@@ -8,3 +8,4 @@
 [ ] - Configure GitHub Dependabot
 [ ] - Align Prettier and ESLint configs with next-web
 [ ] - Migrate Payload to use S3, then remove media directory from Containerfile
+[ ] - Rename internal application route from 'portal' and review default Payload paths (/admin and /api)
