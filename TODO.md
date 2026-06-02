@@ -7,3 +7,4 @@
 [ ] - Add Trivy check via https://github.com/antonbabenko/pre-commit-terraform
 [ ] - Configure GitHub Dependabot
 [ ] - Align Prettier and ESLint configs with next-web
+[ ] - Migrate Payload to use S3, then remove media directory from Containerfile
