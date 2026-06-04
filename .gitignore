@@ -108,6 +108,9 @@ blob-report/
 # Local .terraform directories
 .terraform/
 
+# Lock files in reusable modules (lock files belong in root/environment modules only)
+infrastructure/modules/**/.terraform.lock.hcl
+
 # .tfstate files
 *.tfstate
 *.tfstate.*
