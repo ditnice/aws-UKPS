@@ -1,5 +1,6 @@
-import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
+
+import type { Page } from '@playwright/test'
 
 export interface LoginOptions {
   page: Page

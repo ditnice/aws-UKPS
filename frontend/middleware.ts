@@ -4,7 +4,6 @@ export const config = {
   matcher: ['/portal/:path*'],
 }
 
-export function middleware(req: NextRequest) {
-  // TODO: verify Cognito JWT (Step 9)
+export function middleware(_req: NextRequest) {
   return NextResponse.next()
 }

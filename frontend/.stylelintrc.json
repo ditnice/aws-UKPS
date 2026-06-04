@@ -1,4 +1,5 @@
 {
+  "plugins": ["stylelint-order"],
   "extends": "stylelint-config-sass-guidelines",
   "rules": {
     "selector-class-pattern": "^[a-z][a-zA-Z0-9]+$",
