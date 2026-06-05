@@ -36,21 +36,25 @@ variable "profile" {
 variable "engine_version" {
   description = "SQL Engine version"
   type        = string
+  default     = "17.9"
 }
 
 variable "aurora_postgres_port" {
   description = "Database connection port"
   type        = number
+  default     = 5432
 }
 
 variable "aurora_postgres_max_capacity" {
   description = "The maximum capacity for an Aurora Serverless v2 cluster"
   type        = number
+  default     = 2
 }
 
 variable "aurora_postgres_min_capacity" {
   description = "The minimum capacity for an Aurora Serverless v2 cluster"
   type        = number
+  default     = 0.5
 }
 
 variable "aurora_postgres_identifier" {
