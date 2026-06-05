@@ -72,7 +72,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "lifecycle_configuration" {
   bucket = aws_s3_bucket.bucket.id
 
   rule {
-    id     = "${var.bucket_name}-lifecycle"
+    id     = "${var.bucket_name}-${var.environment}-lifecycle"
     status = "Enabled"
 
     dynamic "noncurrent_version_transition" {
