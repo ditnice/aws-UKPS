@@ -1,5 +1,5 @@
 resource "aws_lb" "ecs_lb" {
-  name               = "${var.project}-alb-${var.environment}"
+  name               = "${var.project}-${var.environment}-alb"
   load_balancer_type = "application"
   internal           = false
 
@@ -9,14 +9,14 @@ resource "aws_lb" "ecs_lb" {
   enable_deletion_protection = false
 
   tags = {
-    Name        = "${var.project}-alb-${var.environment}"
+    Name        = "${var.project}-${var.environment}-alb"
     Environment = var.environment
     Project     = var.project
   }
 }
 
 resource "aws_lb_target_group" "ecs_lb_tg" {
-  name        = "${var.project}-tg-${var.environment}"
+  name        = "${var.project}-${var.environment}-tg"
   port        = var.container_port
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -33,7 +33,7 @@ resource "aws_lb_target_group" "ecs_lb_tg" {
   }
 
   tags = {
-    Name        = "${var.project}-tg-${var.environment}"
+    Name        = "${var.project}-${var.environment}-tg"
     Environment = var.environment
     Project     = var.project
   }
@@ -51,7 +51,7 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_security_group" "alb_sg" {
-  name   = "${var.project}-alb-sg-${var.environment}"
+  name   = "${var.project}-${var.environment}-alb-sg"
   vpc_id = var.vpc_id
 
   ingress {
@@ -69,7 +69,7 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name        = "${var.project}-alb-sg-${var.environment}"
+    Name        = "${var.project}-${var.environment}-alb-sg"
     Environment = var.environment
     Project     = var.project
   }

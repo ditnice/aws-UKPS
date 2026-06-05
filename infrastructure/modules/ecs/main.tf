@@ -1,8 +1,8 @@
 resource "aws_ecs_cluster" "cluster" {
-  name = "${var.project}-cluster-${var.environment}"
+  name = "${var.project}-${var.environment}-cluster"
 
   tags = {
-    Name    = "${var.project}-cluster-${var.environment}"
+    Name    = "${var.project}-${var.environment}-cluster"
     Project = var.project
   }
 }
@@ -13,7 +13,7 @@ resource "aws_ecs_cluster_capacity_providers" "this" {
 }
 
 resource "aws_ecs_task_definition" "ecs_task_def" {
-  family = "${var.project}-web"
+  family = "${var.project}-${var.environment}-web"
 
   container_definitions = templatefile(
     "${path.module}/templates/task-definition.json.tpl",
