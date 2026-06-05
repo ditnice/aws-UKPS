@@ -1,5 +1,5 @@
 resource "aws_rds_cluster" "aurora" {
-  cluster_identifier = "${var.project}-aurora"
+  cluster_identifier = "${var.project}-${var.environment}-aurora"
 
   engine         = "aurora-postgresql"
   engine_version = var.engine_version
@@ -34,6 +34,6 @@ resource "aws_rds_cluster_instance" "aurora_postgres_instance" {
 }
 
 resource "aws_db_subnet_group" "aurora" {
-  name       = "${var.project}-aurora-subnet-group"
+  name       = "${var.project}-${var.environment}-aurora-subnet-group"
   subnet_ids = var.private_subnet_ids
 }

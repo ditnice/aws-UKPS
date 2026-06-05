@@ -1,5 +1,5 @@
 resource "aws_security_group" "aurora_postgres_sg" {
-  name   = "${var.project}-aurora-sg"
+  name   = "${var.project}-${var.environment}-aurora-sg"
   vpc_id = var.vpc_id
 
   ingress {
