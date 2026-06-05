@@ -1,0 +1,81 @@
+repos:
+  # Basic checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+
+  # Terraform
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.106.0
+    hooks:
+      - id: terraform_fmt
+        files: ^infrastructure/.*\.tf$
+      - id: terraform_validate
+        files: ^infrastructure/.*\.tf$
+      - id: terraform_docs
+        files: ^infrastructure/.*\.tf$
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+          - --hook-config=--lockfile=false
+      - id: terraform_tflint
+        files: ^infrastructure/.*\.tf$
+        args:
+          - --args=--only=terraform_deprecated_interpolation
+          - --args=--only=terraform_deprecated_index
+          - --args=--only=terraform_unused_declarations
+          - --args=--only=terraform_comment_syntax
+          - --args=--only=terraform_documented_outputs
+          - --args=--only=terraform_documented_variables
+          - --args=--only=terraform_typed_variables
+          - --args=--only=terraform_module_pinned_source
+          - --args=--only=terraform_naming_convention
+          - --args=--only=terraform_required_version
+          - --args=--only=terraform_required_providers
+          - --args=--only=terraform_unused_required_providers
+          - --args=--only=terraform_standard_module_structure
+      - id: terraform_trivy
+        files: ^infrastructure/
+
+  # Frontend
+  - repo: local
+    hooks:
+      - id: frontend-prettier
+        name: Prettier (frontend)
+        language: system
+        entry: bash -c 'cd frontend && pnpm format:check'
+        files: ^frontend/
+        pass_filenames: false
+
+      - id: frontend-eslint
+        name: ESLint (frontend)
+        language: system
+        entry: bash -c 'cd frontend && pnpm lint'
+        files: ^frontend/.*\.(js|jsx|ts|tsx|mjs)$
+        pass_filenames: false
+
+      - id: frontend-stylelint
+        name: Stylelint (frontend)
+        language: system
+        entry: bash -c 'cd frontend && pnpm lint:style'
+        files: ^frontend/.*\.(css|scss)$
+        pass_filenames: false
+
+  # Backend
+  - repo: local
+    hooks:
+      - id: backend-dotnet-format
+        name: dotnet format (backend)
+        language: system
+        entry: bash -c 'cd backend && dotnet format --verify-no-changes'
+        files: ^backend/.*\.(cs|csproj|sln|slnx)$
+        pass_filenames: false
