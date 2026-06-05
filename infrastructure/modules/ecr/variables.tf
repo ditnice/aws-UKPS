@@ -1,24 +1,33 @@
-variable "repository_name" {
-  description = "value of the repository name to be created in ECR"
+variable "project" {
+  description = "Name of the project"
   type        = string
-}
-
-variable "image_tag_mutability" {
-  description = "value of the image tag mutability to be set for the ECR repository"
-  type        = string
-}
-
-variable "scan_on_push" {
-  description = "value of the scan on push to be set for the ECR repository"
-  type        = bool
 }
 
 variable "region" {
   description = "AWS region"
   type        = string
+  default     = ""
 }
 
 variable "profile" {
   description = "AWS profile to use"
   type        = string
+  default     = ""
+}
+
+variable "environment" {
+  description = "The environment to deploy to (e.g. dev, staging, prod)"
+  type        = string
+}
+
+variable "image_tag_mutability" {
+  description = "Value of the image tag mutability to be set for the ECR repository"
+  type        = string
+  default     = "IMMUTABLE"
+}
+
+variable "scan_on_push" {
+  description = "Whether to enable ECR image scan on push"
+  type        = bool
+  default     = true
 }
