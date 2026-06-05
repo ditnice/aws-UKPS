@@ -6,13 +6,11 @@ variable "project" {
 variable "region" {
   description = "AWS region"
   type        = string
-  default     = ""
 }
 
 variable "profile" {
   description = "AWS profile to use"
   type        = string
-  default     = ""
 }
 
 variable "environment" {
