@@ -1,4 +1,4 @@
-![Alt text](documentation/assets/ukps-logo.png.png)
+![Alt text](documentation/assets/ukps-logo.png)
 
 ## Structure
 
