@@ -27,6 +27,7 @@ repos:
           - --hook-config=--add-to-existing-file=true
           - --hook-config=--create-file-if-not-exist=true
           - --hook-config=--lockfile=false
+          - --args=--lockfile=false
       - id: terraform_tflint
         files: ^infrastructure/.*\.tf$
         args:
