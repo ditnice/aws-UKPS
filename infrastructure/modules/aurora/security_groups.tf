@@ -2,6 +2,7 @@ resource "aws_security_group" "aurora_postgres_sg" {
   name        = "${var.project}-${var.environment}-aurora-sg"
   vpc_id      = var.vpc_id
   description = "Aurora PostgreSQL security group for cluster access"
+  tags        = var.tags
 
   ingress {
     from_port       = var.aurora_postgres_port

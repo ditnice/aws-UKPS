@@ -1,5 +1,6 @@
 resource "aws_rds_cluster" "aurora" {
   cluster_identifier = "${var.project}-${var.environment}-aurora"
+  tags               = var.tags
 
   engine         = "aurora-postgresql"
   engine_version = var.engine_version
@@ -30,6 +31,7 @@ resource "aws_rds_cluster" "aurora" {
 resource "aws_rds_cluster_instance" "aurora_postgres_instance" {
   identifier                      = "${var.aurora_postgres_identifier}-${var.environment}"
   cluster_identifier              = aws_rds_cluster.aurora.id
+  tags                            = var.tags
   instance_class                  = "db.serverless"
   engine                          = aws_rds_cluster.aurora.engine
   engine_version                  = aws_rds_cluster.aurora.engine_version
@@ -39,5 +41,6 @@ resource "aws_rds_cluster_instance" "aurora_postgres_instance" {
 
 resource "aws_db_subnet_group" "aurora" {
   name       = "${var.project}-${var.environment}-aurora-subnet-group"
+  tags       = var.tags
   subnet_ids = var.private_subnet_ids
 }

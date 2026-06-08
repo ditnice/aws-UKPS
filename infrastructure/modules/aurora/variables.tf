@@ -82,3 +82,9 @@ variable "kms_key_id" {
   description = "KMS key ARN or ID used for Aurora encryption"
   type        = string
 }
+
+variable "tags" {
+  description = "Tags to apply to supported Aurora resources"
+  type        = map(string)
+  default     = {}
+}
