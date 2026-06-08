@@ -3,21 +3,22 @@ resource "aws_security_group" "aurora_postgres_sg" {
   vpc_id      = var.vpc_id
   description = "Aurora PostgreSQL security group for cluster access"
   tags        = var.tags
+}
 
-  ingress {
-    from_port       = var.aurora_postgres_port
-    to_port         = var.aurora_postgres_port
-    protocol        = "tcp"
-    security_groups = var.allowed_security_group_ids
-    description     = "Allow inbound PostgreSQL traffic from authorized security groups"
-  }
+resource "aws_vpc_security_group_ingress_rule" "aurora_postgres" {
+  for_each = toset(var.allowed_security_group_ids)
 
-  egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+  description                  = "Allow inbound PostgreSQL traffic from authorised security groups"
+  from_port                    = var.aurora_postgres_port
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = each.key
+  security_group_id            = aws_security_group.aurora_postgres_sg.id
+  to_port                      = var.aurora_postgres_port
+}
 
-    cidr_blocks = [var.vpc_cidr]
-    description = "Allow all outbound traffic within the VPC CIDR"
-  }
+resource "aws_vpc_security_group_egress_rule" "aurora_vpc" {
+  cidr_ipv4         = var.vpc_cidr
+  description       = "Allow outbound traffic within the VPC CIDR"
+  ip_protocol       = "-1"
+  security_group_id = aws_security_group.aurora_postgres_sg.id
 }
