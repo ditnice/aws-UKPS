@@ -5,7 +5,7 @@
     "essential": true,
     "portMappings": [
       {
-        "containerPort": 3000,
+        "containerPort": ${container_port},
         "protocol": "tcp"
       }
     ],
@@ -14,7 +14,7 @@
       "logDriver": "awslogs",
       "options": {
         "awslogs-group": "${ecs_logs}",
-        "awslogs-region": "eu-west-2",
+        "awslogs-region": "${region}",
         "awslogs-stream-prefix": "ecs"
       }
     }

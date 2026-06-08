@@ -1,5 +1,12 @@
+data "aws_region" "current" {}
+
 resource "aws_ecs_cluster" "cluster" {
   name = "${var.project}-${var.environment}-cluster"
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 
   tags = {
     Name    = "${var.project}-${var.environment}-cluster"
@@ -18,8 +25,10 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
   container_definitions = templatefile(
     "${path.module}/templates/task-definition.json.tpl",
     {
-      image    = var.ecr_image_url
-      ecs_logs = aws_cloudwatch_log_group.ecs_logs.name
+      container_port = var.container_port
+      ecs_logs       = aws_cloudwatch_log_group.ecs_logs.name
+      image          = var.ecr_image_url
+      region         = data.aws_region.current.region
     }
   )
 
@@ -52,8 +61,8 @@ resource "aws_ecs_service" "ecs_service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.ecs_lb_tg.arn
+    target_group_arn = var.target_group_arn
     container_name   = "container"
-    container_port   = 3000
+    container_port   = var.container_port
   }
 }

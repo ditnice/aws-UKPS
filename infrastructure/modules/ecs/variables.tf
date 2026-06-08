@@ -3,16 +3,6 @@ variable "project" {
   type        = string
 }
 
-variable "region" {
-  description = "AWS region"
-  type        = string
-}
-
-variable "profile" {
-  description = "AWS profile to use"
-  type        = string
-}
-
 variable "environment" {
   description = "The environment to deploy to (e.g. dev, staging, prod)"
   type        = string
@@ -64,24 +54,33 @@ variable "private_subnet_ids" {
   type        = list(string)
 }
 
-variable "public_subnet_ids" {
-  description = "A list of public VPC subnet IDs for the ALB"
-  type        = list(string)
-}
-
 variable "container_port" {
   description = "The port on which the container listens"
   type        = number
   default     = 3000
 }
 
-variable "health_check_path" {
-  description = "The path to use for the ALB health check"
-  type        = string
-  default     = "/health"
-}
-
 variable "ecr_image_url" {
   description = "ECR repository image URL"
   type        = string
+}
+
+variable "target_group_arn" {
+  description = "ARN of the ALB target group used by the ECS service"
+  type        = string
+}
+
+variable "alb_security_group_id" {
+  description = "ID of the ALB security group allowed to reach ECS tasks"
+  type        = string
+}
+
+variable "ecs_egress_cidr_blocks" {
+  description = "CIDR blocks allowed for ECS task egress"
+  type        = list(string)
+
+  validation {
+    condition     = length(var.ecs_egress_cidr_blocks) > 0
+    error_message = "At least one ECS egress CIDR block must be provided."
+  }
 }
