@@ -1,7 +1,9 @@
 output "bucket_name" {
-  value = aws_s3_bucket.bucket.bucket
+  description = "Name of the S3 bucket"
+  value       = aws_s3_bucket.bucket.bucket
 }
 
 output "bucket_arn" {
-  value = aws_s3_bucket.bucket.arn
+  description = "ARN of the S3 bucket"
+  value       = aws_s3_bucket.bucket.arn
 }
