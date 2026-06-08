@@ -1,3 +1,6 @@
+Networking module
+=================
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +13,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.48.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
 
 ## Modules
 
