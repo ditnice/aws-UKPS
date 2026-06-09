@@ -1,13 +1,14 @@
 resource "aws_security_group" "ecs_sg" {
   description = "Security group for the ${var.project}-${var.environment} ECS service"
-  name        = "${var.project}-${var.environment}-ecs-sg-"
+  name        = "${var.project}-${var.environment}-${var.service_name}-ecs-sg"
   vpc_id      = var.vpc_id
 
-  tags = {
-    Name        = "${var.project}-${var.environment}-ecs-sg"
+  tags = merge(var.tags, {
+    Name        = "${var.project}-${var.environment}-${var.service_name}-ecs-sg"
     Environment = var.environment
     Project     = var.project
-  }
+    Service     = var.service_name
+  })
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb_to_ecs" {

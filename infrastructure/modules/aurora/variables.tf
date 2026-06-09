@@ -1,6 +1,11 @@
 variable "project" {
   description = "Name of the project"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{1,21}[a-z0-9]$", var.project))
+    error_message = "Project must be 3-23 characters, start with a lowercase letter, end with a lowercase letter or number, and contain only lowercase letters, numbers, or hyphens."
+  }
 }
 
 variable "environment" {
@@ -16,6 +21,11 @@ variable "environment" {
 variable "vpc_id" {
   description = "Identifier of the VPC to be deployed into"
   type        = string
+
+  validation {
+    condition     = can(regex("^vpc-[0-9a-f]{8,17}$", var.vpc_id))
+    error_message = "VPC ID must be a valid AWS VPC ID."
+  }
 }
 
 variable "vpc_cidr" {
@@ -33,8 +43,8 @@ variable "private_subnet_ids" {
   type        = list(string)
 
   validation {
-    condition     = length(var.private_subnet_ids) > 0
-    error_message = "At least one private subnet ID must be provided."
+    condition     = length(var.private_subnet_ids) > 0 && alltrue([for subnet_id in var.private_subnet_ids : can(regex("^subnet-[0-9a-f]{8,17}$", subnet_id))])
+    error_message = "At least one private subnet ID must be provided, and all values must be valid AWS subnet IDs."
   }
 }
 
@@ -123,14 +133,19 @@ variable "allowed_security_group_ids" {
   type        = list(string)
 
   validation {
-    condition     = length(var.allowed_security_group_ids) > 0
-    error_message = "At least one allowed security group ID must be provided."
+    condition     = length(var.allowed_security_group_ids) > 0 && alltrue([for security_group_id in var.allowed_security_group_ids : can(regex("^sg-[0-9a-f]{8,17}$", security_group_id))])
+    error_message = "At least one allowed security group ID must be provided, and all values must be valid AWS security group IDs."
   }
 }
 
 variable "kms_key_id" {
   description = "KMS key ARN or ID used for Aurora encryption"
   type        = string
+
+  validation {
+    condition     = can(regex("^(arn:aws[a-zA-Z-]*:kms:[a-z0-9-]+:[0-9]{12}:key/(mrk-[0-9a-f]{32}|[0-9a-f-]{36})|mrk-[0-9a-f]{32}|[0-9a-f-]{36})$", var.kms_key_id))
+    error_message = "KMS key ID must be a valid AWS KMS key ARN or key ID."
+  }
 }
 
 variable "apply_immediately" {
