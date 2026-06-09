@@ -71,6 +71,14 @@ repos:
         files: ^frontend/.*\.(css|scss)$
         pass_filenames: false
 
+      # TODO - to be uncommented once development starts
+      # - id: frontend-fallow
+      #   name: Fallow dead-code check (frontend)
+      #   language: system
+      #   entry: bash -c 'cd frontend && pnpm fallow'
+      #   files: ^frontend/.*\.(js|jsx|ts|tsx|mjs)$
+      #   pass_filenames: false
+
   # Backend
   - repo: local
     hooks:
