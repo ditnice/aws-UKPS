@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ecs_execution_role" {
-  name = "${var.project}-${var.environment}-ecs-execution-role-"
+  name = "${var.project}-${var.environment}-${var.service_name}-ecs-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -13,11 +13,18 @@ resource "aws_iam_role" "ecs_execution_role" {
       }
     ]
   })
+
+  tags = merge(var.tags, {
+    Name        = "${var.project}-${var.environment}-${var.service_name}-ecs-execution-role"
+    Environment = var.environment
+    Project     = var.project
+    Service     = var.service_name
+  })
 }
 
 
 resource "aws_iam_role" "ecs_task_role" {
-  name = "${var.project}-${var.environment}-ecs-task-role-"
+  name = "${var.project}-${var.environment}-${var.service_name}-ecs-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -30,6 +37,13 @@ resource "aws_iam_role" "ecs_task_role" {
         Action = "sts:AssumeRole"
       }
     ]
+  })
+
+  tags = merge(var.tags, {
+    Name        = "${var.project}-${var.environment}-${var.service_name}-ecs-task-role"
+    Environment = var.environment
+    Project     = var.project
+    Service     = var.service_name
   })
 }
 

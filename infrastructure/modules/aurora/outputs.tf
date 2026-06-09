@@ -21,6 +21,7 @@ output "database_name" {
 output "master_user_secret_arn" {
   description = "ARN of the Secrets Manager secret containing the managed master user password"
   value       = try(aws_rds_cluster.aurora.master_user_secret[0].secret_arn, null)
+  sensitive   = true
 }
 
 output "port" {

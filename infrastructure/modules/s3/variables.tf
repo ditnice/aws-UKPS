@@ -70,6 +70,11 @@ variable "policy" {
   description = "Additional bucket policy JSON to merge with the required deny-non-SSL policy"
   type        = string
   default     = null
+
+  validation {
+    condition     = var.policy == null || can(jsondecode(var.policy))
+    error_message = "Policy must be valid JSON when provided."
+  }
 }
 
 variable "tags" {

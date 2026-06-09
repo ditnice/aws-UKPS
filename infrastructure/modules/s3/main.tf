@@ -29,7 +29,10 @@ resource "aws_s3_bucket" "bucket" {
   bucket        = var.bucket_name
   force_destroy = var.force_destroy
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name        = var.bucket_name
+    Environment = var.environment
+  })
 }
 
 resource "aws_s3_bucket_versioning" "bucket_versioning" {

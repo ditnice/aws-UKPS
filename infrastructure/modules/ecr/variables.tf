@@ -1,6 +1,11 @@
 variable "project" {
   description = "Name of the project"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{1,21}[a-z0-9]$", var.project))
+    error_message = "Project must be 3-23 characters, start with a lowercase letter, end with a lowercase letter or number, and contain only lowercase letters, numbers, or hyphens."
+  }
 }
 
 variable "environment" {
@@ -33,6 +38,11 @@ variable "scan_on_push" {
 variable "kms_key_arn" {
   description = "KMS key ARN used to encrypt the ECR repository"
   type        = string
+
+  validation {
+    condition     = can(regex("^arn:aws[a-zA-Z-]*:kms:[a-z0-9-]+:[0-9]{12}:key/(mrk-[0-9a-f]{32}|[0-9a-f-]{36})$", var.kms_key_arn))
+    error_message = "KMS key ARN must be a valid AWS KMS key ARN."
+  }
 }
 
 variable "max_image_count" {
