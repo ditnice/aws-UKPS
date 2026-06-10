@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using UKPS.Api.Entities;
+using UKPS.Data.Entities.Identity;
 
 namespace UKPS.Api.Data;
 

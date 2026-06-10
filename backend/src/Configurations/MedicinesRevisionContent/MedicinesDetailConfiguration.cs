@@ -1,0 +1,25 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using UKPS.Data.Entities.MedicinesRevisionContent;
+
+namespace UKPS.Data.Configurations.MedicinesRevisionContent;
+
+public class MedicinesDetailConfiguration : IEntityTypeConfiguration<MedicinesDetail>
+{
+    public void Configure(EntityTypeBuilder<MedicinesDetail> builder)
+    {
+        builder.ToTable("medicines_detail", "ukps");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).UseIdentityColumn();
+        builder.Property(x => x.IsPersonalisedMedicine).HasConversion<string>();
+        builder.Property(x => x.IsRepurposedMedicine).HasConversion<string>();
+
+        builder.HasIndex(x => x.RevisionId).IsUnique()
+               .HasDatabaseName("ix_medicines_detail_revision_id");
+
+        builder.HasOne(x => x.Revision)
+               .WithMany()
+               .HasForeignKey(x => x.RevisionId)
+               .OnDelete(DeleteBehavior.Restrict);
+    }
+}

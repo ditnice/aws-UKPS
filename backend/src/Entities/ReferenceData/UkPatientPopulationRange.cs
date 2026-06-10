@@ -1,0 +1,9 @@
+using UKPS.Data.Enums;
+
+namespace UKPS.Data.Entities.ReferenceData;
+
+/// <summary>13 values — medicines only.</summary>
+public class UkPatientPopulationRange : ReferenceDataBase
+{
+    public int SortOrder { get; set; }
+}
