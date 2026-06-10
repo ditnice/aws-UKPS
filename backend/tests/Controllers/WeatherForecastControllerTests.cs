@@ -1,7 +1,7 @@
-namespace UKPS.Api.Tests;
+namespace UKPS.Api.Tests.Controllers;
 
-using UKPS.Api;
 using UKPS.Api.Controllers;
+using UKPS.Api.DTOs;
 
 public class WeatherForecastControllerTests
 {

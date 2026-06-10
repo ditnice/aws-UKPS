@@ -1,0 +1,14 @@
+default: format build test
+
+format:
+    dotnet format
+
+build:
+    dotnet build
+
+test:
+    dotnet test
+
+coverage:
+    dotnet test /p:CollectCoverage=true
+    dotnet tool run reportgenerator

@@ -1,6 +1,6 @@
-namespace UKPS.Api.Tests;
+namespace UKPS.Api.Tests.DTOs;
 
-using UKPS.Api;
+using UKPS.Api.DTOs;
 
 public class WeatherForecastTests
 {
