@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.MedicinesRevisionContent;
+namespace UKPS.Api.Entities.MedicinesRevisionContent;
 
 public class MedicinesProductDetail
 {

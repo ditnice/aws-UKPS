@@ -1,4 +1,4 @@
-namespace UKPS.Data.Entities.UserFeatures;
+namespace UKPS.Api.Entities.UserFeatures;
 
 public class RecordWatchlist
 {

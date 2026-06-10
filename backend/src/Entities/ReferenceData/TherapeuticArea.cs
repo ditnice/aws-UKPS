@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.ReferenceData;
+namespace UKPS.Api.Entities.ReferenceData;
 
 /// <summary>
 /// Therapeutic area hierarchy — medicines only. Currently flat; supports future sub-levels.

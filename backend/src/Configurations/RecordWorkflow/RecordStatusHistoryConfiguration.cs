@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.RecordWorkflow;
+using UKPS.Api.Entities.RecordWorkflow;
 
-namespace UKPS.Data.Configurations.RecordWorkflow;
+namespace UKPS.Api.Configurations.RecordWorkflow;
 
 public class RecordStatusHistoryConfiguration : IEntityTypeConfiguration<RecordStatusHistory>
 {

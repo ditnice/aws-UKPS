@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.ReferenceData;
+using UKPS.Api.Entities.ReferenceData;
 
-namespace UKPS.Data.Configurations.ReferenceData;
+namespace UKPS.Api.Configurations.ReferenceData;
 
 public class TherapeuticAreaConfiguration : IEntityTypeConfiguration<TherapeuticArea>
 {

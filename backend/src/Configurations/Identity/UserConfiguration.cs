@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.Identity;
-using UKPS.Data.Enums;
+using UKPS.Api.Entities.Identity;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Configurations.Identity;
+namespace UKPS.Api.Configurations.Identity;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {

@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.MedicinesRevisionContent;
+namespace UKPS.Api.Entities.MedicinesRevisionContent;
 
 /// <summary>Junction table: technology status types selected for a medicine record.</summary>
 public class MedicinesRecordStatus

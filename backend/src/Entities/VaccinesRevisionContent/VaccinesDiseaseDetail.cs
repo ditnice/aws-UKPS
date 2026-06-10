@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.VaccinesRevisionContent;
+namespace UKPS.Api.Entities.VaccinesRevisionContent;
 
 public class VaccinesDiseaseDetail
 {

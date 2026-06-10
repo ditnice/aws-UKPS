@@ -1,7 +1,7 @@
 using System.Text.Json;
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.Reporting;
+namespace UKPS.Api.Entities.Reporting;
 
 /// <summary>
 /// Log of every report run for KPI tracking.

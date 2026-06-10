@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.UserFeatures;
+using UKPS.Api.Entities.UserFeatures;
 
-namespace UKPS.Data.Configurations.UserFeatures;
+namespace UKPS.Api.Configurations.UserFeatures;
 
 public class RecordWatchlistConfiguration : IEntityTypeConfiguration<RecordWatchlist>
 {

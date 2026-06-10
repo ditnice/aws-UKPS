@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.VaccinesRevisionContent;
+namespace UKPS.Api.Entities.VaccinesRevisionContent;
 
 /// <summary>
 /// One row per adjuvant component. Supports zero, one, or multiple adjuvants.

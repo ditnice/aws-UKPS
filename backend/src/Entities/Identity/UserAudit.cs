@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.Identity;
+namespace UKPS.Api.Entities.Identity;
 
 public class UserAudit
 {

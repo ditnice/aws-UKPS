@@ -1,4 +1,4 @@
-namespace UKPS.Data.Enums;
+namespace UKPS.Api.Enums;
 
 public enum OrganisationType
 {

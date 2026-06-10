@@ -1,4 +1,4 @@
-namespace UKPS.Data.Entities.Email;
+namespace UKPS.Api.Entities.Email;
 
 public class EmailAudit
 {

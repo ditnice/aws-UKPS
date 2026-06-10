@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.VaccinesRevisionContent;
+namespace UKPS.Api.Entities.VaccinesRevisionContent;
 
 /// <summary>
 /// Alternative names, synonyms, and prior codes for this vaccine candidate.

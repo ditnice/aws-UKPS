@@ -1,7 +1,7 @@
 using System.Text.Json;
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.RecordWorkflow;
+namespace UKPS.Api.Entities.RecordWorkflow;
 
 public class RecordEvent
 {

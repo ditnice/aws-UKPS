@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.SharedRevisionContent;
+namespace UKPS.Api.Entities.SharedRevisionContent;
 
 public class RegulatoryDate
 {

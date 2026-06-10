@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.Email;
+using UKPS.Api.Entities.Email;
 
-namespace UKPS.Data.Configurations.Email;
+namespace UKPS.Api.Configurations.Email;
 
 public class EmailAuditConfiguration : IEntityTypeConfiguration<EmailAudit>
 {

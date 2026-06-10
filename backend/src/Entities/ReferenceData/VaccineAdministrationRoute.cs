@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.ReferenceData;
+namespace UKPS.Api.Entities.ReferenceData;
 
 /// <summary>Values TBC — vaccines only.</summary>
 public class VaccineAdministrationRoute : ReferenceDataBase { }

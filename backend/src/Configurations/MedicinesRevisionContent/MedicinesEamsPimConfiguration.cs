@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.MedicinesRevisionContent;
+using UKPS.Api.Entities.MedicinesRevisionContent;
 
-namespace UKPS.Data.Configurations.MedicinesRevisionContent;
+namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
 public class MedicinesEamsPimConfiguration : IEntityTypeConfiguration<MedicinesEamsPim>
 {

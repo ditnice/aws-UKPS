@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.VaccinesRevisionContent;
+using UKPS.Api.Entities.VaccinesRevisionContent;
 
-namespace UKPS.Data.Configurations.VaccinesRevisionContent;
+namespace UKPS.Api.Configurations.VaccinesRevisionContent;
 
 public class VaccinesTechnologyConfiguration : IEntityTypeConfiguration<VaccinesTechnology>
 {

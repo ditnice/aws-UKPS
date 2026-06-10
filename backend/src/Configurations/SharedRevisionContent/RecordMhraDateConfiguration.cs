@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.SharedRevisionContent;
+using UKPS.Api.Entities.SharedRevisionContent;
 
-namespace UKPS.Data.Configurations.SharedRevisionContent;
+namespace UKPS.Api.Configurations.SharedRevisionContent;
 
 public class RecordMhraDateConfiguration : IEntityTypeConfiguration<RecordMhraDate>
 {

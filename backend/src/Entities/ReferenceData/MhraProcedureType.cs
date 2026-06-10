@@ -1,6 +1,6 @@
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.ReferenceData;
+namespace UKPS.Api.Entities.ReferenceData;
 
 /// <summary>
 /// 6 values — shared. Access Consortium and Orbis relevant to medicines only.

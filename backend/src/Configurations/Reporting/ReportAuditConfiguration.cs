@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Data.Entities.Reporting;
+using UKPS.Api.Entities.Reporting;
 
-namespace UKPS.Data.Configurations.Reporting;
+namespace UKPS.Api.Configurations.Reporting;
 
 public class ReportAuditConfiguration : IEntityTypeConfiguration<ReportAudit>
 {

@@ -1,4 +1,4 @@
-namespace UKPS.Data.Enums;
+namespace UKPS.Api.Enums;
 
 /// <summary>
 /// Flags enum stored as integer. Only Organisation uses Both;
@@ -8,6 +8,6 @@ namespace UKPS.Data.Enums;
 public enum PharmaceuticalEntity
 {
     Medicines = 1,
-    Vaccines  = 2,
-    Both      = Medicines | Vaccines
+    Vaccines = 2,
+    Both = Medicines | Vaccines
 }

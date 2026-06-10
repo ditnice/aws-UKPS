@@ -1,7 +1,7 @@
 using System.Text.Json;
-using UKPS.Data.Enums;
+using UKPS.Api.Enums;
 
-namespace UKPS.Data.Entities.Reporting;
+namespace UKPS.Api.Entities.Reporting;
 
 /// <summary>
 /// Saved report configurations. Two tiers:
