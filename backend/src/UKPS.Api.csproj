@@ -13,4 +13,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../data/UKPS.Data.csproj" />
+  </ItemGroup>
+
 </Project>
