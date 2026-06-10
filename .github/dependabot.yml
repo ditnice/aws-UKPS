@@ -1,0 +1,76 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: daily
+      time: "07:00"
+      timezone: Europe/London
+    groups:
+      frontend-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - frontend
+
+  - package-ecosystem: nuget
+    directory: /backend
+    schedule:
+      interval: daily
+      time: "07:00"
+      timezone: Europe/London
+    groups:
+      backend-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - backend
+
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: daily
+      time: "07:00"
+      timezone: Europe/London
+    labels:
+      - dependencies
+      - docker
+      - frontend
+
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: daily
+      time: "07:00"
+      timezone: Europe/London
+    labels:
+      - dependencies
+      - docker
+      - backend
+
+  - package-ecosystem: terraform
+    directories:
+      - /infrastructure/environments/alpha
+      - /infrastructure/environments/beta
+      - /infrastructure/environments/dev
+      - /infrastructure/environments/live
+      - /infrastructure/environments/test
+      - /infrastructure/modules/alb
+      - /infrastructure/modules/aurora
+      - /infrastructure/modules/ecr
+      - /infrastructure/modules/ecs
+      - /infrastructure/modules/networking
+      - /infrastructure/modules/s3
+    schedule:
+      interval: daily
+      time: "07:00"
+      timezone: Europe/London
+    groups:
+      terraform-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - infrastructure

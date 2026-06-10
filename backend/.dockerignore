@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+tests/
+TestResult.xml
+TestResults/
+coverage/
+.env
+*.user
+*.suo
+*.binlog
+.DS_Store
