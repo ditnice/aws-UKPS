@@ -163,12 +163,22 @@ variable "aurora_final_snapshot_identifier" {
   default     = "snapshot_id"
 }
 
-variable "target_group_arn" {
-  description = "ARN of the ALB target group used by the ECS service"
+variable "frontend_target_group_arn" {
+  description = "ARN of the ALB target group used by the frontend ECS service"
   type        = string
 
   validation {
-    condition     = can(regex("^arn:aws[a-zA-Z-]*:elasticloadbalancing:[a-z0-9-]+:[0-9]{12}:targetgroup/.+/.+$", var.target_group_arn))
+    condition     = can(regex("^arn:aws[a-zA-Z-]*:elasticloadbalancing:[a-z0-9-]+:[0-9]{12}:targetgroup/.+/.+$", var.frontend_target_group_arn))
+    error_message = "Target group ARN must be a valid ALB target group ARN."
+  }
+}
+
+variable "backend_target_group_arn" {
+  description = "ARN of the ALB target group used by the backend ECS service"
+  type        = string
+
+  validation {
+    condition     = can(regex("^arn:aws[a-zA-Z-]*:elasticloadbalancing:[a-z0-9-]+:[0-9]{12}:targetgroup/.+/.+$", var.backend_target_group_arn))
     error_message = "Target group ARN must be a valid ALB target group ARN."
   }
 }
