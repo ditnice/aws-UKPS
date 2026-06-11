@@ -8,7 +8,7 @@ public class RecordHtaConfiguration : IEntityTypeConfiguration<RecordHta>
 {
     public void Configure(EntityTypeBuilder<RecordHta> builder)
     {
-        builder.ToTable("record_hta", "ukps");
+        builder.ToTable("record_hta");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.HtaNiceAlignedPathway).HasConversion<string>();

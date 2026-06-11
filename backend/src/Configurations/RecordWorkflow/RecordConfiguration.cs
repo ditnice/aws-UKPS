@@ -8,7 +8,7 @@ public class RecordConfiguration : IEntityTypeConfiguration<Record>
 {
     public void Configure(EntityTypeBuilder<Record> builder)
     {
-        builder.ToTable("record", "ukps");
+        builder.ToTable("record");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RecordType).HasConversion<string>();

@@ -8,7 +8,7 @@ public class RecordEventConfiguration : IEntityTypeConfiguration<RecordEvent>
 {
     public void Configure(EntityTypeBuilder<RecordEvent> builder)
     {
-        builder.ToTable("record_event", "ukps");
+        builder.ToTable("record_event");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.EventType).HasConversion<string>();

@@ -8,7 +8,7 @@ public class RegulatoryDateConfiguration : IEntityTypeConfiguration<RegulatoryDa
 {
     public void Configure(EntityTypeBuilder<RegulatoryDate> builder)
     {
-        builder.ToTable("regulatory_date", "ukps");
+        builder.ToTable("regulatory_date");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.DateEvent).HasConversion<string>();

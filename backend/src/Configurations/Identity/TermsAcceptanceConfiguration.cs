@@ -9,7 +9,7 @@ public class TermsAcceptanceConfiguration : IEntityTypeConfiguration<TermsAccept
 {
     public void Configure(EntityTypeBuilder<TermsAcceptance> builder)
     {
-        builder.ToTable("terms_acceptance", "ukps");
+        builder.ToTable("terms_acceptance");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RelevantPharmaceuticalEntity).HasConversion<int>();

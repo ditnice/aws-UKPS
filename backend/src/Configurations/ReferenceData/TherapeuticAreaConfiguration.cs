@@ -8,7 +8,7 @@ public class TherapeuticAreaConfiguration : IEntityTypeConfiguration<Therapeutic
 {
     public void Configure(EntityTypeBuilder<TherapeuticArea> builder)
     {
-        builder.ToTable("therapeutic_area", "ukps");
+        builder.ToTable("therapeutic_area");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Label).IsRequired();

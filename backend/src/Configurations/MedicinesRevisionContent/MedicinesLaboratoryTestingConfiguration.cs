@@ -9,7 +9,7 @@ public class MedicinesLaboratoryTestingConfiguration
 {
     public void Configure(EntityTypeBuilder<MedicinesLaboratoryTesting> builder)
     {
-        builder.ToTable("medicines_laboratory_testing", "ukps");
+        builder.ToTable("medicines_laboratory_testing");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.DiagnosticTestRequired).HasConversion<string>();

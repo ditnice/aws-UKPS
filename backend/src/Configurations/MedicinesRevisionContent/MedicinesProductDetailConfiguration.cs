@@ -8,7 +8,7 @@ public class MedicinesProductDetailConfiguration : IEntityTypeConfiguration<Medi
 {
     public void Configure(EntityTypeBuilder<MedicinesProductDetail> builder)
     {
-        builder.ToTable("medicines_product_detail", "ukps");
+        builder.ToTable("medicines_product_detail");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RecordTitle).IsRequired();

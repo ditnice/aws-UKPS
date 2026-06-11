@@ -8,7 +8,7 @@ public class RecordMhraProcedureConfiguration : IEntityTypeConfiguration<RecordM
 {
     public void Configure(EntityTypeBuilder<RecordMhraProcedure> builder)
     {
-        builder.ToTable("record_mhra_procedure", "ukps");
+        builder.ToTable("record_mhra_procedure");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
 

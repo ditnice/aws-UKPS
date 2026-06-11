@@ -8,7 +8,7 @@ public class RecordGlobalSubmissionConfiguration : IEntityTypeConfiguration<Reco
 {
     public void Configure(EntityTypeBuilder<RecordGlobalSubmission> builder)
     {
-        builder.ToTable("record_global_submission", "ukps");
+        builder.ToTable("record_global_submission");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
 

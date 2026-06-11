@@ -8,7 +8,7 @@ public class VaccinesCompanyInfoConfiguration : IEntityTypeConfiguration<Vaccine
 {
     public void Configure(EntityTypeBuilder<VaccinesCompanyInfo> builder)
     {
-        builder.ToTable("vaccines_company_info", "ukps");
+        builder.ToTable("vaccines_company_info");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.IsOriginatorCompany).HasConversion<string>();

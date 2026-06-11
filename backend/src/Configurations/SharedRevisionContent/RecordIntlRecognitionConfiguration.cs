@@ -8,7 +8,7 @@ public class RecordIntlRecognitionConfiguration : IEntityTypeConfiguration<Recor
 {
     public void Configure(EntityTypeBuilder<RecordIntlRecognition> builder)
     {
-        builder.ToTable("record_intl_recognition", "ukps");
+        builder.ToTable("record_intl_recognition");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.IntlConditionalApprovalAnticipated).HasConversion<string>();

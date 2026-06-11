@@ -9,7 +9,7 @@ public class OrganisationAuditConfiguration : IEntityTypeConfiguration<Organisat
 {
     public void Configure(EntityTypeBuilder<OrganisationAudit> builder)
     {
-        builder.ToTable("organisation_audit", "ukps");
+        builder.ToTable("organisation_audit");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.EventType).HasConversion<string>();

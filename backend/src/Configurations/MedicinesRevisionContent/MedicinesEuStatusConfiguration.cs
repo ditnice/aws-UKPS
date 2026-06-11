@@ -8,7 +8,7 @@ public class MedicinesEuStatusConfiguration : IEntityTypeConfiguration<Medicines
 {
     public void Configure(EntityTypeBuilder<MedicinesEuStatus> builder)
     {
-        builder.ToTable("medicines_eu_status", "ukps");
+        builder.ToTable("medicines_eu_status");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.EuOrphanStatus).HasConversion<string>();

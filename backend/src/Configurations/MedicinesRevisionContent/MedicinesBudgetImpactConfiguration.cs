@@ -8,7 +8,7 @@ public class MedicinesBudgetImpactConfiguration : IEntityTypeConfiguration<Medic
 {
     public void Configure(EntityTypeBuilder<MedicinesBudgetImpact> builder)
     {
-        builder.ToTable("medicines_budget_impact", "ukps");
+        builder.ToTable("medicines_budget_impact");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.IndicationSpecificPricingPlanned).HasConversion<string>();

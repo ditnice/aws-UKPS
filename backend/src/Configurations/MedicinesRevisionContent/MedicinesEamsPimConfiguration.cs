@@ -8,7 +8,7 @@ public class MedicinesEamsPimConfiguration : IEntityTypeConfiguration<MedicinesE
 {
     public void Configure(EntityTypeBuilder<MedicinesEamsPim> builder)
     {
-        builder.ToTable("medicines_eams_pim", "ukps");
+        builder.ToTable("medicines_eams_pim");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.PimDesignationStatus).HasConversion<string>();

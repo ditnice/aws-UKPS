@@ -89,6 +89,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // ── Reporting & Email ────────────────────────────────────────────────────
     public DbSet<ReportPreset> ReportPresets => Set<ReportPreset>();
     public DbSet<ReportAudit> ReportAudits => Set<ReportAudit>();
+
+    // ── Email ────────────────────────────────────────────────────────────────
     public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
     public DbSet<EmailAudit> EmailAudits => Set<EmailAudit>();
 
@@ -98,6 +100,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema("ukps");
+        base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }

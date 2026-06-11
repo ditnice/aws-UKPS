@@ -8,7 +8,7 @@ public class MedicinesPasRegionConfiguration : IEntityTypeConfiguration<Medicine
 {
     public void Configure(EntityTypeBuilder<MedicinesPasRegion> builder)
     {
-        builder.ToTable("medicines_pas_region", "ukps");
+        builder.ToTable("medicines_pas_region");
         builder.HasKey(x => new { x.MedicinesBudgetImpactId, x.PasRegionId });
 
         builder.HasOne(x => x.MedicinesBudgetImpact)

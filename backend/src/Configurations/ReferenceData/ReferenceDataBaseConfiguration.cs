@@ -15,7 +15,7 @@ public abstract class ReferenceDataBaseConfiguration<T> : IEntityTypeConfigurati
 
     public virtual void Configure(EntityTypeBuilder<T> builder)
     {
-        builder.ToTable(TableName, "ukps");
+        builder.ToTable(TableName);
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Label).IsRequired();

@@ -9,7 +9,7 @@ public class UserAuditConfiguration : IEntityTypeConfiguration<UserAudit>
 {
     public void Configure(EntityTypeBuilder<UserAudit> builder)
     {
-        builder.ToTable("user_audit", "ukps");
+        builder.ToTable("user_audit");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.EventType).HasConversion<string>();

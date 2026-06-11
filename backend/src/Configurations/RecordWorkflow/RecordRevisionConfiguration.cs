@@ -8,7 +8,7 @@ public class RecordRevisionConfiguration : IEntityTypeConfiguration<RecordRevisi
 {
     public void Configure(EntityTypeBuilder<RecordRevision> builder)
     {
-        builder.ToTable("record_revision", "ukps");
+        builder.ToTable("record_revision");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.WorkflowStatus).HasConversion<string>();

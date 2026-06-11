@@ -8,7 +8,7 @@ public class VaccinesAdjuvantConfiguration : IEntityTypeConfiguration<VaccinesAd
 {
     public void Configure(EntityTypeBuilder<VaccinesAdjuvant> builder)
     {
-        builder.ToTable("vaccines_adjuvant", "ukps");
+        builder.ToTable("vaccines_adjuvant");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.AdjuvantName).IsRequired();

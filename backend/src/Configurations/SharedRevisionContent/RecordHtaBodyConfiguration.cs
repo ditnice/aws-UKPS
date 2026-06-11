@@ -8,7 +8,7 @@ public class RecordHtaBodyConfiguration : IEntityTypeConfiguration<RecordHtaBody
 {
     public void Configure(EntityTypeBuilder<RecordHtaBody> builder)
     {
-        builder.ToTable("record_hta_body", "ukps");
+        builder.ToTable("record_hta_body");
         builder.HasKey(x => new { x.RecordHtaId, x.Label });
         builder.Property(x => x.Label).IsRequired();
 

@@ -8,7 +8,7 @@ public class BnfChapterConfiguration : IEntityTypeConfiguration<BnfChapter>
 {
     public void Configure(EntityTypeBuilder<BnfChapter> builder)
     {
-        builder.ToTable("bnf_chapter", "ukps");
+        builder.ToTable("bnf_chapter");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Code).IsRequired();

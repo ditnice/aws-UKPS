@@ -9,7 +9,7 @@ public class MedicinesPatientIdentificationConfiguration
 {
     public void Configure(EntityTypeBuilder<MedicinesPatientIdentification> builder)
     {
-        builder.ToTable("medicines_patient_identification", "ukps");
+        builder.ToTable("medicines_patient_identification");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.ScreeningRequired).HasConversion<string>();

@@ -8,7 +8,7 @@ public class RecordWatchlistConfiguration : IEntityTypeConfiguration<RecordWatch
 {
     public void Configure(EntityTypeBuilder<RecordWatchlist> builder)
     {
-        builder.ToTable("record_watchlist", "ukps");
+        builder.ToTable("record_watchlist");
         builder.HasKey(x => new { x.UserId, x.RecordId });
 
         builder.HasOne(x => x.User)

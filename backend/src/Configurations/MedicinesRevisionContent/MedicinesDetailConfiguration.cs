@@ -8,7 +8,7 @@ public class MedicinesDetailConfiguration : IEntityTypeConfiguration<MedicinesDe
 {
     public void Configure(EntityTypeBuilder<MedicinesDetail> builder)
     {
-        builder.ToTable("medicines_detail", "ukps");
+        builder.ToTable("medicines_detail");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.IsPersonalisedMedicine).HasConversion<string>();

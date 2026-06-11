@@ -8,7 +8,7 @@ public class RecordStatusHistoryConfiguration : IEntityTypeConfiguration<RecordS
 {
     public void Configure(EntityTypeBuilder<RecordStatusHistory> builder)
     {
-        builder.ToTable("record_status_history", "ukps");
+        builder.ToTable("record_status_history");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.FromStatus).HasConversion<string>();

@@ -8,7 +8,7 @@ public class OtherClinicalTrialNumberConfiguration : IEntityTypeConfiguration<Ot
 {
     public void Configure(EntityTypeBuilder<OtherClinicalTrialNumber> builder)
     {
-        builder.ToTable("other_clinical_trial_number", "ukps");
+        builder.ToTable("other_clinical_trial_number");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.OtherRegistryNumber).IsRequired();

@@ -8,7 +8,7 @@ public class VaccinesProductDetailConfiguration : IEntityTypeConfiguration<Vacci
 {
     public void Configure(EntityTypeBuilder<VaccinesProductDetail> builder)
     {
-        builder.ToTable("vaccines_product_detail", "ukps");
+        builder.ToTable("vaccines_product_detail");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RecordTitle).IsRequired();

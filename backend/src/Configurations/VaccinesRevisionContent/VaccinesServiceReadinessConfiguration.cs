@@ -8,7 +8,7 @@ public class VaccinesServiceReadinessConfiguration : IEntityTypeConfiguration<Va
 {
     public void Configure(EntityTypeBuilder<VaccinesServiceReadiness> builder)
     {
-        builder.ToTable("vaccines_service_readiness", "ukps");
+        builder.ToTable("vaccines_service_readiness");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RequiresReconstitution).HasConversion<string>();

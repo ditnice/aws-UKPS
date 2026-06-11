@@ -8,7 +8,7 @@ public class EmailAuditConfiguration : IEntityTypeConfiguration<EmailAudit>
 {
     public void Configure(EntityTypeBuilder<EmailAudit> builder)
     {
-        builder.ToTable("email_audit", "ukps");
+        builder.ToTable("email_audit");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Recipients).IsRequired();

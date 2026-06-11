@@ -10,7 +10,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         // Table is named app_user to avoid collision with PostgreSQL reserved word 'user'
-        builder.ToTable("app_user", "ukps");
+        builder.ToTable("app_user");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Username).IsRequired();

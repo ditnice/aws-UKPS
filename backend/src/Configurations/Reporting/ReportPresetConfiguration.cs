@@ -8,7 +8,7 @@ public class ReportPresetConfiguration : IEntityTypeConfiguration<ReportPreset>
 {
     public void Configure(EntityTypeBuilder<ReportPreset> builder)
     {
-        builder.ToTable("report_preset", "ukps");
+        builder.ToTable("report_preset");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.ApplicableUserType).HasConversion<string>();

@@ -8,7 +8,7 @@ public class MedicinesRecordStatusConfiguration : IEntityTypeConfiguration<Medic
 {
     public void Configure(EntityTypeBuilder<MedicinesRecordStatus> builder)
     {
-        builder.ToTable("medicines_record_status", "ukps");
+        builder.ToTable("medicines_record_status");
         builder.HasKey(x => new { x.MedicinesProductDetailId, x.MedicineStatusTypeId });
 
         builder.HasOne(x => x.MedicinesProductDetail)

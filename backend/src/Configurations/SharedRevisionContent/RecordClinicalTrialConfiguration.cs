@@ -8,7 +8,7 @@ public class RecordClinicalTrialConfiguration : IEntityTypeConfiguration<RecordC
 {
     public void Configure(EntityTypeBuilder<RecordClinicalTrial> builder)
     {
-        builder.ToTable("record_clinical_trial", "ukps");
+        builder.ToTable("record_clinical_trial");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.StudyName).IsRequired();

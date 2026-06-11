@@ -9,7 +9,7 @@ public class UserOrgMembershipConfiguration : IEntityTypeConfiguration<UserOrgMe
 {
     public void Configure(EntityTypeBuilder<UserOrgMembership> builder)
     {
-        builder.ToTable("user_org_membership", "ukps");
+        builder.ToTable("user_org_membership");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.UserRole).HasConversion<string>();

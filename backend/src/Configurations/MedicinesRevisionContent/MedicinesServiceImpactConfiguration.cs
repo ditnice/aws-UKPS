@@ -8,7 +8,7 @@ public class MedicinesServiceImpactConfiguration : IEntityTypeConfiguration<Medi
 {
     public void Configure(EntityTypeBuilder<MedicinesServiceImpact> builder)
     {
-        builder.ToTable("medicines_service_impact", "ukps");
+        builder.ToTable("medicines_service_impact");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.ExistingNhsService).HasConversion<string>();

@@ -8,7 +8,7 @@ public class VaccinesPathogenConfiguration : IEntityTypeConfiguration<VaccinesPa
 {
     public void Configure(EntityTypeBuilder<VaccinesPathogen> builder)
     {
-        builder.ToTable("vaccines_pathogen", "ukps");
+        builder.ToTable("vaccines_pathogen");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.PathogenName).IsRequired();

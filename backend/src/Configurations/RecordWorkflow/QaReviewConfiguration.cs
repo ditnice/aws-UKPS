@@ -8,7 +8,7 @@ public class QaReviewConfiguration : IEntityTypeConfiguration<QaReview>
 {
     public void Configure(EntityTypeBuilder<QaReview> builder)
     {
-        builder.ToTable("qa_review", "ukps");
+        builder.ToTable("qa_review");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Outcome).HasConversion<string>();

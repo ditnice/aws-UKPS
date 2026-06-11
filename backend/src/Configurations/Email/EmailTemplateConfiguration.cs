@@ -8,7 +8,7 @@ public class EmailTemplateConfiguration : IEntityTypeConfiguration<EmailTemplate
 {
     public void Configure(EntityTypeBuilder<EmailTemplate> builder)
     {
-        builder.ToTable("email_template", "ukps");
+        builder.ToTable("email_template");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Title).IsRequired();

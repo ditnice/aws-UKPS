@@ -8,7 +8,7 @@ public class MedicinesActiveSubstanceConfiguration : IEntityTypeConfiguration<Me
 {
     public void Configure(EntityTypeBuilder<MedicinesActiveSubstance> builder)
     {
-        builder.ToTable("medicines_active_substance", "ukps");
+        builder.ToTable("medicines_active_substance");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Name).IsRequired();

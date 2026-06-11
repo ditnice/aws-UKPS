@@ -8,7 +8,7 @@ public class RecordEventFieldChangeConfiguration : IEntityTypeConfiguration<Reco
 {
     public void Configure(EntityTypeBuilder<RecordEventFieldChange> builder)
     {
-        builder.ToTable("record_event_field_change", "ukps");
+        builder.ToTable("record_event_field_change");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.FieldPath).IsRequired();
