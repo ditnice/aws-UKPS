@@ -58,7 +58,7 @@ No resources.
 | <a name="input_frontend_container_port"></a> [frontend\_container\_port](#input\_frontend\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
 | <a name="input_frontend_db_master_username"></a> [frontend\_db\_master\_username](#input\_frontend\_db\_master\_username) | Master username for the Aurora cluster | `string` | n/a | yes |
 | <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpsdev_frontend"` | no |
-| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of the KMS key to use for encrypting resources. This key must be in the same region as the resources being encrypted. | `string` | `"arn:aws:kms:eu-west-2:123456789012:key/12345678-abcd-1234-efab-1234567890ab"` | no |
+| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of the KMS key to use for encrypting resources. This key must be in the same region as the resources being encrypted. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
 | <a name="input_security_group_id"></a> [security\_group\_id](#input\_security\_group\_id) | ID of the ALB security group allowed to reach ECS tasks | `string` | n/a | yes |
 | <a name="input_target_group_arn"></a> [target\_group\_arn](#input\_target\_group\_arn) | ARN of the ALB target group used by the ECS service | `string` | n/a | yes |

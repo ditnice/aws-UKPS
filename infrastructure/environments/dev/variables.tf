@@ -125,7 +125,6 @@ variable "aurora_apply_immediately" {
 variable "kms_key_arn" {
   description = "ARN of the KMS key to use for encrypting resources. This key must be in the same region as the resources being encrypted."
   type        = string
-  default     = "arn:aws:kms:eu-west-2:123456789012:key/12345678-abcd-1234-efab-1234567890ab"
 }
 
 variable "aurora_allow_major_version_upgrade" {
