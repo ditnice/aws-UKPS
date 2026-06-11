@@ -36,6 +36,7 @@ No modules.
 | <a name="input_max_image_count"></a> [max\_image\_count](#input\_max\_image\_count) | Maximum number of images to retain in the ECR repository | `number` | `5` | no |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
 | <a name="input_scan_on_push"></a> [scan\_on\_push](#input\_scan\_on\_push) | Whether to enable ECR image scan on push | `bool` | `true` | no |
+| <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name used in ECR resource names | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional tags to apply to ECR resources | `map(string)` | `{}` | no |
 
 ## Outputs

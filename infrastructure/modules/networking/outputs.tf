@@ -3,6 +3,11 @@ output "vpc_id" {
   value       = data.aws_vpc.vpc.id
 }
 
+output "vpc_cidr" {
+  description = "CIDR block of the VPC"
+  value       = data.aws_vpc.vpc.cidr_block
+}
+
 output "alb_subnet_ids" {
   description = "IDs of the alb subnets"
   value       = data.aws_subnets.alb_subnets.ids

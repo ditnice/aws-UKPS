@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "ecr_repository" {
-  name                 = "${var.project}-${var.environment}-repository"
+  name                 = "${var.project}-${var.environment}-${var.service_name}-repository"
   image_tag_mutability = var.image_tag_mutability
 
   encryption_configuration {
@@ -12,7 +12,7 @@ resource "aws_ecr_repository" "ecr_repository" {
   }
 
   tags = merge(var.tags, {
-    Name        = "${var.project}-${var.environment}-repository"
+    Name        = "${var.project}-${var.environment}-${var.service_name}-repository"
     Environment = var.environment
     Project     = var.project
   })

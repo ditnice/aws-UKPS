@@ -18,6 +18,17 @@ variable "environment" {
   }
 }
 
+variable "service_name" {
+  description = "Name used in ECR resource names"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{1,21}[a-z0-9]$", var.service_name))
+    error_message = "Service name must be 3-23 characters, start with a lowercase letter, end with a lowercase letter or number, and contain only lowercase letters, numbers, or hyphens."
+  }
+}
+
+
 variable "image_tag_mutability" {
   description = "Value of the image tag mutability to be set for the ECR repository"
   type        = string

@@ -41,5 +41,6 @@ No modules.
 | <a name="output_alb_subnet_ids"></a> [alb\_subnet\_ids](#output\_alb\_subnet\_ids) | IDs of the alb subnets |
 | <a name="output_app_subnet_ids"></a> [app\_subnet\_ids](#output\_app\_subnet\_ids) | IDs of the app subnets |
 | <a name="output_data_subnet_ids"></a> [data\_subnet\_ids](#output\_data\_subnet\_ids) | IDs of the data subnets |
+| <a name="output_vpc_cidr"></a> [vpc\_cidr](#output\_vpc\_cidr) | CIDR block of the VPC |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | ID of the VPC |
 <!-- END_TF_DOCS -->
