@@ -1,5 +1,5 @@
 resource "aws_rds_cluster" "aurora" {
-  cluster_identifier = "${var.project}-${var.environment}-aurora"
+  cluster_identifier = "${var.project}-${var.environment}-${var.service_name}-aurora"
 
   engine         = "aurora-postgresql"
   engine_version = var.engine_version

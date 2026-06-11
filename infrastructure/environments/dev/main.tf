@@ -86,6 +86,7 @@ module "aurora_frontend" {
 
   project                      = local.project
   environment                  = local.environment
+  service_name                 = "${local.service_name}-frontend"
   vpc_id                       = module.networking.vpc_id
   vpc_cidr                     = module.networking.vpc_cidr
   private_subnet_ids           = module.networking.data_subnet_ids
@@ -110,6 +111,7 @@ module "aurora_backend" {
 
   project                      = local.project
   environment                  = local.environment
+  service_name                 = "${local.service_name}-backend"
   vpc_id                       = module.networking.vpc_id
   vpc_cidr                     = module.networking.vpc_cidr
   private_subnet_ids           = module.networking.data_subnet_ids
