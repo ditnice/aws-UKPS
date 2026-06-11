@@ -7,7 +7,7 @@ namespace UKPS.Api.Entities.VaccinesRevisionContent;
 /// An adjuvant enhances the immune response but is not itself immunogenic —
 /// distinct from the antigen. e.g. AS01, aluminium hydroxide, MF59.
 /// </summary>
-public class VaccinesAdjuvant
+internal sealed class VaccinesAdjuvant
 {
     public int Id { get; set; }
     public int VaccinesTechnologyId { get; set; }

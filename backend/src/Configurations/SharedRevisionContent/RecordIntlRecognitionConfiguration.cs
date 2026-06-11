@@ -4,11 +4,10 @@ using UKPS.Api.Entities.SharedRevisionContent;
 
 namespace UKPS.Api.Configurations.SharedRevisionContent;
 
-public class RecordIntlRecognitionConfiguration : IEntityTypeConfiguration<RecordIntlRecognition>
+internal sealed class RecordIntlRecognitionConfiguration : IEntityTypeConfiguration<RecordIntlRecognition>
 {
     public void Configure(EntityTypeBuilder<RecordIntlRecognition> builder)
     {
-        builder.ToTable("record_intl_recognition");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.IntlConditionalApprovalAnticipated).HasConversion<string>();

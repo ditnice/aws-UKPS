@@ -5,11 +5,10 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Configurations.Identity;
 
-public class UserOrgMembershipConfiguration : IEntityTypeConfiguration<UserOrgMembership>
+internal sealed class UserOrgMembershipConfiguration : IEntityTypeConfiguration<UserOrgMembership>
 {
     public void Configure(EntityTypeBuilder<UserOrgMembership> builder)
     {
-        builder.ToTable("user_org_membership");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.UserRole).HasConversion<string>();

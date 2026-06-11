@@ -5,11 +5,10 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Configurations.Identity;
 
-public class TermsAcceptanceConfiguration : IEntityTypeConfiguration<TermsAcceptance>
+internal sealed class TermsAcceptanceConfiguration : IEntityTypeConfiguration<TermsAcceptance>
 {
     public void Configure(EntityTypeBuilder<TermsAcceptance> builder)
     {
-        builder.ToTable("terms_acceptance");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RelevantPharmaceuticalEntity).HasConversion<int>();

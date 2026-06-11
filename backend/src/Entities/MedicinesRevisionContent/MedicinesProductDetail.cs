@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.MedicinesRevisionContent;
 
-public class MedicinesProductDetail
+internal sealed class MedicinesProductDetail
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }

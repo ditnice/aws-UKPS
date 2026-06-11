@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.RecordWorkflow;
 
-public class RecordStatusHistory
+internal sealed class RecordStatusHistory
 {
     public int Id { get; set; }
     public int RecordId { get; set; }

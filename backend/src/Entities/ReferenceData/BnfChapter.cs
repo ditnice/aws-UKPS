@@ -7,7 +7,7 @@ namespace UKPS.Api.Entities.ReferenceData;
 /// 15 top-level chapters, 125 total nodes including subsections.
 /// Self-referencing for arbitrary depth.
 /// </summary>
-public class BnfChapter
+internal sealed class BnfChapter
 {
     public int Id { get; set; }
 

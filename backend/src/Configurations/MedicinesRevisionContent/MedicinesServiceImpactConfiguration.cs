@@ -4,11 +4,10 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-public class MedicinesServiceImpactConfiguration : IEntityTypeConfiguration<MedicinesServiceImpact>
+internal sealed class MedicinesServiceImpactConfiguration : IEntityTypeConfiguration<MedicinesServiceImpact>
 {
     public void Configure(EntityTypeBuilder<MedicinesServiceImpact> builder)
     {
-        builder.ToTable("medicines_service_impact");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.ExistingNhsService).HasConversion<string>();

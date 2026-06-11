@@ -4,11 +4,10 @@ using UKPS.Api.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Configurations.RecordWorkflow;
 
-public class RecordEventConfiguration : IEntityTypeConfiguration<RecordEvent>
+internal sealed class RecordEventConfiguration : IEntityTypeConfiguration<RecordEvent>
 {
     public void Configure(EntityTypeBuilder<RecordEvent> builder)
     {
-        builder.ToTable("record_event");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.EventType).HasConversion<string>();

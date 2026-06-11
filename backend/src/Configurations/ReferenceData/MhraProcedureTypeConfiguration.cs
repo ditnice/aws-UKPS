@@ -3,7 +3,7 @@ using UKPS.Api.Entities.ReferenceData;
 
 namespace UKPS.Api.Configurations.ReferenceData;
 
-public class MhraProcedureTypeConfiguration : ReferenceDataBaseConfiguration<MhraProcedureType>
+internal sealed class MhraProcedureTypeConfiguration : ReferenceDataBaseConfiguration<MhraProcedureType>
 {
     protected override string TableName => "mhra_procedure_type";
 

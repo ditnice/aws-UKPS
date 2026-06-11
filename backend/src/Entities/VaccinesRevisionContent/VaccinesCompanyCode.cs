@@ -6,7 +6,7 @@ namespace UKPS.Api.Entities.VaccinesRevisionContent;
 /// Alternative names, synonyms, and prior codes for this vaccine candidate.
 /// Covers code names, historical names, partner organisation names, and registry identifiers.
 /// </summary>
-public class VaccinesCompanyCode
+internal sealed class VaccinesCompanyCode
 {
     public int Id { get; set; }
     public int VaccinesProductDetailId { get; set; }

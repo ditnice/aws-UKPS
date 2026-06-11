@@ -4,11 +4,10 @@ using UKPS.Api.Entities.ReferenceData;
 
 namespace UKPS.Api.Configurations.ReferenceData;
 
-public class BnfChapterConfiguration : IEntityTypeConfiguration<BnfChapter>
+internal sealed class BnfChapterConfiguration : IEntityTypeConfiguration<BnfChapter>
 {
     public void Configure(EntityTypeBuilder<BnfChapter> builder)
     {
-        builder.ToTable("bnf_chapter");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Code).IsRequired();

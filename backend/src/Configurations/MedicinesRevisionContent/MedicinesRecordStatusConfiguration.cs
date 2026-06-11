@@ -4,11 +4,10 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-public class MedicinesRecordStatusConfiguration : IEntityTypeConfiguration<MedicinesRecordStatus>
+internal sealed class MedicinesRecordStatusConfiguration : IEntityTypeConfiguration<MedicinesRecordStatus>
 {
     public void Configure(EntityTypeBuilder<MedicinesRecordStatus> builder)
     {
-        builder.ToTable("medicines_record_status");
         builder.HasKey(x => new { x.MedicinesProductDetailId, x.MedicineStatusTypeId });
 
         builder.HasOne(x => x.MedicinesProductDetail)

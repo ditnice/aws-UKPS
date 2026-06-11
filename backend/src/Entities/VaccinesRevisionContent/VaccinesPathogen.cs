@@ -6,7 +6,7 @@ namespace UKPS.Api.Entities.VaccinesRevisionContent;
 /// One row per target pathogen. Handles both multivalent vaccines (e.g. MMR = 3 rows)
 /// and polyvalent vaccines (multiple strains, one disease).
 /// </summary>
-public class VaccinesPathogen
+internal sealed class VaccinesPathogen
 {
     public int Id { get; set; }
     public int VaccinesDiseaseDetailId { get; set; }

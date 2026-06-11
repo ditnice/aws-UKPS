@@ -1,6 +1,6 @@
 namespace UKPS.Api.Entities.UserFeatures;
 
-public class RecordWatchlist
+internal sealed class RecordWatchlist
 {
     public int UserId { get; set; }
     public int RecordId { get; set; }

@@ -4,11 +4,10 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-public class MedicinesBudgetImpactConfiguration : IEntityTypeConfiguration<MedicinesBudgetImpact>
+internal sealed class MedicinesBudgetImpactConfiguration : IEntityTypeConfiguration<MedicinesBudgetImpact>
 {
     public void Configure(EntityTypeBuilder<MedicinesBudgetImpact> builder)
     {
-        builder.ToTable("medicines_budget_impact");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.IndicationSpecificPricingPlanned).HasConversion<string>();

@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-public enum UserType
+internal enum UserType
 {
     PharmaUser,
     HorizonScanner,

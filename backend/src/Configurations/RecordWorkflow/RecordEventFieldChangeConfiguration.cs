@@ -4,11 +4,10 @@ using UKPS.Api.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Configurations.RecordWorkflow;
 
-public class RecordEventFieldChangeConfiguration : IEntityTypeConfiguration<RecordEventFieldChange>
+internal sealed class RecordEventFieldChangeConfiguration : IEntityTypeConfiguration<RecordEventFieldChange>
 {
     public void Configure(EntityTypeBuilder<RecordEventFieldChange> builder)
     {
-        builder.ToTable("record_event_field_change");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.FieldPath).IsRequired();

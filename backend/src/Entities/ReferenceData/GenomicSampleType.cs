@@ -6,4 +6,4 @@ namespace UKPS.Api.Entities.ReferenceData;
 /// 4 values — medicines only:
 /// Tissue, Liquid, Any sample, Other.
 /// </summary>
-public class GenomicSampleType : ReferenceDataBase { }
+internal sealed class GenomicSampleType : ReferenceDataBase { }

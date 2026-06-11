@@ -4,11 +4,10 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-public class MedicinesPasRegionConfiguration : IEntityTypeConfiguration<MedicinesPasRegion>
+internal sealed class MedicinesPasRegionConfiguration : IEntityTypeConfiguration<MedicinesPasRegion>
 {
     public void Configure(EntityTypeBuilder<MedicinesPasRegion> builder)
     {
-        builder.ToTable("medicines_pas_region");
         builder.HasKey(x => new { x.MedicinesBudgetImpactId, x.PasRegionId });
 
         builder.HasOne(x => x.MedicinesBudgetImpact)

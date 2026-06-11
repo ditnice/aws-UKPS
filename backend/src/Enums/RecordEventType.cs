@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-public enum RecordEventType
+internal enum RecordEventType
 {
     RecordCreated,
     RecordStatusChanged,

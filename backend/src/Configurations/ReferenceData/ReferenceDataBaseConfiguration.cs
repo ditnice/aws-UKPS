@@ -8,7 +8,7 @@ namespace UKPS.Api.Configurations.ReferenceData;
 /// Shared base configuration for simple reference data tables
 /// (id, label, is_archived).
 /// </summary>
-public abstract class ReferenceDataBaseConfiguration<T> : IEntityTypeConfiguration<T>
+internal abstract class ReferenceDataBaseConfiguration<T> : IEntityTypeConfiguration<T>
     where T : ReferenceDataBase
 {
     protected abstract string TableName { get; }

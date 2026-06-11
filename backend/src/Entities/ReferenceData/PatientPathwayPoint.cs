@@ -6,4 +6,4 @@ namespace UKPS.Api.Entities.ReferenceData;
 /// 4 values — medicines only:
 /// Initial presentation, Progression, Longitudinal testing, Other.
 /// </summary>
-public class PatientPathwayPoint : ReferenceDataBase { }
+internal sealed class PatientPathwayPoint : ReferenceDataBase { }

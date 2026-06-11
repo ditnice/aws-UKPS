@@ -3,7 +3,7 @@ using UKPS.Api.Enums;
 namespace UKPS.Api.Entities.MedicinesRevisionContent;
 
 /// <summary>Owns EamsSubmission and EamsOpinion regulatory date rows.</summary>
-public class MedicinesEamsPim
+internal sealed class MedicinesEamsPim
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }

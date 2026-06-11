@@ -55,12 +55,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("template_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_email_audit");
+                        .HasName("pk_email_audits");
 
                     b.HasIndex("TemplateId")
-                        .HasDatabaseName("ix_email_audit_template_id");
+                        .HasDatabaseName("ix_email_audits_template_id");
 
-                    b.ToTable("email_audit", "ukps");
+                    b.ToTable("email_audits", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.Email.EmailTemplate", b =>
@@ -98,9 +98,9 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id")
-                        .HasName("pk_email_template");
+                        .HasName("pk_email_templates");
 
-                    b.ToTable("email_template", "ukps");
+                    b.ToTable("email_templates", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.Identity.Organisation", b =>
@@ -156,9 +156,9 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("status");
 
                     b.HasKey("Id")
-                        .HasName("pk_organisation");
+                        .HasName("pk_organisations");
 
-                    b.ToTable("organisation", "ukps");
+                    b.ToTable("organisations", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.Identity.OrganisationAudit", b =>
@@ -208,15 +208,15 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_organisation_audit");
+                        .HasName("pk_organisation_audits");
 
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_organisation_audit_organisation_id");
 
                     b.HasIndex("UpdatedBy")
-                        .HasDatabaseName("ix_organisation_audit_updated_by");
+                        .HasDatabaseName("ix_organisation_audits_updated_by");
 
-                    b.ToTable("organisation_audit", "ukps");
+                    b.ToTable("organisation_audits", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.Identity.TermsAcceptance", b =>
@@ -272,12 +272,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("status");
 
                     b.HasKey("Id")
-                        .HasName("pk_terms_acceptance");
+                        .HasName("pk_terms_acceptances");
 
                     b.HasIndex("OrganisationId")
-                        .HasDatabaseName("ix_terms_acceptance_organisation_id");
+                        .HasDatabaseName("ix_terms_acceptances_organisation_id");
 
-                    b.ToTable("terms_acceptance", "ukps");
+                    b.ToTable("terms_acceptances", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.Identity.User", b =>
@@ -289,10 +289,6 @@ namespace UKPS.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("text")
@@ -302,30 +298,14 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("job_title");
 
-                    b.Property<DateTime?>("LastActive")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("last_active");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("last_name");
 
-                    b.Property<DateTime?>("LoginTime")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("login_time");
-
-                    b.Property<DateTime?>("LogoutTime")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("logout_time");
-
                     b.Property<string>("Title")
                         .HasColumnType("text")
                         .HasColumnName("title");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("updated_at");
 
                     b.Property<string>("UserType")
                         .IsRequired()
@@ -402,15 +382,15 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_user_audit");
+                        .HasName("pk_user_audits");
 
                     b.HasIndex("UpdatedBy")
-                        .HasDatabaseName("ix_user_audit_updated_by");
+                        .HasDatabaseName("ix_user_audits_updated_by");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_user_audit_user_id");
 
-                    b.ToTable("user_audit", "ukps");
+                    b.ToTable("user_audits", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.Identity.UserOrgMembership", b =>
@@ -449,7 +429,7 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("user_role");
 
                     b.HasKey("Id")
-                        .HasName("pk_user_org_membership");
+                        .HasName("pk_user_org_memberships");
 
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_user_org_membership_organisation_id");
@@ -458,7 +438,7 @@ namespace UKPS.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_user_org_membership_user_org_entity");
 
-                    b.ToTable("user_org_membership", "ukps");
+                    b.ToTable("user_org_memberships", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesActiveSubstance", b =>
@@ -489,12 +469,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("name_type");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_active_substance");
+                        .HasName("pk_medicines_active_substances");
 
                     b.HasIndex("MedicinesProductDetailId")
                         .HasDatabaseName("ix_medicines_active_substance_product_detail_id");
 
-                    b.ToTable("medicines_active_substance", "ukps");
+                    b.ToTable("medicines_active_substances", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesBudgetImpact", b =>
@@ -523,13 +503,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_budget_impact");
+                        .HasName("pk_medicines_budget_impacts");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_budget_impact_revision_id");
 
-                    b.ToTable("medicines_budget_impact", "ukps");
+                    b.ToTable("medicines_budget_impacts", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesCompanyInfo", b =>
@@ -562,13 +542,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_company_info");
+                        .HasName("pk_medicines_company_infos");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_company_info_revision_id");
 
-                    b.ToTable("medicines_company_info", "ukps");
+                    b.ToTable("medicines_company_infos", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesDetail", b =>
@@ -605,13 +585,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_detail");
+                        .HasName("pk_medicines_details");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_detail_revision_id");
 
-                    b.ToTable("medicines_detail", "ukps");
+                    b.ToTable("medicines_details", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesEamsPim", b =>
@@ -648,19 +628,19 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("will_submit_to_eams");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_eams_pim");
+                        .HasName("pk_medicines_eams_pims");
 
                     b.HasIndex("EamsOpinionDateId")
-                        .HasDatabaseName("ix_medicines_eams_pim_eams_opinion_date_id");
+                        .HasDatabaseName("ix_medicines_eams_pims_eams_opinion_date_id");
 
                     b.HasIndex("EamsSubmissionDateId")
-                        .HasDatabaseName("ix_medicines_eams_pim_eams_submission_date_id");
+                        .HasDatabaseName("ix_medicines_eams_pims_eams_submission_date_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_eams_pim_revision_id");
 
-                    b.ToTable("medicines_eams_pim", "ukps");
+                    b.ToTable("medicines_eams_pims", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesEuStatus", b =>
@@ -697,19 +677,19 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_eu_status");
+                        .HasName("pk_medicines_eu_statuses");
 
                     b.HasIndex("AtmpClassificationId")
-                        .HasDatabaseName("ix_medicines_eu_status_atmp_classification_id");
+                        .HasDatabaseName("ix_medicines_eu_statuses_atmp_classification_id");
 
                     b.HasIndex("EuOrphanGrantedDateId")
-                        .HasDatabaseName("ix_medicines_eu_status_eu_orphan_granted_date_id");
+                        .HasDatabaseName("ix_medicines_eu_statuses_eu_orphan_granted_date_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_eu_status_revision_id");
 
-                    b.ToTable("medicines_eu_status", "ukps");
+                    b.ToTable("medicines_eu_statuses", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesLaboratoryTesting", b =>
@@ -798,19 +778,19 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_laboratory_testing");
+                        .HasName("pk_medicines_laboratory_testings");
 
                     b.HasIndex("GenomicSampleTypeId")
-                        .HasDatabaseName("ix_medicines_laboratory_testing_genomic_sample_type_id");
+                        .HasDatabaseName("ix_medicines_laboratory_testings_genomic_sample_type_id");
 
                     b.HasIndex("PatientPathwayPointId")
-                        .HasDatabaseName("ix_medicines_laboratory_testing_patient_pathway_point_id");
+                        .HasDatabaseName("ix_medicines_laboratory_testings_patient_pathway_point_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_laboratory_testing_revision_id");
 
-                    b.ToTable("medicines_laboratory_testing", "ukps");
+                    b.ToTable("medicines_laboratory_testings", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesPasRegion", b =>
@@ -824,12 +804,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("pas_region_id");
 
                     b.HasKey("MedicinesBudgetImpactId", "PasRegionId")
-                        .HasName("pk_medicines_pas_region");
+                        .HasName("pk_medicines_pas_regions");
 
                     b.HasIndex("PasRegionId")
-                        .HasDatabaseName("ix_medicines_pas_region_pas_region_id");
+                        .HasDatabaseName("ix_medicines_pas_regions_pas_region_id");
 
-                    b.ToTable("medicines_pas_region", "ukps");
+                    b.ToTable("medicines_pas_regions", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesPatientIdentification", b =>
@@ -862,13 +842,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("urgent_identification_required");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_patient_identification");
+                        .HasName("pk_medicines_patient_identifications");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_patient_identification_revision_id");
 
-                    b.ToTable("medicines_patient_identification", "ukps");
+                    b.ToTable("medicines_patient_identifications", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesProductDetail", b =>
@@ -923,22 +903,22 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("therapeutic_area_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_product_detail");
+                        .HasName("pk_medicines_product_details");
 
                     b.HasIndex("BnfChapterId")
-                        .HasDatabaseName("ix_medicines_product_detail_bnf_chapter_id");
+                        .HasDatabaseName("ix_medicines_product_details_bnf_chapter_id");
 
                     b.HasIndex("FormulationTypeId")
-                        .HasDatabaseName("ix_medicines_product_detail_formulation_type_id");
+                        .HasDatabaseName("ix_medicines_product_details_formulation_type_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_product_detail_revision_id");
 
                     b.HasIndex("TherapeuticAreaId")
-                        .HasDatabaseName("ix_medicines_product_detail_therapeutic_area_id");
+                        .HasDatabaseName("ix_medicines_product_details_therapeutic_area_id");
 
-                    b.ToTable("medicines_product_detail", "ukps");
+                    b.ToTable("medicines_product_details", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesRecordStatus", b =>
@@ -952,12 +932,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("medicine_status_type_id");
 
                     b.HasKey("MedicinesProductDetailId", "MedicineStatusTypeId")
-                        .HasName("pk_medicines_record_status");
+                        .HasName("pk_medicines_record_statuses");
 
                     b.HasIndex("MedicineStatusTypeId")
-                        .HasDatabaseName("ix_medicines_record_status_medicine_status_type_id");
+                        .HasDatabaseName("ix_medicines_record_statuses_medicine_status_type_id");
 
-                    b.ToTable("medicines_record_status", "ukps");
+                    b.ToTable("medicines_record_statuses", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesServiceImpact", b =>
@@ -1002,16 +982,16 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("uk_patient_population_range_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_service_impact");
+                        .HasName("pk_medicines_service_impacts");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_service_impact_revision_id");
 
                     b.HasIndex("UkPatientPopulationRangeId")
-                        .HasDatabaseName("ix_medicines_service_impact_uk_patient_population_range_id");
+                        .HasDatabaseName("ix_medicines_service_impacts_uk_patient_population_range_id");
 
-                    b.ToTable("medicines_service_impact", "ukps");
+                    b.ToTable("medicines_service_impacts", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesTreatmentDetail", b =>
@@ -1037,13 +1017,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_medicines_treatment_detail");
+                        .HasName("pk_medicines_treatment_details");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_medicines_treatment_detail_revision_id");
 
-                    b.ToTable("medicines_treatment_detail", "ukps");
+                    b.ToTable("medicines_treatment_details", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.RecordWorkflow.QaReview", b =>
@@ -1081,15 +1061,15 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_qa_review");
+                        .HasName("pk_qa_reviews");
 
                     b.HasIndex("ReviewedBy")
-                        .HasDatabaseName("ix_qa_review_reviewed_by");
+                        .HasDatabaseName("ix_qa_reviews_reviewed_by");
 
                     b.HasIndex("RevisionId")
                         .HasDatabaseName("ix_qa_review_revision_id");
 
-                    b.ToTable("qa_review", "ukps");
+                    b.ToTable("qa_reviews", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.RecordWorkflow.QaReviewItem", b =>
@@ -1133,15 +1113,15 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("resolved_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_qa_review_item");
+                        .HasName("pk_qa_review_items");
 
                     b.HasIndex("QaReviewId")
                         .HasDatabaseName("ix_qa_review_item_qa_review_id");
 
                     b.HasIndex("ResolvedBy")
-                        .HasDatabaseName("ix_qa_review_item_resolved_by");
+                        .HasDatabaseName("ix_qa_review_items_resolved_by");
 
-                    b.ToTable("qa_review_item", "ukps");
+                    b.ToTable("qa_review_items", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.RecordWorkflow.Record", b =>
@@ -1188,24 +1168,24 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("reviewed_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_record");
+                        .HasName("pk_records");
 
                     b.HasIndex("CreatedBy")
-                        .HasDatabaseName("ix_record_created_by");
+                        .HasDatabaseName("ix_records_created_by");
 
                     b.HasIndex("CurrentDraftRevisionId")
-                        .HasDatabaseName("ix_record_current_draft_revision_id");
+                        .HasDatabaseName("ix_records_current_draft_revision_id");
 
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_record_organisation_id");
 
                     b.HasIndex("PublishedRevisionId")
-                        .HasDatabaseName("ix_record_published_revision_id");
+                        .HasDatabaseName("ix_records_published_revision_id");
 
                     b.HasIndex("RecordType", "RecordStatus", "ReviewedAt")
                         .HasDatabaseName("ix_record_type_status_reviewed_at");
 
-                    b.ToTable("record", "ukps");
+                    b.ToTable("records", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.RecordWorkflow.RecordEvent", b =>
@@ -1255,16 +1235,16 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_event");
+                        .HasName("pk_record_events");
 
                     b.HasIndex("PerformedBy")
-                        .HasDatabaseName("ix_record_event_performed_by");
+                        .HasDatabaseName("ix_record_events_performed_by");
 
                     b.HasIndex("QaReviewId")
-                        .HasDatabaseName("ix_record_event_qa_review_id");
+                        .HasDatabaseName("ix_record_events_qa_review_id");
 
                     b.HasIndex("QaReviewItemId")
-                        .HasDatabaseName("ix_record_event_qa_review_item_id");
+                        .HasDatabaseName("ix_record_events_qa_review_item_id");
 
                     b.HasIndex("RevisionId")
                         .HasDatabaseName("ix_record_event_revision_id");
@@ -1272,7 +1252,7 @@ namespace UKPS.Api.Migrations
                     b.HasIndex("RecordId", "EventType")
                         .HasDatabaseName("ix_record_event_record_id_event_type");
 
-                    b.ToTable("record_event", "ukps");
+                    b.ToTable("record_events", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.RecordWorkflow.RecordEventFieldChange", b =>
@@ -1302,12 +1282,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("record_event_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_event_field_change");
+                        .HasName("pk_record_event_field_changes");
 
                     b.HasIndex("RecordEventId")
                         .HasDatabaseName("ix_record_event_field_change_record_event_id");
 
-                    b.ToTable("record_event_field_change", "ukps");
+                    b.ToTable("record_event_field_changes", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.RecordWorkflow.RecordRevision", b =>
@@ -1369,19 +1349,19 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("workflow_status");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_revision");
+                        .HasName("pk_record_revisions");
 
                     b.HasIndex("BasedOnRevisionId")
-                        .HasDatabaseName("ix_record_revision_based_on_revision_id");
+                        .HasDatabaseName("ix_record_revisions_based_on_revision_id");
 
                     b.HasIndex("CreatedBy")
-                        .HasDatabaseName("ix_record_revision_created_by");
+                        .HasDatabaseName("ix_record_revisions_created_by");
 
                     b.HasIndex("SubmittedBy")
-                        .HasDatabaseName("ix_record_revision_submitted_by");
+                        .HasDatabaseName("ix_record_revisions_submitted_by");
 
                     b.HasIndex("UpdatedBy")
-                        .HasDatabaseName("ix_record_revision_updated_by");
+                        .HasDatabaseName("ix_record_revisions_updated_by");
 
                     b.HasIndex("RecordId", "RevisionNo")
                         .IsUnique()
@@ -1391,7 +1371,7 @@ namespace UKPS.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_record_revision_record_id_major_minor");
 
-                    b.ToTable("record_revision", "ukps");
+                    b.ToTable("record_revisions", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.RecordWorkflow.RecordStatusHistory", b =>
@@ -1433,15 +1413,15 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_status_history");
+                        .HasName("pk_record_status_histories");
 
                     b.HasIndex("RecordId")
                         .HasDatabaseName("ix_record_status_history_record_id");
 
                     b.HasIndex("UpdatedBy")
-                        .HasDatabaseName("ix_record_status_history_updated_by");
+                        .HasDatabaseName("ix_record_status_histories_updated_by");
 
-                    b.ToTable("record_status_history", "ukps");
+                    b.ToTable("record_status_histories", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.ReferenceData.AtmpClassification", b =>
@@ -1500,12 +1480,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("parent_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_bnf_chapter");
+                        .HasName("pk_bnf_chapters");
 
                     b.HasIndex("ParentId")
-                        .HasDatabaseName("ix_bnf_chapter_parent_id");
+                        .HasDatabaseName("ix_bnf_chapters_parent_id");
 
-                    b.ToTable("bnf_chapter", "ukps");
+                    b.ToTable("bnf_chapters", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.ReferenceData.FormulationType", b =>
@@ -1731,12 +1711,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("parent_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_therapeutic_area");
+                        .HasName("pk_therapeutic_areas");
 
                     b.HasIndex("ParentId")
-                        .HasDatabaseName("ix_therapeutic_area_parent_id");
+                        .HasDatabaseName("ix_therapeutic_areas_parent_id");
 
-                    b.ToTable("therapeutic_area", "ukps");
+                    b.ToTable("therapeutic_areas", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.ReferenceData.UkPatientPopulationRange", b =>
@@ -1901,15 +1881,15 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_report_audit");
+                        .HasName("pk_report_audits");
 
                     b.HasIndex("ReportPresetId")
-                        .HasDatabaseName("ix_report_audit_report_preset_id");
+                        .HasDatabaseName("ix_report_audits_report_preset_id");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_report_audit_user_id");
+                        .HasDatabaseName("ix_report_audits_user_id");
 
-                    b.ToTable("report_audit", "ukps");
+                    b.ToTable("report_audits", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.Reporting.ReportPreset", b =>
@@ -1953,12 +1933,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_report_preset");
+                        .HasName("pk_report_presets");
 
                     b.HasIndex("CreatedBy")
-                        .HasDatabaseName("ix_report_preset_created_by");
+                        .HasDatabaseName("ix_report_presets_created_by");
 
-                    b.ToTable("report_preset", "ukps");
+                    b.ToTable("report_presets", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.OtherClinicalTrialNumber", b =>
@@ -1984,12 +1964,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("other_registry_number");
 
                     b.HasKey("Id")
-                        .HasName("pk_other_clinical_trial_number");
+                        .HasName("pk_other_clinical_trial_numbers");
 
                     b.HasIndex("ClinicalTrialId")
                         .HasDatabaseName("ix_other_clinical_trial_number_clinical_trial_id");
 
-                    b.ToTable("other_clinical_trial_number", "ukps");
+                    b.ToTable("other_clinical_trial_numbers", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.RecordClinicalTrial", b =>
@@ -2023,12 +2003,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("study_name");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_clinical_trial");
+                        .HasName("pk_record_clinical_trials");
 
                     b.HasIndex("RevisionId")
                         .HasDatabaseName("ix_record_clinical_trial_revision_id");
 
-                    b.ToTable("record_clinical_trial", "ukps");
+                    b.ToTable("record_clinical_trials", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.RecordGlobalSubmission", b =>
@@ -2061,19 +2041,19 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_global_submission");
+                        .HasName("pk_record_global_submissions");
 
                     b.HasIndex("GlobalSubmissionActualDateId")
-                        .HasDatabaseName("ix_record_global_submission_global_submission_actual_date_id");
+                        .HasDatabaseName("ix_record_global_submissions_global_submission_actual_date_id");
 
                     b.HasIndex("GlobalSubmissionEstimatedDateId")
-                        .HasDatabaseName("ix_record_global_submission_global_submission_estimated_date_id");
+                        .HasDatabaseName("ix_record_global_submissions_global_submission_estimated_date_");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_record_global_submission_revision_id");
 
-                    b.ToTable("record_global_submission", "ukps");
+                    b.ToTable("record_global_submissions", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.RecordHta", b =>
@@ -2102,13 +2082,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_hta");
+                        .HasName("pk_record_htas");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_record_hta_revision_id");
 
-                    b.ToTable("record_hta", "ukps");
+                    b.ToTable("record_htas", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.RecordHtaBody", b =>
@@ -2122,9 +2102,9 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("label");
 
                     b.HasKey("RecordHtaId", "Label")
-                        .HasName("pk_record_hta_body");
+                        .HasName("pk_record_hta_bodies");
 
-                    b.ToTable("record_hta_body", "ukps");
+                    b.ToTable("record_hta_bodies", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.RecordIntlRecognition", b =>
@@ -2161,25 +2141,25 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_intl_recognition");
+                        .HasName("pk_record_intl_recognitions");
 
                     b.HasIndex("IntlLicenceDateId")
-                        .HasDatabaseName("ix_record_intl_recognition_intl_licence_date_id");
+                        .HasDatabaseName("ix_record_intl_recognitions_intl_licence_date_id");
 
                     b.HasIndex("IntlSubmissionDateId")
-                        .HasDatabaseName("ix_record_intl_recognition_intl_submission_date_id");
+                        .HasDatabaseName("ix_record_intl_recognitions_intl_submission_date_id");
 
                     b.HasIndex("IrpReferenceRegulatorId")
-                        .HasDatabaseName("ix_record_intl_recognition_irp_reference_regulator_id");
+                        .HasDatabaseName("ix_record_intl_recognitions_irp_reference_regulator_id");
 
                     b.HasIndex("IrpRouteId")
-                        .HasDatabaseName("ix_record_intl_recognition_irp_route_id");
+                        .HasDatabaseName("ix_record_intl_recognitions_irp_route_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_record_intl_recognition_revision_id");
 
-                    b.ToTable("record_intl_recognition", "ukps");
+                    b.ToTable("record_intl_recognitions", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.RecordMhraDate", b =>
@@ -2208,22 +2188,22 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("uk_submission_date_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_mhra_date");
+                        .HasName("pk_record_mhra_dates");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_record_mhra_date_revision_id");
 
                     b.HasIndex("UkLaunchDateId")
-                        .HasDatabaseName("ix_record_mhra_date_uk_launch_date_id");
+                        .HasDatabaseName("ix_record_mhra_dates_uk_launch_date_id");
 
                     b.HasIndex("UkLicenceDateId")
-                        .HasDatabaseName("ix_record_mhra_date_uk_licence_date_id");
+                        .HasDatabaseName("ix_record_mhra_dates_uk_licence_date_id");
 
                     b.HasIndex("UkSubmissionDateId")
-                        .HasDatabaseName("ix_record_mhra_date_uk_submission_date_id");
+                        .HasDatabaseName("ix_record_mhra_dates_uk_submission_date_id");
 
-                    b.ToTable("record_mhra_date", "ukps");
+                    b.ToTable("record_mhra_dates", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.RecordMhraProcedure", b =>
@@ -2248,16 +2228,16 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_mhra_procedure");
+                        .HasName("pk_record_mhra_procedures");
 
                     b.HasIndex("MhraProcedureTypeId")
-                        .HasDatabaseName("ix_record_mhra_procedure_mhra_procedure_type_id");
+                        .HasDatabaseName("ix_record_mhra_procedures_mhra_procedure_type_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_record_mhra_procedure_revision_id");
 
-                    b.ToTable("record_mhra_procedure", "ukps");
+                    b.ToTable("record_mhra_procedures", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.SharedRevisionContent.RegulatoryDate", b =>
@@ -2296,13 +2276,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_regulatory_date");
+                        .HasName("pk_regulatory_dates");
 
                     b.HasIndex("RevisionId", "DateEvent", "DatePrecision")
                         .IsUnique()
                         .HasDatabaseName("ix_regulatory_date_revision_event_precision");
 
-                    b.ToTable("regulatory_date", "ukps");
+                    b.ToTable("regulatory_dates", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.UserFeatures.RecordWatchlist", b =>
@@ -2316,12 +2296,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("record_id");
 
                     b.HasKey("UserId", "RecordId")
-                        .HasName("pk_record_watchlist");
+                        .HasName("pk_record_watchlists");
 
                     b.HasIndex("RecordId")
-                        .HasDatabaseName("ix_record_watchlist_record_id");
+                        .HasDatabaseName("ix_record_watchlists_record_id");
 
-                    b.ToTable("record_watchlist", "ukps");
+                    b.ToTable("record_watchlists", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesAdjuvant", b =>
@@ -2347,12 +2327,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("vaccines_technology_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_adjuvant");
+                        .HasName("pk_vaccines_adjuvants");
 
                     b.HasIndex("VaccinesTechnologyId")
                         .HasDatabaseName("ix_vaccines_adjuvant_technology_id");
 
-                    b.ToTable("vaccines_adjuvant", "ukps");
+                    b.ToTable("vaccines_adjuvants", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesAntigen", b =>
@@ -2378,12 +2358,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("vaccines_technology_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_antigen");
+                        .HasName("pk_vaccines_antigens");
 
                     b.HasIndex("VaccinesTechnologyId")
                         .HasDatabaseName("ix_vaccines_antigen_technology_id");
 
-                    b.ToTable("vaccines_antigen", "ukps");
+                    b.ToTable("vaccines_antigens", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesCompanyCode", b =>
@@ -2409,12 +2389,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("vaccines_product_detail_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_company_code");
+                        .HasName("pk_vaccines_company_codes");
 
                     b.HasIndex("VaccinesProductDetailId")
                         .HasDatabaseName("ix_vaccines_company_code_product_detail_id");
 
-                    b.ToTable("vaccines_company_code", "ukps");
+                    b.ToTable("vaccines_company_codes", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesCompanyInfo", b =>
@@ -2457,13 +2437,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_company_info");
+                        .HasName("pk_vaccines_company_infos");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_vaccines_company_info_revision_id");
 
-                    b.ToTable("vaccines_company_info", "ukps");
+                    b.ToTable("vaccines_company_infos", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesDiseaseDetail", b =>
@@ -2498,16 +2478,16 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("risk_group");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_disease_detail");
+                        .HasName("pk_vaccines_disease_details");
 
                     b.HasIndex("DiseaseAreaId")
-                        .HasDatabaseName("ix_vaccines_disease_detail_disease_area_id");
+                        .HasDatabaseName("ix_vaccines_disease_details_disease_area_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_vaccines_disease_detail_revision_id");
 
-                    b.ToTable("vaccines_disease_detail", "ukps");
+                    b.ToTable("vaccines_disease_details", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesPathogen", b =>
@@ -2533,12 +2513,12 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("vaccines_disease_detail_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_pathogen");
+                        .HasName("pk_vaccines_pathogens");
 
                     b.HasIndex("VaccinesDiseaseDetailId")
                         .HasDatabaseName("ix_vaccines_pathogen_disease_detail_id");
 
-                    b.ToTable("vaccines_pathogen", "ukps");
+                    b.ToTable("vaccines_pathogens", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesPopulation", b =>
@@ -2563,13 +2543,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("risk_group");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_population");
+                        .HasName("pk_vaccines_populations");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_vaccines_population_revision_id");
 
-                    b.ToTable("vaccines_population", "ukps");
+                    b.ToTable("vaccines_populations", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesProductDetail", b =>
@@ -2600,13 +2580,13 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_product_detail");
+                        .HasName("pk_vaccines_product_details");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_vaccines_product_detail_revision_id");
 
-                    b.ToTable("vaccines_product_detail", "ukps");
+                    b.ToTable("vaccines_product_details", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesServiceReadiness", b =>
@@ -2636,16 +2616,16 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("storage_requirement_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_service_readiness");
+                        .HasName("pk_vaccines_service_readinesses");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_vaccines_service_readiness_revision_id");
 
                     b.HasIndex("StorageRequirementId")
-                        .HasDatabaseName("ix_vaccines_service_readiness_storage_requirement_id");
+                        .HasDatabaseName("ix_vaccines_service_readinesses_storage_requirement_id");
 
-                    b.ToTable("vaccines_service_readiness", "ukps");
+                    b.ToTable("vaccines_service_readinesses", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.VaccinesRevisionContent.VaccinesTechnology", b =>
@@ -2679,19 +2659,19 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("vaccine_platform_other");
 
                     b.HasKey("Id")
-                        .HasName("pk_vaccines_technology");
+                        .HasName("pk_vaccines_technologies");
 
                     b.HasIndex("AdministrationRouteId")
-                        .HasDatabaseName("ix_vaccines_technology_administration_route_id");
+                        .HasDatabaseName("ix_vaccines_technologies_administration_route_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
                         .HasDatabaseName("ix_vaccines_technology_revision_id");
 
                     b.HasIndex("VaccinePlatformId")
-                        .HasDatabaseName("ix_vaccines_technology_vaccine_platform_id");
+                        .HasDatabaseName("ix_vaccines_technologies_vaccine_platform_id");
 
-                    b.ToTable("vaccines_technology", "ukps");
+                    b.ToTable("vaccines_technologies", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Entities.Email.EmailAudit", b =>
@@ -2701,7 +2681,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("TemplateId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_email_audit_email_templates_template_id");
+                        .HasConstraintName("fk_email_audits_email_templates_template_id");
 
                     b.Navigation("Template");
                 });
@@ -2713,13 +2693,13 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("OrganisationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_organisation_audit_organisations_organisation_id");
+                        .HasConstraintName("fk_organisation_audits_organisations_organisation_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_organisation_audit_users_updated_by");
+                        .HasConstraintName("fk_organisation_audits_users_updated_by");
 
                     b.Navigation("Organisation");
 
@@ -2733,7 +2713,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("OrganisationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_terms_acceptance_organisation_organisation_id");
+                        .HasConstraintName("fk_terms_acceptances_organisations_organisation_id");
 
                     b.Navigation("Organisation");
                 });
@@ -2744,14 +2724,14 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_user_audit_users_updated_by");
+                        .HasConstraintName("fk_user_audits_users_updated_by");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "User")
                         .WithMany("UserAudits")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_user_audit_users_user_id");
+                        .HasConstraintName("fk_user_audits_users_user_id");
 
                     b.Navigation("UpdatedByUser");
 
@@ -2765,14 +2745,14 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("OrganisationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_user_org_membership_organisation_organisation_id");
+                        .HasConstraintName("fk_user_org_memberships_organisations_organisation_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "User")
                         .WithMany("UserOrgMemberships")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_user_org_membership_app_user_user_id");
+                        .HasConstraintName("fk_user_org_memberships_users_user_id");
 
                     b.Navigation("Organisation");
 
@@ -2786,7 +2766,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("MedicinesProductDetailId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_active_substance_medicines_product_details_medici");
+                        .HasConstraintName("fk_medicines_active_substances_medicines_product_details_medic");
 
                     b.Navigation("MedicinesProductDetail");
                 });
@@ -2798,7 +2778,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_budget_impact_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_budget_impacts_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -2810,7 +2790,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_company_info_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_company_infos_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -2822,7 +2802,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_detail_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_details_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -2833,20 +2813,20 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("EamsOpinionDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_eams_pim_regulatory_dates_eams_opinion_date_id");
+                        .HasConstraintName("fk_medicines_eams_pims_regulatory_dates_eams_opinion_date_id");
 
                     b.HasOne("UKPS.Api.Entities.SharedRevisionContent.RegulatoryDate", "EamsSubmissionDate")
                         .WithMany()
                         .HasForeignKey("EamsSubmissionDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_eams_pim_regulatory_dates_eams_submission_date_id");
+                        .HasConstraintName("fk_medicines_eams_pims_regulatory_dates_eams_submission_date_id");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_eams_pim_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_eams_pims_record_revisions_revision_id");
 
                     b.Navigation("EamsOpinionDate");
 
@@ -2861,20 +2841,20 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("AtmpClassificationId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_eu_status_atmp_classifications_atmp_classificatio");
+                        .HasConstraintName("fk_medicines_eu_statuses_atmp_classifications_atmp_classificat");
 
                     b.HasOne("UKPS.Api.Entities.SharedRevisionContent.RegulatoryDate", "EuOrphanGrantedDate")
                         .WithMany()
                         .HasForeignKey("EuOrphanGrantedDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_eu_status_regulatory_dates_eu_orphan_granted_date");
+                        .HasConstraintName("fk_medicines_eu_statuses_regulatory_dates_eu_orphan_granted_da");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_eu_status_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_eu_statuses_record_revisions_revision_id");
 
                     b.Navigation("AtmpClassification");
 
@@ -2889,20 +2869,20 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("GenomicSampleTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_laboratory_testing_genomic_sample_types_genomic_s");
+                        .HasConstraintName("fk_medicines_laboratory_testings_genomic_sample_types_genomic_");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.PatientPathwayPoint", "PatientPathwayPoint")
                         .WithMany()
                         .HasForeignKey("PatientPathwayPointId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_laboratory_testing_patient_pathway_points_patient");
+                        .HasConstraintName("fk_medicines_laboratory_testings_patient_pathway_points_patien");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_laboratory_testing_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_laboratory_testings_record_revisions_revision_id");
 
                     b.Navigation("GenomicSampleType");
 
@@ -2918,14 +2898,14 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("MedicinesBudgetImpactId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_pas_region_medicines_budget_impact_medicines_budg");
+                        .HasConstraintName("fk_medicines_pas_regions_medicines_budget_impacts_medicines_bu");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.PasRegion", "PasRegion")
                         .WithMany()
                         .HasForeignKey("PasRegionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_pas_region_pas_regions_pas_region_id");
+                        .HasConstraintName("fk_medicines_pas_regions_pas_regions_pas_region_id");
 
                     b.Navigation("MedicinesBudgetImpact");
 
@@ -2939,7 +2919,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_patient_identification_record_revisions_revision_");
+                        .HasConstraintName("fk_medicines_patient_identifications_record_revisions_revision");
 
                     b.Navigation("Revision");
                 });
@@ -2950,26 +2930,26 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("BnfChapterId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_product_detail_bnf_chapters_bnf_chapter_id");
+                        .HasConstraintName("fk_medicines_product_details_bnf_chapters_bnf_chapter_id");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.FormulationType", "FormulationType")
                         .WithMany()
                         .HasForeignKey("FormulationTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_product_detail_formulation_types_formulation_type");
+                        .HasConstraintName("fk_medicines_product_details_formulation_types_formulation_typ");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_product_detail_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_product_details_record_revisions_revision_id");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.TherapeuticArea", "TherapeuticArea")
                         .WithMany()
                         .HasForeignKey("TherapeuticAreaId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_product_detail_therapeutic_areas_therapeutic_area");
+                        .HasConstraintName("fk_medicines_product_details_therapeutic_areas_therapeutic_are");
 
                     b.Navigation("BnfChapter");
 
@@ -2987,14 +2967,14 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("MedicineStatusTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_record_status_medicine_technology_statuses_medici");
+                        .HasConstraintName("fk_medicines_record_statuses_medicine_technology_statuses_medi");
 
                     b.HasOne("UKPS.Api.Entities.MedicinesRevisionContent.MedicinesProductDetail", "MedicinesProductDetail")
                         .WithMany("RecordStatuses")
                         .HasForeignKey("MedicinesProductDetailId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_record_status_medicines_product_detail_medicines_");
+                        .HasConstraintName("fk_medicines_record_statuses_medicines_product_details_medicin");
 
                     b.Navigation("MedicineStatusType");
 
@@ -3008,13 +2988,13 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_service_impact_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_service_impacts_record_revisions_revision_id");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.UkPatientPopulationRange", "UkPatientPopulationRange")
                         .WithMany()
                         .HasForeignKey("UkPatientPopulationRangeId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_medicines_service_impact_uk_patient_population_ranges_uk_pa");
+                        .HasConstraintName("fk_medicines_service_impacts_uk_patient_population_ranges_uk_p");
 
                     b.Navigation("Revision");
 
@@ -3028,7 +3008,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_medicines_treatment_detail_record_revisions_revision_id");
+                        .HasConstraintName("fk_medicines_treatment_details_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -3039,14 +3019,14 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("ReviewedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_qa_review_app_user_reviewed_by");
+                        .HasConstraintName("fk_qa_reviews_app_user_reviewed_by");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany("QaReviews")
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_qa_review_record_revisions_revision_id");
+                        .HasConstraintName("fk_qa_reviews_record_revisions_revision_id");
 
                     b.Navigation("ReviewedByUser");
 
@@ -3060,13 +3040,13 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("QaReviewId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_qa_review_item_qa_review_qa_review_id");
+                        .HasConstraintName("fk_qa_review_items_qa_reviews_qa_review_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "ResolvedByUser")
                         .WithMany()
                         .HasForeignKey("ResolvedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_qa_review_item_app_user_resolved_by");
+                        .HasConstraintName("fk_qa_review_items_app_user_resolved_by");
 
                     b.Navigation("QaReview");
 
@@ -3079,26 +3059,26 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_app_user_created_by");
+                        .HasConstraintName("fk_records_app_user_created_by");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "CurrentDraftRevision")
                         .WithMany()
                         .HasForeignKey("CurrentDraftRevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_record_revisions_current_draft_revision_id");
+                        .HasConstraintName("fk_records_record_revisions_current_draft_revision_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.Organisation", "Organisation")
                         .WithMany()
                         .HasForeignKey("OrganisationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_organisation_organisation_id");
+                        .HasConstraintName("fk_records_organisations_organisation_id");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "PublishedRevision")
                         .WithMany()
                         .HasForeignKey("PublishedRevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_record_revisions_published_revision_id");
+                        .HasConstraintName("fk_records_record_revisions_published_revision_id");
 
                     b.Navigation("CreatedByUser");
 
@@ -3115,32 +3095,32 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("PerformedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_event_app_user_performed_by");
+                        .HasConstraintName("fk_record_events_app_user_performed_by");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.QaReview", "QaReview")
                         .WithMany()
                         .HasForeignKey("QaReviewId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_event_qa_review_qa_review_id");
+                        .HasConstraintName("fk_record_events_qa_reviews_qa_review_id");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.QaReviewItem", "QaReviewItem")
                         .WithMany()
                         .HasForeignKey("QaReviewItemId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_event_qa_review_item_qa_review_item_id");
+                        .HasConstraintName("fk_record_events_qa_review_items_qa_review_item_id");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.Record", "Record")
                         .WithMany("Events")
                         .HasForeignKey("RecordId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_event_record_record_id");
+                        .HasConstraintName("fk_record_events_records_record_id");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany("Events")
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_event_record_revisions_revision_id");
+                        .HasConstraintName("fk_record_events_record_revisions_revision_id");
 
                     b.Navigation("PerformedByUser");
 
@@ -3160,7 +3140,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RecordEventId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_event_field_change_record_event_record_event_id");
+                        .HasConstraintName("fk_record_event_field_changes_record_events_record_event_id");
 
                     b.Navigation("RecordEvent");
                 });
@@ -3171,33 +3151,33 @@ namespace UKPS.Api.Migrations
                         .WithMany("DerivedRevisions")
                         .HasForeignKey("BasedOnRevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_revision_record_revision_based_on_revision_id");
+                        .HasConstraintName("fk_record_revisions_record_revisions_based_on_revision_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_revision_app_user_created_by");
+                        .HasConstraintName("fk_record_revisions_app_user_created_by");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.Record", "Record")
                         .WithMany("Revisions")
                         .HasForeignKey("RecordId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_revision_record_record_id");
+                        .HasConstraintName("fk_record_revisions_records_record_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "SubmittedByUser")
                         .WithMany()
                         .HasForeignKey("SubmittedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_revision_app_user_submitted_by");
+                        .HasConstraintName("fk_record_revisions_app_user_submitted_by");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_revision_app_user_updated_by");
+                        .HasConstraintName("fk_record_revisions_app_user_updated_by");
 
                     b.Navigation("BasedOnRevision");
 
@@ -3217,14 +3197,14 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RecordId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_status_history_record_record_id");
+                        .HasConstraintName("fk_record_status_histories_records_record_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_status_history_app_user_updated_by");
+                        .HasConstraintName("fk_record_status_histories_app_user_updated_by");
 
                     b.Navigation("Record");
 
@@ -3237,7 +3217,7 @@ namespace UKPS.Api.Migrations
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_bnf_chapter_bnf_chapter_parent_id");
+                        .HasConstraintName("fk_bnf_chapters_bnf_chapters_parent_id");
 
                     b.Navigation("Parent");
                 });
@@ -3248,7 +3228,7 @@ namespace UKPS.Api.Migrations
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_therapeutic_area_therapeutic_area_parent_id");
+                        .HasConstraintName("fk_therapeutic_areas_therapeutic_areas_parent_id");
 
                     b.Navigation("Parent");
                 });
@@ -3259,14 +3239,14 @@ namespace UKPS.Api.Migrations
                         .WithMany("ReportAudits")
                         .HasForeignKey("ReportPresetId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_report_audit_report_presets_report_preset_id");
+                        .HasConstraintName("fk_report_audits_report_presets_report_preset_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_report_audit_app_user_user_id");
+                        .HasConstraintName("fk_report_audits_users_user_id");
 
                     b.Navigation("ReportPreset");
 
@@ -3280,7 +3260,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_report_preset_app_user_created_by");
+                        .HasConstraintName("fk_report_presets_app_user_created_by");
 
                     b.Navigation("CreatedByUser");
                 });
@@ -3292,7 +3272,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("ClinicalTrialId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_other_clinical_trial_number_record_clinical_trials_clinical");
+                        .HasConstraintName("fk_other_clinical_trial_numbers_record_clinical_trials_clinica");
 
                     b.Navigation("ClinicalTrial");
                 });
@@ -3304,7 +3284,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_clinical_trial_record_revision_revision_id");
+                        .HasConstraintName("fk_record_clinical_trials_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -3315,20 +3295,20 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("GlobalSubmissionActualDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_global_submission_regulatory_dates_global_submission");
+                        .HasConstraintName("fk_record_global_submissions_regulatory_dates_global_submissio");
 
                     b.HasOne("UKPS.Api.Entities.SharedRevisionContent.RegulatoryDate", "GlobalSubmissionEstimatedDate")
                         .WithMany()
                         .HasForeignKey("GlobalSubmissionEstimatedDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_global_submission_regulatory_dates_global_submission1");
+                        .HasConstraintName("fk_record_global_submissions_regulatory_dates_global_submissio1");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_global_submission_record_revision_revision_id");
+                        .HasConstraintName("fk_record_global_submissions_record_revisions_revision_id");
 
                     b.Navigation("GlobalSubmissionActualDate");
 
@@ -3344,7 +3324,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_hta_record_revision_revision_id");
+                        .HasConstraintName("fk_record_htas_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -3356,7 +3336,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RecordHtaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_hta_body_record_htas_record_hta_id");
+                        .HasConstraintName("fk_record_hta_bodies_record_htas_record_hta_id");
 
                     b.Navigation("RecordHta");
                 });
@@ -3367,32 +3347,32 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("IntlLicenceDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_intl_recognition_regulatory_dates_intl_licence_date_");
+                        .HasConstraintName("fk_record_intl_recognitions_regulatory_dates_intl_licence_date");
 
                     b.HasOne("UKPS.Api.Entities.SharedRevisionContent.RegulatoryDate", "IntlSubmissionDate")
                         .WithMany()
                         .HasForeignKey("IntlSubmissionDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_intl_recognition_regulatory_dates_intl_submission_da");
+                        .HasConstraintName("fk_record_intl_recognitions_regulatory_dates_intl_submission_d");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.IrpReferenceRegulator", "IrpReferenceRegulator")
                         .WithMany()
                         .HasForeignKey("IrpReferenceRegulatorId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_intl_recognition_irp_reference_regulator_irp_referen");
+                        .HasConstraintName("fk_record_intl_recognitions_irp_reference_regulators_irp_refer");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.IrpRoute", "IrpRoute")
                         .WithMany()
                         .HasForeignKey("IrpRouteId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_intl_recognition_irp_route_irp_route_id");
+                        .HasConstraintName("fk_record_intl_recognitions_irp_routes_irp_route_id");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_intl_recognition_record_revision_revision_id");
+                        .HasConstraintName("fk_record_intl_recognitions_record_revisions_revision_id");
 
                     b.Navigation("IntlLicenceDate");
 
@@ -3412,25 +3392,25 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_mhra_date_record_revision_revision_id");
+                        .HasConstraintName("fk_record_mhra_dates_record_revisions_revision_id");
 
                     b.HasOne("UKPS.Api.Entities.SharedRevisionContent.RegulatoryDate", "UkLaunchDate")
                         .WithMany()
                         .HasForeignKey("UkLaunchDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_mhra_date_regulatory_dates_uk_launch_date_id");
+                        .HasConstraintName("fk_record_mhra_dates_regulatory_dates_uk_launch_date_id");
 
                     b.HasOne("UKPS.Api.Entities.SharedRevisionContent.RegulatoryDate", "UkLicenceDate")
                         .WithMany()
                         .HasForeignKey("UkLicenceDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_mhra_date_regulatory_dates_uk_licence_date_id");
+                        .HasConstraintName("fk_record_mhra_dates_regulatory_dates_uk_licence_date_id");
 
                     b.HasOne("UKPS.Api.Entities.SharedRevisionContent.RegulatoryDate", "UkSubmissionDate")
                         .WithMany()
                         .HasForeignKey("UkSubmissionDateId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_mhra_date_regulatory_dates_uk_submission_date_id");
+                        .HasConstraintName("fk_record_mhra_dates_regulatory_dates_uk_submission_date_id");
 
                     b.Navigation("Revision");
 
@@ -3447,14 +3427,14 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("MhraProcedureTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_mhra_procedure_mhra_procedure_type_mhra_procedure_ty");
+                        .HasConstraintName("fk_record_mhra_procedures_mhra_procedure_types_mhra_procedure_");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_mhra_procedure_record_revision_revision_id");
+                        .HasConstraintName("fk_record_mhra_procedures_record_revisions_revision_id");
 
                     b.Navigation("MhraProcedureType");
 
@@ -3468,7 +3448,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_regulatory_date_record_revision_revision_id");
+                        .HasConstraintName("fk_regulatory_dates_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -3480,14 +3460,14 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RecordId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_watchlist_record_record_id");
+                        .HasConstraintName("fk_record_watchlists_records_record_id");
 
                     b.HasOne("UKPS.Api.Entities.Identity.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_watchlist_app_user_user_id");
+                        .HasConstraintName("fk_record_watchlists_users_user_id");
 
                     b.Navigation("Record");
 
@@ -3501,7 +3481,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("VaccinesTechnologyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_adjuvant_vaccines_technologies_vaccines_technology");
+                        .HasConstraintName("fk_vaccines_adjuvants_vaccines_technologies_vaccines_technolog");
 
                     b.Navigation("VaccinesTechnology");
                 });
@@ -3513,7 +3493,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("VaccinesTechnologyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_antigen_vaccines_technologies_vaccines_technology_");
+                        .HasConstraintName("fk_vaccines_antigens_vaccines_technologies_vaccines_technology");
 
                     b.Navigation("VaccinesTechnology");
                 });
@@ -3525,7 +3505,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("VaccinesProductDetailId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_company_code_vaccines_product_details_vaccines_pro");
+                        .HasConstraintName("fk_vaccines_company_codes_vaccines_product_details_vaccines_pr");
 
                     b.Navigation("VaccinesProductDetail");
                 });
@@ -3537,7 +3517,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_company_info_record_revision_revision_id");
+                        .HasConstraintName("fk_vaccines_company_infos_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -3548,14 +3528,14 @@ namespace UKPS.Api.Migrations
                         .WithMany()
                         .HasForeignKey("DiseaseAreaId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_vaccines_disease_detail_vaccine_disease_area_disease_area_id");
+                        .HasConstraintName("fk_vaccines_disease_details_vaccine_disease_areas_disease_area");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_disease_detail_record_revision_revision_id");
+                        .HasConstraintName("fk_vaccines_disease_details_record_revisions_revision_id");
 
                     b.Navigation("DiseaseArea");
 
@@ -3569,7 +3549,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("VaccinesDiseaseDetailId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_pathogen_vaccines_disease_detail_vaccines_disease_");
+                        .HasConstraintName("fk_vaccines_pathogens_vaccines_disease_details_vaccines_diseas");
 
                     b.Navigation("VaccinesDiseaseDetail");
                 });
@@ -3581,7 +3561,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_population_record_revision_revision_id");
+                        .HasConstraintName("fk_vaccines_populations_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -3593,7 +3573,7 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_product_detail_record_revision_revision_id");
+                        .HasConstraintName("fk_vaccines_product_details_record_revisions_revision_id");
 
                     b.Navigation("Revision");
                 });
@@ -3605,14 +3585,14 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_service_readiness_record_revision_revision_id");
+                        .HasConstraintName("fk_vaccines_service_readinesses_record_revisions_revision_id");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.VaccineStorageRequirement", "StorageRequirement")
                         .WithMany()
                         .HasForeignKey("StorageRequirementId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_service_readiness_vaccine_storage_requirement_stor");
+                        .HasConstraintName("fk_vaccines_service_readinesses_vaccine_storage_requirements_s");
 
                     b.Navigation("Revision");
 
@@ -3626,21 +3606,21 @@ namespace UKPS.Api.Migrations
                         .HasForeignKey("AdministrationRouteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_technology_vaccine_administration_route_administra");
+                        .HasConstraintName("fk_vaccines_technologies_vaccine_administration_routes_adminis");
 
                     b.HasOne("UKPS.Api.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany()
                         .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_technology_record_revision_revision_id");
+                        .HasConstraintName("fk_vaccines_technologies_record_revisions_revision_id");
 
                     b.HasOne("UKPS.Api.Entities.ReferenceData.VaccinePlatform", "VaccinePlatform")
                         .WithMany()
                         .HasForeignKey("VaccinePlatformId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_vaccines_technology_vaccine_platform_vaccine_platform_id");
+                        .HasConstraintName("fk_vaccines_technologies_vaccine_platforms_vaccine_platform_id");
 
                     b.Navigation("AdministrationRoute");
 

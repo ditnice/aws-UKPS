@@ -1,6 +1,6 @@
 namespace UKPS.Api.Entities.Email;
 
-public class EmailAudit
+internal sealed class EmailAudit
 {
     public int Id { get; set; }
     public int TemplateId { get; set; }

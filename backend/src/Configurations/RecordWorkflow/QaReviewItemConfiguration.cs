@@ -4,11 +4,10 @@ using UKPS.Api.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Configurations.RecordWorkflow;
 
-public class QaReviewItemConfiguration : IEntityTypeConfiguration<QaReviewItem>
+internal sealed class QaReviewItemConfiguration : IEntityTypeConfiguration<QaReviewItem>
 {
     public void Configure(EntityTypeBuilder<QaReviewItem> builder)
     {
-        builder.ToTable("qa_review_item");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.FieldPath).IsRequired();

@@ -5,11 +5,10 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Configurations.Identity;
 
-public class OrganisationAuditConfiguration : IEntityTypeConfiguration<OrganisationAudit>
+internal sealed class OrganisationAuditConfiguration : IEntityTypeConfiguration<OrganisationAudit>
 {
     public void Configure(EntityTypeBuilder<OrganisationAudit> builder)
     {
-        builder.ToTable("organisation_audit");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.EventType).HasConversion<string>();

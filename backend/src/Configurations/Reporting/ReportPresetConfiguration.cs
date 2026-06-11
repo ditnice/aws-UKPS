@@ -4,11 +4,10 @@ using UKPS.Api.Entities.Reporting;
 
 namespace UKPS.Api.Configurations.Reporting;
 
-public class ReportPresetConfiguration : IEntityTypeConfiguration<ReportPreset>
+internal sealed class ReportPresetConfiguration : IEntityTypeConfiguration<ReportPreset>
 {
     public void Configure(EntityTypeBuilder<ReportPreset> builder)
     {
-        builder.ToTable("report_preset");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.ApplicableUserType).HasConversion<string>();

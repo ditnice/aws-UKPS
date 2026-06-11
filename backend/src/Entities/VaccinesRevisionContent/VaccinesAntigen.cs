@@ -7,7 +7,7 @@ namespace UKPS.Api.Entities.VaccinesRevisionContent;
 /// the immune system learns to recognise — e.g. spike protein, polysaccharide capsule,
 /// haemagglutinin. Replaces 'pathogen-related components' from the original JCVI proforma.
 /// </summary>
-public class VaccinesAntigen
+internal sealed class VaccinesAntigen
 {
     public int Id { get; set; }
     public int VaccinesTechnologyId { get; set; }

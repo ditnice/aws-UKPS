@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-public enum RecordStatus
+internal enum RecordStatus
 {
     Unpublished,
     Active,

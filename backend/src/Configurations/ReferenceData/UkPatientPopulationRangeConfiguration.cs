@@ -3,7 +3,7 @@ using UKPS.Api.Entities.ReferenceData;
 
 namespace UKPS.Api.Configurations.ReferenceData;
 
-public class UkPatientPopulationRangeConfiguration
+internal sealed class UkPatientPopulationRangeConfiguration
     : ReferenceDataBaseConfiguration<UkPatientPopulationRange>
 {
     protected override string TableName => "uk_patient_population_range";

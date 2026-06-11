@@ -4,11 +4,10 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-public class MedicinesCompanyInfoConfiguration : IEntityTypeConfiguration<MedicinesCompanyInfo>
+internal sealed class MedicinesCompanyInfoConfiguration : IEntityTypeConfiguration<MedicinesCompanyInfo>
 {
     public void Configure(EntityTypeBuilder<MedicinesCompanyInfo> builder)
     {
-        builder.ToTable("medicines_company_info");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.IsOriginatorCompany).HasConversion<string>();

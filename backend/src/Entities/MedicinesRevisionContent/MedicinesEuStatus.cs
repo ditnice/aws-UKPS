@@ -3,7 +3,7 @@ using UKPS.Api.Enums;
 namespace UKPS.Api.Entities.MedicinesRevisionContent;
 
 /// <summary>Owns the EuOrphanGranted regulatory date row.</summary>
-public class MedicinesEuStatus
+internal sealed class MedicinesEuStatus
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }

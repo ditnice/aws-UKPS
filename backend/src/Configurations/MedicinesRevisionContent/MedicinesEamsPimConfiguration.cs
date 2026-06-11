@@ -4,11 +4,10 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-public class MedicinesEamsPimConfiguration : IEntityTypeConfiguration<MedicinesEamsPim>
+internal sealed class MedicinesEamsPimConfiguration : IEntityTypeConfiguration<MedicinesEamsPim>
 {
     public void Configure(EntityTypeBuilder<MedicinesEamsPim> builder)
     {
-        builder.ToTable("medicines_eams_pim");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.PimDesignationStatus).HasConversion<string>();

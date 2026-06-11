@@ -4,11 +4,10 @@ using UKPS.Api.Entities.VaccinesRevisionContent;
 
 namespace UKPS.Api.Configurations.VaccinesRevisionContent;
 
-public class VaccinesDiseaseDetailConfiguration : IEntityTypeConfiguration<VaccinesDiseaseDetail>
+internal sealed class VaccinesDiseaseDetailConfiguration : IEntityTypeConfiguration<VaccinesDiseaseDetail>
 {
     public void Configure(EntityTypeBuilder<VaccinesDiseaseDetail> builder)
     {
-        builder.ToTable("vaccines_disease_detail");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.DiseaseTarget).IsRequired();

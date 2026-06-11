@@ -4,11 +4,10 @@ using UKPS.Api.Entities.SharedRevisionContent;
 
 namespace UKPS.Api.Configurations.SharedRevisionContent;
 
-public class RecordGlobalSubmissionConfiguration : IEntityTypeConfiguration<RecordGlobalSubmission>
+internal sealed class RecordGlobalSubmissionConfiguration : IEntityTypeConfiguration<RecordGlobalSubmission>
 {
     public void Configure(EntityTypeBuilder<RecordGlobalSubmission> builder)
     {
-        builder.ToTable("record_global_submission");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
 

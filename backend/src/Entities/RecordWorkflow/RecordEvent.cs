@@ -3,7 +3,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.RecordWorkflow;
 
-public class RecordEvent
+internal sealed class RecordEvent
 {
     public int Id { get; set; }
     public int RecordId { get; set; }

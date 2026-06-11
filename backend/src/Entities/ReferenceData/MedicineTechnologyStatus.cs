@@ -8,4 +8,4 @@ namespace UKPS.Api.Entities.ReferenceData;
 /// New formulation, New indication, New presentation,
 /// SPC amendment without indication change.
 /// </summary>
-public class MedicineTechnologyStatus : ReferenceDataBase { }
+internal sealed class MedicineTechnologyStatus : ReferenceDataBase { }

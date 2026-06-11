@@ -4,11 +4,10 @@ using UKPS.Api.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Configurations.RecordWorkflow;
 
-public class RecordStatusHistoryConfiguration : IEntityTypeConfiguration<RecordStatusHistory>
+internal sealed class RecordStatusHistoryConfiguration : IEntityTypeConfiguration<RecordStatusHistory>
 {
     public void Configure(EntityTypeBuilder<RecordStatusHistory> builder)
     {
-        builder.ToTable("record_status_history");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.FromStatus).HasConversion<string>();

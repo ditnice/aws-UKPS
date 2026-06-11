@@ -6,7 +6,7 @@ namespace UKPS.Api.Entities.ReferenceData;
 /// Therapeutic area hierarchy — medicines only. Currently flat; supports future sub-levels.
 /// 20 values.
 /// </summary>
-public class TherapeuticArea
+internal sealed class TherapeuticArea
 {
     public int Id { get; set; }
 

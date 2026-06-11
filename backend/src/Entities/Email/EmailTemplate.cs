@@ -1,6 +1,6 @@
 namespace UKPS.Api.Entities.Email;
 
-public class EmailTemplate
+internal sealed class EmailTemplate
 {
     public int Id { get; set; }
 

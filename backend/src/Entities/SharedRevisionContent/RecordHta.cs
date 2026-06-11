@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.SharedRevisionContent;
 
-public class RecordHta
+internal sealed class RecordHta
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }

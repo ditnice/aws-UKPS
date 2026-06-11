@@ -4,11 +4,10 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-public class MedicinesTreatmentDetailConfiguration : IEntityTypeConfiguration<MedicinesTreatmentDetail>
+internal sealed class MedicinesTreatmentDetailConfiguration : IEntityTypeConfiguration<MedicinesTreatmentDetail>
 {
     public void Configure(EntityTypeBuilder<MedicinesTreatmentDetail> builder)
     {
-        builder.ToTable("medicines_treatment_detail");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.ProposedPlaceInTherapy).IsRequired();

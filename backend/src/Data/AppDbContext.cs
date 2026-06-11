@@ -11,7 +11,7 @@ using UKPS.Api.Entities.VaccinesRevisionContent;
 
 namespace UKPS.Api.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     // ── Identity & Access Management ────────────────────────────────────────
     public DbSet<Organisation> Organisations => Set<Organisation>();

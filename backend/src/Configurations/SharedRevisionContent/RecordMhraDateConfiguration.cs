@@ -4,11 +4,10 @@ using UKPS.Api.Entities.SharedRevisionContent;
 
 namespace UKPS.Api.Configurations.SharedRevisionContent;
 
-public class RecordMhraDateConfiguration : IEntityTypeConfiguration<RecordMhraDate>
+internal sealed class RecordMhraDateConfiguration : IEntityTypeConfiguration<RecordMhraDate>
 {
     public void Configure(EntityTypeBuilder<RecordMhraDate> builder)
     {
-        builder.ToTable("record_mhra_date");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
 

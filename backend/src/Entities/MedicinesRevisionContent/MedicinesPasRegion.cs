@@ -3,7 +3,7 @@ using UKPS.Api.Enums;
 namespace UKPS.Api.Entities.MedicinesRevisionContent;
 
 /// <summary>Junction table: PAS regions selected for a medicine record.</summary>
-public class MedicinesPasRegion
+internal sealed class MedicinesPasRegion
 {
     public int MedicinesBudgetImpactId { get; set; }
     public int PasRegionId { get; set; }

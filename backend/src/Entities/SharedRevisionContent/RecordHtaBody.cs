@@ -7,7 +7,7 @@ namespace UKPS.Api.Entities.SharedRevisionContent;
 /// Stored as label varchar (NICE, SMC, AWMSG) rather than FK to organisation —
 /// HTA bodies are a small, stable set that do not require the full organisation model.
 /// </summary>
-public class RecordHtaBody
+internal sealed class RecordHtaBody
 {
     public int RecordHtaId { get; set; }
 

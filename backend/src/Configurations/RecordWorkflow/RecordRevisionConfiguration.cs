@@ -4,11 +4,10 @@ using UKPS.Api.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Configurations.RecordWorkflow;
 
-public class RecordRevisionConfiguration : IEntityTypeConfiguration<RecordRevision>
+internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<RecordRevision>
 {
     public void Configure(EntityTypeBuilder<RecordRevision> builder)
     {
-        builder.ToTable("record_revision");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.WorkflowStatus).HasConversion<string>();

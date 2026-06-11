@@ -4,11 +4,10 @@ using UKPS.Api.Entities.SharedRevisionContent;
 
 namespace UKPS.Api.Configurations.SharedRevisionContent;
 
-public class RegulatoryDateConfiguration : IEntityTypeConfiguration<RegulatoryDate>
+internal sealed class RegulatoryDateConfiguration : IEntityTypeConfiguration<RegulatoryDate>
 {
     public void Configure(EntityTypeBuilder<RegulatoryDate> builder)
     {
-        builder.ToTable("regulatory_date");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.DateEvent).HasConversion<string>();

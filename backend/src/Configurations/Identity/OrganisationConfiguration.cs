@@ -5,11 +5,10 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Configurations.Identity;
 
-public class OrganisationConfiguration : IEntityTypeConfiguration<Organisation>
+internal sealed class OrganisationConfiguration : IEntityTypeConfiguration<Organisation>
 {
     public void Configure(EntityTypeBuilder<Organisation> builder)
     {
-        builder.ToTable("organisation");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.OrganisationName).IsRequired();

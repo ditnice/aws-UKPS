@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-public enum TermsAcceptanceStatus
+internal enum TermsAcceptanceStatus
 {
     Pending,
 #pragma warning disable CA1720

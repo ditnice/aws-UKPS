@@ -4,11 +4,10 @@ using UKPS.Api.Entities.ReferenceData;
 
 namespace UKPS.Api.Configurations.ReferenceData;
 
-public class TherapeuticAreaConfiguration : IEntityTypeConfiguration<TherapeuticArea>
+internal sealed class TherapeuticAreaConfiguration : IEntityTypeConfiguration<TherapeuticArea>
 {
     public void Configure(EntityTypeBuilder<TherapeuticArea> builder)
     {
-        builder.ToTable("therapeutic_area");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Label).IsRequired();

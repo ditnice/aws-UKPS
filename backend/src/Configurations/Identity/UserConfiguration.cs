@@ -5,7 +5,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Configurations.Identity;
 
-public class UserConfiguration : IEntityTypeConfiguration<User>
+internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
@@ -19,10 +19,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.UserType).HasConversion<string>();
         builder.Property(x => x.FirstName).IsRequired();
         builder.Property(x => x.LastName).IsRequired();
-        builder.Property(x => x.LoginTime).HasColumnType("timestamptz");
-        builder.Property(x => x.LogoutTime).HasColumnType("timestamptz");
-        builder.Property(x => x.LastActive).HasColumnType("timestamptz");
-        builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
-        builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
     }
 }

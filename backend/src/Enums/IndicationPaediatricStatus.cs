@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-public enum IndicationPaediatricStatus
+internal enum IndicationPaediatricStatus
 {
     ExclusivelyChildren,
     BothChildrenAndAdults,

@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.RecordWorkflow;
 
-public class Record
+internal sealed class Record
 {
     public int Id { get; set; }
     public int OrganisationId { get; set; }

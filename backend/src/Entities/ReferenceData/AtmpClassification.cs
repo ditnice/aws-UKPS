@@ -7,4 +7,4 @@ namespace UKPS.Api.Entities.ReferenceData;
 /// Ex-vivo gene therapy medicine, In-vivo gene therapy medicine,
 /// Somatic-cell therapy medicine, Tissue-engineered medicine, Combined ATMP.
 /// </summary>
-public class AtmpClassification : ReferenceDataBase { }
+internal sealed class AtmpClassification : ReferenceDataBase { }

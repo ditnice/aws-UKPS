@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.SharedRevisionContent;
 
-public class RecordIntlRecognition
+internal sealed class RecordIntlRecognition
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }

@@ -9,7 +9,7 @@ namespace UKPS.Api.Entities.Reporting;
 /// configuration always stored at run time even when a preset was used,
 /// since presets can be edited over time.
 /// </summary>
-public class ReportAudit
+internal sealed class ReportAudit
 {
     public int Id { get; set; }
     public int UserId { get; set; }

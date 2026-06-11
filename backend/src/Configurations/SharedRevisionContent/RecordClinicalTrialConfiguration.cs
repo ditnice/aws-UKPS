@@ -4,11 +4,10 @@ using UKPS.Api.Entities.SharedRevisionContent;
 
 namespace UKPS.Api.Configurations.SharedRevisionContent;
 
-public class RecordClinicalTrialConfiguration : IEntityTypeConfiguration<RecordClinicalTrial>
+internal sealed class RecordClinicalTrialConfiguration : IEntityTypeConfiguration<RecordClinicalTrial>
 {
     public void Configure(EntityTypeBuilder<RecordClinicalTrial> builder)
     {
-        builder.ToTable("record_clinical_trial");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.StudyName).IsRequired();

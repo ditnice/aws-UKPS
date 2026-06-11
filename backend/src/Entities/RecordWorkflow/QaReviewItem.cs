@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.RecordWorkflow;
 
-public class QaReviewItem
+internal sealed class QaReviewItem
 {
     public int Id { get; set; }
     public int QaReviewId { get; set; }

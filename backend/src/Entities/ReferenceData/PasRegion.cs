@@ -6,4 +6,4 @@ namespace UKPS.Api.Entities.ReferenceData;
 /// 4 values — medicines only:
 /// England, Wales, Scotland, Northern Ireland.
 /// </summary>
-public class PasRegion : ReferenceDataBase { }
+internal sealed class PasRegion : ReferenceDataBase { }

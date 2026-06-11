@@ -4,11 +4,10 @@ using UKPS.Api.Entities.UserFeatures;
 
 namespace UKPS.Api.Configurations.UserFeatures;
 
-public class RecordWatchlistConfiguration : IEntityTypeConfiguration<RecordWatchlist>
+internal sealed class RecordWatchlistConfiguration : IEntityTypeConfiguration<RecordWatchlist>
 {
     public void Configure(EntityTypeBuilder<RecordWatchlist> builder)
     {
-        builder.ToTable("record_watchlist");
         builder.HasKey(x => new { x.UserId, x.RecordId });
 
         builder.HasOne(x => x.User)

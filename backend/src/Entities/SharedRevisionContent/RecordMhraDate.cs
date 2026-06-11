@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.SharedRevisionContent;
 
-public class RecordMhraDate
+internal sealed class RecordMhraDate
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }

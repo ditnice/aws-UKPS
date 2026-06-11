@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-public enum SubstanceNameType
+internal enum SubstanceNameType
 {
     GenericName,
     DevelopmentName

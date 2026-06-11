@@ -6,4 +6,4 @@ namespace UKPS.Api.Entities.ReferenceData;
 /// 7 values — shared:
 /// European Union, United States, Australia, Canada, Singapore, Japan, Switzerland.
 /// </summary>
-public class IrpReferenceRegulator : ReferenceDataBase { }
+internal sealed class IrpReferenceRegulator : ReferenceDataBase { }

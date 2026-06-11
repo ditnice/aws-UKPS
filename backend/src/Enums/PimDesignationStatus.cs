@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-public enum PimDesignationStatus
+internal enum PimDesignationStatus
 {
     Granted,
     NotGranted,

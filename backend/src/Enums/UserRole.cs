@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-public enum UserRole
+internal enum UserRole
 {
     Standard,
     Champion,

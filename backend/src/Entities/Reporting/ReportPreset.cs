@@ -10,7 +10,7 @@ namespace UKPS.Api.Entities.Reporting;
 /// configuration jsonb stores the full report state — custom filter tree or
 /// strategic report category selections.
 /// </summary>
-public class ReportPreset
+internal sealed class ReportPreset
 {
     public int Id { get; set; }
     public UserType ApplicableUserType { get; set; }

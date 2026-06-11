@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.Identity;
 
-public class TermsAcceptance
+internal sealed class TermsAcceptance
 {
     public int Id { get; set; }
     public int OrganisationId { get; set; }
