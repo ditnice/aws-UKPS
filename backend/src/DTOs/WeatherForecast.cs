@@ -1,4 +1,4 @@
-namespace UKPS.Api;
+namespace UKPS.Api.DTOs;
 
 public class WeatherForecast
 {

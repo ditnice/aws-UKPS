@@ -45,6 +45,7 @@ CodeCoverage/
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
+backend/tests/TestResults/
 
 # NUnit
 *.VisualState.xml
