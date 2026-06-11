@@ -10,22 +10,6 @@ module "networking" {
   environment = local.environment
 }
 
-module "alb" {
-  source = "../../modules/alb"
-
-  project                    = local.project
-  environment                = local.environment
-  vpc_id                     = module.networking.vpc_id
-  public_subnet_ids          = module.networking.alb_subnet_ids
-  certificate_arn            = var.acm_certificate_arn
-  container_port             = var.alb_container_port
-  health_check_path          = var.alb_health_check_path
-  alb_ingress_cidr_blocks    = var.alb_ingress_cidr_blocks
-  alb_egress_cidr_blocks     = [module.networking.vpc_cidr]
-  internal                   = var.alb_internal
-  enable_deletion_protection = var.alb_enable_deletion_protection
-}
-
 # ECR - Frontend
 module "ecr_frontend" {
   source = "../../modules/ecr"
@@ -69,8 +53,8 @@ module "ecs_frontend" {
   private_subnet_ids       = module.networking.app_subnet_ids
   container_port           = var.frontend_container_port
   ecr_image_url            = module.ecr_frontend.repository_url
-  target_group_arn         = module.alb.target_group_arn
-  alb_security_group_id    = module.alb.security_group_id
+  target_group_arn         = var.target_group_arn
+  alb_security_group_id    = var.security_group_id
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
 }
 
@@ -91,8 +75,8 @@ module "ecs_backend" {
   private_subnet_ids       = module.networking.app_subnet_ids
   container_port           = var.backend_container_port
   ecr_image_url            = module.ecr_backend.repository_url
-  target_group_arn         = module.alb.target_group_arn
-  alb_security_group_id    = module.alb.security_group_id
+  target_group_arn         = var.target_group_arn
+  alb_security_group_id    = var.security_group_id
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
 }
 

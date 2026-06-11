@@ -50,12 +50,6 @@ variable "ecr_max_image_count" {
   default     = 5
 }
 
-variable "alb_container_port" {
-  description = "Port on which the target container listens"
-  type        = number
-  default     = 3000
-}
-
 variable "backend_container_port" {
   description = "Port on which the target container listens"
   type        = number
@@ -66,36 +60,6 @@ variable "frontend_container_port" {
   description = "Port on which the target container listens"
   type        = number
   default     = 3000
-}
-
-variable "alb_health_check_path" {
-  description = "Path to use for the target group health check"
-  type        = string
-  default     = "/health"
-}
-
-variable "alb_ingress_cidr_blocks" {
-  description = "CIDR blocks allowed to reach the ALB over HTTP"
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
-}
-
-variable "acm_certificate_arn" {
-  description = "ARN of the ACM certificate to use for the ALB. This certificate must be in the same region as the ALB and must cover the FQDN specified in this environment's variables."
-  type        = string
-  default     = "arn:aws:acm:eu-west-2:123456789012:certificate/12345678-abcd-1234-efab-1234567890ab"
-}
-
-variable "alb_internal" {
-  description = "Whether the ALB is internal"
-  type        = bool
-  default     = true
-}
-
-variable "alb_enable_deletion_protection" {
-  description = "Whether deletion protection is enabled on the ALB"
-  type        = bool
-  default     = false
 }
 
 variable "ecs_capacity_providers" {
@@ -198,4 +162,25 @@ variable "aurora_final_snapshot_identifier" {
   description = "Identifier for the final snapshot when skip_final_snapshot is false"
   type        = string
   default     = "snapshot_id"
+}
+
+variable "target_group_arn" {
+  description = "ARN of the ALB target group used by the ECS service"
+  type        = string
+
+  validation {
+    condition     = can(regex("^arn:aws[a-zA-Z-]*:elasticloadbalancing:[a-z0-9-]+:[0-9]{12}:targetgroup/.+/.+$", var.target_group_arn))
+    error_message = "Target group ARN must be a valid ALB target group ARN."
+  }
+}
+
+
+variable "security_group_id" {
+  description = "ID of the ALB security group allowed to reach ECS tasks"
+  type        = string
+
+  validation {
+    condition     = can(regex("^sg-[0-9a-f]{8,17}$", var.security_group_id))
+    error_message = "ALB security group ID must be a valid AWS security group ID."
+  }
 }

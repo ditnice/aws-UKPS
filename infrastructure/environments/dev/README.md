@@ -16,7 +16,6 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_alb"></a> [alb](#module\_alb) | ../../modules/alb | n/a |
 | <a name="module_aurora_backend"></a> [aurora\_backend](#module\_aurora\_backend) | ../../modules/aurora | n/a |
 | <a name="module_aurora_frontend"></a> [aurora\_frontend](#module\_aurora\_frontend) | ../../modules/aurora | n/a |
 | <a name="module_ecr_backend"></a> [ecr\_backend](#module\_ecr\_backend) | ../../modules/ecr | n/a |
@@ -33,12 +32,6 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_acm_certificate_arn"></a> [acm\_certificate\_arn](#input\_acm\_certificate\_arn) | ARN of the ACM certificate to use for the ALB. This certificate must be in the same region as the ALB and must cover the FQDN specified in this environment's variables. | `string` | `"arn:aws:acm:eu-west-2:123456789012:certificate/12345678-abcd-1234-efab-1234567890ab"` | no |
-| <a name="input_alb_container_port"></a> [alb\_container\_port](#input\_alb\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
-| <a name="input_alb_enable_deletion_protection"></a> [alb\_enable\_deletion\_protection](#input\_alb\_enable\_deletion\_protection) | Whether deletion protection is enabled on the ALB | `bool` | `false` | no |
-| <a name="input_alb_health_check_path"></a> [alb\_health\_check\_path](#input\_alb\_health\_check\_path) | Path to use for the target group health check | `string` | `"/health"` | no |
-| <a name="input_alb_ingress_cidr_blocks"></a> [alb\_ingress\_cidr\_blocks](#input\_alb\_ingress\_cidr\_blocks) | CIDR blocks allowed to reach the ALB over HTTP | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
-| <a name="input_alb_internal"></a> [alb\_internal](#input\_alb\_internal) | Whether the ALB is internal | `bool` | `true` | no |
 | <a name="input_aurora_allow_major_version_upgrade"></a> [aurora\_allow\_major\_version\_upgrade](#input\_aurora\_allow\_major\_version\_upgrade) | Whether major engine version upgrades are allowed | `bool` | `false` | no |
 | <a name="input_aurora_apply_immediately"></a> [aurora\_apply\_immediately](#input\_aurora\_apply\_immediately) | Whether Aurora changes are applied immediately instead of during the maintenance window | `bool` | `true` | no |
 | <a name="input_aurora_enable_http_endpoint"></a> [aurora\_enable\_http\_endpoint](#input\_aurora\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `false` | no |
@@ -67,6 +60,8 @@ No resources.
 | <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpsdev_frontend"` | no |
 | <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of the KMS key to use for encrypting resources. This key must be in the same region as the resources being encrypted. | `string` | `"arn:aws:kms:eu-west-2:123456789012:key/12345678-abcd-1234-efab-1234567890ab"` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
+| <a name="input_security_group_id"></a> [security\_group\_id](#input\_security\_group\_id) | ID of the ALB security group allowed to reach ECS tasks | `string` | n/a | yes |
+| <a name="input_target_group_arn"></a> [target\_group\_arn](#input\_target\_group\_arn) | ARN of the ALB target group used by the ECS service | `string` | n/a | yes |
 
 ## Outputs
 
