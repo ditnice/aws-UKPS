@@ -129,6 +129,9 @@ csharp_space_between_square_brackets = false
 # Namespace matches folder structure
 dotnet_diagnostic.IDE0130.severity = warning
 
+[src/Migrations/*.cs]
+generated_code = true
+
 # Xml project files
 [*.{csproj,vbproj,vcxproj,props,targets,nuspec,locproj,nativeproj}]
 indent_size = 2
