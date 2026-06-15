@@ -18,6 +18,17 @@ variable "environment" {
   }
 }
 
+variable "service_name" {
+  description = "Name used in Aurora resource names"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{1,21}[a-z0-9]$", var.service_name))
+    error_message = "Service name must be 3-23 characters, start with a lowercase letter, end with a lowercase letter or number, and contain only lowercase letters, numbers, or hyphens."
+  }
+}
+
+
 variable "vpc_id" {
   description = "Identifier of the VPC to be deployed into"
   type        = string

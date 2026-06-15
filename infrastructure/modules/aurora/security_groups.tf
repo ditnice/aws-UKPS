@@ -11,7 +11,11 @@ resource "aws_security_group" "aurora_postgres_sg" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "aurora_postgres" {
-  for_each = toset(var.allowed_security_group_ids)
+  # Map with static indexes as sg ids are unknown at plan time
+  for_each = {
+    for idx, sg_id in var.allowed_security_group_ids :
+    idx => sg_id
+  }
 
   description                  = "Allow inbound PostgreSQL traffic from authorised security groups"
   from_port                    = var.aurora_postgres_port
