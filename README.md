@@ -36,6 +36,7 @@
 
 The backend is an ASP.NET Core Web API built on .NET 10, contained in the `UKPS.Api` project. It includes OpenAPI support via `Microsoft.AspNetCore.OpenApi`, with automatic API schema generation and documentation. Tests are written using xUnit and live in the `UKPS.Api.Tests` project under `tests/`.
 
+
 For more information, see the [backend README](backend/README.md).
 
 ## Frontend
