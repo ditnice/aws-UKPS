@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UKPS.Api.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Configurations.RecordWorkflow;
@@ -12,7 +14,11 @@ internal sealed class RecordEventConfiguration : IEntityTypeConfiguration<Record
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.EventType).HasConversion<string>();
         builder.Property(x => x.PerformedAt).HasColumnType("timestamptz").IsRequired();
-        builder.Property(x => x.Payload).HasColumnType("jsonb");
+        builder.Property(x => x.Payload)
+            .HasColumnType("jsonb")
+            .HasConversion(new ValueConverter<JsonDocument?, string?>(
+                doc => doc == null ? null : doc.RootElement.GetRawText(),
+                json => json == null ? null : JsonDocument.Parse(json)));
 
         // Composite index supports horizon scanner timeline view (filter to
         // published/no_change events) and QA timeline view (filter to QA events)

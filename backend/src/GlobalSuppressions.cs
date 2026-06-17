@@ -14,6 +14,14 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.DTOs")]
 
+// Might need to split the Services directory into Interfaces and Services (?) to narrow the scope of this suppression
+[assembly: SuppressMessage(
+    "Maintainability",
+    "CA1515:Consider making public types internal",
+    Justification = "Constructor parameters of controllers are required to be public.",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api.Services")]
+
 [assembly: SuppressMessage(
     "Maintainability",
     "CA1812:Internal class that is never instantiated",
