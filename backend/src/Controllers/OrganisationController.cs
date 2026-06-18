@@ -9,13 +9,12 @@ namespace UKPS.Api.Controllers;
 public class OrganisationController(IOrganisationService organisationService) : ControllerBase
 {
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetOrganisationById(int id)
     {
-        OrganisationDetailsDto? organisation = await organisationService.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
+        OrganisationDetailsDto? organisation = await organisationService.GetOrganisationById(id).ConfigureAwait(false);
 
-        if (organisation is null)
-            return NotFound();
-
-        return Ok(organisation);
+        return (organisation is null)
+         ? NotFound()
+         : Ok(organisation);
     }
 }

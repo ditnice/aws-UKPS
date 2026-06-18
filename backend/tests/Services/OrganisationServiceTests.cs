@@ -34,7 +34,7 @@ public class OrganisationServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(id, result.Id);
-        Assert.Equal("PharmaCompany", result.OrganisationType);
+        Assert.Equal("PharmaCompany", result.OrganisationType.ToString());
         Assert.Equal("Acme Pharma Ltd", result.OrganisationName);
         Assert.Equal("1 High Street, London, EC1A 1AA", result.HeadOfficeAddress);
         Assert.Equal("info@acme.com", result.HeadOfficeEmail);

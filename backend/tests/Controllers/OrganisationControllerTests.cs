@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
+using UKPS.Api.Enums;
 using UKPS.Api.Services;
 
 namespace UKPS.Api.Tests.Controllers;
@@ -13,7 +14,7 @@ public class OrganisationControllerTests
         OrganisationDetailsDto expected = new()
         {
             Id = 1,
-            OrganisationType = "PharmaCompany",
+            OrganisationType = OrganisationType.PharmaCompany,
             OrganisationName = "Acme Pharma Ltd",
             HeadOfficeAddress = "1 High Street, London, EC1A 1AA",
             HeadOfficeEmail = "info@acme.com",
@@ -21,7 +22,7 @@ public class OrganisationControllerTests
         };
         OrganisationController controller = new(new StubOrganisationService(expected));
 
-        IActionResult result = await controller.GetByIdAsync(1, CancellationToken.None);
+        IActionResult result = await controller.GetOrganisationById(1);
 
         OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
         Assert.Same(expected, ok.Value);
@@ -32,7 +33,7 @@ public class OrganisationControllerTests
     {
         OrganisationController controller = new(new StubOrganisationService(null));
 
-        IActionResult result = await controller.GetByIdAsync(99, CancellationToken.None);
+        IActionResult result = await controller.GetOrganisationById(99);
 
         Assert.IsType<NotFoundResult>(result);
     }
@@ -43,14 +44,14 @@ public class OrganisationControllerTests
         CapturingOrganisationService service = new();
         OrganisationController controller = new(service);
 
-        await controller.GetByIdAsync(42, CancellationToken.None);
+        await controller.GetOrganisationById(42);
 
         Assert.Equal(42, service.CapturedId);
     }
 
     private sealed class StubOrganisationService(OrganisationDetailsDto? result) : IOrganisationService
     {
-        public Task<OrganisationDetailsDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public Task<OrganisationDetailsDto?> GetOrganisationById(int id)
             => Task.FromResult(result);
     }
 
@@ -58,7 +59,7 @@ public class OrganisationControllerTests
     {
         public int CapturedId { get; private set; }
 
-        public Task<OrganisationDetailsDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public Task<OrganisationDetailsDto?> GetOrganisationById(int id)
         {
             CapturedId = id;
             return Task.FromResult<OrganisationDetailsDto?>(null);

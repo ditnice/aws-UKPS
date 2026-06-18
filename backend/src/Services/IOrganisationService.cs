@@ -4,5 +4,5 @@ namespace UKPS.Api.Services;
 
 public interface IOrganisationService
 {
-    Task<OrganisationDetailsDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<OrganisationDetailsDto?> GetOrganisationById(int id);
 }

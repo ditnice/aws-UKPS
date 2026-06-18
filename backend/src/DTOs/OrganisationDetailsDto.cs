@@ -5,8 +5,10 @@ namespace UKPS.Api.DTOs;
 public sealed class OrganisationDetailsDto
 {
     public int Id { get; init; }
-    public string OrganisationType { get; init; } = null!;
     public string OrganisationName { get; init; } = null!;
+    public OrganisationType OrganisationType { get; init; }
+    public PharmaceuticalEntity AllowedPharmaceuticalEntity { get; init; }
+    public string? CountryOrRegion { get; init; }
     public string? HeadOfficeAddress { get; init; }
     public string? HeadOfficeEmail { get; init; }
     public string? HeadOfficeTelephone { get; init; }
