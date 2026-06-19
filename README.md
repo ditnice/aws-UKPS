@@ -40,6 +40,7 @@ The backend is an ASP.NET Core Web API built on .NET 10, contained in the `UKPS.
 
 For more information, see the [backend README](backend/README.md).
 
+
 ## Frontend
 
 The frontend is a Next.js 16 application with Payload CMS 3 embedded directly via the `/app` directory integration, backed by PostgreSQL. The app is divided into three route groups: `(payload)` for the Payload admin interface, `(public)` for the public-facing site with slug-based routing, and `portal` for the authenticated user portal. Tests use Vitest for integration tests and Playwright for end-to-end tests.
