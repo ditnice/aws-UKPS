@@ -10,8 +10,8 @@ internal sealed class MedicinesCompanyInfoConfiguration : IEntityTypeConfigurati
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.IsOriginatorCompany).HasConversion<string>();
-        builder.Property(x => x.IsCoMarketed).HasConversion<string>();
+        builder.Property(x => x.IsOriginatorCompany);
+        builder.Property(x => x.IsCoMarketed);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_company_info_revision_id");

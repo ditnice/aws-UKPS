@@ -10,8 +10,8 @@ internal sealed class MedicinesEuStatusConfiguration : IEntityTypeConfiguration<
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.EuOrphanStatus).HasConversion<string>();
-        builder.Property(x => x.EuAtmpClassificationStatus).HasConversion<string>();
+        builder.Property(x => x.EuOrphanStatus);
+        builder.Property(x => x.EuAtmpClassificationStatus);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_eu_status_revision_id");

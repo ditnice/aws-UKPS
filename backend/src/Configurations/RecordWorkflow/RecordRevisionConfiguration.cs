@@ -10,7 +10,7 @@ internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<Rec
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.WorkflowStatus).HasConversion<string>();
+        builder.Property(x => x.WorkflowStatus);
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz").IsRequired();
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
         builder.Property(x => x.SubmittedAt).HasColumnType("timestamptz");

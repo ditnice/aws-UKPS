@@ -10,6 +10,6 @@ internal sealed class MhraProcedureTypeConfiguration : ReferenceDataBaseConfigur
     public override void Configure(EntityTypeBuilder<MhraProcedureType> builder)
     {
         base.Configure(builder);
-        builder.Property(x => x.RelevantTo).HasConversion<string>();
+        builder.Property(x => x.RelevantTo);
     }
 }

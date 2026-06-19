@@ -2,7 +2,7 @@ namespace UKPS.Api.Enums;
 
 public enum UserRole
 {
-    Standard,
-    Champion,
-    Super
+    Standard = 0,
+    Champion = 1,
+    Super = 2,
 }

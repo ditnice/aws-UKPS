@@ -2,6 +2,6 @@ namespace UKPS.Api.Enums;
 
 public enum RecordType
 {
-    Medicine,
-    Vaccine
+    Medicine = 0,
+    Vaccine = 1,
 }

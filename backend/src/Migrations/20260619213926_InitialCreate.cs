@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -24,7 +23,7 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     username = table.Column<string>(type: "text", nullable: false),
-                    user_type = table.Column<string>(type: "text", nullable: false),
+                    user_type = table.Column<int>(type: "integer", nullable: false),
                     title = table.Column<string>(type: "text", nullable: true),
                     first_name = table.Column<string>(type: "text", nullable: false),
                     last_name = table.Column<string>(type: "text", nullable: false),
@@ -178,7 +177,7 @@ namespace UKPS.Api.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    relevant_to = table.Column<string>(type: "text", nullable: true),
+                    relevant_to = table.Column<int>(type: "integer", nullable: true),
                     label = table.Column<string>(type: "text", nullable: false),
                     is_archived = table.Column<bool>(type: "boolean", nullable: false)
                 },
@@ -195,13 +194,13 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     organisation_name = table.Column<string>(type: "text", nullable: false),
-                    organisation_type = table.Column<string>(type: "text", nullable: false),
+                    organisation_type = table.Column<int>(type: "integer", nullable: false),
                     allowed_pharmaceutical_entity = table.Column<int>(type: "integer", nullable: false),
                     country_or_region = table.Column<string>(type: "text", nullable: true),
                     head_office_address = table.Column<string>(type: "text", nullable: true),
                     head_office_telephone = table.Column<string>(type: "text", nullable: true),
                     head_office_email = table.Column<string>(type: "text", nullable: true),
-                    status = table.Column<string>(type: "text", nullable: false),
+                    status = table.Column<int>(type: "integer", nullable: false),
                     last_active = table.Column<DateTime>(type: "timestamptz", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
                 },
@@ -347,10 +346,10 @@ namespace UKPS.Api.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    applicable_user_type = table.Column<string>(type: "text", nullable: false),
+                    applicable_user_type = table.Column<int>(type: "integer", nullable: false),
                     applicable_pharmaceutical_entity = table.Column<int>(type: "integer", nullable: false),
                     title = table.Column<string>(type: "text", nullable: false),
-                    configuration = table.Column<JsonDocument>(type: "jsonb", nullable: false),
+                    configuration = table.Column<string>(type: "jsonb", nullable: false),
                     is_shared = table.Column<bool>(type: "boolean", nullable: false),
                     created_by = table.Column<int>(type: "integer", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
@@ -375,7 +374,7 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     user_id = table.Column<int>(type: "integer", nullable: false),
-                    event_type = table.Column<string>(type: "text", nullable: false),
+                    event_type = table.Column<int>(type: "integer", nullable: false),
                     updated_by = table.Column<int>(type: "integer", nullable: true),
                     updated_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
                     field_path = table.Column<string>(type: "text", nullable: true),
@@ -436,7 +435,7 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     organisation_id = table.Column<int>(type: "integer", nullable: false),
-                    event_type = table.Column<string>(type: "text", nullable: false),
+                    event_type = table.Column<int>(type: "integer", nullable: false),
                     updated_by = table.Column<int>(type: "integer", nullable: true),
                     updated_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
                     field_path = table.Column<string>(type: "text", nullable: true),
@@ -477,7 +476,7 @@ namespace UKPS.Api.Migrations
                     signatory_email = table.Column<string>(type: "text", nullable: false),
                     signatory_job_title = table.Column<string>(type: "text", nullable: true),
                     link_expires_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
-                    status = table.Column<string>(type: "text", nullable: false),
+                    status = table.Column<int>(type: "integer", nullable: false),
                     signed_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
                     ip_address = table.Column<string>(type: "text", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
@@ -503,8 +502,8 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     user_id = table.Column<int>(type: "integer", nullable: false),
                     organisation_id = table.Column<int>(type: "integer", nullable: false),
-                    user_role = table.Column<string>(type: "text", nullable: false),
-                    status = table.Column<string>(type: "text", nullable: false),
+                    user_role = table.Column<int>(type: "integer", nullable: false),
+                    status = table.Column<int>(type: "integer", nullable: false),
                     allowed_pharmaceutical_entity = table.Column<int>(type: "integer", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
                 },
@@ -536,8 +535,8 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     user_id = table.Column<int>(type: "integer", nullable: false),
                     report_preset_id = table.Column<int>(type: "integer", nullable: true),
-                    configuration = table.Column<JsonDocument>(type: "jsonb", nullable: true),
-                    field_usage = table.Column<JsonDocument>(type: "jsonb", nullable: true),
+                    configuration = table.Column<string>(type: "jsonb", nullable: true),
+                    field_usage = table.Column<string>(type: "jsonb", nullable: true),
                     result_count = table.Column<int>(type: "integer", nullable: true),
                     exported = table.Column<bool>(type: "boolean", nullable: true),
                     ran_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
@@ -570,7 +569,7 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     medicines_product_detail_id = table.Column<int>(type: "integer", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false),
-                    name_type = table.Column<string>(type: "text", nullable: false),
+                    name_type = table.Column<int>(type: "integer", nullable: false),
                     display_order = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -586,9 +585,9 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    indication_specific_pricing_planned = table.Column<string>(type: "text", nullable: true),
+                    indication_specific_pricing_planned = table.Column<int>(type: "integer", nullable: true),
                     indication_specific_pricing_details = table.Column<string>(type: "text", nullable: true),
-                    net_uk_budget_impact_over5m = table.Column<string>(type: "text", nullable: true)
+                    net_uk_budget_impact_over5m = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -630,9 +629,9 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    is_originator_company = table.Column<string>(type: "text", nullable: true),
+                    is_originator_company = table.Column<int>(type: "integer", nullable: true),
                     originator_company_name = table.Column<string>(type: "text", nullable: true),
-                    is_co_marketed = table.Column<string>(type: "text", nullable: true),
+                    is_co_marketed = table.Column<int>(type: "integer", nullable: true),
                     co_marketing_company_name = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -650,8 +649,8 @@ namespace UKPS.Api.Migrations
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     mode_of_action = table.Column<string>(type: "text", nullable: true),
                     proposed_dose_regimen = table.Column<string>(type: "text", nullable: true),
-                    is_personalised_medicine = table.Column<string>(type: "text", nullable: true),
-                    is_repurposed_medicine = table.Column<string>(type: "text", nullable: true),
+                    is_personalised_medicine = table.Column<int>(type: "integer", nullable: true),
+                    is_repurposed_medicine = table.Column<int>(type: "integer", nullable: true),
                     repurposed_medicine_details = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -667,9 +666,9 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    pim_designation_status = table.Column<string>(type: "text", nullable: true),
-                    will_submit_to_eams = table.Column<string>(type: "text", nullable: true),
-                    eams_opinion_decision = table.Column<string>(type: "text", nullable: true),
+                    pim_designation_status = table.Column<int>(type: "integer", nullable: true),
+                    will_submit_to_eams = table.Column<int>(type: "integer", nullable: true),
+                    eams_opinion_decision = table.Column<int>(type: "integer", nullable: true),
                     eams_submission_date_id = table.Column<int>(type: "integer", nullable: true),
                     eams_opinion_date_id = table.Column<int>(type: "integer", nullable: true)
                 },
@@ -686,10 +685,10 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    eu_orphan_status = table.Column<string>(type: "text", nullable: true),
+                    eu_orphan_status = table.Column<int>(type: "integer", nullable: true),
                     eu_orphan_status_number = table.Column<string>(type: "text", nullable: true),
                     eu_orphan_granted_date_id = table.Column<int>(type: "integer", nullable: true),
-                    eu_atmp_classification_status = table.Column<string>(type: "text", nullable: true),
+                    eu_atmp_classification_status = table.Column<int>(type: "integer", nullable: true),
                     atmp_classification_id = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -712,13 +711,13 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    diagnostic_test_required = table.Column<string>(type: "text", nullable: true),
-                    genomic_test_required = table.Column<string>(type: "text", nullable: true),
-                    genomic_test_in_national_directory = table.Column<string>(type: "text", nullable: true),
+                    diagnostic_test_required = table.Column<int>(type: "integer", nullable: true),
+                    genomic_test_required = table.Column<int>(type: "integer", nullable: true),
+                    genomic_test_in_national_directory = table.Column<int>(type: "integer", nullable: true),
                     national_genomic_test_directory_id = table.Column<string>(type: "text", nullable: true),
                     genomic_sample_type_id = table.Column<int>(type: "integer", nullable: true),
                     genomic_sample_type_other = table.Column<string>(type: "text", nullable: true),
-                    genomic_turnaround_considerations = table.Column<string>(type: "text", nullable: true),
+                    genomic_turnaround_considerations = table.Column<int>(type: "integer", nullable: true),
                     patient_pathway_point_id = table.Column<int>(type: "integer", nullable: true),
                     genomic_test_pathway_point_other = table.Column<string>(type: "text", nullable: true),
                     genomic_biomarker = table.Column<string>(type: "text", nullable: true),
@@ -726,9 +725,9 @@ namespace UKPS.Api.Migrations
                     genomic_test_used_in_trials = table.Column<string>(type: "text", nullable: true),
                     genomic_test_specificity_sensitivity = table.Column<string>(type: "text", nullable: true),
                     genomic_co_mutations = table.Column<string>(type: "text", nullable: true),
-                    genomic_test_mandatory = table.Column<string>(type: "text", nullable: true),
+                    genomic_test_mandatory = table.Column<int>(type: "integer", nullable: true),
                     genomic_test_notes = table.Column<string>(type: "text", nullable: true),
-                    monitoring_tests_required = table.Column<string>(type: "text", nullable: true),
+                    monitoring_tests_required = table.Column<int>(type: "integer", nullable: true),
                     monitoring_tests_details = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -758,9 +757,9 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    screening_required = table.Column<string>(type: "text", nullable: true),
+                    screening_required = table.Column<int>(type: "integer", nullable: true),
                     screening_details = table.Column<string>(type: "text", nullable: true),
-                    urgent_identification_required = table.Column<string>(type: "text", nullable: true),
+                    urgent_identification_required = table.Column<int>(type: "integer", nullable: true),
                     urgent_identification_details = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -779,8 +778,8 @@ namespace UKPS.Api.Migrations
                     record_title = table.Column<string>(type: "text", nullable: false),
                     branded_name = table.Column<string>(type: "text", nullable: true),
                     indication = table.Column<string>(type: "text", nullable: false),
-                    indication_is_paediatric = table.Column<string>(type: "text", nullable: true),
-                    indication_is_cancer = table.Column<string>(type: "text", nullable: true),
+                    indication_is_paediatric = table.Column<int>(type: "integer", nullable: true),
+                    indication_is_cancer = table.Column<int>(type: "integer", nullable: true),
                     bnf_chapter_id = table.Column<int>(type: "integer", nullable: true),
                     therapeutic_area_id = table.Column<int>(type: "integer", nullable: true),
                     formulation_type_id = table.Column<int>(type: "integer", nullable: true),
@@ -847,12 +846,12 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    existing_nhs_service = table.Column<string>(type: "text", nullable: true),
+                    existing_nhs_service = table.Column<int>(type: "integer", nullable: true),
                     nhs_service_redesign_details = table.Column<string>(type: "text", nullable: true),
                     uk_patient_population_range_id = table.Column<int>(type: "integer", nullable: true),
                     uk_patient_population_notes = table.Column<string>(type: "text", nullable: true),
                     estimated_eligible_patient_population = table.Column<string>(type: "text", nullable: true),
-                    compassionate_access_available = table.Column<string>(type: "text", nullable: true),
+                    compassionate_access_available = table.Column<int>(type: "integer", nullable: true),
                     compassionate_access_details = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -908,9 +907,9 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     qa_review_id = table.Column<int>(type: "integer", nullable: false),
                     field_path = table.Column<string>(type: "text", nullable: false),
-                    issue_type = table.Column<string>(type: "text", nullable: false),
+                    issue_type = table.Column<int>(type: "integer", nullable: false),
                     note = table.Column<string>(type: "text", nullable: true),
-                    resolution_status = table.Column<string>(type: "text", nullable: false),
+                    resolution_status = table.Column<int>(type: "integer", nullable: false),
                     resolved_by = table.Column<int>(type: "integer", nullable: true),
                     resolved_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
                 },
@@ -935,7 +934,7 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     major_revision_submission_round_no = table.Column<int>(type: "integer", nullable: false),
-                    outcome = table.Column<string>(type: "text", nullable: false),
+                    outcome = table.Column<int>(type: "integer", nullable: false),
                     note = table.Column<string>(type: "text", nullable: true),
                     reviewed_by = table.Column<int>(type: "integer", nullable: true),
                     reviewed_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
@@ -963,7 +962,7 @@ namespace UKPS.Api.Migrations
                     study_name = table.Column<string>(type: "text", nullable: false),
                     clinical_trials_gov_number = table.Column<string>(type: "text", nullable: true),
                     brief_description = table.Column<string>(type: "text", nullable: true),
-                    recruiting_in_uk = table.Column<string>(type: "text", nullable: true)
+                    recruiting_in_uk = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -998,11 +997,11 @@ namespace UKPS.Api.Migrations
                     revision_id = table.Column<int>(type: "integer", nullable: true),
                     qa_review_id = table.Column<int>(type: "integer", nullable: true),
                     qa_review_item_id = table.Column<int>(type: "integer", nullable: true),
-                    event_type = table.Column<string>(type: "text", nullable: false),
+                    event_type = table.Column<int>(type: "integer", nullable: false),
                     performed_by = table.Column<int>(type: "integer", nullable: true),
                     performed_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
                     note = table.Column<string>(type: "text", nullable: true),
-                    payload = table.Column<JsonDocument>(type: "jsonb", nullable: true)
+                    payload = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1070,7 +1069,7 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     hta_body_vaccine = table.Column<string>(type: "text", nullable: true),
-                    hta_nice_aligned_pathway = table.Column<string>(type: "text", nullable: true),
+                    hta_nice_aligned_pathway = table.Column<int>(type: "integer", nullable: true),
                     hta_additional_details = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -1088,7 +1087,7 @@ namespace UKPS.Api.Migrations
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     irp_reference_regulator_id = table.Column<int>(type: "integer", nullable: true),
                     irp_route_id = table.Column<int>(type: "integer", nullable: true),
-                    intl_conditional_approval_anticipated = table.Column<string>(type: "text", nullable: true),
+                    intl_conditional_approval_anticipated = table.Column<int>(type: "integer", nullable: true),
                     intl_submission_date_id = table.Column<int>(type: "integer", nullable: true),
                     intl_licence_date_id = table.Column<int>(type: "integer", nullable: true)
                 },
@@ -1163,7 +1162,7 @@ namespace UKPS.Api.Migrations
                     revision_no = table.Column<int>(type: "integer", nullable: false),
                     major_version = table.Column<int>(type: "integer", nullable: false),
                     minor_version = table.Column<int>(type: "integer", nullable: false),
-                    workflow_status = table.Column<string>(type: "text", nullable: false),
+                    workflow_status = table.Column<int>(type: "integer", nullable: false),
                     created_by = table.Column<int>(type: "integer", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
                     updated_by = table.Column<int>(type: "integer", nullable: true),
@@ -1212,8 +1211,8 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     organisation_id = table.Column<int>(type: "integer", nullable: false),
-                    record_type = table.Column<string>(type: "text", nullable: false),
-                    record_status = table.Column<string>(type: "text", nullable: false),
+                    record_type = table.Column<int>(type: "integer", nullable: false),
+                    record_status = table.Column<int>(type: "integer", nullable: false),
                     published_revision_id = table.Column<int>(type: "integer", nullable: true),
                     current_draft_revision_id = table.Column<int>(type: "integer", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
@@ -1261,8 +1260,8 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    date_event = table.Column<string>(type: "text", nullable: false),
-                    date_precision = table.Column<string>(type: "text", nullable: false),
+                    date_event = table.Column<int>(type: "integer", nullable: false),
+                    date_precision = table.Column<int>(type: "integer", nullable: false),
                     date_value = table.Column<DateOnly>(type: "date", nullable: false),
                     is_confidential = table.Column<bool>(type: "boolean", nullable: false),
                     conditional_approval_anticipated = table.Column<bool>(type: "boolean", nullable: true)
@@ -1287,11 +1286,11 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    is_originator_company = table.Column<string>(type: "text", nullable: true),
+                    is_originator_company = table.Column<int>(type: "integer", nullable: true),
                     originator_company_name = table.Column<string>(type: "text", nullable: true),
-                    has_been_acquired = table.Column<string>(type: "text", nullable: false),
+                    has_been_acquired = table.Column<int>(type: "integer", nullable: false),
                     previous_owner = table.Column<string>(type: "text", nullable: true),
-                    has_grant_funding = table.Column<string>(type: "text", nullable: false),
+                    has_grant_funding = table.Column<int>(type: "integer", nullable: false),
                     grant_funding_identifier = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -1394,7 +1393,7 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     storage_requirement_id = table.Column<int>(type: "integer", nullable: false),
-                    requires_reconstitution = table.Column<string>(type: "text", nullable: false),
+                    requires_reconstitution = table.Column<int>(type: "integer", nullable: false),
                     additional_service_notes = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -1427,7 +1426,7 @@ namespace UKPS.Api.Migrations
                     vaccine_platform_id = table.Column<int>(type: "integer", nullable: false),
                     vaccine_platform_other = table.Column<string>(type: "text", nullable: true),
                     administration_route_id = table.Column<int>(type: "integer", nullable: false),
-                    has_adjuvant = table.Column<string>(type: "text", nullable: false)
+                    has_adjuvant = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1463,9 +1462,9 @@ namespace UKPS.Api.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     record_id = table.Column<int>(type: "integer", nullable: false),
-                    from_status = table.Column<string>(type: "text", nullable: true),
-                    to_status = table.Column<string>(type: "text", nullable: false),
-                    reason = table.Column<string>(type: "text", nullable: true),
+                    from_status = table.Column<int>(type: "integer", nullable: true),
+                    to_status = table.Column<int>(type: "integer", nullable: false),
+                    reason = table.Column<int>(type: "integer", nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
                     updated_by = table.Column<int>(type: "integer", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamptz", nullable: false)

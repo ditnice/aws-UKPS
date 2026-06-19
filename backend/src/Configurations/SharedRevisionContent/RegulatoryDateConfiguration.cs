@@ -10,8 +10,8 @@ internal sealed class RegulatoryDateConfiguration : IEntityTypeConfiguration<Reg
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.DateEvent).HasConversion<string>();
-        builder.Property(x => x.DatePrecision).HasConversion<string>();
+        builder.Property(x => x.DateEvent);
+        builder.Property(x => x.DatePrecision);
         builder.Property(x => x.DateValue).IsRequired();
 
         builder.HasIndex(x => new { x.RevisionId, x.DateEvent, x.DatePrecision })

@@ -10,7 +10,7 @@ internal sealed class RecordIntlRecognitionConfiguration : IEntityTypeConfigurat
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.IntlConditionalApprovalAnticipated).HasConversion<string>();
+        builder.Property(x => x.IntlConditionalApprovalAnticipated);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_record_intl_recognition_revision_id");

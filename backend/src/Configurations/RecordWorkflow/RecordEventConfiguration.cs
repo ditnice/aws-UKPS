@@ -12,7 +12,7 @@ internal sealed class RecordEventConfiguration : IEntityTypeConfiguration<Record
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.EventType).HasConversion<string>();
+        builder.Property(x => x.EventType);
         builder.Property(x => x.PerformedAt).HasColumnType("timestamptz").IsRequired();
         builder.Property(x => x.Payload)
             .HasColumnType("jsonb")

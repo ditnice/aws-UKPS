@@ -11,8 +11,8 @@ internal sealed class QaReviewItemConfiguration : IEntityTypeConfiguration<QaRev
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.FieldPath).IsRequired();
-        builder.Property(x => x.IssueType).HasConversion<string>();
-        builder.Property(x => x.ResolutionStatus).HasConversion<string>();
+        builder.Property(x => x.IssueType);
+        builder.Property(x => x.ResolutionStatus);
         builder.Property(x => x.ResolvedAt).HasColumnType("timestamptz");
 
         builder.HasIndex(x => x.QaReviewId)

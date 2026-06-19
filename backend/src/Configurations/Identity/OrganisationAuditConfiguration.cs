@@ -11,7 +11,7 @@ internal sealed class OrganisationAuditConfiguration : IEntityTypeConfiguration<
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.EventType).HasConversion<string>();
+        builder.Property(x => x.EventType);
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz").IsRequired();
 
         builder.HasIndex(x => x.OrganisationId)

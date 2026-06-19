@@ -10,8 +10,8 @@ internal sealed class MedicinesBudgetImpactConfiguration : IEntityTypeConfigurat
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.IndicationSpecificPricingPlanned).HasConversion<string>();
-        builder.Property(x => x.NetUkBudgetImpactOver5M).HasConversion<string>();
+        builder.Property(x => x.IndicationSpecificPricingPlanned);
+        builder.Property(x => x.NetUkBudgetImpactOver5M);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_budget_impact_revision_id");

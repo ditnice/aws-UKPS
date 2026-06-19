@@ -2,7 +2,7 @@ namespace UKPS.Api.Enums;
 
 public enum YesNoUnknown
 {
-    Yes,
-    No,
-    Unknown
+    Yes = 0,
+    No = 1,
+    Unknown = 2
 }

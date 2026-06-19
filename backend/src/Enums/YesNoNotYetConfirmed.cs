@@ -2,7 +2,7 @@ namespace UKPS.Api.Enums;
 
 public enum YesNoNotYetConfirmed
 {
-    Yes,
-    No,
-    NotYetConfirmed
+    Yes = 0,
+    No = 1,
+    NotYetConfirmed = 2,
 }

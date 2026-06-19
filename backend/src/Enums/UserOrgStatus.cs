@@ -2,8 +2,8 @@ namespace UKPS.Api.Enums;
 
 public enum UserOrgStatus
 {
-    Pending,
-    Approved,
-    Rejected,
-    Inactive
+    Pending = 0,
+    Approved = 1,
+    Rejected = 2,
+    Inactive = 3,
 }

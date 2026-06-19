@@ -2,6 +2,6 @@ namespace UKPS.Api.Enums;
 
 public enum QaOutcome
 {
-    Approved,
-    Rejected
+    Approved = 0,
+    Rejected = 1
 }

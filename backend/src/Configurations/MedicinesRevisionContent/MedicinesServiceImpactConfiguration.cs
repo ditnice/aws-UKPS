@@ -10,8 +10,8 @@ internal sealed class MedicinesServiceImpactConfiguration : IEntityTypeConfigura
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.ExistingNhsService).HasConversion<string>();
-        builder.Property(x => x.CompassionateAccessAvailable).HasConversion<string>();
+        builder.Property(x => x.ExistingNhsService);
+        builder.Property(x => x.CompassionateAccessAvailable);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_service_impact_revision_id");

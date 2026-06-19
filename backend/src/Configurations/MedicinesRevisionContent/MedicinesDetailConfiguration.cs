@@ -10,8 +10,8 @@ internal sealed class MedicinesDetailConfiguration : IEntityTypeConfiguration<Me
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.IsPersonalisedMedicine).HasConversion<string>();
-        builder.Property(x => x.IsRepurposedMedicine).HasConversion<string>();
+        builder.Property(x => x.IsPersonalisedMedicine);
+        builder.Property(x => x.IsRepurposedMedicine);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_detail_revision_id");

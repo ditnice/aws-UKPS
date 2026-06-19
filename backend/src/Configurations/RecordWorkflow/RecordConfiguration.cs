@@ -10,8 +10,8 @@ internal sealed class RecordConfiguration : IEntityTypeConfiguration<Record>
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.RecordType).HasConversion<string>();
-        builder.Property(x => x.RecordStatus).HasConversion<string>();
+        builder.Property(x => x.RecordType);
+        builder.Property(x => x.RecordStatus);
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz").IsRequired();
         builder.Property(x => x.ReviewedAt).HasColumnType("timestamptz");
 
