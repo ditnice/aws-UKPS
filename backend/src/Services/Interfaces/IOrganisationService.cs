@@ -1,6 +1,6 @@
 using UKPS.Api.DTOs;
 
-namespace UKPS.Api.Services;
+namespace UKPS.Api.Services.Interfaces;
 
 public interface IOrganisationService
 {

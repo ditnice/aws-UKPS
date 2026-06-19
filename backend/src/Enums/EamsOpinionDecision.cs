@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum EamsOpinionDecision
+public enum EamsOpinionDecision
 {
     Positive,
     Negative

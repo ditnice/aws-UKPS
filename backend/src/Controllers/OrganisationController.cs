@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.DTOs;
-using UKPS.Api.Services;
+using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Controllers;
 

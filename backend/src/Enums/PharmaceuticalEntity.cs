@@ -5,9 +5,9 @@ namespace UKPS.Api.Enums;
 /// UserOrgMembership and TermsAcceptance use Medicines or Vaccines only.
 /// </summary>
 [Flags]
-internal enum PharmaceuticalEntity
+public enum PharmaceuticalEntity
 {
     Medicines = 1,
     Vaccines = 2,
-    Both = Medicines | Vaccines
+    Both = Medicines | Vaccines,
 }

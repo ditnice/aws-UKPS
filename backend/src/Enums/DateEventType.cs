@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum DateEventType
+public enum DateEventType
 {
     UkSubmission,
     UkLicence,

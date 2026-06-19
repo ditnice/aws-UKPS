@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum YesNoNotYetConfirmed
+public enum YesNoNotYetConfirmed
 {
     Yes,
     No,

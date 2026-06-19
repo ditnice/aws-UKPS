@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum YesNoUnknown
+public enum YesNoUnknown
 {
     Yes,
     No,

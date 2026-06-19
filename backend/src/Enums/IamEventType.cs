@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum IamEventType
+public enum IamEventType
 {
     FieldUpdated,
     StatusChanged,

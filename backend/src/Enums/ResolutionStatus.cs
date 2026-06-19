@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum ResolutionStatus
+public enum ResolutionStatus
 {
     Unresolved,
     Resolved

@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum WorkflowStatus
+public enum WorkflowStatus
 {
     Draft,
     InReview,

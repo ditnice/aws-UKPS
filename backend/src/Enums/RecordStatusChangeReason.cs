@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum RecordStatusChangeReason
+public enum RecordStatusChangeReason
 {
     DevelopmentDiscontinued,
     TrialSuspended,

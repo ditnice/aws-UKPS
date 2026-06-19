@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum IssueType
+public enum IssueType
 {
     MissingDetail,
     InvalidValue,

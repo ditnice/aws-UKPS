@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum UserOrgStatus
+public enum UserOrgStatus
 {
     Pending,
     Approved,

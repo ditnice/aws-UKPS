@@ -14,13 +14,19 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.DTOs")]
 
-// Might need to split the Services directory into Interfaces and Services (?) to narrow the scope of this suppression
+[assembly: SuppressMessage(
+    "Maintainability",
+    "CA1515:Consider making public types internal",
+    Justification = "Must be public as they are used in DTOs",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api.Enums")]
+
 [assembly: SuppressMessage(
     "Maintainability",
     "CA1515:Consider making public types internal",
     Justification = "Constructor parameters of controllers are required to be public.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Services")]
+    Target = "~N:UKPS.Api.Services.Interfaces")]
 
 [assembly: SuppressMessage(
     "Maintainability",

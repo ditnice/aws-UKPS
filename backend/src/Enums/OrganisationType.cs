@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum OrganisationType
+public enum OrganisationType
 {
     PharmaCompany,
     HorizonScanning,

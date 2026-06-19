@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum RecordType
+public enum RecordType
 {
     Medicine,
     Vaccine

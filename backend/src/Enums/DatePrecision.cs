@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum DatePrecision
+public enum DatePrecision
 {
     EstimatedQuarter,
     EstimatedMonth,

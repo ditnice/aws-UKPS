@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Data;
 using UKPS.Api.Services;
+using UKPS.Api.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

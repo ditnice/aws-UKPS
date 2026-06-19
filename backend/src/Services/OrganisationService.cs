@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
+using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Services;
 
@@ -14,8 +15,12 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
             .SingleOrDefaultAsync(o => o.Id == id)
             .ConfigureAwait(false);
 
-        return (organisation is null) ? null
-        : new OrganisationDetailsDto
+        return (organisation is null) ? null : MapToDto(organisation);
+    }
+
+    private static OrganisationDetailsDto MapToDto(Organisation organisation)
+    {
+        return new OrganisationDetailsDto
         {
             Id = organisation.Id,
             OrganisationName = organisation.OrganisationName,

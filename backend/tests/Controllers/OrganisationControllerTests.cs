@@ -1,24 +1,29 @@
+using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
-using UKPS.Api.Services;
+using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Tests.Controllers;
 
 public class OrganisationControllerTests
 {
     [Fact]
-    public async Task GetById_ReturnsOk_WhenOrganisationExists()
+    public async Task GetOrganisationById_ReturnsOk_WhenOrganisationExists()
     {
         OrganisationDetailsDto expected = new()
         {
             Id = 1,
-            OrganisationType = OrganisationType.PharmaCompany,
             OrganisationName = "Acme Pharma Ltd",
+            OrganisationType = OrganisationType.PharmaCompany,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
             HeadOfficeAddress = "1 High Street, London, EC1A 1AA",
             HeadOfficeEmail = "info@acme.com",
-            HeadOfficeTelephone = "020 1234 5678"
+            HeadOfficeTelephone = "020 1234 5678",
+            Status = UserOrgStatus.Approved,
+            LastActive = DateTime.Now,
+            CreatedAt = DateTime.Now
         };
         OrganisationController controller = new(new StubOrganisationService(expected));
 
@@ -29,7 +34,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public async Task GetById_ReturnsNotFound_WhenOrganisationDoesNotExist()
+    public async Task GetOrganisationById_ReturnsNotFound_WhenOrganisationDoesNotExist()
     {
         OrganisationController controller = new(new StubOrganisationService(null));
 
@@ -39,7 +44,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public async Task GetById_PassesIdToService()
+    public async Task GetOrganisationById_PassesIdToService()
     {
         CapturingOrganisationService service = new();
         OrganisationController controller = new(service);

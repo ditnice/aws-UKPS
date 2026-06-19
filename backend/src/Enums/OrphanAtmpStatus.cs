@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum OrphanAtmpStatus
+public enum OrphanAtmpStatus
 {
     Granted,
     No,

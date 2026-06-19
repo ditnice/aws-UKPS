@@ -1,6 +1,6 @@
 namespace UKPS.Api.Enums;
 
-internal enum ReferenceDataType
+public enum ReferenceDataType
 {
     MedicinesOnly,
     VaccinesOnly,
