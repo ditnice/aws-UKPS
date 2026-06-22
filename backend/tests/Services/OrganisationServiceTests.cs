@@ -28,8 +28,8 @@ public class OrganisationServiceTests
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
-            LastActive = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Local),
-            CreatedAt = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Local),
+            LastActive = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
+            CreatedAt = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
         });
         await dbContext.SaveChangesAsync();
         int id = (await dbContext.Organisations.SingleAsync()).Id;
@@ -46,8 +46,8 @@ public class OrganisationServiceTests
         Assert.Equal("info@acme.com", result.HeadOfficeEmail);
         Assert.Equal("020 1234 5678", result.HeadOfficeTelephone);
         Assert.Equal(UserOrgStatus.Approved, result.Status);
-        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Local), result.LastActive);
-        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Local), result.CreatedAt);
+        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), result.LastActive);
+        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), result.CreatedAt);
     }
 
     [Fact]

@@ -9,7 +9,9 @@ namespace UKPS.Api.Controllers;
 public class OrganisationController(IOrganisationService organisationService) : ControllerBase
 {
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetOrganisationById(int id)
+    [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(int id)
     {
         OrganisationDetailsDto? organisation = await organisationService.GetOrganisationById(id).ConfigureAwait(false);
 

@@ -1,4 +1,3 @@
-using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
@@ -22,14 +21,14 @@ public class OrganisationControllerTests
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
-            LastActive = DateTime.Now,
-            CreatedAt = DateTime.Now
+            LastActive = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
         };
         OrganisationController controller = new(new StubOrganisationService(expected));
 
-        IActionResult result = await controller.GetOrganisationById(1);
+        ActionResult<OrganisationDetailsDto> result = await controller.GetOrganisationById(1);
 
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
+        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
         Assert.Same(expected, ok.Value);
     }
 
@@ -38,9 +37,9 @@ public class OrganisationControllerTests
     {
         OrganisationController controller = new(new StubOrganisationService(null));
 
-        IActionResult result = await controller.GetOrganisationById(99);
+        ActionResult<OrganisationDetailsDto> result = await controller.GetOrganisationById(99);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]

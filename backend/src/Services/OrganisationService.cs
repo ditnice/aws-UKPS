@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
-using UKPS.Api.Entities.Identity;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Services;
@@ -10,29 +9,24 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
 {
     public async Task<OrganisationDetailsDto?> GetOrganisationById(int id)
     {
-        Organisation? organisation = await dbContext.Organisations
+        return await dbContext.Organisations
             .AsNoTracking()
-            .SingleOrDefaultAsync(o => o.Id == id)
+            .Where(o => o.Id == id)
+            .Select(o => new OrganisationDetailsDto
+            {
+                Id = o.Id,
+                OrganisationName = o.OrganisationName,
+                OrganisationType = o.OrganisationType,
+                AllowedPharmaceuticalEntity = o.AllowedPharmaceuticalEntity,
+                CountryOrRegion = o.CountryOrRegion,
+                HeadOfficeAddress = o.HeadOfficeAddress,
+                HeadOfficeEmail = o.HeadOfficeEmail,
+                HeadOfficeTelephone = o.HeadOfficeTelephone,
+                Status = o.Status,
+                LastActive = o.LastActive,
+                CreatedAt = o.CreatedAt,
+            })
+            .SingleOrDefaultAsync()
             .ConfigureAwait(false);
-
-        return (organisation is null) ? null : MapToDto(organisation);
-    }
-
-    private static OrganisationDetailsDto MapToDto(Organisation organisation)
-    {
-        return new OrganisationDetailsDto
-        {
-            Id = organisation.Id,
-            OrganisationName = organisation.OrganisationName,
-            OrganisationType = organisation.OrganisationType,
-            AllowedPharmaceuticalEntity = organisation.AllowedPharmaceuticalEntity,
-            CountryOrRegion = organisation.CountryOrRegion,
-            HeadOfficeAddress = organisation.HeadOfficeAddress,
-            HeadOfficeEmail = organisation.HeadOfficeEmail,
-            HeadOfficeTelephone = organisation.HeadOfficeTelephone,
-            Status = organisation.Status,
-            LastActive = organisation.LastActive,
-            CreatedAt = organisation.CreatedAt,
-        };
     }
 }
