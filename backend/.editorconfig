@@ -129,6 +129,9 @@ csharp_space_between_square_brackets = false
 # Namespace matches folder structure
 dotnet_diagnostic.IDE0130.severity = warning
 
+# Enums must have explicit numeric values
+dotnet_diagnostic.RCS1161.severity = warning
+
 [src/Migrations/*.cs]
 generated_code = true
 
