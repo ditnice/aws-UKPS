@@ -10,7 +10,7 @@ internal sealed class VaccinesServiceReadinessConfiguration : IEntityTypeConfigu
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.RequiresReconstitution).HasConversion<string>();
+        builder.Property(x => x.RequiresReconstitution);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_vaccines_service_readiness_revision_id");

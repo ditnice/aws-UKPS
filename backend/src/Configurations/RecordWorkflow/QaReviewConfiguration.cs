@@ -10,7 +10,7 @@ internal sealed class QaReviewConfiguration : IEntityTypeConfiguration<QaReview>
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.Outcome).HasConversion<string>();
+        builder.Property(x => x.Outcome);
         builder.Property(x => x.ReviewedAt).HasColumnType("timestamptz").IsRequired();
 
         builder.HasIndex(x => x.RevisionId)

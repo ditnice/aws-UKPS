@@ -1,7 +1,7 @@
 namespace UKPS.Api.Enums;
 
-internal enum SubstanceNameType
+public enum SubstanceNameType
 {
-    GenericName,
-    DevelopmentName
+    GenericName = 0,
+    DevelopmentName = 1,
 }

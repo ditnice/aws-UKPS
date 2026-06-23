@@ -11,12 +11,12 @@ internal sealed class MedicinesLaboratoryTestingConfiguration
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.DiagnosticTestRequired).HasConversion<string>();
-        builder.Property(x => x.GenomicTestRequired).HasConversion<string>();
-        builder.Property(x => x.GenomicTestInNationalDirectory).HasConversion<string>();
-        builder.Property(x => x.GenomicTurnaroundConsiderations).HasConversion<string>();
-        builder.Property(x => x.GenomicTestMandatory).HasConversion<string>();
-        builder.Property(x => x.MonitoringTestsRequired).HasConversion<string>();
+        builder.Property(x => x.DiagnosticTestRequired);
+        builder.Property(x => x.GenomicTestRequired);
+        builder.Property(x => x.GenomicTestInNationalDirectory);
+        builder.Property(x => x.GenomicTurnaroundConsiderations);
+        builder.Property(x => x.GenomicTestMandatory);
+        builder.Property(x => x.MonitoringTestsRequired);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_laboratory_testing_revision_id");

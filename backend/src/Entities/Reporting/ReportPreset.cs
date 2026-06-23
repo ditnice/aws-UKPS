@@ -1,4 +1,3 @@
-using System.Text.Json;
 using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.Reporting;
@@ -23,7 +22,7 @@ internal sealed class ReportPreset
     /// StrategicReport: date field, primary category field + selected options,
     /// optional secondary category field + selected options.
     /// </summary>
-    public JsonDocument Configuration { get; set; } = null!;
+    public ReportPresetConfigurationDocument Configuration { get; set; } = new();
 
     public bool IsShared { get; set; }
     public int CreatedBy { get; set; }

@@ -1,7 +1,7 @@
 namespace UKPS.Api.Enums;
 
-internal enum QaOutcome
+public enum QaOutcome
 {
-    Approved,
-    Rejected
+    Approved = 0,
+    Rejected = 1
 }

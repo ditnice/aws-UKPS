@@ -11,7 +11,7 @@ internal sealed class UserAuditConfiguration : IEntityTypeConfiguration<UserAudi
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.EventType).HasConversion<string>();
+        builder.Property(x => x.EventType);
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz").IsRequired();
 
         builder.HasIndex(x => x.UserId)

@@ -10,9 +10,9 @@ internal sealed class VaccinesCompanyInfoConfiguration : IEntityTypeConfiguratio
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.IsOriginatorCompany).HasConversion<string>();
-        builder.Property(x => x.HasBeenAcquired).HasConversion<string>();
-        builder.Property(x => x.HasGrantFunding).HasConversion<string>();
+        builder.Property(x => x.IsOriginatorCompany);
+        builder.Property(x => x.HasBeenAcquired);
+        builder.Property(x => x.HasGrantFunding);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_vaccines_company_info_revision_id");

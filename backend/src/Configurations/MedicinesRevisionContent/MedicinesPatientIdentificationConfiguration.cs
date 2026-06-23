@@ -11,8 +11,8 @@ internal sealed class MedicinesPatientIdentificationConfiguration
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.ScreeningRequired).HasConversion<string>();
-        builder.Property(x => x.UrgentIdentificationRequired).HasConversion<string>();
+        builder.Property(x => x.ScreeningRequired);
+        builder.Property(x => x.UrgentIdentificationRequired);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_patient_identification_revision_id");

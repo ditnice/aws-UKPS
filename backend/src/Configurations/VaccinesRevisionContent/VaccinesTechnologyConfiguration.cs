@@ -10,7 +10,7 @@ internal sealed class VaccinesTechnologyConfiguration : IEntityTypeConfiguration
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.HasAdjuvant).HasConversion<string>();
+        builder.Property(x => x.HasAdjuvant);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_vaccines_technology_revision_id");

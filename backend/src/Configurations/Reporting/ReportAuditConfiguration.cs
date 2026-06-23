@@ -10,8 +10,19 @@ internal sealed class ReportAuditConfiguration : IEntityTypeConfiguration<Report
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.Configuration).HasColumnType("jsonb");
-        builder.Property(x => x.FieldUsage).HasColumnType("jsonb");
+
+        builder.ComplexProperty(x => x.Configuration, configuration =>
+        {
+            configuration.ToJson();
+            configuration.IsRequired();
+        });
+
+        builder.ComplexProperty(x => x.FieldUsage, fieldUsage =>
+        {
+            fieldUsage.ToJson();
+            fieldUsage.IsRequired();
+        });
+
         builder.Property(x => x.RanAt).HasColumnType("timestamptz").IsRequired();
 
         builder.HasOne(x => x.User)

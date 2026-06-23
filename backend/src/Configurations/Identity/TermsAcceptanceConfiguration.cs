@@ -14,7 +14,7 @@ internal sealed class TermsAcceptanceConfiguration : IEntityTypeConfiguration<Te
         builder.Property(x => x.RelevantPharmaceuticalEntity).HasConversion<int>();
         builder.Property(x => x.SignatoryName).IsRequired();
         builder.Property(x => x.SignatoryEmail).IsRequired();
-        builder.Property(x => x.Status).HasConversion<string>();
+        builder.Property(x => x.Status);
         builder.Property(x => x.LinkExpiresAt).HasColumnType("timestamptz");
         builder.Property(x => x.SignedAt).HasColumnType("timestamptz");
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");

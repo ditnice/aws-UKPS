@@ -1,4 +1,3 @@
-using System.Text.Json;
 using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.RecordWorkflow;
@@ -26,7 +25,7 @@ internal sealed class RecordEvent
     public string? Note { get; set; }
 
     /// <summary>Structured metadata specific to the event type. Stored as jsonb.</summary>
-    public JsonDocument? Payload { get; set; }
+    public RecordEventPayloadDocument? Payload { get; set; }
 
     // Navigation
     public Record Record { get; set; } = null!;

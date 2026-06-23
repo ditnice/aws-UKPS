@@ -10,9 +10,9 @@ internal sealed class RecordStatusHistoryConfiguration : IEntityTypeConfiguratio
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.FromStatus).HasConversion<string>();
-        builder.Property(x => x.ToStatus).HasConversion<string>();
-        builder.Property(x => x.Reason).HasConversion<string>();
+        builder.Property(x => x.FromStatus);
+        builder.Property(x => x.ToStatus);
+        builder.Property(x => x.Reason);
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz").IsRequired();
 
         builder.HasIndex(x => x.RecordId)

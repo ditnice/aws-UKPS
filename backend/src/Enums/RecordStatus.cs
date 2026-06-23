@@ -1,9 +1,9 @@
 namespace UKPS.Api.Enums;
 
-internal enum RecordStatus
+public enum RecordStatus
 {
-    Unpublished,
-    Active,
-    OnHold,
-    Archived
+    Unpublished = 0,
+    Active = 1,
+    OnHold = 2,
+    Archived = 3,
 }

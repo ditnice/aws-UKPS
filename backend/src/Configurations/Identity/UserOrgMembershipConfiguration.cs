@@ -11,8 +11,8 @@ internal sealed class UserOrgMembershipConfiguration : IEntityTypeConfiguration<
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.UserRole).HasConversion<string>();
-        builder.Property(x => x.Status).HasConversion<string>();
+        builder.Property(x => x.UserRole);
+        builder.Property(x => x.Status);
         // PharmaceuticalEntity is a [Flags] integer
         builder.Property(x => x.AllowedPharmaceuticalEntity).HasConversion<int>();
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");

@@ -12,8 +12,8 @@ internal sealed class MedicinesProductDetailConfiguration : IEntityTypeConfigura
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RecordTitle).IsRequired();
         builder.Property(x => x.Indication).IsRequired();
-        builder.Property(x => x.IndicationIsPaediatric).HasConversion<string>();
-        builder.Property(x => x.IndicationIsCancer).HasConversion<string>();
+        builder.Property(x => x.IndicationIsPaediatric);
+        builder.Property(x => x.IndicationIsCancer);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_product_detail_revision_id");

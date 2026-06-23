@@ -10,13 +10,15 @@ internal sealed class ReportPresetConfiguration : IEntityTypeConfiguration<Repor
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.ApplicableUserType).HasConversion<string>();
+        builder.Property(x => x.ApplicableUserType);
         // PharmaceuticalEntity is a [Flags] integer
         builder.Property(x => x.ApplicablePharmaceuticalEntity).HasConversion<int>();
         builder.Property(x => x.Title).IsRequired();
-        builder.Property(x => x.Configuration)
-               .HasColumnType("jsonb")
-               .IsRequired();
+        builder.ComplexProperty(x => x.Configuration, configuration =>
+        {
+            configuration.ToJson();
+            configuration.IsRequired();
+        });
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
 
         builder.HasOne(x => x.CreatedByUser)

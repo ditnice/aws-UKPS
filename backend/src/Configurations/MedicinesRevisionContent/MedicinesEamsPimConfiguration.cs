@@ -10,9 +10,9 @@ internal sealed class MedicinesEamsPimConfiguration : IEntityTypeConfiguration<M
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.PimDesignationStatus).HasConversion<string>();
-        builder.Property(x => x.WillSubmitToEams).HasConversion<string>();
-        builder.Property(x => x.EamsOpinionDecision).HasConversion<string>();
+        builder.Property(x => x.PimDesignationStatus);
+        builder.Property(x => x.WillSubmitToEams);
+        builder.Property(x => x.EamsOpinionDecision);
 
         builder.HasIndex(x => x.RevisionId).IsUnique()
                .HasDatabaseName("ix_medicines_eams_pim_revision_id");

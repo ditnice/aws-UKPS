@@ -1,10 +1,10 @@
 namespace UKPS.Api.Enums;
 
-internal enum RecordStatusChangeReason
+public enum RecordStatusChangeReason
 {
-    DevelopmentDiscontinued,
-    TrialSuspended,
-    FilingWithdrawn,
-    AwaitingExternalClarification,
-    Other
+    DevelopmentDiscontinued = 0,
+    TrialSuspended = 1,
+    FilingWithdrawn = 2,
+    AwaitingExternalClarification = 3,
+    Other = 4,
 }

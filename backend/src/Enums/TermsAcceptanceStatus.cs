@@ -1,10 +1,10 @@
 namespace UKPS.Api.Enums;
 
-internal enum TermsAcceptanceStatus
+public enum TermsAcceptanceStatus
 {
-    Pending,
+    Pending = 0,
 #pragma warning disable CA1720
-    Signed,
+    Signed = 1,
 #pragma warning restore CA1720
-    Expired
+    Expired = 2,
 }

@@ -1,9 +1,9 @@
 namespace UKPS.Api.Enums;
 
-internal enum OrganisationType
+public enum OrganisationType
 {
-    PharmaCompany,
-    HorizonScanning,
-    Strategic,
-    Internal
+    PharmaCompany = 0,
+    HorizonScanning = 1,
+    Strategic = 2,
+    Internal = 3,
 }
