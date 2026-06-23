@@ -25,11 +25,13 @@ variable "region" {
 variable "frontend_db_master_username" {
   description = "Master username for the Aurora cluster"
   type        = string
+  default     = "ukpsadmin"
 }
 
 variable "backend_db_master_username" {
   description = "Master username for the Aurora cluster"
   type        = string
+  default     = "ukpsadmin"
 }
 
 variable "ecr_image_tag_mutability" {
@@ -111,20 +113,10 @@ variable "aurora_engine_version" {
   default     = "17.9"
 }
 
-variable "aurora_postgres_identifier" {
-  description = "The identifier for the Aurora PostgreSQL instance"
-  type        = string
-}
-
 variable "aurora_apply_immediately" {
   description = "Whether Aurora changes are applied immediately instead of during the maintenance window"
   type        = bool
   default     = true
-}
-
-variable "kms_key_arn" {
-  description = "ARN of the KMS key to use for encrypting resources. This key must be in the same region as the resources being encrypted."
-  type        = string
 }
 
 variable "aurora_allow_major_version_upgrade" {
@@ -160,7 +152,7 @@ variable "aurora_skip_final_snapshot" {
 variable "aurora_final_snapshot_identifier" {
   description = "Identifier for the final snapshot when skip_final_snapshot is false"
   type        = string
-  default     = "snapshot_id"
+  default     = "snapshot-id"
 }
 
 variable "frontend_target_group_arn" {
