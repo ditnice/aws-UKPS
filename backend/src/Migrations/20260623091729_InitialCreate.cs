@@ -349,10 +349,10 @@ namespace UKPS.Api.Migrations
                     applicable_user_type = table.Column<int>(type: "integer", nullable: false),
                     applicable_pharmaceutical_entity = table.Column<int>(type: "integer", nullable: false),
                     title = table.Column<string>(type: "text", nullable: false),
-                    configuration = table.Column<string>(type: "jsonb", nullable: false),
                     is_shared = table.Column<bool>(type: "boolean", nullable: false),
                     created_by = table.Column<int>(type: "integer", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
+                    updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
+                    configuration = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -535,11 +535,11 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     user_id = table.Column<int>(type: "integer", nullable: false),
                     report_preset_id = table.Column<int>(type: "integer", nullable: true),
-                    configuration = table.Column<string>(type: "jsonb", nullable: true),
-                    field_usage = table.Column<string>(type: "jsonb", nullable: true),
+                    field_usage = table.Column<string[]>(type: "text[]", nullable: false),
                     result_count = table.Column<int>(type: "integer", nullable: true),
                     exported = table.Column<bool>(type: "boolean", nullable: true),
-                    ran_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
+                    ran_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    configuration = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {

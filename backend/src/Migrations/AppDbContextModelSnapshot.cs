@@ -1191,10 +1191,6 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("note");
 
-                    b.Property<string>("Payload")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("payload");
-
                     b.Property<DateTime>("PerformedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("performed_at");
@@ -1218,6 +1214,21 @@ namespace UKPS.Api.Migrations
                     b.Property<int?>("RevisionId")
                         .HasColumnType("integer")
                         .HasColumnName("revision_id");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Payload", "UKPS.Api.Entities.RecordWorkflow.RecordEvent.Payload#RecordEventPayloadDocument", b1 =>
+                        {
+                            b1.Property<string>("Description")
+                                .IsRequired()
+                                .HasJsonPropertyName("description");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasJsonPropertyName("name");
+
+                            b1
+                                .ToJson("payload")
+                                .HasColumnType("jsonb");
+                        });
 
                     b.HasKey("Id")
                         .HasName("pk_record_events");
@@ -1860,7 +1871,7 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("user_id");
 
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Configuration", "UKPS.Api.Entities.Reporting.ReportAudit.Configuration#ReportAuditConfigurationSnapshot", b1 =>
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Configuration", "UKPS.Api.Entities.Reporting.ReportAudit.Configuration#ReportAuditConfigurationDocument", b1 =>
                         {
                             b1.IsRequired();
 
@@ -1905,11 +1916,6 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("applicable_user_type");
 
-                    b.Property<string>("Configuration")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("configuration");
-
                     b.Property<int>("CreatedBy")
                         .HasColumnType("integer")
                         .HasColumnName("created_by");
@@ -1926,6 +1932,22 @@ namespace UKPS.Api.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("updated_at");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Configuration", "UKPS.Api.Entities.Reporting.ReportPreset.Configuration#ReportPresetConfigurationDocument", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<bool>("Enabled")
+                                .HasJsonPropertyName("enabled");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasJsonPropertyName("name");
+
+                            b1
+                                .ToJson("configuration")
+                                .HasColumnType("jsonb");
+                        });
 
                     b.HasKey("Id")
                         .HasName("pk_report_presets");

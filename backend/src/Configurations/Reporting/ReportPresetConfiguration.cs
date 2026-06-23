@@ -1,7 +1,5 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UKPS.Api.Entities.Reporting;
 
 namespace UKPS.Api.Configurations.Reporting;
@@ -16,12 +14,11 @@ internal sealed class ReportPresetConfiguration : IEntityTypeConfiguration<Repor
         // PharmaceuticalEntity is a [Flags] integer
         builder.Property(x => x.ApplicablePharmaceuticalEntity).HasConversion<int>();
         builder.Property(x => x.Title).IsRequired();
-        builder.Property(x => x.Configuration)
-               .HasColumnType("jsonb")
-               .IsRequired()
-               .HasConversion(new ValueConverter<JsonDocument, string>(
-                   doc => doc.RootElement.GetRawText(),
-                   json => JsonDocument.Parse(json)));
+        builder.ComplexProperty(x => x.Configuration, configuration =>
+        {
+            configuration.ToJson();
+            configuration.IsRequired();
+        });
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
 
         builder.HasOne(x => x.CreatedByUser)

@@ -15,7 +15,7 @@ internal sealed class ReportAudit
     public int? ReportPresetId { get; set; }
 
     /// <summary>Full config at time of run. Always stored regardless of preset.</summary>
-    public ReportAuditConfigurationSnapshot Configuration { get; set; } = new();
+    public ReportAuditConfigurationDocument Configuration { get; set; } = new();
 
     /// <summary>
     /// Array of field names referenced in the configuration.
