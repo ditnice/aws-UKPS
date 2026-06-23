@@ -1,6 +1,3 @@
-using System.Text.Json;
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.Reporting;
 
 /// <summary>
@@ -18,14 +15,14 @@ internal sealed class ReportAudit
     public int? ReportPresetId { get; set; }
 
     /// <summary>Full config at time of run. Always stored regardless of preset.</summary>
-    public JsonDocument? Configuration { get; set; }
+    public ReportAuditConfigurationSnapshot Configuration { get; set; } = new();
 
     /// <summary>
     /// Array of field names referenced in the configuration.
     /// Populated by the application layer. Enables the field usage in reports KPI.
     /// e.g. ["formulation_type", "uk_submission_date"]
     /// </summary>
-    public JsonDocument? FieldUsage { get; set; }
+    public string[] FieldUsage { get; set; } = [];
 
     /// <summary>Number of records returned. Indicates whether the configuration was useful.</summary>
     public int? ResultCount { get; set; }
