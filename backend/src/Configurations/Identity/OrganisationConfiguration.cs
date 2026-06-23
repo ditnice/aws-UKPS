@@ -18,6 +18,5 @@ internal sealed class OrganisationConfiguration : IEntityTypeConfiguration<Organ
         builder.Property(x => x.Status);
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
         builder.Property(x => x.LastActive).HasColumnType("timestamptz");
-
     }
 }

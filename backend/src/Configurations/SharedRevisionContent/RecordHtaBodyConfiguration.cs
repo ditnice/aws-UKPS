@@ -11,9 +11,10 @@ internal sealed class RecordHtaBodyConfiguration : IEntityTypeConfiguration<Reco
         builder.HasKey(x => new { x.RecordHtaId, x.Label });
         builder.Property(x => x.Label).IsRequired();
 
-        builder.HasOne(x => x.RecordHta)
-               .WithMany(x => x.HtaBodies)
-               .HasForeignKey(x => x.RecordHtaId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.RecordHta)
+            .WithMany(x => x.HtaBodies)
+            .HasForeignKey(x => x.RecordHtaId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

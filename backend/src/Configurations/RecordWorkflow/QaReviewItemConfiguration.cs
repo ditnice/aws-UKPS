@@ -15,17 +15,18 @@ internal sealed class QaReviewItemConfiguration : IEntityTypeConfiguration<QaRev
         builder.Property(x => x.ResolutionStatus);
         builder.Property(x => x.ResolvedAt).HasColumnType("timestamptz");
 
-        builder.HasIndex(x => x.QaReviewId)
-               .HasDatabaseName("ix_qa_review_item_qa_review_id");
+        builder.HasIndex(x => x.QaReviewId).HasDatabaseName("ix_qa_review_item_qa_review_id");
 
-        builder.HasOne(x => x.QaReview)
-               .WithMany(x => x.QaReviewItems)
-               .HasForeignKey(x => x.QaReviewId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.QaReview)
+            .WithMany(x => x.QaReviewItems)
+            .HasForeignKey(x => x.QaReviewId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.ResolvedByUser)
-               .WithMany()
-               .HasForeignKey(x => x.ResolvedBy)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.ResolvedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.ResolvedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

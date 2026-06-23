@@ -10,14 +10,16 @@ internal sealed class MedicinesPasRegionConfiguration : IEntityTypeConfiguration
     {
         builder.HasKey(x => new { x.MedicinesBudgetImpactId, x.PasRegionId });
 
-        builder.HasOne(x => x.MedicinesBudgetImpact)
-               .WithMany(x => x.PasRegions)
-               .HasForeignKey(x => x.MedicinesBudgetImpactId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.MedicinesBudgetImpact)
+            .WithMany(x => x.PasRegions)
+            .HasForeignKey(x => x.MedicinesBudgetImpactId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.PasRegion)
-               .WithMany()
-               .HasForeignKey(x => x.PasRegionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.PasRegion)
+            .WithMany()
+            .HasForeignKey(x => x.PasRegionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

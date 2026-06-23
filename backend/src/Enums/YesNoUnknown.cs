@@ -4,5 +4,5 @@ public enum YesNoUnknown
 {
     Yes = 0,
     No = 1,
-    Unknown = 2
+    Unknown = 2,
 }

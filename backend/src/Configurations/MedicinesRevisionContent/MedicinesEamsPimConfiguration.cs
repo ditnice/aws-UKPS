@@ -14,22 +14,27 @@ internal sealed class MedicinesEamsPimConfiguration : IEntityTypeConfiguration<M
         builder.Property(x => x.WillSubmitToEams);
         builder.Property(x => x.EamsOpinionDecision);
 
-        builder.HasIndex(x => x.RevisionId).IsUnique()
-               .HasDatabaseName("ix_medicines_eams_pim_revision_id");
+        builder
+            .HasIndex(x => x.RevisionId)
+            .IsUnique()
+            .HasDatabaseName("ix_medicines_eams_pim_revision_id");
 
-        builder.HasOne(x => x.Revision)
-               .WithMany()
-               .HasForeignKey(x => x.RevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Revision)
+            .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.EamsSubmissionDate)
-               .WithMany()
-               .HasForeignKey(x => x.EamsSubmissionDateId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.EamsSubmissionDate)
+            .WithMany()
+            .HasForeignKey(x => x.EamsSubmissionDateId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.EamsOpinionDate)
-               .WithMany()
-               .HasForeignKey(x => x.EamsOpinionDateId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.EamsOpinionDate)
+            .WithMany()
+            .HasForeignKey(x => x.EamsOpinionDateId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

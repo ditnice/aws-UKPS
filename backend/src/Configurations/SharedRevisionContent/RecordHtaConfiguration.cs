@@ -12,12 +12,12 @@ internal sealed class RecordHtaConfiguration : IEntityTypeConfiguration<RecordHt
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.HtaNiceAlignedPathway);
 
-        builder.HasIndex(x => x.RevisionId).IsUnique()
-               .HasDatabaseName("ix_record_hta_revision_id");
+        builder.HasIndex(x => x.RevisionId).IsUnique().HasDatabaseName("ix_record_hta_revision_id");
 
-        builder.HasOne(x => x.Revision)
-               .WithMany()
-               .HasForeignKey(x => x.RevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Revision)
+            .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

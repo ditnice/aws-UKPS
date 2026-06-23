@@ -4,7 +4,8 @@ using UKPS.Api.Entities.VaccinesRevisionContent;
 
 namespace UKPS.Api.Configurations.VaccinesRevisionContent;
 
-internal sealed class VaccinesCompanyInfoConfiguration : IEntityTypeConfiguration<VaccinesCompanyInfo>
+internal sealed class VaccinesCompanyInfoConfiguration
+    : IEntityTypeConfiguration<VaccinesCompanyInfo>
 {
     public void Configure(EntityTypeBuilder<VaccinesCompanyInfo> builder)
     {
@@ -14,12 +15,15 @@ internal sealed class VaccinesCompanyInfoConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.HasBeenAcquired);
         builder.Property(x => x.HasGrantFunding);
 
-        builder.HasIndex(x => x.RevisionId).IsUnique()
-               .HasDatabaseName("ix_vaccines_company_info_revision_id");
+        builder
+            .HasIndex(x => x.RevisionId)
+            .IsUnique()
+            .HasDatabaseName("ix_vaccines_company_info_revision_id");
 
-        builder.HasOne(x => x.Revision)
-               .WithMany()
-               .HasForeignKey(x => x.RevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Revision)
+            .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

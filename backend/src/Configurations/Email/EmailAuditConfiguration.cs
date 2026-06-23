@@ -13,9 +13,10 @@ internal sealed class EmailAuditConfiguration : IEntityTypeConfiguration<EmailAu
         builder.Property(x => x.Recipients).IsRequired();
         builder.Property(x => x.SentAt).HasColumnType("timestamptz").IsRequired();
 
-        builder.HasOne(x => x.Template)
-               .WithMany(x => x.EmailAudits)
-               .HasForeignKey(x => x.TemplateId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Template)
+            .WithMany(x => x.EmailAudits)
+            .HasForeignKey(x => x.TemplateId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

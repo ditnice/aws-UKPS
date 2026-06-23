@@ -14,16 +14,20 @@ internal sealed class ReportPresetConfiguration : IEntityTypeConfiguration<Repor
         // PharmaceuticalEntity is a [Flags] integer
         builder.Property(x => x.ApplicablePharmaceuticalEntity).HasConversion<int>();
         builder.Property(x => x.Title).IsRequired();
-        builder.ComplexProperty(x => x.Configuration, configuration =>
-        {
-            configuration.ToJson();
-            configuration.IsRequired();
-        });
+        builder.ComplexProperty(
+            x => x.Configuration,
+            configuration =>
+            {
+                configuration.ToJson();
+                configuration.IsRequired();
+            }
+        );
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
 
-        builder.HasOne(x => x.CreatedByUser)
-               .WithMany()
-               .HasForeignKey(x => x.CreatedBy)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

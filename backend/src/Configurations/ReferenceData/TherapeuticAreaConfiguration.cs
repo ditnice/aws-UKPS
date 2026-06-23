@@ -12,9 +12,10 @@ internal sealed class TherapeuticAreaConfiguration : IEntityTypeConfiguration<Th
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Label).IsRequired();
 
-        builder.HasOne(x => x.Parent)
-               .WithMany(x => x.Children)
-               .HasForeignKey(x => x.ParentId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Parent)
+            .WithMany(x => x.Children)
+            .HasForeignKey(x => x.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

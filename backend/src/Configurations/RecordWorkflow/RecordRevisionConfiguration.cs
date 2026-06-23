@@ -15,39 +15,51 @@ internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<Rec
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
         builder.Property(x => x.SubmittedAt).HasColumnType("timestamptz");
 
-        builder.HasIndex(x => new { x.RecordId, x.RevisionNo })
-               .IsUnique()
-               .HasDatabaseName("ix_record_revision_record_id_revision_no");
+        builder
+            .HasIndex(x => new { x.RecordId, x.RevisionNo })
+            .IsUnique()
+            .HasDatabaseName("ix_record_revision_record_id_revision_no");
 
-        builder.HasIndex(x => new { x.RecordId, x.MajorVersion, x.MinorVersion })
-               .IsUnique()
-               .HasDatabaseName("ix_record_revision_record_id_major_minor");
+        builder
+            .HasIndex(x => new
+            {
+                x.RecordId,
+                x.MajorVersion,
+                x.MinorVersion,
+            })
+            .IsUnique()
+            .HasDatabaseName("ix_record_revision_record_id_major_minor");
 
         // Circular relationship with Record — both sides use Restrict to avoid
         // cascade cycles. Record is always inserted first with null revision FKs.
-        builder.HasOne(x => x.Record)
-               .WithMany(x => x.Revisions)
-               .HasForeignKey(x => x.RecordId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Record)
+            .WithMany(x => x.Revisions)
+            .HasForeignKey(x => x.RecordId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.BasedOnRevision)
-               .WithMany(x => x.DerivedRevisions)
-               .HasForeignKey(x => x.BasedOnRevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.BasedOnRevision)
+            .WithMany(x => x.DerivedRevisions)
+            .HasForeignKey(x => x.BasedOnRevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.CreatedByUser)
-               .WithMany()
-               .HasForeignKey(x => x.CreatedBy)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.UpdatedByUser)
-               .WithMany()
-               .HasForeignKey(x => x.UpdatedBy)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.SubmittedByUser)
-               .WithMany()
-               .HasForeignKey(x => x.SubmittedBy)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.SubmittedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.SubmittedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

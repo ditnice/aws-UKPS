@@ -9,8 +9,8 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
 {
     public async Task<OrganisationDetailsDto?> GetOrganisationById(int id)
     {
-        return await dbContext.Organisations
-            .AsNoTracking()
+        return await dbContext
+            .Organisations.AsNoTracking()
             .Where(o => o.Id == id)
             .Select(o => new OrganisationDetailsDto
             {
@@ -26,7 +26,6 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
                 LastActive = o.LastActive,
                 CreatedAt = o.CreatedAt,
             })
-            .SingleOrDefaultAsync()
-            .ConfigureAwait(false);
+            .SingleOrDefaultAsync();
     }
 }

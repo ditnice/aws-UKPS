@@ -4,7 +4,8 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-internal sealed class MedicinesActiveSubstanceConfiguration : IEntityTypeConfiguration<MedicinesActiveSubstance>
+internal sealed class MedicinesActiveSubstanceConfiguration
+    : IEntityTypeConfiguration<MedicinesActiveSubstance>
 {
     public void Configure(EntityTypeBuilder<MedicinesActiveSubstance> builder)
     {
@@ -13,12 +14,14 @@ internal sealed class MedicinesActiveSubstanceConfiguration : IEntityTypeConfigu
         builder.Property(x => x.Name).IsRequired();
         builder.Property(x => x.NameType);
 
-        builder.HasIndex(x => x.MedicinesProductDetailId)
-               .HasDatabaseName("ix_medicines_active_substance_product_detail_id");
+        builder
+            .HasIndex(x => x.MedicinesProductDetailId)
+            .HasDatabaseName("ix_medicines_active_substance_product_detail_id");
 
-        builder.HasOne(x => x.MedicinesProductDetail)
-               .WithMany(x => x.ActiveSubstances)
-               .HasForeignKey(x => x.MedicinesProductDetailId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.MedicinesProductDetail)
+            .WithMany(x => x.ActiveSubstances)
+            .HasForeignKey(x => x.MedicinesProductDetailId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

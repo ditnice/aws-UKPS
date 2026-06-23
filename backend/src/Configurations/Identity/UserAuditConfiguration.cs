@@ -14,17 +14,18 @@ internal sealed class UserAuditConfiguration : IEntityTypeConfiguration<UserAudi
         builder.Property(x => x.EventType);
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz").IsRequired();
 
-        builder.HasIndex(x => x.UserId)
-               .HasDatabaseName("ix_user_audit_user_id");
+        builder.HasIndex(x => x.UserId).HasDatabaseName("ix_user_audit_user_id");
 
-        builder.HasOne(x => x.User)
-               .WithMany(x => x.UserAudits)
-               .HasForeignKey(x => x.UserId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.User)
+            .WithMany(x => x.UserAudits)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.UpdatedByUser)
-               .WithMany()
-               .HasForeignKey(x => x.UpdatedBy)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

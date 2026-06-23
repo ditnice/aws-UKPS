@@ -1,7 +1,10 @@
 default: format build test
 
 format:
-    dotnet format
+    dotnet csharpier format .
+
+format-check:
+    dotnet csharpier check .
 
 build:
     dotnet build
