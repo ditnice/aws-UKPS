@@ -14,12 +14,15 @@ internal sealed class MedicinesPatientIdentificationConfiguration
         builder.Property(x => x.ScreeningRequired);
         builder.Property(x => x.UrgentIdentificationRequired);
 
-        builder.HasIndex(x => x.RevisionId).IsUnique()
-               .HasDatabaseName("ix_medicines_patient_identification_revision_id");
+        builder
+            .HasIndex(x => x.RevisionId)
+            .IsUnique()
+            .HasDatabaseName("ix_medicines_patient_identification_revision_id");
 
-        builder.HasOne(x => x.Revision)
-               .WithMany()
-               .HasForeignKey(x => x.RevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Revision)
+            .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

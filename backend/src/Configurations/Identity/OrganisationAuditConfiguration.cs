@@ -14,17 +14,20 @@ internal sealed class OrganisationAuditConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.EventType);
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz").IsRequired();
 
-        builder.HasIndex(x => x.OrganisationId)
-               .HasDatabaseName("ix_organisation_audit_organisation_id");
+        builder
+            .HasIndex(x => x.OrganisationId)
+            .HasDatabaseName("ix_organisation_audit_organisation_id");
 
-        builder.HasOne(x => x.Organisation)
-               .WithMany(x => x.OrganisationAudits)
-               .HasForeignKey(x => x.OrganisationId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Organisation)
+            .WithMany(x => x.OrganisationAudits)
+            .HasForeignKey(x => x.OrganisationId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.UpdatedByUser)
-               .WithMany()
-               .HasForeignKey(x => x.UpdatedBy)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

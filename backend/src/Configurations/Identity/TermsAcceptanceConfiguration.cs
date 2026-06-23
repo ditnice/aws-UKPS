@@ -19,9 +19,10 @@ internal sealed class TermsAcceptanceConfiguration : IEntityTypeConfiguration<Te
         builder.Property(x => x.SignedAt).HasColumnType("timestamptz");
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
 
-        builder.HasOne(x => x.Organisation)
-               .WithMany(x => x.TermsAcceptances)
-               .HasForeignKey(x => x.OrganisationId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Organisation)
+            .WithMany(x => x.TermsAcceptances)
+            .HasForeignKey(x => x.OrganisationId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

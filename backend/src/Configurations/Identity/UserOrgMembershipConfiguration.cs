@@ -17,22 +17,30 @@ internal sealed class UserOrgMembershipConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.AllowedPharmaceuticalEntity).HasConversion<int>();
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
 
-        builder.HasIndex(
-                   x => new { x.UserId, x.OrganisationId, x.AllowedPharmaceuticalEntity })
-               .IsUnique()
-               .HasDatabaseName("ix_user_org_membership_user_org_entity");
+        builder
+            .HasIndex(x => new
+            {
+                x.UserId,
+                x.OrganisationId,
+                x.AllowedPharmaceuticalEntity,
+            })
+            .IsUnique()
+            .HasDatabaseName("ix_user_org_membership_user_org_entity");
 
-        builder.HasIndex(x => x.OrganisationId)
-               .HasDatabaseName("ix_user_org_membership_organisation_id");
+        builder
+            .HasIndex(x => x.OrganisationId)
+            .HasDatabaseName("ix_user_org_membership_organisation_id");
 
-        builder.HasOne(x => x.User)
-               .WithMany(x => x.UserOrgMemberships)
-               .HasForeignKey(x => x.UserId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.User)
+            .WithMany(x => x.UserOrgMemberships)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Organisation)
-               .WithMany(x => x.UserOrgMemberships)
-               .HasForeignKey(x => x.OrganisationId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Organisation)
+            .WithMany(x => x.UserOrgMemberships)
+            .HasForeignKey(x => x.OrganisationId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

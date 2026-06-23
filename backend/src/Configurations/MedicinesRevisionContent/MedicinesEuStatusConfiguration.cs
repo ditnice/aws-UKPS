@@ -13,22 +13,27 @@ internal sealed class MedicinesEuStatusConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.EuOrphanStatus);
         builder.Property(x => x.EuAtmpClassificationStatus);
 
-        builder.HasIndex(x => x.RevisionId).IsUnique()
-               .HasDatabaseName("ix_medicines_eu_status_revision_id");
+        builder
+            .HasIndex(x => x.RevisionId)
+            .IsUnique()
+            .HasDatabaseName("ix_medicines_eu_status_revision_id");
 
-        builder.HasOne(x => x.Revision)
-               .WithMany()
-               .HasForeignKey(x => x.RevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Revision)
+            .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.EuOrphanGrantedDate)
-               .WithMany()
-               .HasForeignKey(x => x.EuOrphanGrantedDateId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.EuOrphanGrantedDate)
+            .WithMany()
+            .HasForeignKey(x => x.EuOrphanGrantedDateId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.AtmpClassification)
-               .WithMany()
-               .HasForeignKey(x => x.AtmpClassificationId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.AtmpClassification)
+            .WithMany()
+            .HasForeignKey(x => x.AtmpClassificationId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

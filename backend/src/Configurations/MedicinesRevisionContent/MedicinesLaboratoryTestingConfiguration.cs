@@ -18,22 +18,27 @@ internal sealed class MedicinesLaboratoryTestingConfiguration
         builder.Property(x => x.GenomicTestMandatory);
         builder.Property(x => x.MonitoringTestsRequired);
 
-        builder.HasIndex(x => x.RevisionId).IsUnique()
-               .HasDatabaseName("ix_medicines_laboratory_testing_revision_id");
+        builder
+            .HasIndex(x => x.RevisionId)
+            .IsUnique()
+            .HasDatabaseName("ix_medicines_laboratory_testing_revision_id");
 
-        builder.HasOne(x => x.Revision)
-               .WithMany()
-               .HasForeignKey(x => x.RevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Revision)
+            .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.GenomicSampleType)
-               .WithMany()
-               .HasForeignKey(x => x.GenomicSampleTypeId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.GenomicSampleType)
+            .WithMany()
+            .HasForeignKey(x => x.GenomicSampleTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.PatientPathwayPoint)
-               .WithMany()
-               .HasForeignKey(x => x.PatientPathwayPointId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.PatientPathwayPoint)
+            .WithMany()
+            .HasForeignKey(x => x.PatientPathwayPointId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

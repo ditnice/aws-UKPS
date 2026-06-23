@@ -22,7 +22,7 @@ public class OrganisationControllerTests
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
             LastActive = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
         OrganisationController controller = new(new StubOrganisationService(expected));
 
@@ -53,10 +53,10 @@ public class OrganisationControllerTests
         Assert.Equal(42, service.CapturedId);
     }
 
-    private sealed class StubOrganisationService(OrganisationDetailsDto? result) : IOrganisationService
+    private sealed class StubOrganisationService(OrganisationDetailsDto? result)
+        : IOrganisationService
     {
-        public Task<OrganisationDetailsDto?> GetOrganisationById(int id)
-            => Task.FromResult(result);
+        public Task<OrganisationDetailsDto?> GetOrganisationById(int id) => Task.FromResult(result);
     }
 
     private sealed class CapturingOrganisationService : IOrganisationService

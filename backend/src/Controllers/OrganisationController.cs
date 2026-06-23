@@ -13,10 +13,8 @@ public class OrganisationController(IOrganisationService organisationService) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(int id)
     {
-        OrganisationDetailsDto? organisation = await organisationService.GetOrganisationById(id).ConfigureAwait(false);
+        OrganisationDetailsDto? organisation = await organisationService.GetOrganisationById(id);
 
-        return (organisation is null)
-         ? NotFound()
-         : Ok(organisation);
+        return (organisation is null) ? NotFound() : Ok(organisation);
     }
 }

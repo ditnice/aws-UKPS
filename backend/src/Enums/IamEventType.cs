@@ -11,5 +11,5 @@ public enum IamEventType
     InformationRequested = 6,
     TermsRequested = 7,
     TermsSigned = 8,
-    TermsExpired = 9
+    TermsExpired = 9,
 }

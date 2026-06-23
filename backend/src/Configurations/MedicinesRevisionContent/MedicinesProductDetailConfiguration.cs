@@ -4,7 +4,8 @@ using UKPS.Api.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Configurations.MedicinesRevisionContent;
 
-internal sealed class MedicinesProductDetailConfiguration : IEntityTypeConfiguration<MedicinesProductDetail>
+internal sealed class MedicinesProductDetailConfiguration
+    : IEntityTypeConfiguration<MedicinesProductDetail>
 {
     public void Configure(EntityTypeBuilder<MedicinesProductDetail> builder)
     {
@@ -15,27 +16,33 @@ internal sealed class MedicinesProductDetailConfiguration : IEntityTypeConfigura
         builder.Property(x => x.IndicationIsPaediatric);
         builder.Property(x => x.IndicationIsCancer);
 
-        builder.HasIndex(x => x.RevisionId).IsUnique()
-               .HasDatabaseName("ix_medicines_product_detail_revision_id");
+        builder
+            .HasIndex(x => x.RevisionId)
+            .IsUnique()
+            .HasDatabaseName("ix_medicines_product_detail_revision_id");
 
-        builder.HasOne(x => x.Revision)
-               .WithMany()
-               .HasForeignKey(x => x.RevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Revision)
+            .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.BnfChapter)
-               .WithMany()
-               .HasForeignKey(x => x.BnfChapterId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.BnfChapter)
+            .WithMany()
+            .HasForeignKey(x => x.BnfChapterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.TherapeuticArea)
-               .WithMany()
-               .HasForeignKey(x => x.TherapeuticAreaId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.TherapeuticArea)
+            .WithMany()
+            .HasForeignKey(x => x.TherapeuticAreaId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.FormulationType)
-               .WithMany()
-               .HasForeignKey(x => x.FormulationTypeId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.FormulationType)
+            .WithMany()
+            .HasForeignKey(x => x.FormulationTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

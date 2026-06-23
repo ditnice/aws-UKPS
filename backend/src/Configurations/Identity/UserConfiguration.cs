@@ -14,8 +14,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.Username).IsRequired();
-        builder.HasIndex(x => x.Username).IsUnique()
-               .HasDatabaseName("ix_app_user_username");
+        builder.HasIndex(x => x.Username).IsUnique().HasDatabaseName("ix_app_user_username");
         builder.Property(x => x.UserType);
         builder.Property(x => x.FirstName).IsRequired();
         builder.Property(x => x.LastName).IsRequired();

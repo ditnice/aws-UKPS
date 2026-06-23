@@ -10,14 +10,16 @@ internal sealed class RecordWatchlistConfiguration : IEntityTypeConfiguration<Re
     {
         builder.HasKey(x => new { x.UserId, x.RecordId });
 
-        builder.HasOne(x => x.User)
-               .WithMany()
-               .HasForeignKey(x => x.UserId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Record)
-               .WithMany()
-               .HasForeignKey(x => x.RecordId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Record)
+            .WithMany()
+            .HasForeignKey(x => x.RecordId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

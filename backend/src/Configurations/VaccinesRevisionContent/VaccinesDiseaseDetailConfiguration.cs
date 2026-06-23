@@ -4,7 +4,8 @@ using UKPS.Api.Entities.VaccinesRevisionContent;
 
 namespace UKPS.Api.Configurations.VaccinesRevisionContent;
 
-internal sealed class VaccinesDiseaseDetailConfiguration : IEntityTypeConfiguration<VaccinesDiseaseDetail>
+internal sealed class VaccinesDiseaseDetailConfiguration
+    : IEntityTypeConfiguration<VaccinesDiseaseDetail>
 {
     public void Configure(EntityTypeBuilder<VaccinesDiseaseDetail> builder)
     {
@@ -13,17 +14,21 @@ internal sealed class VaccinesDiseaseDetailConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.DiseaseTarget).IsRequired();
         builder.Property(x => x.AgeGroup).IsRequired();
 
-        builder.HasIndex(x => x.RevisionId).IsUnique()
-               .HasDatabaseName("ix_vaccines_disease_detail_revision_id");
+        builder
+            .HasIndex(x => x.RevisionId)
+            .IsUnique()
+            .HasDatabaseName("ix_vaccines_disease_detail_revision_id");
 
-        builder.HasOne(x => x.Revision)
-               .WithMany()
-               .HasForeignKey(x => x.RevisionId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.Revision)
+            .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.DiseaseArea)
-               .WithMany()
-               .HasForeignKey(x => x.DiseaseAreaId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.DiseaseArea)
+            .WithMany()
+            .HasForeignKey(x => x.DiseaseAreaId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -82,9 +82,16 @@ repos:
   # Backend
   - repo: local
     hooks:
-      - id: backend-dotnet-format
-        name: dotnet format (backend)
+      - id: backend-csharpier
+        name: CSharpier (backend)
         language: system
-        entry: bash -c 'cd backend && dotnet format --verify-no-changes'
-        files: ^backend/.*\.(cs|csproj|sln|slnx)$
+        entry: bash -c 'cd backend && dotnet tool restore && dotnet csharpier check .'
+        files: ^backend/.*\.(cs|csproj|props|targets|xml|config|slnx)$
+        pass_filenames: false
+
+      - id: backend-dotnet-build
+        name: dotnet build (backend)
+        language: system
+        entry: bash -c 'cd backend && dotnet restore && dotnet build --no-restore'
+        files: ^backend/.*\.(cs|csproj|props|targets)$
         pass_filenames: false

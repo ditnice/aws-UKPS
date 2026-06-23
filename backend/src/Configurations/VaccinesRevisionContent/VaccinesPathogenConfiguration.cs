@@ -12,12 +12,14 @@ internal sealed class VaccinesPathogenConfiguration : IEntityTypeConfiguration<V
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.PathogenName).IsRequired();
 
-        builder.HasIndex(x => x.VaccinesDiseaseDetailId)
-               .HasDatabaseName("ix_vaccines_pathogen_disease_detail_id");
+        builder
+            .HasIndex(x => x.VaccinesDiseaseDetailId)
+            .HasDatabaseName("ix_vaccines_pathogen_disease_detail_id");
 
-        builder.HasOne(x => x.VaccinesDiseaseDetail)
-               .WithMany(x => x.Pathogens)
-               .HasForeignKey(x => x.VaccinesDiseaseDetailId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(x => x.VaccinesDiseaseDetail)
+            .WithMany(x => x.Pathogens)
+            .HasForeignKey(x => x.VaccinesDiseaseDetailId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

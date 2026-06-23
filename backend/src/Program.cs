@@ -10,18 +10,22 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options
         .UseNpgsql(
             builder.Configuration.GetConnectionString("DefaultConnection"),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "ukps"))
-        .UseSnakeCaseNamingConvention());
+            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "ukps")
+        )
+        .UseSnakeCaseNamingConvention()
+);
 
 // Add services to the container.
 
 builder.Services.AddScoped<IOrganisationService, OrganisationService>();
 
-builder.Services.AddControllers()
+builder
+    .Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -39,4 +43,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await app.RunAsync().ConfigureAwait(false);
+await app.RunAsync();

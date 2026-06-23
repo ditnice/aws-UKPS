@@ -3,48 +3,31 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage(
     "Maintainability",
     "CA1515:Consider making public types internal",
-    Justification = "ASP.NET controllers must be public for endpoint discovery.",
+    Justification = "ASP.NET Core controller discovery requires public controller types.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Controllers")]
+    Target = "~N:UKPS.Api.Controllers"
+)]
 
 [assembly: SuppressMessage(
     "Maintainability",
     "CA1515:Consider making public types internal",
-    Justification = "DTOs are intentionally public API surface.",
+    Justification = "DTOs are public HTTP API contracts exposed by controller actions.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.DTOs")]
+    Target = "~N:UKPS.Api.DTOs"
+)]
 
 [assembly: SuppressMessage(
     "Maintainability",
     "CA1515:Consider making public types internal",
-    Justification = "Must be public as they are used in DTOs",
+    Justification = "Enums are public HTTP API contract values used by DTOs and JSON serialization.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Enums")]
+    Target = "~N:UKPS.Api.Enums"
+)]
 
 [assembly: SuppressMessage(
     "Maintainability",
     "CA1515:Consider making public types internal",
-    Justification = "Constructor parameters of controllers are required to be public.",
+    Justification = "Interfaces injected into public controllers must be public constructor parameter types.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Services.Interfaces")]
-
-[assembly: SuppressMessage(
-    "Maintainability",
-    "CA1812:Internal class that is never instantiated",
-    Justification = "EF Core instantiates these classes via reflection; they are never explicitly instantiated in code.",
-    Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Configurations")]
-
-[assembly: SuppressMessage(
-    "Maintainability",
-    "CA1812:Internal class that is never instantiated",
-    Justification = "EF Core instantiates these classes via reflection; they are never explicitly instantiated in code.",
-    Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Entities")]
-
-[assembly: SuppressMessage(
-    "Maintainability",
-    "CA1812:Internal class that is never instantiated",
-    Justification = "EF Core instantiates these classes via reflection; they are never explicitly instantiated in code.",
-    Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Data")]
+    Target = "~N:UKPS.Api.Services.Interfaces"
+)]
