@@ -15,6 +15,7 @@ module "kms_frontend" {
 
   project      = local.project
   environment  = local.environment
+  region       = var.region
   service_name = "frontend"
 }
 
@@ -23,6 +24,7 @@ module "kms_backend" {
 
   project      = local.project
   environment  = local.environment
+  region       = var.region
   service_name = "backend"
 }
 

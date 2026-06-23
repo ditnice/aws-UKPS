@@ -46,6 +46,9 @@ resource "aws_kms_alias" "data" {
 }
 
 data "aws_iam_policy_document" "app" {
+  # checkov:skip=CKV_AWS_109:KMS key policies use wildcard resources; scope is constrained by the attached key, principal, and conditions.
+  # checkov:skip=CKV_AWS_111:KMS key policies use wildcard resources; scope is constrained by the attached key, principal, and conditions.
+  # checkov:skip=CKV_AWS_356:KMS key policies use wildcard resources because the policy is attached to the key.
   policy_id = "key-policy-app"
 
   statement {
@@ -61,10 +64,9 @@ data "aws_iam_policy_document" "app" {
   }
 
   statement {
-    sid    = "AllowApplicationServices"
+    sid    = "AllowECR"
     effect = "Allow"
     actions = [
-      "kms:CreateGrant",
       "kms:Decrypt",
       "kms:DescribeKey",
       "kms:Encrypt",
@@ -74,20 +76,44 @@ data "aws_iam_policy_document" "app" {
     resources = ["*"]
 
     principals {
-      type = "Service"
-      identifiers = [
-        "ecr.${data.aws_partition.current.dns_suffix}",
-        "logs.${var.region}.${data.aws_partition.current.dns_suffix}",
-      ]
+      type        = "Service"
+      identifiers = ["ecr.${data.aws_partition.current.dns_suffix}"]
     }
 
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
-      values = [
-        "ecr.${var.region}.${data.aws_partition.current.dns_suffix}",
-        "logs.${var.region}.${data.aws_partition.current.dns_suffix}",
-      ]
+      values   = ["ecr.${var.region}.${data.aws_partition.current.dns_suffix}"]
+    }
+  }
+
+  statement {
+    sid    = "AllowCloudWatchLogs"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:Encrypt",
+      "kms:GenerateDataKey*",
+      "kms:ReEncrypt*",
+    ]
+    resources = ["*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["logs.${var.region}.${data.aws_partition.current.dns_suffix}"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["logs.${var.region}.${data.aws_partition.current.dns_suffix}"]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = ["arn:${data.aws_partition.current.partition}:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${var.project}/${var.environment}/*"]
     }
   }
 
@@ -98,11 +124,8 @@ data "aws_iam_policy_document" "app" {
     resources = ["*"]
 
     principals {
-      type = "Service"
-      identifiers = [
-        "ecr.${data.aws_partition.current.dns_suffix}",
-        "logs.${var.region}.${data.aws_partition.current.dns_suffix}",
-      ]
+      type        = "Service"
+      identifiers = ["ecr.${data.aws_partition.current.dns_suffix}"]
     }
 
     condition {
@@ -114,6 +137,9 @@ data "aws_iam_policy_document" "app" {
 }
 
 data "aws_iam_policy_document" "data" {
+  # checkov:skip=CKV_AWS_109:KMS key policies use wildcard resources; scope is constrained by the attached key, principal, and conditions.
+  # checkov:skip=CKV_AWS_111:KMS key policies use wildcard resources; scope is constrained by the attached key, principal, and conditions.
+  # checkov:skip=CKV_AWS_356:KMS key policies use wildcard resources because the policy is attached to the key.
   policy_id = "key-policy-data"
 
   statement {
@@ -132,7 +158,6 @@ data "aws_iam_policy_document" "data" {
     sid    = "AllowDataServices"
     effect = "Allow"
     actions = [
-      "kms:CreateGrant",
       "kms:Decrypt",
       "kms:DescribeKey",
       "kms:Encrypt",
