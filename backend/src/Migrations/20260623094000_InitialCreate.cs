@@ -535,11 +535,11 @@ namespace UKPS.Api.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     user_id = table.Column<int>(type: "integer", nullable: false),
                     report_preset_id = table.Column<int>(type: "integer", nullable: true),
-                    field_usage = table.Column<string[]>(type: "text[]", nullable: false),
                     result_count = table.Column<int>(type: "integer", nullable: true),
                     exported = table.Column<bool>(type: "boolean", nullable: true),
                     ran_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
-                    configuration = table.Column<string>(type: "jsonb", nullable: false)
+                    configuration = table.Column<string>(type: "jsonb", nullable: false),
+                    field_usage = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -22,7 +22,7 @@ internal sealed class ReportAudit
     /// Populated by the application layer. Enables the field usage in reports KPI.
     /// e.g. ["formulation_type", "uk_submission_date"]
     /// </summary>
-    public string[] FieldUsage { get; set; } = [];
+    public ReportAuditFieldUsageDocument FieldUsage { get; set; } = new();
 
     /// <summary>Number of records returned. Indicates whether the configuration was useful.</summary>
     public int? ResultCount { get; set; }

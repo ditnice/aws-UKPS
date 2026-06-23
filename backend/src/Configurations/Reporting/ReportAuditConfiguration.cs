@@ -17,7 +17,12 @@ internal sealed class ReportAuditConfiguration : IEntityTypeConfiguration<Report
             configuration.IsRequired();
         });
 
-        builder.Property(x => x.FieldUsage).HasColumnType("text[]").IsRequired();
+        builder.ComplexProperty(x => x.FieldUsage, fieldUsage =>
+        {
+            fieldUsage.ToJson();
+            fieldUsage.IsRequired();
+        });
+
         builder.Property(x => x.RanAt).HasColumnType("timestamptz").IsRequired();
 
         builder.HasOne(x => x.User)

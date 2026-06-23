@@ -1850,11 +1850,6 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("exported");
 
-                    b.PrimitiveCollection<string[]>("FieldUsage")
-                        .IsRequired()
-                        .HasColumnType("text[]")
-                        .HasColumnName("field_usage");
-
                     b.Property<DateTime>("RanAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("ran_at");
@@ -1884,6 +1879,23 @@ namespace UKPS.Api.Migrations
 
                             b1
                                 .ToJson("configuration")
+                                .HasColumnType("jsonb");
+                        });
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "FieldUsage", "UKPS.Api.Entities.Reporting.ReportAudit.FieldUsage#ReportAuditFieldUsageDocument", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.PrimitiveCollection<string>("Exported")
+                                .IsRequired()
+                                .HasJsonPropertyName("exported");
+
+                            b1.PrimitiveCollection<string>("Filters")
+                                .IsRequired()
+                                .HasJsonPropertyName("filters");
+
+                            b1
+                                .ToJson("field_usage")
                                 .HasColumnType("jsonb");
                         });
 
