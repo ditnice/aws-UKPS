@@ -19,6 +19,10 @@ resource "aws_kms_key" "app" {
     Project     = var.project
     Service     = var.service_name
   })
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_kms_alias" "app" {
@@ -38,6 +42,10 @@ resource "aws_kms_key" "data" {
     Project     = var.project
     Service     = var.service_name
   })
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_kms_alias" "data" {

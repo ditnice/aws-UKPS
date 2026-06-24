@@ -46,7 +46,7 @@ variable "region" {
 variable "deletion_window_in_days" {
   description = "Number of days before KMS key deletion after scheduling destruction"
   type        = number
-  default     = 10
+  default     = 30
   nullable    = false
 
   validation {

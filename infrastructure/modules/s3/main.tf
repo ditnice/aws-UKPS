@@ -26,6 +26,8 @@ data "aws_iam_policy_document" "bucket_policy" {
 }
 
 resource "aws_s3_bucket" "bucket" {
+  # checkov:skip=CKV_AWS_144: Cross-region replication is not required for this bucket class; versioning and lifecycle controls are accepted.
+  # checkov:skip=CKV2_AWS_62: Event notifications are not required because this reusable bucket module has no default downstream event consumer.
   bucket        = var.bucket_name
   force_destroy = var.force_destroy
 

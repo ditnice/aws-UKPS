@@ -104,7 +104,7 @@ variable "ecs_backend_memory_allocation" {
 variable "ecs_log_retention" {
   description = "The number of days to retain the logs in CloudWatch"
   type        = number
-  default     = 30
+  default     = 365
 }
 
 variable "aurora_engine_version" {
@@ -152,7 +152,7 @@ variable "aurora_skip_final_snapshot" {
 variable "aurora_final_snapshot_identifier" {
   description = "Identifier for the final snapshot when skip_final_snapshot is false"
   type        = string
-  default     = "snapshot-id"
+  default     = "ukps-dev-aurora-final-snapshot"
 }
 
 variable "frontend_target_group_arn" {

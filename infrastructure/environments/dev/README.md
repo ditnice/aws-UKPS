@@ -38,7 +38,7 @@ No resources.
 | <a name="input_aurora_apply_immediately"></a> [aurora\_apply\_immediately](#input\_aurora\_apply\_immediately) | Whether Aurora changes are applied immediately instead of during the maintenance window | `bool` | `true` | no |
 | <a name="input_aurora_enable_http_endpoint"></a> [aurora\_enable\_http\_endpoint](#input\_aurora\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `false` | no |
 | <a name="input_aurora_engine_version"></a> [aurora\_engine\_version](#input\_aurora\_engine\_version) | SQL Engine version | `string` | `"17.9"` | no |
-| <a name="input_aurora_final_snapshot_identifier"></a> [aurora\_final\_snapshot\_identifier](#input\_aurora\_final\_snapshot\_identifier) | Identifier for the final snapshot when skip\_final\_snapshot is false | `string` | `"snapshot-id"` | no |
+| <a name="input_aurora_final_snapshot_identifier"></a> [aurora\_final\_snapshot\_identifier](#input\_aurora\_final\_snapshot\_identifier) | Identifier for the final snapshot when skip\_final\_snapshot is false | `string` | `"ukps-dev-aurora-final-snapshot"` | no |
 | <a name="input_aurora_preferred_backup_window"></a> [aurora\_preferred\_backup\_window](#input\_aurora\_preferred\_backup\_window) | Daily time range during which automated backups are created | `string` | `"02:00-03:00"` | no |
 | <a name="input_aurora_preferred_maintenance_window"></a> [aurora\_preferred\_maintenance\_window](#input\_aurora\_preferred\_maintenance\_window) | Weekly time range during which system maintenance can occur | `string` | `"sun:03:00-sun:04:00"` | no |
 | <a name="input_aurora_skip_final_snapshot"></a> [aurora\_skip\_final\_snapshot](#input\_aurora\_skip\_final\_snapshot) | Whether to skip creating a final snapshot when the Aurora cluster is destroyed | `bool` | `true` | no |
@@ -56,7 +56,7 @@ No resources.
 | <a name="input_ecs_capacity_providers"></a> [ecs\_capacity\_providers](#input\_ecs\_capacity\_providers) | A list of capacity providers to use for the ECS cluster | `list(string)` | <pre>[<br/>  "FARGATE"<br/>]</pre> | no |
 | <a name="input_ecs_frontend_cpu_allocation"></a> [ecs\_frontend\_cpu\_allocation](#input\_ecs\_frontend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
 | <a name="input_ecs_frontend_memory_allocation"></a> [ecs\_frontend\_memory\_allocation](#input\_ecs\_frontend\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |
-| <a name="input_ecs_log_retention"></a> [ecs\_log\_retention](#input\_ecs\_log\_retention) | The number of days to retain the logs in CloudWatch | `number` | `30` | no |
+| <a name="input_ecs_log_retention"></a> [ecs\_log\_retention](#input\_ecs\_log\_retention) | The number of days to retain the logs in CloudWatch | `number` | `365` | no |
 | <a name="input_frontend_container_port"></a> [frontend\_container\_port](#input\_frontend\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
 | <a name="input_frontend_db_master_username"></a> [frontend\_db\_master\_username](#input\_frontend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
 | <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpsdev_frontend"` | no |

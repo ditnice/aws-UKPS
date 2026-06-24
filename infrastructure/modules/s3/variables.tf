@@ -33,7 +33,7 @@ variable "versioning" {
 variable "encryption_type" {
   description = "Server-side encryption algorithm used by the bucket"
   type        = string
-  default     = "AES256"
+  default     = "aws:kms"
 
   validation {
     condition     = contains(["AES256", "aws:kms"], var.encryption_type)
