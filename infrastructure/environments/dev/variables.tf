@@ -152,7 +152,7 @@ variable "aurora_skip_final_snapshot" {
 variable "aurora_final_snapshot_identifier" {
   description = "Identifier for the final snapshot when skip_final_snapshot is false"
   type        = string
-  default     = "snapshot-id"
+  default     = "ukps-dev-aurora-final-snapshot"
 }
 
 variable "frontend_target_group_arn" {

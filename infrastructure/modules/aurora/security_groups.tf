@@ -1,12 +1,13 @@
 resource "aws_security_group" "aurora_postgres_sg" {
-  name        = "${var.project}-${var.environment}-aurora-sg"
+  name        = "${var.project}-${var.environment}-${var.service_name}-aurora-sg"
   vpc_id      = var.vpc_id
   description = "Aurora PostgreSQL security group for cluster access"
 
   tags = merge(var.tags, {
-    Name        = "${var.project}-${var.environment}-aurora-sg"
+    Name        = "${var.project}-${var.environment}-${var.service_name}-aurora-sg"
     Environment = var.environment
     Project     = var.project
+    Service     = var.service_name
   })
 }
 

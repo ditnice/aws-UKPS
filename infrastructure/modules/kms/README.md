@@ -53,7 +53,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_deletion_window_in_days"></a> [deletion\_window\_in\_days](#input\_deletion\_window\_in\_days) | Number of days before KMS key deletion after scheduling destruction | `number` | `10` | no |
+| <a name="input_deletion_window_in_days"></a> [deletion\_window\_in\_days](#input\_deletion\_window\_in\_days) | Number of days before KMS key deletion after scheduling destruction | `number` | `30` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment used in KMS aliases and tags | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project used in KMS aliases and tags | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region where services will use these KMS keys | `string` | `"eu-west-2"` | no |

@@ -39,6 +39,10 @@ resource "aws_rds_cluster" "aurora" {
     Environment = var.environment
     Project     = var.project
   })
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_rds_cluster_instance" "aurora_postgres_instance" {
