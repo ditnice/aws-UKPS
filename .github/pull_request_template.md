@@ -11,8 +11,8 @@ Screenshots of the feature if applicable
 - I was unsure the best way to write this function, please pay extra attention to it during review
 
 ## Checklist
-[ ] Tests added or updated where appropriate
-[ ] Linting and formatting pass
-[ ] Accessibility considered for UI changes
-[ ] Security/privacy impact considered
-[ ] Documentation updated where needed
+- [ ] Tests added or updated where appropriate
+- [ ] Linting and formatting pass
+- [ ] Accessibility considered for UI changes
+- [ ] Security/privacy impact considered
+- [ ] Documentation updated where needed
