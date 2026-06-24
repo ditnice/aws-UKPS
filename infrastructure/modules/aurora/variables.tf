@@ -75,6 +75,12 @@ variable "engine_version" {
   default     = "17.9"
 }
 
+variable "cluster_parameter_group_family" {
+  description = "Aurora PostgreSQL cluster parameter group family"
+  type        = string
+  default     = "aurora-postgresql17"
+}
+
 variable "master_username" {
   description = "Master username for the Aurora cluster"
   type        = string
@@ -126,6 +132,17 @@ variable "backup_retention_period" {
   validation {
     condition     = var.backup_retention_period >= 1 && var.backup_retention_period <= 35
     error_message = "Backup retention period must be between 1 and 35 days."
+  }
+}
+
+variable "monitoring_interval" {
+  description = "Interval in seconds for Aurora enhanced monitoring"
+  type        = number
+  default     = 60
+
+  validation {
+    condition     = contains([1, 5, 10, 15, 30, 60], var.monitoring_interval)
+    error_message = "Monitoring interval must be one of: 1, 5, 10, 15, 30, 60."
   }
 }
 

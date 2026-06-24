@@ -1,4 +1,5 @@
 resource "aws_rds_cluster" "aurora" {
+  # checkov:skip=CKV2_AWS_8: Aurora automated backup retention is the accepted control.
   cluster_identifier = "${var.project}-${var.environment}-${var.service_name}-aurora"
 
   engine         = "aurora-postgresql"
@@ -10,8 +11,9 @@ resource "aws_rds_cluster" "aurora" {
   iam_database_authentication_enabled = true
   deletion_protection                 = true
 
-  db_subnet_group_name   = aws_db_subnet_group.aurora.name
-  vpc_security_group_ids = [aws_security_group.aurora_postgres_sg.id]
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora_postgres.name
+  db_subnet_group_name            = aws_db_subnet_group.aurora.name
+  vpc_security_group_ids          = [aws_security_group.aurora_postgres_sg.id]
 
   enable_http_endpoint            = var.enable_http_endpoint
   apply_immediately               = var.apply_immediately
@@ -40,11 +42,15 @@ resource "aws_rds_cluster" "aurora" {
 }
 
 resource "aws_rds_cluster_instance" "aurora_postgres_instance" {
-  identifier                      = "${var.aurora_postgres_identifier}-${var.environment}"
-  cluster_identifier              = aws_rds_cluster.aurora.id
-  instance_class                  = "db.serverless"
-  engine                          = aws_rds_cluster.aurora.engine
-  engine_version                  = aws_rds_cluster.aurora.engine_version
+  identifier                 = "${var.aurora_postgres_identifier}-${var.environment}"
+  cluster_identifier         = aws_rds_cluster.aurora.id
+  instance_class             = "db.serverless"
+  engine                     = aws_rds_cluster.aurora.engine
+  engine_version             = aws_rds_cluster.aurora.engine_version
+  auto_minor_version_upgrade = true
+  monitoring_interval        = var.monitoring_interval
+  monitoring_role_arn        = aws_iam_role.rds_enhanced_monitoring.arn
+
   performance_insights_enabled    = true
   performance_insights_kms_key_id = var.kms_key_id
 
@@ -61,6 +67,30 @@ resource "aws_db_subnet_group" "aurora" {
 
   tags = merge(var.tags, {
     Name        = "${var.project}-${var.environment}-aurora-subnet-group"
+    Environment = var.environment
+    Project     = var.project
+  })
+}
+
+resource "aws_rds_cluster_parameter_group" "aurora_postgres" {
+  description = "Aurora PostgreSQL cluster parameter group for ${var.project}-${var.environment}-${var.service_name}"
+  family      = var.cluster_parameter_group_family
+  name        = "${var.project}-${var.environment}-${var.service_name}-aurora-postgres"
+
+  parameter {
+    apply_method = "immediate"
+    name         = "log_statement"
+    value        = "ddl"
+  }
+
+  parameter {
+    apply_method = "immediate"
+    name         = "log_min_duration_statement"
+    value        = "1000"
+  }
+
+  tags = merge(var.tags, {
+    Name        = "${var.project}-${var.environment}-${var.service_name}-aurora-postgres"
     Environment = var.environment
     Project     = var.project
   })

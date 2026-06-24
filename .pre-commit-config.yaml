@@ -46,6 +46,11 @@ repos:
           - --args=--only=terraform_standard_module_structure
       - id: terraform_trivy
         files: ^infrastructure/
+      - id: terraform_checkov
+        files: ^infrastructure/
+        args:
+          - --args=--framework terraform
+          - --args=--quiet
 
   # Frontend
   - repo: local

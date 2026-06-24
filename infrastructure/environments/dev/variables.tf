@@ -104,7 +104,7 @@ variable "ecs_backend_memory_allocation" {
 variable "ecs_log_retention" {
   description = "The number of days to retain the logs in CloudWatch"
   type        = number
-  default     = 30
+  default     = 365
 }
 
 variable "aurora_engine_version" {

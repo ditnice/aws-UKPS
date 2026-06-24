@@ -56,7 +56,7 @@ No resources.
 | <a name="input_ecs_capacity_providers"></a> [ecs\_capacity\_providers](#input\_ecs\_capacity\_providers) | A list of capacity providers to use for the ECS cluster | `list(string)` | <pre>[<br/>  "FARGATE"<br/>]</pre> | no |
 | <a name="input_ecs_frontend_cpu_allocation"></a> [ecs\_frontend\_cpu\_allocation](#input\_ecs\_frontend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
 | <a name="input_ecs_frontend_memory_allocation"></a> [ecs\_frontend\_memory\_allocation](#input\_ecs\_frontend\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |
-| <a name="input_ecs_log_retention"></a> [ecs\_log\_retention](#input\_ecs\_log\_retention) | The number of days to retain the logs in CloudWatch | `number` | `30` | no |
+| <a name="input_ecs_log_retention"></a> [ecs\_log\_retention](#input\_ecs\_log\_retention) | The number of days to retain the logs in CloudWatch | `number` | `365` | no |
 | <a name="input_frontend_container_port"></a> [frontend\_container\_port](#input\_frontend\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
 | <a name="input_frontend_db_master_username"></a> [frontend\_db\_master\_username](#input\_frontend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
 | <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpsdev_frontend"` | no |
