@@ -52,7 +52,7 @@ public class UserControllerTests
     {
         CapturingUserService service = new();
         UserController controller = new(service);
-        GetUsersQueryDto query = new()
+        GetUsersQueryDto getUsersQuery = new()
         {
             OrganisationId = 42,
             Page = 3,
@@ -60,7 +60,7 @@ public class UserControllerTests
             Status = [UserOrgStatus.Approved, UserOrgStatus.Inactive],
         };
 
-        await controller.GetUsers(query);
+        await controller.GetUsers(getUsersQuery);
 
         Assert.Equal(42, service.CapturedOrganisationId);
         Assert.Equal(3, service.CapturedPage);

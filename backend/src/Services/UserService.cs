@@ -24,18 +24,20 @@ internal sealed class UserService(AppDbContext dbContext) : IUserService
             return null;
         }
 
-        var query = dbContext
+        var organisationMemberships = dbContext
             .UserOrgMemberships.AsNoTracking()
             .Where(m => m.OrganisationId == organisationId);
 
         if (statuses.Count > 0)
         {
-            query = query.Where(m => statuses.Contains(m.Status));
+            organisationMemberships = organisationMemberships.Where(m =>
+                statuses.Contains(m.Status)
+            );
         }
 
-        int totalCount = await query.CountAsync();
+        int totalCount = await organisationMemberships.CountAsync();
 
-        List<UserListItemDto> items = await query
+        List<UserListItemDto> items = await organisationMemberships
             .OrderBy(m => m.User.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

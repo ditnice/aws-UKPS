@@ -13,19 +13,19 @@ public class UserController(IUserService userService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PaginatedResponseDto<UserListItemDto>>> GetUsers(
-        [FromQuery] GetUsersQueryDto? query
+        [FromQuery] GetUsersQueryDto? getUsersQuery
     )
     {
-        if (query is null)
+        if (getUsersQuery is null)
         {
             return BadRequest();
         }
 
         PaginatedResponseDto<UserListItemDto>? result = await userService.GetUsersByOrganisation(
-            query.OrganisationId!.Value,
-            query.Page,
-            query.PageSize,
-            query.Status.ToArray()
+            getUsersQuery.OrganisationId!.Value,
+            getUsersQuery.Page,
+            getUsersQuery.PageSize,
+            getUsersQuery.Status.ToArray()
         );
 
         return (result is null) ? NotFound() : Ok(result);
