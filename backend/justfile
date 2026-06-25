@@ -9,6 +9,9 @@ format-check:
 build:
     dotnet build
 
+run:
+    dotnet run --project src --launch-profile http
+
 test:
     dotnet test
 
