@@ -145,6 +145,100 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Users By Organisation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users?organisationId={{organisationId}}&page=1&pageSize=20&status=Approved&status=Inactive",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                {
+                  "key": "organisationId",
+                  "value": "{{organisationId}}",
+                  "description": "The integer ID of the organisation whose users should be retrieved"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "The 1-based page number"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "The number of users per page, from 1 to 100"
+                },
+                {
+                  "key": "status",
+                  "value": "Approved",
+                  "description": "Optional repeated UserOrgStatus filter"
+                },
+                {
+                  "key": "status",
+                  "value": "Inactive",
+                  "description": "Optional repeated UserOrgStatus filter"
+                }
+              ]
+            },
+            "description": "Returns a paginated list of users belonging to an organisation. Returns 404 if no organisation with the given ID exists. Status can be supplied as repeated query parameters."
+          },
+          "response": [
+            {
+              "name": "200 OK - Users found",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"userId\": 1,\n      \"emailAddress\": \"user@example.com\",\n      \"role\": \"Standard\",\n      \"status\": \"Approved\",\n      \"lastActive\": null\n    }\n  ],\n  \"totalCount\": 1,\n  \"page\": 1,\n  \"pageSize\": 20\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "200 OK - Organisation has no users",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [],\n  \"totalCount\": 0,\n  \"page\": 1,\n  \"pageSize\": 20\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "400 Bad Request - Invalid page",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/problem+json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\n  \"title\": \"One or more validation errors occurred.\",\n  \"status\": 400,\n  \"errors\": {\n    \"Page\": [\n      \"Page cannot be less than 1.\"\n    ]\n  }\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "404 Not Found - Organisation does not exist",
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
