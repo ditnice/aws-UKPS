@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
@@ -17,14 +18,18 @@ public class OrganisationControllerTests
             OrganisationName = "Acme Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
-            HeadOfficeAddress = "1 High Street, London, EC1A 1AA",
+            HeadOfficeAddressLine1 = "1 High Street",
+            HeadOfficeAddressLine2 = "Floor 2",
+            HeadOfficeTown = "London",
+            HeadOfficeCounty = "Greater London",
+            HeadOfficePostcode = "EC1A 1AA",
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
             LastActive = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
         };
-        OrganisationController controller = new(new StubOrganisationService(expected));
+        OrganisationController controller = new(new StubOrganisationService(getResult: expected));
 
         ActionResult<OrganisationDetailsDto> result = await controller.GetOrganisationById(1);
 
@@ -35,7 +40,7 @@ public class OrganisationControllerTests
     [Fact]
     public async Task GetOrganisationById_ReturnsNotFound_WhenOrganisationDoesNotExist()
     {
-        OrganisationController controller = new(new StubOrganisationService(null));
+        OrganisationController controller = new(new StubOrganisationService(getResult: null));
 
         ActionResult<OrganisationDetailsDto> result = await controller.GetOrganisationById(99);
 
@@ -53,19 +58,197 @@ public class OrganisationControllerTests
         Assert.Equal(42, service.CapturedId);
     }
 
-    private sealed class StubOrganisationService(OrganisationDetailsDto? result)
-        : IOrganisationService
+    [Fact]
+    public async Task UpdateOrganisationDetails_ReturnsOk_WhenOrganisationExists()
     {
-        public Task<OrganisationDetailsDto?> GetOrganisationById(int id) => Task.FromResult(result);
+        OrganisationDetailsDto expected = CreateOrganisationDetailsDto();
+        OrganisationController controller = new(
+            new StubOrganisationService(updateResult: expected)
+        );
+
+        ActionResult<OrganisationDetailsDto> result = await controller.UpdateOrganisationDetails(
+            1,
+            CreateUpdateOrganisationDetailsDto()
+        );
+
+        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Same(expected, ok.Value);
+    }
+
+    [Fact]
+    public async Task UpdateOrganisationDetails_ReturnsNotFound_WhenOrganisationDoesNotExist()
+    {
+        OrganisationController controller = new(new StubOrganisationService(updateResult: null));
+
+        ActionResult<OrganisationDetailsDto> result = await controller.UpdateOrganisationDetails(
+            99,
+            CreateUpdateOrganisationDetailsDto()
+        );
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task UpdateOrganisationDetails_PassesIdAndDtoToService()
+    {
+        CapturingOrganisationService service = new();
+        OrganisationController controller = new(service);
+        UpdateOrganisationDetailsDto request = CreateUpdateOrganisationDetailsDto();
+
+        await controller.UpdateOrganisationDetails(42, request);
+
+        Assert.Equal(42, service.CapturedUpdateId);
+        Assert.Same(request, service.CapturedUpdateDto);
+    }
+
+    [Fact]
+    public async Task UpdateOrganisationDetails_ReturnsBadRequest_WhenModelStateIsInvalid()
+    {
+        OrganisationController controller = new(new StubOrganisationService());
+        controller.ModelState.AddModelError(
+            nameof(UpdateOrganisationDetailsDto.OrganisationName),
+            "Required"
+        );
+
+        ActionResult<OrganisationDetailsDto> result = await controller.UpdateOrganisationDetails(
+            1,
+            CreateUpdateOrganisationDetailsDto()
+        );
+
+        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        SerializableError errors = Assert.IsType<SerializableError>(badRequest.Value);
+        string[] organisationNameErrors = Assert.IsType<string[]>(
+            errors[nameof(UpdateOrganisationDetailsDto.OrganisationName)]
+        );
+        Assert.Contains("Required", organisationNameErrors);
+    }
+
+    [Fact]
+    public void UpdateOrganisationDetailsDto_IsInvalid_WhenRequiredFieldsAreMissing()
+    {
+        UpdateOrganisationDetailsDto dto = new();
+
+        List<ValidationResult> validationResults = Validate(dto);
+
+        string[] invalidMembers = validationResults
+            .SelectMany(r => r.MemberNames)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Contains(nameof(UpdateOrganisationDetailsDto.OrganisationName), invalidMembers);
+        Assert.Contains(
+            nameof(UpdateOrganisationDetailsDto.HeadOfficeAddressLine1),
+            invalidMembers
+        );
+        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeTown), invalidMembers);
+        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficePostcode), invalidMembers);
+        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail), invalidMembers);
+        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone), invalidMembers);
+    }
+
+    [Fact]
+    public void UpdateOrganisationDetailsDto_IsInvalid_WhenEmailIsInvalid()
+    {
+        UpdateOrganisationDetailsDto dto = new()
+        {
+            OrganisationName = "Acme Pharma Ltd",
+            HeadOfficeAddressLine1 = "1 High Street",
+            HeadOfficeTown = "London",
+            HeadOfficePostcode = "EC1A 1AA",
+            HeadOfficeEmail = "not-an-email",
+            HeadOfficeTelephone = "020 1234 5678",
+        };
+
+        List<ValidationResult> validationResults = Validate(dto);
+
+        Assert.Contains(
+            validationResults,
+            r =>
+                r.MemberNames.Contains(
+                    nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail),
+                    StringComparer.Ordinal
+                )
+        );
+    }
+
+    private static OrganisationDetailsDto CreateOrganisationDetailsDto() =>
+        new()
+        {
+            Id = 1,
+            OrganisationName = "Acme Pharma Ltd",
+            OrganisationType = OrganisationType.PharmaCompany,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
+            HeadOfficeAddressLine1 = "1 High Street",
+            HeadOfficeAddressLine2 = "Floor 2",
+            HeadOfficeTown = "London",
+            HeadOfficeCounty = "Greater London",
+            HeadOfficePostcode = "EC1A 1AA",
+            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeTelephone = "020 1234 5678",
+            Status = UserOrgStatus.Approved,
+            LastActive = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+    private static UpdateOrganisationDetailsDto CreateUpdateOrganisationDetailsDto() =>
+        new()
+        {
+            OrganisationName = "Acme Pharma Ltd",
+            HeadOfficeAddressLine1 = "1 High Street",
+            HeadOfficeAddressLine2 = "Floor 2",
+            HeadOfficeTown = "London",
+            HeadOfficeCounty = "Greater London",
+            HeadOfficePostcode = "EC1A 1AA",
+            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeTelephone = "020 1234 5678",
+        };
+
+    private static List<ValidationResult> Validate(UpdateOrganisationDetailsDto dto)
+    {
+        List<ValidationResult> validationResults = [];
+        Validator.TryValidateObject(
+            dto,
+            new ValidationContext(dto),
+            validationResults,
+            validateAllProperties: true
+        );
+
+        return validationResults;
+    }
+
+    private sealed class StubOrganisationService(
+        OrganisationDetailsDto? getResult = null,
+        OrganisationDetailsDto? updateResult = null
+    ) : IOrganisationService
+    {
+        public Task<OrganisationDetailsDto?> GetOrganisationById(int id) =>
+            Task.FromResult(getResult);
+
+        public Task<OrganisationDetailsDto?> UpdateOrganisationDetails(
+            int id,
+            UpdateOrganisationDetailsDto organisationDetails
+        ) => Task.FromResult(updateResult);
     }
 
     private sealed class CapturingOrganisationService : IOrganisationService
     {
         public int CapturedId { get; private set; }
+        public int CapturedUpdateId { get; private set; }
+        public UpdateOrganisationDetailsDto? CapturedUpdateDto { get; private set; }
 
         public Task<OrganisationDetailsDto?> GetOrganisationById(int id)
         {
             CapturedId = id;
+            return Task.FromResult<OrganisationDetailsDto?>(null);
+        }
+
+        public Task<OrganisationDetailsDto?> UpdateOrganisationDetails(
+            int id,
+            UpdateOrganisationDetailsDto organisationDetails
+        )
+        {
+            CapturedUpdateId = id;
+            CapturedUpdateDto = organisationDetails;
             return Task.FromResult<OrganisationDetailsDto?>(null);
         }
     }

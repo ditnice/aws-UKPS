@@ -124,17 +124,38 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("HeadOfficeAddress")
+                    b.Property<string>("HeadOfficeAddressLine1")
+                        .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("head_office_address");
+                        .HasColumnName("head_office_address_line1");
+
+                    b.Property<string>("HeadOfficeAddressLine2")
+                        .HasColumnType("text")
+                        .HasColumnName("head_office_address_line2");
+
+                    b.Property<string>("HeadOfficeCounty")
+                        .HasColumnType("text")
+                        .HasColumnName("head_office_county");
 
                     b.Property<string>("HeadOfficeEmail")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_email");
 
+                    b.Property<string>("HeadOfficePostcode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("head_office_postcode");
+
                     b.Property<string>("HeadOfficeTelephone")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_telephone");
+
+                    b.Property<string>("HeadOfficeTown")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("head_office_town");
 
                     b.Property<DateTime?>("LastActive")
                         .HasColumnType("timestamptz")

@@ -1,22 +1,29 @@
-using UKPS.Api.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace UKPS.Api.DTOs;
 
-public sealed class OrganisationDetailsDto
+public sealed class UpdateOrganisationDetailsDto
 {
-    public int Id { get; init; }
+    [Required]
     public string OrganisationName { get; init; } = null!;
-    public OrganisationType OrganisationType { get; init; }
-    public PharmaceuticalEntity AllowedPharmaceuticalEntity { get; init; }
-    public string? CountryOrRegion { get; init; }
+
+    [Required]
     public string HeadOfficeAddressLine1 { get; init; } = null!;
+
     public string? HeadOfficeAddressLine2 { get; init; }
+
+    [Required]
     public string HeadOfficeTown { get; init; } = null!;
+
     public string? HeadOfficeCounty { get; init; }
+
+    [Required]
     public string HeadOfficePostcode { get; init; } = null!;
+
+    [Required]
+    [EmailAddress]
     public string HeadOfficeEmail { get; init; } = null!;
+
+    [Required]
     public string HeadOfficeTelephone { get; init; } = null!;
-    public UserOrgStatus Status { get; init; }
-    public DateTime? LastActive { get; init; }
-    public DateTime? CreatedAt { get; init; }
 }
