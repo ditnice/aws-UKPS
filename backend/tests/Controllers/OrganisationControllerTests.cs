@@ -9,8 +9,11 @@ namespace UKPS.Api.Tests.Controllers;
 
 public class OrganisationControllerTests
 {
+    private static readonly DateTime CreatedAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
+    private static readonly DateTime LastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
+
     [Fact]
-    public async Task GetOrganisationById_ReturnsOk_WhenOrganisationExists()
+    public async Task GetOrganisationById_OrganisationExists_ReturnsOk()
     {
         OrganisationDetailsDto expected = new()
         {
@@ -26,8 +29,8 @@ public class OrganisationControllerTests
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
-            LastActive = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow,
+            LastActive = LastActive,
+            CreatedAt = CreatedAt,
         };
         OrganisationController controller = new(new StubOrganisationService(getResult: expected));
 
@@ -38,7 +41,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public async Task GetOrganisationById_ReturnsNotFound_WhenOrganisationDoesNotExist()
+    public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFound()
     {
         OrganisationController controller = new(new StubOrganisationService(getResult: null));
 
@@ -48,7 +51,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public async Task GetOrganisationById_PassesIdToService()
+    public async Task GetOrganisationById_IdProvided_PassesIdToService()
     {
         CapturingOrganisationService service = new();
         OrganisationController controller = new(service);
@@ -59,7 +62,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_ReturnsOk_WhenOrganisationExists()
+    public async Task UpdateOrganisationDetails_OrganisationExists_ReturnsOk()
     {
         OrganisationDetailsDto expected = CreateOrganisationDetailsDto();
         OrganisationController controller = new(
@@ -76,7 +79,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_ReturnsNotFound_WhenOrganisationDoesNotExist()
+    public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNotFound()
     {
         OrganisationController controller = new(new StubOrganisationService(updateResult: null));
 
@@ -89,7 +92,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_PassesIdAndDtoToService()
+    public async Task UpdateOrganisationDetails_IdAndDtoProvided_PassesIdAndDtoToService()
     {
         CapturingOrganisationService service = new();
         OrganisationController controller = new(service);
@@ -102,7 +105,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_ReturnsBadRequest_WhenModelStateIsInvalid()
+    public async Task UpdateOrganisationDetails_ModelStateIsInvalid_ReturnsBadRequest()
     {
         OrganisationController controller = new(new StubOrganisationService());
         controller.ModelState.AddModelError(
@@ -124,7 +127,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public void UpdateOrganisationDetailsDto_IsInvalid_WhenRequiredFieldsAreMissing()
+    public void UpdateOrganisationDetailsDto_RequiredFieldsAreMissing_IsInvalid()
     {
         UpdateOrganisationDetailsDto dto = new();
 
@@ -147,7 +150,7 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public void UpdateOrganisationDetailsDto_IsInvalid_WhenEmailIsInvalid()
+    public void UpdateOrganisationDetailsDto_EmailIsInvalid_IsInvalid()
     {
         UpdateOrganisationDetailsDto dto = new()
         {
@@ -186,8 +189,8 @@ public class OrganisationControllerTests
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
-            LastActive = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow,
+            LastActive = LastActive,
+            CreatedAt = CreatedAt,
         };
 
     private static UpdateOrganisationDetailsDto CreateUpdateOrganisationDetailsDto() =>

@@ -17,7 +17,7 @@ public class OrganisationServiceTests
         );
 
     [Fact]
-    public async Task GetOrganisationByIdAsync_ReturnsDto_WhenOrganisationExists()
+    public async Task GetOrganisationById_OrganisationExists_ReturnsDto()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(
@@ -63,7 +63,7 @@ public class OrganisationServiceTests
     }
 
     [Fact]
-    public async Task GetOrganisationById_ReturnsNull_WhenOrganisationDoesNotExist()
+    public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNull()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(CreateOrganisation());
@@ -77,7 +77,7 @@ public class OrganisationServiceTests
     }
 
     [Fact]
-    public async Task GetOrganisationById_ReturnsNullFields_WhenOptionalFieldsNotSet()
+    public async Task GetOrganisationById_OptionalFieldsNotSet_ReturnsNullFields()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(CreateOrganisation());
@@ -93,7 +93,7 @@ public class OrganisationServiceTests
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_UpdatesEditableFields_WhenOrganisationExists()
+    public async Task UpdateOrganisationDetails_OrganisationExists_UpdatesEditableFields()
     {
         await using AppDbContext dbContext = CreateDbContext();
         DateTime createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
@@ -115,7 +115,7 @@ public class OrganisationServiceTests
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_AllowsOptionalAddressFieldsToBeNull()
+    public async Task UpdateOrganisationDetails_OptionalAddressFieldsAreNull_AllowsNullFields()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(
@@ -155,7 +155,7 @@ public class OrganisationServiceTests
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_ReturnsNull_WhenOrganisationDoesNotExist()
+    public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNull()
     {
         await using AppDbContext dbContext = CreateDbContext();
         OrganisationService service = new(dbContext);
