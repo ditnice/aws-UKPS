@@ -4,7 +4,7 @@
 ## Requirements
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10, < 2.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 
@@ -15,7 +15,7 @@ No providers.
 ## Modules
 
 | Name | Source | Version |
-| ---- | ------ | ------- |
+|------|--------|---------|
 | <a name="module_aurora_backend"></a> [aurora\_backend](#module\_aurora\_backend) | ../../modules/aurora | n/a |
 | <a name="module_aurora_frontend"></a> [aurora\_frontend](#module\_aurora\_frontend) | ../../modules/aurora | n/a |
 | <a name="module_ecr_backend"></a> [ecr\_backend](#module\_ecr\_backend) | ../../modules/ecr | n/a |
@@ -33,7 +33,7 @@ No resources.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
+|------|-------------|------|---------|:--------:|
 | <a name="input_aurora_allow_major_version_upgrade"></a> [aurora\_allow\_major\_version\_upgrade](#input\_aurora\_allow\_major\_version\_upgrade) | Whether major engine version upgrades are allowed | `bool` | `false` | no |
 | <a name="input_aurora_apply_immediately"></a> [aurora\_apply\_immediately](#input\_aurora\_apply\_immediately) | Whether Aurora changes are applied immediately instead of during the maintenance window | `bool` | `true` | no |
 | <a name="input_aurora_enable_http_endpoint"></a> [aurora\_enable\_http\_endpoint](#input\_aurora\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `false` | no |
@@ -67,7 +67,7 @@ No resources.
 ## Outputs
 
 | Name | Description |
-| ---- | ----------- |
+|------|-------------|
 | <a name="output_backend_aurora_endpoint"></a> [backend\_aurora\_endpoint](#output\_backend\_aurora\_endpoint) | Dev Aurora writer endpoint |
 | <a name="output_backend_ecr_repository_url"></a> [backend\_ecr\_repository\_url](#output\_backend\_ecr\_repository\_url) | ECR repository URL for the dev app |
 | <a name="output_backend_ecs_cluster_name"></a> [backend\_ecs\_cluster\_name](#output\_backend\_ecs\_cluster\_name) | Dev ECS cluster name |
