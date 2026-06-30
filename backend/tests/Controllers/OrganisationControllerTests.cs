@@ -21,11 +21,7 @@ public class OrganisationControllerTests
             OrganisationName = "Acme Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
-            HeadOfficeAddressLine1 = "1 High Street",
-            HeadOfficeAddressLine2 = "Floor 2",
-            HeadOfficeTown = "London",
-            HeadOfficeCounty = "Greater London",
-            HeadOfficePostcode = "EC1A 1AA",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
@@ -139,14 +135,54 @@ public class OrganisationControllerTests
             .ToArray();
 
         Assert.Contains(nameof(UpdateOrganisationDetailsDto.OrganisationName), invalidMembers);
-        Assert.Contains(
-            nameof(UpdateOrganisationDetailsDto.HeadOfficeAddressLine1),
-            invalidMembers
-        );
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeTown), invalidMembers);
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficePostcode), invalidMembers);
+        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress), invalidMembers);
         Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail), invalidMembers);
         Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone), invalidMembers);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\n\n")]
+    [InlineData(" \r\n ")]
+    public void UpdateOrganisationDetailsDto_AddressIsWhitespace_IsInvalid(string address)
+    {
+        UpdateOrganisationDetailsDto dto = CreateUpdateOrganisationDetailsDto(address);
+
+        List<ValidationResult> validationResults = Validate(dto);
+
+        Assert.Contains(
+            validationResults,
+            r =>
+                r.MemberNames.Contains(
+                    nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
+                    StringComparer.Ordinal
+                )
+                && string.Equals(
+                    r.ErrorMessage,
+                    "HeadOfficeAddress cannot be empty or whitespace.",
+                    StringComparison.Ordinal
+                )
+        );
+    }
+
+    [Fact]
+    public void UpdateOrganisationDetailsDto_AddressIsMultiline_IsValid()
+    {
+        UpdateOrganisationDetailsDto dto = CreateUpdateOrganisationDetailsDto(
+            "10 Downing Street\nLondon\nSW1A 2AA"
+        );
+
+        List<ValidationResult> validationResults = Validate(dto);
+
+        Assert.DoesNotContain(
+            validationResults,
+            r =>
+                r.MemberNames.Contains(
+                    nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
+                    StringComparer.Ordinal
+                )
+        );
     }
 
     [Fact]
@@ -155,9 +191,7 @@ public class OrganisationControllerTests
         UpdateOrganisationDetailsDto dto = new()
         {
             OrganisationName = "Acme Pharma Ltd",
-            HeadOfficeAddressLine1 = "1 High Street",
-            HeadOfficeTown = "London",
-            HeadOfficePostcode = "EC1A 1AA",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "not-an-email",
             HeadOfficeTelephone = "020 1234 5678",
         };
@@ -181,11 +215,7 @@ public class OrganisationControllerTests
             OrganisationName = "Acme Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
-            HeadOfficeAddressLine1 = "1 High Street",
-            HeadOfficeAddressLine2 = "Floor 2",
-            HeadOfficeTown = "London",
-            HeadOfficeCounty = "Greater London",
-            HeadOfficePostcode = "EC1A 1AA",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
@@ -197,11 +227,18 @@ public class OrganisationControllerTests
         new()
         {
             OrganisationName = "Acme Pharma Ltd",
-            HeadOfficeAddressLine1 = "1 High Street",
-            HeadOfficeAddressLine2 = "Floor 2",
-            HeadOfficeTown = "London",
-            HeadOfficeCounty = "Greater London",
-            HeadOfficePostcode = "EC1A 1AA",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeTelephone = "020 1234 5678",
+        };
+
+    private static UpdateOrganisationDetailsDto CreateUpdateOrganisationDetailsDto(
+        string address
+    ) =>
+        new()
+        {
+            OrganisationName = "Acme Pharma Ltd",
+            HeadOfficeAddress = address,
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
         };

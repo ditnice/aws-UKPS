@@ -30,11 +30,7 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
         }
 
         organisation.OrganisationName = organisationDetails.OrganisationName;
-        organisation.HeadOfficeAddressLine1 = organisationDetails.HeadOfficeAddressLine1;
-        organisation.HeadOfficeAddressLine2 = organisationDetails.HeadOfficeAddressLine2;
-        organisation.HeadOfficeTown = organisationDetails.HeadOfficeTown;
-        organisation.HeadOfficeCounty = organisationDetails.HeadOfficeCounty;
-        organisation.HeadOfficePostcode = organisationDetails.HeadOfficePostcode;
+        organisation.HeadOfficeAddress = organisationDetails.HeadOfficeAddress;
         organisation.HeadOfficeEmail = organisationDetails.HeadOfficeEmail;
         organisation.HeadOfficeTelephone = organisationDetails.HeadOfficeTelephone;
 
@@ -51,11 +47,7 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
             OrganisationType = organisation.OrganisationType,
             AllowedPharmaceuticalEntity = organisation.AllowedPharmaceuticalEntity,
             CountryOrRegion = organisation.CountryOrRegion,
-            HeadOfficeAddressLine1 = organisation.HeadOfficeAddressLine1,
-            HeadOfficeAddressLine2 = organisation.HeadOfficeAddressLine2,
-            HeadOfficeTown = organisation.HeadOfficeTown,
-            HeadOfficeCounty = organisation.HeadOfficeCounty,
-            HeadOfficePostcode = organisation.HeadOfficePostcode,
+            HeadOfficeAddress = organisation.HeadOfficeAddress,
             HeadOfficeEmail = organisation.HeadOfficeEmail,
             HeadOfficeTelephone = organisation.HeadOfficeTelephone,
             Status = organisation.Status,

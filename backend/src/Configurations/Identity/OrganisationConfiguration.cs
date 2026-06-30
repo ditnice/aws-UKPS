@@ -15,11 +15,7 @@ internal sealed class OrganisationConfiguration : IEntityTypeConfiguration<Organ
         // PharmaceuticalEntity is a [Flags] integer — stored as int, not a PG enum
         builder.Property(x => x.AllowedPharmaceuticalEntity);
         builder.Property(x => x.CountryOrRegion);
-        builder.Property(x => x.HeadOfficeAddressLine1).IsRequired();
-        builder.Property(x => x.HeadOfficeAddressLine2);
-        builder.Property(x => x.HeadOfficeTown).IsRequired();
-        builder.Property(x => x.HeadOfficeCounty);
-        builder.Property(x => x.HeadOfficePostcode).IsRequired();
+        builder.Property(x => x.HeadOfficeAddress).IsRequired();
         builder.Property(x => x.HeadOfficeTelephone).IsRequired();
         builder.Property(x => x.HeadOfficeEmail).IsRequired();
         builder.Property(x => x.Status);

@@ -27,11 +27,7 @@ public class OrganisationServiceTests
                 OrganisationName = "Acme Pharma Ltd",
                 OrganisationType = OrganisationType.PharmaCompany,
                 AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
-                HeadOfficeAddressLine1 = "1 High Street",
-                HeadOfficeAddressLine2 = "Floor 2",
-                HeadOfficeTown = "London",
-                HeadOfficeCounty = "Greater London",
-                HeadOfficePostcode = "EC1A 1AA",
+                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
                 HeadOfficeEmail = "info@acme.com",
                 HeadOfficeTelephone = "020 1234 5678",
                 Status = UserOrgStatus.Approved,
@@ -50,11 +46,7 @@ public class OrganisationServiceTests
         Assert.Equal("Acme Pharma Ltd", result.OrganisationName);
         Assert.Equal(PharmaceuticalEntity.Medicines, result.AllowedPharmaceuticalEntity);
         Assert.Equal(OrganisationType.PharmaCompany, result.OrganisationType);
-        Assert.Equal("1 High Street", result.HeadOfficeAddressLine1);
-        Assert.Equal("Floor 2", result.HeadOfficeAddressLine2);
-        Assert.Equal("London", result.HeadOfficeTown);
-        Assert.Equal("Greater London", result.HeadOfficeCounty);
-        Assert.Equal("EC1A 1AA", result.HeadOfficePostcode);
+        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", result.HeadOfficeAddress);
         Assert.Equal("info@acme.com", result.HeadOfficeEmail);
         Assert.Equal("020 1234 5678", result.HeadOfficeTelephone);
         Assert.Equal(UserOrgStatus.Approved, result.Status);
@@ -74,22 +66,6 @@ public class OrganisationServiceTests
         OrganisationDetailsDto? result = await service.GetOrganisationById(seededId + 1);
 
         Assert.Null(result);
-    }
-
-    [Fact]
-    public async Task GetOrganisationById_OptionalFieldsNotSet_ReturnsNullFields()
-    {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(CreateOrganisation());
-        await dbContext.SaveChangesAsync();
-        int id = (await dbContext.Organisations.SingleAsync()).Id;
-
-        OrganisationService service = new(dbContext);
-        OrganisationDetailsDto? result = await service.GetOrganisationById(id);
-
-        Assert.NotNull(result);
-        Assert.Null(result.HeadOfficeAddressLine2);
-        Assert.Null(result.HeadOfficeCounty);
     }
 
     [Fact]
@@ -115,46 +91,6 @@ public class OrganisationServiceTests
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_OptionalAddressFieldsAreNull_AllowsNullFields()
-    {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(
-            new Organisation
-            {
-                OrganisationName = "Old Pharma Ltd",
-                OrganisationType = OrganisationType.PharmaCompany,
-                HeadOfficeAddressLine1 = "Old line 1",
-                HeadOfficeAddressLine2 = "Old line 2",
-                HeadOfficeTown = "Old town",
-                HeadOfficeCounty = "Old county",
-                HeadOfficePostcode = "OLD 1AA",
-                HeadOfficeEmail = "old@example.com",
-                HeadOfficeTelephone = "020 0000 0000",
-            }
-        );
-        await dbContext.SaveChangesAsync();
-        int id = (await dbContext.Organisations.SingleAsync()).Id;
-
-        OrganisationService service = new(dbContext);
-        OrganisationDetailsDto? result = await service.UpdateOrganisationDetails(
-            id,
-            new UpdateOrganisationDetailsDto
-            {
-                OrganisationName = "New Pharma Ltd",
-                HeadOfficeAddressLine1 = "New line 1",
-                HeadOfficeTown = "New town",
-                HeadOfficePostcode = "NEW 1AA",
-                HeadOfficeEmail = "new@example.com",
-                HeadOfficeTelephone = "020 1111 1111",
-            }
-        );
-
-        Assert.NotNull(result);
-        Assert.Null(result.HeadOfficeAddressLine2);
-        Assert.Null(result.HeadOfficeCounty);
-    }
-
-    [Fact]
     public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNull()
     {
         await using AppDbContext dbContext = CreateDbContext();
@@ -165,9 +101,7 @@ public class OrganisationServiceTests
             new UpdateOrganisationDetailsDto
             {
                 OrganisationName = "New Pharma Ltd",
-                HeadOfficeAddressLine1 = "New line 1",
-                HeadOfficeTown = "New town",
-                HeadOfficePostcode = "NEW 1AA",
+                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
                 HeadOfficeEmail = "new@example.com",
                 HeadOfficeTelephone = "020 1111 1111",
             }
@@ -181,9 +115,7 @@ public class OrganisationServiceTests
         {
             OrganisationName = "Acme Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
-            HeadOfficeAddressLine1 = "1 High Street",
-            HeadOfficeTown = "London",
-            HeadOfficePostcode = "EC1A 1AA",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@acme.com",
             HeadOfficeTelephone = "020 1234 5678",
         };
@@ -198,11 +130,7 @@ public class OrganisationServiceTests
             OrganisationName = "Old Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
-            HeadOfficeAddressLine1 = "Old line 1",
-            HeadOfficeAddressLine2 = "Old line 2",
-            HeadOfficeTown = "Old town",
-            HeadOfficeCounty = "Old county",
-            HeadOfficePostcode = "OLD 1AA",
+            HeadOfficeAddress = "Old line 1\nOld town\nOLD 1AA",
             HeadOfficeEmail = "old@example.com",
             HeadOfficeTelephone = "020 0000 0000",
             Status = UserOrgStatus.Approved,
@@ -214,11 +142,7 @@ public class OrganisationServiceTests
         new()
         {
             OrganisationName = "New Pharma Ltd",
-            HeadOfficeAddressLine1 = "New line 1",
-            HeadOfficeAddressLine2 = "New line 2",
-            HeadOfficeTown = "New town",
-            HeadOfficeCounty = "New county",
-            HeadOfficePostcode = "NEW 1AA",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "new@example.com",
             HeadOfficeTelephone = "020 1111 1111",
         };
@@ -231,11 +155,7 @@ public class OrganisationServiceTests
     {
         Assert.NotNull(result);
         Assert.Equal("New Pharma Ltd", result.OrganisationName);
-        Assert.Equal("New line 1", result.HeadOfficeAddressLine1);
-        Assert.Equal("New line 2", result.HeadOfficeAddressLine2);
-        Assert.Equal("New town", result.HeadOfficeTown);
-        Assert.Equal("New county", result.HeadOfficeCounty);
-        Assert.Equal("NEW 1AA", result.HeadOfficePostcode);
+        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", result.HeadOfficeAddress);
         Assert.Equal("new@example.com", result.HeadOfficeEmail);
         Assert.Equal("020 1111 1111", result.HeadOfficeTelephone);
         Assert.Equal(OrganisationType.PharmaCompany, result.OrganisationType);
@@ -252,11 +172,7 @@ public class OrganisationServiceTests
     )
     {
         Assert.Equal("New Pharma Ltd", saved.OrganisationName);
-        Assert.Equal("New line 1", saved.HeadOfficeAddressLine1);
-        Assert.Equal("New line 2", saved.HeadOfficeAddressLine2);
-        Assert.Equal("New town", saved.HeadOfficeTown);
-        Assert.Equal("New county", saved.HeadOfficeCounty);
-        Assert.Equal("NEW 1AA", saved.HeadOfficePostcode);
+        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", saved.HeadOfficeAddress);
         Assert.Equal("new@example.com", saved.HeadOfficeEmail);
         Assert.Equal("020 1111 1111", saved.HeadOfficeTelephone);
         Assert.Equal(OrganisationType.PharmaCompany, saved.OrganisationType);

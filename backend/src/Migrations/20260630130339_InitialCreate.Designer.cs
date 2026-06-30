@@ -13,7 +13,7 @@ using UKPS.Api.Data;
 namespace UKPS.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260624120122_InitialCreate")]
+    [Migration("20260630130339_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -127,38 +127,20 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("HeadOfficeAddressLine1")
+                    b.Property<string>("HeadOfficeAddress")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("head_office_address_line1");
-
-                    b.Property<string>("HeadOfficeAddressLine2")
-                        .HasColumnType("text")
-                        .HasColumnName("head_office_address_line2");
-
-                    b.Property<string>("HeadOfficeCounty")
-                        .HasColumnType("text")
-                        .HasColumnName("head_office_county");
+                        .HasColumnName("head_office_address");
 
                     b.Property<string>("HeadOfficeEmail")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_email");
 
-                    b.Property<string>("HeadOfficePostcode")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("head_office_postcode");
-
                     b.Property<string>("HeadOfficeTelephone")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_telephone");
-
-                    b.Property<string>("HeadOfficeTown")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("head_office_town");
 
                     b.Property<DateTime?>("LastActive")
                         .HasColumnType("timestamptz")
