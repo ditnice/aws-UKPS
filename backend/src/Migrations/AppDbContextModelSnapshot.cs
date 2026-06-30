@@ -125,14 +125,17 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<string>("HeadOfficeAddress")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_address");
 
                     b.Property<string>("HeadOfficeEmail")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_email");
 
                     b.Property<string>("HeadOfficeTelephone")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_telephone");
 

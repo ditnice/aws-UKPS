@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
+using UKPS.Api.Entities.Identity;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Services;
@@ -9,23 +10,48 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
 {
     public async Task<OrganisationDetailsDto?> GetOrganisationById(int id)
     {
-        return await dbContext
+        var organisation = await dbContext
             .Organisations.AsNoTracking()
-            .Where(o => o.Id == id)
-            .Select(o => new OrganisationDetailsDto
-            {
-                Id = o.Id,
-                OrganisationName = o.OrganisationName,
-                OrganisationType = o.OrganisationType,
-                AllowedPharmaceuticalEntity = o.AllowedPharmaceuticalEntity,
-                CountryOrRegion = o.CountryOrRegion,
-                HeadOfficeAddress = o.HeadOfficeAddress,
-                HeadOfficeEmail = o.HeadOfficeEmail,
-                HeadOfficeTelephone = o.HeadOfficeTelephone,
-                Status = o.Status,
-                LastActive = o.LastActive,
-                CreatedAt = o.CreatedAt,
-            })
-            .SingleOrDefaultAsync();
+            .SingleOrDefaultAsync(o => o.Id == id);
+
+        return organisation is null ? null : MapToDto(organisation);
     }
+
+    public async Task<OrganisationDetailsDto?> UpdateOrganisationDetails(
+        int id,
+        UpdateOrganisationDetailsDto organisationDetails
+    )
+    {
+        var organisation = await dbContext.Organisations.SingleOrDefaultAsync(o => o.Id == id);
+
+        if (organisation is null)
+        {
+            return null;
+        }
+
+        organisation.OrganisationName = organisationDetails.OrganisationName;
+        organisation.HeadOfficeAddress = organisationDetails.HeadOfficeAddress;
+        organisation.HeadOfficeEmail = organisationDetails.HeadOfficeEmail;
+        organisation.HeadOfficeTelephone = organisationDetails.HeadOfficeTelephone;
+
+        await dbContext.SaveChangesAsync();
+
+        return MapToDto(organisation);
+    }
+
+    private static OrganisationDetailsDto MapToDto(Organisation organisation) =>
+        new()
+        {
+            Id = organisation.Id,
+            OrganisationName = organisation.OrganisationName,
+            OrganisationType = organisation.OrganisationType,
+            AllowedPharmaceuticalEntity = organisation.AllowedPharmaceuticalEntity,
+            CountryOrRegion = organisation.CountryOrRegion,
+            HeadOfficeAddress = organisation.HeadOfficeAddress,
+            HeadOfficeEmail = organisation.HeadOfficeEmail,
+            HeadOfficeTelephone = organisation.HeadOfficeTelephone,
+            Status = organisation.Status,
+            LastActive = organisation.LastActive,
+            CreatedAt = organisation.CreatedAt,
+        };
 }

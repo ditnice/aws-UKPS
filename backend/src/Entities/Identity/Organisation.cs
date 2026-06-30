@@ -9,9 +9,9 @@ internal sealed class Organisation
     public OrganisationType OrganisationType { get; set; }
     public PharmaceuticalEntity AllowedPharmaceuticalEntity { get; set; }
     public string? CountryOrRegion { get; set; }
-    public string? HeadOfficeAddress { get; set; }
-    public string? HeadOfficeTelephone { get; set; }
-    public string? HeadOfficeEmail { get; set; }
+    public string HeadOfficeAddress { get; set; } = null!;
+    public string HeadOfficeTelephone { get; set; } = null!;
+    public string HeadOfficeEmail { get; set; } = null!;
     public UserOrgStatus Status { get; set; }
     public DateTime? LastActive { get; set; }
     public DateTime? CreatedAt { get; set; }

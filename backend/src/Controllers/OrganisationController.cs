@@ -17,4 +17,26 @@ public class OrganisationController(IOrganisationService organisationService) : 
 
         return (organisation is null) ? NotFound() : Ok(organisation);
     }
+
+    [HttpPut("{id:int}")]
+    [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<OrganisationDetailsDto>> UpdateOrganisationDetails(
+        int id,
+        UpdateOrganisationDetailsDto organisationDetails
+    )
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        OrganisationDetailsDto? organisation = await organisationService.UpdateOrganisationDetails(
+            id,
+            organisationDetails
+        );
+
+        return (organisation is null) ? NotFound() : Ok(organisation);
+    }
 }

@@ -80,6 +80,9 @@ dotnet_diagnostic.MA0004.severity = none
 # Namespace should match folder structure
 dotnet_diagnostic.IDE0130.severity = warning
 
+# Unused using directives are not allowed
+dotnet_diagnostic.IDE0005.severity = warning
+
 # Roslynator: enums must have explicit numeric values
 dotnet_diagnostic.RCS1161.severity = warning
 

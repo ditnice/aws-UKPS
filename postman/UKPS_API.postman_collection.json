@@ -45,7 +45,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"organisationName\": \"Example Pharma Ltd\",\n  \"organisationType\": 0,\n  \"allowedPharmaceuticalEntity\": 3,\n  \"countryOrRegion\": \"United Kingdom\",\n  \"headOfficeAddress\": \"123 Example Street, London, EC1A 1BB\",\n  \"headOfficeEmail\": \"contact@examplepharma.co.uk\",\n  \"headOfficeTelephone\": \"+44 20 7946 0000\",\n  \"status\": 1,\n  \"lastActive\": \"2026-06-01T09:00:00Z\",\n  \"createdAt\": \"2025-01-15T10:30:00Z\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"organisationName\": \"Example Pharma Ltd\",\n  \"organisationType\": 0,\n  \"allowedPharmaceuticalEntity\": 3,\n  \"countryOrRegion\": \"United Kingdom\",\n  \"headOfficeAddress\": \"10 Downing Street\\nLondon\\nSW1A 2AA\",\n  \"headOfficeEmail\": \"contact@examplepharma.co.uk\",\n  \"headOfficeTelephone\": \"+44 20 7946 0000\",\n  \"status\": 1,\n  \"lastActive\": \"2026-06-01T09:00:00Z\",\n  \"createdAt\": \"2025-01-15T10:30:00Z\"\n}",
               "_postman_previewlanguage": "json",
               "originalRequest": {
                 "method": "GET",
@@ -71,6 +71,76 @@
                   "path": ["organisations", "9999"]
                 }
               }
+            }
+          ]
+        },
+        {
+          "name": "Update Organisation Details",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"organisationName\": \"Example Pharma Ltd\",\n  \"headOfficeAddress\": \"10 Downing Street\\nLondon\\nSW1A 2AA\",\n  \"headOfficeEmail\": \"contact@examplepharma.co.uk\",\n  \"headOfficeTelephone\": \"+44 20 7946 0000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/organisations/{{organisationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organisations", "{{organisationId}}"],
+              "variable": [
+                {
+                  "key": "organisationId",
+                  "value": "1",
+                  "description": "The integer ID of the organisation to update"
+                }
+              ]
+            },
+            "description": "Fully replaces the editable organisation details for the given ID. Head office address is a required multiline text value."
+          },
+          "response": [
+            {
+              "name": "200 OK - Organisation updated",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"organisationName\": \"Example Pharma Ltd\",\n  \"organisationType\": 0,\n  \"allowedPharmaceuticalEntity\": 3,\n  \"countryOrRegion\": \"United Kingdom\",\n  \"headOfficeAddress\": \"10 Downing Street\\nLondon\\nSW1A 2AA\",\n  \"headOfficeEmail\": \"contact@examplepharma.co.uk\",\n  \"headOfficeTelephone\": \"+44 20 7946 0000\",\n  \"status\": 1,\n  \"lastActive\": \"2026-06-01T09:00:00Z\",\n  \"createdAt\": \"2025-01-15T10:30:00Z\"\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "400 Bad Request - Validation failed",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/problem+json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\n  \"title\": \"One or more validation errors occurred.\",\n  \"status\": 400,\n  \"errors\": {\n    \"HeadOfficeEmail\": [\n      \"The HeadOfficeEmail field is not a valid e-mail address.\"\n    ]\n  }\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "404 Not Found - Organisation does not exist",
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
             }
           ]
         }

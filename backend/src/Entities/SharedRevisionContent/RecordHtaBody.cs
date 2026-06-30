@@ -1,5 +1,3 @@
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.SharedRevisionContent;
 
 /// <summary>
