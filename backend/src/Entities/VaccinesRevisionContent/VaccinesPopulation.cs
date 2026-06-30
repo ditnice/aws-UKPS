@@ -1,5 +1,3 @@
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.VaccinesRevisionContent;
 
 internal sealed class VaccinesPopulation

@@ -1,5 +1,3 @@
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.MedicinesRevisionContent;
 
 /// <summary>Junction table: PAS regions selected for a medicine record.</summary>

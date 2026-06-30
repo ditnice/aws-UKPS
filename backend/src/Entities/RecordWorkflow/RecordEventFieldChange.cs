@@ -1,6 +1,3 @@
-using System.Text.Json;
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.RecordWorkflow;
 
 internal sealed class RecordEventFieldChange

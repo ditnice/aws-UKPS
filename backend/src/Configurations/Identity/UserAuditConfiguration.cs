@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UKPS.Api.Entities.Identity;
-using UKPS.Api.Enums;
 
 namespace UKPS.Api.Configurations.Identity;
 
