@@ -115,6 +115,28 @@ variable "response_time_threshold" {
   }
 }
 
+variable "log_error_threshold" {
+  description = "Number of error log occurrences before alarm triggers"
+  type        = number
+  default     = 5
+
+  validation {
+    condition     = var.log_error_threshold > 0
+    error_message = "Log error threshold must be greater than zero."
+  }
+}
+
+variable "log_group_name" {
+  description = "CloudWatch log group for ECS service"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[\\.\\-_/#A-Za-z0-9]{1,512}$", var.log_group_name))
+    error_message = "Log group name must be 1-512 characters and contain only letters, numbers, periods, hyphens, underscores, slashes, or #."
+  }
+}
+
+
 variable "load_balancer_id" {
   description = "Application Load Balancer identifier used for CloudWatch alarm dimensions"
   type        = string

@@ -20,10 +20,12 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [aws_cloudwatch_log_metric_filter.ecs_error_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_metric_filter) | resource |
 | [aws_cloudwatch_metric_alarm.alb_5xx](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.alb_response_time](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_cpu_high](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_cpu_reservation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
+| [aws_cloudwatch_metric_alarm.ecs_log_error_alarm](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_memory_high](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_memory_reservation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 
@@ -36,6 +38,8 @@ No modules.
 | <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, alpha, etc.) | `string` | n/a | yes |
 | <a name="input_evaluation_periods"></a> [evaluation\_periods](#input\_evaluation\_periods) | Number of consecutive periods required before entering alarm state | `number` | `3` | no |
 | <a name="input_load_balancer_id"></a> [load\_balancer\_id](#input\_load\_balancer\_id) | Application Load Balancer identifier used for CloudWatch alarm dimensions | `string` | n/a | yes |
+| <a name="input_log_error_threshold"></a> [log\_error\_threshold](#input\_log\_error\_threshold) | Number of error log occurrences before alarm triggers | `number` | `5` | no |
+| <a name="input_log_group_name"></a> [log\_group\_name](#input\_log\_group\_name) | CloudWatch log group for ECS service | `string` | n/a | yes |
 | <a name="input_memory_threshold"></a> [memory\_threshold](#input\_memory\_threshold) | Memory utilisation percentage threshold before alarm triggers | `number` | `80` | no |
 | <a name="input_monitoring_period"></a> [monitoring\_period](#input\_monitoring\_period) | CloudWatch metric collection period in seconds | `number` | `60` | no |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |

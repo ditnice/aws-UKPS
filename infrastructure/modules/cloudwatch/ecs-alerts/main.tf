@@ -86,7 +86,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
   evaluation_periods  = 1
   metric_name         = "HTTPCode_Target_5XX_Count"
   namespace           = "AWS/ApplicationELB"
-  period              = 60
+  period              = var.monitoring_period
   statistic           = "Sum"
   threshold           = 5
 
@@ -120,4 +120,32 @@ resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
     LoadBalancer = var.load_balancer_id
     TargetGroup  = var.target_group_id
   }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "ecs_error_logs" {
+  name           = "${var.project}-${var.environment}-${var.service_name}-ecs-error-log-filter"
+  log_group_name = var.log_group_name
+  pattern        = "?ERROR ?Error ?error ?Exception ?FATAL"
+
+  metric_transformation {
+    name      = "${var.project}-${var.environment}-${var.service_name}-error-count"
+    namespace = "ECS/LogMetrics"
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "ecs_log_error_alarm" {
+  alarm_name          = "${var.project}-${var.environment}-${var.service_name}-log-errors"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = var.evaluation_periods
+  metric_name         = "${var.project}-${var.environment}-${var.service_name}-error-count"
+  namespace           = "ECS/LogMetrics"
+  period              = var.monitoring_period
+  statistic           = "Sum"
+  threshold           = var.log_error_threshold
+
+  alarm_description = "High number of error logs detected for ECS service ${var.service_name}"
+
+  alarm_actions = [var.sns_topic_arn]
+  ok_actions    = [var.sns_topic_arn]
 }
