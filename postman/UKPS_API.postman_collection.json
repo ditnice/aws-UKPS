@@ -155,7 +155,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users?organisationId={{organisationId}}&page=1&pageSize=20&status=Approved&status=Inactive",
+              "raw": "{{baseUrl}}/users?organisationId={{organisationId}}&page=1&pageSize=20&status=Active&status=Inactive",
               "host": ["{{baseUrl}}"],
               "path": ["users"],
               "query": [
@@ -176,7 +176,7 @@
                 },
                 {
                   "key": "status",
-                  "value": "Approved",
+                  "value": "Active",
                   "description": "Optional repeated UserOrgStatus filter"
                 },
                 {
@@ -199,7 +199,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"userId\": 1,\n      \"emailAddress\": \"user@example.com\",\n      \"role\": \"Standard\",\n      \"status\": \"Approved\",\n      \"lastActive\": null\n    }\n  ],\n  \"totalCount\": 1,\n  \"page\": 1,\n  \"pageSize\": 20\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"userId\": 1,\n      \"emailAddress\": \"user@example.com\",\n      \"role\": \"Standard\",\n      \"status\": \"Active\",\n      \"lastActive\": null\n    }\n  ],\n  \"totalCount\": 1,\n  \"page\": 1,\n  \"pageSize\": 20\n}",
               "_postman_previewlanguage": "json"
             },
             {

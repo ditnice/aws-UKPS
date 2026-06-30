@@ -67,7 +67,7 @@ public class UserServiceTests
                 userId: 10,
                 organisationId: 1,
                 role: UserRole.Champion,
-                status: UserOrgStatus.Approved
+                status: UserOrgStatus.Active
             )
         );
         await dbContext.SaveChangesAsync();
@@ -86,7 +86,7 @@ public class UserServiceTests
         Assert.Equal(10, item.UserId);
         Assert.Equal("user@example.com", item.EmailAddress);
         Assert.Equal(UserRole.Champion, item.Role);
-        Assert.Equal(UserOrgStatus.Approved, item.Status);
+        Assert.Equal(UserOrgStatus.Active, item.Status);
         Assert.Null(item.LastActive);
     }
 
@@ -96,13 +96,18 @@ public class UserServiceTests
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(CreateOrganisation(id: 1));
         dbContext.Users.AddRange(
-            CreateUser(id: 1, workEmail: "pending@example.com"),
-            CreateUser(id: 2, workEmail: "approved@example.com"),
+            CreateUser(id: 1, workEmail: "requested-access@example.com"),
+            CreateUser(id: 2, workEmail: "active@example.com"),
             CreateUser(id: 3, workEmail: "inactive@example.com")
         );
         dbContext.UserOrgMemberships.AddRange(
-            CreateMembership(id: 1, userId: 1, organisationId: 1, status: UserOrgStatus.Pending),
-            CreateMembership(id: 2, userId: 2, organisationId: 1, status: UserOrgStatus.Approved),
+            CreateMembership(
+                id: 1,
+                userId: 1,
+                organisationId: 1,
+                status: UserOrgStatus.RequestedAccess
+            ),
+            CreateMembership(id: 2, userId: 2, organisationId: 1, status: UserOrgStatus.Active),
             CreateMembership(id: 3, userId: 3, organisationId: 1, status: UserOrgStatus.Inactive)
         );
         await dbContext.SaveChangesAsync();
@@ -113,7 +118,7 @@ public class UserServiceTests
             1,
             1,
             20,
-            [UserOrgStatus.Approved, UserOrgStatus.Inactive]
+            [UserOrgStatus.Active, UserOrgStatus.Inactive]
         );
 
         Assert.NotNull(result);
@@ -183,7 +188,7 @@ public class UserServiceTests
         int userId,
         int organisationId,
         UserRole role = UserRole.Standard,
-        UserOrgStatus status = UserOrgStatus.Approved
+        UserOrgStatus status = UserOrgStatus.Active
     ) =>
         new()
         {

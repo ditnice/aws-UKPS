@@ -57,7 +57,7 @@ public class UserControllerTests
             OrganisationId = 42,
             Page = 3,
             PageSize = 10,
-            Status = [UserOrgStatus.Approved, UserOrgStatus.Inactive],
+            Status = [UserOrgStatus.Active, UserOrgStatus.Inactive],
         };
 
         await controller.GetUsers(getUsersQuery);
@@ -65,7 +65,7 @@ public class UserControllerTests
         Assert.Equal(42, service.CapturedOrganisationId);
         Assert.Equal(3, service.CapturedPage);
         Assert.Equal(10, service.CapturedPageSize);
-        Assert.Equal([UserOrgStatus.Approved, UserOrgStatus.Inactive], service.CapturedStatuses);
+        Assert.Equal([UserOrgStatus.Active, UserOrgStatus.Inactive], service.CapturedStatuses);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class UserControllerTests
                     UserId = 1,
                     EmailAddress = "user@example.com",
                     Role = UserRole.Standard,
-                    Status = UserOrgStatus.Approved,
+                    Status = UserOrgStatus.Active,
                 },
             ],
             TotalCount = 1,
