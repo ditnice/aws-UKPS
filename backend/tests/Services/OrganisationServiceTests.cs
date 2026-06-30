@@ -24,11 +24,11 @@ public class OrganisationServiceTests
             new Organisation
             {
                 Id = 1,
-                OrganisationName = "Acme Pharma Ltd",
+                OrganisationName = "Gov Pharma Ltd",
                 OrganisationType = OrganisationType.PharmaCompany,
                 AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
                 HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-                HeadOfficeEmail = "info@acme.com",
+                HeadOfficeEmail = "info@pharma.gov.uk",
                 HeadOfficeTelephone = "020 1234 5678",
                 Status = UserOrgStatus.Approved,
                 LastActive = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
@@ -43,11 +43,11 @@ public class OrganisationServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(id, result.Id);
-        Assert.Equal("Acme Pharma Ltd", result.OrganisationName);
+        Assert.Equal("Gov Pharma Ltd", result.OrganisationName);
         Assert.Equal(PharmaceuticalEntity.Medicines, result.AllowedPharmaceuticalEntity);
         Assert.Equal(OrganisationType.PharmaCompany, result.OrganisationType);
         Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", result.HeadOfficeAddress);
-        Assert.Equal("info@acme.com", result.HeadOfficeEmail);
+        Assert.Equal("info@pharma.gov.uk", result.HeadOfficeEmail);
         Assert.Equal("020 1234 5678", result.HeadOfficeTelephone);
         Assert.Equal(UserOrgStatus.Approved, result.Status);
         Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), result.LastActive);
@@ -113,10 +113,10 @@ public class OrganisationServiceTests
     private static Organisation CreateOrganisation() =>
         new()
         {
-            OrganisationName = "Acme Pharma Ltd",
+            OrganisationName = "Gov Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
         };
 

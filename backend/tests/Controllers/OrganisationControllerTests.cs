@@ -9,8 +9,8 @@ namespace UKPS.Api.Tests.Controllers;
 
 public class OrganisationControllerTests
 {
-    private static readonly DateTime CreatedAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
-    private static readonly DateTime LastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
+    private static readonly DateTime _createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
+    private static readonly DateTime _lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
 
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsOk()
@@ -18,15 +18,15 @@ public class OrganisationControllerTests
         OrganisationDetailsDto expected = new()
         {
             Id = 1,
-            OrganisationName = "Acme Pharma Ltd",
+            OrganisationName = "Gov Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
-            LastActive = LastActive,
-            CreatedAt = CreatedAt,
+            LastActive = _lastActive,
+            CreatedAt = _createdAt,
         };
         OrganisationController controller = new(new StubOrganisationService(getResult: expected));
 
@@ -190,7 +190,7 @@ public class OrganisationControllerTests
     {
         UpdateOrganisationDetailsDto dto = new()
         {
-            OrganisationName = "Acme Pharma Ltd",
+            OrganisationName = "Gov Pharma Ltd",
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "not-an-email",
             HeadOfficeTelephone = "020 1234 5678",
@@ -212,23 +212,23 @@ public class OrganisationControllerTests
         new()
         {
             Id = 1,
-            OrganisationName = "Acme Pharma Ltd",
+            OrganisationName = "Gov Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
             Status = UserOrgStatus.Approved,
-            LastActive = LastActive,
-            CreatedAt = CreatedAt,
+            LastActive = _lastActive,
+            CreatedAt = _createdAt,
         };
 
     private static UpdateOrganisationDetailsDto CreateUpdateOrganisationDetailsDto() =>
         new()
         {
-            OrganisationName = "Acme Pharma Ltd",
+            OrganisationName = "Gov Pharma Ltd",
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
         };
 
@@ -237,9 +237,9 @@ public class OrganisationControllerTests
     ) =>
         new()
         {
-            OrganisationName = "Acme Pharma Ltd",
+            OrganisationName = "Gov Pharma Ltd",
             HeadOfficeAddress = address,
-            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
         };
 
