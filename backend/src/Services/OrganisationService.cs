@@ -10,28 +10,11 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
 {
     public async Task<OrganisationDetailsDto?> GetOrganisationById(int id)
     {
-        return await dbContext
+        var organisation = await dbContext
             .Organisations.AsNoTracking()
-            .Where(o => o.Id == id)
-            .Select(o => new OrganisationDetailsDto
-            {
-                Id = o.Id,
-                OrganisationName = o.OrganisationName,
-                OrganisationType = o.OrganisationType,
-                AllowedPharmaceuticalEntity = o.AllowedPharmaceuticalEntity,
-                CountryOrRegion = o.CountryOrRegion,
-                HeadOfficeAddressLine1 = o.HeadOfficeAddressLine1,
-                HeadOfficeAddressLine2 = o.HeadOfficeAddressLine2,
-                HeadOfficeTown = o.HeadOfficeTown,
-                HeadOfficeCounty = o.HeadOfficeCounty,
-                HeadOfficePostcode = o.HeadOfficePostcode,
-                HeadOfficeEmail = o.HeadOfficeEmail,
-                HeadOfficeTelephone = o.HeadOfficeTelephone,
-                Status = o.Status,
-                LastActive = o.LastActive,
-                CreatedAt = o.CreatedAt,
-            })
-            .SingleOrDefaultAsync();
+            .SingleOrDefaultAsync(o => o.Id == id);
+
+        return organisation is null ? null : MapToDto(organisation);
     }
 
     public async Task<OrganisationDetailsDto?> UpdateOrganisationDetails(
