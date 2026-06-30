@@ -164,12 +164,10 @@ public class UserServiceTests
         new()
         {
             Id = id,
-            OrganisationName = "Acme Pharma Ltd",
+            OrganisationName = "Gov Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
-            HeadOfficeAddressLine1 = "1 High Street",
-            HeadOfficeTown = "London",
-            HeadOfficePostcode = "EC1A 1AA",
-            HeadOfficeEmail = "info@acme.com",
+            HeadOfficeAddress = "1 High Street\nLondon\nEC1A 1AA",
+            HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
         };
 
