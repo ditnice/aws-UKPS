@@ -99,8 +99,8 @@ variable "sns_topic_arn" {
   type        = string
 
   validation {
-    condition     = can(regex("^arn:aws[a-zA-Z-]*:kms:[a-z0-9-]+:[0-9]{12}:key/(mrk-[0-9a-f]{32}|[0-9a-f-]{36})$", var.sns_topic_arn))
-    error_message = "SNS topic ARN must be a valid AWS SNS ARN."
+    condition     = can(regex("^arn:aws(-[a-z]+)?:sns:[a-z0-9-]+:[0-9]{12}:[a-zA-Z0-9-_]+$", var.sns_topic_arn))
+    error_message = "SNS topic ARN must be a valid SNS topic ARN."
   }
 }
 

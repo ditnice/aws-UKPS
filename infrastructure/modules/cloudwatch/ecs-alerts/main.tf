@@ -88,7 +88,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
   namespace           = "AWS/ApplicationELB"
   period              = 60
   statistic           = "Sum"
-  threshold           = 0
+  threshold           = 5
 
   alarm_description = "Target group for ${var.service_name} returned HTTP 5XX responses."
 
@@ -118,5 +118,6 @@ resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
 
   dimensions = {
     LoadBalancer = var.load_balancer_id
+    TargetGroup  = var.target_group_id
   }
 }
