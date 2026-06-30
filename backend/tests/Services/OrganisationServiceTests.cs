@@ -110,14 +110,136 @@ public class OrganisationServiceTests
         Assert.Null(result);
     }
 
-    private static Organisation CreateOrganisation() =>
+    [Fact]
+    public async Task DeactivateUser_OrganisationDoesNotExist_ReturnsOrganisationNotFound()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        OrganisationService service = new(dbContext);
+
+        DeactivateOrganisationUserResult result = await service.DeactivateUser(99, 10);
+
+        Assert.Equal(DeactivateOrganisationUserStatus.OrganisationNotFound, result.Status);
+        Assert.Null(result.User);
+    }
+
+    [Fact]
+    public async Task DeactivateUser_UserDoesNotExistInOrganisation_ReturnsUserNotFound()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        dbContext.Organisations.Add(CreateOrganisation(id: 1));
+        await dbContext.SaveChangesAsync();
+        OrganisationService service = new(dbContext);
+
+        DeactivateOrganisationUserResult result = await service.DeactivateUser(1, 99);
+
+        Assert.Equal(DeactivateOrganisationUserStatus.UserNotFound, result.Status);
+        Assert.Null(result.User);
+    }
+
+    [Fact]
+    public async Task DeactivateUser_UserExistsInDifferentOrganisation_ReturnsUserNotFound()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        dbContext.Organisations.AddRange(CreateOrganisation(id: 1), CreateOrganisation(id: 2));
+        dbContext.Users.Add(CreateUser(id: 10, workEmail: "user@example.com"));
+        dbContext.UserOrgMemberships.Add(CreateMembership(id: 100, userId: 10, organisationId: 2));
+        await dbContext.SaveChangesAsync();
+        OrganisationService service = new(dbContext);
+
+        DeactivateOrganisationUserResult result = await service.DeactivateUser(1, 10);
+
+        Assert.Equal(DeactivateOrganisationUserStatus.UserNotFound, result.Status);
+        UserOrgMembership saved = await dbContext.UserOrgMemberships.SingleAsync(m => m.Id == 100);
+        Assert.Equal(UserOrgStatus.Active, saved.Status);
+    }
+
+    [Fact]
+    public async Task DeactivateUser_UserAlreadyInactive_ReturnsAlreadyInactive()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        dbContext.Organisations.Add(CreateOrganisation(id: 1));
+        dbContext.Users.Add(CreateUser(id: 10, workEmail: "user@example.com"));
+        dbContext.UserOrgMemberships.Add(
+            CreateMembership(id: 100, userId: 10, organisationId: 1, status: UserOrgStatus.Inactive)
+        );
+        await dbContext.SaveChangesAsync();
+        OrganisationService service = new(dbContext);
+
+        DeactivateOrganisationUserResult result = await service.DeactivateUser(1, 10);
+
+        Assert.Equal(DeactivateOrganisationUserStatus.AlreadyInactive, result.Status);
+        Assert.Null(result.User);
+    }
+
+    [Fact]
+    public async Task DeactivateUser_UserIsActive_UpdatesMembershipStatusToInactive()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        dbContext.Organisations.Add(CreateOrganisation(id: 1));
+        dbContext.Users.Add(CreateUser(id: 10, workEmail: "user@example.com"));
+        dbContext.UserOrgMemberships.Add(
+            CreateMembership(
+                id: 100,
+                userId: 10,
+                organisationId: 1,
+                role: UserRole.Champion,
+                status: UserOrgStatus.Active
+            )
+        );
+        await dbContext.SaveChangesAsync();
+        OrganisationService service = new(dbContext);
+
+        DeactivateOrganisationUserResult result = await service.DeactivateUser(1, 10);
+
+        Assert.Equal(DeactivateOrganisationUserStatus.Success, result.Status);
+        Assert.NotNull(result.User);
+        Assert.Equal(10, result.User.UserId);
+        Assert.Equal("user@example.com", result.User.EmailAddress);
+        Assert.Equal(UserRole.Champion, result.User.Role);
+        Assert.Equal(UserOrgStatus.Inactive, result.User.Status);
+        Assert.Null(result.User.LastActive);
+
+        UserOrgMembership saved = await dbContext.UserOrgMemberships.SingleAsync(m => m.Id == 100);
+        Assert.Equal(UserOrgStatus.Inactive, saved.Status);
+    }
+
+    private static Organisation CreateOrganisation() => CreateOrganisation(id: 1);
+
+    private static Organisation CreateOrganisation(int id) =>
         new()
         {
+            Id = id,
             OrganisationName = "Gov Pharma Ltd",
             OrganisationType = OrganisationType.PharmaCompany,
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
+        };
+
+    private static User CreateUser(int id, string workEmail) =>
+        new()
+        {
+            Id = id,
+            Username = workEmail,
+            FirstName = "Test",
+            LastName = "User",
+            WorkEmail = workEmail,
+        };
+
+    private static UserOrgMembership CreateMembership(
+        int id,
+        int userId,
+        int organisationId,
+        UserRole role = UserRole.Standard,
+        UserOrgStatus status = UserOrgStatus.Active
+    ) =>
+        new()
+        {
+            Id = id,
+            UserId = userId,
+            OrganisationId = organisationId,
+            UserRole = role,
+            Status = status,
         };
 
     private static Organisation CreateOrganisationForUpdate(

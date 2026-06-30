@@ -16,6 +16,7 @@ internal sealed class UserOrgMembershipConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.AllowedPharmaceuticalEntity).HasConversion<int>();
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
 
+        // Review whether uniqueness should be enforced on UserId + OrganisationId only.
         builder
             .HasIndex(x => new
             {

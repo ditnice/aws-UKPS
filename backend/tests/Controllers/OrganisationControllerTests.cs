@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
+using UKPS.Api.Services;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Tests.Controllers;
@@ -208,6 +209,79 @@ public class OrganisationControllerTests
         );
     }
 
+    [Fact]
+    public async Task DeactivateUser_UserIsActive_ReturnsOkWithUpdatedUser()
+    {
+        UserListItemDto expected = CreateUserListItemDto(UserOrgStatus.Inactive);
+        OrganisationController controller = new(
+            new StubOrganisationService(
+                deactivateResult: DeactivateOrganisationUserResult.Success(expected)
+            )
+        );
+
+        ActionResult<UserListItemDto> result = await controller.DeactivateUser(1, 10);
+
+        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Same(expected, ok.Value);
+    }
+
+    [Fact]
+    public async Task DeactivateUser_OrganisationDoesNotExist_ReturnsNotFoundWithMessage()
+    {
+        OrganisationController controller = new(
+            new StubOrganisationService(
+                deactivateResult: DeactivateOrganisationUserResult.OrganisationNotFound()
+            )
+        );
+
+        ActionResult<UserListItemDto> result = await controller.DeactivateUser(99, 10);
+
+        NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Equal("Organisation not found.", notFound.Value);
+    }
+
+    [Fact]
+    public async Task DeactivateUser_UserDoesNotExistInOrganisation_ReturnsNotFoundWithMessage()
+    {
+        OrganisationController controller = new(
+            new StubOrganisationService(
+                deactivateResult: DeactivateOrganisationUserResult.UserNotFound()
+            )
+        );
+
+        ActionResult<UserListItemDto> result = await controller.DeactivateUser(1, 99);
+
+        NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Equal("User not found in organisation.", notFound.Value);
+    }
+
+    [Fact]
+    public async Task DeactivateUser_UserIsAlreadyInactive_ReturnsBadRequestWithMessage()
+    {
+        OrganisationController controller = new(
+            new StubOrganisationService(
+                deactivateResult: DeactivateOrganisationUserResult.AlreadyInactive()
+            )
+        );
+
+        ActionResult<UserListItemDto> result = await controller.DeactivateUser(1, 10);
+
+        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("User is already inactive.", badRequest.Value);
+    }
+
+    [Fact]
+    public async Task DeactivateUser_IdAndUserIdProvided_PassesIdsToService()
+    {
+        CapturingOrganisationService service = new();
+        OrganisationController controller = new(service);
+
+        await controller.DeactivateUser(42, 24);
+
+        Assert.Equal(42, service.CapturedDeactivateOrganisationId);
+        Assert.Equal(24, service.CapturedDeactivateUserId);
+    }
+
     private static OrganisationDetailsDto CreateOrganisationDetailsDto() =>
         new()
         {
@@ -243,6 +317,15 @@ public class OrganisationControllerTests
             HeadOfficeTelephone = "020 1234 5678",
         };
 
+    private static UserListItemDto CreateUserListItemDto(UserOrgStatus status) =>
+        new()
+        {
+            UserId = 10,
+            EmailAddress = "user@example.com",
+            Role = UserRole.Standard,
+            Status = status,
+        };
+
     private static List<ValidationResult> Validate(UpdateOrganisationDetailsDto dto)
     {
         List<ValidationResult> validationResults = [];
@@ -258,7 +341,8 @@ public class OrganisationControllerTests
 
     private sealed class StubOrganisationService(
         OrganisationDetailsDto? getResult = null,
-        OrganisationDetailsDto? updateResult = null
+        OrganisationDetailsDto? updateResult = null,
+        DeactivateOrganisationUserResult? deactivateResult = null
     ) : IOrganisationService
     {
         public Task<OrganisationDetailsDto?> GetOrganisationById(int id) =>
@@ -268,12 +352,19 @@ public class OrganisationControllerTests
             int id,
             UpdateOrganisationDetailsDto organisationDetails
         ) => Task.FromResult(updateResult);
+
+        public Task<DeactivateOrganisationUserResult> DeactivateUser(
+            int organisationId,
+            int userId
+        ) => Task.FromResult(deactivateResult ?? DeactivateOrganisationUserResult.UserNotFound());
     }
 
     private sealed class CapturingOrganisationService : IOrganisationService
     {
         public int CapturedId { get; private set; }
         public int CapturedUpdateId { get; private set; }
+        public int CapturedDeactivateOrganisationId { get; private set; }
+        public int CapturedDeactivateUserId { get; private set; }
         public UpdateOrganisationDetailsDto? CapturedUpdateDto { get; private set; }
 
         public Task<OrganisationDetailsDto?> GetOrganisationById(int id)
@@ -290,6 +381,13 @@ public class OrganisationControllerTests
             CapturedUpdateId = id;
             CapturedUpdateDto = organisationDetails;
             return Task.FromResult<OrganisationDetailsDto?>(null);
+        }
+
+        public Task<DeactivateOrganisationUserResult> DeactivateUser(int organisationId, int userId)
+        {
+            CapturedDeactivateOrganisationId = organisationId;
+            CapturedDeactivateUserId = userId;
+            return Task.FromResult(DeactivateOrganisationUserResult.UserNotFound());
         }
     }
 }
