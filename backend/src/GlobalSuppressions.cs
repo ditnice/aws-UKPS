@@ -31,3 +31,11 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.Services.Interfaces"
 )]
+
+[assembly: SuppressMessage(
+    "Maintainability",
+    "CA1515:Consider making public types internal",
+    Justification = "Service result types are public contracts returned by public service interfaces.",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api.Services.Results"
+)]

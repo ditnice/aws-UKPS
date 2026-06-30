@@ -1,12 +1,7 @@
 using UKPS.Api.DTOs;
 
-namespace UKPS.Api.Services;
+namespace UKPS.Api.Services.Results;
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage(
-    "Design",
-    "CA1515:Consider making public types internal",
-    Justification = "Returned by the public organisation service interface."
-)]
 public sealed class DeactivateOrganisationUserResult
 {
     public DeactivateOrganisationUserStatus Status { get; init; }

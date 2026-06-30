@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
-using UKPS.Api.Services;
 using UKPS.Api.Services.Interfaces;
+using UKPS.Api.Services.Results;
 
 namespace UKPS.Api.Tests.Controllers;
 
