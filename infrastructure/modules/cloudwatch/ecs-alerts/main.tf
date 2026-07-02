@@ -40,55 +40,37 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "ecs_cpu_reservation" {
-  alarm_name          = "${var.project}-${var.environment}-${var.service_name}-cpu-reservation-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = var.evaluation_periods
-  metric_name         = "CPUReservation"
-  namespace           = "AWS/ECS"
+resource "aws_cloudwatch_metric_alarm" "ecs_running_tasks_low" {
+  alarm_name          = "${var.project}-${var.environment}-${var.service_name}-running-tasks-low"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = var.running_tasks_evaluation_periods
+  namespace           = "ECS/ContainerInsights"
+  metric_name         = "RunningTaskCount"
   period              = var.monitoring_period
-  statistic           = "Average"
-  threshold           = var.reservation_threshold
+  statistic           = "Minimum"
+  threshold           = var.desired_task_count
+  treat_missing_data  = "breaching"
 
-  alarm_description = "ECS cluster CPU reservation for ${var.cluster_name} exceeded ${var.reservation_threshold}%."
+  alarm_description = "Running task count dropped below desired count for ${var.service_name}"
 
   alarm_actions = [var.sns_topic_arn]
   ok_actions    = [var.sns_topic_arn]
 
   dimensions = {
     ClusterName = var.cluster_name
-  }
-}
-
-resource "aws_cloudwatch_metric_alarm" "ecs_memory_reservation" {
-  alarm_name          = "${var.project}-${var.environment}-${var.service_name}-memory-reservation-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = var.evaluation_periods
-  metric_name         = "MemoryReservation"
-  namespace           = "AWS/ECS"
-  period              = var.monitoring_period
-  statistic           = "Average"
-  threshold           = var.reservation_threshold
-
-  alarm_description = "ECS cluster memory reservation for ${var.cluster_name} exceeded ${var.reservation_threshold}%."
-
-  alarm_actions = [var.sns_topic_arn]
-  ok_actions    = [var.sns_topic_arn]
-
-  dimensions = {
-    ClusterName = var.cluster_name
+    ServiceName = var.service_name
   }
 }
 
 resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
   alarm_name          = "${var.project}-${var.environment}-${var.service_name}-5xx-errors"
   comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
+  evaluation_periods  = var.alb_5xx_evaluation_periods
   metric_name         = "HTTPCode_Target_5XX_Count"
   namespace           = "AWS/ApplicationELB"
   period              = var.monitoring_period
   statistic           = "Sum"
-  threshold           = 5
+  threshold           = var.alb_5xx_threshold
 
   alarm_description = "Target group for ${var.service_name} returned HTTP 5XX responses."
 
@@ -112,6 +94,27 @@ resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
   threshold           = var.response_time_threshold
 
   alarm_description = "Average target response time for ${var.service_name} exceeded ${var.response_time_threshold} seconds."
+
+  alarm_actions = [var.sns_topic_arn]
+  ok_actions    = [var.sns_topic_arn]
+
+  dimensions = {
+    LoadBalancer = var.load_balancer_id
+    TargetGroup  = var.target_group_id
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "alb_unhealthy_hosts" {
+  alarm_name          = "${var.project}-${var.environment}-${var.service_name}-unhealthy-hosts"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = var.running_tasks_evaluation_periods
+  metric_name         = "UnHealthyHostCount"
+  namespace           = "AWS/ApplicationELB"
+  period              = var.monitoring_period
+  statistic           = "Maximum"
+  threshold           = var.unhealthy_hosts_threshold
+
+  alarm_description = "One or more targets for ${var.service_name} are failing health checks."
 
   alarm_actions = [var.sns_topic_arn]
   ok_actions    = [var.sns_topic_arn]

@@ -55,8 +55,12 @@ variable "monitoring_period" {
   default     = 60
 
   validation {
-    condition     = contains([10, 30, 60, 300, 900, 3600], var.monitoring_period)
-    error_message = "Monitoring period must be a valid CloudWatch period."
+    condition = contains(
+      [60, 120, 180, 240, 300, 600, 900, 1800, 3600],
+      var.monitoring_period
+    )
+
+    error_message = "Monitoring period must be a supported value."
   }
 }
 
@@ -79,18 +83,6 @@ variable "memory_threshold" {
   validation {
     condition     = var.memory_threshold >= 1 && var.memory_threshold <= 100
     error_message = "Memory threshold must be between 1 and 100."
-  }
-}
-
-variable "reservation_threshold" {
-  description = "Cluster reservation percentage threshold before alarm triggers"
-
-  type    = number
-  default = 80
-
-  validation {
-    condition     = var.reservation_threshold >= 1 && var.reservation_threshold <= 100
-    error_message = "Reservation threshold must be between 1 and 100."
   }
 }
 
@@ -154,5 +146,59 @@ variable "target_group_id" {
   validation {
     condition     = length(trim(var.target_group_id, " ")) > 0
     error_message = "Target group ID cannot be empty."
+  }
+}
+
+variable "desired_task_count" {
+  description = "Desired task count for the ECS service"
+  type        = number
+
+  validation {
+    condition     = var.desired_task_count >= 0
+    error_message = "Desired task count must be 0 or greater."
+  }
+}
+
+variable "alb_5xx_threshold" {
+  description = "Maximum number of target 5XX responses before alarm triggers"
+  type        = number
+  default     = 5
+
+  validation {
+    condition     = var.alb_5xx_threshold >= 0
+    error_message = "ALB 5XX threshold must be 0 or greater."
+  }
+}
+
+variable "alb_5xx_evaluation_periods" {
+  description = "Number of periods required before ALB 5XX alarm triggers"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.alb_5xx_evaluation_periods > 0
+    error_message = "Evaluation periods must be greater than zero."
+  }
+}
+
+variable "running_tasks_evaluation_periods" {
+  description = "Number of periods required before running task count alarm triggers"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.running_tasks_evaluation_periods > 0
+    error_message = "Evaluation periods must be greater than zero."
+  }
+}
+
+variable "unhealthy_hosts_threshold" {
+  description = "Maximum number of unhealthy hosts before alarm triggers"
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.unhealthy_hosts_threshold >= 0
+    error_message = "Unhealthy hosts threshold must be 0 or greater."
   }
 }
