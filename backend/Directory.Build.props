@@ -5,8 +5,6 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- TODO URP 299: Remove this TreatWarningsAsErrors once Microsoft.AspNetCore.OpenApi doesn't depend on Microsoft.OpenApi 2.0.0 -->
-    <WarningsNotAsErrors>NU1903</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
