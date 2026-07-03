@@ -19,5 +19,5 @@ internal sealed class RegulatoryDate
     public bool? ConditionalApprovalAnticipated { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
 }

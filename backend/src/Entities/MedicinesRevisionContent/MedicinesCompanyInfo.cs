@@ -17,5 +17,5 @@ internal sealed class MedicinesCompanyInfo
     public string? CoMarketingCompanyName { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
 }

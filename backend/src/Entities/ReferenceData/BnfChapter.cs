@@ -13,9 +13,9 @@ internal sealed class BnfChapter
     public int? ParentId { get; set; }
 
     /// <summary>e.g. "1", "1.1", "2.5"</summary>
-    public string Code { get; set; } = null!;
+    public required string Code { get; set; }
 
-    public string Label { get; set; } = null!;
+    public required string Label { get; set; }
     public int? DisplayOrder { get; set; }
     public bool IsArchived { get; set; }
 

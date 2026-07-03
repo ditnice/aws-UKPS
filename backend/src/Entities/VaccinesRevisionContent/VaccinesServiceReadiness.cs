@@ -11,6 +11,6 @@ internal sealed class VaccinesServiceReadiness
     public string? AdditionalServiceNotes { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
-    public ReferenceData.VaccineStorageRequirement StorageRequirement { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
+    public ReferenceData.VaccineStorageRequirement? StorageRequirement { get; set; }
 }

@@ -5,18 +5,18 @@ namespace UKPS.Api.DTOs;
 public sealed class UpdateOrganisationDetailsDto : IValidatableObject
 {
     [Required]
-    public string OrganisationName { get; init; } = null!;
+    public required string OrganisationName { get; init; }
 
     // Allow the custom whitespace check below to handle empty textarea values consistently.
     [Required(AllowEmptyStrings = true)]
-    public string HeadOfficeAddress { get; init; } = null!;
+    public required string HeadOfficeAddress { get; init; }
 
     [Required]
     [EmailAddress]
-    public string HeadOfficeEmail { get; init; } = null!;
+    public required string HeadOfficeEmail { get; init; }
 
     [Required]
-    public string HeadOfficeTelephone { get; init; } = null!;
+    public required string HeadOfficeTelephone { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

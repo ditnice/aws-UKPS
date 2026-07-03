@@ -13,7 +13,7 @@ internal sealed class RecordIntlRecognition
     public int? IntlLicenceDateId { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.IrpReferenceRegulator? IrpReferenceRegulator { get; set; }
     public ReferenceData.IrpRoute? IrpRoute { get; set; }
     public RegulatoryDate? IntlSubmissionDate { get; set; }

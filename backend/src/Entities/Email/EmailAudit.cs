@@ -5,7 +5,7 @@ internal sealed class EmailAudit
     public int Id { get; set; }
     public int TemplateId { get; set; }
     public DateTime SentAt { get; set; }
-    public string Recipients { get; set; } = null!;
+    public required string Recipients { get; set; }
 
     /// <summary>
     /// Soft reference — e.g. record, user, organisation.
@@ -17,5 +17,5 @@ internal sealed class EmailAudit
     public int? RelatedEntityId { get; set; }
 
     // Navigation
-    public EmailTemplate Template { get; set; } = null!;
+    public EmailTemplate? Template { get; set; }
 }

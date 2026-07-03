@@ -17,6 +17,6 @@ internal sealed class MedicinesServiceImpact
     public string? CompassionateAccessDetails { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.UkPatientPopulationRange? UkPatientPopulationRange { get; set; }
 }

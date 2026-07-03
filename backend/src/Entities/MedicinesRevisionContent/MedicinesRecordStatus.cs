@@ -7,6 +7,6 @@ internal sealed class MedicinesRecordStatus
     public int MedicineStatusTypeId { get; set; }
 
     // Navigation
-    public MedicinesProductDetail MedicinesProductDetail { get; set; } = null!;
-    public ReferenceData.MedicineTechnologyStatus MedicineStatusType { get; set; } = null!;
+    public MedicinesProductDetail? MedicinesProductDetail { get; set; }
+    public ReferenceData.MedicineTechnologyStatus? MedicineStatusType { get; set; }
 }
