@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.DTOs;
 
-public sealed class OrganisationDetailsDto
+public sealed record OrganisationDetailsDto
 {
     public int Id { get; init; }
     public string OrganisationName { get; init; } = null!;
