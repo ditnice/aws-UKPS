@@ -10,5 +10,5 @@ public interface IOrganisationService
         int id,
         UpdateOrganisationDetailsDto organisationDetails
     );
-    Task<DeactivateOrganisationUserResult> DeactivateUser(int organisationId, int userId);
+    Task<Result<UserListItemDto>> DeactivateUser(int organisationId, int userId);
 }

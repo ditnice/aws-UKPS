@@ -39,3 +39,11 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.Services.Results"
 )]
+
+[assembly: SuppressMessage(
+    "Maintainability",
+    "CA1515:Consider making public types internal",
+    Justification = "Service error catalogues are public contracts used by service result types.",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api.Services.Errors"
+)]

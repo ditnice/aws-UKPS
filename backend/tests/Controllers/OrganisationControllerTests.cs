@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Services.Results;
 
@@ -214,9 +215,7 @@ public class OrganisationControllerTests
     {
         UserListItemDto expected = CreateUserListItemDto(UserOrgStatus.Inactive);
         OrganisationController controller = new(
-            new StubOrganisationService(
-                deactivateResult: DeactivateOrganisationUserResult.Success(expected)
-            )
+            new StubOrganisationService(deactivateResult: Result.Success(expected))
         );
 
         ActionResult<UserListItemDto> result = await controller.DeactivateUser(1, 10);
@@ -230,7 +229,9 @@ public class OrganisationControllerTests
     {
         OrganisationController controller = new(
             new StubOrganisationService(
-                deactivateResult: DeactivateOrganisationUserResult.OrganisationNotFound()
+                deactivateResult: Result.Failure<UserListItemDto>(
+                    OrganisationErrors.OrganisationNotFound
+                )
             )
         );
 
@@ -245,7 +246,9 @@ public class OrganisationControllerTests
     {
         OrganisationController controller = new(
             new StubOrganisationService(
-                deactivateResult: DeactivateOrganisationUserResult.UserNotFound()
+                deactivateResult: Result.Failure<UserListItemDto>(
+                    OrganisationErrors.UserNotFoundInOrganisation
+                )
             )
         );
 
@@ -260,7 +263,9 @@ public class OrganisationControllerTests
     {
         OrganisationController controller = new(
             new StubOrganisationService(
-                deactivateResult: DeactivateOrganisationUserResult.AlreadyInactive()
+                deactivateResult: Result.Failure<UserListItemDto>(
+                    OrganisationErrors.UserAlreadyInactive
+                )
             )
         );
 
@@ -342,7 +347,7 @@ public class OrganisationControllerTests
     private sealed class StubOrganisationService(
         OrganisationDetailsDto? getResult = null,
         OrganisationDetailsDto? updateResult = null,
-        DeactivateOrganisationUserResult? deactivateResult = null
+        Result<UserListItemDto>? deactivateResult = null
     ) : IOrganisationService
     {
         public Task<OrganisationDetailsDto?> GetOrganisationById(int id) =>
@@ -353,10 +358,13 @@ public class OrganisationControllerTests
             UpdateOrganisationDetailsDto organisationDetails
         ) => Task.FromResult(updateResult);
 
-        public Task<DeactivateOrganisationUserResult> DeactivateUser(
-            int organisationId,
-            int userId
-        ) => Task.FromResult(deactivateResult ?? DeactivateOrganisationUserResult.UserNotFound());
+        public Task<Result<UserListItemDto>> DeactivateUser(int organisationId, int userId) =>
+            Task.FromResult(
+                deactivateResult
+                    ?? Result.Failure<UserListItemDto>(
+                        OrganisationErrors.UserNotFoundInOrganisation
+                    )
+            );
     }
 
     private sealed class CapturingOrganisationService : IOrganisationService
@@ -383,11 +391,13 @@ public class OrganisationControllerTests
             return Task.FromResult<OrganisationDetailsDto?>(null);
         }
 
-        public Task<DeactivateOrganisationUserResult> DeactivateUser(int organisationId, int userId)
+        public Task<Result<UserListItemDto>> DeactivateUser(int organisationId, int userId)
         {
             CapturedDeactivateOrganisationId = organisationId;
             CapturedDeactivateUserId = userId;
-            return Task.FromResult(DeactivateOrganisationUserResult.UserNotFound());
+            return Task.FromResult(
+                Result.Failure<UserListItemDto>(OrganisationErrors.UserNotFoundInOrganisation)
+            );
         }
     }
 }

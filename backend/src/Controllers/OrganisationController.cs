@@ -47,24 +47,18 @@ public class OrganisationController(IOrganisationService organisationService) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserListItemDto>> DeactivateUser(int id, int userId)
     {
-        DeactivateOrganisationUserResult result = await organisationService.DeactivateUser(
-            id,
-            userId
-        );
+        Result<UserListItemDto> result = await organisationService.DeactivateUser(id, userId);
 
-        return result.Status switch
+        if (result.IsSuccess)
         {
-            DeactivateOrganisationUserStatus.Success => Ok(result.User),
-            DeactivateOrganisationUserStatus.OrganisationNotFound => NotFound(
-                "Organisation not found."
-            ),
-            DeactivateOrganisationUserStatus.UserNotFound => NotFound(
-                "User not found in organisation."
-            ),
-            DeactivateOrganisationUserStatus.AlreadyInactive => BadRequest(
-                "User is already inactive."
-            ),
-            _ => throw new InvalidOperationException("Unexpected deactivate user result."),
+            return Ok(result.Value);
+        }
+
+        return result.Error.Type switch
+        {
+            ErrorType.NotFound => NotFound(result.Error.Description),
+            ErrorType.Validation => BadRequest(result.Error.Description),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, result.Error.Description),
         };
     }
 }

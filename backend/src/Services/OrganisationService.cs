@@ -3,6 +3,7 @@ using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Services.Results;
 
@@ -41,10 +42,7 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
         return MapToDto(organisation);
     }
 
-    public async Task<DeactivateOrganisationUserResult> DeactivateUser(
-        int organisationId,
-        int userId
-    )
+    public async Task<Result<UserListItemDto>> DeactivateUser(int organisationId, int userId)
     {
         bool organisationExists = await dbContext.Organisations.AnyAsync(o =>
             o.Id == organisationId
@@ -52,7 +50,7 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
 
         if (!organisationExists)
         {
-            return DeactivateOrganisationUserResult.OrganisationNotFound();
+            return Result.Failure<UserListItemDto>(OrganisationErrors.OrganisationNotFound);
         }
 
         UserOrgMembership? membership = await dbContext
@@ -61,19 +59,19 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
 
         if (membership is null)
         {
-            return DeactivateOrganisationUserResult.UserNotFound();
+            return Result.Failure<UserListItemDto>(OrganisationErrors.UserNotFoundInOrganisation);
         }
 
         if (membership.Status == UserOrgStatus.Inactive)
         {
-            return DeactivateOrganisationUserResult.AlreadyInactive();
+            return Result.Failure<UserListItemDto>(OrganisationErrors.UserAlreadyInactive);
         }
 
         membership.Status = UserOrgStatus.Inactive;
 
         await dbContext.SaveChangesAsync();
 
-        return DeactivateOrganisationUserResult.Success(MapToUserListItemDto(membership));
+        return Result.Success(MapToUserListItemDto(membership));
     }
 
     private static OrganisationDetailsDto MapToDto(Organisation organisation) =>

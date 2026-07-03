@@ -4,6 +4,7 @@ using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Results;
 
 namespace UKPS.Api.Tests.Services;
@@ -117,10 +118,11 @@ public class OrganisationServiceTests
         await using AppDbContext dbContext = CreateDbContext();
         OrganisationService service = new(dbContext);
 
-        DeactivateOrganisationUserResult result = await service.DeactivateUser(99, 10);
+        Result<UserListItemDto> result = await service.DeactivateUser(99, 10);
 
-        Assert.Equal(DeactivateOrganisationUserStatus.OrganisationNotFound, result.Status);
-        Assert.Null(result.User);
+        Assert.False(result.IsSuccess);
+        Assert.Equal(OrganisationErrors.OrganisationNotFound, result.Error);
+        Assert.Null(result.Value);
     }
 
     [Fact]
@@ -131,10 +133,11 @@ public class OrganisationServiceTests
         await dbContext.SaveChangesAsync();
         OrganisationService service = new(dbContext);
 
-        DeactivateOrganisationUserResult result = await service.DeactivateUser(1, 99);
+        Result<UserListItemDto> result = await service.DeactivateUser(1, 99);
 
-        Assert.Equal(DeactivateOrganisationUserStatus.UserNotFound, result.Status);
-        Assert.Null(result.User);
+        Assert.False(result.IsSuccess);
+        Assert.Equal(OrganisationErrors.UserNotFoundInOrganisation, result.Error);
+        Assert.Null(result.Value);
     }
 
     [Fact]
@@ -147,9 +150,10 @@ public class OrganisationServiceTests
         await dbContext.SaveChangesAsync();
         OrganisationService service = new(dbContext);
 
-        DeactivateOrganisationUserResult result = await service.DeactivateUser(1, 10);
+        Result<UserListItemDto> result = await service.DeactivateUser(1, 10);
 
-        Assert.Equal(DeactivateOrganisationUserStatus.UserNotFound, result.Status);
+        Assert.False(result.IsSuccess);
+        Assert.Equal(OrganisationErrors.UserNotFoundInOrganisation, result.Error);
         UserOrgMembership saved = await dbContext.UserOrgMemberships.SingleAsync(m => m.Id == 100);
         Assert.Equal(UserOrgStatus.Active, saved.Status);
     }
@@ -166,10 +170,11 @@ public class OrganisationServiceTests
         await dbContext.SaveChangesAsync();
         OrganisationService service = new(dbContext);
 
-        DeactivateOrganisationUserResult result = await service.DeactivateUser(1, 10);
+        Result<UserListItemDto> result = await service.DeactivateUser(1, 10);
 
-        Assert.Equal(DeactivateOrganisationUserStatus.AlreadyInactive, result.Status);
-        Assert.Null(result.User);
+        Assert.False(result.IsSuccess);
+        Assert.Equal(OrganisationErrors.UserAlreadyInactive, result.Error);
+        Assert.Null(result.Value);
     }
 
     [Fact]
@@ -190,15 +195,16 @@ public class OrganisationServiceTests
         await dbContext.SaveChangesAsync();
         OrganisationService service = new(dbContext);
 
-        DeactivateOrganisationUserResult result = await service.DeactivateUser(1, 10);
+        Result<UserListItemDto> result = await service.DeactivateUser(1, 10);
 
-        Assert.Equal(DeactivateOrganisationUserStatus.Success, result.Status);
-        Assert.NotNull(result.User);
-        Assert.Equal(10, result.User.UserId);
-        Assert.Equal("user@example.com", result.User.EmailAddress);
-        Assert.Equal(UserRole.Champion, result.User.Role);
-        Assert.Equal(UserOrgStatus.Inactive, result.User.Status);
-        Assert.Null(result.User.LastActive);
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Error);
+        Assert.NotNull(result.Value);
+        Assert.Equal(10, result.Value.UserId);
+        Assert.Equal("user@example.com", result.Value.EmailAddress);
+        Assert.Equal(UserRole.Champion, result.Value.Role);
+        Assert.Equal(UserOrgStatus.Inactive, result.Value.Status);
+        Assert.Null(result.Value.LastActive);
 
         UserOrgMembership saved = await dbContext.UserOrgMemberships.SingleAsync(m => m.Id == 100);
         Assert.Equal(UserOrgStatus.Inactive, saved.Status);
