@@ -24,7 +24,7 @@ public class OrganisationControllerTests
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
-            Status = UserOrgStatus.Approved,
+            Status = UserOrgStatus.Active,
             LastActive = _lastActive,
             CreatedAt = _createdAt,
         };
@@ -218,7 +218,7 @@ public class OrganisationControllerTests
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
-            Status = UserOrgStatus.Approved,
+            Status = UserOrgStatus.Active,
             LastActive = _lastActive,
             CreatedAt = _createdAt,
         };
