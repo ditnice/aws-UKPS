@@ -42,6 +42,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
 
     [HttpPut("{organisationId:int}/users/{userId}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<UserOrganisationMembershipDto>> UpdateUserRole(
         int organisationId,
         int userId,
