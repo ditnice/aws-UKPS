@@ -13,6 +13,6 @@ internal sealed class UserOrgMembership
     public DateTime? CreatedAt { get; set; }
 
     // Navigation
-    public User User { get; set; } = null!;
-    public Organisation Organisation { get; set; } = null!;
+    public User? User { get; set; }
+    public Organisation? Organisation { get; set; }
 }

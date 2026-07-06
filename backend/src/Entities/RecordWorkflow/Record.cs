@@ -39,7 +39,7 @@ internal sealed class Record
     public DateTime? ReviewedAt { get; set; }
 
     // Navigation
-    public Identity.Organisation Organisation { get; set; } = null!;
+    public Identity.Organisation? Organisation { get; set; }
     public Identity.User? CreatedByUser { get; set; }
     public RecordRevision? PublishedRevision { get; set; }
     public RecordRevision? CurrentDraftRevision { get; set; }

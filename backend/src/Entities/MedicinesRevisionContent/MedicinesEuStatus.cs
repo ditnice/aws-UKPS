@@ -14,7 +14,7 @@ internal sealed class MedicinesEuStatus
     public int? AtmpClassificationId { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public SharedRevisionContent.RegulatoryDate? EuOrphanGrantedDate { get; set; }
     public ReferenceData.AtmpClassification? AtmpClassification { get; set; }
 }

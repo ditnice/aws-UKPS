@@ -6,10 +6,10 @@ internal sealed class MedicinesActiveSubstance
 {
     public int Id { get; set; }
     public int MedicinesProductDetailId { get; set; }
-    public string Name { get; set; } = null!;
+    public required string Name { get; set; }
     public SubstanceNameType NameType { get; set; }
     public int? DisplayOrder { get; set; }
 
     // Navigation
-    public MedicinesProductDetail MedicinesProductDetail { get; set; } = null!;
+    public MedicinesProductDetail? MedicinesProductDetail { get; set; }
 }

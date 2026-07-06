@@ -6,10 +6,10 @@ internal sealed class OtherClinicalTrialNumber
     public int ClinicalTrialId { get; set; }
 
     /// <summary>e.g. ISRCTN, EudraCT</summary>
-    public string OtherRegistryNumber { get; set; } = null!;
+    public required string OtherRegistryNumber { get; set; }
 
     public int? DisplayOrder { get; set; }
 
     // Navigation
-    public RecordClinicalTrial ClinicalTrial { get; set; } = null!;
+    public RecordClinicalTrial? ClinicalTrial { get; set; }
 }

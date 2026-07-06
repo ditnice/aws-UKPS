@@ -17,6 +17,6 @@ internal sealed class MedicinesBudgetImpact
     public YesNoUnknown? NetUkBudgetImpactOver5M { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ICollection<MedicinesPasRegion> PasRegions { get; set; } = [];
 }

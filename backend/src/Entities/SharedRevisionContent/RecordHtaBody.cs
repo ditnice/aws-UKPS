@@ -10,8 +10,8 @@ internal sealed class RecordHtaBody
     public int RecordHtaId { get; set; }
 
     /// <summary>e.g. NICE, SMC, AWMSG</summary>
-    public string Label { get; set; } = null!;
+    public required string Label { get; set; }
 
     // Navigation
-    public RecordHta RecordHta { get; set; } = null!;
+    public RecordHta? RecordHta { get; set; }
 }

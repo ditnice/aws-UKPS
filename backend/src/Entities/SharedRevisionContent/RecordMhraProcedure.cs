@@ -8,6 +8,6 @@ internal sealed class RecordMhraProcedure
     public string? ProcedureDetails { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.MhraProcedureType? MhraProcedureType { get; set; }
 }

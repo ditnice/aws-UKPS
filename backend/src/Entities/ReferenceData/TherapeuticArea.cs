@@ -11,7 +11,7 @@ internal sealed class TherapeuticArea
     /// <summary>Null for top-level areas. Currently flat; structure supports future sub-levels.</summary>
     public int? ParentId { get; set; }
 
-    public string Label { get; set; } = null!;
+    public required string Label { get; set; }
     public int? DisplayOrder { get; set; }
     public bool IsArchived { get; set; }
 

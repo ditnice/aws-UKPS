@@ -8,7 +8,7 @@ internal sealed class QaReviewItem
     public int QaReviewId { get; set; }
 
     /// <summary>section.field e.g. medicines_product_detail.indication</summary>
-    public string FieldPath { get; set; } = null!;
+    public required string FieldPath { get; set; }
 
     public IssueType IssueType { get; set; }
     public string? Note { get; set; }
@@ -17,6 +17,6 @@ internal sealed class QaReviewItem
     public DateTime? ResolvedAt { get; set; }
 
     // Navigation
-    public QaReview QaReview { get; set; } = null!;
+    public QaReview? QaReview { get; set; }
     public Identity.User? ResolvedByUser { get; set; }
 }
