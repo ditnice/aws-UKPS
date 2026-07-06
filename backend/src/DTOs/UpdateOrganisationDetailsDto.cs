@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UKPS.Api.DTOs;
 
-public sealed class UpdateOrganisationDetailsDto : IValidatableObject
+public sealed record UpdateOrganisationDetailsDto : IValidatableObject
 {
     [Required]
     public string OrganisationName { get; init; } = null!;
