@@ -32,8 +32,8 @@ public class UserControllerTests
             CreateQuery()
         );
 
-        NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
-        Assert.Equal("Organisation not found.", notFound.Value);
+        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("Organisation not found.", badRequest.Value);
     }
 
     [Fact]

@@ -28,6 +28,6 @@ public class UserController(IUserService userService) : ControllerBase
             getUsersQuery.Status.ToArray()
         );
 
-        return (result is null) ? NotFound("Organisation not found.") : Ok(result);
+        return (result is null) ? BadRequest("Organisation not found.") : Ok(result);
     }
 }
