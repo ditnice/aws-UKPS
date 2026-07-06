@@ -268,6 +268,13 @@ public class OrganisationControllerTests
             int id,
             UpdateOrganisationDetailsDto organisationDetails
         ) => Task.FromResult(updateResult);
+
+        public Task<UserOrganisationMembershipDto?> UpdateUserOrganisationMembershipRole(
+            int organisationId,
+            int userId,
+            UpdateUserOrganisationMembershipRoleCommandDto command,
+            CancellationToken cancellationToken
+        ) => Task.FromResult<UserOrganisationMembershipDto?>(null);
     }
 
     private sealed class CapturingOrganisationService : IOrganisationService
@@ -291,5 +298,12 @@ public class OrganisationControllerTests
             CapturedUpdateDto = organisationDetails;
             return Task.FromResult<OrganisationDetailsDto?>(null);
         }
+
+        public Task<UserOrganisationMembershipDto?> UpdateUserOrganisationMembershipRole(
+            int organisationId,
+            int userId,
+            UpdateUserOrganisationMembershipRoleCommandDto command,
+            CancellationToken cancellationToken
+        ) => Task.FromResult<UserOrganisationMembershipDto?>(null);
     }
 }

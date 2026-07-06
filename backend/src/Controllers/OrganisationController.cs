@@ -39,4 +39,30 @@ public class OrganisationController(IOrganisationService organisationService) : 
 
         return (organisation is null) ? NotFound() : Ok(organisation);
     }
+
+    [HttpPut("{organisationId:int}/users/{userId}")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserOrganisationMembershipDto>> UpdateUserRole(
+        int organisationId,
+        int userId,
+        UpdateUserOrganisationMembershipRoleCommandDto command,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            UserOrganisationMembershipDto? result =
+                await organisationService.UpdateUserOrganisationMembershipRole(
+                    organisationId,
+                    userId,
+                    command,
+                    cancellationToken
+                );
+            return result is null ? NotFound() : Ok(result);
+        }
+        catch (BadRequestException badRequestException)
+        {
+            return BadRequest(badRequestException.Message);
+        }
+    }
 }

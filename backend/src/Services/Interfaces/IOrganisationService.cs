@@ -9,4 +9,11 @@ public interface IOrganisationService
         int id,
         UpdateOrganisationDetailsDto organisationDetails
     );
+
+    Task<UserOrganisationMembershipDto?> UpdateUserOrganisationMembershipRole(
+        int organisationId,
+        int userId,
+        UpdateUserOrganisationMembershipRoleCommandDto command,
+        CancellationToken cancellationToken
+    );
 }

@@ -39,6 +39,36 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
         return MapToDto(organisation);
     }
 
+    public async Task<UserOrganisationMembershipDto?> UpdateUserOrganisationMembershipRole(
+        int organisationId,
+        int userId,
+        UpdateUserOrganisationMembershipRoleCommandDto command,
+        CancellationToken cancellationToken
+    )
+    {
+        UserOrgMembership? userOrganisationMembership =
+            await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
+                x => x.OrganisationId == organisationId && x.UserId == userId,
+                cancellationToken
+            );
+
+        if (userOrganisationMembership is null)
+        {
+            return null;
+        }
+
+        if (userOrganisationMembership.UserRole == command.UserRole)
+        {
+            throw new BadRequestException("The user already has the specified organisation role.");
+        }
+
+        userOrganisationMembership.UserRole = command.UserRole;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapToDto(userOrganisationMembership);
+    }
+
     private static OrganisationDetailsDto MapToDto(Organisation organisation) =>
         new()
         {
@@ -54,4 +84,17 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
             LastActive = organisation.LastActive,
             CreatedAt = organisation.CreatedAt,
         };
+
+    private static UserOrganisationMembershipDto MapToDto(UserOrgMembership entity)
+    {
+        return new UserOrganisationMembershipDto
+        {
+            UserId = entity.UserId,
+            OrganisationId = entity.OrganisationId,
+            UserRole = entity.UserRole,
+            Status = entity.Status,
+            AllowedPharmaceuticalEntity = entity.AllowedPharmaceuticalEntity,
+            CreatedAt = entity.CreatedAt,
+        };
+    }
 }

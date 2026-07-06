@@ -4,6 +4,7 @@ using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
+using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Tests.Services;
 
@@ -108,6 +109,116 @@ public class OrganisationServiceTests
         );
 
         Assert.Null(result);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Champion)]
+    [InlineData(UserRole.Super)]
+    public async Task UpdateUserOrganisationMembershipRole_ShouldUpdatedUserMembershipRole(
+        UserRole userRole
+    )
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        var userOrgMembership = await SetupUserOrgMembership(dbContext);
+        var service = new OrganisationService(dbContext);
+        var command = new UpdateUserOrganisationMembershipRoleCommandDto() { UserRole = userRole };
+        UserOrganisationMembershipDto? result = await service.UpdateUserOrganisationMembershipRole(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.UserId,
+            command,
+            CancellationToken.None
+        );
+
+        Assert.NotNull(result);
+        Assert.Equal(userRole, result.UserRole);
+    }
+
+    [Fact]
+    public async Task UpdateUserOrganisationMembershipRole_OrganisationDoesNotExist_ShouldReturnNull()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        var userOrgMembership = await SetupUserOrgMembership(dbContext);
+        var service = new OrganisationService(dbContext);
+        var command = new UpdateUserOrganisationMembershipRoleCommandDto()
+        {
+            UserRole = UserRole.Champion,
+        };
+        UserOrganisationMembershipDto? result = await service.UpdateUserOrganisationMembershipRole(
+            999_999,
+            userOrgMembership.UserId,
+            command,
+            CancellationToken.None
+        );
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateUserOrganisationMembershipRole_UserDoesNotExist_ShouldReturnNull()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        var userOrgMembership = await SetupUserOrgMembership(dbContext);
+        var service = new OrganisationService(dbContext);
+        var command = new UpdateUserOrganisationMembershipRoleCommandDto()
+        {
+            UserRole = UserRole.Champion,
+        };
+        UserOrganisationMembershipDto? result = await service.UpdateUserOrganisationMembershipRole(
+            userOrgMembership.OrganisationId,
+            999_999,
+            command,
+            CancellationToken.None
+        );
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateUserOrganisationMembershipRoleToSuperUser_WhenUserAlreadyHasRole_ShouldThrowBadRequestException()
+    {
+        var existingUserRole = UserRole.Champion;
+        await using AppDbContext dbContext = CreateDbContext();
+        var userOrgMembership = await SetupUserOrgMembership(
+            dbContext,
+            x =>
+            {
+                x.UserRole = existingUserRole;
+            }
+        );
+        var service = new OrganisationService(dbContext);
+        var command = new UpdateUserOrganisationMembershipRoleCommandDto()
+        {
+            UserRole = existingUserRole,
+        };
+        await Assert.ThrowsAsync<BadRequestException>(async () =>
+        {
+            await service.UpdateUserOrganisationMembershipRole(
+                userOrgMembership.OrganisationId,
+                userOrgMembership.UserId,
+                command,
+                CancellationToken.None
+            );
+        });
+    }
+
+    private static async Task<UserOrgMembership> SetupUserOrgMembership(
+        AppDbContext dbContext,
+        Action<UserOrgMembership>? modifier = null
+    )
+    {
+        var userOrgMembership = new UserOrgMembership()
+        {
+            Id = 123,
+            UserId = 234,
+            OrganisationId = 345,
+        };
+        if (modifier is not null)
+        {
+            modifier(userOrgMembership);
+        }
+        dbContext.UserOrgMemberships.Add(userOrgMembership);
+        await dbContext.SaveChangesAsync();
+        return userOrgMembership;
     }
 
     private static Organisation CreateOrganisation() =>
