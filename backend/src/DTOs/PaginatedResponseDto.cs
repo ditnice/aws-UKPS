@@ -1,6 +1,6 @@
 namespace UKPS.Api.DTOs;
 
-public sealed class PaginatedResponseDto<T>
+public sealed record PaginatedResponseDto<T>
 {
     public IReadOnlyList<T> Items { get; init; } = [];
     public int TotalCount { get; init; }

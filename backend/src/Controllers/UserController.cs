@@ -21,13 +21,13 @@ public class UserController(IUserService userService) : ControllerBase
             return BadRequest();
         }
 
-        PaginatedResponseDto<UserListItemDto>? result = await userService.GetUsersByOrganisation(
-            getUsersQuery.OrganisationId!.Value,
+        PaginatedResponseDto<UserListItemDto>? result = await userService.GetUsers(
+            getUsersQuery.OrganisationId,
             getUsersQuery.Page,
             getUsersQuery.PageSize,
             getUsersQuery.Status.ToArray()
         );
 
-        return (result is null) ? NotFound() : Ok(result);
+        return (result is null) ? NotFound("Organisation not found.") : Ok(result);
     }
 }

@@ -8,25 +8,33 @@ namespace UKPS.Api.Services;
 
 internal sealed class UserService(AppDbContext dbContext) : IUserService
 {
-    public async Task<PaginatedResponseDto<UserListItemDto>?> GetUsersByOrganisation(
-        int organisationId,
+    public async Task<PaginatedResponseDto<UserListItemDto>?> GetUsers(
+        int? organisationId,
         int page,
         int pageSize,
         IReadOnlyCollection<UserOrgStatus> statuses
     )
     {
-        bool organisationExists = await dbContext.Organisations.AnyAsync(o =>
-            o.Id == organisationId
-        );
-
-        if (!organisationExists)
+        if (organisationId.HasValue)
         {
-            return null;
+            bool organisationExists = await dbContext.Organisations.AnyAsync(o =>
+                o.Id == organisationId.Value
+            );
+
+            if (!organisationExists)
+            {
+                return null;
+            }
         }
 
-        var organisationMemberships = dbContext
-            .UserOrgMemberships.AsNoTracking()
-            .Where(m => m.OrganisationId == organisationId);
+        var organisationMemberships = dbContext.UserOrgMemberships.AsNoTracking();
+
+        if (organisationId.HasValue)
+        {
+            organisationMemberships = organisationMemberships.Where(m =>
+                m.OrganisationId == organisationId.Value
+            );
+        }
 
         if (statuses.Count > 0)
         {

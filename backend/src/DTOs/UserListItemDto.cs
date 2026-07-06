@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.DTOs;
 
-public sealed class UserListItemDto
+public sealed record UserListItemDto
 {
     public int UserId { get; init; }
     public string? EmailAddress { get; init; }

@@ -32,7 +32,8 @@ public class UserControllerTests
             CreateQuery()
         );
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Equal("Organisation not found.", notFound.Value);
     }
 
     [Fact]
@@ -69,20 +70,24 @@ public class UserControllerTests
     }
 
     [Fact]
-    public void GetUsersQueryDto_IsInvalid_WhenOrganisationIdIsMissing()
+    public async Task GetUsers_PassesNullOrganisationIdToService()
+    {
+        CapturingUserService service = new();
+        UserController controller = new(service);
+
+        await controller.GetUsers(new GetUsersQueryDto());
+
+        Assert.Null(service.CapturedOrganisationId);
+    }
+
+    [Fact]
+    public void GetUsersQueryDto_IsValid_WhenOrganisationIdIsMissing()
     {
         GetUsersQueryDto dto = new();
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(
-                    nameof(GetUsersQueryDto.OrganisationId),
-                    StringComparer.Ordinal
-                )
-        );
+        Assert.Empty(validationResults);
     }
 
     [Theory]
@@ -169,8 +174,8 @@ public class UserControllerTests
     private sealed class StubUserService(PaginatedResponseDto<UserListItemDto>? result)
         : IUserService
     {
-        public Task<PaginatedResponseDto<UserListItemDto>?> GetUsersByOrganisation(
-            int organisationId,
+        public Task<PaginatedResponseDto<UserListItemDto>?> GetUsers(
+            int? organisationId,
             int page,
             int pageSize,
             IReadOnlyCollection<UserOrgStatus> statuses
@@ -179,13 +184,13 @@ public class UserControllerTests
 
     private sealed class CapturingUserService : IUserService
     {
-        public int CapturedOrganisationId { get; private set; }
+        public int? CapturedOrganisationId { get; private set; }
         public int CapturedPage { get; private set; }
         public int CapturedPageSize { get; private set; }
         public UserOrgStatus[] CapturedStatuses { get; private set; } = [];
 
-        public Task<PaginatedResponseDto<UserListItemDto>?> GetUsersByOrganisation(
-            int organisationId,
+        public Task<PaginatedResponseDto<UserListItemDto>?> GetUsers(
+            int? organisationId,
             int page,
             int pageSize,
             IReadOnlyCollection<UserOrgStatus> statuses

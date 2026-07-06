@@ -17,23 +17,18 @@ public class UserServiceTests
         );
 
     [Fact]
-    public async Task GetUsersByOrganisation_ReturnsNull_WhenOrganisationDoesNotExist()
+    public async Task GetUsers_ReturnsNull_WhenOrganisationDoesNotExist()
     {
         await using AppDbContext dbContext = CreateDbContext();
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsersByOrganisation(
-            99,
-            1,
-            20,
-            []
-        );
+        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(99, 1, 20, []);
 
         Assert.Null(result);
     }
 
     [Fact]
-    public async Task GetUsersByOrganisation_ReturnsEmptyPage_WhenOrganisationHasNoUsers()
+    public async Task GetUsers_ReturnsEmptyPage_WhenOrganisationHasNoUsers()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(CreateOrganisation(id: 1));
@@ -41,12 +36,7 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsersByOrganisation(
-            1,
-            1,
-            20,
-            []
-        );
+        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(1, 1, 20, []);
 
         Assert.NotNull(result);
         Assert.Empty(result.Items);
@@ -56,7 +46,7 @@ public class UserServiceTests
     }
 
     [Fact]
-    public async Task GetUsersByOrganisation_MapsUserMembershipFields_WhenUsersExist()
+    public async Task GetUsers_MapsUserMembershipFields_WhenUsersExist()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(CreateOrganisation(id: 1));
@@ -74,12 +64,7 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsersByOrganisation(
-            1,
-            1,
-            20,
-            []
-        );
+        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(1, 1, 20, []);
 
         Assert.NotNull(result);
         UserListItemDto item = Assert.Single(result.Items);
@@ -91,7 +76,7 @@ public class UserServiceTests
     }
 
     [Fact]
-    public async Task GetUsersByOrganisation_FiltersByMultipleStatuses_WhenStatusesProvided()
+    public async Task GetUsers_FiltersByMultipleStatuses_WhenStatusesProvided()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(CreateOrganisation(id: 1));
@@ -114,7 +99,7 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsersByOrganisation(
+        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(
             1,
             1,
             20,
@@ -127,7 +112,7 @@ public class UserServiceTests
     }
 
     [Fact]
-    public async Task GetUsersByOrganisation_PaginatesAndOrdersByUserId_WhenUsersExist()
+    public async Task GetUsers_PaginatesAndOrdersByUserId_WhenUsersExist()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(CreateOrganisation(id: 1));
@@ -145,12 +130,7 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsersByOrganisation(
-            1,
-            2,
-            1,
-            []
-        );
+        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(1, 2, 1, []);
 
         Assert.NotNull(result);
         Assert.Equal(3, result.TotalCount);
@@ -158,6 +138,61 @@ public class UserServiceTests
         Assert.Equal(1, result.PageSize);
         UserListItemDto item = Assert.Single(result.Items);
         Assert.Equal(20, item.UserId);
+    }
+
+    [Fact]
+    public async Task GetUsers_ReturnsUsersAcrossOrganisations_WhenOrganisationIdIsMissing()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        dbContext.Organisations.AddRange(CreateOrganisation(id: 1), CreateOrganisation(id: 2));
+        dbContext.Users.AddRange(
+            CreateUser(id: 10, workEmail: "one@example.com"),
+            CreateUser(id: 20, workEmail: "two@example.com")
+        );
+        dbContext.UserOrgMemberships.AddRange(
+            CreateMembership(id: 1, userId: 10, organisationId: 1),
+            CreateMembership(id: 2, userId: 20, organisationId: 2)
+        );
+        await dbContext.SaveChangesAsync();
+
+        UserService service = new(dbContext);
+
+        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(null, 1, 20, []);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal([10, 20], result.Items.Select(i => i.UserId).ToArray());
+    }
+
+    [Fact]
+    public async Task GetUsers_FiltersByStatus_WhenOrganisationIdIsMissing()
+    {
+        await using AppDbContext dbContext = CreateDbContext();
+        dbContext.Organisations.AddRange(CreateOrganisation(id: 1), CreateOrganisation(id: 2));
+        dbContext.Users.AddRange(
+            CreateUser(id: 10, workEmail: "active@example.com"),
+            CreateUser(id: 20, workEmail: "inactive@example.com")
+        );
+        dbContext.UserOrgMemberships.AddRange(
+            CreateMembership(id: 1, userId: 10, organisationId: 1, status: UserOrgStatus.Active),
+            CreateMembership(id: 2, userId: 20, organisationId: 2, status: UserOrgStatus.Inactive)
+        );
+        await dbContext.SaveChangesAsync();
+
+        UserService service = new(dbContext);
+
+        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(
+            null,
+            1,
+            20,
+            [UserOrgStatus.Inactive]
+        );
+
+        Assert.NotNull(result);
+        Assert.Equal(1, result.TotalCount);
+        UserListItemDto item = Assert.Single(result.Items);
+        Assert.Equal(20, item.UserId);
+        Assert.Equal(UserOrgStatus.Inactive, item.Status);
     }
 
     private static Organisation CreateOrganisation(int id) =>

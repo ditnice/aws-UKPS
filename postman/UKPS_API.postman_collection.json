@@ -150,19 +150,20 @@
       "name": "Users",
       "item": [
         {
-          "name": "Get Users By Organisation",
+          "name": "Get Users",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users?organisationId={{organisationId}}&page=1&pageSize=20&status=Active&status=Inactive",
+              "raw": "{{baseUrl}}/users?page=1&pageSize=20&status=Active&status=Inactive",
               "host": ["{{baseUrl}}"],
               "path": ["users"],
               "query": [
                 {
                   "key": "organisationId",
                   "value": "{{organisationId}}",
-                  "description": "The integer ID of the organisation whose users should be retrieved"
+                  "description": "Optional integer ID used to filter users by organisation",
+                  "disabled": true
                 },
                 {
                   "key": "page",
@@ -186,7 +187,7 @@
                 }
               ]
             },
-            "description": "Returns a paginated list of users belonging to an organisation. Returns 404 if no organisation with the given ID exists. Status can be supplied as repeated query parameters."
+            "description": "Returns a paginated list of users. Optionally filter by organisationId. Returns 404 only when organisationId is supplied and no organisation with that ID exists. Status can be supplied as repeated query parameters."
           },
           "response": [
             {
@@ -199,11 +200,11 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"userId\": 1,\n      \"emailAddress\": \"user@example.com\",\n      \"role\": \"Standard\",\n      \"status\": \"Active\",\n      \"lastActive\": null\n    }\n  ],\n  \"totalCount\": 1,\n  \"page\": 1,\n  \"pageSize\": 20\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"userId\": 1,\n      \"emailAddress\": \"user@example.com\",\n      \"role\": \"Standard\",\n      \"status\": \"Active\",\n      \"lastActive\": null\n    },\n    {\n      \"userId\": 2,\n      \"emailAddress\": \"another.user@example.com\",\n      \"role\": \"Champion\",\n      \"status\": \"Inactive\",\n      \"lastActive\": null\n    }\n  ],\n  \"totalCount\": 2,\n  \"page\": 1,\n  \"pageSize\": 20\n}",
               "_postman_previewlanguage": "json"
             },
             {
-              "name": "200 OK - Organisation has no users",
+              "name": "200 OK - No users found",
               "status": "OK",
               "code": 200,
               "header": [
@@ -229,7 +230,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "name": "404 Not Found - Organisation does not exist",
+              "name": "404 Not Found - Supplied organisation does not exist",
               "status": "Not Found",
               "code": 404,
               "header": [],
