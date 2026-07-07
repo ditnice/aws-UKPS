@@ -6,11 +6,24 @@ using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Services;
 
-internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisationService
+internal sealed class OrganisationService : IOrganisationService
 {
+    public IOrganisationMembershipService Memberships { get; }
+
+    private readonly AppDbContext _dbContext;
+
+    public OrganisationService(
+        AppDbContext dbContext,
+        IOrganisationMembershipService membershipService
+    )
+    {
+        _dbContext = dbContext;
+        Memberships = membershipService;
+    }
+
     public async Task<OrganisationDetailsDto?> GetOrganisationById(int id)
     {
-        var organisation = await dbContext
+        var organisation = await _dbContext
             .Organisations.AsNoTracking()
             .SingleOrDefaultAsync(o => o.Id == id);
 
@@ -22,7 +35,7 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
         UpdateOrganisationDetailsDto organisationDetails
     )
     {
-        var organisation = await dbContext.Organisations.SingleOrDefaultAsync(o => o.Id == id);
+        var organisation = await _dbContext.Organisations.SingleOrDefaultAsync(o => o.Id == id);
 
         if (organisation is null)
         {
@@ -34,39 +47,9 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
         organisation.HeadOfficeEmail = organisationDetails.HeadOfficeEmail;
         organisation.HeadOfficeTelephone = organisationDetails.HeadOfficeTelephone;
 
-        await dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync();
 
         return MapToDto(organisation);
-    }
-
-    public async Task<UserOrganisationMembershipDto?> UpdateUserOrganisationMembershipRole(
-        int organisationId,
-        int userId,
-        UpdateUserOrganisationMembershipRoleCommandDto command,
-        CancellationToken cancellationToken
-    )
-    {
-        UserOrgMembership? userOrganisationMembership =
-            await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
-                x => x.OrganisationId == organisationId && x.UserId == userId,
-                cancellationToken
-            );
-
-        if (userOrganisationMembership is null)
-        {
-            return null;
-        }
-
-        if (userOrganisationMembership.UserRole == command.UserRole)
-        {
-            throw new BadRequestException("The user already has the specified organisation role.");
-        }
-
-        userOrganisationMembership.UserRole = command.UserRole;
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return MapToDto(userOrganisationMembership);
     }
 
     private static OrganisationDetailsDto MapToDto(Organisation organisation) =>
@@ -84,17 +67,4 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
             LastActive = organisation.LastActive,
             CreatedAt = organisation.CreatedAt,
         };
-
-    private static UserOrganisationMembershipDto MapToDto(UserOrgMembership entity)
-    {
-        return new UserOrganisationMembershipDto
-        {
-            UserId = entity.UserId,
-            OrganisationId = entity.OrganisationId,
-            UserRole = entity.UserRole,
-            Status = entity.Status,
-            AllowedPharmaceuticalEntity = entity.AllowedPharmaceuticalEntity,
-            CreatedAt = entity.CreatedAt,
-        };
-    }
 }

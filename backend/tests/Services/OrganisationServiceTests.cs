@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
@@ -8,20 +7,24 @@ using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Tests.Services;
 
-public class OrganisationServiceTests
+public class OrganisationServiceTests : IAsyncDisposable
 {
-    private static AppDbContext CreateDbContext() =>
-        new(
-            new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options
+    private readonly TestDatabase _testDatabase;
+    private readonly OrganisationService _service;
+
+    public OrganisationServiceTests()
+    {
+        _testDatabase = new TestDatabase();
+        _service = new OrganisationService(
+            _testDatabase.Context,
+            new StubOrganisationMembershipService()
         );
+    }
 
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsDto()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(
+        _testDatabase.Context.Organisations.Add(
             new Organisation
             {
                 Id = 1,
@@ -36,11 +39,10 @@ public class OrganisationServiceTests
                 CreatedAt = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
             }
         );
-        await dbContext.SaveChangesAsync();
-        int id = (await dbContext.Organisations.SingleAsync()).Id;
+        await _testDatabase.Context.SaveChangesAsync();
+        int id = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
 
-        OrganisationService service = new(dbContext);
-        OrganisationDetailsDto? result = await service.GetOrganisationById(id);
+        OrganisationDetailsDto? result = await _service.GetOrganisationById(id);
 
         Assert.NotNull(result);
         Assert.Equal(id, result.Id);
@@ -58,13 +60,11 @@ public class OrganisationServiceTests
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNull()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(CreateOrganisation());
-        await dbContext.SaveChangesAsync();
-        int seededId = (await dbContext.Organisations.SingleAsync()).Id;
+        _testDatabase.Context.Organisations.Add(CreateOrganisation());
+        await _testDatabase.Context.SaveChangesAsync();
+        int seededId = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
 
-        OrganisationService service = new(dbContext);
-        OrganisationDetailsDto? result = await service.GetOrganisationById(seededId + 1);
+        OrganisationDetailsDto? result = await _service.GetOrganisationById(seededId + 1);
 
         Assert.Null(result);
     }
@@ -72,32 +72,27 @@ public class OrganisationServiceTests
     [Fact]
     public async Task UpdateOrganisationDetails_OrganisationExists_UpdatesEditableFields()
     {
-        await using AppDbContext dbContext = CreateDbContext();
         DateTime createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
         DateTime lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
-        dbContext.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
-        await dbContext.SaveChangesAsync();
-        int id = (await dbContext.Organisations.SingleAsync()).Id;
+        _testDatabase.Context.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
+        await _testDatabase.Context.SaveChangesAsync();
+        int id = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
 
-        OrganisationService service = new(dbContext);
-        OrganisationDetailsDto? result = await service.UpdateOrganisationDetails(
+        OrganisationDetailsDto? result = await _service.UpdateOrganisationDetails(
             id,
             CreateUpdateDto()
         );
 
         AssertUpdatedDetails(result, createdAt, lastActive);
 
-        Organisation saved = await dbContext.Organisations.SingleAsync(o => o.Id == id);
+        Organisation saved = await _testDatabase.Context.Organisations.SingleAsync(o => o.Id == id);
         AssertUpdatedEntity(saved, createdAt, lastActive);
     }
 
     [Fact]
     public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNull()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        OrganisationService service = new(dbContext);
-
-        OrganisationDetailsDto? result = await service.UpdateOrganisationDetails(
+        OrganisationDetailsDto? result = await _service.UpdateOrganisationDetails(
             99,
             new UpdateOrganisationDetailsDto
             {
@@ -109,116 +104,6 @@ public class OrganisationServiceTests
         );
 
         Assert.Null(result);
-    }
-
-    [Theory]
-    [InlineData(UserRole.Champion)]
-    [InlineData(UserRole.Super)]
-    public async Task UpdateUserOrganisationMembershipRole_ShouldUpdatedUserMembershipRole(
-        UserRole userRole
-    )
-    {
-        await using AppDbContext dbContext = CreateDbContext();
-        var userOrgMembership = await SetupUserOrgMembership(dbContext);
-        var service = new OrganisationService(dbContext);
-        var command = new UpdateUserOrganisationMembershipRoleCommandDto() { UserRole = userRole };
-        UserOrganisationMembershipDto? result = await service.UpdateUserOrganisationMembershipRole(
-            userOrgMembership.OrganisationId,
-            userOrgMembership.UserId,
-            command,
-            CancellationToken.None
-        );
-
-        Assert.NotNull(result);
-        Assert.Equal(userRole, result.UserRole);
-    }
-
-    [Fact]
-    public async Task UpdateUserOrganisationMembershipRole_OrganisationDoesNotExist_ShouldReturnNull()
-    {
-        await using AppDbContext dbContext = CreateDbContext();
-        var userOrgMembership = await SetupUserOrgMembership(dbContext);
-        var service = new OrganisationService(dbContext);
-        var command = new UpdateUserOrganisationMembershipRoleCommandDto()
-        {
-            UserRole = UserRole.Champion,
-        };
-        UserOrganisationMembershipDto? result = await service.UpdateUserOrganisationMembershipRole(
-            999_999,
-            userOrgMembership.UserId,
-            command,
-            CancellationToken.None
-        );
-
-        Assert.Null(result);
-    }
-
-    [Fact]
-    public async Task UpdateUserOrganisationMembershipRole_UserDoesNotExist_ShouldReturnNull()
-    {
-        await using AppDbContext dbContext = CreateDbContext();
-        var userOrgMembership = await SetupUserOrgMembership(dbContext);
-        var service = new OrganisationService(dbContext);
-        var command = new UpdateUserOrganisationMembershipRoleCommandDto()
-        {
-            UserRole = UserRole.Champion,
-        };
-        UserOrganisationMembershipDto? result = await service.UpdateUserOrganisationMembershipRole(
-            userOrgMembership.OrganisationId,
-            999_999,
-            command,
-            CancellationToken.None
-        );
-
-        Assert.Null(result);
-    }
-
-    [Fact]
-    public async Task UpdateUserOrganisationMembershipRoleToSuperUser_WhenUserAlreadyHasRole_ShouldThrowBadRequestException()
-    {
-        var existingUserRole = UserRole.Champion;
-        await using AppDbContext dbContext = CreateDbContext();
-        var userOrgMembership = await SetupUserOrgMembership(
-            dbContext,
-            x =>
-            {
-                x.UserRole = existingUserRole;
-            }
-        );
-        var service = new OrganisationService(dbContext);
-        var command = new UpdateUserOrganisationMembershipRoleCommandDto()
-        {
-            UserRole = existingUserRole,
-        };
-        await Assert.ThrowsAsync<BadRequestException>(async () =>
-        {
-            await service.UpdateUserOrganisationMembershipRole(
-                userOrgMembership.OrganisationId,
-                userOrgMembership.UserId,
-                command,
-                CancellationToken.None
-            );
-        });
-    }
-
-    private static async Task<UserOrgMembership> SetupUserOrgMembership(
-        AppDbContext dbContext,
-        Action<UserOrgMembership>? modifier = null
-    )
-    {
-        var userOrgMembership = new UserOrgMembership()
-        {
-            Id = 123,
-            UserId = 234,
-            OrganisationId = 345,
-        };
-        if (modifier is not null)
-        {
-            modifier(userOrgMembership);
-        }
-        dbContext.UserOrgMemberships.Add(userOrgMembership);
-        await dbContext.SaveChangesAsync();
-        return userOrgMembership;
     }
 
     private static Organisation CreateOrganisation() =>
@@ -291,5 +176,21 @@ public class OrganisationServiceTests
         Assert.Equal(UserOrgStatus.Approved, saved.Status);
         Assert.Equal(lastActive, saved.LastActive);
         Assert.Equal(createdAt, saved.CreatedAt);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _testDatabase.DisposeAsync();
+        GC.SuppressFinalize(this);
+    }
+
+    private sealed class StubOrganisationMembershipService : IOrganisationMembershipService
+    {
+        public Task<OrganisationMembershipDto?> UpdateUserRole(
+            int organisationId,
+            int membershipId,
+            UpdateOrgMembershipUserRoleCommandDto command,
+            CancellationToken cancellationToken
+        ) => Task.FromResult<OrganisationMembershipDto?>(null);
     }
 }

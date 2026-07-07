@@ -261,6 +261,8 @@ public class OrganisationControllerTests
         OrganisationDetailsDto? updateResult = null
     ) : IOrganisationService
     {
+        public IOrganisationMembershipService Memberships => throw new InvalidOperationException();
+
         public Task<OrganisationDetailsDto?> GetOrganisationById(int id) =>
             Task.FromResult(getResult);
 
@@ -268,17 +270,11 @@ public class OrganisationControllerTests
             int id,
             UpdateOrganisationDetailsDto organisationDetails
         ) => Task.FromResult(updateResult);
-
-        public Task<UserOrganisationMembershipDto?> UpdateUserOrganisationMembershipRole(
-            int organisationId,
-            int userId,
-            UpdateUserOrganisationMembershipRoleCommandDto command,
-            CancellationToken cancellationToken
-        ) => Task.FromResult<UserOrganisationMembershipDto?>(null);
     }
 
     private sealed class CapturingOrganisationService : IOrganisationService
     {
+        public IOrganisationMembershipService Memberships => throw new InvalidOperationException();
         public int CapturedId { get; private set; }
         public int CapturedUpdateId { get; private set; }
         public UpdateOrganisationDetailsDto? CapturedUpdateDto { get; private set; }
@@ -298,12 +294,5 @@ public class OrganisationControllerTests
             CapturedUpdateDto = organisationDetails;
             return Task.FromResult<OrganisationDetailsDto?>(null);
         }
-
-        public Task<UserOrganisationMembershipDto?> UpdateUserOrganisationMembershipRole(
-            int organisationId,
-            int userId,
-            UpdateUserOrganisationMembershipRoleCommandDto command,
-            CancellationToken cancellationToken
-        ) => Task.FromResult<UserOrganisationMembershipDto?>(null);
     }
 }

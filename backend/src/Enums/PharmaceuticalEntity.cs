@@ -7,6 +7,7 @@ namespace UKPS.Api.Enums;
 [Flags]
 public enum PharmaceuticalEntity
 {
+    None = 0,
     Medicines = 1,
     Vaccines = 2,
     Both = Medicines | Vaccines,

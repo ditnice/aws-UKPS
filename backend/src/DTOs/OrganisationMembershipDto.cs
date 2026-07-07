@@ -2,8 +2,9 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.DTOs;
 
-public record UserOrganisationMembershipDto
+public record OrganisationMembershipDto
 {
+    public required int Id { get; init; }
     public required int UserId { get; init; }
     public required int OrganisationId { get; init; }
     public required UserRole UserRole { get; init; }
