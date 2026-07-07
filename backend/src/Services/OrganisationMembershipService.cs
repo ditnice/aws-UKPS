@@ -2,14 +2,19 @@ using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
+using UpdateUserRoleResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.OrganisationMembershipDto,
+    UKPS.Api.Services.Errors.OrganisationMembershipUpdateUserRoleError
+>;
 
 namespace UKPS.Api.Services;
 
 internal sealed class OrganisationMembershipService(AppDbContext dbContext)
     : IOrganisationMembershipService
 {
-    public async Task<OrganisationMembershipDto?> UpdateUserRole(
+    public async Task<UpdateUserRoleResult> UpdateUserRole(
         int organisationId,
         int membershipId,
         UpdateOrgMembershipUserRoleCommandDto command,
@@ -21,10 +26,16 @@ internal sealed class OrganisationMembershipService(AppDbContext dbContext)
             cancellationToken
         );
         if (membership is null)
-            return null;
+        {
+            var error = new OrganisationMembershipUpdateUserRoleError.NotFound(
+                organisationId,
+                membershipId
+            );
+            return UpdateUserRoleResult.Err(error);
+        }
         membership.UserRole = command.UserRole;
         await dbContext.SaveChangesAsync(cancellationToken);
-        return MapToDto(membership);
+        return UpdateUserRoleResult.Ok(MapToDto(membership));
     }
 
     private static OrganisationMembershipDto MapToDto(UserOrgMembership entity)

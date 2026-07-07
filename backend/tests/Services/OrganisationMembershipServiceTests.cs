@@ -3,6 +3,7 @@ using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
+using UKPS.Api.Services.Errors;
 
 namespace UKPS.Api.Tests.Services;
 
@@ -33,8 +34,8 @@ public class OrganisationMembershipServiceTests : IAsyncDisposable
             CancellationToken.None
         );
 
-        Assert.NotNull(result);
-        Assert.Equal(userRole, result.UserRole);
+        Assert.True(result.IsOk);
+        Assert.Equal(userRole, result.Value.UserRole);
     }
 
     [Fact]
@@ -49,7 +50,8 @@ public class OrganisationMembershipServiceTests : IAsyncDisposable
             CancellationToken.None
         );
 
-        Assert.Null(result);
+        Assert.True(result.IsErr);
+        Assert.IsType<OrganisationMembershipUpdateUserRoleError.NotFound>(result.Error);
     }
 
     [Fact]
@@ -64,7 +66,8 @@ public class OrganisationMembershipServiceTests : IAsyncDisposable
             CancellationToken.None
         );
 
-        Assert.Null(result);
+        Assert.True(result.IsErr);
+        Assert.IsType<OrganisationMembershipUpdateUserRoleError.NotFound>(result.Error);
     }
 
     private async Task<UserOrgMembership> SetupUserOrgMembership(

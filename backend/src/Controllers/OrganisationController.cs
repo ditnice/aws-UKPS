@@ -70,12 +70,22 @@ public class OrganisationController(IOrganisationService organisationService) : 
         CancellationToken cancellationToken
     )
     {
-        OrganisationMembershipDto? result = await organisationService.Memberships.UpdateUserRole(
+        var result = await organisationService.Memberships.UpdateUserRole(
             organisationId,
             membershipId,
             command,
             cancellationToken
         );
-        return result is null ? NotFound() : Ok(result);
+        return result.Match<ActionResult<OrganisationMembershipDto>>(
+            x => Ok(x),
+            x =>
+                x switch
+                {
+                    OrganisationMembershipUpdateUserRoleError.NotFound notFound => NotFound(
+                        $"Could not find a membership with organisation ID = {notFound.OrganisationId} and membership ID = {notFound.MembershipId}"
+                    ),
+                    _ => throw new UnreachableException(),
+                }
+        );
     }
 }

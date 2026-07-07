@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Common;
 using UKPS.Api.DTOs;
@@ -198,11 +199,13 @@ public class OrganisationServiceTests : IAsyncDisposable
 
     private sealed class StubOrganisationMembershipService : IOrganisationMembershipService
     {
-        public Task<OrganisationMembershipDto?> UpdateUserRole(
+        Task<
+            Result<OrganisationMembershipDto, OrganisationMembershipUpdateUserRoleError>
+        > IOrganisationMembershipService.UpdateUserRole(
             int organisationId,
             int membershipId,
             UpdateOrgMembershipUserRoleCommandDto command,
             CancellationToken cancellationToken
-        ) => Task.FromResult<OrganisationMembershipDto?>(null);
+        ) => throw new UnreachableException();
     }
 }
