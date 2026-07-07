@@ -8,13 +8,26 @@ using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Services;
 
-internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisationService
+internal sealed class OrganisationService : IOrganisationService
 {
+    public IOrganisationMembershipService Memberships { get; }
+
+    private readonly AppDbContext _dbContext;
+
+    public OrganisationService(
+        AppDbContext dbContext,
+        IOrganisationMembershipService membershipService
+    )
+    {
+        _dbContext = dbContext;
+        Memberships = membershipService;
+    }
+
     public async Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
         int id
     )
     {
-        var organisation = await dbContext
+        var organisation = await _dbContext
             .Organisations.AsNoTracking()
             .SingleOrDefaultAsync(o => o.Id == id);
 
@@ -29,7 +42,7 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>
     > UpdateOrganisationDetails(int id, UpdateOrganisationDetailsDto organisationDetails)
     {
-        var organisation = await dbContext.Organisations.SingleOrDefaultAsync(o => o.Id == id);
+        var organisation = await _dbContext.Organisations.SingleOrDefaultAsync(o => o.Id == id);
 
         if (organisation is null)
         {
@@ -43,7 +56,7 @@ internal sealed class OrganisationService(AppDbContext dbContext) : IOrganisatio
         organisation.HeadOfficeEmail = organisationDetails.HeadOfficeEmail;
         organisation.HeadOfficeTelephone = organisationDetails.HeadOfficeTelephone;
 
-        await dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync();
 
         return Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Ok(
             MapToDto(organisation)

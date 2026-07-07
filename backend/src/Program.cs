@@ -18,6 +18,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Add services to the container.
 
 builder.Services.AddScoped<IOrganisationService, OrganisationService>();
+builder.Services.AddScoped<IOrganisationMembershipService, OrganisationMembershipService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder

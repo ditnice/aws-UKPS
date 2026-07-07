@@ -1,28 +1,33 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Common;
-using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
+using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Tests.Services;
 
-public class OrganisationServiceTests
+public class OrganisationServiceTests : IAsyncDisposable
 {
-    private static AppDbContext CreateDbContext() =>
-        new(
-            new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options
+    private readonly TestDatabase _testDatabase;
+    private readonly OrganisationService _service;
+
+    public OrganisationServiceTests()
+    {
+        _testDatabase = new TestDatabase();
+        _service = new OrganisationService(
+            _testDatabase.Context,
+            new StubOrganisationMembershipService()
         );
+    }
 
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsDto()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(
+        _testDatabase.Context.Organisations.Add(
             new Organisation
             {
                 Id = 1,
@@ -37,12 +42,11 @@ public class OrganisationServiceTests
                 CreatedAt = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
             }
         );
-        await dbContext.SaveChangesAsync();
-        int id = (await dbContext.Organisations.SingleAsync()).Id;
+        await _testDatabase.Context.SaveChangesAsync();
+        int id = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
 
-        OrganisationService service = new(dbContext);
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await service.GetOrganisationById(id);
+            await _service.GetOrganisationById(id);
 
         Assert.True(result.IsOk);
         OrganisationDetailsDto? dto = result.Value;
@@ -62,14 +66,12 @@ public class OrganisationServiceTests
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(CreateOrganisation());
-        await dbContext.SaveChangesAsync();
-        int seededId = (await dbContext.Organisations.SingleAsync()).Id;
+        _testDatabase.Context.Organisations.Add(CreateOrganisation());
+        await _testDatabase.Context.SaveChangesAsync();
+        int seededId = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
 
-        OrganisationService service = new(dbContext);
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await service.GetOrganisationById(seededId + 1);
+            await _service.GetOrganisationById(seededId + 1);
 
         Assert.True(result.IsErr);
         GetOrganisationByIdError.NotFound notFound =
@@ -80,32 +82,27 @@ public class OrganisationServiceTests
     [Fact]
     public async Task UpdateOrganisationDetails_OrganisationExists_UpdatesEditableFields()
     {
-        await using AppDbContext dbContext = CreateDbContext();
         DateTime createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
         DateTime lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
-        dbContext.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
-        await dbContext.SaveChangesAsync();
-        int id = (await dbContext.Organisations.SingleAsync()).Id;
+        _testDatabase.Context.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
+        await _testDatabase.Context.SaveChangesAsync();
+        int id = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
 
-        OrganisationService service = new(dbContext);
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
-            await service.UpdateOrganisationDetails(id, CreateUpdateDto());
+            await _service.UpdateOrganisationDetails(id, CreateUpdateDto());
 
         Assert.True(result.IsOk);
         AssertUpdatedDetails(result.Value, createdAt, lastActive);
 
-        Organisation saved = await dbContext.Organisations.SingleAsync(o => o.Id == id);
+        Organisation saved = await _testDatabase.Context.Organisations.SingleAsync(o => o.Id == id);
         AssertUpdatedEntity(saved, createdAt, lastActive);
     }
 
     [Fact]
     public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        OrganisationService service = new(dbContext);
-
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
-            await service.UpdateOrganisationDetails(
+            await _service.UpdateOrganisationDetails(
                 99,
                 new UpdateOrganisationDetailsDto
                 {
@@ -192,5 +189,23 @@ public class OrganisationServiceTests
         Assert.Equal(UserOrgStatus.Active, saved.Status);
         Assert.Equal(lastActive, saved.LastActive);
         Assert.Equal(createdAt, saved.CreatedAt);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _testDatabase.DisposeAsync();
+        GC.SuppressFinalize(this);
+    }
+
+    private sealed class StubOrganisationMembershipService : IOrganisationMembershipService
+    {
+        Task<
+            Result<OrganisationMembershipDto, OrganisationMembershipUpdateUserRoleError>
+        > IOrganisationMembershipService.UpdateUserRole(
+            int organisationId,
+            int membershipId,
+            UpdateOrgMembershipUserRoleCommandDto command,
+            CancellationToken cancellationToken
+        ) => throw new UnreachableException();
     }
 }

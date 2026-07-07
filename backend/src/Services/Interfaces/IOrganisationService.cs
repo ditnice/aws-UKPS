@@ -6,6 +6,7 @@ namespace UKPS.Api.Services.Interfaces;
 
 public interface IOrganisationService
 {
+    IOrganisationMembershipService Memberships { get; }
     Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(int id);
     Task<Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>> UpdateOrganisationDetails(
         int id,

@@ -58,4 +58,34 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 }
         );
     }
+
+    [HttpPatch("{organisationId:int}/memberships/{membershipId}")]
+    [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<OrganisationMembershipDto>> UpdateUserRole(
+        int organisationId,
+        int membershipId,
+        UpdateOrgMembershipUserRoleCommandDto command,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await organisationService.Memberships.UpdateUserRole(
+            organisationId,
+            membershipId,
+            command,
+            cancellationToken
+        );
+        return result.Match<ActionResult<OrganisationMembershipDto>>(
+            x => Ok(x),
+            x =>
+                x switch
+                {
+                    OrganisationMembershipUpdateUserRoleError.NotFound notFound => NotFound(
+                        $"Could not find a membership with organisation ID = {notFound.OrganisationId} and membership ID = {notFound.MembershipId}"
+                    ),
+                    _ => throw new UnreachableException(),
+                }
+        );
+    }
 }

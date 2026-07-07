@@ -281,6 +281,8 @@ public class OrganisationControllerTests
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>? updateResult = null
     ) : IOrganisationService
     {
+        public IOrganisationMembershipService Memberships => throw new InvalidOperationException();
+
         public Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
             int id
         ) =>
@@ -304,6 +306,7 @@ public class OrganisationControllerTests
 
     private sealed class CapturingOrganisationService : IOrganisationService
     {
+        public IOrganisationMembershipService Memberships => throw new InvalidOperationException();
         public int CapturedId { get; private set; }
         public int CapturedUpdateId { get; private set; }
         public UpdateOrganisationDetailsDto? CapturedUpdateDto { get; private set; }
