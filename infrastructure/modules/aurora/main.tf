@@ -12,7 +12,7 @@ resource "aws_rds_cluster" "aurora" {
   deletion_protection                 = true
 
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora_postgres.name
-  db_subnet_group_name            = aws_db_subnet_group.aurora.name
+  db_subnet_group_name            = var.db_subnet_group_name
   vpc_security_group_ids          = [aws_security_group.aurora_postgres_sg.id]
 
   enable_http_endpoint            = var.enable_http_endpoint
@@ -27,7 +27,6 @@ resource "aws_rds_cluster" "aurora" {
   skip_final_snapshot             = var.skip_final_snapshot
   storage_encrypted               = true
   kms_key_id                      = var.kms_key_id
-  performance_insights_enabled    = true
 
   serverlessv2_scaling_configuration {
     max_capacity = var.aurora_postgres_max_capacity
@@ -46,31 +45,19 @@ resource "aws_rds_cluster" "aurora" {
 }
 
 resource "aws_rds_cluster_instance" "aurora_postgres_instance" {
-  identifier                 = "${var.aurora_postgres_identifier}-${var.environment}"
-  cluster_identifier         = aws_rds_cluster.aurora.id
-  instance_class             = "db.serverless"
-  engine                     = aws_rds_cluster.aurora.engine
-  engine_version             = aws_rds_cluster.aurora.engine_version
-  auto_minor_version_upgrade = true
-  monitoring_interval        = var.monitoring_interval
-  monitoring_role_arn        = aws_iam_role.rds_enhanced_monitoring.arn
-
+  identifier                      = "${var.aurora_postgres_identifier}-${var.environment}"
+  cluster_identifier              = aws_rds_cluster.aurora.id
+  instance_class                  = "db.serverless"
+  engine                          = aws_rds_cluster.aurora.engine
+  engine_version                  = aws_rds_cluster.aurora.engine_version
+  auto_minor_version_upgrade      = true
+  monitoring_interval             = var.monitoring_interval
+  monitoring_role_arn             = aws_iam_role.rds_enhanced_monitoring.arn
   performance_insights_enabled    = true
   performance_insights_kms_key_id = var.kms_key_id
 
   tags = merge(var.tags, {
     Name        = "${var.aurora_postgres_identifier}-${var.environment}"
-    Environment = var.environment
-    Project     = var.project
-  })
-}
-
-resource "aws_db_subnet_group" "aurora" {
-  name       = "${var.project}-${var.environment}-aurora-subnet-group"
-  subnet_ids = var.private_subnet_ids
-
-  tags = merge(var.tags, {
-    Name        = "${var.project}-${var.environment}-aurora-subnet-group"
     Environment = var.environment
     Project     = var.project
   })
