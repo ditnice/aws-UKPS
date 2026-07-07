@@ -22,5 +22,5 @@ internal sealed class VaccinesCompanyInfo
     public string? GrantFundingIdentifier { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
 }

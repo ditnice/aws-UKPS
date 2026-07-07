@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Services;
@@ -21,25 +23,32 @@ internal sealed class OrganisationService : IOrganisationService
         Memberships = membershipService;
     }
 
-    public async Task<OrganisationDetailsDto?> GetOrganisationById(int id)
+    public async Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
+        int id
+    )
     {
         var organisation = await _dbContext
             .Organisations.AsNoTracking()
             .SingleOrDefaultAsync(o => o.Id == id);
 
-        return organisation is null ? null : MapToDto(organisation);
+        return organisation is null
+            ? Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
+                new GetOrganisationByIdError.NotFound(id)
+            )
+            : Result<OrganisationDetailsDto, GetOrganisationByIdError>.Ok(MapToDto(organisation));
     }
 
-    public async Task<OrganisationDetailsDto?> UpdateOrganisationDetails(
-        int id,
-        UpdateOrganisationDetailsDto organisationDetails
-    )
+    public async Task<
+        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>
+    > UpdateOrganisationDetails(int id, UpdateOrganisationDetailsDto organisationDetails)
     {
         var organisation = await _dbContext.Organisations.SingleOrDefaultAsync(o => o.Id == id);
 
         if (organisation is null)
         {
-            return null;
+            return Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
+                new UpdateOrganisationDetailsError.NotFound(id)
+            );
         }
 
         organisation.OrganisationName = organisationDetails.OrganisationName;
@@ -49,7 +58,9 @@ internal sealed class OrganisationService : IOrganisationService
 
         await _dbContext.SaveChangesAsync();
 
-        return MapToDto(organisation);
+        return Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Ok(
+            MapToDto(organisation)
+        );
     }
 
     private static OrganisationDetailsDto MapToDto(Organisation organisation) =>

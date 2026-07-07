@@ -17,7 +17,7 @@ internal sealed class MedicinesEamsPim
     public int? EamsOpinionDateId { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public SharedRevisionContent.RegulatoryDate? EamsSubmissionDate { get; set; }
     public SharedRevisionContent.RegulatoryDate? EamsOpinionDate { get; set; }
 }

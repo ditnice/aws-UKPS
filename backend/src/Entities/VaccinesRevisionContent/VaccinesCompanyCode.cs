@@ -8,9 +8,9 @@ internal sealed class VaccinesCompanyCode
 {
     public int Id { get; set; }
     public int VaccinesProductDetailId { get; set; }
-    public string Name { get; set; } = null!;
+    public required string Name { get; set; }
     public int? DisplayOrder { get; set; }
 
     // Navigation
-    public VaccinesProductDetail VaccinesProductDetail { get; set; } = null!;
+    public VaccinesProductDetail? VaccinesProductDetail { get; set; }
 }

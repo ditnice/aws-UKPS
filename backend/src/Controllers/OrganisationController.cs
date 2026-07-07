@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.DTOs;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Controllers;
@@ -13,9 +15,19 @@ public class OrganisationController(IOrganisationService organisationService) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(int id)
     {
-        OrganisationDetailsDto? organisation = await organisationService.GetOrganisationById(id);
+        var result = await organisationService.GetOrganisationById(id);
 
-        return (organisation is null) ? NotFound() : Ok(organisation);
+        return result.Match<ActionResult<OrganisationDetailsDto>>(
+            organisation => Ok(organisation),
+            error =>
+                error switch
+                {
+                    GetOrganisationByIdError.NotFound => NotFound(),
+                    _ => throw new UnreachableException(
+                        "Unhandled GetOrganisationByIdError variant."
+                    ),
+                }
+        );
     }
 
     [HttpPut("{id:int}")]
@@ -32,12 +44,19 @@ public class OrganisationController(IOrganisationService organisationService) : 
             return BadRequest(ModelState);
         }
 
-        OrganisationDetailsDto? organisation = await organisationService.UpdateOrganisationDetails(
-            id,
-            organisationDetails
-        );
+        var result = await organisationService.UpdateOrganisationDetails(id, organisationDetails);
 
-        return (organisation is null) ? NotFound() : Ok(organisation);
+        return result.Match<ActionResult<OrganisationDetailsDto>>(
+            organisation => Ok(organisation),
+            error =>
+                error switch
+                {
+                    UpdateOrganisationDetailsError.NotFound => NotFound(),
+                    _ => throw new UnreachableException(
+                        "Unhandled UpdateOrganisationDetailsError variant."
+                    ),
+                }
+        );
     }
 
     [HttpPatch("{organisationId:int}/memberships/{membershipId}")]

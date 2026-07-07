@@ -20,6 +20,6 @@ internal sealed class RecordStatusHistory
     public DateTime UpdatedAt { get; set; }
 
     // Navigation
-    public Record Record { get; set; } = null!;
-    public Identity.User UpdatedByUser { get; set; } = null!;
+    public Record? Record { get; set; }
+    public Identity.User? UpdatedByUser { get; set; }
 }

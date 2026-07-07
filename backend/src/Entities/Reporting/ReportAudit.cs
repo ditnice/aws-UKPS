@@ -33,6 +33,6 @@ internal sealed class ReportAudit
     public DateTime RanAt { get; set; }
 
     // Navigation
-    public Identity.User User { get; set; } = null!;
+    public Identity.User? User { get; set; }
     public ReportPreset? ReportPreset { get; set; }
 }

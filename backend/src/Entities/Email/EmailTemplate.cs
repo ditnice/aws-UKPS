@@ -5,7 +5,7 @@ internal sealed class EmailTemplate
     public int Id { get; set; }
 
     /// <summary>e.g. RecordApproved, RecordRejected, UserRegistrationApproved, TermsAcceptanceRequest</summary>
-    public string Title { get; set; } = null!;
+    public required string Title { get; set; }
 
     public string? Description { get; set; }
 

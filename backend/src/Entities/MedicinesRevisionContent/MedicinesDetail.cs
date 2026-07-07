@@ -15,5 +15,5 @@ internal sealed class MedicinesDetail
     public string? RepurposedMedicineDetails { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
 }
