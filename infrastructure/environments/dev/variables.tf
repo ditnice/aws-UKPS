@@ -10,12 +10,6 @@ variable "frontend_db_name" {
   default     = "ukpsdev_frontend"
 }
 
-variable "aws_profile" {
-  description = "AWS CLI profile to use for authentication"
-  type        = string
-  default     = "default"
-}
-
 variable "region" {
   description = "AWS region to deploy resources in"
   type        = string
