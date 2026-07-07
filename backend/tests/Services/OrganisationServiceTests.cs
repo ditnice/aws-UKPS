@@ -199,6 +199,14 @@ public class OrganisationServiceTests : IAsyncDisposable
 
     private sealed class StubOrganisationMembershipService : IOrganisationMembershipService
     {
+        public Task<
+            Result<OrganisationMembershipDto, OrganisationMembershipDeactivateUserError>
+        > DeactivateMembership(
+            int organisationId,
+            int membershipId,
+            CancellationToken cancellationToken
+        ) => throw new UnreachableException();
+
         Task<
             Result<OrganisationMembershipDto, OrganisationMembershipUpdateUserRoleError>
         > IOrganisationMembershipService.UpdateUserRole(
