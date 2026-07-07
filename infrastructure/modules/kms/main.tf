@@ -113,12 +113,6 @@ data "aws_iam_policy_document" "app" {
     }
 
     condition {
-      test     = "StringEquals"
-      variable = "kms:ViaService"
-      values   = ["logs.${var.region}.${data.aws_partition.current.dns_suffix}"]
-    }
-
-    condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
       values   = ["arn:${data.aws_partition.current.partition}:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${var.project}/${var.environment}/*"]

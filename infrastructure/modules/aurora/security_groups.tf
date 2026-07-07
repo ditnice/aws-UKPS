@@ -12,7 +12,7 @@ resource "aws_security_group" "aurora_postgres_sg" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "aurora_postgres" {
-  # Map with static indexes as sg ids are unknown at plan time
+  # Keyed by list index (known at plan time) because the SG IDs themselves are unknown on first apply
   for_each = {
     for idx, sg_id in var.allowed_security_group_ids :
     idx => sg_id
@@ -21,7 +21,7 @@ resource "aws_vpc_security_group_ingress_rule" "aurora_postgres" {
   description                  = "Allow inbound PostgreSQL traffic from authorised security groups"
   from_port                    = var.aurora_postgres_port
   ip_protocol                  = "tcp"
-  referenced_security_group_id = each.key
+  referenced_security_group_id = each.value
   security_group_id            = aws_security_group.aurora_postgres_sg.id
   to_port                      = var.aurora_postgres_port
 }

@@ -49,13 +49,13 @@ variable "vpc_cidr" {
   }
 }
 
-variable "private_subnet_ids" {
-  description = "A list of VPC subnet IDs"
-  type        = list(string)
+variable "db_subnet_group_name" {
+  description = "Name of the DB subnet group used by the Aurora cluster"
+  type        = string
 
   validation {
-    condition     = length(var.private_subnet_ids) > 0 && alltrue([for subnet_id in var.private_subnet_ids : can(regex("^subnet-[0-9a-f]{8,17}$", subnet_id))])
-    error_message = "At least one private subnet ID must be provided, and all values must be valid AWS subnet IDs."
+    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9-]{0,254}$", var.db_subnet_group_name))
+    error_message = "DB subnet group name must start with a letter and contain only letters, numbers, or hyphens."
   }
 }
 

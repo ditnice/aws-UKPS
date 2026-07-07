@@ -119,6 +119,17 @@ module "ecs_backend" {
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
 }
 
+resource "aws_db_subnet_group" "aurora" {
+  name       = "${local.project}-${local.environment}-aurora-subnet-group"
+  subnet_ids = module.networking.data_subnet_ids
+
+  tags = {
+    Name        = "${local.project}-${local.environment}-aurora-subnet-group"
+    Environment = local.environment
+    Project     = local.project
+  }
+}
+
 # Aurora - Frontend
 module "aurora_frontend" {
   source = "../../modules/aurora"
@@ -128,7 +139,7 @@ module "aurora_frontend" {
   service_name                 = "${local.service_name}-frontend"
   vpc_id                       = module.networking.vpc_id
   vpc_cidr                     = module.networking.vpc_cidr
-  private_subnet_ids           = module.networking.data_subnet_ids
+  db_subnet_group_name         = aws_db_subnet_group.aurora.name
   db_name                      = var.frontend_db_name
   engine_version               = var.aurora_engine_version
   master_username              = var.frontend_db_master_username
@@ -153,7 +164,7 @@ module "aurora_backend" {
   service_name                 = "${local.service_name}-backend"
   vpc_id                       = module.networking.vpc_id
   vpc_cidr                     = module.networking.vpc_cidr
-  private_subnet_ids           = module.networking.data_subnet_ids
+  db_subnet_group_name         = aws_db_subnet_group.aurora.name
   db_name                      = var.backend_db_name
   engine_version               = var.aurora_engine_version
   master_username              = var.backend_db_master_username
