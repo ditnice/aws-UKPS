@@ -7,6 +7,12 @@ data "aws_lb" "this" {
   name = var.alb_name
 }
 
+data "aws_acm_certificate" "this" {
+  domain      = local.frontend_host_name
+  statuses    = ["ISSUED"]
+  most_recent = true
+}
+
 resource "aws_lb_target_group" "this" {
   for_each = var.target_groups
 
@@ -40,7 +46,7 @@ resource "aws_lb_listener" "https" {
   load_balancer_arn = data.aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
-  certificate_arn   = var.certificate_arn
+  certificate_arn   = data.aws_acm_certificate.this.arn
   ssl_policy        = var.ssl_policy
 
   default_action {

@@ -26,6 +26,7 @@ No modules.
 | [aws_lb_listener.https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener_rule.backend](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule) | resource |
 | [aws_lb_target_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
+| [aws_acm_certificate.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/acm_certificate) | data source |
 | [aws_lb.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/lb) | data source |
 
 ## Inputs
@@ -34,7 +35,6 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alb_name"></a> [alb\_name](#input\_alb\_name) | Name of the existing ALB to attach listeners and target groups to | `string` | `"workload-private-alb"` | no |
 | <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain used to build host-header routing names | `string` | n/a | yes |
-| <a name="input_certificate_arn"></a> [certificate\_arn](#input\_certificate\_arn) | ACM certificate ARN used by the HTTPS listener | `string` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment used to build host-header routing names | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
 | <a name="input_ssl_policy"></a> [ssl\_policy](#input\_ssl\_policy) | Security policy used by the HTTPS listener | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |

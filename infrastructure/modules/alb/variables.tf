@@ -39,16 +39,6 @@ variable "vpc_id" {
   }
 }
 
-variable "certificate_arn" {
-  description = "ACM certificate ARN used by the HTTPS listener"
-  type        = string
-
-  validation {
-    condition     = can(regex("^arn:aws[a-zA-Z-]*:acm:[a-z0-9-]+:[0-9]{12}:certificate/.+$", var.certificate_arn))
-    error_message = "Certificate ARN must be a valid ACM certificate ARN."
-  }
-}
-
 variable "ssl_policy" {
   description = "Security policy used by the HTTPS listener"
   type        = string

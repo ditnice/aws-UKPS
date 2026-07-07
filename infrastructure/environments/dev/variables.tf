@@ -22,16 +22,6 @@ variable "region" {
   default     = "eu-west-2"
 }
 
-variable "alb_certificate_arn" {
-  description = "ACM certificate ARN used by the workload private ALB HTTPS listener"
-  type        = string
-
-  validation {
-    condition     = can(regex("^arn:aws[a-zA-Z-]*:acm:[a-z0-9-]+:[0-9]{12}:certificate/.+$", var.alb_certificate_arn))
-    error_message = "ALB certificate ARN must be a valid ACM certificate ARN."
-  }
-}
-
 variable "base_domain_name" {
   description = "Base DNS domain used to build workload hostnames"
   type        = string

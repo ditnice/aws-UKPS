@@ -62,7 +62,6 @@ module "alb" {
   project          = local.project
   environment      = local.environment
   vpc_id           = module.networking.vpc_id
-  certificate_arn  = var.alb_certificate_arn
   base_domain_name = var.base_domain_name
 
   target_groups = {
