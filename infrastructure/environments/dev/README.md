@@ -43,7 +43,6 @@ No resources.
 | <a name="input_aurora_preferred_backup_window"></a> [aurora\_preferred\_backup\_window](#input\_aurora\_preferred\_backup\_window) | Daily time range during which automated backups are created | `string` | `"02:00-03:00"` | no |
 | <a name="input_aurora_preferred_maintenance_window"></a> [aurora\_preferred\_maintenance\_window](#input\_aurora\_preferred\_maintenance\_window) | Weekly time range during which system maintenance can occur | `string` | `"sun:03:00-sun:04:00"` | no |
 | <a name="input_aurora_skip_final_snapshot"></a> [aurora\_skip\_final\_snapshot](#input\_aurora\_skip\_final\_snapshot) | Whether to skip creating a final snapshot when the Aurora cluster is destroyed | `bool` | `true` | no |
-| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS CLI profile to use for authentication | `string` | `"default"` | no |
 | <a name="input_backend_container_port"></a> [backend\_container\_port](#input\_backend\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
 | <a name="input_backend_db_master_username"></a> [backend\_db\_master\_username](#input\_backend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
 | <a name="input_backend_db_name"></a> [backend\_db\_name](#input\_backend\_db\_name) | Name of the backend database | `string` | `"ukpsdev_backend"` | no |
