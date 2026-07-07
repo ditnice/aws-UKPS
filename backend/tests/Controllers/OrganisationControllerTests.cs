@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using UKPS.Api.Common;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Tests.Controllers;
@@ -29,7 +31,11 @@ public class OrganisationControllerTests
             LastActive = _lastActive,
             CreatedAt = _createdAt,
         };
-        OrganisationController controller = new(new StubOrganisationService(getResult: expected));
+        OrganisationController controller = new(
+            new StubOrganisationService(
+                getResult: Result<OrganisationDetailsDto, GetOrganisationByIdError>.Ok(expected)
+            )
+        );
 
         ActionResult<OrganisationDetailsDto> result = await controller.GetOrganisationById(1);
 
@@ -40,7 +46,7 @@ public class OrganisationControllerTests
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFound()
     {
-        OrganisationController controller = new(new StubOrganisationService(getResult: null));
+        OrganisationController controller = new(new StubOrganisationService());
 
         ActionResult<OrganisationDetailsDto> result = await controller.GetOrganisationById(99);
 
@@ -63,7 +69,11 @@ public class OrganisationControllerTests
     {
         OrganisationDetailsDto expected = CreateOrganisationDetailsDto();
         OrganisationController controller = new(
-            new StubOrganisationService(updateResult: expected)
+            new StubOrganisationService(
+                updateResult: Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Ok(
+                    expected
+                )
+            )
         );
 
         ActionResult<OrganisationDetailsDto> result = await controller.UpdateOrganisationDetails(
@@ -78,7 +88,7 @@ public class OrganisationControllerTests
     [Fact]
     public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNotFound()
     {
-        OrganisationController controller = new(new StubOrganisationService(updateResult: null));
+        OrganisationController controller = new(new StubOrganisationService());
 
         ActionResult<OrganisationDetailsDto> result = await controller.UpdateOrganisationDetails(
             99,
@@ -267,17 +277,29 @@ public class OrganisationControllerTests
     }
 
     private sealed class StubOrganisationService(
-        OrganisationDetailsDto? getResult = null,
-        OrganisationDetailsDto? updateResult = null
+        Result<OrganisationDetailsDto, GetOrganisationByIdError>? getResult = null,
+        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>? updateResult = null
     ) : IOrganisationService
     {
-        public Task<OrganisationDetailsDto?> GetOrganisationById(int id) =>
-            Task.FromResult(getResult);
+        public Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
+            int id
+        ) =>
+            Task.FromResult(
+                getResult
+                    ?? Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
+                        new GetOrganisationByIdError.NotFound(id)
+                    )
+            );
 
-        public Task<OrganisationDetailsDto?> UpdateOrganisationDetails(
-            int id,
-            UpdateOrganisationDetailsDto organisationDetails
-        ) => Task.FromResult(updateResult);
+        public Task<
+            Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>
+        > UpdateOrganisationDetails(int id, UpdateOrganisationDetailsDto organisationDetails) =>
+            Task.FromResult(
+                updateResult
+                    ?? Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
+                        new UpdateOrganisationDetailsError.NotFound(id)
+                    )
+            );
     }
 
     private sealed class CapturingOrganisationService : IOrganisationService
@@ -286,20 +308,29 @@ public class OrganisationControllerTests
         public int CapturedUpdateId { get; private set; }
         public UpdateOrganisationDetailsDto? CapturedUpdateDto { get; private set; }
 
-        public Task<OrganisationDetailsDto?> GetOrganisationById(int id)
+        public Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
+            int id
+        )
         {
             CapturedId = id;
-            return Task.FromResult<OrganisationDetailsDto?>(null);
+            return Task.FromResult(
+                Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
+                    new GetOrganisationByIdError.NotFound(id)
+                )
+            );
         }
 
-        public Task<OrganisationDetailsDto?> UpdateOrganisationDetails(
-            int id,
-            UpdateOrganisationDetailsDto organisationDetails
-        )
+        public Task<
+            Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>
+        > UpdateOrganisationDetails(int id, UpdateOrganisationDetailsDto organisationDetails)
         {
             CapturedUpdateId = id;
             CapturedUpdateDto = organisationDetails;
-            return Task.FromResult<OrganisationDetailsDto?>(null);
+            return Task.FromResult(
+                Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
+                    new UpdateOrganisationDetailsError.NotFound(id)
+                )
+            );
         }
     }
 }

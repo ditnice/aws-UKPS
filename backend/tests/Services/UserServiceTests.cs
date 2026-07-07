@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
+using UKPS.Api.Services.Errors;
 
 namespace UKPS.Api.Tests.Services;
 
@@ -17,14 +19,18 @@ public class UserServiceTests
         );
 
     [Fact]
-    public async Task GetUsers_ReturnsNull_WhenOrganisationDoesNotExist()
+    public async Task GetUsers_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
     {
         await using AppDbContext dbContext = CreateDbContext();
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(99, 1, 20, []);
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await service.GetUsers(99, 1, 20, []);
 
-        Assert.Null(result);
+        Assert.True(result.IsErr);
+        GetUsersError.OrganisationNotFound notFound =
+            Assert.IsType<GetUsersError.OrganisationNotFound>(result.Error);
+        Assert.Equal(99, notFound.OrganisationId);
     }
 
     [Fact]
@@ -36,13 +42,16 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(1, 1, 20, []);
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await service.GetUsers(1, 1, 20, []);
 
-        Assert.NotNull(result);
-        Assert.Empty(result.Items);
-        Assert.Equal(0, result.TotalCount);
-        Assert.Equal(1, result.Page);
-        Assert.Equal(20, result.PageSize);
+        Assert.True(result.IsOk);
+        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
+        Assert.NotNull(dto);
+        Assert.Empty(dto.Items);
+        Assert.Equal(0, dto.TotalCount);
+        Assert.Equal(1, dto.Page);
+        Assert.Equal(20, dto.PageSize);
     }
 
     [Fact]
@@ -64,10 +73,13 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(1, 1, 20, []);
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await service.GetUsers(1, 1, 20, []);
 
-        Assert.NotNull(result);
-        UserListItemDto item = Assert.Single(result.Items);
+        Assert.True(result.IsOk);
+        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
+        Assert.NotNull(dto);
+        UserListItemDto item = Assert.Single(dto.Items);
         Assert.Equal(10, item.UserId);
         Assert.Equal("user@example.com", item.EmailAddress);
         Assert.Equal(UserRole.Champion, item.Role);
@@ -99,16 +111,14 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(
-            1,
-            1,
-            20,
-            [UserOrgStatus.Active, UserOrgStatus.Inactive]
-        );
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await service.GetUsers(1, 1, 20, [UserOrgStatus.Active, UserOrgStatus.Inactive]);
 
-        Assert.NotNull(result);
-        Assert.Equal(2, result.TotalCount);
-        Assert.Equal([2, 3], result.Items.Select(i => i.UserId).ToArray());
+        Assert.True(result.IsOk);
+        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
+        Assert.NotNull(dto);
+        Assert.Equal(2, dto.TotalCount);
+        Assert.Equal([2, 3], dto.Items.Select(i => i.UserId).ToArray());
     }
 
     [Fact]
@@ -130,13 +140,16 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(1, 2, 1, []);
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await service.GetUsers(1, 2, 1, []);
 
-        Assert.NotNull(result);
-        Assert.Equal(3, result.TotalCount);
-        Assert.Equal(2, result.Page);
-        Assert.Equal(1, result.PageSize);
-        UserListItemDto item = Assert.Single(result.Items);
+        Assert.True(result.IsOk);
+        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
+        Assert.NotNull(dto);
+        Assert.Equal(3, dto.TotalCount);
+        Assert.Equal(2, dto.Page);
+        Assert.Equal(1, dto.PageSize);
+        UserListItemDto item = Assert.Single(dto.Items);
         Assert.Equal(20, item.UserId);
     }
 
@@ -157,11 +170,14 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(null, 1, 20, []);
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await service.GetUsers(null, 1, 20, []);
 
-        Assert.NotNull(result);
-        Assert.Equal(2, result.TotalCount);
-        Assert.Equal([10, 20], result.Items.Select(i => i.UserId).ToArray());
+        Assert.True(result.IsOk);
+        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
+        Assert.NotNull(dto);
+        Assert.Equal(2, dto.TotalCount);
+        Assert.Equal([10, 20], dto.Items.Select(i => i.UserId).ToArray());
     }
 
     [Fact]
@@ -181,16 +197,14 @@ public class UserServiceTests
 
         UserService service = new(dbContext);
 
-        PaginatedResponseDto<UserListItemDto>? result = await service.GetUsers(
-            null,
-            1,
-            20,
-            [UserOrgStatus.Inactive]
-        );
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await service.GetUsers(null, 1, 20, [UserOrgStatus.Inactive]);
 
-        Assert.NotNull(result);
-        Assert.Equal(1, result.TotalCount);
-        UserListItemDto item = Assert.Single(result.Items);
+        Assert.True(result.IsOk);
+        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
+        Assert.NotNull(dto);
+        Assert.Equal(1, dto.TotalCount);
+        UserListItemDto item = Assert.Single(dto.Items);
         Assert.Equal(20, item.UserId);
         Assert.Equal(UserOrgStatus.Inactive, item.Status);
     }
