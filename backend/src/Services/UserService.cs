@@ -2,13 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
+using GetUsersResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.PaginatedResponseDto<UKPS.Api.DTOs.UserListItemDto>,
+    UKPS.Api.Services.Errors.GetUsersError
+>;
 
 namespace UKPS.Api.Services;
 
 internal sealed class UserService(AppDbContext dbContext) : IUserService
 {
-    public async Task<PaginatedResponseDto<UserListItemDto>?> GetUsers(
+    public async Task<GetUsersResult> GetUsers(
         int? organisationId,
         int page,
         int pageSize,
@@ -23,7 +28,9 @@ internal sealed class UserService(AppDbContext dbContext) : IUserService
 
             if (!organisationExists)
             {
-                return null;
+                return GetUsersResult.Err(
+                    new GetUsersError.OrganisationNotFound(organisationId.Value)
+                );
             }
         }
 
@@ -46,12 +53,12 @@ internal sealed class UserService(AppDbContext dbContext) : IUserService
         int totalCount = await organisationMemberships.CountAsync();
 
         List<UserListItemDto> items = await organisationMemberships
-            .OrderBy(m => m.User.Id)
+            .OrderBy(m => m.User!.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(m => new UserListItemDto
             {
-                UserId = m.User.Id,
+                UserId = m.User!.Id,
                 EmailAddress = m.User.WorkEmail,
                 Role = m.UserRole,
                 Status = m.Status,
@@ -60,12 +67,14 @@ internal sealed class UserService(AppDbContext dbContext) : IUserService
             })
             .ToListAsync();
 
-        return new PaginatedResponseDto<UserListItemDto>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-        };
+        return GetUsersResult.Ok(
+            new PaginatedResponseDto<UserListItemDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+            }
+        );
     }
 }

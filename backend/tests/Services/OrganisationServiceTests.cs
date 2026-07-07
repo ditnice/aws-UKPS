@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
+using UKPS.Api.Services.Errors;
 
 namespace UKPS.Api.Tests.Services;
 
@@ -39,23 +41,26 @@ public class OrganisationServiceTests
         int id = (await dbContext.Organisations.SingleAsync()).Id;
 
         OrganisationService service = new(dbContext);
-        OrganisationDetailsDto? result = await service.GetOrganisationById(id);
+        Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
+            await service.GetOrganisationById(id);
 
-        Assert.NotNull(result);
-        Assert.Equal(id, result.Id);
-        Assert.Equal("Gov Pharma Ltd", result.OrganisationName);
-        Assert.Equal(PharmaceuticalEntity.Medicines, result.AllowedPharmaceuticalEntity);
-        Assert.Equal(OrganisationType.PharmaCompany, result.OrganisationType);
-        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", result.HeadOfficeAddress);
-        Assert.Equal("info@pharma.gov.uk", result.HeadOfficeEmail);
-        Assert.Equal("020 1234 5678", result.HeadOfficeTelephone);
-        Assert.Equal(UserOrgStatus.Active, result.Status);
-        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), result.LastActive);
-        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), result.CreatedAt);
+        Assert.True(result.IsOk);
+        OrganisationDetailsDto? dto = result.Value;
+        Assert.NotNull(dto);
+        Assert.Equal(id, dto.Id);
+        Assert.Equal("Gov Pharma Ltd", dto.OrganisationName);
+        Assert.Equal(PharmaceuticalEntity.Medicines, dto.AllowedPharmaceuticalEntity);
+        Assert.Equal(OrganisationType.PharmaCompany, dto.OrganisationType);
+        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", dto.HeadOfficeAddress);
+        Assert.Equal("info@pharma.gov.uk", dto.HeadOfficeEmail);
+        Assert.Equal("020 1234 5678", dto.HeadOfficeTelephone);
+        Assert.Equal(UserOrgStatus.Active, dto.Status);
+        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), dto.LastActive);
+        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), dto.CreatedAt);
     }
 
     [Fact]
-    public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNull()
+    public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
         await using AppDbContext dbContext = CreateDbContext();
         dbContext.Organisations.Add(CreateOrganisation());
@@ -63,9 +68,13 @@ public class OrganisationServiceTests
         int seededId = (await dbContext.Organisations.SingleAsync()).Id;
 
         OrganisationService service = new(dbContext);
-        OrganisationDetailsDto? result = await service.GetOrganisationById(seededId + 1);
+        Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
+            await service.GetOrganisationById(seededId + 1);
 
-        Assert.Null(result);
+        Assert.True(result.IsErr);
+        GetOrganisationByIdError.NotFound notFound =
+            Assert.IsType<GetOrganisationByIdError.NotFound>(result.Error);
+        Assert.Equal(seededId + 1, notFound.OrganisationId);
     }
 
     [Fact]
@@ -79,35 +88,38 @@ public class OrganisationServiceTests
         int id = (await dbContext.Organisations.SingleAsync()).Id;
 
         OrganisationService service = new(dbContext);
-        OrganisationDetailsDto? result = await service.UpdateOrganisationDetails(
-            id,
-            CreateUpdateDto()
-        );
+        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
+            await service.UpdateOrganisationDetails(id, CreateUpdateDto());
 
-        AssertUpdatedDetails(result, createdAt, lastActive);
+        Assert.True(result.IsOk);
+        AssertUpdatedDetails(result.Value, createdAt, lastActive);
 
         Organisation saved = await dbContext.Organisations.SingleAsync(o => o.Id == id);
         AssertUpdatedEntity(saved, createdAt, lastActive);
     }
 
     [Fact]
-    public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNull()
+    public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
         await using AppDbContext dbContext = CreateDbContext();
         OrganisationService service = new(dbContext);
 
-        OrganisationDetailsDto? result = await service.UpdateOrganisationDetails(
-            99,
-            new UpdateOrganisationDetailsDto
-            {
-                OrganisationName = "New Pharma Ltd",
-                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-                HeadOfficeEmail = "new@example.com",
-                HeadOfficeTelephone = "020 1111 1111",
-            }
-        );
+        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
+            await service.UpdateOrganisationDetails(
+                99,
+                new UpdateOrganisationDetailsDto
+                {
+                    OrganisationName = "New Pharma Ltd",
+                    HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+                    HeadOfficeEmail = "new@example.com",
+                    HeadOfficeTelephone = "020 1111 1111",
+                }
+            );
 
-        Assert.Null(result);
+        Assert.True(result.IsErr);
+        UpdateOrganisationDetailsError.NotFound notFound =
+            Assert.IsType<UpdateOrganisationDetailsError.NotFound>(result.Error);
+        Assert.Equal(99, notFound.OrganisationId);
     }
 
     private static Organisation CreateOrganisation() =>

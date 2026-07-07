@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using UKPS.Api.Common;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Tests.Controllers;
@@ -13,7 +15,11 @@ public class UserControllerTests
     public async Task GetUsers_ReturnsOk_WhenOrganisationExists()
     {
         PaginatedResponseDto<UserListItemDto> expected = CreatePaginatedResponse();
-        UserController controller = new(new StubUserService(expected));
+        UserController controller = new(
+            new StubUserService(
+                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(expected)
+            )
+        );
 
         ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
             CreateQuery()
@@ -26,7 +32,13 @@ public class UserControllerTests
     [Fact]
     public async Task GetUsers_ReturnsNotFound_WhenOrganisationDoesNotExist()
     {
-        UserController controller = new(new StubUserService(null));
+        UserController controller = new(
+            new StubUserService(
+                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
+                    new GetUsersError.OrganisationNotFound(1)
+                )
+            )
+        );
 
         ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
             CreateQuery()
@@ -39,7 +51,13 @@ public class UserControllerTests
     [Fact]
     public async Task GetUsers_ReturnsBadRequest_WhenQueryIsNull()
     {
-        UserController controller = new(new StubUserService(CreatePaginatedResponse()));
+        UserController controller = new(
+            new StubUserService(
+                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(
+                    CreatePaginatedResponse()
+                )
+            )
+        );
 
         ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
             null
@@ -171,10 +189,11 @@ public class UserControllerTests
         return validationResults;
     }
 
-    private sealed class StubUserService(PaginatedResponseDto<UserListItemDto>? result)
-        : IUserService
+    private sealed class StubUserService(
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result
+    ) : IUserService
     {
-        public Task<PaginatedResponseDto<UserListItemDto>?> GetUsers(
+        public Task<Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>> GetUsers(
             int? organisationId,
             int page,
             int pageSize,
@@ -189,7 +208,7 @@ public class UserControllerTests
         public int CapturedPageSize { get; private set; }
         public UserOrgStatus[] CapturedStatuses { get; private set; } = [];
 
-        public Task<PaginatedResponseDto<UserListItemDto>?> GetUsers(
+        public Task<Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>> GetUsers(
             int? organisationId,
             int page,
             int pageSize,
@@ -200,8 +219,10 @@ public class UserControllerTests
             CapturedPage = page;
             CapturedPageSize = pageSize;
             CapturedStatuses = statuses.ToArray();
-            return Task.FromResult<PaginatedResponseDto<UserListItemDto>?>(
-                CreatePaginatedResponse()
+            return Task.FromResult(
+                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(
+                    CreatePaginatedResponse()
+                )
             );
         }
     }

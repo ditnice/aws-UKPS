@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.DTOs;
+using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Controllers;
@@ -21,13 +23,21 @@ public class UserController(IUserService userService) : ControllerBase
             return BadRequest();
         }
 
-        PaginatedResponseDto<UserListItemDto>? result = await userService.GetUsers(
+        var result = await userService.GetUsers(
             getUsersQuery.OrganisationId,
             getUsersQuery.Page,
             getUsersQuery.PageSize,
             getUsersQuery.Status.ToArray()
         );
 
-        return (result is null) ? BadRequest("Organisation not found.") : Ok(result);
+        return result.Match<ActionResult<PaginatedResponseDto<UserListItemDto>>>(
+            items => Ok(items),
+            error =>
+                error switch
+                {
+                    GetUsersError.OrganisationNotFound => BadRequest("Organisation not found."),
+                    _ => throw new UnreachableException("Unhandled GetUsersError variant."),
+                }
+        );
     }
 }

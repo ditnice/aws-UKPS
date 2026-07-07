@@ -1,11 +1,13 @@
+using UKPS.Api.Common;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
+using UKPS.Api.Services.Errors;
 
 namespace UKPS.Api.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<PaginatedResponseDto<UserListItemDto>?> GetUsers(
+    Task<Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>> GetUsers(
         int? organisationId,
         int page,
         int pageSize,
