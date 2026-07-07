@@ -1,28 +1,19 @@
-using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Common;
-using UKPS.Api.Data;
 using UKPS.Api.DTOs;
-using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
+using UKPS.Api.Tests.Fixtures;
 
 namespace UKPS.Api.Tests.Services;
 
-public class UserServiceTests
+[Collection(DatabaseCollection.Name)]
+public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
 {
-    private static AppDbContext CreateDbContext() =>
-        new(
-            new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options
-        );
-
     [Fact]
     public async Task GetUsers_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        UserService service = new(dbContext);
+        UserService service = new(Context);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(99, 1, 20, []);
@@ -36,11 +27,10 @@ public class UserServiceTests
     [Fact]
     public async Task GetUsers_ReturnsEmptyPage_WhenOrganisationHasNoUsers()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(CreateOrganisation(id: 1));
-        await dbContext.SaveChangesAsync();
+        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        await Context.SaveChangesAsync();
 
-        UserService service = new(dbContext);
+        UserService service = new(Context);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 1, 20, []);
@@ -57,11 +47,10 @@ public class UserServiceTests
     [Fact]
     public async Task GetUsers_MapsUserMembershipFields_WhenUsersExist()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(CreateOrganisation(id: 1));
-        dbContext.Users.Add(CreateUser(id: 10, workEmail: "user@example.com"));
-        dbContext.UserOrgMemberships.Add(
-            CreateMembership(
+        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        Context.Users.Add(EntityFactory.CreateUser(id: 10, workEmail: "user@example.com"));
+        Context.UserOrgMemberships.Add(
+            EntityFactory.CreateMembership(
                 id: 100,
                 userId: 10,
                 organisationId: 1,
@@ -69,9 +58,9 @@ public class UserServiceTests
                 status: UserOrgStatus.Active
             )
         );
-        await dbContext.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
-        UserService service = new(dbContext);
+        UserService service = new(Context);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 1, 20, []);
@@ -90,26 +79,35 @@ public class UserServiceTests
     [Fact]
     public async Task GetUsers_FiltersByMultipleStatuses_WhenStatusesProvided()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(CreateOrganisation(id: 1));
-        dbContext.Users.AddRange(
-            CreateUser(id: 1, workEmail: "requested-access@example.com"),
-            CreateUser(id: 2, workEmail: "active@example.com"),
-            CreateUser(id: 3, workEmail: "inactive@example.com")
+        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        Context.Users.AddRange(
+            EntityFactory.CreateUser(id: 1, workEmail: "requested-access@example.com"),
+            EntityFactory.CreateUser(id: 2, workEmail: "active@example.com"),
+            EntityFactory.CreateUser(id: 3, workEmail: "inactive@example.com")
         );
-        dbContext.UserOrgMemberships.AddRange(
-            CreateMembership(
+        Context.UserOrgMemberships.AddRange(
+            EntityFactory.CreateMembership(
                 id: 1,
                 userId: 1,
                 organisationId: 1,
                 status: UserOrgStatus.RequestedAccess
             ),
-            CreateMembership(id: 2, userId: 2, organisationId: 1, status: UserOrgStatus.Active),
-            CreateMembership(id: 3, userId: 3, organisationId: 1, status: UserOrgStatus.Inactive)
+            EntityFactory.CreateMembership(
+                id: 2,
+                userId: 2,
+                organisationId: 1,
+                status: UserOrgStatus.Active
+            ),
+            EntityFactory.CreateMembership(
+                id: 3,
+                userId: 3,
+                organisationId: 1,
+                status: UserOrgStatus.Inactive
+            )
         );
-        await dbContext.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
-        UserService service = new(dbContext);
+        UserService service = new(Context);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 1, 20, [UserOrgStatus.Active, UserOrgStatus.Inactive]);
@@ -124,21 +122,20 @@ public class UserServiceTests
     [Fact]
     public async Task GetUsers_PaginatesAndOrdersByUserId_WhenUsersExist()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.Add(CreateOrganisation(id: 1));
-        dbContext.Users.AddRange(
-            CreateUser(id: 30, workEmail: "thirty@example.com"),
-            CreateUser(id: 10, workEmail: "ten@example.com"),
-            CreateUser(id: 20, workEmail: "twenty@example.com")
+        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        Context.Users.AddRange(
+            EntityFactory.CreateUser(id: 30, workEmail: "thirty@example.com"),
+            EntityFactory.CreateUser(id: 10, workEmail: "ten@example.com"),
+            EntityFactory.CreateUser(id: 20, workEmail: "twenty@example.com")
         );
-        dbContext.UserOrgMemberships.AddRange(
-            CreateMembership(id: 1, userId: 30, organisationId: 1),
-            CreateMembership(id: 2, userId: 10, organisationId: 1),
-            CreateMembership(id: 3, userId: 20, organisationId: 1)
+        Context.UserOrgMemberships.AddRange(
+            EntityFactory.CreateMembership(id: 1, userId: 30, organisationId: 1),
+            EntityFactory.CreateMembership(id: 2, userId: 10, organisationId: 1),
+            EntityFactory.CreateMembership(id: 3, userId: 20, organisationId: 1)
         );
-        await dbContext.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
-        UserService service = new(dbContext);
+        UserService service = new(Context);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 2, 1, []);
@@ -156,19 +153,21 @@ public class UserServiceTests
     [Fact]
     public async Task GetUsers_ReturnsUsersAcrossOrganisations_WhenOrganisationIdIsMissing()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.AddRange(CreateOrganisation(id: 1), CreateOrganisation(id: 2));
-        dbContext.Users.AddRange(
-            CreateUser(id: 10, workEmail: "one@example.com"),
-            CreateUser(id: 20, workEmail: "two@example.com")
+        Context.Organisations.AddRange(
+            EntityFactory.CreateOrganisation(id: 1),
+            EntityFactory.CreateOrganisation(id: 2)
         );
-        dbContext.UserOrgMemberships.AddRange(
-            CreateMembership(id: 1, userId: 10, organisationId: 1),
-            CreateMembership(id: 2, userId: 20, organisationId: 2)
+        Context.Users.AddRange(
+            EntityFactory.CreateUser(id: 10, workEmail: "one@example.com"),
+            EntityFactory.CreateUser(id: 20, workEmail: "two@example.com")
         );
-        await dbContext.SaveChangesAsync();
+        Context.UserOrgMemberships.AddRange(
+            EntityFactory.CreateMembership(id: 1, userId: 10, organisationId: 1),
+            EntityFactory.CreateMembership(id: 2, userId: 20, organisationId: 2)
+        );
+        await Context.SaveChangesAsync();
 
-        UserService service = new(dbContext);
+        UserService service = new(Context);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(null, 1, 20, []);
@@ -183,19 +182,31 @@ public class UserServiceTests
     [Fact]
     public async Task GetUsers_FiltersByStatus_WhenOrganisationIdIsMissing()
     {
-        await using AppDbContext dbContext = CreateDbContext();
-        dbContext.Organisations.AddRange(CreateOrganisation(id: 1), CreateOrganisation(id: 2));
-        dbContext.Users.AddRange(
-            CreateUser(id: 10, workEmail: "active@example.com"),
-            CreateUser(id: 20, workEmail: "inactive@example.com")
+        Context.Organisations.AddRange(
+            EntityFactory.CreateOrganisation(id: 1),
+            EntityFactory.CreateOrganisation(id: 2)
         );
-        dbContext.UserOrgMemberships.AddRange(
-            CreateMembership(id: 1, userId: 10, organisationId: 1, status: UserOrgStatus.Active),
-            CreateMembership(id: 2, userId: 20, organisationId: 2, status: UserOrgStatus.Inactive)
+        Context.Users.AddRange(
+            EntityFactory.CreateUser(id: 10, workEmail: "active@example.com"),
+            EntityFactory.CreateUser(id: 20, workEmail: "inactive@example.com")
         );
-        await dbContext.SaveChangesAsync();
+        Context.UserOrgMemberships.AddRange(
+            EntityFactory.CreateMembership(
+                id: 1,
+                userId: 10,
+                organisationId: 1,
+                status: UserOrgStatus.Active
+            ),
+            EntityFactory.CreateMembership(
+                id: 2,
+                userId: 20,
+                organisationId: 2,
+                status: UserOrgStatus.Inactive
+            )
+        );
+        await Context.SaveChangesAsync();
 
-        UserService service = new(dbContext);
+        UserService service = new(Context);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(null, 1, 20, [UserOrgStatus.Inactive]);
@@ -208,41 +219,4 @@ public class UserServiceTests
         Assert.Equal(20, item.UserId);
         Assert.Equal(UserOrgStatus.Inactive, item.Status);
     }
-
-    private static Organisation CreateOrganisation(int id) =>
-        new()
-        {
-            Id = id,
-            OrganisationName = "Gov Pharma Ltd",
-            OrganisationType = OrganisationType.PharmaCompany,
-            HeadOfficeAddress = "1 High Street\nLondon\nEC1A 1AA",
-            HeadOfficeEmail = "info@pharma.gov.uk",
-            HeadOfficeTelephone = "020 1234 5678",
-        };
-
-    private static User CreateUser(int id, string workEmail) =>
-        new()
-        {
-            Id = id,
-            Username = workEmail,
-            FirstName = "Test",
-            LastName = "User",
-            WorkEmail = workEmail,
-        };
-
-    private static UserOrgMembership CreateMembership(
-        int id,
-        int userId,
-        int organisationId,
-        UserRole role = UserRole.Standard,
-        UserOrgStatus status = UserOrgStatus.Active
-    ) =>
-        new()
-        {
-            Id = id,
-            UserId = userId,
-            OrganisationId = organisationId,
-            UserRole = role,
-            Status = status,
-        };
 }
