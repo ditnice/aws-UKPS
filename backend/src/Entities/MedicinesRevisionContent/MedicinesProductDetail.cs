@@ -11,10 +11,10 @@ internal sealed class MedicinesProductDetail
     /// Short human-readable label to identify this record on the homepage.
     /// e.g. Chronic hepatitis C in adults.
     /// </summary>
-    public string RecordTitle { get; set; } = null!;
+    public required string RecordTitle { get; set; }
 
     public string? BrandedName { get; set; }
-    public string Indication { get; set; } = null!;
+    public required string Indication { get; set; }
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
     public YesNoUnknown? IndicationIsCancer { get; set; }
     public int? BnfChapterId { get; set; }
@@ -23,7 +23,7 @@ internal sealed class MedicinesProductDetail
     public string? Presentation { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.BnfChapter? BnfChapter { get; set; }
     public ReferenceData.TherapeuticArea? TherapeuticArea { get; set; }
     public ReferenceData.FormulationType? FormulationType { get; set; }

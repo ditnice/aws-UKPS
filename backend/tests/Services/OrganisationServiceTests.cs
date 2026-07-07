@@ -34,7 +34,7 @@ public class OrganisationServiceTests : IAsyncDisposable
                 HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
                 HeadOfficeEmail = "info@pharma.gov.uk",
                 HeadOfficeTelephone = "020 1234 5678",
-                Status = UserOrgStatus.Approved,
+                Status = UserOrgStatus.Active,
                 LastActive = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
                 CreatedAt = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
             }
@@ -52,7 +52,7 @@ public class OrganisationServiceTests : IAsyncDisposable
         Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", result.HeadOfficeAddress);
         Assert.Equal("info@pharma.gov.uk", result.HeadOfficeEmail);
         Assert.Equal("020 1234 5678", result.HeadOfficeTelephone);
-        Assert.Equal(UserOrgStatus.Approved, result.Status);
+        Assert.Equal(UserOrgStatus.Active, result.Status);
         Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), result.LastActive);
         Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), result.CreatedAt);
     }
@@ -129,7 +129,7 @@ public class OrganisationServiceTests : IAsyncDisposable
             HeadOfficeAddress = "Old line 1\nOld town\nOLD 1AA",
             HeadOfficeEmail = "old@example.com",
             HeadOfficeTelephone = "020 0000 0000",
-            Status = UserOrgStatus.Approved,
+            Status = UserOrgStatus.Active,
             LastActive = lastActive,
             CreatedAt = createdAt,
         };
@@ -156,7 +156,7 @@ public class OrganisationServiceTests : IAsyncDisposable
         Assert.Equal("020 1111 1111", result.HeadOfficeTelephone);
         Assert.Equal(OrganisationType.PharmaCompany, result.OrganisationType);
         Assert.Equal(PharmaceuticalEntity.Medicines, result.AllowedPharmaceuticalEntity);
-        Assert.Equal(UserOrgStatus.Approved, result.Status);
+        Assert.Equal(UserOrgStatus.Active, result.Status);
         Assert.Equal(lastActive, result.LastActive);
         Assert.Equal(createdAt, result.CreatedAt);
     }
@@ -173,7 +173,7 @@ public class OrganisationServiceTests : IAsyncDisposable
         Assert.Equal("020 1111 1111", saved.HeadOfficeTelephone);
         Assert.Equal(OrganisationType.PharmaCompany, saved.OrganisationType);
         Assert.Equal(PharmaceuticalEntity.Medicines, saved.AllowedPharmaceuticalEntity);
-        Assert.Equal(UserOrgStatus.Approved, saved.Status);
+        Assert.Equal(UserOrgStatus.Active, saved.Status);
         Assert.Equal(lastActive, saved.LastActive);
         Assert.Equal(createdAt, saved.CreatedAt);
     }

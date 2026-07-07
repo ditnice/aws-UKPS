@@ -22,6 +22,17 @@ variable "region" {
   default     = "eu-west-2"
 }
 
+variable "base_domain_name" {
+  description = "Base DNS domain used to build workload hostnames"
+  type        = string
+  default     = "ukps.nice.org.uk"
+
+  validation {
+    condition     = can(regex("^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$", var.base_domain_name))
+    error_message = "Base domain name must be a valid DNS name."
+  }
+}
+
 variable "frontend_db_master_username" {
   description = "Master username for the Aurora cluster"
   type        = string
@@ -153,35 +164,4 @@ variable "aurora_final_snapshot_identifier" {
   description = "Identifier for the final snapshot when skip_final_snapshot is false"
   type        = string
   default     = "ukps-dev-aurora-final-snapshot"
-}
-
-variable "frontend_target_group_arn" {
-  description = "ARN of the ALB target group used by the frontend ECS service"
-  type        = string
-
-  validation {
-    condition     = can(regex("^arn:aws[a-zA-Z-]*:elasticloadbalancing:[a-z0-9-]+:[0-9]{12}:targetgroup/.+/.+$", var.frontend_target_group_arn))
-    error_message = "Target group ARN must be a valid ALB target group ARN."
-  }
-}
-
-variable "backend_target_group_arn" {
-  description = "ARN of the ALB target group used by the backend ECS service"
-  type        = string
-
-  validation {
-    condition     = can(regex("^arn:aws[a-zA-Z-]*:elasticloadbalancing:[a-z0-9-]+:[0-9]{12}:targetgroup/.+/.+$", var.backend_target_group_arn))
-    error_message = "Target group ARN must be a valid ALB target group ARN."
-  }
-}
-
-
-variable "security_group_id" {
-  description = "ID of the ALB security group allowed to reach ECS tasks"
-  type        = string
-
-  validation {
-    condition     = can(regex("^sg-[0-9a-f]{8,17}$", var.security_group_id))
-    error_message = "ALB security group ID must be a valid AWS security group ID."
-  }
 }

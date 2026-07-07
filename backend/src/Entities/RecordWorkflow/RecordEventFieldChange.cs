@@ -10,7 +10,7 @@ internal sealed class RecordEventFieldChange
     /// Used for the progressive disclosure KPI — querying fields transitioning
     /// away from 'unknown' over time.
     /// </summary>
-    public string FieldPath { get; set; } = null!;
+    public required string FieldPath { get; set; }
 
     /// <summary>Null for newly populated fields.</summary>
     public string? OldValue { get; set; }
@@ -19,5 +19,5 @@ internal sealed class RecordEventFieldChange
     public string? NewValue { get; set; }
 
     // Navigation
-    public RecordEvent RecordEvent { get; set; } = null!;
+    public RecordEvent? RecordEvent { get; set; }
 }

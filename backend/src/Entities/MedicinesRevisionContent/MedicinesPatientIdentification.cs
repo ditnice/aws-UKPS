@@ -17,5 +17,5 @@ internal sealed class MedicinesPatientIdentification
     public string? UrgentIdentificationDetails { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
 }

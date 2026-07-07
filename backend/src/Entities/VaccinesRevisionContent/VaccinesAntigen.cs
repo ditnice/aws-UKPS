@@ -9,9 +9,9 @@ internal sealed class VaccinesAntigen
 {
     public int Id { get; set; }
     public int VaccinesTechnologyId { get; set; }
-    public string AntigenName { get; set; } = null!;
+    public required string AntigenName { get; set; }
     public int? DisplayOrder { get; set; }
 
     // Navigation
-    public VaccinesTechnology VaccinesTechnology { get; set; } = null!;
+    public VaccinesTechnology? VaccinesTechnology { get; set; }
 }

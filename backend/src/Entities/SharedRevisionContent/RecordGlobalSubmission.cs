@@ -10,7 +10,7 @@ internal sealed class RecordGlobalSubmission
     public int? GlobalSubmissionActualDateId { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public RegulatoryDate? GlobalSubmissionEstimatedDate { get; set; }
     public RegulatoryDate? GlobalSubmissionActualDate { get; set; }
 }

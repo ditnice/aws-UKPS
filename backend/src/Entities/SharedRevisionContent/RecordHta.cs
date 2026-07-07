@@ -16,6 +16,6 @@ internal sealed class RecordHta
     public string? HtaAdditionalDetails { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ICollection<RecordHtaBody> HtaBodies { get; set; } = [];
 }

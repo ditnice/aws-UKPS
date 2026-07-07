@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
@@ -24,7 +25,7 @@ public class OrganisationControllerTests
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
-            Status = UserOrgStatus.Approved,
+            Status = UserOrgStatus.Active,
             LastActive = _lastActive,
             CreatedAt = _createdAt,
         };
@@ -123,9 +124,18 @@ public class OrganisationControllerTests
     }
 
     [Fact]
-    public void UpdateOrganisationDetailsDto_RequiredFieldsAreMissing_IsInvalid()
+    public void UpdateOrganisationDetailsDto_RequiredFieldsAreNull_IsInvalid()
     {
-        UpdateOrganisationDetailsDto dto = new();
+        UpdateOrganisationDetailsDto dto = JsonSerializer.Deserialize<UpdateOrganisationDetailsDto>(
+            """
+            {
+                "OrganisationName": null,
+                "HeadOfficeAddress": null,
+                "HeadOfficeEmail": null,
+                "HeadOfficeTelephone": null
+            }
+            """
+        )!;
 
         List<ValidationResult> validationResults = Validate(dto);
 
@@ -218,7 +228,7 @@ public class OrganisationControllerTests
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
-            Status = UserOrgStatus.Approved,
+            Status = UserOrgStatus.Active,
             LastActive = _lastActive,
             CreatedAt = _createdAt,
         };

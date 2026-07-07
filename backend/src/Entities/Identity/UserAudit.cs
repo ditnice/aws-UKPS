@@ -16,6 +16,6 @@ internal sealed class UserAudit
     public string? Notes { get; set; }
 
     // Navigation
-    public User User { get; set; } = null!;
+    public User? User { get; set; }
     public User? UpdatedByUser { get; set; }
 }

@@ -16,6 +16,6 @@ internal sealed class OrganisationAudit
     public string? Notes { get; set; }
 
     // Navigation
-    public Organisation Organisation { get; set; } = null!;
+    public Organisation? Organisation { get; set; }
     public User? UpdatedByUser { get; set; }
 }

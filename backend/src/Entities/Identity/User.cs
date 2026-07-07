@@ -5,11 +5,11 @@ namespace UKPS.Api.Entities.Identity;
 internal sealed class User
 {
     public int Id { get; set; }
-    public string Username { get; set; } = null!;
+    public required string Username { get; set; }
     public UserType UserType { get; set; }
     public string? Title { get; set; }
-    public string FirstName { get; set; } = null!;
-    public string LastName { get; set; } = null!;
+    public required string FirstName { get; set; }
+    public required string LastName { get; set; }
     public string? JobTitle { get; set; }
     public string? WorkTelephone { get; set; }
     public string? WorkEmail { get; set; }
