@@ -10,5 +10,5 @@ public record OrganisationMembershipDto
     public required UserRole UserRole { get; init; }
     public required UserOrgStatus Status { get; init; }
     public required PharmaceuticalEntity AllowedPharmaceuticalEntity { get; init; }
-    public required DateTime? CreatedAt { get; init; }
+    public required DateTime CreatedAt { get; init; }
 }
