@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Common;
+using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
@@ -92,7 +93,8 @@ public class OrganisationServiceTests : DatabaseTestBase
         Assert.True(result.IsOk);
         AssertUpdatedDetails(result.Value, createdAt, lastActive);
 
-        Organisation saved = await Context.Organisations.SingleAsync(o => o.Id == id);
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        Organisation saved = await verifyContext.Organisations.SingleAsync(o => o.Id == id);
         AssertUpdatedEntity(saved, createdAt, lastActive);
     }
 

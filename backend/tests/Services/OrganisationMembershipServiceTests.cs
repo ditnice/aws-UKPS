@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
@@ -36,6 +38,12 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
 
         Assert.True(result.IsOk);
         Assert.Equal(userRole, result.Value.UserRole);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
+            m.Id == userOrgMembership.Id
+        );
+        Assert.Equal(userRole, saved.UserRole);
     }
 
     [Fact]
@@ -74,6 +82,28 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     public async Task DeactivateMembership_ShouldDeactivateTheSpecifiedMembership()
     {
         var userOrgMembership = await SetupUserOrgMembership();
+        var result = await _service.DeactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        Assert.True(result.IsOk);
+        Assert.Equal(UserOrgStatus.Inactive, result.Value.Status);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
+            m.Id == userOrgMembership.Id
+        );
+        Assert.Equal(UserOrgStatus.Inactive, saved.Status);
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_MembershipAlreadyInactive_ReturnsOkIdempotently()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(m =>
+            m.Status = UserOrgStatus.Inactive
+        );
         var result = await _service.DeactivateMembership(
             userOrgMembership.OrganisationId,
             userOrgMembership.Id,
