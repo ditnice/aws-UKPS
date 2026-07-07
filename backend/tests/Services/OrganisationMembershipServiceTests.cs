@@ -70,6 +70,48 @@ public class OrganisationMembershipServiceTests : IAsyncDisposable
         Assert.IsType<OrganisationMembershipUpdateUserRoleError.NotFound>(result.Error);
     }
 
+    [Fact]
+    public async Task DeactivateMembership_ShouldDeactivateTheSpecifiedMembership()
+    {
+        var userOrgMembership = await SetupUserOrgMembership();
+        var result = await _service.DeactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        Assert.True(result.IsOk);
+        Assert.Equal(UserOrgStatus.Inactive, result.Value.Status);
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_WhenOrganisationDoesNotExist_ShouldReturnNotFoundResult()
+    {
+        var userOrgMembership = await SetupUserOrgMembership();
+        var result = await _service.DeactivateMembership(
+            999_999,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        Assert.True(result.IsErr);
+        Assert.IsType<OrganisationMembershipDeactivateUserError.NotFound>(result.Error);
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_WhenMembershipDoesNotExist_ShouldReturnNotFoundResult()
+    {
+        var userOrgMembership = await SetupUserOrgMembership();
+        var result = await _service.DeactivateMembership(
+            userOrgMembership.OrganisationId,
+            999_999,
+            CancellationToken.None
+        );
+
+        Assert.True(result.IsErr);
+        Assert.IsType<OrganisationMembershipDeactivateUserError.NotFound>(result.Error);
+    }
+
     private async Task<UserOrgMembership> SetupUserOrgMembership(
         Action<UserOrgMembership>? modifier = null
     )
