@@ -39,24 +39,6 @@ variable "backend_db_master_username" {
   default     = "ukpsadmin"
 }
 
-variable "ecr_image_tag_mutability" {
-  description = "ECR image tag mutability setting (MUTABLE or IMMUTABLE)"
-  type        = string
-  default     = "IMMUTABLE"
-}
-
-variable "ecr_scan_on_push" {
-  description = "Whether to enable ECR image scan on push"
-  type        = bool
-  default     = true
-}
-
-variable "ecr_max_image_count" {
-  description = "Maximum number of images to retain in the ECR repository"
-  type        = number
-  default     = 5
-}
-
 variable "backend_container_port" {
   description = "Port on which the target container listens"
   type        = number
@@ -67,6 +49,16 @@ variable "frontend_container_port" {
   description = "Port on which the target container listens"
   type        = number
   default     = 3000
+}
+
+variable "frontend_image_repository_url" {
+  description = "Container image repository URL for the frontend service"
+  type        = string
+}
+
+variable "backend_image_repository_url" {
+  description = "Container image repository URL for the backend service"
+  type        = string
 }
 
 variable "ecs_capacity_providers" {

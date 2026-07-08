@@ -28,34 +28,6 @@ module "kms_backend" {
   service_name = "backend"
 }
 
-# ECR - Frontend
-module "ecr_frontend" {
-  source = "../../modules/ecr"
-
-  project              = local.project
-  environment          = local.environment
-  kms_key_arn          = module.kms_frontend.app_key_arn
-  image_tag_mutability = var.ecr_image_tag_mutability
-  scan_on_push         = var.ecr_scan_on_push
-  max_image_count      = var.ecr_max_image_count
-  service_name         = "${local.service_name}-frontend"
-}
-
-
-
-# ECR - Backend
-module "ecr_backend" {
-  source = "../../modules/ecr"
-
-  project              = local.project
-  environment          = local.environment
-  kms_key_arn          = module.kms_backend.app_key_arn
-  image_tag_mutability = var.ecr_image_tag_mutability
-  scan_on_push         = var.ecr_scan_on_push
-  max_image_count      = var.ecr_max_image_count
-  service_name         = "${local.service_name}-backend"
-}
-
 module "alb" {
   source = "../../modules/alb"
 
@@ -91,7 +63,7 @@ module "ecs_frontend" {
   vpc_id                   = module.networking.vpc_id
   private_subnet_ids       = module.networking.app_subnet_ids
   container_port           = var.frontend_container_port
-  ecr_image_url            = module.ecr_frontend.repository_url
+  ecr_image_url            = var.frontend_image_repository_url
   target_group_arn         = module.alb.frontend_target_group_arn
   alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
@@ -113,7 +85,7 @@ module "ecs_backend" {
   vpc_id                   = module.networking.vpc_id
   private_subnet_ids       = module.networking.app_subnet_ids
   container_port           = var.backend_container_port
-  ecr_image_url            = module.ecr_backend.repository_url
+  ecr_image_url            = var.backend_image_repository_url
   target_group_arn         = module.alb.backend_target_group_arn
   alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]

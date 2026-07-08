@@ -1,13 +1,3 @@
-output "frontend_ecr_repository_url" {
-  description = "ECR repository URL for the dev app"
-  value       = module.ecr_frontend.repository_url
-}
-
-output "backend_ecr_repository_url" {
-  description = "ECR repository URL for the dev app"
-  value       = module.ecr_backend.repository_url
-}
-
 output "frontend_ecs_cluster_name" {
   description = "Dev ECS cluster name"
   value       = module.ecs_frontend.cluster_name
