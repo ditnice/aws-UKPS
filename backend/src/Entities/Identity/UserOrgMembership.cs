@@ -10,9 +10,9 @@ internal sealed class UserOrgMembership
     public UserRole UserRole { get; set; }
     public UserOrgStatus Status { get; set; }
     public PharmaceuticalEntity AllowedPharmaceuticalEntity { get; set; }
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     // Navigation
-    public User User { get; set; } = null!;
-    public Organisation Organisation { get; set; } = null!;
+    public User? User { get; set; }
+    public Organisation? Organisation { get; set; }
 }

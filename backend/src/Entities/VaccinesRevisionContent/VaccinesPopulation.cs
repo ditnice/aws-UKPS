@@ -1,5 +1,3 @@
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.VaccinesRevisionContent;
 
 internal sealed class VaccinesPopulation
@@ -10,5 +8,5 @@ internal sealed class VaccinesPopulation
     public string? RiskGroup { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
 }

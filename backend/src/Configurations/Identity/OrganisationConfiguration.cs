@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UKPS.Api.Entities.Identity;
-using UKPS.Api.Enums;
 
 namespace UKPS.Api.Configurations.Identity;
 
@@ -15,8 +14,12 @@ internal sealed class OrganisationConfiguration : IEntityTypeConfiguration<Organ
         builder.Property(x => x.OrganisationType);
         // PharmaceuticalEntity is a [Flags] integer — stored as int, not a PG enum
         builder.Property(x => x.AllowedPharmaceuticalEntity);
+        builder.Property(x => x.CountryOrRegion);
+        builder.Property(x => x.HeadOfficeAddress).IsRequired();
+        builder.Property(x => x.HeadOfficeTelephone).IsRequired();
+        builder.Property(x => x.HeadOfficeEmail).IsRequired();
         builder.Property(x => x.Status);
-        builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
         builder.Property(x => x.LastActive).HasColumnType("timestamptz");
+        builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
     }
 }

@@ -13,8 +13,8 @@ using UKPS.Api.Data;
 namespace UKPS.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260623094000_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260707144056_UpdatingOrgMembershipCreatedAtToBeNonNullable")]
+    partial class UpdatingOrgMembershipCreatedAtToBeNonNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -128,14 +128,17 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<string>("HeadOfficeAddress")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_address");
 
                     b.Property<string>("HeadOfficeEmail")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_email");
 
                     b.Property<string>("HeadOfficeTelephone")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("head_office_telephone");
 
@@ -403,7 +406,7 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("allowed_pharmaceutical_entity");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 

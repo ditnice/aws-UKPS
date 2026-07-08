@@ -56,6 +56,24 @@ module "ecr_backend" {
   service_name         = "${local.service_name}-backend"
 }
 
+module "alb" {
+  source = "../../modules/alb"
+
+  project          = local.project
+  environment      = local.environment
+  vpc_id           = module.networking.vpc_id
+  base_domain_name = var.base_domain_name
+
+  target_groups = {
+    frontend = {
+      port = var.frontend_container_port
+    }
+    backend = {
+      port = var.backend_container_port
+    }
+  }
+}
+
 
 # ECS - Frontend
 module "ecs_frontend" {
@@ -74,8 +92,8 @@ module "ecs_frontend" {
   private_subnet_ids       = module.networking.app_subnet_ids
   container_port           = var.frontend_container_port
   ecr_image_url            = module.ecr_frontend.repository_url
-  target_group_arn         = var.frontend_target_group_arn
-  alb_security_group_id    = var.security_group_id
+  target_group_arn         = module.alb.frontend_target_group_arn
+  alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
 }
 
@@ -96,9 +114,20 @@ module "ecs_backend" {
   private_subnet_ids       = module.networking.app_subnet_ids
   container_port           = var.backend_container_port
   ecr_image_url            = module.ecr_backend.repository_url
-  target_group_arn         = var.backend_target_group_arn
-  alb_security_group_id    = var.security_group_id
+  target_group_arn         = module.alb.backend_target_group_arn
+  alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
+}
+
+resource "aws_db_subnet_group" "aurora" {
+  name       = "${local.project}-${local.environment}-aurora-subnet-group"
+  subnet_ids = module.networking.data_subnet_ids
+
+  tags = {
+    Name        = "${local.project}-${local.environment}-aurora-subnet-group"
+    Environment = local.environment
+    Project     = local.project
+  }
 }
 
 # Aurora - Frontend
@@ -110,7 +139,7 @@ module "aurora_frontend" {
   service_name                 = "${local.service_name}-frontend"
   vpc_id                       = module.networking.vpc_id
   vpc_cidr                     = module.networking.vpc_cidr
-  private_subnet_ids           = module.networking.data_subnet_ids
+  db_subnet_group_name         = aws_db_subnet_group.aurora.name
   db_name                      = var.frontend_db_name
   engine_version               = var.aurora_engine_version
   master_username              = var.frontend_db_master_username
@@ -135,7 +164,7 @@ module "aurora_backend" {
   service_name                 = "${local.service_name}-backend"
   vpc_id                       = module.networking.vpc_id
   vpc_cidr                     = module.networking.vpc_cidr
-  private_subnet_ids           = module.networking.data_subnet_ids
+  db_subnet_group_name         = aws_db_subnet_group.aurora.name
   db_name                      = var.backend_db_name
   engine_version               = var.aurora_engine_version
   master_username              = var.backend_db_master_username

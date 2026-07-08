@@ -30,10 +30,10 @@ internal sealed class RecordRevision
     public DateTime? SubmittedAt { get; set; }
 
     // Navigation
-    public Record Record { get; set; } = null!;
+    public Record? Record { get; set; }
     public RecordRevision? BasedOnRevision { get; set; }
     public ICollection<RecordRevision> DerivedRevisions { get; set; } = [];
-    public Identity.User CreatedByUser { get; set; } = null!;
+    public Identity.User? CreatedByUser { get; set; }
     public Identity.User? UpdatedByUser { get; set; }
     public Identity.User? SubmittedByUser { get; set; }
     public ICollection<QaReview> QaReviews { get; set; } = [];

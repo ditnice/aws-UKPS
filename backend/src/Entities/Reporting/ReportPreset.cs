@@ -14,7 +14,7 @@ internal sealed class ReportPreset
     public int Id { get; set; }
     public UserType ApplicableUserType { get; set; }
     public PharmaceuticalEntity ApplicablePharmaceuticalEntity { get; set; }
-    public string Title { get; set; } = null!;
+    public required string Title { get; set; }
 
     /// <summary>
     /// Full report config at time of save. Stored as jsonb.
@@ -29,6 +29,6 @@ internal sealed class ReportPreset
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation
-    public Identity.User CreatedByUser { get; set; } = null!;
+    public Identity.User? CreatedByUser { get; set; }
     public ICollection<ReportAudit> ReportAudits { get; set; } = [];
 }

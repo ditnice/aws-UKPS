@@ -41,5 +41,5 @@ output "security_group_id" {
 
 output "subnet_group_name" {
   description = "Name of the Aurora DB subnet group"
-  value       = aws_db_subnet_group.aurora.name
+  value       = var.db_subnet_group_name
 }

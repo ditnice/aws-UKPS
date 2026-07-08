@@ -28,7 +28,7 @@ internal sealed class MedicinesLaboratoryTesting
     public string? MonitoringTestsDetails { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.GenomicSampleType? GenomicSampleType { get; set; }
     public ReferenceData.PatientPathwayPoint? PatientPathwayPoint { get; set; }
 }

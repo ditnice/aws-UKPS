@@ -15,9 +15,9 @@ internal sealed class VaccinesTechnology
     public YesNoNotYetConfirmed HasAdjuvant { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
-    public ReferenceData.VaccinePlatform VaccinePlatform { get; set; } = null!;
-    public ReferenceData.VaccineAdministrationRoute AdministrationRoute { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
+    public ReferenceData.VaccinePlatform? VaccinePlatform { get; set; }
+    public ReferenceData.VaccineAdministrationRoute? AdministrationRoute { get; set; }
     public ICollection<VaccinesAntigen> Antigens { get; set; } = [];
     public ICollection<VaccinesAdjuvant> Adjuvants { get; set; } = [];
 }

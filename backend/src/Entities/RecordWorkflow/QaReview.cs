@@ -16,7 +16,7 @@ internal sealed class QaReview
     public DateTime ReviewedAt { get; set; }
 
     // Navigation
-    public RecordRevision Revision { get; set; } = null!;
+    public RecordRevision? Revision { get; set; }
     public Identity.User? ReviewedByUser { get; set; }
     public ICollection<QaReviewItem> QaReviewItems { get; set; } = [];
 }

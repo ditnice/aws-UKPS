@@ -28,7 +28,7 @@ internal sealed class RecordEvent
     public RecordEventPayloadDocument? Payload { get; set; }
 
     // Navigation
-    public Record Record { get; set; } = null!;
+    public Record? Record { get; set; }
     public RecordRevision? Revision { get; set; }
     public QaReview? QaReview { get; set; }
     public QaReviewItem? QaReviewItem { get; set; }

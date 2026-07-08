@@ -1,5 +1,3 @@
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.VaccinesRevisionContent;
 
 /// <summary>
@@ -12,10 +10,10 @@ internal sealed class VaccinesPathogen
     public int VaccinesDiseaseDetailId { get; set; }
 
     /// <summary>e.g. Measles virus, Streptococcus pneumoniae, RSV</summary>
-    public string PathogenName { get; set; } = null!;
+    public required string PathogenName { get; set; }
 
     public int? DisplayOrder { get; set; }
 
     // Navigation
-    public VaccinesDiseaseDetail VaccinesDiseaseDetail { get; set; } = null!;
+    public VaccinesDiseaseDetail? VaccinesDiseaseDetail { get; set; }
 }

@@ -1,5 +1,3 @@
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.SharedRevisionContent;
 
 internal sealed class RecordMhraProcedure
@@ -10,6 +8,6 @@ internal sealed class RecordMhraProcedure
     public string? ProcedureDetails { get; set; }
 
     // Navigation
-    public RecordWorkflow.RecordRevision Revision { get; set; } = null!;
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.MhraProcedureType? MhraProcedureType { get; set; }
 }

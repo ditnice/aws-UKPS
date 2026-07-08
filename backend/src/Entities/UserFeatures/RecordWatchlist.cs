@@ -6,6 +6,6 @@ internal sealed class RecordWatchlist
     public int RecordId { get; set; }
 
     // Navigation
-    public Identity.User User { get; set; } = null!;
-    public RecordWorkflow.Record Record { get; set; } = null!;
+    public Identity.User? User { get; set; }
+    public RecordWorkflow.Record? Record { get; set; }
 }

@@ -1,5 +1,3 @@
-using UKPS.Api.Enums;
-
 namespace UKPS.Api.Entities.VaccinesRevisionContent;
 
 /// <summary>
@@ -11,9 +9,9 @@ internal sealed class VaccinesAdjuvant
 {
     public int Id { get; set; }
     public int VaccinesTechnologyId { get; set; }
-    public string AdjuvantName { get; set; } = null!;
+    public required string AdjuvantName { get; set; }
     public int? DisplayOrder { get; set; }
 
     // Navigation
-    public VaccinesTechnology VaccinesTechnology { get; set; } = null!;
+    public VaccinesTechnology? VaccinesTechnology { get; set; }
 }
