@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
 using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
@@ -20,7 +20,10 @@ public class OrganisationServiceTests : DatabaseTestBase
     public OrganisationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _service = new OrganisationService(Context, new StubOrganisationMembershipService());
+        _service = new OrganisationService(
+            Context,
+            Substitute.For<IOrganisationMembershipService>()
+        );
     }
 
     [Fact]
@@ -189,25 +192,5 @@ public class OrganisationServiceTests : DatabaseTestBase
         Assert.Equal(UserOrgStatus.Active, saved.Status);
         Assert.Equal(lastActive, saved.LastActive);
         Assert.Equal(createdAt, saved.CreatedAt);
-    }
-
-    private sealed class StubOrganisationMembershipService : IOrganisationMembershipService
-    {
-        public Task<
-            Result<OrganisationMembershipDto, OrganisationMembershipDeactivateUserError>
-        > DeactivateMembership(
-            int organisationId,
-            int membershipId,
-            CancellationToken cancellationToken
-        ) => throw new UnreachableException();
-
-        Task<
-            Result<OrganisationMembershipDto, OrganisationMembershipUpdateUserRoleError>
-        > IOrganisationMembershipService.UpdateUserRole(
-            int organisationId,
-            int membershipId,
-            UpdateOrgMembershipUserRoleCommandDto command,
-            CancellationToken cancellationToken
-        ) => throw new UnreachableException();
     }
 }
