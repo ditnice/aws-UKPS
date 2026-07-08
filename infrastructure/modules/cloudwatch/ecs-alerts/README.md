@@ -36,7 +36,7 @@ No modules.
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | ECS cluster name | `string` | n/a | yes |
 | <a name="input_cpu_threshold"></a> [cpu\_threshold](#input\_cpu\_threshold) | CPU utilisation percentage threshold before alarm triggers | `number` | `80` | no |
 | <a name="input_datapoints_to_alarm"></a> [datapoints\_to\_alarm](#input\_datapoints\_to\_alarm) | Number of datapoints within evaluation\_periods that must breach to alarm (null = all) | `number` | `null` | no |
-| <a name="input_desired_task_count"></a> [desired\_task\_count](#input\_desired\_task\_count) | Desired task count for the ECS service; must match the ECS service's desired\_count (currently 1 in the ecs module) | `number` | n/a | yes |
+| <a name="input_desired_task_count"></a> [desired\_task\_count](#input\_desired\_task\_count) | Desired task count for the ECS service; must match the ECS service's desired\_count | `number` | n/a | yes |
 | <a name="input_enable_alb_alarms"></a> [enable\_alb\_alarms](#input\_enable\_alb\_alarms) | Whether to create the ALB target group alarms (5XX, response time, unhealthy hosts) | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, alpha, etc.) | `string` | n/a | yes |
 | <a name="input_evaluation_periods"></a> [evaluation\_periods](#input\_evaluation\_periods) | Number of consecutive periods required before entering alarm state | `number` | `3` | no |

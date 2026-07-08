@@ -146,7 +146,7 @@ variable "target_group_id" {
 }
 
 variable "desired_task_count" {
-  description = "Desired task count for the ECS service; must match the ECS service's desired_count (currently 1 in the ecs module)"
+  description = "Desired task count for the ECS service; must match the ECS service's desired_count"
   type        = number
 
   validation {
