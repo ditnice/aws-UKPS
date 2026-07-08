@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
 using UKPS.Api.Common;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
@@ -20,7 +20,7 @@ public class OrganisationServiceTests : IAsyncDisposable
         _testDatabase = new TestDatabase();
         _service = new OrganisationService(
             _testDatabase.Context,
-            new StubOrganisationMembershipService()
+            Substitute.For<IOrganisationMembershipService>()
         );
     }
 
@@ -195,25 +195,5 @@ public class OrganisationServiceTests : IAsyncDisposable
     {
         await _testDatabase.DisposeAsync();
         GC.SuppressFinalize(this);
-    }
-
-    private sealed class StubOrganisationMembershipService : IOrganisationMembershipService
-    {
-        public Task<
-            Result<OrganisationMembershipDto, OrganisationMembershipDeactivateUserError>
-        > DeactivateMembership(
-            int organisationId,
-            int membershipId,
-            CancellationToken cancellationToken
-        ) => throw new UnreachableException();
-
-        Task<
-            Result<OrganisationMembershipDto, OrganisationMembershipUpdateUserRoleError>
-        > IOrganisationMembershipService.UpdateUserRole(
-            int organisationId,
-            int membershipId,
-            UpdateOrgMembershipUserRoleCommandDto command,
-            CancellationToken cancellationToken
-        ) => throw new UnreachableException();
     }
 }
