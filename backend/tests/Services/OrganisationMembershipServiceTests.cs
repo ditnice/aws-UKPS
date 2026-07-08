@@ -1,21 +1,23 @@
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
+using UKPS.Api.Tests.Fixtures;
 
 namespace UKPS.Api.Tests.Services;
 
-public class OrganisationMembershipServiceTests : IAsyncDisposable
+[Collection(DatabaseCollection.Name)]
+public class OrganisationMembershipServiceTests : DatabaseTestBase
 {
-    private readonly TestDatabase _testDatabase;
     private readonly OrganisationMembershipService _service;
 
-    public OrganisationMembershipServiceTests()
+    public OrganisationMembershipServiceTests(PostgresFixture fixture)
+        : base(fixture)
     {
-        _testDatabase = new TestDatabase();
-        _service = new OrganisationMembershipService(_testDatabase.Context);
+        _service = new OrganisationMembershipService(Context);
     }
 
     [Theory]
@@ -36,6 +38,12 @@ public class OrganisationMembershipServiceTests : IAsyncDisposable
 
         Assert.True(result.IsOk);
         Assert.Equal(userRole, result.Value.UserRole);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
+            m.Id == userOrgMembership.Id
+        );
+        Assert.Equal(userRole, saved.UserRole);
     }
 
     [Fact]
@@ -82,6 +90,28 @@ public class OrganisationMembershipServiceTests : IAsyncDisposable
 
         Assert.True(result.IsOk);
         Assert.Equal(UserOrgStatus.Inactive, result.Value.Status);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
+            m.Id == userOrgMembership.Id
+        );
+        Assert.Equal(UserOrgStatus.Inactive, saved.Status);
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_MembershipAlreadyInactive_ReturnsOkIdempotently()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(m =>
+            m.Status = UserOrgStatus.Inactive
+        );
+        var result = await _service.DeactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        Assert.True(result.IsOk);
+        Assert.Equal(UserOrgStatus.Inactive, result.Value.Status);
     }
 
     [Fact]
@@ -116,25 +146,23 @@ public class OrganisationMembershipServiceTests : IAsyncDisposable
         Action<UserOrgMembership>? modifier = null
     )
     {
-        var userOrgMembership = new UserOrgMembership()
-        {
-            Id = 123,
-            UserId = 234,
-            OrganisationId = 345,
-            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
-        };
+        // Both FKs are Restrict, so the parent User and Organisation rows must exist first.
+        Context.Users.Add(EntityFactory.CreateUser(id: 234, workEmail: "member@example.com"));
+        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 345));
+        await Context.SaveChangesAsync();
+
+        var userOrgMembership = EntityFactory.CreateMembership(
+            id: 123,
+            userId: 234,
+            organisationId: 345,
+            allowedPharmaceuticalEntity: PharmaceuticalEntity.Both
+        );
         if (modifier is not null)
         {
             modifier(userOrgMembership);
         }
-        _testDatabase.Context.UserOrgMemberships.Add(userOrgMembership);
-        await _testDatabase.Context.SaveChangesAsync();
+        Context.UserOrgMemberships.Add(userOrgMembership);
+        await Context.SaveChangesAsync();
         return userOrgMembership;
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _testDatabase.DisposeAsync();
-        GC.SuppressFinalize(this);
     }
 }

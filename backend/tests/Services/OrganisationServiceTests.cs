@@ -1,25 +1,27 @@
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using UKPS.Api.Common;
+using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
+using UKPS.Api.Tests.Fixtures;
 
 namespace UKPS.Api.Tests.Services;
 
-public class OrganisationServiceTests : IAsyncDisposable
+[Collection(DatabaseCollection.Name)]
+public class OrganisationServiceTests : DatabaseTestBase
 {
-    private readonly TestDatabase _testDatabase;
     private readonly OrganisationService _service;
 
-    public OrganisationServiceTests()
+    public OrganisationServiceTests(PostgresFixture fixture)
+        : base(fixture)
     {
-        _testDatabase = new TestDatabase();
         _service = new OrganisationService(
-            _testDatabase.Context,
+            Context,
             Substitute.For<IOrganisationMembershipService>()
         );
     }
@@ -27,7 +29,7 @@ public class OrganisationServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsDto()
     {
-        _testDatabase.Context.Organisations.Add(
+        Context.Organisations.Add(
             new Organisation
             {
                 Id = 1,
@@ -42,8 +44,8 @@ public class OrganisationServiceTests : IAsyncDisposable
                 CreatedAt = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
             }
         );
-        await _testDatabase.Context.SaveChangesAsync();
-        int id = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
+        await Context.SaveChangesAsync();
+        int id = (await Context.Organisations.SingleAsync()).Id;
 
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
             await _service.GetOrganisationById(id);
@@ -66,9 +68,9 @@ public class OrganisationServiceTests : IAsyncDisposable
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
-        _testDatabase.Context.Organisations.Add(CreateOrganisation());
-        await _testDatabase.Context.SaveChangesAsync();
-        int seededId = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
+        Context.Organisations.Add(CreateOrganisation());
+        await Context.SaveChangesAsync();
+        int seededId = (await Context.Organisations.SingleAsync()).Id;
 
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
             await _service.GetOrganisationById(seededId + 1);
@@ -84,9 +86,9 @@ public class OrganisationServiceTests : IAsyncDisposable
     {
         DateTime createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
         DateTime lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
-        _testDatabase.Context.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
-        await _testDatabase.Context.SaveChangesAsync();
-        int id = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
+        Context.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
+        await Context.SaveChangesAsync();
+        int id = (await Context.Organisations.SingleAsync()).Id;
 
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
             await _service.UpdateOrganisationDetails(id, CreateUpdateDto());
@@ -94,7 +96,8 @@ public class OrganisationServiceTests : IAsyncDisposable
         Assert.True(result.IsOk);
         AssertUpdatedDetails(result.Value, createdAt, lastActive);
 
-        Organisation saved = await _testDatabase.Context.Organisations.SingleAsync(o => o.Id == id);
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        Organisation saved = await verifyContext.Organisations.SingleAsync(o => o.Id == id);
         AssertUpdatedEntity(saved, createdAt, lastActive);
     }
 
@@ -189,11 +192,5 @@ public class OrganisationServiceTests : IAsyncDisposable
         Assert.Equal(UserOrgStatus.Active, saved.Status);
         Assert.Equal(lastActive, saved.LastActive);
         Assert.Equal(createdAt, saved.CreatedAt);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _testDatabase.DisposeAsync();
-        GC.SuppressFinalize(this);
     }
 }
