@@ -107,28 +107,46 @@ variable "response_time_threshold" {
   }
 }
 
+variable "enable_alb_alarms" {
+  description = "Whether to create the ALB target group alarms (5XX, response time, unhealthy hosts)"
+  type        = bool
+  default     = true
+}
+
 variable "load_balancer_id" {
   description = "Application Load Balancer identifier used for CloudWatch alarm dimensions"
   type        = string
+  default     = null
 
   validation {
-    condition     = length(trim(var.load_balancer_id, " ")) > 0
-    error_message = "Load balancer ID cannot be empty."
+    condition     = var.load_balancer_id == null || can(regex("^app/[^/]+/[a-f0-9]+$", var.load_balancer_id))
+    error_message = "Load balancer ID must be the ALB ARN suffix in the form app/<name>/<id>, not the full ARN."
+  }
+
+  validation {
+    condition     = !var.enable_alb_alarms || var.load_balancer_id != null
+    error_message = "load_balancer_id is required when enable_alb_alarms is true."
   }
 }
 
 variable "target_group_id" {
   description = "Target group identifier used for CloudWatch alarm dimensions"
   type        = string
+  default     = null
 
   validation {
-    condition     = length(trim(var.target_group_id, " ")) > 0
-    error_message = "Target group ID cannot be empty."
+    condition     = var.target_group_id == null || can(regex("^targetgroup/[^/]+/[a-f0-9]+$", var.target_group_id))
+    error_message = "Target group ID must be the target group ARN suffix in the form targetgroup/<name>/<id>, not the full ARN."
+  }
+
+  validation {
+    condition     = !var.enable_alb_alarms || var.target_group_id != null
+    error_message = "target_group_id is required when enable_alb_alarms is true."
   }
 }
 
 variable "desired_task_count" {
-  description = "Desired task count for the ECS service"
+  description = "Desired task count for the ECS service; must match the ECS service's desired_count (currently 1 in the ecs module)"
   type        = number
 
   validation {
@@ -162,10 +180,21 @@ variable "alb_5xx_evaluation_periods" {
 variable "running_tasks_evaluation_periods" {
   description = "Number of periods required before running task count alarm triggers"
   type        = number
-  default     = 1
+  default     = 3
 
   validation {
     condition     = var.running_tasks_evaluation_periods > 0
+    error_message = "Evaluation periods must be greater than zero."
+  }
+}
+
+variable "unhealthy_hosts_evaluation_periods" {
+  description = "Number of periods required before unhealthy hosts alarm triggers"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.unhealthy_hosts_evaluation_periods > 0
     error_message = "Evaluation periods must be greater than zero."
   }
 }
@@ -179,4 +208,32 @@ variable "unhealthy_hosts_threshold" {
     condition     = var.unhealthy_hosts_threshold >= 0
     error_message = "Unhealthy hosts threshold must be 0 or greater."
   }
+}
+
+variable "datapoints_to_alarm" {
+  description = "Number of datapoints within evaluation_periods that must breach to alarm (null = all)"
+  type        = number
+  default     = null
+
+  validation {
+    condition     = var.datapoints_to_alarm == null || (var.datapoints_to_alarm > 0 && var.datapoints_to_alarm <= var.evaluation_periods)
+    error_message = "datapoints_to_alarm must be null or a positive number no greater than evaluation_periods."
+  }
+}
+
+variable "running_tasks_datapoints_to_alarm" {
+  description = "Number of datapoints within running_tasks_evaluation_periods that must breach before the running task count alarm triggers"
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = var.running_tasks_datapoints_to_alarm > 0 && var.running_tasks_datapoints_to_alarm <= var.running_tasks_evaluation_periods
+    error_message = "running_tasks_datapoints_to_alarm must be greater than zero and no greater than running_tasks_evaluation_periods."
+  }
+}
+
+variable "tags" {
+  description = "Additional tags applied to all alarms"
+  type        = map(string)
+  default     = {}
 }
