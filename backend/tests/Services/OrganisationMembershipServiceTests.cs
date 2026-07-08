@@ -6,6 +6,7 @@ using UKPS.Api.Enums;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Services;
 
@@ -13,11 +14,17 @@ namespace UKPS.Api.Tests.Services;
 public class OrganisationMembershipServiceTests : DatabaseTestBase
 {
     private readonly OrganisationMembershipService _service;
+    private readonly UserFaker _userFaker;
+    private readonly UserOrgMembershipFaker _membershipFaker;
+    private readonly OrganisationFaker _organisationFaker;
 
     public OrganisationMembershipServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
         _service = new OrganisationMembershipService(Context);
+        _userFaker = new UserFaker();
+        _membershipFaker = new UserOrgMembershipFaker();
+        _organisationFaker = new OrganisationFaker();
     }
 
     [Theory]
@@ -147,16 +154,27 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     )
     {
         // Both FKs are Restrict, so the parent User and Organisation rows must exist first.
-        Context.Users.Add(EntityFactory.CreateUser(id: 234, workEmail: "member@example.com"));
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 345));
+        var user = _userFaker.Generate() with
+        {
+            Id = 234,
+            WorkEmail = "member@example.com",
+        };
+        Context.Users.Add(user);
+        var organisation = _organisationFaker.Generate() with
+        {
+            Id = 345,
+            OrganisationName = "Other Org",
+        };
+        Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
-        var userOrgMembership = EntityFactory.CreateMembership(
-            id: 123,
-            userId: 234,
-            organisationId: 345,
-            allowedPharmaceuticalEntity: PharmaceuticalEntity.Both
-        );
+        var userOrgMembership = _membershipFaker.Generate() with
+        {
+            Id = 123,
+            UserId = user.Id,
+            OrganisationId = organisation.Id,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
+        };
         if (modifier is not null)
         {
             modifier(userOrgMembership);

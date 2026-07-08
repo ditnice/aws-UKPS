@@ -2,7 +2,7 @@ using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.Identity;
 
-internal sealed class User
+internal sealed record User
 {
     public int Id { get; set; }
     public required string Username { get; set; }

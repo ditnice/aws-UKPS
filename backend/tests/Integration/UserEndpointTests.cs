@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using UKPS.Api.DTOs;
+using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Integration;
 
@@ -20,33 +22,39 @@ public class UserEndpointTests : DatabaseTestBase
     [Fact]
     public async Task GetUsers_OrganisationIdProvided_ReturnsOnlyThatOrganisationsUsers()
     {
-        Context.Organisations.AddRange(
-            EntityFactory.CreateOrganisation(id: 1),
-            EntityFactory.CreateOrganisation(id: 2)
-        );
-        Context.Users.AddRange(
-            EntityFactory.CreateUser(id: 1, workEmail: "requested@example.com"),
-            EntityFactory.CreateUser(id: 2, workEmail: "active@example.com"),
-            EntityFactory.CreateUser(id: 3, workEmail: "other-org@example.com")
-        );
+        var organisationFaker = new OrganisationFaker();
+        var userFaker = new UserFaker();
+        var membershipFaker = new UserOrgMembershipFaker();
+
+        List<Organisation> organisations = organisationFaker.Generate(2);
+        List<User> users = userFaker.Generate(3);
+
+        Context.Organisations.AddRange(organisations);
+        Context.Users.AddRange(users);
+
         Context.UserOrgMemberships.AddRange(
-            EntityFactory.CreateMembership(
-                id: 1,
-                userId: 1,
-                organisationId: 1,
-                status: UserOrgStatus.RequestedAccess
-            ),
-            EntityFactory.CreateMembership(
-                id: 2,
-                userId: 2,
-                organisationId: 1,
-                status: UserOrgStatus.Active
-            ),
-            EntityFactory.CreateMembership(id: 3, userId: 3, organisationId: 2)
+            membershipFaker.Generate() with
+            {
+                UserId = users[0].Id,
+                OrganisationId = organisations[0].Id,
+                Status = UserOrgStatus.RequestedAccess,
+            },
+            membershipFaker.Generate() with
+            {
+                UserId = users[1].Id,
+                OrganisationId = organisations[0].Id,
+                Status = UserOrgStatus.Active,
+            },
+            membershipFaker.Generate() with
+            {
+                UserId = users[2].Id,
+                OrganisationId = organisations[1].Id,
+            }
         );
+
         await Context.SaveChangesAsync();
 
-        var uri = new Uri("/users?organisationId=1", UriKind.Relative);
+        var uri = new Uri($"/users?organisationId={organisations[0].Id}", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -55,38 +63,49 @@ public class UserEndpointTests : DatabaseTestBase
         >(TestJsonOptions.Default);
         Assert.NotNull(dto);
         Assert.Equal(2, dto.TotalCount);
-        Assert.Equal([1, 2], dto.Items.Select(i => i.UserId).ToArray());
+        Assert.Equal([users[0].Id, users[1].Id], dto.Items.Select(i => i.UserId).ToArray());
     }
 
     [Fact]
     public async Task GetUsers_StatusQueryParametersProvided_FiltersByStatus()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
-        Context.Users.AddRange(
-            EntityFactory.CreateUser(id: 1, workEmail: "requested@example.com"),
-            EntityFactory.CreateUser(id: 2, workEmail: "active@example.com"),
-            EntityFactory.CreateUser(id: 3, workEmail: "inactive@example.com")
-        );
+        var organisationFaker = new OrganisationFaker();
+        var userFaker = new UserFaker();
+        var membershipFaker = new UserOrgMembershipFaker();
+
+        var organisation = organisationFaker.Generate();
+
+        var requestedUser = userFaker.Generate() with { WorkEmail = "requested@example.com" };
+
+        var activeUser = userFaker.Generate() with { WorkEmail = "active@example.com" };
+
+        var inactiveUser = userFaker.Generate() with { WorkEmail = "inactive@example.com" };
+
+        Context.Organisations.Add(organisation);
+
+        Context.Users.AddRange(requestedUser, activeUser, inactiveUser);
+
         Context.UserOrgMemberships.AddRange(
-            EntityFactory.CreateMembership(
-                id: 1,
-                userId: 1,
-                organisationId: 1,
-                status: UserOrgStatus.RequestedAccess
-            ),
-            EntityFactory.CreateMembership(
-                id: 2,
-                userId: 2,
-                organisationId: 1,
-                status: UserOrgStatus.Active
-            ),
-            EntityFactory.CreateMembership(
-                id: 3,
-                userId: 3,
-                organisationId: 1,
-                status: UserOrgStatus.Inactive
-            )
+            membershipFaker.Generate() with
+            {
+                UserId = requestedUser.Id,
+                OrganisationId = organisation.Id,
+                Status = UserOrgStatus.RequestedAccess,
+            },
+            membershipFaker.Generate() with
+            {
+                UserId = activeUser.Id,
+                OrganisationId = organisation.Id,
+                Status = UserOrgStatus.Active,
+            },
+            membershipFaker.Generate() with
+            {
+                UserId = inactiveUser.Id,
+                OrganisationId = organisation.Id,
+                Status = UserOrgStatus.Inactive,
+            }
         );
+
         await Context.SaveChangesAsync();
 
         var uri = new Uri(

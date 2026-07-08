@@ -7,6 +7,7 @@ using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Integration;
 
@@ -79,7 +80,8 @@ public class OrganisationEndpointTests : DatabaseTestBase
     [Fact]
     public async Task UpdateOrganisationDetails_ValidBody_ReturnsOkAndPersistsChanges()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        Organisation organisation = new OrganisationFaker().Generate() with { Id = 1 };
+        Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
         UpdateOrganisationDetailsDto updateDto = new()
@@ -131,7 +133,8 @@ public class OrganisationEndpointTests : DatabaseTestBase
     [Fact]
     public async Task UpdateOrganisationDetails_InvalidEmail_ReturnsBadRequest()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        Organisation organisation = new OrganisationFaker().Generate() with { Id = 1 };
+        Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
         UpdateOrganisationDetailsDto updateDto = new()
@@ -155,7 +158,8 @@ public class OrganisationEndpointTests : DatabaseTestBase
     [Fact]
     public async Task UpdateOrganisationDetails_WhitespaceOnlyAddress_ReturnsBadRequest()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        Organisation organisation = new OrganisationFaker().Generate() with { Id = 1 };
+        Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
         UpdateOrganisationDetailsDto updateDto = new()
@@ -297,16 +301,23 @@ public class OrganisationEndpointTests : DatabaseTestBase
     private async Task<UserOrgMembership> SeedMembership()
     {
         // Both FKs are Restrict, so the parent User and Organisation rows must exist first.
-        Context.Users.Add(EntityFactory.CreateUser(id: 1, workEmail: "member@example.com"));
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        User user = new UserFaker().Generate() with
+        {
+            Id = 1,
+            WorkEmail = "member@example.com",
+        };
+        Context.Users.Add(user);
+        Organisation organisation = new OrganisationFaker().Generate() with { Id = 1 };
+        Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
-        UserOrgMembership membership = EntityFactory.CreateMembership(
-            id: 1,
-            userId: 1,
-            organisationId: 1,
-            allowedPharmaceuticalEntity: PharmaceuticalEntity.Both
-        );
+        UserOrgMembership membership = new UserOrgMembershipFaker().Generate() with
+        {
+            Id = 1,
+            UserId = 1,
+            OrganisationId = 1,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
+        };
         Context.UserOrgMemberships.Add(membership);
         await Context.SaveChangesAsync();
         return membership;
