@@ -26,21 +26,20 @@ public class OrganisationEndpointTests : DatabaseTestBase
     {
         DateTime createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
         DateTime lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
-        Context.Organisations.Add(
-            new Organisation
-            {
-                Id = 1,
-                OrganisationName = "Gov Pharma Ltd",
-                OrganisationType = OrganisationType.PharmaCompany,
-                AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
-                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-                HeadOfficeEmail = "info@pharma.gov.uk",
-                HeadOfficeTelephone = "020 1234 5678",
-                Status = UserOrgStatus.Active,
-                LastActive = lastActive,
-                CreatedAt = createdAt,
-            }
-        );
+        var organisation = new Organisation
+        {
+            Id = 1,
+            OrganisationName = "Gov Pharma Ltd",
+            OrganisationType = OrganisationType.PharmaCompany,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            HeadOfficeEmail = "info@pharma.gov.uk",
+            HeadOfficeTelephone = "020 1234 5678",
+            Status = UserOrgStatus.Active,
+            LastActive = lastActive,
+            CreatedAt = createdAt,
+        };
+        Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
         var uri = new Uri("/organisations/1", UriKind.Relative);
@@ -52,16 +51,20 @@ public class OrganisationEndpointTests : DatabaseTestBase
                 TestJsonOptions.Default
             );
         Assert.NotNull(dto);
-        Assert.Equal(1, dto.Id);
-        Assert.Equal("Gov Pharma Ltd", dto.OrganisationName);
-        Assert.Equal(OrganisationType.PharmaCompany, dto.OrganisationType);
-        Assert.Equal(PharmaceuticalEntity.Both, dto.AllowedPharmaceuticalEntity);
-        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", dto.HeadOfficeAddress);
-        Assert.Equal("info@pharma.gov.uk", dto.HeadOfficeEmail);
-        Assert.Equal("020 1234 5678", dto.HeadOfficeTelephone);
-        Assert.Equal(UserOrgStatus.Active, dto.Status);
-        Assert.Equal(lastActive, dto.LastActive);
-        Assert.Equal(createdAt, dto.CreatedAt);
+        var expectedDto = new OrganisationDetailsDto
+        {
+            Id = organisation.Id,
+            OrganisationName = organisation.OrganisationName,
+            OrganisationType = organisation.OrganisationType,
+            AllowedPharmaceuticalEntity = organisation.AllowedPharmaceuticalEntity,
+            HeadOfficeAddress = organisation.HeadOfficeAddress,
+            HeadOfficeEmail = organisation.HeadOfficeEmail,
+            HeadOfficeTelephone = organisation.HeadOfficeTelephone,
+            Status = organisation.Status,
+            LastActive = organisation.LastActive,
+            CreatedAt = organisation.CreatedAt,
+        };
+        Assert.Equal(expectedDto, dto);
     }
 
     [Fact]

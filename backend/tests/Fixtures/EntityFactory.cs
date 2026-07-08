@@ -42,7 +42,7 @@ internal static class EntityFactory
             UserRole = role,
             Status = status,
             AllowedPharmaceuticalEntity = allowedPharmaceuticalEntity,
-            // Npgsql rejects DateTime.Kind = Unspecified for timestamptz columns.
+            // Use UTC because PostgreSQL timestamptz columns reject unspecified DateTime values.
             CreatedAt = DateTime.UtcNow,
         };
 }
