@@ -11,8 +11,8 @@ namespace UKPS.Api.Services;
 /// </summary>
 internal sealed class MockCurrentUserInfoService : ICurrentUserInfoService
 {
-    public CurrentUserInfo GetCurrentUserInfo()
+    public CurrentUser GetCurrentUserInfo()
     {
-        return new CurrentUserInfo { OrganisationId = 1, UserRole = UserRole.Super };
+        return new CurrentUser { OrganisationId = 1, UserRole = UserRole.Super };
     }
 }

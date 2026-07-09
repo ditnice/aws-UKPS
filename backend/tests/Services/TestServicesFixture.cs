@@ -15,7 +15,7 @@ internal sealed class TestServicesFixture
 
     private readonly IServiceProvider _serviceProvider;
 
-    public TestServicesFixture(AppDbContext context, CurrentUserInfo currentUserInfo)
+    public TestServicesFixture(AppDbContext context, CurrentUser currentUserInfo)
     {
         var mockCurrentUserInfoService = Substitute.For<ICurrentUserInfoService>();
         mockCurrentUserInfoService.GetCurrentUserInfo().Returns(currentUserInfo);
@@ -28,10 +28,10 @@ internal sealed class TestServicesFixture
 
     public static TestServicesFixture Create(
         AppDbContext context,
-        Func<CurrentUserInfo, CurrentUserInfo>? updateCurrentUserInfo = null
+        Func<CurrentUser, CurrentUser>? updateCurrentUserInfo = null
     )
     {
-        var defaultUserInfo = new CurrentUserInfo { OrganisationId = 1, UserRole = UserRole.Super };
+        var defaultUserInfo = new CurrentUser { OrganisationId = 1, UserRole = UserRole.Super };
         var updatedCurrentUserInfo = updateCurrentUserInfo is not null
             ? updateCurrentUserInfo(defaultUserInfo)
             : defaultUserInfo;

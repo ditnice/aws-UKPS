@@ -5,7 +5,7 @@ namespace UKPS.Api.Services.Interfaces;
 /// <summary>
 /// Represents the information of the current user of the system.
 /// </summary>
-public sealed record CurrentUserInfo
+public sealed record CurrentUser
 {
     /// <summary>
     /// Gets the identifier of the organisation associated with the current user.
