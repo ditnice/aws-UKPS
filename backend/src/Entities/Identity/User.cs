@@ -12,7 +12,7 @@ internal sealed record User
     public required string LastName { get; set; }
     public string? JobTitle { get; set; }
     public string? WorkTelephone { get; set; }
-    public string? WorkEmail { get; set; }
+    public required string WorkEmail { get; set; }
 
     // Navigation
     public ICollection<UserOrgMembership> UserOrgMemberships { get; set; } = [];
