@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using UKPS.Api.Data;
 using UKPS.Api.Services;
-using UKPS.Api.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,10 +16,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 // Add services to the container.
-
-builder.Services.AddScoped<IOrganisationService, OrganisationService>();
-builder.Services.AddScoped<IOrganisationMembershipService, OrganisationMembershipService>();
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddUkpsServices();
 
 builder
     .Services.AddControllers()
