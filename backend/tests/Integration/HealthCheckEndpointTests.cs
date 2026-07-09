@@ -1,3 +1,4 @@
+using Shouldly;
 using UKPS.Api.Tests.Fixtures;
 
 namespace UKPS.Api.Tests.Integration;
@@ -20,6 +21,6 @@ public class HealthCheckEndpointTests
         var healthCheckUrl = new Uri("/health", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(healthCheckUrl);
 
-        Assert.True(response.IsSuccessStatusCode);
+        response.IsSuccessStatusCode.ShouldBeTrue();
     }
 }

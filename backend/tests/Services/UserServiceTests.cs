@@ -1,3 +1,4 @@
+using Shouldly;
 using UKPS.Api.Common;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
@@ -18,10 +19,10 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(99, 1, 20, []);
 
-        Assert.True(result.IsErr);
+        result.IsErr.ShouldBeTrue();
         GetUsersError.OrganisationNotFound notFound =
-            Assert.IsType<GetUsersError.OrganisationNotFound>(result.Error);
-        Assert.Equal(99, notFound.OrganisationId);
+            result.Error.ShouldBeOfType<GetUsersError.OrganisationNotFound>();
+        notFound.OrganisationId.ShouldBe(99);
     }
 
     [Fact]
@@ -35,13 +36,13 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 1, 20, []);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Empty(dto.Items);
-        Assert.Equal(0, dto.TotalCount);
-        Assert.Equal(1, dto.Page);
-        Assert.Equal(20, dto.PageSize);
+        dto.ShouldNotBeNull();
+        dto.Items.ShouldBeEmpty();
+        dto.TotalCount.ShouldBe(0);
+        dto.Page.ShouldBe(1);
+        dto.PageSize.ShouldBe(20);
     }
 
     [Fact]
@@ -65,15 +66,15 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 1, 20, []);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        Assert.NotNull(dto);
-        UserListItemDto item = Assert.Single(dto.Items);
-        Assert.Equal(10, item.UserId);
-        Assert.Equal("user@example.com", item.EmailAddress);
-        Assert.Equal(UserRole.Champion, item.Role);
-        Assert.Equal(UserOrgStatus.Active, item.Status);
-        Assert.Null(item.LastActive);
+        dto.ShouldNotBeNull();
+        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
+        item.UserId.ShouldBe(10);
+        item.EmailAddress.ShouldBe("user@example.com");
+        item.Role.ShouldBe(UserRole.Champion);
+        item.Status.ShouldBe(UserOrgStatus.Active);
+        item.LastActive.ShouldBeNull();
     }
 
     [Fact]
@@ -112,11 +113,11 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 1, 20, [UserOrgStatus.Active, UserOrgStatus.Inactive]);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Equal(2, dto.TotalCount);
-        Assert.Equal([2, 3], dto.Items.Select(i => i.UserId).ToArray());
+        dto.ShouldNotBeNull();
+        dto.TotalCount.ShouldBe(2);
+        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([2, 3]);
     }
 
     [Fact]
@@ -140,14 +141,14 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 2, 1, []);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Equal(3, dto.TotalCount);
-        Assert.Equal(2, dto.Page);
-        Assert.Equal(1, dto.PageSize);
-        UserListItemDto item = Assert.Single(dto.Items);
-        Assert.Equal(20, item.UserId);
+        dto.ShouldNotBeNull();
+        dto.TotalCount.ShouldBe(3);
+        dto.Page.ShouldBe(2);
+        dto.PageSize.ShouldBe(1);
+        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
+        item.UserId.ShouldBe(20);
     }
 
     [Fact]
@@ -172,11 +173,11 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(null, 1, 20, []);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Equal(2, dto.TotalCount);
-        Assert.Equal([10, 20], dto.Items.Select(i => i.UserId).ToArray());
+        dto.ShouldNotBeNull();
+        dto.TotalCount.ShouldBe(2);
+        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 20]);
     }
 
     [Fact]
@@ -211,13 +212,13 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(null, 1, 20, [UserOrgStatus.Inactive]);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Equal(1, dto.TotalCount);
-        UserListItemDto item = Assert.Single(dto.Items);
-        Assert.Equal(20, item.UserId);
-        Assert.Equal(UserOrgStatus.Inactive, item.Status);
+        dto.ShouldNotBeNull();
+        dto.TotalCount.ShouldBe(1);
+        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
+        item.UserId.ShouldBe(20);
+        item.Status.ShouldBe(UserOrgStatus.Inactive);
     }
 
     [Fact]
@@ -235,12 +236,12 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(1, 5, 20, []);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Empty(dto.Items);
-        Assert.Equal(1, dto.TotalCount);
-        Assert.Equal(5, dto.Page);
+        dto.ShouldNotBeNull();
+        dto.Items.ShouldBeEmpty();
+        dto.TotalCount.ShouldBe(1);
+        dto.Page.ShouldBe(5);
     }
 
     [Fact]
@@ -272,10 +273,10 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(null, 1, 20, []);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Equal(2, dto.TotalCount);
-        Assert.Equal([10, 10], dto.Items.Select(i => i.UserId).ToArray());
+        dto.ShouldNotBeNull();
+        dto.TotalCount.ShouldBe(2);
+        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 10]);
     }
 }

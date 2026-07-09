@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Shouldly;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
 using UKPS.Api.Tests.Fixtures;
@@ -49,13 +50,13 @@ public class UserEndpointTests : DatabaseTestBase
         var uri = new Uri("/users?organisationId=1", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
         PaginatedResponseDto<UserListItemDto>? dto = await response.Content.ReadFromJsonAsync<
             PaginatedResponseDto<UserListItemDto>
         >(TestJsonOptions.Default);
-        Assert.NotNull(dto);
-        Assert.Equal(2, dto.TotalCount);
-        Assert.Equal([1, 2], dto.Items.Select(i => i.UserId).ToArray());
+        dto.ShouldNotBeNull();
+        dto.TotalCount.ShouldBe(2);
+        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([1, 2]);
     }
 
     [Fact]
@@ -95,13 +96,13 @@ public class UserEndpointTests : DatabaseTestBase
         );
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
         PaginatedResponseDto<UserListItemDto>? dto = await response.Content.ReadFromJsonAsync<
             PaginatedResponseDto<UserListItemDto>
         >(TestJsonOptions.Default);
-        Assert.NotNull(dto);
-        Assert.Equal(2, dto.TotalCount);
-        Assert.Equal([2, 3], dto.Items.Select(i => i.UserId).ToArray());
+        dto.ShouldNotBeNull();
+        dto.TotalCount.ShouldBe(2);
+        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([2, 3]);
     }
 
     [Fact]
@@ -110,7 +111,7 @@ public class UserEndpointTests : DatabaseTestBase
         var uri = new Uri("/users?status=NotAStatus", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -119,7 +120,7 @@ public class UserEndpointTests : DatabaseTestBase
         var uri = new Uri("/users?page=0", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -128,7 +129,7 @@ public class UserEndpointTests : DatabaseTestBase
         var uri = new Uri("/users?pageSize=101", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -137,6 +138,6 @@ public class UserEndpointTests : DatabaseTestBase
         var uri = new Uri("/users?organisationId=999999", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 }

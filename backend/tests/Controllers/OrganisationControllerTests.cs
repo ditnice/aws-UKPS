@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using Shouldly;
 using UKPS.Api.Common;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
@@ -63,8 +64,8 @@ public class OrganisationControllerTests
 
         ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(1);
 
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Same(expected, ok.Value);
+        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(expected);
     }
 
     [Fact]
@@ -72,7 +73,7 @@ public class OrganisationControllerTests
     {
         ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(99);
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        result.Result.ShouldBeOfType<NotFoundResult>();
     }
 
     [Fact]
@@ -98,8 +99,8 @@ public class OrganisationControllerTests
             CreateUpdateOrganisationDetailsDto()
         );
 
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Same(expected, ok.Value);
+        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(expected);
     }
 
     [Fact]
@@ -110,7 +111,7 @@ public class OrganisationControllerTests
             CreateUpdateOrganisationDetailsDto()
         );
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        result.Result.ShouldBeOfType<NotFoundResult>();
     }
 
     [Fact]
@@ -136,12 +137,13 @@ public class OrganisationControllerTests
             CreateUpdateOrganisationDetailsDto()
         );
 
-        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
-        SerializableError errors = Assert.IsType<SerializableError>(badRequest.Value);
-        string[] organisationNameErrors = Assert.IsType<string[]>(
-            errors[nameof(UpdateOrganisationDetailsDto.OrganisationName)]
-        );
-        Assert.Contains("Required", organisationNameErrors);
+        BadRequestObjectResult badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        SerializableError errors = badRequest.Value.ShouldBeOfType<SerializableError>();
+        string[] organisationNameErrors = errors[
+            nameof(UpdateOrganisationDetailsDto.OrganisationName)
+        ]
+            .ShouldBeOfType<string[]>();
+        organisationNameErrors.ShouldContain("Required");
     }
 
     [Fact]
@@ -165,10 +167,10 @@ public class OrganisationControllerTests
             .Distinct(StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.OrganisationName), invalidMembers);
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress), invalidMembers);
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail), invalidMembers);
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone), invalidMembers);
+        invalidMembers.ShouldContain(nameof(UpdateOrganisationDetailsDto.OrganisationName));
+        invalidMembers.ShouldContain(nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress));
+        invalidMembers.ShouldContain(nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail));
+        invalidMembers.ShouldContain(nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone));
     }
 
     [Theory]
@@ -182,18 +184,16 @@ public class OrganisationControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(
-                    nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
-                    StringComparer.Ordinal
-                )
-                && string.Equals(
-                    r.ErrorMessage,
-                    "HeadOfficeAddress cannot be empty or whitespace.",
-                    StringComparison.Ordinal
-                )
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
+                StringComparer.Ordinal
+            )
+            && string.Equals(
+                r.ErrorMessage,
+                "HeadOfficeAddress cannot be empty or whitespace.",
+                StringComparison.Ordinal
+            )
         );
     }
 
@@ -206,13 +206,11 @@ public class OrganisationControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.DoesNotContain(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(
-                    nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
-                    StringComparer.Ordinal
-                )
+        validationResults.ShouldNotContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
+                StringComparer.Ordinal
+            )
         );
     }
 
@@ -229,13 +227,11 @@ public class OrganisationControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(
-                    nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail),
-                    StringComparer.Ordinal
-                )
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail),
+                StringComparer.Ordinal
+            )
         );
     }
 
@@ -276,7 +272,7 @@ public class OrganisationControllerTests
 
     private static List<ValidationResult> Validate(UpdateOrganisationDetailsDto dto)
     {
-        List<ValidationResult> validationResults = [];
+        List<ValidationResult> validationResults = new();
         Validator.TryValidateObject(
             dto,
             new ValidationContext(dto),

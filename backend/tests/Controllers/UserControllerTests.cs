@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using Shouldly;
 using UKPS.Api.Common;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
@@ -31,8 +32,8 @@ public class UserControllerTests
             CreateQuery()
         );
 
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Same(expected, ok.Value);
+        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(expected);
     }
 
     [Fact]
@@ -57,8 +58,8 @@ public class UserControllerTests
             CreateQuery()
         );
 
-        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("Organisation not found.", badRequest.Value);
+        BadRequestObjectResult badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        badRequest.Value.ShouldBe("Organisation not found.");
     }
 
     [Fact]
@@ -83,7 +84,7 @@ public class UserControllerTests
             null
         );
 
-        Assert.IsType<BadRequestResult>(result.Result);
+        result.Result.ShouldBeOfType<BadRequestResult>();
     }
 
     [Fact]
@@ -162,7 +163,7 @@ public class UserControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Empty(validationResults);
+        validationResults.ShouldBeEmpty();
     }
 
     [Theory]
@@ -174,15 +175,13 @@ public class UserControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(nameof(GetUsersQueryDto.Page), StringComparer.Ordinal)
-                && string.Equals(
-                    r.ErrorMessage,
-                    "Page cannot be less than 1.",
-                    StringComparison.Ordinal
-                )
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(nameof(GetUsersQueryDto.Page), StringComparer.Ordinal)
+            && string.Equals(
+                r.ErrorMessage,
+                "Page cannot be less than 1.",
+                StringComparison.Ordinal
+            )
         );
     }
 
@@ -195,15 +194,13 @@ public class UserControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(nameof(GetUsersQueryDto.PageSize), StringComparer.Ordinal)
-                && string.Equals(
-                    r.ErrorMessage,
-                    "PageSize must be between 1 and 100.",
-                    StringComparison.Ordinal
-                )
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(nameof(GetUsersQueryDto.PageSize), StringComparer.Ordinal)
+            && string.Equals(
+                r.ErrorMessage,
+                "PageSize must be between 1 and 100.",
+                StringComparison.Ordinal
+            )
         );
     }
 
