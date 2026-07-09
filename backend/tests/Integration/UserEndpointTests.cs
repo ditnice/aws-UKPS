@@ -12,6 +12,9 @@ namespace UKPS.Api.Tests.Integration;
 public class UserEndpointTests : DatabaseTestBase
 {
     private readonly HttpClient _httpClient;
+    private readonly OrganisationFaker _organisationFaker = new();
+    private readonly UserFaker _userFaker = new();
+    private readonly UserOrgMembershipFaker _membershipFaker = new();
 
     public UserEndpointTests(PostgresFixture fixture)
         : base(fixture)
@@ -22,30 +25,26 @@ public class UserEndpointTests : DatabaseTestBase
     [Fact]
     public async Task GetUsers_OrganisationIdProvided_ReturnsOnlyThatOrganisationsUsers()
     {
-        var organisationFaker = new OrganisationFaker();
-        var userFaker = new UserFaker();
-        var membershipFaker = new UserOrgMembershipFaker();
-
-        List<Organisation> organisations = organisationFaker.Generate(2);
-        List<User> users = userFaker.Generate(3);
+        List<Organisation> organisations = _organisationFaker.Generate(2);
+        List<User> users = _userFaker.Generate(3);
 
         Context.Organisations.AddRange(organisations);
         Context.Users.AddRange(users);
 
         Context.UserOrgMemberships.AddRange(
-            membershipFaker.Generate() with
+            _membershipFaker.Generate() with
             {
                 UserId = users[0].Id,
                 OrganisationId = organisations[0].Id,
                 Status = UserOrgStatus.RequestedAccess,
             },
-            membershipFaker.Generate() with
+            _membershipFaker.Generate() with
             {
                 UserId = users[1].Id,
                 OrganisationId = organisations[0].Id,
                 Status = UserOrgStatus.Active,
             },
-            membershipFaker.Generate() with
+            _membershipFaker.Generate() with
             {
                 UserId = users[2].Id,
                 OrganisationId = organisations[1].Id,
@@ -69,36 +68,32 @@ public class UserEndpointTests : DatabaseTestBase
     [Fact]
     public async Task GetUsers_StatusQueryParametersProvided_FiltersByStatus()
     {
-        var organisationFaker = new OrganisationFaker();
-        var userFaker = new UserFaker();
-        var membershipFaker = new UserOrgMembershipFaker();
+        var organisation = _organisationFaker.Generate();
 
-        var organisation = organisationFaker.Generate();
+        var requestedUser = _userFaker.Generate() with { WorkEmail = "requested@example.com" };
 
-        var requestedUser = userFaker.Generate() with { WorkEmail = "requested@example.com" };
+        var activeUser = _userFaker.Generate() with { WorkEmail = "active@example.com" };
 
-        var activeUser = userFaker.Generate() with { WorkEmail = "active@example.com" };
-
-        var inactiveUser = userFaker.Generate() with { WorkEmail = "inactive@example.com" };
+        var inactiveUser = _userFaker.Generate() with { WorkEmail = "inactive@example.com" };
 
         Context.Organisations.Add(organisation);
 
         Context.Users.AddRange(requestedUser, activeUser, inactiveUser);
 
         Context.UserOrgMemberships.AddRange(
-            membershipFaker.Generate() with
+            _membershipFaker.Generate() with
             {
                 UserId = requestedUser.Id,
                 OrganisationId = organisation.Id,
                 Status = UserOrgStatus.RequestedAccess,
             },
-            membershipFaker.Generate() with
+            _membershipFaker.Generate() with
             {
                 UserId = activeUser.Id,
                 OrganisationId = organisation.Id,
                 Status = UserOrgStatus.Active,
             },
-            membershipFaker.Generate() with
+            _membershipFaker.Generate() with
             {
                 UserId = inactiveUser.Id,
                 OrganisationId = organisation.Id,
