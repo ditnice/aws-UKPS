@@ -45,6 +45,23 @@ public class DatabaseConstraintTests : DatabaseTestBase
     [Fact]
     public async Task SaveChangesAsync_DuplicateUsername_ThrowsDbUpdateException()
     {
+        var duplicateUsername = "duplicate-name";
+        var user1 = _userFaker.Generate() with { Username = duplicateUsername };
+        var user2 = _userFaker.Generate() with { Username = duplicateUsername };
+        Context.Users.Add(user1);
+        await Context.SaveChangesAsync();
+
+        Context.Users.Add(user2);
+
+        DbUpdateException exception = await Assert.ThrowsAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        AssertUniqueViolation(exception);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_DuplicateWorkEmail_ThrowsDbUpdateException()
+    {
         var duplicateEmail = "duplicate@example.com";
         var user1 = _userFaker.Generate() with { WorkEmail = duplicateEmail };
         var user2 = _userFaker.Generate() with { WorkEmail = duplicateEmail };
