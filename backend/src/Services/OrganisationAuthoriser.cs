@@ -6,7 +6,7 @@ namespace UKPS.Api.Services;
 internal class OrganisationAuthoriser : IOrganisationAuthoriser
 {
     private readonly ICurrentUserInfoService _currentUserInfoService;
-    private readonly Operation[] _allowedOperationsForStandardUser =
+    private static readonly Operation[] _allowedOperationsForStandardUser =
     [
         Operation.View,
         Operation.Create,
