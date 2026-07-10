@@ -52,7 +52,11 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [InlineData(true, UserRole.Standard, false)]
     [InlineData(false, UserRole.Champion, false)]
     [InlineData(false, UserRole.Standard, false)]
-    public async Task Test(bool organisationIdMatches, UserRole userRole, bool expectedAuthorised)
+    public async Task UpdateUserRole_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
     {
         var userOrgMembership = await SetupUserOrgMembership();
         var command = new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Champion };

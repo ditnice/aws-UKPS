@@ -30,7 +30,7 @@ internal sealed class OrganisationMembershipService(
     {
         if (
             !organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.Edit,
+                Operation.Update,
                 organisationId
             )
         )

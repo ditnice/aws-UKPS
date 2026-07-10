@@ -8,7 +8,7 @@ internal class OrganisationAuthoriser : IOrganisationAuthoriser
     private readonly ICurrentUserInfoService _currentUserInfoService;
     private static readonly Operation[] _allowedOperationsForStandardUser =
     [
-        Operation.View,
+        Operation.Read,
         Operation.Create,
     ];
 
