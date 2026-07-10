@@ -16,6 +16,8 @@ internal sealed class TestServicesFixture
     public IOrganisationService OrganisationService =>
         _serviceProvider.GetRequiredService<IOrganisationService>();
 
+    public IUserService UserService => _serviceProvider.GetRequiredService<IUserService>();
+
     private readonly IServiceProvider _serviceProvider;
 
     public TestServicesFixture(AppDbContext context, CurrentUser currentUserInfo)

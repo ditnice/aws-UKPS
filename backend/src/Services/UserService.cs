@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
+using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
@@ -11,7 +12,10 @@ using GetUsersResult = UKPS.Api.Common.Result<
 
 namespace UKPS.Api.Services;
 
-internal sealed class UserService(AppDbContext dbContext) : IUserService
+internal sealed class UserService(
+    AppDbContext dbContext,
+    IOrganisationAuthoriser organisationAuthoriser
+) : IUserService
 {
     public async Task<GetUsersResult> GetUsers(
         int? organisationId,
@@ -22,6 +26,14 @@ internal sealed class UserService(AppDbContext dbContext) : IUserService
     {
         if (organisationId.HasValue)
         {
+            bool notAllowed = organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Read,
+                organisationId.Value
+            );
+            if (!notAllowed)
+            {
+                return GetUsersResult.Err(new GetUsersError.NotAllowed(organisationId.Value));
+            }
             bool organisationExists = await dbContext.Organisations.AnyAsync(o =>
                 o.Id == organisationId.Value
             );
@@ -34,21 +46,15 @@ internal sealed class UserService(AppDbContext dbContext) : IUserService
             }
         }
 
-        var organisationMemberships = dbContext.UserOrgMemberships.AsNoTracking();
-
-        if (organisationId.HasValue)
-        {
-            organisationMemberships = organisationMemberships.Where(m =>
-                m.OrganisationId == organisationId.Value
-            );
-        }
-
-        if (statuses.Count > 0)
-        {
-            organisationMemberships = organisationMemberships.Where(m =>
-                statuses.Contains(m.Status)
-            );
-        }
+        var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
+            Operation.Read
+        );
+        var organisationMemberships = ApplyFilters(
+            dbContext.UserOrgMemberships.AsNoTracking(),
+            permittedOrganisationIds,
+            organisationId,
+            statuses
+        );
 
         int totalCount = await organisationMemberships.CountAsync();
 
@@ -76,5 +82,33 @@ internal sealed class UserService(AppDbContext dbContext) : IUserService
                 PageSize = pageSize,
             }
         );
+    }
+
+    private static IQueryable<UserOrgMembership> ApplyFilters(
+        IQueryable<UserOrgMembership> input,
+        ValueOrAll<int> permittedOrganisationIds,
+        int? organisationId,
+        IReadOnlyCollection<UserOrgStatus> statuses
+    )
+    {
+        IQueryable<UserOrgMembership> organisationMemberships = input.Where(
+            permittedOrganisationIds.Contains<UserOrgMembership>(x => x.OrganisationId)
+        );
+
+        if (organisationId.HasValue)
+        {
+            organisationMemberships = organisationMemberships.Where(m =>
+                m.OrganisationId == organisationId.Value
+            );
+        }
+
+        if (statuses.Count > 0)
+        {
+            organisationMemberships = organisationMemberships.Where(m =>
+                statuses.Contains(m.Status)
+            );
+        }
+
+        return organisationMemberships;
     }
 }

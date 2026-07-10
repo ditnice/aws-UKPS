@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 
 namespace UKPS.Api.Services.Interfaces;
@@ -28,6 +30,30 @@ internal readonly record struct ValueOrAll<T>
             (ValueOrAllState.Value, var v) => EqualityComparer<T>.Default.Equals(v, value),
             _ => false,
         };
+
+    /// <summary>
+    /// Converts the ValueOrAll instance into a filter expression that can be used in EF Core queries.
+    /// </summary>
+    public Expression<Func<TEntity, bool>> Contains<TEntity>(Expression<Func<TEntity, T>> selector)
+    {
+        switch (_state)
+        {
+            case ValueOrAllState.All:
+                return _ => true;
+
+            case ValueOrAllState.None:
+                return _ => false;
+
+            case ValueOrAllState.Value:
+                return Expression.Lambda<Func<TEntity, bool>>(
+                    Expression.Equal(selector.Body, Expression.Constant(_value, typeof(T))),
+                    selector.Parameters
+                );
+
+            default:
+                throw new UnreachableException();
+        }
+    }
 
     public static implicit operator ValueOrAll<T>(T value) => FromValue(value);
 

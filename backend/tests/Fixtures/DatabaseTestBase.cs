@@ -26,6 +26,24 @@ public abstract class DatabaseTestBase : IAsyncLifetime, IAsyncDisposable
         return entity;
     }
 
+    protected async Task<IEnumerable<T>> AddEntities<T>(IEnumerable<T> entities)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+        foreach (var entity in entities)
+        {
+            if (entity is null)
+            {
+                throw new ArgumentNullException(
+                    nameof(entities),
+                    "Entity in collection cannot be null"
+                );
+            }
+            Context.Add(entity);
+        }
+        await Context.SaveChangesAsync();
+        return entities;
+    }
+
     async Task IAsyncLifetime.DisposeAsync() => await DisposeAsync();
 
     public async ValueTask DisposeAsync()
