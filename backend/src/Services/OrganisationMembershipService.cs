@@ -61,6 +61,16 @@ internal sealed class OrganisationMembershipService(
         CancellationToken cancellationToken
     )
     {
+        if (
+            !organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Update,
+                organisationId
+            )
+        )
+        {
+            var error = new OrganisationMembershipDeactivateUserError.NotAllowed(organisationId);
+            return DeactivateUserResult.Err(error);
+        }
         var membership = await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
             x => x.OrganisationId == organisationId && x.Id == membershipId,
             cancellationToken

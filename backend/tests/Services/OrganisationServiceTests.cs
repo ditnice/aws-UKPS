@@ -1,30 +1,67 @@
+using Bogus;
 using Microsoft.EntityFrameworkCore;
-using NSubstitute;
 using Shouldly;
 using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
-using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Services;
 
 [Collection(DatabaseCollection.Name)]
 public class OrganisationServiceTests : DatabaseTestBase
 {
-    private readonly OrganisationService _service;
+    private readonly IOrganisationService _service;
+    private readonly OrganisationFaker _organisationFaker = new();
 
     public OrganisationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _service = new OrganisationService(
-            Context,
-            Substitute.For<IOrganisationMembershipService>()
-        );
+        _service = TestServicesFixture.Create(Context).OrganisationService;
+    }
+
+    [Theory]
+    [InlineData(true, UserRole.Super, true)]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(true, UserRole.Standard, true)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task GetOrganisationById_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        Organisation organisation = await AddEntity(_organisationFaker.Generate());
+        int otherOrganisationId = 999_999;
+        int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
+
+        var currentUserInfo = new CurrentUser
+        {
+            OrganisationId = usersOrganisationId,
+            UserRole = userRole,
+        };
+        var testFixture = TestServicesFixture.Create(Context, _ => currentUserInfo);
+        var service = testFixture.OrganisationService;
+
+        Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
+            await service.GetOrganisationById(organisation.Id);
+
+        if (expectedAuthorised)
+        {
+            result.IsOk.ShouldBeTrue();
+        }
+        else
+        {
+            result.IsErr.ShouldBeTrue();
+            result.Error.ShouldBeOfType<GetOrganisationByIdError.NotAllowed>();
+        }
     }
 
     [Fact]
@@ -100,6 +137,43 @@ public class OrganisationServiceTests : DatabaseTestBase
         await using AppDbContext verifyContext = Fixture.CreateContext();
         Organisation saved = await verifyContext.Organisations.SingleAsync(o => o.Id == id);
         AssertUpdatedEntity(saved, createdAt, lastActive);
+    }
+
+    [Theory]
+    [InlineData(true, UserRole.Super, true)]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(true, UserRole.Standard, false)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task UpdateOrganisationDetails_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        Organisation organisation = await AddEntity(_organisationFaker.Generate());
+        int otherOrganisationId = 999_999;
+        int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
+        var testFixture = TestServicesFixture.Create(
+            Context,
+            x => x with { OrganisationId = usersOrganisationId, UserRole = userRole }
+        );
+        var service = testFixture.OrganisationService;
+
+        var updateCommand = new UpdateOrganisationDetailsDtoFaker().Generate();
+        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
+            await service.UpdateOrganisationDetails(organisation.Id, updateCommand);
+
+        if (expectedAuthorised)
+        {
+            result.IsOk.ShouldBeTrue();
+        }
+        else
+        {
+            result.IsErr.ShouldBeTrue();
+            result.Error.ShouldBeOfType<UpdateOrganisationDetailsError.NotAllowed>();
+        }
     }
 
     [Fact]
@@ -193,5 +267,16 @@ public class OrganisationServiceTests : DatabaseTestBase
         saved.Status.ShouldBe(UserOrgStatus.Active);
         saved.LastActive.ShouldBe(lastActive);
         saved.CreatedAt.ShouldBe(createdAt);
+    }
+
+    private sealed class UpdateOrganisationDetailsDtoFaker : Faker<UpdateOrganisationDetailsDto>
+    {
+        public UpdateOrganisationDetailsDtoFaker()
+        {
+            RuleFor(o => o.OrganisationName, f => f.Company.CompanyName());
+            RuleFor(o => o.HeadOfficeAddress, f => f.Address.FullAddress());
+            RuleFor(o => o.HeadOfficeEmail, f => f.Internet.Email());
+            RuleFor(o => o.HeadOfficeTelephone, f => f.Phone.PhoneNumber());
+        }
     }
 }

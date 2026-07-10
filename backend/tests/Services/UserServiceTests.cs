@@ -3,8 +3,8 @@ using UKPS.Api.Common;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
-using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
+using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
@@ -12,19 +12,24 @@ using UKPS.Api.Tests.Utilities.Data.Fakers;
 namespace UKPS.Api.Tests.Services;
 
 [Collection(DatabaseCollection.Name)]
-public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
+public class UserServiceTests : DatabaseTestBase
 {
     private readonly OrganisationFaker _organisationFaker = new();
     private readonly UserFaker _userFaker = new();
     private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
+    private readonly IUserService _service;
+
+    public UserServiceTests(PostgresFixture fixture)
+        : base(fixture)
+    {
+        _service = TestServicesFixture.Create(Context).UserService;
+    }
 
     [Fact]
     public async Task GetUsers_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
     {
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(99, 1, 20, []);
+            await _service.GetUsers(99, 1, 20, []);
 
         result.IsErr.ShouldBeTrue();
         GetUsersError.OrganisationNotFound notFound =
@@ -38,10 +43,8 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Context.Organisations.Add(_organisationFaker.Generate());
         await Context.SaveChangesAsync();
 
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(1, 1, 20, []);
+            await _service.GetUsers(1, 1, 20, []);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -70,11 +73,8 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Context.Users.Add(user);
         Context.UserOrgMemberships.Add(membership);
         await Context.SaveChangesAsync();
-
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(1, 1, 20, []);
+            await _service.GetUsers(1, 1, 20, []);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -110,10 +110,8 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         Context.UserOrgMemberships.AddRange(data);
         await Context.SaveChangesAsync();
 
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(1, 1, 20, [UserOrgStatus.Active, UserOrgStatus.Inactive]);
+            await _service.GetUsers(1, 1, 20, [UserOrgStatus.Active, UserOrgStatus.Inactive]);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -159,10 +157,8 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         );
         await Context.SaveChangesAsync();
 
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(1, 2, 1, []);
+            await _service.GetUsers(1, 2, 1, []);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -217,10 +213,8 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         );
         await Context.SaveChangesAsync();
 
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(null, 1, 20, []);
+            await _service.GetUsers(null, 1, 20, []);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -274,10 +268,8 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         );
         await Context.SaveChangesAsync();
 
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(null, 1, 20, [UserOrgStatus.Inactive]);
+            await _service.GetUsers(null, 1, 20, [UserOrgStatus.Inactive]);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -313,10 +305,8 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         );
         await Context.SaveChangesAsync();
 
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(1, 5, 20, []);
+            await _service.GetUsers(1, 5, 20, []);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -364,15 +354,105 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
         );
         await Context.SaveChangesAsync();
 
-        UserService service = new(Context);
-
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(null, 1, 20, []);
+            await _service.GetUsers(null, 1, 20, []);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
         dto.ShouldNotBeNull();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 10]);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, false)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Standard, true)]
+    public async Task GetUsers_ReturnsAllUsersForSuperAdmins_AndFiltersByOrganisationForOtherRoles(
+        UserRole userRole,
+        bool filtersByOrganisation
+    )
+    {
+        var organisations = _organisationFaker.Generate(2);
+        var users = _userFaker.Generate(3);
+        var memberships = new List<UserOrgMembership>
+        {
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.User = users[0];
+                    x.Organisation = organisations[0];
+                }),
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.User = users[1];
+                    x.Organisation = organisations[1];
+                }),
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.User = users[2];
+                    x.Organisation = organisations[0];
+                }),
+        };
+        await AddEntities(memberships);
+        var fixture = TestServicesFixture.Create(
+            Context,
+            x => x with { OrganisationId = organisations[0].Id, UserRole = userRole }
+        );
+        var service = fixture.UserService;
+        var results = await service.GetUsers(null, 1, 20, []);
+
+        results.IsOk.ShouldBeTrue();
+
+        if (filtersByOrganisation)
+        {
+            results.Value!.TotalCount.ShouldBe(2);
+            results
+                .Value.Items.Select(i => i.UserId)
+                .ToArray()
+                .ShouldBe([users[0].Id, users[2].Id]);
+        }
+        else
+        {
+            results.Value!.TotalCount.ShouldBe(3);
+            results
+                .Value.Items.Select(i => i.UserId)
+                .ToArray()
+                .ShouldBe([users[0].Id, users[1].Id, users[2].Id]);
+        }
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task GetUsers_ReturnsNotAllowed_WhenExplicitlyRequestingUsersForAnOrganisationIsNotAllowedToAccess(
+        UserRole userRole,
+        bool isAllowedToAccess
+    )
+    {
+        int userOrganisation = 1;
+        int otherOrganisation = 2;
+        TestServicesFixture testFixture = TestServicesFixture.Create(
+            Context,
+            x => x with { UserRole = userRole, OrganisationId = userOrganisation }
+        );
+        IUserService service = testFixture.UserService;
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await service.GetUsers(otherOrganisation, 1, 20, []);
+
+        if (isAllowedToAccess)
+        {
+            result.Error.ShouldNotBeOfType<GetUsersError.NotAllowed>();
+        }
+        else
+        {
+            result.Error.ShouldBeOfType<GetUsersError.NotAllowed>();
+        }
     }
 }
