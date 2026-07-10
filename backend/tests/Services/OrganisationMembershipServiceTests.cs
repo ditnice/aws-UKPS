@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Shouldly;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
@@ -43,14 +44,14 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        Assert.True(result.IsOk);
-        Assert.Equal(userRole, result.Value.UserRole);
+        result.IsOk.ShouldBeTrue();
+        result.Value.UserRole.ShouldBe(userRole);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
             m.Id == userOrgMembership.Id
         );
-        Assert.Equal(userRole, saved.UserRole);
+        saved.UserRole.ShouldBe(userRole);
     }
 
     [Fact]
@@ -65,8 +66,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        Assert.True(result.IsErr);
-        Assert.IsType<OrganisationMembershipUpdateUserRoleError.NotFound>(result.Error);
+        result.IsErr.ShouldBeTrue();
+        result.Error.ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotFound>();
     }
 
     [Fact]
@@ -81,8 +82,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        Assert.True(result.IsErr);
-        Assert.IsType<OrganisationMembershipUpdateUserRoleError.NotFound>(result.Error);
+        result.IsErr.ShouldBeTrue();
+        result.Error.ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotFound>();
     }
 
     [Fact]
@@ -95,14 +96,14 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        Assert.True(result.IsOk);
-        Assert.Equal(UserOrgStatus.Inactive, result.Value.Status);
+        result.IsOk.ShouldBeTrue();
+        result.Value.Status.ShouldBe(UserOrgStatus.Inactive);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
             m.Id == userOrgMembership.Id
         );
-        Assert.Equal(UserOrgStatus.Inactive, saved.Status);
+        saved.Status.ShouldBe(UserOrgStatus.Inactive);
     }
 
     [Fact]
@@ -117,8 +118,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        Assert.True(result.IsOk);
-        Assert.Equal(UserOrgStatus.Inactive, result.Value.Status);
+        result.IsOk.ShouldBeTrue();
+        result.Value.Status.ShouldBe(UserOrgStatus.Inactive);
     }
 
     [Fact]
@@ -131,8 +132,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        Assert.True(result.IsErr);
-        Assert.IsType<OrganisationMembershipDeactivateUserError.NotFound>(result.Error);
+        result.IsErr.ShouldBeTrue();
+        result.Error.ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
     }
 
     [Fact]
@@ -145,8 +146,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        Assert.True(result.IsErr);
-        Assert.IsType<OrganisationMembershipDeactivateUserError.NotFound>(result.Error);
+        result.IsErr.ShouldBeTrue();
+        result.Error.ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
     }
 
     private async Task<UserOrgMembership> SetupUserOrgMembership(

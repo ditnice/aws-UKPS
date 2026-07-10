@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Shouldly;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
 
@@ -36,7 +37,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
 
         Context.UserOrgMemberships.Add(membership with { Id = 2 });
 
-        DbUpdateException exception = await Assert.ThrowsAsync<DbUpdateException>(() =>
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
         );
         AssertUniqueViolation(exception);
@@ -70,7 +71,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
 
         Context.Users.Add(user2);
 
-        DbUpdateException exception = await Assert.ThrowsAsync<DbUpdateException>(() =>
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
         );
         AssertUniqueViolation(exception);
@@ -78,9 +79,8 @@ public class DatabaseConstraintTests : DatabaseTestBase
 
     private static void AssertUniqueViolation(DbUpdateException exception)
     {
-        PostgresException postgresException = Assert.IsType<PostgresException>(
-            exception.InnerException
-        );
-        Assert.Equal(UniqueViolationSqlState, postgresException.SqlState);
+        PostgresException postgresException =
+            exception.InnerException.ShouldBeOfType<PostgresException>();
+        postgresException.SqlState.ShouldBe(UniqueViolationSqlState);
     }
 }

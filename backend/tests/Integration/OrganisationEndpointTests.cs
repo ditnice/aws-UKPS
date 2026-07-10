@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Shouldly;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
@@ -46,12 +47,12 @@ public class OrganisationEndpointTests : DatabaseTestBase
         var uri = new Uri("/organisations/1", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
         OrganisationDetailsDto? dto =
             await response.Content.ReadFromJsonAsync<OrganisationDetailsDto>(
                 TestJsonOptions.Default
             );
-        Assert.NotNull(dto);
+        dto.ShouldNotBeNull();
         var expectedDto = new OrganisationDetailsDto
         {
             Id = organisation.Id,
@@ -65,7 +66,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
             LastActive = organisation.LastActive,
             CreatedAt = organisation.CreatedAt,
         };
-        Assert.Equal(expectedDto, dto);
+        dto.ShouldBe(expectedDto);
     }
 
     [Fact]
@@ -74,7 +75,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
         var uri = new Uri("/organisations/999999", UriKind.Relative);
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -99,20 +100,20 @@ public class OrganisationEndpointTests : DatabaseTestBase
             TestJsonOptions.Default
         );
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
         OrganisationDetailsDto? dto =
             await response.Content.ReadFromJsonAsync<OrganisationDetailsDto>(
                 TestJsonOptions.Default
             );
-        Assert.NotNull(dto);
-        Assert.Equal("New Pharma Ltd", dto.OrganisationName);
+        dto.ShouldNotBeNull();
+        dto.OrganisationName.ShouldBe("New Pharma Ltd");
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         Organisation saved = await verifyContext.Organisations.SingleAsync(o => o.Id == 1);
-        Assert.Equal("New Pharma Ltd", saved.OrganisationName);
-        Assert.Equal("1 New Street\nLondon\nEC1A 1AA", saved.HeadOfficeAddress);
-        Assert.Equal("new@example.com", saved.HeadOfficeEmail);
-        Assert.Equal("020 9999 9999", saved.HeadOfficeTelephone);
+        saved.OrganisationName.ShouldBe("New Pharma Ltd");
+        saved.HeadOfficeAddress.ShouldBe("1 New Street\nLondon\nEC1A 1AA");
+        saved.HeadOfficeEmail.ShouldBe("new@example.com");
+        saved.HeadOfficeTelephone.ShouldBe("020 9999 9999");
     }
 
     [Fact]
@@ -127,7 +128,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
             TestJsonOptions.Default
         );
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -152,7 +153,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
             TestJsonOptions.Default
         );
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -177,7 +178,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
             TestJsonOptions.Default
         );
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -191,19 +192,19 @@ public class OrganisationEndpointTests : DatabaseTestBase
 
         HttpResponseMessage response = await _httpClient.PatchAsync(uri, null);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
         OrganisationMembershipDto? dto =
             await response.Content.ReadFromJsonAsync<OrganisationMembershipDto>(
                 TestJsonOptions.Default
             );
-        Assert.NotNull(dto);
-        Assert.Equal(UserOrgStatus.Inactive, dto.Status);
+        dto.ShouldNotBeNull();
+        dto.Status.ShouldBe(UserOrgStatus.Inactive);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
             m.Id == membership.Id
         );
-        Assert.Equal(UserOrgStatus.Inactive, saved.Status);
+        saved.Status.ShouldBe(UserOrgStatus.Inactive);
     }
 
     [Fact]
@@ -217,7 +218,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
 
         HttpResponseMessage response = await _httpClient.PatchAsync(uri, null);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -236,19 +237,19 @@ public class OrganisationEndpointTests : DatabaseTestBase
             TestJsonOptions.Default
         );
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
         OrganisationMembershipDto? dto =
             await response.Content.ReadFromJsonAsync<OrganisationMembershipDto>(
                 TestJsonOptions.Default
             );
-        Assert.NotNull(dto);
-        Assert.Equal(UserRole.Champion, dto.UserRole);
+        dto.ShouldNotBeNull();
+        dto.UserRole.ShouldBe(UserRole.Champion);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
             m.Id == membership.Id
         );
-        Assert.Equal(UserRole.Champion, saved.UserRole);
+        saved.UserRole.ShouldBe(UserRole.Champion);
     }
 
     [Fact]
@@ -267,7 +268,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
             TestJsonOptions.Default
         );
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -286,7 +287,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
 
         HttpResponseMessage response = await _httpClient.PatchAsync(uri, content);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     private static UpdateOrganisationDetailsDto CreateValidUpdateDto() =>

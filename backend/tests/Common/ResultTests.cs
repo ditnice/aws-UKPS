@@ -1,4 +1,5 @@
 using System.Globalization;
+using Shouldly;
 using UKPS.Api.Common;
 
 namespace UKPS.Api.Tests.Common;
@@ -10,8 +11,8 @@ public class ResultTests
     {
         Result<int, string> result = Result<int, string>.Ok(1);
 
-        Assert.True(result.IsOk);
-        Assert.False(result.IsErr);
+        result.IsOk.ShouldBeTrue();
+        result.IsErr.ShouldBeFalse();
     }
 
     [Fact]
@@ -19,8 +20,8 @@ public class ResultTests
     {
         Result<int, string> result = Result<int, string>.Ok(42);
 
-        Assert.Equal(42, result.Value);
-        Assert.Null(result.Error);
+        result.Value.ShouldBe(42);
+        result.Error.ShouldBeNull();
     }
 
     [Fact]
@@ -28,8 +29,8 @@ public class ResultTests
     {
         Result<int, string> result = Result<int, string>.Err("failure");
 
-        Assert.True(result.IsErr);
-        Assert.False(result.IsOk);
+        result.IsErr.ShouldBeTrue();
+        result.IsOk.ShouldBeFalse();
     }
 
     [Fact]
@@ -37,8 +38,8 @@ public class ResultTests
     {
         Result<int, string> result = Result<int, string>.Err("failure");
 
-        Assert.Equal("failure", result.Error);
-        Assert.Equal(0, result.Value);
+        result.Error.ShouldBe("failure");
+        result.Value.ShouldBe(0);
     }
 
     [Fact]
@@ -46,14 +47,10 @@ public class ResultTests
     {
         Result<string, string> result = Result<string, string>.Ok("value");
 
+        result.IsOk.ShouldBeTrue();
         if (result.IsOk)
         {
-            // Compiles without '!' or a null check: [MemberNotNullWhen] narrows Value.
-            Assert.Equal(5, result.Value.Length);
-        }
-        else
-        {
-            Assert.Fail("Expected an Ok result.");
+            result.Value.Length.ShouldBe(5);
         }
     }
 
@@ -64,7 +61,7 @@ public class ResultTests
 
         string matched = result.Match(value => $"ok:{value}", error => $"err:{error}");
 
-        Assert.Equal("ok:42", matched);
+        matched.ShouldBe("ok:42");
     }
 
     [Fact]
@@ -74,7 +71,7 @@ public class ResultTests
 
         string matched = result.Match(value => $"ok:{value}", error => $"err:{error}");
 
-        Assert.Equal("err:failure", matched);
+        matched.ShouldBe("err:failure");
     }
 
     [Fact]
@@ -82,7 +79,7 @@ public class ResultTests
     {
         Result<int, string> result = Result<int, string>.Ok(42);
 
-        Assert.Throws<ArgumentNullException>(() => result.Match(null!, error => error));
+        Should.Throw<ArgumentNullException>(() => result.Match(null!, error => error));
     }
 
     [Fact]
@@ -90,7 +87,7 @@ public class ResultTests
     {
         Result<int, string> result = Result<int, string>.Ok(42);
 
-        Assert.Throws<ArgumentNullException>(() =>
+        Should.Throw<ArgumentNullException>(() =>
             result.Match(value => value.ToString(CultureInfo.InvariantCulture), null!)
         );
     }
@@ -98,13 +95,13 @@ public class ResultTests
     [Fact]
     public void Ok_ValueIsNull_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => Result<string, string>.Ok(null!));
+        Should.Throw<ArgumentNullException>(() => Result<string, string>.Ok(null!));
     }
 
     [Fact]
     public void Err_ErrorIsNull_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => Result<string, string>.Err(null!));
+        Should.Throw<ArgumentNullException>(() => Result<string, string>.Err(null!));
     }
 
     [Fact]
@@ -112,8 +109,8 @@ public class ResultTests
     {
         Result<int, string> result = default;
 
-        Assert.False(result.IsOk);
-        Assert.False(result.IsErr);
+        result.IsOk.ShouldBeFalse();
+        result.IsErr.ShouldBeFalse();
     }
 
     [Fact]
@@ -121,8 +118,8 @@ public class ResultTests
     {
         Result<int, string> result = default;
 
-        Assert.Equal(0, result.Value);
-        Assert.Null(result.Error);
+        result.Value.ShouldBe(0);
+        result.Error.ShouldBeNull();
     }
 
     [Fact]
@@ -130,7 +127,7 @@ public class ResultTests
     {
         Result<int, string> result = default;
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Should.Throw<InvalidOperationException>(() =>
             result.Match(value => value.ToString(CultureInfo.InvariantCulture), error => error)
         );
     }
@@ -141,9 +138,9 @@ public class ResultTests
         Result<int, string> left = Result<int, string>.Ok(1);
         Result<int, string> right = Result<int, string>.Ok(1);
 
-        Assert.True(left.Equals(right));
-        Assert.True(left == right);
-        Assert.False(left != right);
+        left.ShouldBe(right);
+        (left == right).ShouldBeTrue();
+        (left != right).ShouldBeFalse();
     }
 
     [Fact]
@@ -152,9 +149,9 @@ public class ResultTests
         Result<int, string> left = Result<int, string>.Ok(1);
         Result<int, string> right = Result<int, string>.Ok(2);
 
-        Assert.False(left.Equals(right));
-        Assert.False(left == right);
-        Assert.True(left != right);
+        left.ShouldNotBe(right);
+        (left == right).ShouldBeFalse();
+        (left != right).ShouldBeTrue();
     }
 
     [Fact]
@@ -163,9 +160,9 @@ public class ResultTests
         Result<int, string> ok = Result<int, string>.Ok(1);
         Result<int, string> err = Result<int, string>.Err("failure");
 
-        Assert.False(ok.Equals(err));
-        Assert.False(ok == err);
-        Assert.True(ok != err);
+        ok.ShouldNotBe(err);
+        (ok == err).ShouldBeFalse();
+        (ok != err).ShouldBeTrue();
     }
 
     [Fact]
@@ -174,9 +171,9 @@ public class ResultTests
         Result<int, string> left = Result<int, string>.Err("a");
         Result<int, string> right = Result<int, string>.Err("a");
 
-        Assert.True(left.Equals(right));
-        Assert.True(left == right);
-        Assert.False(left != right);
+        left.ShouldBe(right);
+        (left == right).ShouldBeTrue();
+        (left != right).ShouldBeFalse();
     }
 
     [Fact]
@@ -185,9 +182,9 @@ public class ResultTests
         Result<int, string> left = default;
         Result<int, string> right = default;
 
-        Assert.True(left.Equals(right));
-        Assert.True(left == right);
-        Assert.False(left != right);
+        left.ShouldBe(right);
+        (left == right).ShouldBeTrue();
+        (left != right).ShouldBeFalse();
     }
 
     [Fact]
@@ -196,7 +193,7 @@ public class ResultTests
         Result<int, string> left = Result<int, string>.Ok(1);
         Result<int, string> right = Result<int, string>.Ok(1);
 
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        left.GetHashCode().ShouldBe(right.GetHashCode());
     }
 
     [Fact]
@@ -205,7 +202,7 @@ public class ResultTests
         Result<int, string> left = Result<int, string>.Err("a");
         Result<int, string> right = Result<int, string>.Err("a");
 
-        Assert.Equal(left.GetHashCode(), right.GetHashCode());
+        left.GetHashCode().ShouldBe(right.GetHashCode());
     }
 
     [Fact]
@@ -214,7 +211,7 @@ public class ResultTests
         Result<int, string> left = Result<int, string>.Ok(1);
         object right = Result<int, string>.Ok(1);
 
-        Assert.True(left.Equals(right));
+        left.Equals(right).ShouldBeTrue();
     }
 
     [Fact]
@@ -222,6 +219,6 @@ public class ResultTests
     {
         Result<int, string> result = Result<int, string>.Ok(1);
 
-        Assert.False(result.Equals("not a result"));
+        result.Equals("not a result").ShouldBeFalse();
     }
 }

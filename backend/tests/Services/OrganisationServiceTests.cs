@@ -1,5 +1,6 @@
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
+using Shouldly;
 using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
@@ -20,7 +21,10 @@ public class OrganisationServiceTests : DatabaseTestBase
     public OrganisationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _service = new OrganisationService(Context, new StubOrganisationMembershipService());
+        _service = new OrganisationService(
+            Context,
+            Substitute.For<IOrganisationMembershipService>()
+        );
     }
 
     [Fact]
@@ -47,19 +51,19 @@ public class OrganisationServiceTests : DatabaseTestBase
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
             await _service.GetOrganisationById(id);
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         OrganisationDetailsDto? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Equal(id, dto.Id);
-        Assert.Equal("Gov Pharma Ltd", dto.OrganisationName);
-        Assert.Equal(PharmaceuticalEntity.Medicines, dto.AllowedPharmaceuticalEntity);
-        Assert.Equal(OrganisationType.PharmaCompany, dto.OrganisationType);
-        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", dto.HeadOfficeAddress);
-        Assert.Equal("info@pharma.gov.uk", dto.HeadOfficeEmail);
-        Assert.Equal("020 1234 5678", dto.HeadOfficeTelephone);
-        Assert.Equal(UserOrgStatus.Active, dto.Status);
-        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), dto.LastActive);
-        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), dto.CreatedAt);
+        dto.ShouldNotBeNull();
+        dto.Id.ShouldBe(id);
+        dto.OrganisationName.ShouldBe("Gov Pharma Ltd");
+        dto.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Medicines);
+        dto.OrganisationType.ShouldBe(OrganisationType.PharmaCompany);
+        dto.HeadOfficeAddress.ShouldBe("10 Downing Street\nLondon\nSW1A 2AA");
+        dto.HeadOfficeEmail.ShouldBe("info@pharma.gov.uk");
+        dto.HeadOfficeTelephone.ShouldBe("020 1234 5678");
+        dto.Status.ShouldBe(UserOrgStatus.Active);
+        dto.LastActive.ShouldBe(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc));
+        dto.CreatedAt.ShouldBe(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc));
     }
 
     [Fact]
@@ -72,10 +76,10 @@ public class OrganisationServiceTests : DatabaseTestBase
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
             await _service.GetOrganisationById(seededId + 1);
 
-        Assert.True(result.IsErr);
+        result.IsErr.ShouldBeTrue();
         GetOrganisationByIdError.NotFound notFound =
-            Assert.IsType<GetOrganisationByIdError.NotFound>(result.Error);
-        Assert.Equal(seededId + 1, notFound.OrganisationId);
+            result.Error.ShouldBeOfType<GetOrganisationByIdError.NotFound>();
+        notFound.OrganisationId.ShouldBe(seededId + 1);
     }
 
     [Fact]
@@ -90,7 +94,7 @@ public class OrganisationServiceTests : DatabaseTestBase
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
             await _service.UpdateOrganisationDetails(id, CreateUpdateDto());
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         AssertUpdatedDetails(result.Value, createdAt, lastActive);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
@@ -113,10 +117,10 @@ public class OrganisationServiceTests : DatabaseTestBase
                 }
             );
 
-        Assert.True(result.IsErr);
+        result.IsErr.ShouldBeTrue();
         UpdateOrganisationDetailsError.NotFound notFound =
-            Assert.IsType<UpdateOrganisationDetailsError.NotFound>(result.Error);
-        Assert.Equal(99, notFound.OrganisationId);
+            result.Error.ShouldBeOfType<UpdateOrganisationDetailsError.NotFound>();
+        notFound.OrganisationId.ShouldBe(99);
     }
 
     private static Organisation CreateOrganisation() =>
@@ -162,16 +166,16 @@ public class OrganisationServiceTests : DatabaseTestBase
         DateTime lastActive
     )
     {
-        Assert.NotNull(result);
-        Assert.Equal("New Pharma Ltd", result.OrganisationName);
-        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", result.HeadOfficeAddress);
-        Assert.Equal("new@example.com", result.HeadOfficeEmail);
-        Assert.Equal("020 1111 1111", result.HeadOfficeTelephone);
-        Assert.Equal(OrganisationType.PharmaCompany, result.OrganisationType);
-        Assert.Equal(PharmaceuticalEntity.Medicines, result.AllowedPharmaceuticalEntity);
-        Assert.Equal(UserOrgStatus.Active, result.Status);
-        Assert.Equal(lastActive, result.LastActive);
-        Assert.Equal(createdAt, result.CreatedAt);
+        result.ShouldNotBeNull();
+        result.OrganisationName.ShouldBe("New Pharma Ltd");
+        result.HeadOfficeAddress.ShouldBe("10 Downing Street\nLondon\nSW1A 2AA");
+        result.HeadOfficeEmail.ShouldBe("new@example.com");
+        result.HeadOfficeTelephone.ShouldBe("020 1111 1111");
+        result.OrganisationType.ShouldBe(OrganisationType.PharmaCompany);
+        result.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Medicines);
+        result.Status.ShouldBe(UserOrgStatus.Active);
+        result.LastActive.ShouldBe(lastActive);
+        result.CreatedAt.ShouldBe(createdAt);
     }
 
     private static void AssertUpdatedEntity(
@@ -180,34 +184,14 @@ public class OrganisationServiceTests : DatabaseTestBase
         DateTime lastActive
     )
     {
-        Assert.Equal("New Pharma Ltd", saved.OrganisationName);
-        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", saved.HeadOfficeAddress);
-        Assert.Equal("new@example.com", saved.HeadOfficeEmail);
-        Assert.Equal("020 1111 1111", saved.HeadOfficeTelephone);
-        Assert.Equal(OrganisationType.PharmaCompany, saved.OrganisationType);
-        Assert.Equal(PharmaceuticalEntity.Medicines, saved.AllowedPharmaceuticalEntity);
-        Assert.Equal(UserOrgStatus.Active, saved.Status);
-        Assert.Equal(lastActive, saved.LastActive);
-        Assert.Equal(createdAt, saved.CreatedAt);
-    }
-
-    private sealed class StubOrganisationMembershipService : IOrganisationMembershipService
-    {
-        public Task<
-            Result<OrganisationMembershipDto, OrganisationMembershipDeactivateUserError>
-        > DeactivateMembership(
-            int organisationId,
-            int membershipId,
-            CancellationToken cancellationToken
-        ) => throw new UnreachableException();
-
-        Task<
-            Result<OrganisationMembershipDto, OrganisationMembershipUpdateUserRoleError>
-        > IOrganisationMembershipService.UpdateUserRole(
-            int organisationId,
-            int membershipId,
-            UpdateOrgMembershipUserRoleCommandDto command,
-            CancellationToken cancellationToken
-        ) => throw new UnreachableException();
+        saved.OrganisationName.ShouldBe("New Pharma Ltd");
+        saved.HeadOfficeAddress.ShouldBe("10 Downing Street\nLondon\nSW1A 2AA");
+        saved.HeadOfficeEmail.ShouldBe("new@example.com");
+        saved.HeadOfficeTelephone.ShouldBe("020 1111 1111");
+        saved.OrganisationType.ShouldBe(OrganisationType.PharmaCompany);
+        saved.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Medicines);
+        saved.Status.ShouldBe(UserOrgStatus.Active);
+        saved.LastActive.ShouldBe(lastActive);
+        saved.CreatedAt.ShouldBe(createdAt);
     }
 }
