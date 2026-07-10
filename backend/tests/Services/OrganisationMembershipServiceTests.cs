@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
+using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
@@ -139,6 +140,47 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             m.Id == userOrgMembership.Id
         );
         saved.Status.ShouldBe(UserOrgStatus.Inactive);
+    }
+
+    [Theory]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(true, UserRole.Standard, false)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task DeactivateMembership_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        var userOrgMembership = await SetupUserOrgMembership();
+        var testServices = TestServicesFixture.Create(
+            Context,
+            currentUserInfo =>
+                currentUserInfo with
+                {
+                    OrganisationId = organisationIdMatches
+                        ? userOrgMembership.OrganisationId
+                        : 999_999,
+                    UserRole = userRole,
+                }
+        );
+        Result<OrganisationMembershipDto, OrganisationMembershipDeactivateUserError> result =
+            await testServices.OrganisationMembershipService.DeactivateMembership(
+                userOrgMembership.OrganisationId,
+                userOrgMembership.Id,
+                CancellationToken.None
+            );
+
+        if (expectedAuthorised)
+        {
+            Assert.True(result.IsOk);
+            return;
+        }
+
+        Assert.True(result.IsErr);
+        Assert.IsType<OrganisationMembershipDeactivateUserError.NotAllowed>(result.Error);
     }
 
     [Fact]
