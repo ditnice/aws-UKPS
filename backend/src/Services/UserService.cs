@@ -26,11 +26,11 @@ internal sealed class UserService(
     {
         if (organisationId.HasValue)
         {
-            bool notAllowed = organisationAuthoriser.CanPerformOperationOnOrganisation(
+            bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
                 Operation.Read,
                 organisationId.Value
             );
-            if (!notAllowed)
+            if (!actionPermitted)
             {
                 return GetUsersResult.Err(new GetUsersError.NotAllowed(organisationId.Value));
             }
