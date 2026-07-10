@@ -4,8 +4,8 @@ using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
-using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
+using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
@@ -15,18 +15,18 @@ namespace UKPS.Api.Tests.Services;
 [Collection(DatabaseCollection.Name)]
 public class OrganisationMembershipServiceTests : DatabaseTestBase
 {
-    private readonly OrganisationMembershipService _service;
     private readonly UserFaker _userFaker;
     private readonly UserOrgMembershipFaker _membershipFaker;
     private readonly OrganisationFaker _organisationFaker;
+    private readonly IOrganisationMembershipService _service;
 
     public OrganisationMembershipServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _service = new OrganisationMembershipService(Context);
         _userFaker = new UserFaker();
         _membershipFaker = new UserOrgMembershipFaker();
         _organisationFaker = new OrganisationFaker();
+        _service = TestServicesFixture.Create(Context).OrganisationMembershipService;
     }
 
     [Theory]
@@ -53,6 +53,48 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             m.Id == userOrgMembership.Id
         );
         saved.UserRole.ShouldBe(userRole);
+    }
+
+    [Theory]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(true, UserRole.Standard, false)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task UpdateUserRole_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        var userOrgMembership = await SetupUserOrgMembership();
+        var command = new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Champion };
+        var testServices = TestServicesFixture.Create(
+            Context,
+            currentUserInfo =>
+                currentUserInfo with
+                {
+                    OrganisationId = organisationIdMatches
+                        ? userOrgMembership.OrganisationId
+                        : 999_999,
+                    UserRole = userRole,
+                }
+        );
+        var result = await testServices.OrganisationMembershipService.UpdateUserRole(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            command,
+            CancellationToken.None
+        );
+
+        if (expectedAuthorised)
+        {
+            Assert.True(result.IsOk);
+            return;
+        }
+
+        Assert.True(result.IsErr);
+        Assert.IsType<OrganisationMembershipUpdateUserRoleError.NotAllowed>(result.Error);
     }
 
     [Fact]
