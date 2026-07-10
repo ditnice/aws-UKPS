@@ -2,7 +2,7 @@ namespace UKPS.Api.Services.Errors;
 
 public abstract record UpdateOrganisationDetailsError
 {
-    private protected UpdateOrganisationDetailsError() { }
+    public sealed record NotAllowed(int OrganisationId) : UpdateOrganisationDetailsError;
 
     public sealed record NotFound(int OrganisationId) : UpdateOrganisationDetailsError;
 }

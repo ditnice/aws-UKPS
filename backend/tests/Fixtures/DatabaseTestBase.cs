@@ -18,6 +18,14 @@ public abstract class DatabaseTestBase : IAsyncLifetime, IAsyncDisposable
 
     public Task InitializeAsync() => Fixture.ResetDatabaseAsync();
 
+    protected async Task<T> AddEntity<T>(T entity)
+        where T : class
+    {
+        Context.Add(entity);
+        await Context.SaveChangesAsync();
+        return entity;
+    }
+
     async Task IAsyncLifetime.DisposeAsync() => await DisposeAsync();
 
     public async ValueTask DisposeAsync()
