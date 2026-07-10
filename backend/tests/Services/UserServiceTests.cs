@@ -1,16 +1,23 @@
 using Shouldly;
 using UKPS.Api.Common;
 using UKPS.Api.DTOs;
+using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Data;
+using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Services;
 
 [Collection(DatabaseCollection.Name)]
 public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
 {
+    private readonly OrganisationFaker _organisationFaker = new();
+    private readonly UserFaker _userFaker = new();
+    private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
+
     [Fact]
     public async Task GetUsers_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
     {
@@ -28,7 +35,7 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
     [Fact]
     public async Task GetUsers_ReturnsEmptyPage_WhenOrganisationHasNoUsers()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        Context.Organisations.Add(_organisationFaker.Generate());
         await Context.SaveChangesAsync();
 
         UserService service = new(Context);
@@ -48,17 +55,20 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
     [Fact]
     public async Task GetUsers_MapsUserMembershipFields_WhenUsersExist()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
-        Context.Users.Add(EntityFactory.CreateUser(id: 10, workEmail: "user@example.com"));
-        Context.UserOrgMemberships.Add(
-            EntityFactory.CreateMembership(
-                id: 100,
-                userId: 10,
-                organisationId: 1,
-                role: UserRole.Champion,
-                status: UserOrgStatus.Active
-            )
-        );
+        var organisation = _organisationFaker.Generate();
+        var user = _userFaker.Generate();
+        user.Update(x => x.WorkEmail = "user@example.com");
+        var membership = _userOrgMembershipFaker.Generate();
+        membership.Update(x =>
+        {
+            x.UserId = user.Id;
+            x.OrganisationId = organisation.Id;
+            x.UserRole = UserRole.Champion;
+            x.Status = UserOrgStatus.Active;
+        });
+        Context.Organisations.Add(organisation);
+        Context.Users.Add(user);
+        Context.UserOrgMemberships.Add(membership);
         await Context.SaveChangesAsync();
 
         UserService service = new(Context);
@@ -68,10 +78,11 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
+
         dto.ShouldNotBeNull();
         UserListItemDto item = dto.Items.ShouldHaveSingleItem();
-        item.UserId.ShouldBe(10);
-        item.EmailAddress.ShouldBe("user@example.com");
+        item.UserId.ShouldBe(user.Id);
+        item.EmailAddress.ShouldBe(user.WorkEmail);
         item.Role.ShouldBe(UserRole.Champion);
         item.Status.ShouldBe(UserOrgStatus.Active);
         item.LastActive.ShouldBeNull();
@@ -80,32 +91,23 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
     [Fact]
     public async Task GetUsers_FiltersByMultipleStatuses_WhenStatusesProvided()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
-        Context.Users.AddRange(
-            EntityFactory.CreateUser(id: 1, workEmail: "requested-access@example.com"),
-            EntityFactory.CreateUser(id: 2, workEmail: "active@example.com"),
-            EntityFactory.CreateUser(id: 3, workEmail: "inactive@example.com")
-        );
-        Context.UserOrgMemberships.AddRange(
-            EntityFactory.CreateMembership(
-                id: 1,
-                userId: 1,
-                organisationId: 1,
-                status: UserOrgStatus.RequestedAccess
-            ),
-            EntityFactory.CreateMembership(
-                id: 2,
-                userId: 2,
-                organisationId: 1,
-                status: UserOrgStatus.Active
-            ),
-            EntityFactory.CreateMembership(
-                id: 3,
-                userId: 3,
-                organisationId: 1,
-                status: UserOrgStatus.Inactive
-            )
-        );
+        UserOrgStatus[] userOrgStatuses =
+        [
+            UserOrgStatus.RequestedAccess,
+            UserOrgStatus.Active,
+            UserOrgStatus.Inactive,
+        ];
+        Organisation organisation = _organisationFaker.Generate();
+        var data = userOrgStatuses.Select(s =>
+        {
+            var user = _userFaker.Generate();
+            var membership = _userOrgMembershipFaker.Generate();
+            membership.User = user;
+            membership.Organisation = organisation;
+            membership.Status = s;
+            return membership;
+        });
+        Context.UserOrgMemberships.AddRange(data);
         await Context.SaveChangesAsync();
 
         UserService service = new(Context);
@@ -123,16 +125,37 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
     [Fact]
     public async Task GetUsers_PaginatesAndOrdersByUserId_WhenUsersExist()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        Context.Organisations.Add(_organisationFaker.Generate().Update(x => x.Id = 1));
         Context.Users.AddRange(
-            EntityFactory.CreateUser(id: 30, workEmail: "thirty@example.com"),
-            EntityFactory.CreateUser(id: 10, workEmail: "ten@example.com"),
-            EntityFactory.CreateUser(id: 20, workEmail: "twenty@example.com")
+            _userFaker.Generate().Update(x => x.Id = 30),
+            _userFaker.Generate().Update(x => x.Id = 10),
+            _userFaker.Generate().Update(x => x.Id = 20)
         );
         Context.UserOrgMemberships.AddRange(
-            EntityFactory.CreateMembership(id: 1, userId: 30, organisationId: 1),
-            EntityFactory.CreateMembership(id: 2, userId: 10, organisationId: 1),
-            EntityFactory.CreateMembership(id: 3, userId: 20, organisationId: 1)
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 1;
+                    x.UserId = 30;
+                    x.OrganisationId = 1;
+                }),
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 2;
+                    x.UserId = 10;
+                    x.OrganisationId = 1;
+                }),
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 3;
+                    x.UserId = 20;
+                    x.OrganisationId = 1;
+                })
         );
         await Context.SaveChangesAsync();
 
@@ -155,16 +178,42 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
     public async Task GetUsers_ReturnsUsersAcrossOrganisations_WhenOrganisationIdIsMissing()
     {
         Context.Organisations.AddRange(
-            EntityFactory.CreateOrganisation(id: 1),
-            EntityFactory.CreateOrganisation(id: 2)
+            _organisationFaker.Generate().Update(x => x.Id = 1),
+            _organisationFaker.Generate().Update(x => x.Id = 2)
         );
         Context.Users.AddRange(
-            EntityFactory.CreateUser(id: 10, workEmail: "one@example.com"),
-            EntityFactory.CreateUser(id: 20, workEmail: "two@example.com")
+            _userFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 10;
+                    x.WorkEmail = "one@example.com";
+                }),
+            _userFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 20;
+                    x.WorkEmail = "two@example.com";
+                })
         );
         Context.UserOrgMemberships.AddRange(
-            EntityFactory.CreateMembership(id: 1, userId: 10, organisationId: 1),
-            EntityFactory.CreateMembership(id: 2, userId: 20, organisationId: 2)
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 1;
+                    x.UserId = 10;
+                    x.OrganisationId = 1;
+                }),
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 2;
+                    x.UserId = 20;
+                    x.OrganisationId = 2;
+                })
         );
         await Context.SaveChangesAsync();
 
@@ -184,26 +233,44 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
     public async Task GetUsers_FiltersByStatus_WhenOrganisationIdIsMissing()
     {
         Context.Organisations.AddRange(
-            EntityFactory.CreateOrganisation(id: 1),
-            EntityFactory.CreateOrganisation(id: 2)
+            _organisationFaker.Generate().Update(x => x.Id = 1),
+            _organisationFaker.Generate().Update(x => x.Id = 2)
         );
         Context.Users.AddRange(
-            EntityFactory.CreateUser(id: 10, workEmail: "active@example.com"),
-            EntityFactory.CreateUser(id: 20, workEmail: "inactive@example.com")
+            _userFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 10;
+                    x.WorkEmail = "active@example.com";
+                }),
+            _userFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 20;
+                    x.WorkEmail = "inactive@example.com";
+                })
         );
         Context.UserOrgMemberships.AddRange(
-            EntityFactory.CreateMembership(
-                id: 1,
-                userId: 10,
-                organisationId: 1,
-                status: UserOrgStatus.Active
-            ),
-            EntityFactory.CreateMembership(
-                id: 2,
-                userId: 20,
-                organisationId: 2,
-                status: UserOrgStatus.Inactive
-            )
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 1;
+                    x.UserId = 10;
+                    x.OrganisationId = 1;
+                    x.Status = UserOrgStatus.Active;
+                }),
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 2;
+                    x.UserId = 20;
+                    x.OrganisationId = 2;
+                    x.Status = UserOrgStatus.Inactive;
+                })
         );
         await Context.SaveChangesAsync();
 
@@ -224,10 +291,25 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
     [Fact]
     public async Task GetUsers_PageBeyondLastPage_ReturnsEmptyItemsWithCorrectTotalCount()
     {
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
-        Context.Users.Add(EntityFactory.CreateUser(id: 10, workEmail: "user@example.com"));
+        Context.Organisations.Add(_organisationFaker.Generate().Update(x => x.Id = 1));
+        Context.Users.Add(
+            _userFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 10;
+                    x.WorkEmail = "user@example.com";
+                })
+        );
         Context.UserOrgMemberships.Add(
-            EntityFactory.CreateMembership(id: 1, userId: 10, organisationId: 1)
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 1;
+                    x.UserId = 10;
+                    x.OrganisationId = 1;
+                })
         );
         await Context.SaveChangesAsync();
 
@@ -248,23 +330,37 @@ public class UserServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixtur
     public async Task GetUsers_UserHasMembershipsInMultipleOrganisations_ReturnsOneRowPerMembership()
     {
         Context.Organisations.AddRange(
-            EntityFactory.CreateOrganisation(id: 1),
-            EntityFactory.CreateOrganisation(id: 2)
+            _organisationFaker.Generate().Update(x => x.Id = 1),
+            _organisationFaker.Generate().Update(x => x.Id = 2)
         );
-        Context.Users.Add(EntityFactory.CreateUser(id: 10, workEmail: "multi@example.com"));
+        Context.Users.Add(
+            _userFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 10;
+                    x.WorkEmail = "multi@example.com";
+                })
+        );
         Context.UserOrgMemberships.AddRange(
-            EntityFactory.CreateMembership(
-                id: 1,
-                userId: 10,
-                organisationId: 1,
-                allowedPharmaceuticalEntity: PharmaceuticalEntity.Medicines
-            ),
-            EntityFactory.CreateMembership(
-                id: 2,
-                userId: 10,
-                organisationId: 2,
-                allowedPharmaceuticalEntity: PharmaceuticalEntity.Medicines
-            )
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 1;
+                    x.UserId = 10;
+                    x.OrganisationId = 1;
+                    x.AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines;
+                }),
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.Id = 2;
+                    x.UserId = 10;
+                    x.OrganisationId = 2;
+                    x.AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines;
+                })
         );
         await Context.SaveChangesAsync();
 

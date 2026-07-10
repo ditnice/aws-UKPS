@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Shouldly;
-using UKPS.Api.Enums;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Data;
+using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Data;
 
@@ -10,6 +11,9 @@ namespace UKPS.Api.Tests.Data;
 public class DatabaseConstraintTests : DatabaseTestBase
 {
     private const string UniqueViolationSqlState = "23505";
+    private readonly UserFaker _userFaker = new UserFaker();
+    private readonly OrganisationFaker _organisationFaker = new OrganisationFaker();
+    private readonly UserOrgMembershipFaker _membershipFaker = new UserOrgMembershipFaker();
 
     public DatabaseConstraintTests(PostgresFixture fixture)
         : base(fixture) { }
@@ -18,28 +22,23 @@ public class DatabaseConstraintTests : DatabaseTestBase
     public async Task SaveChangesAsync_DuplicateMembershipKey_ThrowsDbUpdateException()
     {
         // Both FKs are Restrict, so the parent User and Organisation rows must exist first.
-        Context.Users.Add(EntityFactory.CreateUser(id: 1, workEmail: "member@example.com"));
-        Context.Organisations.Add(EntityFactory.CreateOrganisation(id: 1));
+        var user = _userFaker.Generate();
+        Context.Users.Add(user);
+        var organisation = _organisationFaker.Generate();
+        Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
-        Context.UserOrgMemberships.Add(
-            EntityFactory.CreateMembership(
-                id: 1,
-                userId: 1,
-                organisationId: 1,
-                allowedPharmaceuticalEntity: PharmaceuticalEntity.Both
-            )
-        );
+        var membership = _membershipFaker
+            .Generate()
+            .Update(x =>
+            {
+                x.UserId = user.Id;
+                x.OrganisationId = organisation.Id;
+            });
+        Context.UserOrgMemberships.Add(membership);
         await Context.SaveChangesAsync();
 
-        Context.UserOrgMemberships.Add(
-            EntityFactory.CreateMembership(
-                id: 2,
-                userId: 1,
-                organisationId: 1,
-                allowedPharmaceuticalEntity: PharmaceuticalEntity.Both
-            )
-        );
+        Context.UserOrgMemberships.Add(membership.Update(x => x.Id = 2));
 
         DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
@@ -50,10 +49,30 @@ public class DatabaseConstraintTests : DatabaseTestBase
     [Fact]
     public async Task SaveChangesAsync_DuplicateUsername_ThrowsDbUpdateException()
     {
-        Context.Users.Add(EntityFactory.CreateUser(id: 1, workEmail: "duplicate@example.com"));
+        var duplicateUsername = "duplicate-name";
+        var user1 = _userFaker.Generate().Update(x => x.Username = duplicateUsername);
+        var user2 = _userFaker.Generate().Update(x => x.Username = duplicateUsername);
+        Context.Users.Add(user1);
         await Context.SaveChangesAsync();
 
-        Context.Users.Add(EntityFactory.CreateUser(id: 2, workEmail: "duplicate@example.com"));
+        Context.Users.Add(user2);
+
+        DbUpdateException exception = await Assert.ThrowsAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        AssertUniqueViolation(exception);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_DuplicateWorkEmail_ThrowsDbUpdateException()
+    {
+        var duplicateEmail = "duplicate@example.com";
+        var user1 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
+        var user2 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
+        Context.Users.Add(user1);
+        await Context.SaveChangesAsync();
+
+        Context.Users.Add(user2);
 
         DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
