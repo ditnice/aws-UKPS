@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Shouldly;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Data;
@@ -27,15 +28,17 @@ public class DatabaseConstraintTests : DatabaseTestBase
         Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
-        var membership = _membershipFaker.Generate() with
-        {
-            UserId = user.Id,
-            OrganisationId = organisation.Id,
-        };
+        var membership = _membershipFaker
+            .Generate()
+            .Update(x =>
+            {
+                x.UserId = user.Id;
+                x.OrganisationId = organisation.Id;
+            });
         Context.UserOrgMemberships.Add(membership);
         await Context.SaveChangesAsync();
 
-        Context.UserOrgMemberships.Add(membership with { Id = 2 });
+        Context.UserOrgMemberships.Add(membership.Update(x => x.Id = 2));
 
         DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
@@ -47,8 +50,8 @@ public class DatabaseConstraintTests : DatabaseTestBase
     public async Task SaveChangesAsync_DuplicateUsername_ThrowsDbUpdateException()
     {
         var duplicateUsername = "duplicate-name";
-        var user1 = _userFaker.Generate() with { Username = duplicateUsername };
-        var user2 = _userFaker.Generate() with { Username = duplicateUsername };
+        var user1 = _userFaker.Generate().Update(x => x.Username = duplicateUsername);
+        var user2 = _userFaker.Generate().Update(x => x.Username = duplicateUsername);
         Context.Users.Add(user1);
         await Context.SaveChangesAsync();
 
@@ -64,8 +67,8 @@ public class DatabaseConstraintTests : DatabaseTestBase
     public async Task SaveChangesAsync_DuplicateWorkEmail_ThrowsDbUpdateException()
     {
         var duplicateEmail = "duplicate@example.com";
-        var user1 = _userFaker.Generate() with { WorkEmail = duplicateEmail };
-        var user2 = _userFaker.Generate() with { WorkEmail = duplicateEmail };
+        var user1 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
+        var user2 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
         Context.Users.Add(user1);
         await Context.SaveChangesAsync();
 

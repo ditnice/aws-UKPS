@@ -5,6 +5,7 @@ using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Integration;
@@ -33,23 +34,29 @@ public class UserEndpointTests : DatabaseTestBase
         Context.Users.AddRange(users);
 
         Context.UserOrgMemberships.AddRange(
-            _membershipFaker.Generate() with
-            {
-                UserId = users[0].Id,
-                OrganisationId = organisations[0].Id,
-                Status = UserOrgStatus.RequestedAccess,
-            },
-            _membershipFaker.Generate() with
-            {
-                UserId = users[1].Id,
-                OrganisationId = organisations[0].Id,
-                Status = UserOrgStatus.Active,
-            },
-            _membershipFaker.Generate() with
-            {
-                UserId = users[2].Id,
-                OrganisationId = organisations[1].Id,
-            }
+            _membershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = users[0].Id;
+                    x.OrganisationId = organisations[0].Id;
+                    x.Status = UserOrgStatus.RequestedAccess;
+                }),
+            _membershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = users[1].Id;
+                    x.OrganisationId = organisations[0].Id;
+                    x.Status = UserOrgStatus.Active;
+                }),
+            _membershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = users[2].Id;
+                    x.OrganisationId = organisations[1].Id;
+                })
         );
 
         await Context.SaveChangesAsync();
@@ -70,36 +77,39 @@ public class UserEndpointTests : DatabaseTestBase
     public async Task GetUsers_StatusQueryParametersProvided_FiltersByStatus()
     {
         var organisation = _organisationFaker.Generate();
-
-        var requestedUser = _userFaker.Generate() with { WorkEmail = "requested@example.com" };
-
-        var activeUser = _userFaker.Generate() with { WorkEmail = "active@example.com" };
-
-        var inactiveUser = _userFaker.Generate() with { WorkEmail = "inactive@example.com" };
+        var requestedUser = _userFaker.Generate();
+        var activeUser = _userFaker.Generate();
+        var inactiveUser = _userFaker.Generate();
 
         Context.Organisations.Add(organisation);
 
         Context.Users.AddRange(requestedUser, activeUser, inactiveUser);
 
         Context.UserOrgMemberships.AddRange(
-            _membershipFaker.Generate() with
-            {
-                UserId = requestedUser.Id,
-                OrganisationId = organisation.Id,
-                Status = UserOrgStatus.RequestedAccess,
-            },
-            _membershipFaker.Generate() with
-            {
-                UserId = activeUser.Id,
-                OrganisationId = organisation.Id,
-                Status = UserOrgStatus.Active,
-            },
-            _membershipFaker.Generate() with
-            {
-                UserId = inactiveUser.Id,
-                OrganisationId = organisation.Id,
-                Status = UserOrgStatus.Inactive,
-            }
+            _membershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = requestedUser.Id;
+                    x.OrganisationId = organisation.Id;
+                    x.Status = UserOrgStatus.RequestedAccess;
+                }),
+            _membershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = activeUser.Id;
+                    x.OrganisationId = organisation.Id;
+                    x.Status = UserOrgStatus.Active;
+                }),
+            _membershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = inactiveUser.Id;
+                    x.OrganisationId = organisation.Id;
+                    x.Status = UserOrgStatus.Inactive;
+                })
         );
 
         await Context.SaveChangesAsync();
