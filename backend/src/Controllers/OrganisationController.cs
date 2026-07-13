@@ -13,9 +13,12 @@ public class OrganisationController(IOrganisationService organisationService) : 
     [HttpGet("{id:int}")]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(int id)
+    public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(
+        int id,
+        CancellationToken cancellationToken
+    )
     {
-        var result = await organisationService.GetOrganisationById(id);
+        var result = await organisationService.GetOrganisationById(id, cancellationToken);
 
         return result.Match<ActionResult<OrganisationDetailsDto>>(
             organisation => Ok(organisation),
@@ -36,7 +39,8 @@ public class OrganisationController(IOrganisationService organisationService) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationDetailsDto>> UpdateOrganisationDetails(
         int id,
-        UpdateOrganisationDetailsDto organisationDetails
+        UpdateOrganisationDetailsDto organisationDetails,
+        CancellationToken cancellationToken
     )
     {
         if (!ModelState.IsValid)
@@ -44,7 +48,11 @@ public class OrganisationController(IOrganisationService organisationService) : 
             return BadRequest(ModelState);
         }
 
-        var result = await organisationService.UpdateOrganisationDetails(id, organisationDetails);
+        var result = await organisationService.UpdateOrganisationDetails(
+            id,
+            organisationDetails,
+            cancellationToken
+        );
 
         return result.Match<ActionResult<OrganisationDetailsDto>>(
             organisation => Ok(organisation),

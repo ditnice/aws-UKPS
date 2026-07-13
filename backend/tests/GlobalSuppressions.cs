@@ -7,3 +7,10 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.Tests.Fixtures"
 )]
+[assembly: SuppressMessage(
+    "Design",
+    "MA0051:Method is too long",
+    Justification = "Long method names for tests are completely fine.",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api.Tests"
+)]

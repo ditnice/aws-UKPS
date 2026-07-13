@@ -21,7 +21,8 @@ internal sealed class UserService(
         int? organisationId,
         int page,
         int pageSize,
-        IReadOnlyCollection<UserOrgStatus> statuses
+        IReadOnlyCollection<UserOrgStatus> statuses,
+        CancellationToken cancellationToken
     )
     {
         if (organisationId.HasValue)
@@ -34,8 +35,9 @@ internal sealed class UserService(
             {
                 return GetUsersResult.Err(new GetUsersError.NotAllowed(organisationId.Value));
             }
-            bool organisationExists = await dbContext.Organisations.AnyAsync(o =>
-                o.Id == organisationId.Value
+            bool organisationExists = await dbContext.Organisations.AnyAsync(
+                o => o.Id == organisationId.Value,
+                cancellationToken
             );
 
             if (!organisationExists)
@@ -56,7 +58,7 @@ internal sealed class UserService(
             statuses
         );
 
-        int totalCount = await organisationMemberships.CountAsync();
+        int totalCount = await organisationMemberships.CountAsync(cancellationToken);
 
         List<UserListItemDto> items = await organisationMemberships
             .OrderBy(m => m.User!.Id)
@@ -71,7 +73,7 @@ internal sealed class UserService(
                 // No user-level last-active source exists yet.
                 LastActive = null,
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return GetUsersResult.Ok(
             new PaginatedResponseDto<UserListItemDto>
