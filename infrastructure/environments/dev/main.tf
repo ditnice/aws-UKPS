@@ -28,6 +28,17 @@ module "kms_backend" {
   service_name = "backend"
 }
 
+# SNS
+module "sns" {
+  source = "../../modules/sns"
+
+  project         = local.project
+  environment     = local.environment
+  service_name    = local.service_name
+  sns_kms_arn     = module.kms_frontend.app_key_arn
+  sns_alarm_email = var.sns_alarm_email
+}
+
 # ECR - Frontend
 module "ecr_frontend" {
   source = "../../modules/ecr"
@@ -97,6 +108,40 @@ module "ecs_frontend" {
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
 }
 
+# ECS - Frontend Alerts
+module "frontend_ecs_alerts" {
+  source = "../../modules/cloudwatch/ecs-alerts"
+
+  project            = local.project
+  environment        = local.environment
+  service_name       = "${local.service_name}-frontend"
+  sns_topic_arn      = module.sns.ecs_alarms_topic_arn
+  load_balancer_id   = module.alb.alb_arn_suffix
+  target_group_id    = module.alb.frontend_target_group_arn_suffix
+  log_group_name     = module.ecs_frontend.cloudwatch_log_group_name
+  desired_task_count = module.ecs_frontend.ecs_desired_count
+  cluster_name       = module.ecs_frontend.cluster_name
+  log_pattern_alarms = {
+    error-logs = {
+      pattern           = "\"ERROR\""
+      alarm_description = "Frontend ECS logs contain ERROR entries"
+    }
+    exception-logs = {
+      pattern           = "\"Exception\""
+      alarm_description = "Frontend ECS logs contain Exception entries"
+    }
+    http-5xx = {
+      pattern             = "{ $.statusCode >= 500 }"
+      threshold           = 5
+      evaluation_periods  = 2
+      datapoints_to_alarm = 2
+      period              = 60
+      statistic           = "Sum"
+      alarm_description   = "Frontend ECS logs contain repeated HTTP 5XX responses"
+    }
+  }
+}
+
 # ECS - Backend
 module "ecs_backend" {
   source = "../../modules/ecs"
@@ -117,6 +162,40 @@ module "ecs_backend" {
   target_group_arn         = module.alb.backend_target_group_arn
   alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
+}
+
+# ECS - Backend Alerts
+module "backend_ecs_alerts" {
+  source = "../../modules/cloudwatch/ecs-alerts"
+
+  project            = local.project
+  environment        = local.environment
+  service_name       = "${local.service_name}-backend"
+  sns_topic_arn      = module.sns.ecs_alarms_topic_arn
+  load_balancer_id   = module.alb.alb_arn_suffix
+  target_group_id    = module.alb.backend_target_group_arn_suffix
+  log_group_name     = module.ecs_backend.cloudwatch_log_group_name
+  desired_task_count = module.ecs_backend.ecs_desired_count
+  cluster_name       = module.ecs_backend.cluster_name
+  log_pattern_alarms = {
+    error-logs = {
+      pattern           = "\"ERROR\""
+      alarm_description = "Backend ECS logs contain ERROR entries"
+    }
+    exception-logs = {
+      pattern           = "\"Exception\""
+      alarm_description = "Backend ECS logs contain Exception entries"
+    }
+    http-5xx = {
+      pattern             = "{ $.statusCode >= 500 }"
+      threshold           = 5
+      evaluation_periods  = 2
+      datapoints_to_alarm = 2
+      period              = 60
+      statistic           = "Sum"
+      alarm_description   = "Backend ECS logs contain repeated HTTP 5XX responses"
+    }
+  }
 }
 
 resource "aws_db_subnet_group" "aurora" {
@@ -155,6 +234,16 @@ module "aurora_frontend" {
   final_snapshot_identifier    = "${var.aurora_final_snapshot_identifier}-frontend"
 }
 
+# Aurora - Frontend Alerts
+module "frontend_aurora_alerts" {
+  source = "../../modules/cloudwatch/rds-alerts"
+
+  db_cluster_identifier = module.aurora_frontend.cluster_identifier
+  db_instance_id        = module.aurora_frontend.instance_id
+  sns_topic_arn         = module.sns.rds_alarms_topic_arn
+  connection_threshold  = var.connection_threshold
+}
+
 # Aurora - Backend
 module "aurora_backend" {
   source = "../../modules/aurora"
@@ -178,4 +267,14 @@ module "aurora_backend" {
   preferred_maintenance_window = var.aurora_preferred_maintenance_window
   skip_final_snapshot          = var.aurora_skip_final_snapshot
   final_snapshot_identifier    = "${var.aurora_final_snapshot_identifier}-backend"
+}
+
+# Aurora - Backend Alerts
+module "backend_aurora_alerts" {
+  source = "../../modules/cloudwatch/rds-alerts"
+
+  db_cluster_identifier = module.aurora_backend.cluster_identifier
+  db_instance_id        = module.aurora_backend.instance_id
+  sns_topic_arn         = module.sns.rds_alarms_topic_arn
+  connection_threshold  = var.connection_threshold
 }
