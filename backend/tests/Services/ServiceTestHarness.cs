@@ -37,6 +37,7 @@ internal sealed class ServiceTestHarness<TService>
     public ServiceTestHarness<TService> UpdateCurrentUser(Func<CurrentUser, CurrentUser> update)
     {
         _currentUser = update(_currentUser);
+        _mockCurrentUserInfoService.GetCurrentUserInfo().Returns(_currentUser);
         return this;
     }
 }
