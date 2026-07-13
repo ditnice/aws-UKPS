@@ -71,7 +71,7 @@
 | <a name="input_frontend_db_master_username"></a> [frontend\_db\_master\_username](#input\_frontend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
 | <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpsdev_frontend"` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
-| <a name="input_sns_alarm_email"></a> [sns\_alarm\_email](#input\_sns\_alarm\_email) | Email address to receive SNS alarm notifications | `string` | n/a | yes |
+| <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | `map(string)` | n/a | yes |
 
 ## Outputs
 

@@ -19,7 +19,7 @@ variable "environment" {
 }
 
 variable "service_name" {
-  description = "Logical ECS service or workload name used in ECS resource names"
+  description = "Short workload name used in SNS topic names"
   type        = string
 
   validation {
@@ -28,14 +28,14 @@ variable "service_name" {
   }
 }
 
-variable "sns_alarm_email" {
-  description = "Email address subscribed to ECS-related alarm notifications"
-  type        = string
+variable "sns_alarm_emails" {
+  description = "Map of recipient labels to email addresses subscribed to alarm notifications"
+  type        = map(string)
   sensitive   = true
 
   validation {
-    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.sns_alarm_email))
-    error_message = "SNS alarm email must be a valid email address."
+    condition     = length(var.sns_alarm_emails) > 0 && alltrue([for email in values(var.sns_alarm_emails) : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", email))])
+    error_message = "SNS alarm emails must contain at least one valid email address."
   }
 }
 

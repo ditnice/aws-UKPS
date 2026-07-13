@@ -166,7 +166,8 @@ variable "connection_threshold" {
   default     = 100
 }
 
-variable "sns_alarm_email" {
-  description = "Email address to receive SNS alarm notifications"
-  type        = string
+variable "sns_alarm_emails" {
+  description = "Map of recipient labels to email addresses subscribed to alarm notifications"
+  type        = map(string)
+  sensitive   = true
 }
