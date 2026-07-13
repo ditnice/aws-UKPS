@@ -8,7 +8,7 @@ using UKPS.Api.Data;
 
 namespace UKPS.Api.Tests.Fixtures;
 
-public sealed class PostgresFixture : IAsyncLifetime, IAsyncDisposable
+public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder(
         "postgres:17-alpine"
@@ -19,7 +19,7 @@ public sealed class PostgresFixture : IAsyncLifetime, IAsyncDisposable
 
     public ApiFactory Factory => _factory ??= new ApiFactory(_container.GetConnectionString());
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _container.StartAsync();
 
@@ -71,8 +71,6 @@ public sealed class PostgresFixture : IAsyncLifetime, IAsyncDisposable
 
         return new AppDbContext(options);
     }
-
-    async Task IAsyncLifetime.DisposeAsync() => await DisposeAsync();
 
     public async ValueTask DisposeAsync()
     {
