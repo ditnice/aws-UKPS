@@ -7,3 +7,10 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.Tests.Fixtures"
 )]
+[assembly: SuppressMessage(
+    "Maintainability",
+    "CA1515:Consider making public types internal",
+    Justification = "<Pending>",
+    Scope = "type",
+    Target = "~T:UKPS.Api.Tests.Services.Organisations.OrganisationServiceWebApiTests"
+)]

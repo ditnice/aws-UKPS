@@ -10,6 +10,7 @@ using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
+using UKPS.Api.Tests.Utilities.Harnesses;
 
 namespace UKPS.Api.Tests.Services;
 
