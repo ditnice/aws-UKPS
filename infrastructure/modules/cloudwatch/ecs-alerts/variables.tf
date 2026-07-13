@@ -232,6 +232,98 @@ variable "running_tasks_datapoints_to_alarm" {
   }
 }
 
+variable "log_group_name" {
+  description = "CloudWatch log group name containing ECS service logs. Required when log_pattern_alarms is not empty."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.log_group_name == null || length(trim(var.log_group_name, " ")) > 0
+    error_message = "Log group name cannot be empty when provided."
+  }
+
+  validation {
+    condition     = length(var.log_pattern_alarms) == 0 || var.log_group_name != null
+    error_message = "log_group_name is required when log_pattern_alarms is not empty."
+  }
+}
+
+variable "log_pattern_alarms" {
+  description = "CloudWatch Logs metric filters and alarms for ECS log pattern matching. Empty by default, so no log pattern alarms are created unless configured."
+  type = map(object({
+    pattern             = string
+    threshold           = optional(number, 1)
+    evaluation_periods  = optional(number, 1)
+    datapoints_to_alarm = optional(number, 1)
+    period              = optional(number, 60)
+    statistic           = optional(string, "Sum")
+    comparison_operator = optional(string, "GreaterThanOrEqualToThreshold")
+    treat_missing_data  = optional(string, "notBreaching")
+    metric_name         = optional(string)
+    metric_value        = optional(string, "1")
+    alarm_description   = optional(string)
+  }))
+  default = {}
+
+  validation {
+    condition     = alltrue([for name in keys(var.log_pattern_alarms) : can(regex("^[a-z][a-z0-9-]{1,61}[a-z0-9]$", name))])
+    error_message = "Each log pattern alarm key must be 3-63 characters, start with a lowercase letter, end with a lowercase letter or number, and contain only lowercase letters, numbers, or hyphens."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : length(trim(alarm.pattern, " ")) > 0])
+    error_message = "Each log pattern alarm must provide a non-empty pattern."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : alarm.threshold >= 0])
+    error_message = "Each log pattern alarm threshold must be 0 or greater."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : alarm.evaluation_periods > 0])
+    error_message = "Each log pattern alarm evaluation_periods value must be greater than zero."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : alarm.datapoints_to_alarm > 0 && alarm.datapoints_to_alarm <= alarm.evaluation_periods])
+    error_message = "Each log pattern alarm datapoints_to_alarm value must be greater than zero and no greater than evaluation_periods."
+  }
+
+  validation {
+    condition = alltrue([for alarm in values(var.log_pattern_alarms) : contains(
+      [60, 120, 180, 240, 300, 600, 900, 1800, 3600],
+      alarm.period
+    )])
+    error_message = "Each log pattern alarm period must be a supported CloudWatch alarm period."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : contains(["Average", "Maximum", "Minimum", "SampleCount", "Sum"], alarm.statistic)])
+    error_message = "Each log pattern alarm statistic must be one of: Average, Maximum, Minimum, SampleCount, Sum."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : contains(["GreaterThanOrEqualToThreshold", "GreaterThanThreshold", "LessThanThreshold", "LessThanOrEqualToThreshold"], alarm.comparison_operator)])
+    error_message = "Each log pattern alarm comparison_operator must be one of: GreaterThanOrEqualToThreshold, GreaterThanThreshold, LessThanThreshold, LessThanOrEqualToThreshold."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : contains(["breaching", "notBreaching", "ignore", "missing"], alarm.treat_missing_data)])
+    error_message = "Each log pattern alarm treat_missing_data must be one of: breaching, notBreaching, ignore, missing."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : alarm.metric_name == null || length(trim(alarm.metric_name, " ")) > 0])
+    error_message = "Log pattern alarm metric_name cannot be empty when provided."
+  }
+
+  validation {
+    condition     = alltrue([for alarm in values(var.log_pattern_alarms) : length(trim(alarm.metric_value, " ")) > 0])
+    error_message = "Each log pattern alarm metric_value must be non-empty."
+  }
+}
+
 variable "tags" {
   description = "Additional tags applied to all alarms"
   type        = map(string)
