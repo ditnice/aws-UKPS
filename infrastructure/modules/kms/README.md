@@ -22,14 +22,14 @@ Example aliases:
 ## Requirements
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10, < 2.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 
 ## Providers
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
 
 ## Modules
@@ -39,7 +39,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-| ---- | ---- |
+|------|------|
 | [aws_kms_alias.app](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
 | [aws_kms_alias.data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
 | [aws_kms_key.app](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
@@ -52,7 +52,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
+|------|-------------|------|---------|:--------:|
 | <a name="input_deletion_window_in_days"></a> [deletion\_window\_in\_days](#input\_deletion\_window\_in\_days) | Number of days before KMS key deletion after scheduling destruction | `number` | `30` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment used in KMS aliases and tags | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project used in KMS aliases and tags | `string` | n/a | yes |
@@ -63,7 +63,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-| ---- | ----------- |
+|------|-------------|
 | <a name="output_app_alias_name"></a> [app\_alias\_name](#output\_app\_alias\_name) | Name of the application KMS alias |
 | <a name="output_app_key_arn"></a> [app\_key\_arn](#output\_app\_key\_arn) | ARN of the application KMS key |
 | <a name="output_app_key_id"></a> [app\_key\_id](#output\_app\_key\_id) | ID of the application KMS key |
