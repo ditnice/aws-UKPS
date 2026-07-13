@@ -35,8 +35,8 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, alpha, etc.) | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
-| <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Logical ECS service or workload name used in ECS resource names | `string` | n/a | yes |
-| <a name="input_sns_alarm_email"></a> [sns\_alarm\_email](#input\_sns\_alarm\_email) | Email address subscribed to ECS-related alarm notifications | `string` | n/a | yes |
+| <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Short workload name used in SNS topic names | `string` | n/a | yes |
+| <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | `map(string)` | n/a | yes |
 | <a name="input_sns_kms_arn"></a> [sns\_kms\_arn](#input\_sns\_kms\_arn) | The arn of the kms key used for encrypting the SNS topics created by this module. | `string` | n/a | yes |
 
 ## Outputs

@@ -32,11 +32,11 @@ module "kms_backend" {
 module "sns" {
   source = "../../modules/sns"
 
-  project         = local.project
-  environment     = local.environment
-  service_name    = local.service_name
-  sns_kms_arn     = module.kms_frontend.app_key_arn
-  sns_alarm_email = var.sns_alarm_email
+  project          = local.project
+  environment      = local.environment
+  service_name     = local.service_name
+  sns_kms_arn      = module.kms_frontend.app_key_arn
+  sns_alarm_emails = var.sns_alarm_emails
 }
 
 # ECR - Frontend
