@@ -116,8 +116,8 @@ module "frontend_ecs_alerts" {
   environment        = local.environment
   service_name       = "${local.service_name}-frontend"
   sns_topic_arn      = module.sns.ecs_alarms_topic_arn
-  load_balancer_id   = module.alb.alb_arn
-  target_group_id    = module.alb.frontend_target_group_arn
+  load_balancer_id   = module.alb.alb_arn_suffix
+  target_group_id    = module.alb.frontend_target_group_arn_suffix
   log_group_name     = module.ecs_frontend.cloudwatch_log_group_name
   desired_task_count = module.ecs_frontend.ecs_desired_count
   cluster_name       = module.ecs_frontend.cluster_name
@@ -172,8 +172,8 @@ module "backend_ecs_alerts" {
   environment        = local.environment
   service_name       = "${local.service_name}-backend"
   sns_topic_arn      = module.sns.ecs_alarms_topic_arn
-  load_balancer_id   = module.alb.alb_arn
-  target_group_id    = module.alb.backend_target_group_arn
+  load_balancer_id   = module.alb.alb_arn_suffix
+  target_group_id    = module.alb.backend_target_group_arn_suffix
   log_group_name     = module.ecs_backend.cloudwatch_log_group_name
   desired_task_count = module.ecs_backend.ecs_desired_count
   cluster_name       = module.ecs_backend.cluster_name
