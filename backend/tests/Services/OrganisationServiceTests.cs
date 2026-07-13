@@ -9,6 +9,7 @@ using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Services;
@@ -90,8 +91,7 @@ public class OrganisationServiceTests : DatabaseTestBase
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
             await _service.GetOrganisationById(id);
 
-        result.IsOk.ShouldBeTrue();
-        OrganisationDetailsDto? dto = result.Value;
+        var dto = result.ShouldBeSuccess();
         dto.ShouldNotBeNull();
         dto.Id.ShouldBe(id);
         dto.OrganisationName.ShouldBe("Gov Pharma Ltd");
@@ -117,9 +117,9 @@ public class OrganisationServiceTests : DatabaseTestBase
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
             await _service.GetOrganisationById(seededId + 1);
 
-        result.IsErr.ShouldBeTrue();
-        GetOrganisationByIdError.NotFound notFound =
-            result.Error.ShouldBeOfType<GetOrganisationByIdError.NotFound>();
+        GetOrganisationByIdError.NotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetOrganisationByIdError.NotFound>();
         notFound.OrganisationId.ShouldBe(seededId + 1);
     }
 
