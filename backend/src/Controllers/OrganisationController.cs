@@ -23,6 +23,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 error switch
                 {
                     GetOrganisationByIdError.NotFound => NotFound(),
+                    GetOrganisationByIdError.NotAllowed => Forbid(),
                     _ => throw new UnreachableException(
                         "Unhandled GetOrganisationByIdError variant."
                     ),
@@ -52,6 +53,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 error switch
                 {
                     UpdateOrganisationDetailsError.NotFound => NotFound(),
+                    UpdateOrganisationDetailsError.NotAllowed => Forbid(),
                     _ => throw new UnreachableException(
                         "Unhandled UpdateOrganisationDetailsError variant."
                     ),

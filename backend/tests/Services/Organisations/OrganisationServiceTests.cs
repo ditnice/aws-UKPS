@@ -70,6 +70,45 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
         dto.CreatedAt.ShouldBe(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc));
     }
 
+    [Theory]
+    [InlineData(true, UserRole.Super, true)]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(true, UserRole.Standard, true)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task GetOrganisationById_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        Organisation organisation = await AddEntity(_organisationFaker.Generate());
+        int otherOrganisationId = 999_999;
+        int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
+
+        var testHarness = ServiceTestHarness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = usersOrganisationId,
+                UserRole = userRole,
+            }
+        );
+        var service = testHarness.Service;
+
+        GetOrganisationResult result = await service.GetOrganisationById(organisation.Id);
+
+        if (expectedAuthorised)
+        {
+            result.IsOk.ShouldBeTrue();
+        }
+        else
+        {
+            result.IsErr.ShouldBeTrue();
+            result.Error.ShouldBeOfType<GetOrganisationByIdError.NotAllowed>();
+        }
+    }
+
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
@@ -105,6 +144,49 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
         await using AppDbContext verifyContext = Fixture.CreateContext();
         Organisation saved = await verifyContext.Organisations.SingleAsync(o => o.Id == id);
         AssertUpdatedEntity(saved, createdAt, lastActive);
+    }
+
+    [Theory]
+    [InlineData(true, UserRole.Super, true)]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(true, UserRole.Standard, false)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task UpdateOrganisationDetails_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        Organisation organisation = await AddEntity(_organisationFaker.Generate());
+        int otherOrganisationId = 999_999;
+        int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
+
+        var testHarness = ServiceTestHarness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = usersOrganisationId,
+                UserRole = userRole,
+            }
+        );
+        var service = testHarness.Service;
+
+        var updateCommand = new UpdateOrganisationDetailsDtoFaker().Generate();
+        UpdateOrganisationResult result = await service.UpdateOrganisationDetails(
+            organisation.Id,
+            updateCommand
+        );
+
+        if (expectedAuthorised)
+        {
+            result.IsOk.ShouldBeTrue();
+        }
+        else
+        {
+            result.IsErr.ShouldBeTrue();
+            result.Error.ShouldBeOfType<UpdateOrganisationDetailsError.NotAllowed>();
+        }
     }
 
     [Fact]

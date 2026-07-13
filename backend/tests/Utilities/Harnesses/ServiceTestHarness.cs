@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using UKPS.Api.Data;
-using UKPS.Api.Enums;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Interfaces;
 
@@ -16,11 +15,7 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
 
     private readonly ICurrentUserInfoService _mockCurrentUserInfoService;
     private readonly ServiceProvider _serviceProvider;
-    private CurrentUser _currentUser = new CurrentUser
-    {
-        OrganisationId = 1,
-        UserRole = UserRole.Super,
-    };
+    private CurrentUser _currentUser = AuthorisationTestConstants.DefaultCurrentUser;
 
     public ServiceTestHarness(AppDbContext context)
     {
