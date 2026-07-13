@@ -22,7 +22,7 @@ public class UserServiceTests : DatabaseTestBase
     public UserServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _service = TestServicesFixture.Create(Context).UserService;
+        _service = new ServiceTestHarness<IUserService>(Context).Service;
     }
 
     [Fact]
@@ -400,12 +400,14 @@ public class UserServiceTests : DatabaseTestBase
                 }),
         };
         await AddEntities(memberships);
-        var fixture = TestServicesFixture.Create(
-            Context,
-            x => x with { OrganisationId = organisations[0].Id, UserRole = userRole }
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = organisations[0].Id,
+                UserRole = userRole,
+            }
         );
-        var service = fixture.UserService;
-        var results = await service.GetUsers(null, 1, 20, []);
+        var results = await harness.Service.GetUsers(null, 1, 20, []);
 
         results.IsOk.ShouldBeTrue();
 
@@ -438,11 +440,14 @@ public class UserServiceTests : DatabaseTestBase
     {
         int userOrganisation = 1;
         int otherOrganisation = 2;
-        TestServicesFixture testFixture = TestServicesFixture.Create(
-            Context,
-            x => x with { UserRole = userRole, OrganisationId = userOrganisation }
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = userRole,
+                OrganisationId = userOrganisation,
+            }
         );
-        IUserService service = testFixture.UserService;
+        IUserService service = harness.Service;
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(otherOrganisation, 1, 20, []);
 
