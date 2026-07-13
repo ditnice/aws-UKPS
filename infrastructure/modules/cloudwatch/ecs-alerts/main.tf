@@ -183,3 +183,44 @@ resource "aws_cloudwatch_metric_alarm" "alb_unhealthy_hosts" {
     Service     = var.service_name
   })
 }
+
+resource "aws_cloudwatch_log_metric_filter" "log_pattern" {
+  for_each = var.log_pattern_alarms
+
+  log_group_name = var.log_group_name
+  name           = "${var.project}-${var.environment}-${var.service_name}-${each.key}"
+  pattern        = each.value.pattern
+
+  metric_transformation {
+    name      = coalesce(each.value.metric_name, "${var.service_name}-${each.key}")
+    namespace = "${var.project}/${var.environment}/ECSLogPatterns"
+    value     = each.value.metric_value
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "log_pattern" {
+  for_each = var.log_pattern_alarms
+
+  alarm_name          = "${var.project}-${var.environment}-${var.service_name}-${each.key}"
+  comparison_operator = each.value.comparison_operator
+  evaluation_periods  = each.value.evaluation_periods
+  metric_name         = coalesce(each.value.metric_name, "${var.service_name}-${each.key}")
+  namespace           = "${var.project}/${var.environment}/ECSLogPatterns"
+  period              = each.value.period
+  statistic           = each.value.statistic
+  threshold           = each.value.threshold
+  treat_missing_data  = each.value.treat_missing_data
+  datapoints_to_alarm = each.value.datapoints_to_alarm
+
+  alarm_description = coalesce(each.value.alarm_description, "ECS service ${var.service_name} matched CloudWatch Logs pattern '${each.key}'.")
+
+  alarm_actions = [var.sns_topic_arn]
+  ok_actions    = [var.sns_topic_arn]
+
+  tags = merge(var.tags, {
+    Name        = "${var.project}-${var.environment}-${var.service_name}-${each.key}"
+    Environment = var.environment
+    Project     = var.project
+    Service     = var.service_name
+  })
+}

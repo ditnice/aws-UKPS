@@ -27,3 +27,13 @@ output "alb_unhealthy_hosts_alarm_arn" {
   description = "ARN of the ALB unhealthy hosts alarm; null when ALB alarms are disabled (enable_alb_alarms = false)"
   value       = one(aws_cloudwatch_metric_alarm.alb_unhealthy_hosts[*].arn)
 }
+
+output "log_pattern_metric_filter_names" {
+  description = "Names of CloudWatch Logs metric filters created for ECS log pattern matching, keyed by log_pattern_alarms key"
+  value       = { for key, filter in aws_cloudwatch_log_metric_filter.log_pattern : key => filter.name }
+}
+
+output "log_pattern_alarm_arns" {
+  description = "ARNs of CloudWatch alarms created for ECS log pattern matching, keyed by log_pattern_alarms key"
+  value       = { for key, alarm in aws_cloudwatch_metric_alarm.log_pattern : key => alarm.arn }
+}
