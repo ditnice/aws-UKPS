@@ -19,19 +19,26 @@ public class WebApiCurrentUserInfoService : ICurrentUserInfoService
 
     public CurrentUser GetCurrentUserInfo()
     {
-        var organisationIdClaim = Principal.FindFirstValue(UkpsClaimTypes.OrganisationId);
-        var organisationId = int.TryParse(
-            organisationIdClaim,
-            CultureInfo.InvariantCulture,
-            out var orgId
-        )
-            ? orgId
-            : throw new InvalidOperationException("Invalid organisation_id claim value.");
-        var userRoleClaim = Principal.FindFirstValue(UkpsClaimTypes.UserRole);
-        var userRole = Enum.TryParse<UserRole>(userRoleClaim, out var role)
-            ? role
-            : throw new InvalidOperationException("Invalid user_role claim value.");
+        return new CurrentUser { OrganisationId = FindOrganisationId(), UserRole = FindUserRole() };
+    }
 
-        return new CurrentUser { OrganisationId = organisationId, UserRole = userRole };
+    private int FindOrganisationId()
+    {
+        string? organisationIdClaim = Principal.FindFirstValue(UkpsClaimTypes.OrganisationId);
+        return int.TryParse(organisationIdClaim, CultureInfo.InvariantCulture, out var orgId)
+            ? orgId
+            : throw new InvalidOperationException(
+                $"Invalid {UkpsClaimTypes.OrganisationId} claim value."
+            );
+    }
+
+    private UserRole FindUserRole()
+    {
+        string? userRoleClaim = Principal.FindFirstValue(UkpsClaimTypes.UserRole);
+        return Enum.TryParse<UserRole>(userRoleClaim, out var role)
+            ? role
+            : throw new InvalidOperationException(
+                $"Invalid {UkpsClaimTypes.UserRole} claim value."
+            );
     }
 }
