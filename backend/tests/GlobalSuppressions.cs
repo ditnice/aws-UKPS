@@ -10,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage(
     "Maintainability",
     "CA1515:Consider making public types internal",
-    Justification = "<Pending>",
+    Justification = "This prevents test classes with no members meaning we can't have test classes that inherit test suites from parent classes.",
     Scope = "type",
     Target = "~T:UKPS.Api.Tests.Services.Organisations.OrganisationServiceWebApiTests"
 )]
