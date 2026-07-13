@@ -27,11 +27,14 @@ internal sealed class OrganisationFaker : Faker<Organisation>
         RuleFor(
             x => x.LastActive,
             (f, o) =>
-                f.Random.Bool(0.8f)
-                    ? f
-                        .Date.Between(o.CreatedAt ?? DateTime.UtcNow.AddYears(-1), DateTime.UtcNow)
-                        .ToUniversalTime()
-                    : null
+            {
+                if (f.Random.Bool(0.2f))
+                    return null;
+                DateTime referenceStartDate = o.CreatedAt ?? f.Date.Past(5).ToUniversalTime();
+                return f
+                    .Date.Between(referenceStartDate, referenceStartDate.AddYears(5))
+                    .ToUniversalTime();
+            }
         );
     }
 }
