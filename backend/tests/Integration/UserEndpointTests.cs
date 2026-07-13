@@ -59,15 +59,18 @@ public class UserEndpointTests : DatabaseTestBase
                 })
         );
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var uri = new Uri($"/users?organisationId={organisations[0].Id}", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         PaginatedResponseDto<UserListItemDto>? dto = await response.Content.ReadFromJsonAsync<
             PaginatedResponseDto<UserListItemDto>
-        >(TestJsonOptions.Default);
+        >(TestJsonOptions.Default, TestContext.Current.CancellationToken);
         dto.ShouldNotBeNull();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([users[0].Id, users[1].Id]);
@@ -112,18 +115,21 @@ public class UserEndpointTests : DatabaseTestBase
                 })
         );
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var uri = new Uri(
             "/users?organisationId=1&status=Active&status=Inactive",
             UriKind.Relative
         );
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         PaginatedResponseDto<UserListItemDto>? dto = await response.Content.ReadFromJsonAsync<
             PaginatedResponseDto<UserListItemDto>
-        >(TestJsonOptions.Default);
+        >(TestJsonOptions.Default, TestContext.Current.CancellationToken);
         dto.ShouldNotBeNull();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([2, 3]);
@@ -133,7 +139,10 @@ public class UserEndpointTests : DatabaseTestBase
     public async Task GetUsers_StatusQueryParameterIsInvalid_ReturnsBadRequest()
     {
         var uri = new Uri("/users?status=NotAStatus", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -142,7 +151,10 @@ public class UserEndpointTests : DatabaseTestBase
     public async Task GetUsers_PageIsZero_ReturnsBadRequest()
     {
         var uri = new Uri("/users?page=0", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -151,7 +163,10 @@ public class UserEndpointTests : DatabaseTestBase
     public async Task GetUsers_PageSizeExceedsMaximum_ReturnsBadRequest()
     {
         var uri = new Uri("/users?pageSize=101", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -160,7 +175,10 @@ public class UserEndpointTests : DatabaseTestBase
     public async Task GetUsers_OrganisationDoesNotExist_ReturnsBadRequest()
     {
         var uri = new Uri("/users?organisationId=999999", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }

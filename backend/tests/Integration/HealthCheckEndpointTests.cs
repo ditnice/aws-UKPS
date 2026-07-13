@@ -19,7 +19,10 @@ public class HealthCheckEndpointTests
     public async Task HealthCheckEndpoint_ShouldReturnSuccessfullyStatus()
     {
         var healthCheckUrl = new Uri("/health", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(healthCheckUrl);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            healthCheckUrl,
+            TestContext.Current.CancellationToken
+        );
 
         response.IsSuccessStatusCode.ShouldBeTrue();
     }

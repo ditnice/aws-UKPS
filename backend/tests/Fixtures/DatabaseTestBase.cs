@@ -2,7 +2,7 @@ using UKPS.Api.Data;
 
 namespace UKPS.Api.Tests.Fixtures;
 
-public abstract class DatabaseTestBase : IAsyncLifetime, IAsyncDisposable
+public abstract class DatabaseTestBase : IAsyncLifetime
 {
     protected DatabaseTestBase(PostgresFixture fixture)
     {
@@ -16,17 +16,20 @@ public abstract class DatabaseTestBase : IAsyncLifetime, IAsyncDisposable
 
     internal AppDbContext Context { get; }
 
-    public Task InitializeAsync() => Fixture.ResetDatabaseAsync();
+    public async ValueTask InitializeAsync() => await Fixture.ResetDatabaseAsync();
 
-    protected async Task<T> AddEntity<T>(T entity)
+    protected async Task<T> AddEntity<T>(T entity, CancellationToken cancellationToken)
         where T : class
     {
         Context.Add(entity);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
-    protected async Task<IEnumerable<T>> AddEntities<T>(IEnumerable<T> entities)
+    protected async Task<IEnumerable<T>> AddEntities<T>(
+        IEnumerable<T> entities,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(entities);
         foreach (var entity in entities)
@@ -40,11 +43,9 @@ public abstract class DatabaseTestBase : IAsyncLifetime, IAsyncDisposable
             }
             Context.Add(entity);
         }
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
         return entities;
     }
-
-    async Task IAsyncLifetime.DisposeAsync() => await DisposeAsync();
 
     public async ValueTask DisposeAsync()
     {
