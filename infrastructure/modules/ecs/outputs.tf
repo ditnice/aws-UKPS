@@ -32,3 +32,13 @@ output "task_role_arn" {
   description = "ARN of the ECS task role"
   value       = aws_iam_role.ecs_task_role.arn
 }
+
+output "cloudwatch_log_group_name" {
+  description = "Name of the CloudWatch log group for ECS logs"
+  value       = aws_cloudwatch_log_group.ecs_logs.name
+}
+
+output "ecs_desired_count" {
+  description = "Desired count of ECS tasks"
+  value       = aws_ecs_service.ecs_service.desired_count
+}

@@ -159,3 +159,14 @@ variable "aurora_final_snapshot_identifier" {
   type        = string
   default     = "ukps-dev-aurora-final-snapshot"
 }
+
+variable "connection_threshold" {
+  description = "Threshold for the number of database connections to trigger an alarm"
+  type        = number
+  default     = 100
+}
+
+variable "sns_alarm_email" {
+  description = "Email address to receive SNS alarm notifications"
+  type        = string
+}
