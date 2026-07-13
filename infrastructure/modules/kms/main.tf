@@ -136,6 +136,44 @@ data "aws_iam_policy_document" "app" {
       values   = ["true"]
     }
   }
+
+  statement {
+    sid    = "AllowCloudWatchAlarmsToPublish"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+    ]
+    resources = ["*"]
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["sns.${var.region}.${data.aws_partition.current.dns_suffix}"]
+    }
+  }
+
+  statement {
+    sid    = "AllowSNSService"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+    ]
+    resources = ["*"]
+    principals {
+      type        = "Service"
+      identifiers = ["sns.${data.aws_partition.current.dns_suffix}"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["sns.${var.region}.${data.aws_partition.current.dns_suffix}"]
+    }
+  }
 }
 
 data "aws_iam_policy_document" "data" {
