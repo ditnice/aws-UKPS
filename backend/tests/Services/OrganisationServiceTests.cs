@@ -22,7 +22,7 @@ public class OrganisationServiceTests : DatabaseTestBase
     public OrganisationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _service = TestServicesFixture.Create(Context).OrganisationService;
+        _service = new ServiceTestHarness<IOrganisationService>(Context).Service;
     }
 
     [Theory]
@@ -42,13 +42,10 @@ public class OrganisationServiceTests : DatabaseTestBase
         int otherOrganisationId = 999_999;
         int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
 
-        var currentUserInfo = new CurrentUser
-        {
-            OrganisationId = usersOrganisationId,
-            UserRole = userRole,
-        };
-        var testFixture = TestServicesFixture.Create(Context, _ => currentUserInfo);
-        var service = testFixture.OrganisationService;
+        var testHarness = new ServiceTestHarness<IOrganisationService>(Context).UpdateCurrentUser(
+            x => x with { OrganisationId = usersOrganisationId, UserRole = userRole }
+        );
+        var service = testHarness.Service;
 
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
             await service.GetOrganisationById(organisation.Id);
@@ -155,11 +152,10 @@ public class OrganisationServiceTests : DatabaseTestBase
         Organisation organisation = await AddEntity(_organisationFaker.Generate());
         int otherOrganisationId = 999_999;
         int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
-        var testFixture = TestServicesFixture.Create(
-            Context,
+        var testHarness = new ServiceTestHarness<IOrganisationService>(Context).UpdateCurrentUser(
             x => x with { OrganisationId = usersOrganisationId, UserRole = userRole }
         );
-        var service = testFixture.OrganisationService;
+        var service = testHarness.Service;
 
         var updateCommand = new UpdateOrganisationDetailsDtoFaker().Generate();
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =

@@ -27,7 +27,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         _userFaker = new UserFaker();
         _membershipFaker = new UserOrgMembershipFaker();
         _organisationFaker = new OrganisationFaker();
-        _service = TestServicesFixture.Create(Context).OrganisationMembershipService;
+        _service = new ServiceTestHarness<IOrganisationMembershipService>(Context).Service;
     }
 
     [Theory]
@@ -70,18 +70,16 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     {
         var userOrgMembership = await SetupUserOrgMembership();
         var command = new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Champion };
-        var testServices = TestServicesFixture.Create(
-            Context,
-            currentUserInfo =>
-                currentUserInfo with
-                {
-                    OrganisationId = organisationIdMatches
-                        ? userOrgMembership.OrganisationId
-                        : 999_999,
-                    UserRole = userRole,
-                }
+        var harness = new ServiceTestHarness<IOrganisationMembershipService>(
+            Context
+        ).UpdateCurrentUser(currentUserInfo =>
+            currentUserInfo with
+            {
+                OrganisationId = organisationIdMatches ? userOrgMembership.OrganisationId : 999_999,
+                UserRole = userRole,
+            }
         );
-        var result = await testServices.OrganisationMembershipService.UpdateUserRole(
+        var result = await harness.Service.UpdateUserRole(
             userOrgMembership.OrganisationId,
             userOrgMembership.Id,
             command,
@@ -163,19 +161,18 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     )
     {
         var userOrgMembership = await SetupUserOrgMembership();
-        var testServices = TestServicesFixture.Create(
-            Context,
-            currentUserInfo =>
-                currentUserInfo with
-                {
-                    OrganisationId = organisationIdMatches
-                        ? userOrgMembership.OrganisationId
-                        : 999_999,
-                    UserRole = userRole,
-                }
+        var harness = new ServiceTestHarness<IOrganisationMembershipService>(
+            Context
+        ).UpdateCurrentUser(currentUserInfo =>
+            currentUserInfo with
+            {
+                OrganisationId = organisationIdMatches ? userOrgMembership.OrganisationId : 999_999,
+                UserRole = userRole,
+            }
         );
+
         Result<OrganisationMembershipDto, OrganisationMembershipDeactivateUserError> result =
-            await testServices.OrganisationMembershipService.DeactivateMembership(
+            await harness.Service.DeactivateMembership(
                 userOrgMembership.OrganisationId,
                 userOrgMembership.Id,
                 CancellationToken.None
