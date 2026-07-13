@@ -12,6 +12,9 @@ build:
 run:
     dotnet run --project src --launch-profile http
 
+openapi:
+    dotnet build src/UKPS.Api.csproj /p:OpenApiDocumentsDirectory=../openapi
+
 test:
     dotnet test
 
