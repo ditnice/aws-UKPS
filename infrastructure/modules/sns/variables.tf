@@ -31,6 +31,7 @@ variable "service_name" {
 variable "sns_alarm_email" {
   description = "Email address subscribed to ECS-related alarm notifications"
   type        = string
+  sensitive   = true
 
   validation {
     condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.sns_alarm_email))
