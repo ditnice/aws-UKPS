@@ -10,5 +10,8 @@ namespace UKPS.Api.Tests.Fixtures;
 internal static class TestJsonOptions
 {
     public static JsonSerializerOptions Default { get; } =
-        new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+        new(JsonSerializerDefaults.Web)
+        {
+            Converters = { new JsonStringEnumConverter(allowIntegerValues: false) },
+        };
 }
