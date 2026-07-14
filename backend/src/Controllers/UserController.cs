@@ -10,7 +10,7 @@ namespace UKPS.Api.Controllers;
 [Route("users")]
 public class UserController(IUserService userService) : ControllerBase
 {
-    [HttpGet]
+    [HttpGet(Name = nameof(GetUsers))]
     [ProducesResponseType<PaginatedResponseDto<UserListItemDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -10,7 +10,7 @@ namespace UKPS.Api.Controllers;
 [Route("organisations")]
 public class OrganisationController(IOrganisationService organisationService) : ControllerBase
 {
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:int}", Name = nameof(GetOrganisationById))]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(
@@ -33,7 +33,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:int}", Name = nameof(UpdateOrganisationDetails))]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -67,7 +67,10 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
-    [HttpPatch("{organisationId:int}/memberships/{membershipId}/deactivate")]
+    [HttpPatch(
+        "{organisationId:int}/memberships/{membershipId}/deactivate",
+        Name = nameof(DeactivateMembership)
+    )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> DeactivateMembership(
@@ -95,7 +98,10 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
-    [HttpPatch("{organisationId:int}/memberships/{membershipId}/update-role")]
+    [HttpPatch(
+        "{organisationId:int}/memberships/{membershipId}/update-role",
+        Name = nameof(UpdateUserRole)
+    )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> UpdateUserRole(
