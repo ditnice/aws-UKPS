@@ -159,3 +159,15 @@ variable "aurora_final_snapshot_identifier" {
   type        = string
   default     = "ukps-dev-aurora-final-snapshot"
 }
+
+variable "invitation_email_subject" {
+  description = "Subject line for admin-created user invitation emails."
+  type        = string
+  default     = "Your account has been created"
+}
+
+variable "invitation_email_message" {
+  description = "Email body for admin-created user invitations."
+  type        = string
+  default     = "Your username is {username} and temporary password is {####}."
+}

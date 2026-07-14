@@ -21,6 +21,7 @@
 | <a name="module_alb"></a> [alb](#module\_alb) | ../../modules/alb | n/a |
 | <a name="module_aurora_backend"></a> [aurora\_backend](#module\_aurora\_backend) | ../../modules/aurora | n/a |
 | <a name="module_aurora_frontend"></a> [aurora\_frontend](#module\_aurora\_frontend) | ../../modules/aurora | n/a |
+| <a name="module_cognito"></a> [cognito](#module\_cognito) | ../../modules/cognito | n/a |
 | <a name="module_ecr_backend"></a> [ecr\_backend](#module\_ecr\_backend) | ../../modules/ecr | n/a |
 | <a name="module_ecr_frontend"></a> [ecr\_frontend](#module\_ecr\_frontend) | ../../modules/ecr | n/a |
 | <a name="module_ecs_backend"></a> [ecs\_backend](#module\_ecs\_backend) | ../../modules/ecs | n/a |
@@ -64,6 +65,8 @@
 | <a name="input_frontend_container_port"></a> [frontend\_container\_port](#input\_frontend\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
 | <a name="input_frontend_db_master_username"></a> [frontend\_db\_master\_username](#input\_frontend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
 | <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpsdev_frontend"` | no |
+| <a name="input_invitation_email_message"></a> [invitation\_email\_message](#input\_invitation\_email\_message) | Email body for admin-created user invitations. | `string` | `"Your username is {username} and temporary password is {####}."` | no |
+| <a name="input_invitation_email_subject"></a> [invitation\_email\_subject](#input\_invitation\_email\_subject) | Subject line for admin-created user invitation emails. | `string` | `"Your account has been created"` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
 
 ## Outputs

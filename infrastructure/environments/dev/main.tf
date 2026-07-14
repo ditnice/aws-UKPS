@@ -28,6 +28,19 @@ module "kms_backend" {
   service_name = "backend"
 }
 
+# Cognito
+module "cognito" {
+  source = "../../modules/cognito"
+
+  project                         = local.project
+  environment                     = local.environment
+  user_pool_name                  = "${local.project}-${local.environment}-user-pool"
+  enable_password_reset_limiter   = true
+  enable_password_attempt_limiter = true
+  invitation_email_subject        = var.invitation_email_subject
+  invitation_email_message        = var.invitation_email_message
+}
+
 # ECR - Frontend
 module "ecr_frontend" {
   source = "../../modules/ecr"
