@@ -51,3 +51,17 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
   role       = aws_iam_role.ecs_execution_role.id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
+
+resource "aws_iam_role_policy_attachment" "additional_execution_role_policies" {
+  for_each = var.execution_role_policy_arns
+
+  policy_arn = each.value
+  role       = aws_iam_role.ecs_execution_role.id
+}
+
+resource "aws_iam_role_policy_attachment" "additional_task_role_policies" {
+  for_each = var.task_role_policy_arns
+
+  policy_arn = each.value
+  role       = aws_iam_role.ecs_task_role.id
+}

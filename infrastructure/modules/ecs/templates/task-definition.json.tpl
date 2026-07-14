@@ -9,7 +9,8 @@
         "protocol": "tcp"
       }
     ],
-    "environment": [],
+    "environment": ${container_environment},
+    "secrets": ${container_secrets},
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {

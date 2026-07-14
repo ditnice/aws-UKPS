@@ -43,13 +43,13 @@ module "sns" {
 module "cognito" {
   source = "../../modules/cognito"
 
-  project                         = local.project
-  environment                     = local.environment
-  user_pool_name                  = "${local.project}-${local.environment}-user-pool"
-  enable_password_reset_limiter   = true
-  enable_password_attempt_limiter = true
-  invitation_email_subject        = var.invitation_email_subject
-  invitation_email_message        = var.invitation_email_message
+  project                       = local.project
+  environment                   = local.environment
+  user_pool_name                = "${local.project}-${local.environment}-user-pool"
+  app_client_name               = "${local.project}-${local.environment}-frontend-bff"
+  app_client_secret_kms_key_arn = module.kms_frontend.app_key_arn
+  invitation_email_subject      = var.invitation_email_subject
+  invitation_email_message      = var.invitation_email_message
 }
 
 # ECR - Frontend
@@ -119,6 +119,21 @@ module "ecs_frontend" {
   target_group_arn         = module.alb.frontend_target_group_arn
   alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
+  container_environment = {
+    AWS_REGION                  = var.region
+    COGNITO_ISSUER              = module.cognito.issuer
+    COGNITO_USER_POOL_CLIENT_ID = module.cognito.user_pool_client_id
+    COGNITO_USER_POOL_ID        = module.cognito.user_pool_id
+  }
+  container_secrets = {
+    COGNITO_USER_POOL_CLIENT_SECRET = module.cognito.app_client_secret_arn
+  }
+  execution_role_policy_arns = {
+    cognito_client_secret = aws_iam_policy.frontend_cognito_client_secret.arn
+  }
+  task_role_policy_arns = {
+    cognito_user_administration = aws_iam_policy.frontend_cognito_user_administration.arn
+  }
 }
 
 # ECS - Frontend Alerts
@@ -175,6 +190,12 @@ module "ecs_backend" {
   target_group_arn         = module.alb.backend_target_group_arn
   alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
+  container_environment = {
+    AWS_REGION                  = var.region
+    COGNITO_ISSUER              = module.cognito.issuer
+    COGNITO_USER_POOL_CLIENT_ID = module.cognito.user_pool_client_id
+    COGNITO_USER_POOL_ID        = module.cognito.user_pool_id
+  }
 }
 
 # ECS - Backend Alerts

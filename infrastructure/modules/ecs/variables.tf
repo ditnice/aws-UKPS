@@ -138,6 +138,49 @@ variable "ecr_image_url" {
   type        = string
 }
 
+variable "container_environment" {
+  description = "Non-sensitive environment variables passed to the application container"
+  type        = map(string)
+  default     = {}
+  nullable    = false
+}
+
+variable "container_secrets" {
+  description = "Map of container environment variable names to Secrets Manager secret ARNs"
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition     = alltrue([for secret_arn in values(var.container_secrets) : can(regex("^arn:aws[a-zA-Z-]*:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:.+$", secret_arn))])
+    error_message = "Container secret values must be valid Secrets Manager secret ARNs."
+  }
+}
+
+variable "execution_role_policy_arns" {
+  description = "Map of stable policy names to additional IAM policy ARNs for the ECS task execution role"
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition     = alltrue([for policy_arn in values(var.execution_role_policy_arns) : can(regex("^arn:aws[a-zA-Z-]*:iam::[0-9]{12}:policy/.+$", policy_arn))])
+    error_message = "Execution role policy ARNs must be valid customer-managed IAM policy ARNs."
+  }
+}
+
+variable "task_role_policy_arns" {
+  description = "Map of stable policy names to additional IAM policy ARNs for the ECS task role"
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition     = alltrue([for policy_arn in values(var.task_role_policy_arns) : can(regex("^arn:aws[a-zA-Z-]*:iam::[0-9]{12}:policy/.+$", policy_arn))])
+    error_message = "Task role policy ARNs must be valid customer-managed IAM policy ARNs."
+  }
+}
+
 variable "target_group_arn" {
   description = "ARN of the ALB target group used by the ECS service"
   type        = string

@@ -27,10 +27,22 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
   container_definitions = templatefile(
     "${path.module}/templates/task-definition.json.tpl",
     {
+      container_environment = jsonencode([
+        for name, value in var.container_environment : {
+          name  = name
+          value = value
+        }
+      ])
       container_port = var.container_port
-      ecs_logs       = aws_cloudwatch_log_group.ecs_logs.name
-      image          = var.ecr_image_url
-      region         = data.aws_region.current.region
+      container_secrets = jsonencode([
+        for name, value_from in var.container_secrets : {
+          name      = name
+          valueFrom = value_from
+        }
+      ])
+      ecs_logs = aws_cloudwatch_log_group.ecs_logs.name
+      image    = var.ecr_image_url
+      region   = data.aws_region.current.region
     }
   )
 
@@ -49,6 +61,12 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
     Project     = var.project
     Service     = var.service_name
   })
+
+  depends_on = [
+    aws_iam_role_policy_attachment.additional_execution_role_policies,
+    aws_iam_role_policy_attachment.additional_task_role_policies,
+    aws_iam_role_policy_attachment.ecs_execution_role_policy,
+  ]
 }
 
 resource "aws_ecs_service" "ecs_service" {
