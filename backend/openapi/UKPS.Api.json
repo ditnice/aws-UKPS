@@ -574,7 +574,13 @@
         }
       },
       "OrganisationType": {
-        "type": "integer"
+        "enum": [
+          "PharmaCompany",
+          "HorizonScanning",
+          "Strategic",
+          "Internal"
+        ],
+        "type": "string"
       },
       "PaginatedResponseDtoOfUserListItemDto": {
         "required": [
@@ -618,7 +624,7 @@
         }
       },
       "PharmaceuticalEntity": {
-        "type": "integer"
+        "type": "string"
       },
       "ProblemDetails": {
         "type": "object",
@@ -725,10 +731,22 @@
         }
       },
       "UserOrgStatus": {
-        "type": "integer"
+        "enum": [
+          "RequestedAccess",
+          "AwaitingSetup",
+          "Active",
+          "Rejected",
+          "Inactive"
+        ],
+        "type": "string"
       },
       "UserRole": {
-        "type": "integer"
+        "enum": [
+          "Standard",
+          "Champion",
+          "Super"
+        ],
+        "type": "string"
       }
     }
   },
