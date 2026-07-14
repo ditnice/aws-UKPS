@@ -115,4 +115,26 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 }
         );
     }
+
+    [HttpPost]
+    [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<OrganisationDetailsDto>> CreateOrganisation(
+        CreateOrganisationDto organisation
+    )
+    {
+        var result = await organisationService.CreateOrganisation(organisation);
+        return result.Match<ActionResult<OrganisationDetailsDto>>(
+            x => Ok(x),
+            x =>
+                x switch
+                {
+                    CreateOrganisationError.OrganisationNameConflict => Conflict(
+                        "An organisation with this name already exists."
+                    ),
+                    _ => throw new UnreachableException(),
+                }
+        );
+    }
 }

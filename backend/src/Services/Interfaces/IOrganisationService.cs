@@ -12,4 +12,7 @@ public interface IOrganisationService
         int id,
         UpdateOrganisationDetailsDto organisationDetails
     );
+    Task<Result<OrganisationDetailsDto, CreateOrganisationError>> CreateOrganisation(
+        CreateOrganisationDto command
+    );
 }
