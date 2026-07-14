@@ -9,7 +9,7 @@ repos:
         args: ['--allow-missing-credentials']
       - id: detect-private-key
       - id: end-of-file-fixer
-        exclude: ^backend/openapi/UKPS\.Api\.json$
+        exclude: ^(backend/openapi/UKPS\.Api\.json|frontend/src/payload-types\.ts)$
       - id: trailing-whitespace
       - id: check-yaml
 
