@@ -19,7 +19,7 @@ variable "environment" {
 }
 
 variable "service_name" {
-  description = "Logical ECS service or workload name used in ECS resource names"
+  description = "ECS service name used in CloudWatch alarm names and dimensions"
   type        = string
 
   validation {

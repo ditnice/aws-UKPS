@@ -41,7 +41,7 @@ public class UserServiceTests : DatabaseTestBase
     public async Task GetUsers_ReturnsEmptyPage_WhenOrganisationHasNoUsers()
     {
         Context.Organisations.Add(_organisationFaker.Generate());
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 1, 20, []);
@@ -72,7 +72,7 @@ public class UserServiceTests : DatabaseTestBase
         Context.Organisations.Add(organisation);
         Context.Users.Add(user);
         Context.UserOrgMemberships.Add(membership);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 1, 20, []);
 
@@ -108,7 +108,7 @@ public class UserServiceTests : DatabaseTestBase
             return membership;
         });
         Context.UserOrgMemberships.AddRange(data);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 1, 20, [UserOrgStatus.Active, UserOrgStatus.Inactive]);
@@ -155,7 +155,7 @@ public class UserServiceTests : DatabaseTestBase
                     x.OrganisationId = 1;
                 })
         );
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 2, 1, []);
@@ -211,7 +211,7 @@ public class UserServiceTests : DatabaseTestBase
                     x.OrganisationId = 2;
                 })
         );
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(null, 1, 20, []);
@@ -266,7 +266,7 @@ public class UserServiceTests : DatabaseTestBase
                     x.Status = UserOrgStatus.Inactive;
                 })
         );
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(null, 1, 20, [UserOrgStatus.Inactive]);
@@ -303,7 +303,7 @@ public class UserServiceTests : DatabaseTestBase
                     x.OrganisationId = 1;
                 })
         );
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 5, 20, []);
@@ -352,7 +352,7 @@ public class UserServiceTests : DatabaseTestBase
                     x.AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines;
                 })
         );
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(null, 1, 20, []);
@@ -399,7 +399,7 @@ public class UserServiceTests : DatabaseTestBase
                     x.Organisation = organisations[0];
                 }),
         };
-        await AddEntities(memberships);
+        await AddEntities(memberships, TestContext.Current.CancellationToken);
         var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
             x with
             {

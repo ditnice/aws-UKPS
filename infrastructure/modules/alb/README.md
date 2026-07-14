@@ -47,11 +47,14 @@ No modules.
 | Name | Description |
 | ---- | ----------- |
 | <a name="output_alb_arn"></a> [alb\_arn](#output\_alb\_arn) | ARN of the existing ALB |
+| <a name="output_alb_arn_suffix"></a> [alb\_arn\_suffix](#output\_alb\_arn\_suffix) | ARN suffix of the existing ALB for CloudWatch metric dimensions |
 | <a name="output_alb_dns_name"></a> [alb\_dns\_name](#output\_alb\_dns\_name) | DNS name of the existing ALB |
 | <a name="output_alb_security_group_ids"></a> [alb\_security\_group\_ids](#output\_alb\_security\_group\_ids) | Security group IDs attached to the existing ALB |
 | <a name="output_backend_host_name"></a> [backend\_host\_name](#output\_backend\_host\_name) | Computed backend host name routed by the HTTPS listener |
 | <a name="output_backend_target_group_arn"></a> [backend\_target\_group\_arn](#output\_backend\_target\_group\_arn) | ARN of the backend target group |
+| <a name="output_backend_target_group_arn_suffix"></a> [backend\_target\_group\_arn\_suffix](#output\_backend\_target\_group\_arn\_suffix) | ARN suffix of the backend target group for CloudWatch metric dimensions |
 | <a name="output_frontend_host_name"></a> [frontend\_host\_name](#output\_frontend\_host\_name) | Computed frontend host name routed by the HTTPS listener default action |
 | <a name="output_frontend_target_group_arn"></a> [frontend\_target\_group\_arn](#output\_frontend\_target\_group\_arn) | ARN of the frontend target group |
+| <a name="output_frontend_target_group_arn_suffix"></a> [frontend\_target\_group\_arn\_suffix](#output\_frontend\_target\_group\_arn\_suffix) | ARN suffix of the frontend target group for CloudWatch metric dimensions |
 | <a name="output_target_group_arns"></a> [target\_group\_arns](#output\_target\_group\_arns) | Target group ARNs keyed by workload name |
 <!-- END_TF_DOCS -->

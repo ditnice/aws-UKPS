@@ -50,8 +50,9 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         result.Value.UserRole.ShouldBe(userRole);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
-        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
-            m.Id == userOrgMembership.Id
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == userOrgMembership.Id,
+            TestContext.Current.CancellationToken
         );
         saved.UserRole.ShouldBe(userRole);
     }
@@ -142,8 +143,9 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         result.Value.Status.ShouldBe(UserOrgStatus.Inactive);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
-        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
-            m.Id == userOrgMembership.Id
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == userOrgMembership.Id,
+            TestContext.Current.CancellationToken
         );
         saved.Status.ShouldBe(UserOrgStatus.Inactive);
     }

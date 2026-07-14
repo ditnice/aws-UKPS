@@ -51,7 +51,7 @@ No modules.
 | <a name="input_response_time_threshold"></a> [response\_time\_threshold](#input\_response\_time\_threshold) | Average target response time threshold in seconds | `number` | `1` | no |
 | <a name="input_running_tasks_datapoints_to_alarm"></a> [running\_tasks\_datapoints\_to\_alarm](#input\_running\_tasks\_datapoints\_to\_alarm) | Number of datapoints within running\_tasks\_evaluation\_periods that must breach before the running task count alarm triggers | `number` | `2` | no |
 | <a name="input_running_tasks_evaluation_periods"></a> [running\_tasks\_evaluation\_periods](#input\_running\_tasks\_evaluation\_periods) | Number of periods required before running task count alarm triggers | `number` | `3` | no |
-| <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Logical ECS service or workload name used in ECS resource names | `string` | n/a | yes |
+| <a name="input_service_name"></a> [service\_name](#input\_service\_name) | ECS service name used in CloudWatch alarm names and dimensions | `string` | n/a | yes |
 | <a name="input_sns_topic_arn"></a> [sns\_topic\_arn](#input\_sns\_topic\_arn) | SNS topic ARN used for CloudWatch alarm notifications | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional tags applied to all alarms | `map(string)` | `{}` | no |
 | <a name="input_target_group_id"></a> [target\_group\_id](#input\_target\_group\_id) | Target group identifier used for CloudWatch alarm dimensions | `string` | `null` | no |

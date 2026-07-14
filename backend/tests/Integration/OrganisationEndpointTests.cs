@@ -43,15 +43,19 @@ public class OrganisationEndpointTests : DatabaseTestBase
             CreatedAt = createdAt,
         };
         Context.Organisations.Add(organisation);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var uri = new Uri("/organisations/1", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         OrganisationDetailsDto? dto =
             await response.Content.ReadFromJsonAsync<OrganisationDetailsDto>(
-                TestJsonOptions.Default
+                TestJsonOptions.Default,
+                TestContext.Current.CancellationToken
             );
         dto.ShouldNotBeNull();
         var expectedDto = new OrganisationDetailsDto
@@ -71,10 +75,43 @@ public class OrganisationEndpointTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetOrganisationById_OrganisationExists_ReturnsEnumsAsStrings()
+    {
+        Organisation organisation = new OrganisationFaker()
+            .Generate()
+            .Update(x =>
+            {
+                x.Id = 1;
+                x.OrganisationType = OrganisationType.PharmaCompany;
+                x.AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both;
+                x.Status = UserOrgStatus.Active;
+            });
+        Context.Organisations.Add(organisation);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var uri = new Uri("/organisations/1", UriKind.Relative);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        string json = await response.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken
+        );
+        json.ShouldContain("\"organisationType\":\"PharmaCompany\"");
+        json.ShouldContain("\"allowedPharmaceuticalEntity\":\"Both\"");
+        json.ShouldContain("\"status\":\"Active\"");
+    }
+
+    [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFound()
     {
         var uri = new Uri("/organisations/999999", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -84,7 +121,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
     {
         Organisation organisation = new OrganisationFaker().Generate().Update(x => x.Id = 1);
         Context.Organisations.Add(organisation);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         UpdateOrganisationDetailsDto updateDto = new()
         {
@@ -98,19 +135,24 @@ public class OrganisationEndpointTests : DatabaseTestBase
         HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
             uri,
             updateDto,
-            TestJsonOptions.Default
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         OrganisationDetailsDto? dto =
             await response.Content.ReadFromJsonAsync<OrganisationDetailsDto>(
-                TestJsonOptions.Default
+                TestJsonOptions.Default,
+                TestContext.Current.CancellationToken
             );
         dto.ShouldNotBeNull();
         dto.OrganisationName.ShouldBe("New Pharma Ltd");
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
-        Organisation saved = await verifyContext.Organisations.SingleAsync(o => o.Id == 1);
+        Organisation saved = await verifyContext.Organisations.SingleAsync(
+            o => o.Id == 1,
+            TestContext.Current.CancellationToken
+        );
         saved.OrganisationName.ShouldBe("New Pharma Ltd");
         saved.HeadOfficeAddress.ShouldBe("1 New Street\nLondon\nEC1A 1AA");
         saved.HeadOfficeEmail.ShouldBe("new@example.com");
@@ -126,7 +168,8 @@ public class OrganisationEndpointTests : DatabaseTestBase
         HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
             uri,
             updateDto,
-            TestJsonOptions.Default
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -137,7 +180,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
     {
         Organisation organisation = new OrganisationFaker().Generate().Update(x => x.Id = 1);
         Context.Organisations.Add(organisation);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         UpdateOrganisationDetailsDto updateDto = new()
         {
@@ -151,7 +194,8 @@ public class OrganisationEndpointTests : DatabaseTestBase
         HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
             uri,
             updateDto,
-            TestJsonOptions.Default
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -162,7 +206,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
     {
         Organisation organisation = new OrganisationFaker().Generate().Update(x => x.Id = 1);
         Context.Organisations.Add(organisation);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         UpdateOrganisationDetailsDto updateDto = new()
         {
@@ -176,7 +220,8 @@ public class OrganisationEndpointTests : DatabaseTestBase
         HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
             uri,
             updateDto,
-            TestJsonOptions.Default
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -191,19 +236,25 @@ public class OrganisationEndpointTests : DatabaseTestBase
             UriKind.Relative
         );
 
-        HttpResponseMessage response = await _httpClient.PatchAsync(uri, null);
+        HttpResponseMessage response = await _httpClient.PatchAsync(
+            uri,
+            null,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         OrganisationMembershipDto? dto =
             await response.Content.ReadFromJsonAsync<OrganisationMembershipDto>(
-                TestJsonOptions.Default
+                TestJsonOptions.Default,
+                TestContext.Current.CancellationToken
             );
         dto.ShouldNotBeNull();
         dto.Status.ShouldBe(UserOrgStatus.Inactive);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
-        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
-            m.Id == membership.Id
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == membership.Id,
+            TestContext.Current.CancellationToken
         );
         saved.Status.ShouldBe(UserOrgStatus.Inactive);
     }
@@ -217,7 +268,11 @@ public class OrganisationEndpointTests : DatabaseTestBase
             UriKind.Relative
         );
 
-        HttpResponseMessage response = await _httpClient.PatchAsync(uri, null);
+        HttpResponseMessage response = await _httpClient.PatchAsync(
+            uri,
+            null,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -235,20 +290,23 @@ public class OrganisationEndpointTests : DatabaseTestBase
         HttpResponseMessage response = await _httpClient.PatchAsJsonAsync(
             uri,
             command,
-            TestJsonOptions.Default
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         OrganisationMembershipDto? dto =
             await response.Content.ReadFromJsonAsync<OrganisationMembershipDto>(
-                TestJsonOptions.Default
+                TestJsonOptions.Default,
+                TestContext.Current.CancellationToken
             );
         dto.ShouldNotBeNull();
         dto.UserRole.ShouldBe(UserRole.Champion);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
-        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(m =>
-            m.Id == membership.Id
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == membership.Id,
+            TestContext.Current.CancellationToken
         );
         saved.UserRole.ShouldBe(UserRole.Champion);
     }
@@ -266,7 +324,8 @@ public class OrganisationEndpointTests : DatabaseTestBase
         HttpResponseMessage response = await _httpClient.PatchAsJsonAsync(
             uri,
             command,
-            TestJsonOptions.Default
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -286,7 +345,30 @@ public class OrganisationEndpointTests : DatabaseTestBase
             "application/json"
         );
 
-        HttpResponseMessage response = await _httpClient.PatchAsync(uri, content);
+        HttpResponseMessage response = await _httpClient.PatchAsync(
+            uri,
+            content,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_NumericEnumValue_ReturnsBadRequest()
+    {
+        UserOrgMembership membership = await SeedMembership();
+        var uri = new Uri(
+            $"/organisations/{membership.OrganisationId}/memberships/{membership.Id}/update-role",
+            UriKind.Relative
+        );
+        using StringContent content = new("""{"userRole":1}""", Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await _httpClient.PatchAsync(
+            uri,
+            content,
+            TestContext.Current.CancellationToken
+        );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
