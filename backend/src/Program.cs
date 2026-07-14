@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using UKPS.Api.Data;
+using UKPS.Api.Data.Seeding;
 using UKPS.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddUkpsServices();
+builder.Services.AddSeedingServices();
 
 builder
     .Services.AddControllers()
@@ -46,5 +48,9 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapHealthChecks("/health");
+
+await app.MigrateDatabase();
+
+await app.SeedData();
 
 await app.RunAsync();

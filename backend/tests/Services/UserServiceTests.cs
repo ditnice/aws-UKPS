@@ -1,5 +1,6 @@
 using Shouldly;
 using UKPS.Api.Common;
+using UKPS.Api.Data.Fakers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
@@ -7,7 +8,6 @@ using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.Data;
-using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Services;
 
