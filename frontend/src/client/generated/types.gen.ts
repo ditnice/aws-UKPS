@@ -28,7 +28,7 @@ export type OrganisationMembershipDto = {
     createdAt: string;
 };
 
-export type OrganisationType = number;
+export type OrganisationType = 'PharmaCompany' | 'HorizonScanning' | 'Strategic' | 'Internal';
 
 export type PaginatedResponseDtoOfUserListItemDto = {
     items: Array<UserListItemDto>;
@@ -37,7 +37,7 @@ export type PaginatedResponseDtoOfUserListItemDto = {
     pageSize: number | string;
 };
 
-export type PharmaceuticalEntity = number;
+export type PharmaceuticalEntity = string;
 
 export type ProblemDetails = {
     type?: null | string;
@@ -66,9 +66,9 @@ export type UserListItemDto = {
     lastActive?: null | string;
 };
 
-export type UserOrgStatus = number;
+export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Rejected' | 'Inactive';
 
-export type UserRole = number;
+export type UserRole = 'Standard' | 'Champion' | 'Super';
 
 export type GetOrganisationByIdData = {
     body?: never;
