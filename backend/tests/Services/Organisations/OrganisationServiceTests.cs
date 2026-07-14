@@ -50,8 +50,10 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
                 CreatedAt = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
             }
         );
-        await Context.SaveChangesAsync();
-        int id = (await Context.Organisations.SingleAsync()).Id;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        int id = (
+            await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
+        ).Id;
 
         GetOrganisationResult result = await Service.GetOrganisationById(id);
 
@@ -83,7 +85,10 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
         bool expectedAuthorised
     )
     {
-        Organisation organisation = await AddEntity(_organisationFaker.Generate());
+        Organisation organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
         int otherOrganisationId = 999_999;
         int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
 
@@ -113,8 +118,10 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
         Context.Organisations.Add(CreateOrganisation());
-        await Context.SaveChangesAsync();
-        int seededId = (await Context.Organisations.SingleAsync()).Id;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        int seededId = (
+            await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
+        ).Id;
 
         GetOrganisationResult result = await Service.GetOrganisationById(seededId + 1);
 
@@ -130,8 +137,10 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
         DateTime createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
         DateTime lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
         Context.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
-        await Context.SaveChangesAsync();
-        int id = (await Context.Organisations.SingleAsync()).Id;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        int id = (
+            await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
+        ).Id;
 
         UpdateOrganisationResult result = await Service.UpdateOrganisationDetails(
             id,
@@ -142,7 +151,10 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
         AssertUpdatedDetails(result.Value, createdAt, lastActive);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
-        Organisation saved = await verifyContext.Organisations.SingleAsync(o => o.Id == id);
+        Organisation saved = await verifyContext.Organisations.SingleAsync(
+            o => o.Id == id,
+            TestContext.Current.CancellationToken
+        );
         AssertUpdatedEntity(saved, createdAt, lastActive);
     }
 
@@ -159,7 +171,10 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
         bool expectedAuthorised
     )
     {
-        Organisation organisation = await AddEntity(_organisationFaker.Generate());
+        Organisation organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
         int otherOrganisationId = 999_999;
         int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
 

@@ -13,6 +13,11 @@ output "cluster_identifier" {
   value       = aws_rds_cluster.aurora.cluster_identifier
 }
 
+output "instance_id" {
+  description = "Identifier of the Aurora DB instance monitored by the alarms"
+  value       = aws_rds_cluster_instance.aurora_postgres_instance.id
+}
+
 output "database_name" {
   description = "Name of the Aurora database"
   value       = aws_rds_cluster.aurora.database_name

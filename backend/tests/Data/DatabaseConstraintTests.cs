@@ -26,7 +26,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
         Context.Users.Add(user);
         var organisation = _organisationFaker.Generate();
         Context.Organisations.Add(organisation);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var membership = _membershipFaker
             .Generate()
@@ -36,7 +36,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
                 x.OrganisationId = organisation.Id;
             });
         Context.UserOrgMemberships.Add(membership);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Context.UserOrgMemberships.Add(membership.Update(x => x.Id = 2));
 
@@ -53,12 +53,12 @@ public class DatabaseConstraintTests : DatabaseTestBase
         var user1 = _userFaker.Generate().Update(x => x.Username = duplicateUsername);
         var user2 = _userFaker.Generate().Update(x => x.Username = duplicateUsername);
         Context.Users.Add(user1);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Context.Users.Add(user2);
 
         DbUpdateException exception = await Assert.ThrowsAsync<DbUpdateException>(() =>
-            Context.SaveChangesAsync()
+            Context.SaveChangesAsync(TestContext.Current.CancellationToken)
         );
         AssertUniqueViolation(exception);
     }
@@ -70,7 +70,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
         var user1 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
         var user2 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
         Context.Users.Add(user1);
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Context.Users.Add(user2);
 
