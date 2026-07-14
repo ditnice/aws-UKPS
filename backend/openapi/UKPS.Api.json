@@ -10,6 +10,7 @@
         "tags": [
           "Organisation"
         ],
+        "operationId": "GetOrganisationById",
         "parameters": [
           {
             "name": "id",
@@ -69,6 +70,7 @@
         "tags": [
           "Organisation"
         ],
+        "operationId": "UpdateOrganisationDetails",
         "parameters": [
           {
             "name": "id",
@@ -170,6 +172,7 @@
         "tags": [
           "Organisation"
         ],
+        "operationId": "DeactivateMembership",
         "parameters": [
           {
             "name": "organisationId",
@@ -244,6 +247,7 @@
         "tags": [
           "Organisation"
         ],
+        "operationId": "UpdateUserRole",
         "parameters": [
           {
             "name": "organisationId",
@@ -338,6 +342,7 @@
         "tags": [
           "User"
         ],
+        "operationId": "GetUsers",
         "parameters": [
           {
             "name": "OrganisationId",
