@@ -7,9 +7,13 @@ namespace UKPS.Api.Services.Interfaces;
 public interface IOrganisationService
 {
     IOrganisationMembershipService Memberships { get; }
-    Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(int id);
+    Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
+        int id,
+        CancellationToken cancellationToken
+    );
     Task<Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>> UpdateOrganisationDetails(
         int id,
-        UpdateOrganisationDetailsDto organisationDetails
+        UpdateOrganisationDetailsDto organisationDetails,
+        CancellationToken cancellationToken
     );
 }

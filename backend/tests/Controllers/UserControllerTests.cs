@@ -30,12 +30,14 @@ public class UserControllerTests
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(expected));
 
         ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
-            CreateQuery()
+            CreateQuery(),
+            TestContext.Current.CancellationToken
         );
 
         OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -50,7 +52,8 @@ public class UserControllerTests
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
@@ -59,7 +62,8 @@ public class UserControllerTests
             );
 
         ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
-            CreateQuery()
+            CreateQuery(),
+            TestContext.Current.CancellationToken
         );
 
         BadRequestObjectResult badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
@@ -74,7 +78,8 @@ public class UserControllerTests
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(
@@ -83,7 +88,8 @@ public class UserControllerTests
             );
 
         ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
-            null
+            null,
+            TestContext.Current.CancellationToken
         );
 
         result.Result.ShouldBeOfType<BadRequestResult>();
@@ -97,7 +103,8 @@ public class UserControllerTests
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
@@ -112,7 +119,7 @@ public class UserControllerTests
             Status = [UserOrgStatus.Active, UserOrgStatus.Inactive],
         };
 
-        await _controller.GetUsers(getUsersQuery);
+        await _controller.GetUsers(getUsersQuery, TestContext.Current.CancellationToken);
 
         await _mockUserService
             .Received()
@@ -122,7 +129,8 @@ public class UserControllerTests
                 getUsersQuery.PageSize,
                 Arg.Is<IReadOnlyCollection<UserOrgStatus>>(statuses =>
                     statuses.SequenceEqual(getUsersQuery.Status)
-                )
+                ),
+                TestContext.Current.CancellationToken
             );
     }
 
@@ -134,7 +142,8 @@ public class UserControllerTests
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
@@ -142,7 +151,7 @@ public class UserControllerTests
                 )
             );
 
-        await _controller.GetUsers(new GetUsersQueryDto());
+        await _controller.GetUsers(new GetUsersQueryDto(), TestContext.Current.CancellationToken);
 
         await _mockUserService
             .Received(1)
@@ -150,7 +159,8 @@ public class UserControllerTests
                 null,
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             );
     }
 

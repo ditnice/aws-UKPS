@@ -11,6 +11,7 @@ public interface IUserService
         int? organisationId,
         int page,
         int pageSize,
-        IReadOnlyCollection<UserOrgStatus> statuses
+        IReadOnlyCollection<UserOrgStatus> statuses,
+        CancellationToken cancellationToken
     );
 }
