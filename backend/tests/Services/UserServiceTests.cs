@@ -6,6 +6,7 @@ using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
 
@@ -46,9 +47,8 @@ public class UserServiceTests : DatabaseTestBase
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 1, 20, [], TestContext.Current.CancellationToken);
 
-        result.IsOk.ShouldBeTrue();
-        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        dto.ShouldNotBeNull();
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
+
         dto.Items.ShouldBeEmpty();
         dto.TotalCount.ShouldBe(0);
         dto.Page.ShouldBe(1);
@@ -76,8 +76,7 @@ public class UserServiceTests : DatabaseTestBase
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 1, 20, [], TestContext.Current.CancellationToken);
 
-        result.IsOk.ShouldBeTrue();
-        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
 
         dto.ShouldNotBeNull();
         UserListItemDto item = dto.Items.ShouldHaveSingleItem();
@@ -119,9 +118,7 @@ public class UserServiceTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
 
-        result.IsOk.ShouldBeTrue();
-        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        dto.ShouldNotBeNull();
+        PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([2, 3]);
     }
@@ -166,9 +163,7 @@ public class UserServiceTests : DatabaseTestBase
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 2, 1, [], TestContext.Current.CancellationToken);
 
-        result.IsOk.ShouldBeTrue();
-        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        dto.ShouldNotBeNull();
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(3);
         dto.Page.ShouldBe(2);
         dto.PageSize.ShouldBe(1);
@@ -222,9 +217,7 @@ public class UserServiceTests : DatabaseTestBase
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(null, 1, 20, [], TestContext.Current.CancellationToken);
 
-        result.IsOk.ShouldBeTrue();
-        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        dto.ShouldNotBeNull();
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 20]);
     }
@@ -283,9 +276,7 @@ public class UserServiceTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
 
-        result.IsOk.ShouldBeTrue();
-        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        dto.ShouldNotBeNull();
+        PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(1);
         UserListItemDto item = dto.Items.ShouldHaveSingleItem();
         item.UserId.ShouldBe(20);
@@ -320,9 +311,7 @@ public class UserServiceTests : DatabaseTestBase
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(1, 5, 20, [], TestContext.Current.CancellationToken);
 
-        result.IsOk.ShouldBeTrue();
-        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        dto.ShouldNotBeNull();
+        PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.Items.ShouldBeEmpty();
         dto.TotalCount.ShouldBe(1);
         dto.Page.ShouldBe(5);
@@ -369,9 +358,7 @@ public class UserServiceTests : DatabaseTestBase
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(null, 1, 20, [], TestContext.Current.CancellationToken);
 
-        result.IsOk.ShouldBeTrue();
-        PaginatedResponseDto<UserListItemDto>? dto = result.Value;
-        dto.ShouldNotBeNull();
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 10]);
     }
@@ -427,21 +414,17 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        results.IsOk.ShouldBeTrue();
+        var dto = results.ShouldBeSuccess();
 
         if (filtersByOrganisation)
         {
-            results.Value!.TotalCount.ShouldBe(2);
-            results
-                .Value.Items.Select(i => i.UserId)
-                .ToArray()
-                .ShouldBe([users[0].Id, users[2].Id]);
+            dto.TotalCount.ShouldBe(2);
+            dto.Items.Select(i => i.UserId).ToArray().ShouldBe([users[0].Id, users[2].Id]);
         }
         else
         {
-            results.Value!.TotalCount.ShouldBe(3);
-            results
-                .Value.Items.Select(i => i.UserId)
+            dto.TotalCount.ShouldBe(3);
+            dto.Items.Select(i => i.UserId)
                 .ToArray()
                 .ShouldBe([users[0].Id, users[1].Id, users[2].Id]);
         }
