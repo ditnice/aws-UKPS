@@ -9,6 +9,7 @@ repos:
         args: ['--allow-missing-credentials']
       - id: detect-private-key
       - id: end-of-file-fixer
+        exclude: ^(backend/openapi/UKPS\.Api\.json|frontend/src/payload-types\.ts)$
       - id: trailing-whitespace
       - id: check-yaml
 
@@ -106,4 +107,11 @@ repos:
         language: system
         entry: bash -c 'cd backend && dotnet restore && dotnet build --no-restore'
         files: ^backend/.*\.(cs|csproj|props|targets)$
+        pass_filenames: false
+
+      - id: backend-openapi
+        name: Generate OpenAPI spec (backend)
+        language: system
+        entry: bash -c 'cd backend && dotnet build src/UKPS.Api.csproj /p:OpenApiDocumentsDirectory=../openapi && git diff --exit-code -- openapi'
+        files: ^backend/src/.*\.(cs|csproj|json)$
         pass_filenames: false

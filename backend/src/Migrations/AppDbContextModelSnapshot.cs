@@ -316,6 +316,7 @@ namespace UKPS.Api.Migrations
                         .HasColumnName("username");
 
                     b.Property<string>("WorkEmail")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("work_email");
 
@@ -329,6 +330,10 @@ namespace UKPS.Api.Migrations
                     b.HasIndex("Username")
                         .IsUnique()
                         .HasDatabaseName("ix_app_user_username");
+
+                    b.HasIndex("WorkEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ix_app_user_work_email");
 
                     b.ToTable("app_user", "ukps");
                 });

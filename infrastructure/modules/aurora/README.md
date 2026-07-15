@@ -72,6 +72,7 @@ No modules.
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | Aurora cluster writer endpoint |
 | <a name="output_cluster_identifier"></a> [cluster\_identifier](#output\_cluster\_identifier) | Identifier of the Aurora cluster |
 | <a name="output_database_name"></a> [database\_name](#output\_database\_name) | Name of the Aurora database |
+| <a name="output_instance_id"></a> [instance\_id](#output\_instance\_id) | Identifier of the Aurora DB instance monitored by the alarms |
 | <a name="output_master_user_secret_arn"></a> [master\_user\_secret\_arn](#output\_master\_user\_secret\_arn) | ARN of the Secrets Manager secret containing the managed master user password |
 | <a name="output_port"></a> [port](#output\_port) | Port used by the Aurora cluster |
 | <a name="output_reader_endpoint"></a> [reader\_endpoint](#output\_reader\_endpoint) | Aurora cluster reader endpoint |

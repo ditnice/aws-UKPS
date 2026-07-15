@@ -1,33 +1,77 @@
-using System.Diagnostics;
+using Bogus;
 using Microsoft.EntityFrameworkCore;
+using Shouldly;
 using UKPS.Api.Common;
+using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
-using UKPS.Api.Services;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
+using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.AssertionHelpers;
+using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Services;
 
-public class OrganisationServiceTests : IAsyncDisposable
+[Collection(DatabaseCollection.Name)]
+public class OrganisationServiceTests : DatabaseTestBase
 {
-    private readonly TestDatabase _testDatabase;
-    private readonly OrganisationService _service;
+    private readonly IOrganisationService _service;
+    private readonly OrganisationFaker _organisationFaker = new();
 
-    public OrganisationServiceTests()
+    public OrganisationServiceTests(PostgresFixture fixture)
+        : base(fixture)
     {
-        _testDatabase = new TestDatabase();
-        _service = new OrganisationService(
-            _testDatabase.Context,
-            new StubOrganisationMembershipService()
+        _service = new ServiceTestHarness<IOrganisationService>(Context).Service;
+    }
+
+    [Theory]
+    [InlineData(true, UserRole.Super, true)]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(true, UserRole.Standard, true)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task GetOrganisationById_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        Organisation organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
         );
+        int otherOrganisationId = 999_999;
+        int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
+
+        var testHarness = new ServiceTestHarness<IOrganisationService>(Context).UpdateCurrentUser(
+            x => x with { OrganisationId = usersOrganisationId, UserRole = userRole }
+        );
+        var service = testHarness.Service;
+
+        Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
+            await service.GetOrganisationById(
+                organisation.Id,
+                TestContext.Current.CancellationToken
+            );
+
+        if (expectedAuthorised)
+        {
+            result.IsOk.ShouldBeTrue();
+        }
+        else
+        {
+            result.IsErr.ShouldBeTrue();
+            result.Error.ShouldBeOfType<GetOrganisationByIdError.NotAllowed>();
+        }
     }
 
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsDto()
     {
-        _testDatabase.Context.Organisations.Add(
+        Context.Organisations.Add(
             new Organisation
             {
                 Id = 1,
@@ -42,41 +86,44 @@ public class OrganisationServiceTests : IAsyncDisposable
                 CreatedAt = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc),
             }
         );
-        await _testDatabase.Context.SaveChangesAsync();
-        int id = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        int id = (
+            await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
+        ).Id;
 
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await _service.GetOrganisationById(id);
+            await _service.GetOrganisationById(id, TestContext.Current.CancellationToken);
 
-        Assert.True(result.IsOk);
-        OrganisationDetailsDto? dto = result.Value;
-        Assert.NotNull(dto);
-        Assert.Equal(id, dto.Id);
-        Assert.Equal("Gov Pharma Ltd", dto.OrganisationName);
-        Assert.Equal(PharmaceuticalEntity.Medicines, dto.AllowedPharmaceuticalEntity);
-        Assert.Equal(OrganisationType.PharmaCompany, dto.OrganisationType);
-        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", dto.HeadOfficeAddress);
-        Assert.Equal("info@pharma.gov.uk", dto.HeadOfficeEmail);
-        Assert.Equal("020 1234 5678", dto.HeadOfficeTelephone);
-        Assert.Equal(UserOrgStatus.Active, dto.Status);
-        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), dto.LastActive);
-        Assert.Equal(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc), dto.CreatedAt);
+        var dto = result.ShouldBeSuccess();
+        dto.ShouldNotBeNull();
+        dto.Id.ShouldBe(id);
+        dto.OrganisationName.ShouldBe("Gov Pharma Ltd");
+        dto.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Medicines);
+        dto.OrganisationType.ShouldBe(OrganisationType.PharmaCompany);
+        dto.HeadOfficeAddress.ShouldBe("10 Downing Street\nLondon\nSW1A 2AA");
+        dto.HeadOfficeEmail.ShouldBe("info@pharma.gov.uk");
+        dto.HeadOfficeTelephone.ShouldBe("020 1234 5678");
+        dto.Status.ShouldBe(UserOrgStatus.Active);
+        dto.LastActive.ShouldBe(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc));
+        dto.CreatedAt.ShouldBe(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc));
     }
 
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
-        _testDatabase.Context.Organisations.Add(CreateOrganisation());
-        await _testDatabase.Context.SaveChangesAsync();
-        int seededId = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
+        Context.Organisations.Add(CreateOrganisation());
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        int seededId = (
+            await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
+        ).Id;
 
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await _service.GetOrganisationById(seededId + 1);
+            await _service.GetOrganisationById(seededId + 1, TestContext.Current.CancellationToken);
 
-        Assert.True(result.IsErr);
-        GetOrganisationByIdError.NotFound notFound =
-            Assert.IsType<GetOrganisationByIdError.NotFound>(result.Error);
-        Assert.Equal(seededId + 1, notFound.OrganisationId);
+        GetOrganisationByIdError.NotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetOrganisationByIdError.NotFound>();
+        notFound.OrganisationId.ShouldBe(seededId + 1);
     }
 
     [Fact]
@@ -84,18 +131,71 @@ public class OrganisationServiceTests : IAsyncDisposable
     {
         DateTime createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
         DateTime lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
-        _testDatabase.Context.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
-        await _testDatabase.Context.SaveChangesAsync();
-        int id = (await _testDatabase.Context.Organisations.SingleAsync()).Id;
+        Context.Organisations.Add(CreateOrganisationForUpdate(createdAt, lastActive));
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        int id = (
+            await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
+        ).Id;
 
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
-            await _service.UpdateOrganisationDetails(id, CreateUpdateDto());
+            await _service.UpdateOrganisationDetails(
+                id,
+                CreateUpdateDto(),
+                TestContext.Current.CancellationToken
+            );
 
-        Assert.True(result.IsOk);
+        result.IsOk.ShouldBeTrue();
         AssertUpdatedDetails(result.Value, createdAt, lastActive);
 
-        Organisation saved = await _testDatabase.Context.Organisations.SingleAsync(o => o.Id == id);
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        Organisation saved = await verifyContext.Organisations.SingleAsync(
+            o => o.Id == id,
+            TestContext.Current.CancellationToken
+        );
         AssertUpdatedEntity(saved, createdAt, lastActive);
+    }
+
+    [Theory]
+    [InlineData(true, UserRole.Super, true)]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(true, UserRole.Standard, false)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task UpdateOrganisationDetails_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        Organisation organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        int otherOrganisationId = 999_999;
+        int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
+        var testHarness = new ServiceTestHarness<IOrganisationService>(Context).UpdateCurrentUser(
+            x => x with { OrganisationId = usersOrganisationId, UserRole = userRole }
+        );
+        var service = testHarness.Service;
+
+        var updateCommand = new UpdateOrganisationDetailsDtoFaker().Generate();
+        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
+            await service.UpdateOrganisationDetails(
+                organisation.Id,
+                updateCommand,
+                TestContext.Current.CancellationToken
+            );
+
+        if (expectedAuthorised)
+        {
+            result.IsOk.ShouldBeTrue();
+        }
+        else
+        {
+            result.IsErr.ShouldBeTrue();
+            result.Error.ShouldBeOfType<UpdateOrganisationDetailsError.NotAllowed>();
+        }
     }
 
     [Fact]
@@ -110,13 +210,14 @@ public class OrganisationServiceTests : IAsyncDisposable
                     HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
                     HeadOfficeEmail = "new@example.com",
                     HeadOfficeTelephone = "020 1111 1111",
-                }
+                },
+                TestContext.Current.CancellationToken
             );
 
-        Assert.True(result.IsErr);
+        result.IsErr.ShouldBeTrue();
         UpdateOrganisationDetailsError.NotFound notFound =
-            Assert.IsType<UpdateOrganisationDetailsError.NotFound>(result.Error);
-        Assert.Equal(99, notFound.OrganisationId);
+            result.Error.ShouldBeOfType<UpdateOrganisationDetailsError.NotFound>();
+        notFound.OrganisationId.ShouldBe(99);
     }
 
     private static Organisation CreateOrganisation() =>
@@ -162,16 +263,16 @@ public class OrganisationServiceTests : IAsyncDisposable
         DateTime lastActive
     )
     {
-        Assert.NotNull(result);
-        Assert.Equal("New Pharma Ltd", result.OrganisationName);
-        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", result.HeadOfficeAddress);
-        Assert.Equal("new@example.com", result.HeadOfficeEmail);
-        Assert.Equal("020 1111 1111", result.HeadOfficeTelephone);
-        Assert.Equal(OrganisationType.PharmaCompany, result.OrganisationType);
-        Assert.Equal(PharmaceuticalEntity.Medicines, result.AllowedPharmaceuticalEntity);
-        Assert.Equal(UserOrgStatus.Active, result.Status);
-        Assert.Equal(lastActive, result.LastActive);
-        Assert.Equal(createdAt, result.CreatedAt);
+        result.ShouldNotBeNull();
+        result.OrganisationName.ShouldBe("New Pharma Ltd");
+        result.HeadOfficeAddress.ShouldBe("10 Downing Street\nLondon\nSW1A 2AA");
+        result.HeadOfficeEmail.ShouldBe("new@example.com");
+        result.HeadOfficeTelephone.ShouldBe("020 1111 1111");
+        result.OrganisationType.ShouldBe(OrganisationType.PharmaCompany);
+        result.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Medicines);
+        result.Status.ShouldBe(UserOrgStatus.Active);
+        result.LastActive.ShouldBe(lastActive);
+        result.CreatedAt.ShouldBe(createdAt);
     }
 
     private static void AssertUpdatedEntity(
@@ -180,40 +281,25 @@ public class OrganisationServiceTests : IAsyncDisposable
         DateTime lastActive
     )
     {
-        Assert.Equal("New Pharma Ltd", saved.OrganisationName);
-        Assert.Equal("10 Downing Street\nLondon\nSW1A 2AA", saved.HeadOfficeAddress);
-        Assert.Equal("new@example.com", saved.HeadOfficeEmail);
-        Assert.Equal("020 1111 1111", saved.HeadOfficeTelephone);
-        Assert.Equal(OrganisationType.PharmaCompany, saved.OrganisationType);
-        Assert.Equal(PharmaceuticalEntity.Medicines, saved.AllowedPharmaceuticalEntity);
-        Assert.Equal(UserOrgStatus.Active, saved.Status);
-        Assert.Equal(lastActive, saved.LastActive);
-        Assert.Equal(createdAt, saved.CreatedAt);
+        saved.OrganisationName.ShouldBe("New Pharma Ltd");
+        saved.HeadOfficeAddress.ShouldBe("10 Downing Street\nLondon\nSW1A 2AA");
+        saved.HeadOfficeEmail.ShouldBe("new@example.com");
+        saved.HeadOfficeTelephone.ShouldBe("020 1111 1111");
+        saved.OrganisationType.ShouldBe(OrganisationType.PharmaCompany);
+        saved.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Medicines);
+        saved.Status.ShouldBe(UserOrgStatus.Active);
+        saved.LastActive.ShouldBe(lastActive);
+        saved.CreatedAt.ShouldBe(createdAt);
     }
 
-    public async ValueTask DisposeAsync()
+    private sealed class UpdateOrganisationDetailsDtoFaker : Faker<UpdateOrganisationDetailsDto>
     {
-        await _testDatabase.DisposeAsync();
-        GC.SuppressFinalize(this);
-    }
-
-    private sealed class StubOrganisationMembershipService : IOrganisationMembershipService
-    {
-        public Task<
-            Result<OrganisationMembershipDto, OrganisationMembershipDeactivateUserError>
-        > DeactivateMembership(
-            int organisationId,
-            int membershipId,
-            CancellationToken cancellationToken
-        ) => throw new UnreachableException();
-
-        Task<
-            Result<OrganisationMembershipDto, OrganisationMembershipUpdateUserRoleError>
-        > IOrganisationMembershipService.UpdateUserRole(
-            int organisationId,
-            int membershipId,
-            UpdateOrgMembershipUserRoleCommandDto command,
-            CancellationToken cancellationToken
-        ) => throw new UnreachableException();
+        public UpdateOrganisationDetailsDtoFaker()
+        {
+            RuleFor(o => o.OrganisationName, f => f.Company.CompanyName());
+            RuleFor(o => o.HeadOfficeAddress, f => f.Address.FullAddress());
+            RuleFor(o => o.HeadOfficeEmail, f => f.Internet.Email());
+            RuleFor(o => o.HeadOfficeTelephone, f => f.Phone.PhoneNumber());
+        }
     }
 }

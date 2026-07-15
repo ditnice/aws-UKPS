@@ -1,24 +1,29 @@
-using Microsoft.AspNetCore.Mvc.Testing;
+using Shouldly;
+using UKPS.Api.Tests.Fixtures;
 
 namespace UKPS.Api.Tests.Integration;
 
-public class HealthCheckEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(DatabaseCollection.Name)]
+public class HealthCheckEndpointTests
 {
     private readonly HttpClient _httpClient;
 
-    public HealthCheckEndpointTests(WebApplicationFactory<Program> apiFactory)
+    public HealthCheckEndpointTests(PostgresFixture fixture)
     {
-        ArgumentNullException.ThrowIfNull(apiFactory);
+        ArgumentNullException.ThrowIfNull(fixture);
 
-        _httpClient = apiFactory.CreateClient();
+        _httpClient = fixture.Factory.CreateClient();
     }
 
     [Fact]
     public async Task HealthCheckEndpoint_ShouldReturnSuccessfullyStatus()
     {
-        var healthCheckUrl = new Uri("/health");
-        HttpResponseMessage response = await _httpClient.GetAsync(healthCheckUrl);
+        var healthCheckUrl = new Uri("/health", UriKind.Relative);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            healthCheckUrl,
+            TestContext.Current.CancellationToken
+        );
 
-        Assert.True(response.IsSuccessStatusCode);
+        response.IsSuccessStatusCode.ShouldBeTrue();
     }
 }

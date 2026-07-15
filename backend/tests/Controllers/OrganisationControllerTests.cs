@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using NSubstitute;
+using Shouldly;
 using UKPS.Api.Common;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
@@ -14,6 +16,35 @@ public class OrganisationControllerTests
 {
     private static readonly DateTime _createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
     private static readonly DateTime _lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
+    private readonly IOrganisationService _organisationServiceMock;
+    private readonly OrganisationController _controller;
+
+    public OrganisationControllerTests()
+    {
+        _organisationServiceMock = Substitute.For<IOrganisationService>();
+
+        _organisationServiceMock
+            .GetOrganisationById(Arg.Any<int>(), TestContext.Current.CancellationToken)
+            .Returns(callInfo =>
+                Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
+                    new GetOrganisationByIdError.NotFound(callInfo.Arg<int>())
+                )
+            );
+
+        _organisationServiceMock
+            .UpdateOrganisationDetails(
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrganisationDetailsDto>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(callInfo =>
+                Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
+                    new UpdateOrganisationDetailsError.NotFound(callInfo.Arg<int>())
+                )
+            );
+
+        _controller = new OrganisationController(_organisationServiceMock);
+    }
 
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsOk()
@@ -31,106 +62,117 @@ public class OrganisationControllerTests
             LastActive = _lastActive,
             CreatedAt = _createdAt,
         };
-        OrganisationController controller = new(
-            new StubOrganisationService(
-                getResult: Result<OrganisationDetailsDto, GetOrganisationByIdError>.Ok(expected)
-            )
+        _organisationServiceMock
+            .GetOrganisationById(1, TestContext.Current.CancellationToken)
+            .Returns(Result<OrganisationDetailsDto, GetOrganisationByIdError>.Ok(expected));
+
+        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(
+            1,
+            TestContext.Current.CancellationToken
         );
 
-        ActionResult<OrganisationDetailsDto> result = await controller.GetOrganisationById(1);
-
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Same(expected, ok.Value);
+        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(expected);
     }
 
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFound()
     {
-        OrganisationController controller = new(new StubOrganisationService());
+        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(
+            99,
+            TestContext.Current.CancellationToken
+        );
 
-        ActionResult<OrganisationDetailsDto> result = await controller.GetOrganisationById(99);
-
-        Assert.IsType<NotFoundResult>(result.Result);
+        result.Result.ShouldBeOfType<NotFoundResult>();
     }
 
     [Fact]
     public async Task GetOrganisationById_IdProvided_PassesIdToService()
     {
-        CapturingOrganisationService service = new();
-        OrganisationController controller = new(service);
+        var expectedId = 42;
 
-        await controller.GetOrganisationById(42);
+        await _controller.GetOrganisationById(42, TestContext.Current.CancellationToken);
 
-        Assert.Equal(42, service.CapturedId);
+        await _organisationServiceMock
+            .Received(1)
+            .GetOrganisationById(expectedId, TestContext.Current.CancellationToken);
     }
 
     [Fact]
     public async Task UpdateOrganisationDetails_OrganisationExists_ReturnsOk()
     {
         OrganisationDetailsDto expected = CreateOrganisationDetailsDto();
-        OrganisationController controller = new(
-            new StubOrganisationService(
-                updateResult: Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Ok(
-                    expected
-                )
+        _organisationServiceMock
+            .UpdateOrganisationDetails(
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrganisationDetailsDto>(),
+                TestContext.Current.CancellationToken
             )
-        );
+            .Returns(Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Ok(expected));
 
-        ActionResult<OrganisationDetailsDto> result = await controller.UpdateOrganisationDetails(
+        ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             1,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Same(expected, ok.Value);
+        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(expected);
     }
 
     [Fact]
     public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNotFound()
     {
-        OrganisationController controller = new(new StubOrganisationService());
-
-        ActionResult<OrganisationDetailsDto> result = await controller.UpdateOrganisationDetails(
+        ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             99,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        result.Result.ShouldBeOfType<NotFoundResult>();
     }
 
     [Fact]
     public async Task UpdateOrganisationDetails_IdAndDtoProvided_PassesIdAndDtoToService()
     {
-        CapturingOrganisationService service = new();
-        OrganisationController controller = new(service);
+        var exampleOrgId = 42;
         UpdateOrganisationDetailsDto request = CreateUpdateOrganisationDetailsDto();
 
-        await controller.UpdateOrganisationDetails(42, request);
-
-        Assert.Equal(42, service.CapturedUpdateId);
-        Assert.Same(request, service.CapturedUpdateDto);
+        await _controller.UpdateOrganisationDetails(
+            42,
+            request,
+            TestContext.Current.CancellationToken
+        );
+        await _organisationServiceMock
+            .Received(1)
+            .UpdateOrganisationDetails(
+                exampleOrgId,
+                request,
+                TestContext.Current.CancellationToken
+            );
     }
 
     [Fact]
     public async Task UpdateOrganisationDetails_ModelStateIsInvalid_ReturnsBadRequest()
     {
-        OrganisationController controller = new(new StubOrganisationService());
-        controller.ModelState.AddModelError(
+        _controller.ModelState.AddModelError(
             nameof(UpdateOrganisationDetailsDto.OrganisationName),
             "Required"
         );
 
-        ActionResult<OrganisationDetailsDto> result = await controller.UpdateOrganisationDetails(
+        ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             1,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
-        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
-        SerializableError errors = Assert.IsType<SerializableError>(badRequest.Value);
-        string[] organisationNameErrors = Assert.IsType<string[]>(
-            errors[nameof(UpdateOrganisationDetailsDto.OrganisationName)]
-        );
-        Assert.Contains("Required", organisationNameErrors);
+        BadRequestObjectResult badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        SerializableError errors = badRequest.Value.ShouldBeOfType<SerializableError>();
+        string[] organisationNameErrors = errors[
+            nameof(UpdateOrganisationDetailsDto.OrganisationName)
+        ]
+            .ShouldBeOfType<string[]>();
+        organisationNameErrors.ShouldContain("Required");
     }
 
     [Fact]
@@ -154,10 +196,10 @@ public class OrganisationControllerTests
             .Distinct(StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.OrganisationName), invalidMembers);
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress), invalidMembers);
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail), invalidMembers);
-        Assert.Contains(nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone), invalidMembers);
+        invalidMembers.ShouldContain(nameof(UpdateOrganisationDetailsDto.OrganisationName));
+        invalidMembers.ShouldContain(nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress));
+        invalidMembers.ShouldContain(nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail));
+        invalidMembers.ShouldContain(nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone));
     }
 
     [Theory]
@@ -171,18 +213,16 @@ public class OrganisationControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(
-                    nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
-                    StringComparer.Ordinal
-                )
-                && string.Equals(
-                    r.ErrorMessage,
-                    "HeadOfficeAddress cannot be empty or whitespace.",
-                    StringComparison.Ordinal
-                )
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
+                StringComparer.Ordinal
+            )
+            && string.Equals(
+                r.ErrorMessage,
+                "HeadOfficeAddress cannot be empty or whitespace.",
+                StringComparison.Ordinal
+            )
         );
     }
 
@@ -195,13 +235,11 @@ public class OrganisationControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.DoesNotContain(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(
-                    nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
-                    StringComparer.Ordinal
-                )
+        validationResults.ShouldNotContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeAddress),
+                StringComparer.Ordinal
+            )
         );
     }
 
@@ -218,13 +256,11 @@ public class OrganisationControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(
-                    nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail),
-                    StringComparer.Ordinal
-                )
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeEmail),
+                StringComparer.Ordinal
+            )
         );
     }
 
@@ -265,75 +301,13 @@ public class OrganisationControllerTests
 
     private static List<ValidationResult> Validate(UpdateOrganisationDetailsDto dto)
     {
-        List<ValidationResult> validationResults = [];
+        List<ValidationResult> validationResults = new();
         Validator.TryValidateObject(
             dto,
             new ValidationContext(dto),
             validationResults,
             validateAllProperties: true
         );
-
         return validationResults;
-    }
-
-    private sealed class StubOrganisationService(
-        Result<OrganisationDetailsDto, GetOrganisationByIdError>? getResult = null,
-        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>? updateResult = null
-    ) : IOrganisationService
-    {
-        public IOrganisationMembershipService Memberships => throw new InvalidOperationException();
-
-        public Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
-            int id
-        ) =>
-            Task.FromResult(
-                getResult
-                    ?? Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
-                        new GetOrganisationByIdError.NotFound(id)
-                    )
-            );
-
-        public Task<
-            Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>
-        > UpdateOrganisationDetails(int id, UpdateOrganisationDetailsDto organisationDetails) =>
-            Task.FromResult(
-                updateResult
-                    ?? Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
-                        new UpdateOrganisationDetailsError.NotFound(id)
-                    )
-            );
-    }
-
-    private sealed class CapturingOrganisationService : IOrganisationService
-    {
-        public IOrganisationMembershipService Memberships => throw new InvalidOperationException();
-        public int CapturedId { get; private set; }
-        public int CapturedUpdateId { get; private set; }
-        public UpdateOrganisationDetailsDto? CapturedUpdateDto { get; private set; }
-
-        public Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
-            int id
-        )
-        {
-            CapturedId = id;
-            return Task.FromResult(
-                Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
-                    new GetOrganisationByIdError.NotFound(id)
-                )
-            );
-        }
-
-        public Task<
-            Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>
-        > UpdateOrganisationDetails(int id, UpdateOrganisationDetailsDto organisationDetails)
-        {
-            CapturedUpdateId = id;
-            CapturedUpdateDto = organisationDetails;
-            return Task.FromResult(
-                Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
-                    new UpdateOrganisationDetailsError.NotFound(id)
-                )
-            );
-        }
     }
 }

@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using NSubstitute;
+using Shouldly;
 using UKPS.Api.Common;
 using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
@@ -11,66 +13,104 @@ namespace UKPS.Api.Tests.Controllers;
 
 public class UserControllerTests
 {
+    private readonly IUserService _mockUserService = Substitute.For<IUserService>();
+    private readonly UserController _controller;
+
+    public UserControllerTests()
+    {
+        _controller = new UserController(_mockUserService);
+    }
+
     [Fact]
     public async Task GetUsers_ReturnsOk_WhenOrganisationExists()
     {
         PaginatedResponseDto<UserListItemDto> expected = CreatePaginatedResponse();
-        UserController controller = new(
-            new StubUserService(
-                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(expected)
+        _mockUserService
+            .GetUsers(
+                Arg.Any<int?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
+            .Returns(Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(expected));
+
+        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
+            CreateQuery(),
+            TestContext.Current.CancellationToken
         );
 
-        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
-            CreateQuery()
-        );
-
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Same(expected, ok.Value);
+        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(expected);
     }
 
     [Fact]
     public async Task GetUsers_ReturnsNotFound_WhenOrganisationDoesNotExist()
     {
-        UserController controller = new(
-            new StubUserService(
+        _mockUserService
+            .GetUsers(
+                Arg.Any<int?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
                     new GetUsersError.OrganisationNotFound(1)
                 )
-            )
+            );
+
+        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
+            CreateQuery(),
+            TestContext.Current.CancellationToken
         );
 
-        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
-            CreateQuery()
-        );
-
-        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("Organisation not found.", badRequest.Value);
+        BadRequestObjectResult badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        badRequest.Value.ShouldBe("Organisation not found.");
     }
 
     [Fact]
     public async Task GetUsers_ReturnsBadRequest_WhenQueryIsNull()
     {
-        UserController controller = new(
-            new StubUserService(
+        _mockUserService
+            .GetUsers(
+                Arg.Any<int?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(
                     CreatePaginatedResponse()
                 )
-            )
+            );
+
+        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
+            null,
+            TestContext.Current.CancellationToken
         );
 
-        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
-            null
-        );
-
-        Assert.IsType<BadRequestResult>(result.Result);
+        result.Result.ShouldBeOfType<BadRequestResult>();
     }
 
     [Fact]
     public async Task GetUsers_PassesQueryValuesToService()
     {
-        CapturingUserService service = new();
-        UserController controller = new(service);
+        _mockUserService
+            .GetUsers(
+                Arg.Any<int?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(
+                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
+                    new GetUsersError.OrganisationNotFound(1)
+                )
+            );
         GetUsersQueryDto getUsersQuery = new()
         {
             OrganisationId = 42,
@@ -79,23 +119,49 @@ public class UserControllerTests
             Status = [UserOrgStatus.Active, UserOrgStatus.Inactive],
         };
 
-        await controller.GetUsers(getUsersQuery);
+        await _controller.GetUsers(getUsersQuery, TestContext.Current.CancellationToken);
 
-        Assert.Equal(42, service.CapturedOrganisationId);
-        Assert.Equal(3, service.CapturedPage);
-        Assert.Equal(10, service.CapturedPageSize);
-        Assert.Equal([UserOrgStatus.Active, UserOrgStatus.Inactive], service.CapturedStatuses);
+        await _mockUserService
+            .Received()
+            .GetUsers(
+                getUsersQuery.OrganisationId,
+                getUsersQuery.Page,
+                getUsersQuery.PageSize,
+                Arg.Is<IReadOnlyCollection<UserOrgStatus>>(statuses =>
+                    statuses.SequenceEqual(getUsersQuery.Status)
+                ),
+                TestContext.Current.CancellationToken
+            );
     }
 
     [Fact]
     public async Task GetUsers_PassesNullOrganisationIdToService()
     {
-        CapturingUserService service = new();
-        UserController controller = new(service);
+        _mockUserService
+            .GetUsers(
+                Arg.Any<int?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(
+                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
+                    new GetUsersError.OrganisationNotFound(1)
+                )
+            );
 
-        await controller.GetUsers(new GetUsersQueryDto());
+        await _controller.GetUsers(new GetUsersQueryDto(), TestContext.Current.CancellationToken);
 
-        Assert.Null(service.CapturedOrganisationId);
+        await _mockUserService
+            .Received(1)
+            .GetUsers(
+                null,
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
+            );
     }
 
     [Fact]
@@ -105,7 +171,7 @@ public class UserControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Empty(validationResults);
+        validationResults.ShouldBeEmpty();
     }
 
     [Theory]
@@ -117,15 +183,13 @@ public class UserControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(nameof(GetUsersQueryDto.Page), StringComparer.Ordinal)
-                && string.Equals(
-                    r.ErrorMessage,
-                    "Page cannot be less than 1.",
-                    StringComparison.Ordinal
-                )
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(nameof(GetUsersQueryDto.Page), StringComparer.Ordinal)
+            && string.Equals(
+                r.ErrorMessage,
+                "Page cannot be less than 1.",
+                StringComparison.Ordinal
+            )
         );
     }
 
@@ -138,15 +202,13 @@ public class UserControllerTests
 
         List<ValidationResult> validationResults = Validate(dto);
 
-        Assert.Contains(
-            validationResults,
-            r =>
-                r.MemberNames.Contains(nameof(GetUsersQueryDto.PageSize), StringComparer.Ordinal)
-                && string.Equals(
-                    r.ErrorMessage,
-                    "PageSize must be between 1 and 100.",
-                    StringComparison.Ordinal
-                )
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(nameof(GetUsersQueryDto.PageSize), StringComparer.Ordinal)
+            && string.Equals(
+                r.ErrorMessage,
+                "PageSize must be between 1 and 100.",
+                StringComparison.Ordinal
+            )
         );
     }
 
@@ -187,43 +249,5 @@ public class UserControllerTests
         );
 
         return validationResults;
-    }
-
-    private sealed class StubUserService(
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result
-    ) : IUserService
-    {
-        public Task<Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>> GetUsers(
-            int? organisationId,
-            int page,
-            int pageSize,
-            IReadOnlyCollection<UserOrgStatus> statuses
-        ) => Task.FromResult(result);
-    }
-
-    private sealed class CapturingUserService : IUserService
-    {
-        public int? CapturedOrganisationId { get; private set; }
-        public int CapturedPage { get; private set; }
-        public int CapturedPageSize { get; private set; }
-        public UserOrgStatus[] CapturedStatuses { get; private set; } = [];
-
-        public Task<Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>> GetUsers(
-            int? organisationId,
-            int page,
-            int pageSize,
-            IReadOnlyCollection<UserOrgStatus> statuses
-        )
-        {
-            CapturedOrganisationId = organisationId;
-            CapturedPage = page;
-            CapturedPageSize = pageSize;
-            CapturedStatuses = statuses.ToArray();
-            return Task.FromResult(
-                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(
-                    CreatePaginatedResponse()
-                )
-            );
-        }
     }
 }

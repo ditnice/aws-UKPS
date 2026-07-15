@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
@@ -8,47 +7,67 @@ using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Services;
 
+// Type aliases for Result
+using GetOrganisationResult = Common.Result<OrganisationDetailsDto, GetOrganisationByIdError>;
+using UpdateOrganisationResult = Common.Result<
+    OrganisationDetailsDto,
+    UpdateOrganisationDetailsError
+>;
+
 internal sealed class OrganisationService : IOrganisationService
 {
     public IOrganisationMembershipService Memberships { get; }
 
     private readonly AppDbContext _dbContext;
+    private readonly IOrganisationAuthoriser _organisationAuthoriser;
 
     public OrganisationService(
         AppDbContext dbContext,
-        IOrganisationMembershipService membershipService
+        IOrganisationMembershipService membershipService,
+        IOrganisationAuthoriser organisationAuthoriser
     )
     {
         _dbContext = dbContext;
         Memberships = membershipService;
+        _organisationAuthoriser = organisationAuthoriser;
     }
 
-    public async Task<Result<OrganisationDetailsDto, GetOrganisationByIdError>> GetOrganisationById(
-        int id
+    public async Task<GetOrganisationResult> GetOrganisationById(
+        int id,
+        CancellationToken cancellationToken
     )
     {
+        if (!_organisationAuthoriser.CanPerformOperationOnOrganisation(Operation.Read, id))
+        {
+            return GetOrganisationResult.Err(new GetOrganisationByIdError.NotAllowed(id));
+        }
         var organisation = await _dbContext
             .Organisations.AsNoTracking()
-            .SingleOrDefaultAsync(o => o.Id == id);
+            .SingleOrDefaultAsync(o => o.Id == id, cancellationToken);
 
         return organisation is null
-            ? Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
-                new GetOrganisationByIdError.NotFound(id)
-            )
-            : Result<OrganisationDetailsDto, GetOrganisationByIdError>.Ok(MapToDto(organisation));
+            ? GetOrganisationResult.Err(new GetOrganisationByIdError.NotFound(id))
+            : GetOrganisationResult.Ok(MapToDto(organisation));
     }
 
-    public async Task<
-        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>
-    > UpdateOrganisationDetails(int id, UpdateOrganisationDetailsDto organisationDetails)
+    public async Task<UpdateOrganisationResult> UpdateOrganisationDetails(
+        int id,
+        UpdateOrganisationDetailsDto organisationDetails,
+        CancellationToken cancellationToken
+    )
     {
-        var organisation = await _dbContext.Organisations.SingleOrDefaultAsync(o => o.Id == id);
+        if (!_organisationAuthoriser.CanPerformOperationOnOrganisation(Operation.Update, id))
+        {
+            return UpdateOrganisationResult.Err(new UpdateOrganisationDetailsError.NotAllowed(id));
+        }
+        var organisation = await _dbContext.Organisations.SingleOrDefaultAsync(
+            o => o.Id == id,
+            cancellationToken
+        );
 
         if (organisation is null)
         {
-            return Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
-                new UpdateOrganisationDetailsError.NotFound(id)
-            );
+            return UpdateOrganisationResult.Err(new UpdateOrganisationDetailsError.NotFound(id));
         }
 
         organisation.OrganisationName = organisationDetails.OrganisationName;
@@ -56,11 +75,9 @@ internal sealed class OrganisationService : IOrganisationService
         organisation.HeadOfficeEmail = organisationDetails.HeadOfficeEmail;
         organisation.HeadOfficeTelephone = organisationDetails.HeadOfficeTelephone;
 
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Ok(
-            MapToDto(organisation)
-        );
+        return UpdateOrganisationResult.Ok(MapToDto(organisation));
     }
 
     private static OrganisationDetailsDto MapToDto(Organisation organisation) =>

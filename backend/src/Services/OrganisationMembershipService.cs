@@ -16,8 +16,10 @@ using UpdateUserRoleResult = UKPS.Api.Common.Result<
 
 namespace UKPS.Api.Services;
 
-internal sealed class OrganisationMembershipService(AppDbContext dbContext)
-    : IOrganisationMembershipService
+internal sealed class OrganisationMembershipService(
+    AppDbContext dbContext,
+    IOrganisationAuthoriser organisationAuthoriser
+) : IOrganisationMembershipService
 {
     public async Task<UpdateUserRoleResult> UpdateUserRole(
         int organisationId,
@@ -26,6 +28,16 @@ internal sealed class OrganisationMembershipService(AppDbContext dbContext)
         CancellationToken cancellationToken
     )
     {
+        if (
+            !organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Update,
+                organisationId
+            )
+        )
+        {
+            var error = new OrganisationMembershipUpdateUserRoleError.NotAllowed(organisationId);
+            return UpdateUserRoleResult.Err(error);
+        }
         var membership = await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
             x => x.OrganisationId == organisationId && x.Id == membershipId,
             cancellationToken
@@ -49,6 +61,16 @@ internal sealed class OrganisationMembershipService(AppDbContext dbContext)
         CancellationToken cancellationToken
     )
     {
+        if (
+            !organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Update,
+                organisationId
+            )
+        )
+        {
+            var error = new OrganisationMembershipDeactivateUserError.NotAllowed(organisationId);
+            return DeactivateUserResult.Err(error);
+        }
         var membership = await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
             x => x.OrganisationId == organisationId && x.Id == membershipId,
             cancellationToken

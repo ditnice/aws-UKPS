@@ -10,12 +10,15 @@ namespace UKPS.Api.Controllers;
 [Route("organisations")]
 public class OrganisationController(IOrganisationService organisationService) : ControllerBase
 {
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:int}", Name = nameof(GetOrganisationById))]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(int id)
+    public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(
+        int id,
+        CancellationToken cancellationToken
+    )
     {
-        var result = await organisationService.GetOrganisationById(id);
+        var result = await organisationService.GetOrganisationById(id, cancellationToken);
 
         return result.Match<ActionResult<OrganisationDetailsDto>>(
             organisation => Ok(organisation),
@@ -30,13 +33,14 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:int}", Name = nameof(UpdateOrganisationDetails))]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationDetailsDto>> UpdateOrganisationDetails(
         int id,
-        UpdateOrganisationDetailsDto organisationDetails
+        UpdateOrganisationDetailsDto organisationDetails,
+        CancellationToken cancellationToken
     )
     {
         if (!ModelState.IsValid)
@@ -44,7 +48,11 @@ public class OrganisationController(IOrganisationService organisationService) : 
             return BadRequest(ModelState);
         }
 
-        var result = await organisationService.UpdateOrganisationDetails(id, organisationDetails);
+        var result = await organisationService.UpdateOrganisationDetails(
+            id,
+            organisationDetails,
+            cancellationToken
+        );
 
         return result.Match<ActionResult<OrganisationDetailsDto>>(
             organisation => Ok(organisation),
@@ -59,7 +67,10 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
-    [HttpPatch("{organisationId:int}/memberships/{membershipId}/deactivate")]
+    [HttpPatch(
+        "{organisationId:int}/memberships/{membershipId}/deactivate",
+        Name = nameof(DeactivateMembership)
+    )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> DeactivateMembership(
@@ -87,7 +98,10 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
-    [HttpPatch("{organisationId:int}/memberships/{membershipId}/update-role")]
+    [HttpPatch(
+        "{organisationId:int}/memberships/{membershipId}/update-role",
+        Name = nameof(UpdateUserRole)
+    )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> UpdateUserRole(
