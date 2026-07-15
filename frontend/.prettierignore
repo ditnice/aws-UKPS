@@ -1,6 +1,8 @@
 .next/
 node_modules/
+playwright-report/
 pnpm-lock.yaml
+test-results/
 next-env.d.ts
 src/payload-types.ts
 src/payload-generated-schema.ts
