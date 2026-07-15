@@ -2,8 +2,8 @@ namespace UKPS.Api.Enums;
 
 public enum OrphanAtmpStatus
 {
-    Granted = 0,
-    No = 1,
-    DecisionToSubmitOngoing = 2,
-    ApplicationSubmitted = 3,
+    ApplicationSubmitted = 0,
+    DecisionToSubmitOngoing = 1,
+    No = 2,
+    Granted = 3,
 }
