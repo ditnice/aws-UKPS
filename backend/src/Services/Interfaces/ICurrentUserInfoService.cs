@@ -1,6 +1,6 @@
 namespace UKPS.Api.Services.Interfaces;
 
-public interface ICurrentUserInfoService
+internal interface ICurrentUserInfoService
 {
     /// <summary>
     /// Gets the information of the current user.
