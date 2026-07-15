@@ -52,13 +52,43 @@ variable "frontend_container_port" {
 }
 
 variable "frontend_image_repository_url" {
-  description = "Container image repository URL for the frontend service"
+  description = "Container image repository URL for the frontend service, without an image tag or digest"
   type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9]+([._/-][a-z0-9]+)*$", var.frontend_image_repository_url))
+    error_message = "Frontend image repository URL must be a private AWS ECR repository URL without an image tag or digest."
+  }
+}
+
+variable "frontend_image_tag" {
+  description = "Container image tag for the frontend service"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", var.frontend_image_tag))
+    error_message = "Frontend image tag must be a valid Docker image tag."
+  }
 }
 
 variable "backend_image_repository_url" {
-  description = "Container image repository URL for the backend service"
+  description = "Container image repository URL for the backend service, without an image tag or digest"
   type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9]+([._/-][a-z0-9]+)*$", var.backend_image_repository_url))
+    error_message = "Backend image repository URL must be a private AWS ECR repository URL without an image tag or digest."
+  }
+}
+
+variable "backend_image_tag" {
+  description = "Container image tag for the backend service"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", var.backend_image_tag))
+    error_message = "Backend image tag must be a valid Docker image tag."
+  }
 }
 
 variable "ecs_capacity_providers" {

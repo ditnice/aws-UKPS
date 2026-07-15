@@ -53,7 +53,8 @@
 | <a name="input_backend_container_port"></a> [backend\_container\_port](#input\_backend\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
 | <a name="input_backend_db_master_username"></a> [backend\_db\_master\_username](#input\_backend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
 | <a name="input_backend_db_name"></a> [backend\_db\_name](#input\_backend\_db\_name) | Name of the backend database | `string` | `"ukpsdev_backend"` | no |
-| <a name="input_backend_image_repository_url"></a> [backend\_image\_repository\_url](#input\_backend\_image\_repository\_url) | Container image repository URL for the backend service | `string` | n/a | yes |
+| <a name="input_backend_image_repository_url"></a> [backend\_image\_repository\_url](#input\_backend\_image\_repository\_url) | Container image repository URL for the backend service, without an image tag or digest | `string` | n/a | yes |
+| <a name="input_backend_image_tag"></a> [backend\_image\_tag](#input\_backend\_image\_tag) | Container image tag for the backend service | `string` | n/a | yes |
 | <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain used to build workload hostnames | `string` | `"ukps.nice.org.uk"` | no |
 | <a name="input_connection_threshold"></a> [connection\_threshold](#input\_connection\_threshold) | Threshold for the number of database connections to trigger an alarm | `number` | `100` | no |
 | <a name="input_ecs_backend_cpu_allocation"></a> [ecs\_backend\_cpu\_allocation](#input\_ecs\_backend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
@@ -66,7 +67,8 @@
 | <a name="input_frontend_container_port"></a> [frontend\_container\_port](#input\_frontend\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
 | <a name="input_frontend_db_master_username"></a> [frontend\_db\_master\_username](#input\_frontend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
 | <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpsdev_frontend"` | no |
-| <a name="input_frontend_image_repository_url"></a> [frontend\_image\_repository\_url](#input\_frontend\_image\_repository\_url) | Container image repository URL for the frontend service | `string` | n/a | yes |
+| <a name="input_frontend_image_repository_url"></a> [frontend\_image\_repository\_url](#input\_frontend\_image\_repository\_url) | Container image repository URL for the frontend service, without an image tag or digest | `string` | n/a | yes |
+| <a name="input_frontend_image_tag"></a> [frontend\_image\_tag](#input\_frontend\_image\_tag) | Container image tag for the frontend service | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
 | <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | `map(string)` | n/a | yes |
 
