@@ -30,7 +30,7 @@ public class UserServiceTests : DatabaseTestBase
     public async Task GetUsers_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
     {
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(99, 1, 20, []);
+            await _service.GetUsers(99, 1, 20, [], TestContext.Current.CancellationToken);
 
         result.IsErr.ShouldBeTrue();
         GetUsersError.OrganisationNotFound notFound =
@@ -45,7 +45,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(1, 1, 20, []);
+            await _service.GetUsers(1, 1, 20, [], TestContext.Current.CancellationToken);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -75,7 +75,7 @@ public class UserServiceTests : DatabaseTestBase
         Context.UserOrgMemberships.Add(membership);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(1, 1, 20, []);
+            await _service.GetUsers(1, 1, 20, [], TestContext.Current.CancellationToken);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -112,7 +112,13 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(1, 1, 20, [UserOrgStatus.Active, UserOrgStatus.Inactive]);
+            await _service.GetUsers(
+                1,
+                1,
+                20,
+                [UserOrgStatus.Active, UserOrgStatus.Inactive],
+                TestContext.Current.CancellationToken
+            );
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -159,7 +165,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(1, 2, 1, []);
+            await _service.GetUsers(1, 2, 1, [], TestContext.Current.CancellationToken);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -215,7 +221,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(null, 1, 20, []);
+            await _service.GetUsers(null, 1, 20, [], TestContext.Current.CancellationToken);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -270,7 +276,13 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(null, 1, 20, [UserOrgStatus.Inactive]);
+            await _service.GetUsers(
+                null,
+                1,
+                20,
+                [UserOrgStatus.Inactive],
+                TestContext.Current.CancellationToken
+            );
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -307,7 +319,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(1, 5, 20, []);
+            await _service.GetUsers(1, 5, 20, [], TestContext.Current.CancellationToken);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -356,7 +368,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(null, 1, 20, []);
+            await _service.GetUsers(null, 1, 20, [], TestContext.Current.CancellationToken);
 
         result.IsOk.ShouldBeTrue();
         PaginatedResponseDto<UserListItemDto>? dto = result.Value;
@@ -408,7 +420,13 @@ public class UserServiceTests : DatabaseTestBase
                 UserRole = userRole,
             }
         );
-        var results = await harness.Service.GetUsers(null, 1, 20, []);
+        var results = await harness.Service.GetUsers(
+            null,
+            1,
+            20,
+            [],
+            TestContext.Current.CancellationToken
+        );
 
         results.IsOk.ShouldBeTrue();
 
@@ -450,7 +468,13 @@ public class UserServiceTests : DatabaseTestBase
         );
         IUserService service = harness.Service;
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(otherOrganisation, 1, 20, []);
+            await service.GetUsers(
+                otherOrganisation,
+                1,
+                20,
+                [],
+                TestContext.Current.CancellationToken
+            );
 
         if (isAllowedToAccess)
         {

@@ -24,7 +24,7 @@ public class OrganisationControllerTests
         _organisationServiceMock = Substitute.For<IOrganisationService>();
 
         _organisationServiceMock
-            .GetOrganisationById(Arg.Any<int>())
+            .GetOrganisationById(Arg.Any<int>(), TestContext.Current.CancellationToken)
             .Returns(callInfo =>
                 Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
                     new GetOrganisationByIdError.NotFound(callInfo.Arg<int>())
@@ -32,7 +32,11 @@ public class OrganisationControllerTests
             );
 
         _organisationServiceMock
-            .UpdateOrganisationDetails(Arg.Any<int>(), Arg.Any<UpdateOrganisationDetailsDto>())
+            .UpdateOrganisationDetails(
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrganisationDetailsDto>(),
+                TestContext.Current.CancellationToken
+            )
             .Returns(callInfo =>
                 Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
                     new UpdateOrganisationDetailsError.NotFound(callInfo.Arg<int>())
@@ -59,10 +63,13 @@ public class OrganisationControllerTests
             CreatedAt = _createdAt,
         };
         _organisationServiceMock
-            .GetOrganisationById(1)
+            .GetOrganisationById(1, TestContext.Current.CancellationToken)
             .Returns(Result<OrganisationDetailsDto, GetOrganisationByIdError>.Ok(expected));
 
-        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(1);
+        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(
+            1,
+            TestContext.Current.CancellationToken
+        );
 
         OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
         ok.Value.ShouldBe(expected);
@@ -71,7 +78,10 @@ public class OrganisationControllerTests
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFound()
     {
-        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(99);
+        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(
+            99,
+            TestContext.Current.CancellationToken
+        );
 
         result.Result.ShouldBeOfType<NotFoundResult>();
     }
@@ -81,9 +91,11 @@ public class OrganisationControllerTests
     {
         var expectedId = 42;
 
-        await _controller.GetOrganisationById(42);
+        await _controller.GetOrganisationById(42, TestContext.Current.CancellationToken);
 
-        await _organisationServiceMock.Received(1).GetOrganisationById(expectedId);
+        await _organisationServiceMock
+            .Received(1)
+            .GetOrganisationById(expectedId, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -91,12 +103,17 @@ public class OrganisationControllerTests
     {
         OrganisationDetailsDto expected = CreateOrganisationDetailsDto();
         _organisationServiceMock
-            .UpdateOrganisationDetails(Arg.Any<int>(), Arg.Any<UpdateOrganisationDetailsDto>())
+            .UpdateOrganisationDetails(
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrganisationDetailsDto>(),
+                TestContext.Current.CancellationToken
+            )
             .Returns(Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Ok(expected));
 
         ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             1,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
         OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -108,7 +125,8 @@ public class OrganisationControllerTests
     {
         ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             99,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
         result.Result.ShouldBeOfType<NotFoundResult>();
@@ -120,8 +138,18 @@ public class OrganisationControllerTests
         var exampleOrgId = 42;
         UpdateOrganisationDetailsDto request = CreateUpdateOrganisationDetailsDto();
 
-        await _controller.UpdateOrganisationDetails(42, request);
-        await _organisationServiceMock.Received(1).UpdateOrganisationDetails(exampleOrgId, request);
+        await _controller.UpdateOrganisationDetails(
+            42,
+            request,
+            TestContext.Current.CancellationToken
+        );
+        await _organisationServiceMock
+            .Received(1)
+            .UpdateOrganisationDetails(
+                exampleOrgId,
+                request,
+                TestContext.Current.CancellationToken
+            );
     }
 
     [Fact]
@@ -134,7 +162,8 @@ public class OrganisationControllerTests
 
         ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             1,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
         BadRequestObjectResult badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();

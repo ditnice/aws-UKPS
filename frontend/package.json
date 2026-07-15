@@ -10,6 +10,7 @@
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
+    "generate:api": "openapi-ts",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "fallow": "fallow",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
@@ -36,9 +37,11 @@
     "payload": "3.85.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "server-only": "0.0.1",
     "sharp": "0.34.2"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
     "@playwright/test": "1.58.2",
     "@testing-library/react": "16.3.0",
     "@types/node": "22.19.9",

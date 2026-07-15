@@ -10,12 +10,13 @@ namespace UKPS.Api.Controllers;
 [Route("users")]
 public class UserController(IUserService userService) : ControllerBase
 {
-    [HttpGet]
+    [HttpGet(Name = nameof(GetUsers))]
     [ProducesResponseType<PaginatedResponseDto<UserListItemDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PaginatedResponseDto<UserListItemDto>>> GetUsers(
-        [FromQuery] GetUsersQueryDto? getUsersQuery
+        [FromQuery] GetUsersQueryDto? getUsersQuery,
+        CancellationToken cancellationToken
     )
     {
         if (getUsersQuery is null)
@@ -27,7 +28,8 @@ public class UserController(IUserService userService) : ControllerBase
             getUsersQuery.OrganisationId,
             getUsersQuery.Page,
             getUsersQuery.PageSize,
-            getUsersQuery.Status.ToArray()
+            getUsersQuery.Status.ToArray(),
+            cancellationToken
         );
 
         return result.Match<ActionResult<PaginatedResponseDto<UserListItemDto>>>(

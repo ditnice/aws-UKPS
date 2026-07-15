@@ -12,3 +12,10 @@ using System.Diagnostics.CodeAnalysis;
     "CA1515:Consider making public types internal",
     Justification = "This prevents test classes with no members meaning we can't have test classes that inherit test suites from parent classes."
 )]
+[assembly: SuppressMessage(
+    "Design",
+    "MA0051:Method is too long",
+    Justification = "Long method names for tests are completely fine.",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api.Tests"
+)]

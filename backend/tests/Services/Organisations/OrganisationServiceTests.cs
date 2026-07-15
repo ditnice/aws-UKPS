@@ -8,6 +8,7 @@ using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
 using UKPS.Api.Tests.Utilities.Harnesses;
 using GetOrganisationResult = UKPS.Api.Common.Result<
@@ -55,10 +56,12 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
             await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
         ).Id;
 
-        GetOrganisationResult result = await Service.GetOrganisationById(id);
+        GetOrganisationResult result = await Service.GetOrganisationById(
+            id,
+            TestContext.Current.CancellationToken
+        );
 
-        result.IsOk.ShouldBeTrue();
-        OrganisationDetailsDto? dto = result.Value;
+        var dto = result.ShouldBeSuccess();
         dto.ShouldNotBeNull();
         dto.Id.ShouldBe(id);
         dto.OrganisationName.ShouldBe("Gov Pharma Ltd");
@@ -101,7 +104,10 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
         );
         var service = testHarness.Service;
 
-        GetOrganisationResult result = await service.GetOrganisationById(organisation.Id);
+        GetOrganisationResult result = await service.GetOrganisationById(
+            organisation.Id,
+            TestContext.Current.CancellationToken
+        );
 
         if (expectedAuthorised)
         {
@@ -123,11 +129,14 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
             await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
         ).Id;
 
-        GetOrganisationResult result = await Service.GetOrganisationById(seededId + 1);
+        GetOrganisationResult result = await Service.GetOrganisationById(
+            seededId + 1,
+            TestContext.Current.CancellationToken
+        );
 
-        result.IsErr.ShouldBeTrue();
-        GetOrganisationByIdError.NotFound notFound =
-            result.Error.ShouldBeOfType<GetOrganisationByIdError.NotFound>();
+        GetOrganisationByIdError.NotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetOrganisationByIdError.NotFound>();
         notFound.OrganisationId.ShouldBe(seededId + 1);
     }
 
@@ -144,7 +153,8 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
 
         UpdateOrganisationResult result = await Service.UpdateOrganisationDetails(
             id,
-            CreateUpdateDto()
+            CreateUpdateDto(),
+            TestContext.Current.CancellationToken
         );
 
         result.IsOk.ShouldBeTrue();
@@ -190,7 +200,8 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
         var updateCommand = new UpdateOrganisationDetailsDtoFaker().Generate();
         UpdateOrganisationResult result = await service.UpdateOrganisationDetails(
             organisation.Id,
-            updateCommand
+            updateCommand,
+            TestContext.Current.CancellationToken
         );
 
         if (expectedAuthorised)
@@ -215,7 +226,8 @@ public abstract class OrganisationServiceTests : DatabaseTestBase
                 HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
                 HeadOfficeEmail = "new@example.com",
                 HeadOfficeTelephone = "020 1111 1111",
-            }
+            },
+            TestContext.Current.CancellationToken
         );
 
         result.IsErr.ShouldBeTrue();

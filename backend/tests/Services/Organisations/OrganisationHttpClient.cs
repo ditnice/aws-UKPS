@@ -31,26 +31,35 @@ internal sealed class OrganisationHttpClient : IOrganisationService
         _httpClient = httpClient;
     }
 
-    public async Task<GetOrganisationResult> GetOrganisationById(int id)
+    public async Task<GetOrganisationResult> GetOrganisationById(
+        int id,
+        CancellationToken cancellationToken
+    )
     {
         var uri = new Uri($"/organisations/{id}", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.GetAsync(uri);
-        return await ConvertGetOrganisationByIdResponse(id, response);
+        HttpResponseMessage response = await _httpClient.GetAsync(uri, cancellationToken);
+        return await ConvertGetOrganisationByIdResponse(id, response, cancellationToken);
     }
 
     public async Task<UpdateOrganisationResult> UpdateOrganisationDetails(
         int id,
-        UpdateOrganisationDetailsDto organisationDetails
+        UpdateOrganisationDetailsDto organisationDetails,
+        CancellationToken cancellationToken
     )
     {
         var uri = new Uri($"/organisations/{id}", UriKind.Relative);
-        HttpResponseMessage response = await _httpClient.PutAsJsonAsync(uri, organisationDetails);
-        return await ConvertUpdateOrganisationResponse(id, response);
+        HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
+            uri,
+            organisationDetails,
+            cancellationToken
+        );
+        return await ConvertUpdateOrganisationResponse(id, response, cancellationToken);
     }
 
     private static async Task<GetOrganisationResult> ConvertGetOrganisationByIdResponse(
         int id,
-        HttpResponseMessage response
+        HttpResponseMessage response,
+        CancellationToken cancellationToken
     )
     {
         return response.StatusCode switch
@@ -64,7 +73,7 @@ internal sealed class OrganisationHttpClient : IOrganisationService
             HttpStatusCode.OK => await ParseOkResultFromBody<
                 OrganisationDetailsDto,
                 GetOrganisationByIdError
-            >(response),
+            >(response, cancellationToken),
             _ => throw new InvalidOperationException(
                 "Unexpected response status code: " + response.StatusCode
             ),
@@ -73,7 +82,8 @@ internal sealed class OrganisationHttpClient : IOrganisationService
 
     private static async Task<UpdateOrganisationResult> ConvertUpdateOrganisationResponse(
         int id,
-        HttpResponseMessage response
+        HttpResponseMessage response,
+        CancellationToken cancellationToken
     )
     {
         return response.StatusCode switch
@@ -87,7 +97,7 @@ internal sealed class OrganisationHttpClient : IOrganisationService
             HttpStatusCode.OK => await ParseOkResultFromBody<
                 OrganisationDetailsDto,
                 UpdateOrganisationDetailsError
-            >(response),
+            >(response, cancellationToken),
             _ => throw new InvalidOperationException(
                 "Unexpected response status code: " + response.StatusCode
             ),
@@ -95,14 +105,17 @@ internal sealed class OrganisationHttpClient : IOrganisationService
     }
 
     private static async Task<Result<TValue, TError>> ParseOkResultFromBody<TValue, TError>(
-        HttpResponseMessage response
+        HttpResponseMessage response,
+        CancellationToken cancellationToken
     )
         where TValue : notnull
         where TError : notnull
     {
         var dto =
-            await response.Content.ReadFromJsonAsync<TValue>(TestJsonOptions.Default)
-            ?? throw new InvalidOperationException("Failed to parse response object from body.");
+            await response.Content.ReadFromJsonAsync<TValue>(
+                TestJsonOptions.Default,
+                cancellationToken
+            ) ?? throw new InvalidOperationException("Failed to parse response object from body.");
         return Result<TValue, TError>.Ok(dto);
     }
 }
