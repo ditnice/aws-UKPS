@@ -1,0 +1,60 @@
+@use '@/styles/colours';
+@use '@/styles/spacing';
+
+.exampleList {
+  display: grid;
+  gap: spacing.$large * 1px;
+}
+
+.example {
+  border: 1px solid colours.$border;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.exampleDark {
+  background: colours.$full-bleed-background-dark;
+  color: colours.$text-inverse;
+}
+
+.exampleFullWidth {
+  overflow: visible;
+}
+
+.exampleTitle {
+  background: colours.$fill-page-background;
+  border-bottom: 1px solid colours.$border;
+  color: colours.$text;
+  font-size: 1rem;
+  margin: 0;
+  padding: spacing.$small * 1px spacing.$medium * 1px;
+}
+
+.exampleBody {
+  padding: spacing.$large * 1px;
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+.inlineExamples {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$medium * 1px;
+}
+
+.tableNumber {
+  text-align: right;
+}
+
+.visuallyHidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
