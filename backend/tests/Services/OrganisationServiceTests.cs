@@ -10,6 +10,7 @@ using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.AssertionHelpers;
 
 namespace UKPS.Api.Tests.Services;
 
@@ -51,7 +52,10 @@ public class OrganisationServiceTests : DatabaseTestBase
         var service = testHarness.Service;
 
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await service.GetOrganisationById(organisation.Id);
+            await service.GetOrganisationById(
+                organisation.Id,
+                TestContext.Current.CancellationToken
+            );
 
         if (expectedAuthorised)
         {
@@ -88,10 +92,9 @@ public class OrganisationServiceTests : DatabaseTestBase
         ).Id;
 
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await _service.GetOrganisationById(id);
+            await _service.GetOrganisationById(id, TestContext.Current.CancellationToken);
 
-        result.IsOk.ShouldBeTrue();
-        OrganisationDetailsDto? dto = result.Value;
+        var dto = result.ShouldBeSuccess();
         dto.ShouldNotBeNull();
         dto.Id.ShouldBe(id);
         dto.OrganisationName.ShouldBe("Gov Pharma Ltd");
@@ -115,11 +118,11 @@ public class OrganisationServiceTests : DatabaseTestBase
         ).Id;
 
         Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await _service.GetOrganisationById(seededId + 1);
+            await _service.GetOrganisationById(seededId + 1, TestContext.Current.CancellationToken);
 
-        result.IsErr.ShouldBeTrue();
-        GetOrganisationByIdError.NotFound notFound =
-            result.Error.ShouldBeOfType<GetOrganisationByIdError.NotFound>();
+        GetOrganisationByIdError.NotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetOrganisationByIdError.NotFound>();
         notFound.OrganisationId.ShouldBe(seededId + 1);
     }
 
@@ -135,7 +138,11 @@ public class OrganisationServiceTests : DatabaseTestBase
         ).Id;
 
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
-            await _service.UpdateOrganisationDetails(id, CreateUpdateDto());
+            await _service.UpdateOrganisationDetails(
+                id,
+                CreateUpdateDto(),
+                TestContext.Current.CancellationToken
+            );
 
         result.IsOk.ShouldBeTrue();
         AssertUpdatedDetails(result.Value, createdAt, lastActive);
@@ -174,7 +181,11 @@ public class OrganisationServiceTests : DatabaseTestBase
 
         var updateCommand = new UpdateOrganisationDetailsDtoFaker().Generate();
         Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
-            await service.UpdateOrganisationDetails(organisation.Id, updateCommand);
+            await service.UpdateOrganisationDetails(
+                organisation.Id,
+                updateCommand,
+                TestContext.Current.CancellationToken
+            );
 
         if (expectedAuthorised)
         {
@@ -199,7 +210,8 @@ public class OrganisationServiceTests : DatabaseTestBase
                     HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
                     HeadOfficeEmail = "new@example.com",
                     HeadOfficeTelephone = "020 1111 1111",
-                }
+                },
+                TestContext.Current.CancellationToken
             );
 
         result.IsErr.ShouldBeTrue();

@@ -1,5 +1,7 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using UKPS.Api.Data;
 using UKPS.Api.Data.Seeding;
@@ -20,15 +22,36 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    ConfigureJsonEnums(options.SerializerOptions);
+});
+
 builder
     .Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        ConfigureJsonEnums(options.JsonSerializerOptions);
     });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddSchemaTransformer(
+        (schema, context, cancellationToken) =>
+        {
+            var type =
+                Nullable.GetUnderlyingType(context.JsonTypeInfo.Type) ?? context.JsonTypeInfo.Type;
+
+            if (type.IsEnum)
+            {
+                schema.Type = JsonSchemaType.String;
+            }
+
+            return Task.CompletedTask;
+        }
+    );
+});
 
 builder.Services.AddHealthChecks();
 
@@ -49,8 +72,19 @@ app.MapControllers();
 
 app.MapHealthChecks("/health");
 
-await app.MigrateDatabase();
-
-await app.SeedData();
+var isOpenApiGeneration = Environment.CommandLine.Contains(
+    "getdocument",
+    StringComparison.OrdinalIgnoreCase
+);
+if (!isOpenApiGeneration)
+{
+    await app.MigrateDatabase();
+    await app.SeedData();
+}
 
 await app.RunAsync();
+
+static void ConfigureJsonEnums(JsonSerializerOptions options)
+{
+    options.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+}
