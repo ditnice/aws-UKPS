@@ -75,7 +75,7 @@ module "ecs_frontend" {
   private_subnet_ids       = module.networking.app_subnet_ids
   container_port           = var.frontend_container_port
   ecr_repository_url       = var.frontend_image_repository_url
-  image_tag                = var.frontend_image_tag
+  image_tag                = var.image_tag
   target_group_arn         = module.alb.frontend_target_group_arn
   alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
@@ -132,7 +132,7 @@ module "ecs_backend" {
   private_subnet_ids       = module.networking.app_subnet_ids
   container_port           = var.backend_container_port
   ecr_repository_url       = var.backend_image_repository_url
-  image_tag                = var.backend_image_tag
+  image_tag                = var.image_tag
   target_group_arn         = module.alb.backend_target_group_arn
   alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]

@@ -61,16 +61,6 @@ variable "frontend_image_repository_url" {
   }
 }
 
-variable "frontend_image_tag" {
-  description = "Container image tag for the frontend service"
-  type        = string
-
-  validation {
-    condition     = can(regex("^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", var.frontend_image_tag))
-    error_message = "Frontend image tag must be a valid Docker image tag."
-  }
-}
-
 variable "backend_image_repository_url" {
   description = "Container image repository URL for the backend service, without an image tag or digest"
   type        = string
@@ -81,13 +71,13 @@ variable "backend_image_repository_url" {
   }
 }
 
-variable "backend_image_tag" {
+variable "image_tag" {
   description = "Container image tag for the backend service"
   type        = string
 
   validation {
-    condition     = can(regex("^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", var.backend_image_tag))
-    error_message = "Backend image tag must be a valid Docker image tag."
+    condition     = can(regex("^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", var.image_tag))
+    error_message = "Image tag must be a valid Docker image tag."
   }
 }
 
