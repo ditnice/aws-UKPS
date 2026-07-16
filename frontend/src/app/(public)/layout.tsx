@@ -1,5 +1,8 @@
 import React from 'react'
 
+import { ApplicationLayout } from '@/components/ApplicationLayout'
+import '@/styles/global.scss'
+
 import './styles.css'
 
 export const metadata = {
@@ -13,7 +16,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <main>{children}</main>
+        <ApplicationLayout>{children}</ApplicationLayout>
       </body>
     </html>
   )

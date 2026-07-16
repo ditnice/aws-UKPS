@@ -1,104 +1,40 @@
-:root {
-  --font-mono: 'Roboto Mono', monospace;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  background: rgb(0 0 0);
-  font-size: 18px;
-  -webkit-font-smoothing: antialiased;
-  line-height: 32px;
-}
-
-html,
-body {
-  height: 100%;
-}
-
-body {
-  color: rgb(1000 1000 1000);
-  font-family: system-ui;
-  font-size: 18px;
-  line-height: 32px;
-  margin: 0;
-
-  @media (width <= 1024px) {
-    font-size: 15px;
-    line-height: 24px;
-  }
-}
-
-img {
-  display: block;
-  height: auto;
-  max-width: 100%;
-}
-
-h1 {
-  font-size: 64px;
-  font-weight: bold;
-  line-height: 70px;
-  margin: 40px 0;
-
-  @media (width <= 1024px) {
-    font-size: 42px;
-    line-height: 42px;
-    margin: 24px 0;
-  }
-
-  @media (width <= 768px) {
-    font-size: 38px;
-    line-height: 38px;
-  }
-
-  @media (width <= 400px) {
-    font-size: 32px;
-    line-height: 32px;
-  }
-}
-
-p {
-  margin: 24px 0;
-
-  @media (width <= 1024px) {
-    margin: calc(var(--base) * 0.75) 0;
-  }
-}
-
-a {
-  color: currentcolor;
-
-  &:focus {
-    opacity: 0.8;
-    outline: none;
-  }
-
-  &:active {
-    opacity: 0.7;
-    outline: none;
-  }
-}
-
-svg {
-  vertical-align: middle;
-}
-
 .home {
   align-items: center;
+  background: rgb(0 0 0);
+  color: rgb(255 255 255);
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  font-size: 18px;
   justify-content: space-between;
+  line-height: 32px;
   margin: 0 auto;
   max-width: 1024px;
+  min-height: 100vh;
   overflow: hidden;
   padding: 45px;
 
   @media (width <= 400px) {
     padding: 24px;
+  }
+
+  img {
+    display: block;
+    height: auto;
+    max-width: 100%;
+  }
+
+  a {
+    color: currentcolor;
+
+    &:focus {
+      opacity: 0.8;
+      outline: none;
+    }
+
+    &:active {
+      opacity: 0.7;
+      outline: none;
+    }
   }
 
   .content {
@@ -109,7 +45,27 @@ svg {
     justify-content: center;
 
     h1 {
+      font-size: 64px;
+      font-weight: bold;
+      line-height: 70px;
+      margin: 40px 0;
       text-align: center;
+
+      @media (width <= 1024px) {
+        font-size: 42px;
+        line-height: 42px;
+        margin: 24px 0;
+      }
+
+      @media (width <= 768px) {
+        font-size: 38px;
+        line-height: 38px;
+      }
+
+      @media (width <= 400px) {
+        font-size: 32px;
+        line-height: 32px;
+      }
     }
   }
 

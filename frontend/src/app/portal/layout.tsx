@@ -1,10 +1,13 @@
+import { ApplicationLayout } from '@/components/ApplicationLayout'
+import '@/styles/global.scss'
+
 import type { ReactNode } from 'react'
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <main>{children}</main>
+        <ApplicationLayout>{children}</ApplicationLayout>
       </body>
     </html>
   )

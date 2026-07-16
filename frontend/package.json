@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@nice-digital/design-system": "5.6.1",
+    "@nice-digital/global-nav": "7.1.1152",
     "@nice-digital/nds-a-z-list": "4.1.0",
     "@nice-digital/nds-accordion": "0.4.0",
     "@nice-digital/nds-action-banner": "4.4.0",
