@@ -228,6 +228,7 @@ public class OrganisationServiceTests : DatabaseTestBase
             HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
             HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
+            CreatedAt = new DateTime(2022, 12, 1, 13, 11, 54, DateTimeKind.Utc),
         };
 
     private static Organisation CreateOrganisationForUpdate(
