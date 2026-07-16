@@ -6,14 +6,14 @@ namespace UKPS.Api.Enums;
 public enum IndicationPaediatricStatus
 {
     /// <summary>
-    /// Indicates that the treatment or condition is exclusively for children.
+    /// Indicates that the paediatric status of the treatment or condition is unknown.
     /// </summary>
-    ExclusivelyChildren = 0,
+    Unknown = 0,
 
     /// <summary>
-    /// Indicates that the treatment or condition is for both children and adults.
+    /// Indicates that the treatment or condition is exclusively for children.
     /// </summary>
-    BothChildrenAndAdults = 1,
+    ExclusivelyChildren = 1,
 
     /// <summary>
     /// Indicates that the treatment or condition is exclusively for adults.
@@ -21,7 +21,7 @@ public enum IndicationPaediatricStatus
     ExclusivelyAdults = 2,
 
     /// <summary>
-    /// Indicates that the paediatric status of the treatment or condition is unknown.
+    /// Indicates that the treatment or condition is for both children and adults.
     /// </summary>
-    Unknown = 3,
+    BothChildrenAndAdults = 3,
 }

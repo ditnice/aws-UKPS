@@ -11,7 +11,7 @@
     <CoverletOutput>./TestResults/Coverage/</CoverletOutput>
     <ExcludeByFile>**/Program.cs,**/obj/**/*.cs</ExcludeByFile>
     <Threshold>80</Threshold>
-    <ThresholdType>line</ThresholdType>
+    <ThresholdType>line,branch</ThresholdType>
     <ThresholdStat>total</ThresholdStat>
   </PropertyGroup>
 

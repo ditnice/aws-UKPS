@@ -8,10 +8,10 @@ public enum EamsOpinionDecision
     /// <summary>
     /// Indicates a positive decision.
     /// </summary>
-    Positive = 0,
+    Negative = 0,
 
     /// <summary>
     /// Indicates a negative decision.
     /// </summary>
-    Negative = 1,
+    Positive = 1,
 }

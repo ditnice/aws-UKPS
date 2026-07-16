@@ -6,22 +6,22 @@ namespace UKPS.Api.Enums;
 public enum OrphanAtmpStatus
 {
     /// <summary>
-    /// Indicates that the attempt has been granted.
-    /// </summary>
-    Granted = 0,
-
-    /// <summary>
-    /// Indicates that the attempt has not been granted.
-    /// </summary>
-    No = 1,
-
-    /// <summary>
     /// Indicates that the decision to submit is ongoing.
     /// </summary>
-    DecisionToSubmitOngoing = 2,
+    DecisionToSubmitOngoing = 0,
 
     /// <summary>
     /// Indicates that the application has been submitted.
     /// </summary>
-    ApplicationSubmitted = 3,
+    ApplicationSubmitted = 1,
+
+    /// <summary>
+    /// Indicates that the attempt has not been granted.
+    /// </summary>
+    No = 2,
+
+    /// <summary>
+    /// Indicates that the attempt has been granted.
+    /// </summary>
+    Granted = 3,
 }

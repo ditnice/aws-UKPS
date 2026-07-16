@@ -6,12 +6,12 @@ namespace UKPS.Api.Enums;
 public enum QaOutcome
 {
     /// <summary>
-    /// Indicates that the QA process has been approved.
-    /// </summary>
-    Approved = 0,
-
-    /// <summary>
     /// Indicates that the QA process has been rejected.
     /// </summary>
-    Rejected = 1,
+    Rejected = 0,
+
+    /// <summary>
+    /// Indicates that the QA process has been approved.
+    /// </summary>
+    Approved = 1,
 }

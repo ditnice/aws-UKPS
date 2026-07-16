@@ -6,9 +6,9 @@ namespace UKPS.Api.Enums;
 public enum YesNoNotYetConfirmed
 {
     /// <summary>
-    /// Indicates a "Yes" response.
+    /// Indicates that the response is "Not Yet Confirmed".
     /// </summary>
-    Yes = 0,
+    NotYetConfirmed = 0,
 
     /// <summary>
     /// Indicates a "No" response.
@@ -16,7 +16,7 @@ public enum YesNoNotYetConfirmed
     No = 1,
 
     /// <summary>
-    /// Indicates that the response is "Not Yet Confirmed".
+    /// Indicates a "Yes" response.
     /// </summary>
-    NotYetConfirmed = 2,
+    Yes = 2,
 }

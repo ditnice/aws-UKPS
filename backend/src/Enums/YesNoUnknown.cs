@@ -6,9 +6,9 @@ namespace UKPS.Api.Enums;
 public enum YesNoUnknown
 {
     /// <summary>
-    /// Indicates a positive response or affirmation.
+    /// Indicates an unknown or indeterminate state.
     /// </summary>
-    Yes = 0,
+    Unknown = 0,
 
     /// <summary>
     /// Indicates a negative response or denial.
@@ -16,7 +16,7 @@ public enum YesNoUnknown
     No = 1,
 
     /// <summary>
-    /// Indicates an unknown or indeterminate state.
+    /// Indicates a positive response or affirmation.
     /// </summary>
-    Unknown = 2,
+    Yes = 2,
 }

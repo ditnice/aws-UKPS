@@ -6,17 +6,17 @@ namespace UKPS.Api.Enums;
 public enum PimDesignationStatus
 {
     /// <summary>
+    /// Indicates that the decision on the designation is pending.
+    /// </summary>
+    DecisionPending = 0,
+
+    /// <summary>
     /// Indicates that the designation has been granted.
     /// </summary>
-    Granted = 0,
+    Granted = 2,
 
     /// <summary>
     /// Indicates that the designation has not been granted.
     /// </summary>
     NotGranted = 1,
-
-    /// <summary>
-    /// Indicates that the decision on the designation is pending.
-    /// </summary>
-    DecisionPending = 2,
 }
