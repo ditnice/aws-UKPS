@@ -93,6 +93,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
                     OrganisationMembershipDeactivateUserError.NotFound => NotFound(
                         $"Could not find a membership with organisation ID = {organisationId} and membership ID = {membershipId}."
                     ),
+                    OrganisationMembershipDeactivateUserError.NotAllowed => Forbid(
+                        "The user is authorised to perform this action."
+                    ),
                     _ => throw new UnreachableException(),
                 }
         );
@@ -124,6 +127,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 {
                     OrganisationMembershipUpdateUserRoleError.NotFound notFound => NotFound(
                         $"Could not find a membership with organisation ID = {notFound.OrganisationId} and membership ID = {notFound.MembershipId}."
+                    ),
+                    OrganisationMembershipUpdateUserRoleError.NotAllowed => Forbid(
+                        "The user is authorised to perform this action."
                     ),
                     _ => throw new UnreachableException(),
                 }
