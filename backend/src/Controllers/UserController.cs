@@ -38,6 +38,7 @@ public class UserController(IUserService userService) : ControllerBase
                 error switch
                 {
                     GetUsersError.OrganisationNotFound => BadRequest("Organisation not found."),
+                    GetUsersError.NotAllowed => Forbid("User is forbidden from accessing data."),
                     _ => throw new UnreachableException("Unhandled GetUsersError variant."),
                 }
         );
