@@ -27,10 +27,11 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
   container_definitions = templatefile(
     "${path.module}/templates/task-definition.json.tpl",
     {
-      container_port = var.container_port
-      ecs_logs       = aws_cloudwatch_log_group.ecs_logs.name
-      image          = var.ecr_image_url
-      region         = data.aws_region.current.region
+      container_port       = var.container_port
+      ecs_logs             = aws_cloudwatch_log_group.ecs_logs.name
+      image_repository_url = var.ecr_repository_url
+      image_tag            = var.image_tag
+      region               = data.aws_region.current.region
     }
   )
 

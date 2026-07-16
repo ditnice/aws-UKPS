@@ -39,24 +39,6 @@ variable "backend_db_master_username" {
   default     = "ukpsadmin"
 }
 
-variable "ecr_image_tag_mutability" {
-  description = "ECR image tag mutability setting (MUTABLE or IMMUTABLE)"
-  type        = string
-  default     = "IMMUTABLE"
-}
-
-variable "ecr_scan_on_push" {
-  description = "Whether to enable ECR image scan on push"
-  type        = bool
-  default     = true
-}
-
-variable "ecr_max_image_count" {
-  description = "Maximum number of images to retain in the ECR repository"
-  type        = number
-  default     = 5
-}
-
 variable "backend_container_port" {
   description = "Port on which the target container listens"
   type        = number
@@ -67,6 +49,36 @@ variable "frontend_container_port" {
   description = "Port on which the target container listens"
   type        = number
   default     = 3000
+}
+
+variable "frontend_image_repository_url" {
+  description = "Container image repository URL for the frontend service, without an image tag or digest"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9]+([._/-][a-z0-9]+)*$", var.frontend_image_repository_url))
+    error_message = "Frontend image repository URL must be a private AWS ECR repository URL without an image tag or digest."
+  }
+}
+
+variable "backend_image_repository_url" {
+  description = "Container image repository URL for the backend service, without an image tag or digest"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9]+([._/-][a-z0-9]+)*$", var.backend_image_repository_url))
+    error_message = "Backend image repository URL must be a private AWS ECR repository URL without an image tag or digest."
+  }
+}
+
+variable "image_tag" {
+  description = "Container image tag for the backend service"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", var.image_tag))
+    error_message = "Image tag must be a valid Docker image tag."
+  }
 }
 
 variable "ecs_capacity_providers" {
