@@ -23,16 +23,13 @@ using UpdateOrganisationResult = UKPS.Api.Common.Result<
 namespace UKPS.Api.Tests.Services;
 
 [Collection(DatabaseCollection.Name)]
-public class OrganisationServiceTests : DatabaseTestBase
+public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
 {
     internal IServiceTestHarness<IOrganisationService> ServiceTestHarness =>
         new ServiceTestHarness<IOrganisationService>(Context);
     private IOrganisationService Service => ServiceTestHarness.Service;
 
     internal readonly OrganisationFaker _organisationFaker = new();
-
-    protected OrganisationServiceTests(PostgresFixture fixture)
-        : base(fixture) { }
 
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsDto()
