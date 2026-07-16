@@ -5,7 +5,7 @@ using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Controllers.Utilities;
 
-public class WebApiCurrentUserInfoService : ICurrentUserInfoService
+internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -35,7 +35,7 @@ public class WebApiCurrentUserInfoService : ICurrentUserInfoService
     private UserRole FindUserRole()
     {
         string? userRoleClaim = Principal.FindFirstValue(UkpsClaimTypes.UserRole);
-        return Enum.TryParse<UserRole>(userRoleClaim, out var role)
+        return Enum.TryParse<UserRole>(userRoleClaim, out var role) && Enum.IsDefined(role)
             ? role
             : throw new InvalidOperationException(
                 $"Invalid {UkpsClaimTypes.UserRole} claim value."

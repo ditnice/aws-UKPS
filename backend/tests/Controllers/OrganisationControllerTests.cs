@@ -87,6 +87,25 @@ public class OrganisationControllerTests
     }
 
     [Fact]
+    public async Task GetOrganisationById_ActionNotAllowed_ReturnsForbidden()
+    {
+        var sampleOrganisationId = 1;
+        _organisationServiceMock
+            .GetOrganisationById(sampleOrganisationId, TestContext.Current.CancellationToken)
+            .Returns(
+                Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
+                    new GetOrganisationByIdError.NotAllowed(sampleOrganisationId)
+                )
+            );
+        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(
+            1,
+            TestContext.Current.CancellationToken
+        );
+
+        result.Result.ShouldBeOfType<ForbidResult>();
+    }
+
+    [Fact]
     public async Task GetOrganisationById_IdProvided_PassesIdToService()
     {
         var expectedId = 42;
@@ -118,6 +137,30 @@ public class OrganisationControllerTests
 
         OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
         ok.Value.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task UpdateOrganisation_ActionNotAllowed_ReturnsForbidden()
+    {
+        var sampleOrganisationId = 1;
+        _organisationServiceMock
+            .UpdateOrganisationDetails(
+                sampleOrganisationId,
+                Arg.Any<UpdateOrganisationDetailsDto>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(
+                Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
+                    new UpdateOrganisationDetailsError.NotAllowed(sampleOrganisationId)
+                )
+            );
+        ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
+            sampleOrganisationId,
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
+        );
+
+        result.Result.ShouldBeOfType<ForbidResult>();
     }
 
     [Fact]

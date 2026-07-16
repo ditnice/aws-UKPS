@@ -20,12 +20,13 @@ using UpdateOrganisationResult = UKPS.Api.Common.Result<
     UKPS.Api.Services.Errors.UpdateOrganisationDetailsError
 >;
 
-namespace UKPS.Api.Tests.Services.Organisations;
+namespace UKPS.Api.Tests.Services;
 
 [Collection(DatabaseCollection.Name)]
-public abstract class OrganisationServiceTests : DatabaseTestBase
+public class OrganisationServiceTests : DatabaseTestBase
 {
-    internal abstract IServiceTestHarness<IOrganisationService> ServiceTestHarness { get; }
+    internal IServiceTestHarness<IOrganisationService> ServiceTestHarness =>
+        new ServiceTestHarness<IOrganisationService>(Context);
     private IOrganisationService Service => ServiceTestHarness.Service;
 
     internal readonly OrganisationFaker _organisationFaker = new();
