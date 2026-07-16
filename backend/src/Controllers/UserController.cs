@@ -40,4 +40,18 @@ public class UserController(IUserService userService) : ControllerBase
                 }
         );
     }
+
+    [HttpPost]
+    [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<UserDetailsDto>> CreateUser(
+        [FromBody] CreateUserRequestDto createUserRequestDto
+    )
+    {
+        // Call the UserService.CreateUser(createUserRequestDto)
+        var result = await userService.CreateUser(createUserRequestDto);
+        return result.Match<ActionResult<UserDetailsDto>>(
+            x => Ok(x), // throw errors on line below
+            x => CreateUserError.OrganisationNotExist => BadRequest("There is no organisation with that Organisation ID. "
+        );
+    }
 }

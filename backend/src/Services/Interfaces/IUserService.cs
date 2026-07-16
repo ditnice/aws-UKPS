@@ -7,6 +7,7 @@ namespace UKPS.Api.Services.Interfaces;
 
 public interface IUserService
 {
+    Task CreateUser(CreateUserRequestDto createUserRequestDto);
     Task<Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>> GetUsers(
         int? organisationId,
         int page,

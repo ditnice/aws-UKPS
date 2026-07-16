@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
@@ -110,5 +111,61 @@ internal sealed class UserService(
         }
 
         return organisationMemberships;
+    }
+
+    public async Task<Result<UserDetailsDto, CreateUserError>> CreateUser(
+        CreateUserRequestDto command
+    )
+    {
+        var organisation = await dbContext.Organisations.FindAsync(command.OrganisationId);
+
+        if (organisation is null)
+        {
+            return Result<UserDetailsDto, CreateUserError>.Err(
+            new CreateUserError.NotFound(command.OrganisationId));
+        }
+        var user = new User()
+        {
+            Username = command.Username,
+            UserType = UserType.PharmaUser,
+            Title = command.Title,
+            FirstName = command.FirstName,
+            LastName = command.LastName,
+            JobTitle = command.JobTitle,
+            WorkTelephone = command.WorkTelephone,
+            WorkEmail = command.WorkEmail,
+        };
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync();
+
+        var userId = user.Id;
+        // Create UserOrgMembership, default to Standard User
+        var userOrgMembership = new UserOrgMembership()
+        {
+            UserId = userId,
+            OrganisationId = command.OrganisationId,
+            UserRole = UserRole.Standard,
+            Status = UserOrgStatus.RequestedAccess,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
+        };
+        return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
+    }
+    private static UserDetailsDto MapToDto(User user)
+    {
+        var organisationIds = user.UserOrgMemberships.Select((x) => x.OrganisationId);
+        //bool onlyOneOrg = organisationIds.Distinct().Count()=1;
+        return new()
+        {
+            Username = user.Username,
+            UserType = user.UserType,
+            Title = user.Title,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            JobTitle = user.JobTitle,
+            WorkPhone = user.WorkTelephone,
+            WorkEmail = user.WorkEmail,
+        };
+        // May need to be changed as currently can't have one user who is part of multiple organisations
     }
 }
