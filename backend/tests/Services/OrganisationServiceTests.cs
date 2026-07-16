@@ -59,12 +59,11 @@ public class OrganisationServiceTests : DatabaseTestBase
 
         if (expectedAuthorised)
         {
-            result.IsOk.ShouldBeTrue();
+            result.ShouldBeSuccess();
         }
         else
         {
-            result.IsErr.ShouldBeTrue();
-            result.Error.ShouldBeOfType<GetOrganisationByIdError.NotAllowed>();
+            result.ShouldBeError().ShouldBeOfType<GetOrganisationByIdError.NotAllowed>();
         }
     }
 
@@ -144,8 +143,8 @@ public class OrganisationServiceTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
 
-        result.IsOk.ShouldBeTrue();
-        AssertUpdatedDetails(result.Value, createdAt, lastActive);
+        var dto = result.ShouldBeSuccess();
+        AssertUpdatedDetails(dto, createdAt, lastActive);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         Organisation saved = await verifyContext.Organisations.SingleAsync(
@@ -189,12 +188,11 @@ public class OrganisationServiceTests : DatabaseTestBase
 
         if (expectedAuthorised)
         {
-            result.IsOk.ShouldBeTrue();
+            result.ShouldBeSuccess();
         }
         else
         {
-            result.IsErr.ShouldBeTrue();
-            result.Error.ShouldBeOfType<UpdateOrganisationDetailsError.NotAllowed>();
+            result.ShouldBeError().ShouldBeOfType<UpdateOrganisationDetailsError.NotAllowed>();
         }
     }
 
@@ -214,9 +212,9 @@ public class OrganisationServiceTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
 
-        result.IsErr.ShouldBeTrue();
-        UpdateOrganisationDetailsError.NotFound notFound =
-            result.Error.ShouldBeOfType<UpdateOrganisationDetailsError.NotFound>();
+        UpdateOrganisationDetailsError.NotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<UpdateOrganisationDetailsError.NotFound>();
         notFound.OrganisationId.ShouldBe(99);
     }
 
