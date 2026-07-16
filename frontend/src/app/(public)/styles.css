@@ -7,11 +7,10 @@
 }
 
 html {
+  background: rgb(0 0 0);
   font-size: 18px;
-  line-height: 32px;
-
-  background: rgb(0, 0, 0);
   -webkit-font-smoothing: antialiased;
+  line-height: 32px;
 }
 
 html,
@@ -20,43 +19,42 @@ body {
 }
 
 body {
+  color: rgb(1000 1000 1000);
   font-family: system-ui;
   font-size: 18px;
   line-height: 32px;
-
   margin: 0;
-  color: rgb(1000, 1000, 1000);
 
-  @media (max-width: 1024px) {
+  @media (width <= 1024px) {
     font-size: 15px;
     line-height: 24px;
   }
 }
 
 img {
-  max-width: 100%;
-  height: auto;
   display: block;
+  height: auto;
+  max-width: 100%;
 }
 
 h1 {
-  margin: 40px 0;
   font-size: 64px;
-  line-height: 70px;
   font-weight: bold;
+  line-height: 70px;
+  margin: 40px 0;
 
-  @media (max-width: 1024px) {
-    margin: 24px 0;
+  @media (width <= 1024px) {
     font-size: 42px;
     line-height: 42px;
+    margin: 24px 0;
   }
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     font-size: 38px;
     line-height: 38px;
   }
 
-  @media (max-width: 400px) {
+  @media (width <= 400px) {
     font-size: 32px;
     line-height: 32px;
   }
@@ -65,13 +63,13 @@ h1 {
 p {
   margin: 24px 0;
 
-  @media (max-width: 1024px) {
+  @media (width <= 1024px) {
     margin: calc(var(--base) * 0.75) 0;
   }
 }
 
 a {
-  color: currentColor;
+  color: currentcolor;
 
   &:focus {
     opacity: 0.8;
@@ -89,26 +87,26 @@ svg {
 }
 
 .home {
+  align-items: center;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
   height: 100vh;
-  padding: 45px;
-  max-width: 1024px;
+  justify-content: space-between;
   margin: 0 auto;
+  max-width: 1024px;
   overflow: hidden;
+  padding: 45px;
 
-  @media (max-width: 400px) {
+  @media (width <= 400px) {
     padding: 24px;
   }
 
   .content {
+    align-items: center;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     flex-grow: 1;
+    justify-content: center;
 
     h1 {
       text-align: center;
@@ -116,35 +114,35 @@ svg {
   }
 
   .links {
-    display: flex;
     align-items: center;
+    display: flex;
     gap: 12px;
 
     a {
-      text-decoration: none;
-      padding: 0.25rem 0.5rem;
       border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      text-decoration: none;
     }
 
     .admin {
-      color: rgb(0, 0, 0);
-      background: rgb(1000, 1000, 1000);
-      border: 1px solid rgb(0, 0, 0);
+      background: rgb(1000 1000 1000);
+      border: 1px solid rgb(0 0 0);
+      color: rgb(0 0 0);
     }
 
     .docs {
-      color: rgb(1000, 1000, 1000);
-      background: rgb(0, 0, 0);
-      border: 1px solid rgb(1000, 1000, 1000);
+      background: rgb(0 0 0);
+      border: 1px solid rgb(1000 1000 1000);
+      color: rgb(1000 1000 1000);
     }
   }
 
   .footer {
-    display: flex;
     align-items: center;
+    display: flex;
     gap: 8px;
 
-    @media (max-width: 1024px) {
+    @media (width <= 1024px) {
       flex-direction: column;
       gap: 6px;
     }
@@ -154,10 +152,10 @@ svg {
     }
 
     .code-link {
-      text-decoration: none;
-      padding: 0 0.5rem;
-      background: rgb(60, 60, 60);
+      background: rgb(60 60 60);
       border-radius: 4px;
+      padding: 0 0.5rem;
+      text-decoration: none;
     }
   }
 }
