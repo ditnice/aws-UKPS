@@ -1,7 +1,5 @@
 'use client'
 
-import { type FormEvent, useState } from 'react'
-
 import {
   FilterByInput,
   FilterGroup,
@@ -12,87 +10,71 @@ import {
 
 import { Example } from '../../_components/Example'
 
-const preventSubmit = (event: FormEvent<HTMLFormElement>) => event.preventDefault()
-
 export function Examples() {
-  const [filterTypes, setFilterTypes] = useState<string[]>(['Guidance'])
-  const [sortOrder, setSortOrder] = useState('relevance')
-  const [reference, setReference] = useState('NG123')
-
-  const toggleFilterType = (type: string, checked: boolean) => {
-    setFilterTypes((current) =>
-      checked ? [...current, type] : current.filter((item) => item !== type),
-    )
-  }
-
-  const activeFilters = filterTypes.map((type) => ({
-    label: type,
-    onClick: () => setFilterTypes((current) => current.filter((item) => item !== type)),
-  }))
-
   return (
     <>
-      <Example title="Interactive filter panel">
-        <FilterPanel heading="Filter guidance" headingLevel={3} onSubmit={preventSubmit}>
-          <FilterGroup
-            collapseByDefault
-            heading="Content type"
-            id="showcase-content-type"
-            selectedCount={filterTypes.length}
-          >
-            {['Guidance', 'Quality standard', 'Advice'].map((type) => (
-              <FilterOption
-                isSelected={filterTypes.includes(type)}
-                key={type}
-                onChanged={(event: FormEvent<HTMLInputElement>) =>
-                  toggleFilterType(type, event.currentTarget.checked)
-                }
-                value={type.toLowerCase().replaceAll(' ', '-')}
-              >
-                {type}
-              </FilterOption>
-            ))}
-          </FilterGroup>
-          <FilterByInput
-            buttonLabel="Filter results"
-            inputProps={{
-              hint: 'For example, NG123',
-              onChange: (event: FormEvent<HTMLInputElement>) =>
-                setReference(event.currentTarget.value),
-              value: reference,
-            }}
-            label="Guidance reference"
-            name="showcase-guidance-reference"
-            type="search"
-          />
-        </FilterPanel>
-      </Example>
-      <Example title="Summary, active filters and sorting">
+      <Example title="Filter summary">
         <FilterSummary
-          activeFilters={activeFilters}
-          headingLevel={3}
-          sorting={[
+          activeFilters={[
             {
-              active: sortOrder === 'relevance',
-              label: 'Relevance',
-              onSelected: () => setSortOrder('relevance'),
-              value: 'relevance',
+              label: 'Guidance',
             },
             {
-              active: sortOrder === 'newest',
-              label: 'Newest',
-              onSelected: () => setSortOrder('newest'),
-              value: 'newest',
+              label: 'Pathway',
             },
           ]}
         >
-          Showing 24 results
+          Showing results 1 to 10 of 1209
         </FilterSummary>
-        <p aria-live="polite">
-          {filterTypes.length
-            ? `Filtering by ${filterTypes.join(', ')}. Sorted by ${sortOrder}.`
-            : `No content type filters selected. Sorted by ${sortOrder}.`}
-        </p>
+      </Example>
+
+      <Example title="Filter panel with filter group">
+        <FilterPanel heading="A filter panel">
+          <FilterGroup heading="Type" id="filter-panel-type">
+            <FilterOption
+              isSelected={true}
+              value="This is an example"
+              onChanged={() => console.log('Changed!')}
+            >
+              This is an example
+            </FilterOption>
+            <FilterOption
+              isSelected={false}
+              value="Another example"
+              onChanged={() => console.log('Changed!')}
+            >
+              Another example
+            </FilterOption>
+          </FilterGroup>
+        </FilterPanel>
+      </Example>
+
+      <Example title="Filter panel with filter by input">
+        <FilterPanel heading="A filter panel">
+          <FilterByInput label="test" name="filter-input-test"></FilterByInput>
+        </FilterPanel>
+      </Example>
+
+      <Example title="Filter panel with multiple filters">
+        <FilterPanel heading="A filter panel">
+          <FilterGroup heading="Type" id="multiple-filters-type">
+            <FilterOption
+              isSelected={true}
+              value="This is an example"
+              onChanged={() => console.log('Changed!')}
+            >
+              This is an example
+            </FilterOption>
+            <FilterOption
+              isSelected={false}
+              value="Another example"
+              onChanged={() => console.log('Changed!')}
+            >
+              Another example
+            </FilterOption>
+          </FilterGroup>
+          <FilterByInput label="test" name="multiple-filters-test"></FilterByInput>
+        </FilterPanel>
       </Example>
     </>
   )

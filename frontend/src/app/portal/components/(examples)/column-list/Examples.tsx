@@ -4,33 +4,28 @@ import { ColumnList } from '@nice-digital/nds-column-list'
 
 import { Example } from '../../_components/Example'
 
-const topics = [
-  'Cardiovascular conditions',
-  'Diabetes and other endocrinal conditions',
-  'Kidney conditions',
-  'Mental health and wellbeing',
-  'Respiratory conditions',
-  'Skin conditions',
-]
+const items = (
+  <>
+    <li>One</li>
+    <li>Two</li>
+    <li>Three</li>
+    <li>Four</li>
+    <li>Five</li>
+    <li>Six</li>
+  </>
+)
 
 export function Examples() {
   return (
     <>
-      <Example title="Boxed, three columns (default)">
-        <ColumnList columns={3} id="column-list-example">
-          {topics.map((topic) => (
-            <li key={topic}>
-              <a href="#column-list-example">{topic}</a>
-            </li>
-          ))}
-        </ColumnList>
+      <Example title="Default column list">
+        <ColumnList>{items}</ColumnList>
       </Example>
-      <Example title="Plain, two columns">
-        <ColumnList columns={2} plain>
-          {topics.map((topic) => (
-            <li key={topic}>{topic}</li>
-          ))}
-        </ColumnList>
+      <Example title="Column list with two columns">
+        <ColumnList columns={2}>{items}</ColumnList>
+      </Example>
+      <Example title="Plain column list">
+        <ColumnList plain>{items}</ColumnList>
       </Example>
     </>
   )

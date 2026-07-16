@@ -3,6 +3,11 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
 
+# FilterPanel 5.1.0 hard-codes `filter-panel-body`, producing duplicate IDs when
+# multiple panels are rendered.
+patchedDependencies:
+  '@nice-digital/nds-filters@5.1.0': patches/@nice-digital__nds-filters@5.1.0.patch
+
 # NICE packages have not yet widened their peer ranges beyond React 18.
 # These scoped exceptions allow installation; they do not assert runtime compatibility.
 peerDependencyRules:

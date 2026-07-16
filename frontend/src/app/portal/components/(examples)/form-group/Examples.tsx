@@ -2,49 +2,62 @@
 
 import { Checkbox } from '@nice-digital/nds-checkbox'
 import { FormGroup } from '@nice-digital/nds-form-group'
+import { Input } from '@nice-digital/nds-input'
 import { Radio } from '@nice-digital/nds-radio'
 
 import { Example } from '../../_components/Example'
-import styles from '../../page.module.scss'
 
 export function Examples() {
   return (
     <>
-      <Example title="Legend heading, hint and inline children">
+      <Example title="Overview">
+        <FormGroup legend="Personal information">
+          <Input label="First name" name="firstname" />
+          <Input label="Surname" name="surname" />
+        </FormGroup>
+      </Example>
+      <Example title="Default form group">
         <FormGroup
-          headingLevel={3}
-          hint="Choose one option."
-          inline
-          legend="Can we contact you about research?"
-          name="showcase-research-contact"
+          legend="Are you happy for us to contact you in the future?"
+          name="contact-preference"
         >
           <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
         </FormGroup>
       </Example>
-      <Example title="Group error">
+      <Example title="Inline radios">
         <FormGroup
-          aria-describedby="showcase-services-error"
-          groupError="Select at least one service."
-          legend="Which services do you use?"
-          name="showcase-services"
+          legend="Are you happy for us to contact you in the future?"
+          name="contact-preference-inline"
+          inline
         >
-          <Checkbox
-            aria-invalid="true"
-            label="Guidance"
-            name="showcase-services"
-            value="guidance"
-          />
-          <Checkbox
-            aria-invalid="true"
-            label="Standards"
-            name="showcase-services"
-            value="standards"
-          />
+          <Radio label="Yes" value="yes" />
+          <Radio label="No" value="no" />
         </FormGroup>
-        <span className={styles.visuallyHidden} id="showcase-services-error">
-          Select at least one service.
-        </span>
+      </Example>
+      <Example title="Form group with hints">
+        <FormGroup
+          legend="How would you like us to contact you?"
+          hint="We promise not to contact you too often"
+        >
+          <Checkbox label="Email" value="email" name="contact-preference-hints" />
+          <Checkbox label="Telephone" value="phone" name="contact-preference-hints" />
+        </FormGroup>
+      </Example>
+      <Example title="Error messages">
+        <FormGroup
+          legend="How would you like us to contact you?"
+          groupError="Please choose at least one contact method!"
+        >
+          <Checkbox label="Email" value="email" name="contact-preference-error" />
+          <Checkbox label="Telephone" value="phone" name="contact-preference-error" />
+        </FormGroup>
+      </Example>
+      <Example title="Form group with heading level">
+        <FormGroup legend="Personal information" headingLevel={3}>
+          <Input label="First name" name="firstname-heading-level" />
+          <Input label="Surname" name="surname-heading-level" />
+        </FormGroup>
       </Example>
     </>
   )

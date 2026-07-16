@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@nice-digital/nds-filters@5.1.0': be23a55e49d48e06353e928abcda45b8431f748e4df140b1f56e983c05de3a41
+
 importers:
 
   .:
@@ -52,7 +55,7 @@ importers:
         version: 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-filters':
         specifier: 5.1.0
-        version: 5.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 5.1.0(patch_hash=be23a55e49d48e06353e928abcda45b8431f748e4df140b1f56e983c05de3a41)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-form-group':
         specifier: 4.1.0
         version: 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -62,13 +65,7 @@ importers:
       '@nice-digital/nds-grid':
         specifier: 4.1.0
         version: 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@nice-digital/nds-hero':
-        specifier: 4.2.0
-        version: 4.2.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-horizontal-nav':
-        specifier: 4.1.0
-        version: 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@nice-digital/nds-in-page-nav':
         specifier: 4.1.0
         version: 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-input':
@@ -6536,7 +6533,7 @@ snapshots:
       '@nice-digital/nds-container': 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-core': 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-enhanced-pagination': 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@nice-digital/nds-filters': 5.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@nice-digital/nds-filters': 5.1.0(patch_hash=be23a55e49d48e06353e928abcda45b8431f748e4df140b1f56e983c05de3a41)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-form-group': 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-full-bleed': 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@nice-digital/nds-grid': 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -6664,7 +6661,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@nice-digital/nds-filters@5.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@nice-digital/nds-filters@5.1.0(patch_hash=be23a55e49d48e06353e928abcda45b8431f748e4df140b1f56e983c05de3a41)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@nice-digital/icons': 6.1.7(react@19.2.6)
       '@nice-digital/nds-button': 4.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)

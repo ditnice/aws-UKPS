@@ -1,56 +1,68 @@
 'use client'
 
-import { useState } from 'react'
-
 import { FormGroup } from '@nice-digital/nds-form-group'
 import { Radio } from '@nice-digital/nds-radio'
 
 import { Example } from '../../_components/Example'
-import styles from '../../page.module.scss'
 
 export function Examples() {
-  const [contactPreference, setContactPreference] = useState('email')
-
   return (
     <>
-      <Example title="Interactive inline group">
+      <Example title="Overview">
         <FormGroup
-          hint="This changes immediately in the showcase."
-          inline
-          legend="Preferred contact method"
-          name="showcase-contact-preference"
+          legend="Are you happy for us to contact you in the future?"
+          name="contact-preference-default"
         >
-          {['email', 'post', 'telephone'].map((value) => (
-            <Radio
-              checked={contactPreference === value}
-              key={value}
-              label={value[0].toUpperCase() + value.slice(1)}
-              onChange={() => setContactPreference(value)}
-              value={value}
-            />
-          ))}
+          <Radio label="Yes" value="yes" />
+          <Radio label="No" value="no" />
         </FormGroup>
-        <p aria-live="polite">Selected: {contactPreference}</p>
       </Example>
-      <Example title="Hint, disabled and error states">
-        <Radio
-          hint="Use the address registered to your account."
-          label="Post"
-          name="showcase-radio-states"
-          value="post"
-        />
-        <Radio disabled label="Fax (not available)" name="showcase-radio-states" value="fax" />
-        <Radio
-          aria-describedby="showcase-radio-error-message"
-          aria-invalid="true"
-          error="This option is unavailable."
-          label="Other"
-          name="showcase-radio-error"
-          value="other"
-        />
-        <span className={styles.visuallyHidden} id="showcase-radio-error-message">
-          This option is unavailable.
-        </span>
+      <Example title="Default radios">
+        <FormGroup
+          legend="Are you happy for us to contact you in the future?"
+          name="contact-preference-default-example"
+        >
+          <Radio label="Yes" value="yes" />
+          <Radio label="No" value="no" />
+        </FormGroup>
+      </Example>
+      <Example title="Inline radios">
+        <FormGroup
+          legend="Are you happy for us to contact you in the future?"
+          name="contact-preference-inline"
+          inline
+        >
+          <Radio label="Yes" value="yes" />
+          <Radio label="No" value="no" />
+        </FormGroup>
+      </Example>
+      <Example title="Individual radio hint text">
+        <FormGroup
+          legend="Are you happy for us to contact you in the future?"
+          name="contact-preference-hint"
+        >
+          <Radio label="Yes" value="yes" hint="Some helpful hint text" />
+          <Radio label="No" value="no" />
+        </FormGroup>
+      </Example>
+      <Example title="Group hint text">
+        <FormGroup
+          legend="Are you happy for us to contact you in the future?"
+          hint="Some helpful hint text"
+          name="contact-preference-grouphint"
+        >
+          <Radio label="Yes" value="yes" />
+          <Radio label="No" value="no" />
+        </FormGroup>
+      </Example>
+      <Example title="Errors">
+        <FormGroup
+          legend="Are you happy for us to contact you in the future?"
+          name="contact-preference-errorhint"
+        >
+          <Radio label="Yes" value="yes" error="Error message" />
+          <Radio label="No" value="no" />
+        </FormGroup>
       </Example>
     </>
   )

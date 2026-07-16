@@ -6,11 +6,11 @@ import { Example } from '../../_components/Example'
 
 export function Examples() {
   return (
-    <Example title="Linked trail and current page">
+    <Example title="Example: breadcrumbs">
       <Breadcrumbs>
-        <Breadcrumb to="/portal">Portal</Breadcrumb>
-        <Breadcrumb to="/portal/components">Components</Breadcrumb>
-        <Breadcrumb>Breadcrumbs</Breadcrumb>
+        <Breadcrumb to="https://www.nice.org.uk/">Home</Breadcrumb>
+        <Breadcrumb to="https://www.nice.org.uk/guidance">NICE guidance</Breadcrumb>
+        <Breadcrumb to="/">Published</Breadcrumb>
       </Breadcrumbs>
     </Example>
   )

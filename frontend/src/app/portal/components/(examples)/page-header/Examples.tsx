@@ -1,49 +1,76 @@
 'use client'
 
+import { Breadcrumb, Breadcrumbs } from '@nice-digital/nds-breadcrumbs'
+import { Button } from '@nice-digital/nds-button'
 import { PageHeader } from '@nice-digital/nds-page-header'
 
 import { Example } from '../../_components/Example'
 
-const pageHeaderUrl = '/portal/components/page-header'
-
 export function Examples() {
   return (
     <>
-      <p>
-        Page Header always renders a page-level heading, so this catalogue intentionally contains
-        additional H1 elements.
-      </p>
-      <Example title="Normal with all content regions">
+      <Example title="Heading">
+        <PageHeader heading="Welcome to the page" />
+      </Example>
+      <Example title="Pre-heading">
+        <PageHeader heading="Welcome to the page" preheading="Here's a pre-heading" />
+      </Example>
+      <Example title="Lead">
+        <PageHeader heading="Welcome to the page" lead="This is the lead" />
+      </Example>
+      <Example title="Metadata">
+        <PageHeader heading="Welcome to the page" metadata={['Item 1', 'Item 2']} />
+      </Example>
+      <Example title="Call-to-action">
+        <PageHeader heading="Welcome to the page" cta={<Button>Do something</Button>} />
+      </Example>
+      <Example title="Header with description">
+        <PageHeader heading="Header with description" description="I am a description" />
+      </Example>
+      <Example title="Header with breadcrumbs">
         <PageHeader
-          breadcrumbs={<a href={pageHeaderUrl}>Guidance</a>}
-          cta={<a href={pageHeaderUrl}>Download guidance</a>}
-          description={<p>Recommendations for identifying and managing hypertension in adults.</p>}
-          heading="Hypertension in adults"
-          lead="Diagnosis and management"
-          metadata={['NICE guideline', 'NG136', 'Last updated: 21 November 2023']}
-          preheading="Clinical guidance"
-          secondSection={
-            <div>
-              <h2>Information for the public</h2>
-              <a href={pageHeaderUrl}>Read the overview</a>
-            </div>
+          heading="Header with breadcrumbs"
+          breadcrumbs={
+            <Breadcrumbs>
+              <Breadcrumb to="https://www.nice.org.uk/">Home</Breadcrumb>
+              <Breadcrumb to="https://www.nice.org.uk/guidance">NICE guidance</Breadcrumb>
+              <Breadcrumb>Published</Breadcrumb>
+            </Breadcrumbs>
           }
-          useAltHeading
         />
       </Example>
-      <Example dark fullWidth title="Full-width dark with loose padding">
+      <Example title="verticalPadding">
+        <PageHeader heading="I have vertical padding!" verticalPadding="loose" />
+      </Example>
+      <Example fullWidth title="Full width light variant">
         <PageHeader
-          heading="Medicines optimisation"
-          lead="Help people get the best outcomes from medicines"
+          heading="I am a full width light header!"
+          variant="fullWidthLight"
+          verticalPadding="loose"
+        />
+      </Example>
+      <Example fullWidth title="Full width dark variant">
+        <PageHeader
+          heading="I am a full width dark header!"
           variant="fullWidthDark"
           verticalPadding="loose"
         />
       </Example>
-      <Example fullWidth title="Full-width light">
+      <Example fullWidth title="Header with second section">
         <PageHeader
-          heading="Shared decision making"
-          lead="Make decisions together using the best available evidence"
+          heading="There's a second section here!"
           variant="fullWidthLight"
+          verticalPadding="loose"
+          secondSection={
+            <aside>
+              <h3>I am a second section</h3>
+              <ol>
+                <li>One</li>
+                <li>Two</li>
+                <li>Three</li>
+              </ol>
+            </aside>
+          }
         />
       </Example>
     </>

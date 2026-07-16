@@ -1,42 +1,63 @@
 'use client'
 
+import { useSyncExternalStore } from 'react'
+
 import { Table } from '@nice-digital/nds-table'
 
 import { Example } from '../../_components/Example'
-import styles from '../../page.module.scss'
+
+const subscribe = () => () => undefined
 
 export function Examples() {
+  const isClient = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  )
+
+  if (!isClient) return null
+
   return (
-    <Example title="Guidance publication schedule">
-      <Table>
-        <caption>Guidance planned for publication</caption>
-        <thead>
+    <>
+      <Example title="Default">
+        <Table>
           <tr>
-            <th scope="col">Topic</th>
-            <th scope="col">Product type</th>
-            <th className={styles.tableNumber} scope="col">
-              Expected publications
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">Cardiovascular</th>
-            <td>Guideline</td>
-            <td className={styles.tableNumber}>4</td>
+            <th>Ref</th>
+            <th>Title</th>
+            <th>Date</th>
           </tr>
           <tr>
-            <th scope="row">Mental health</th>
-            <td>Quality standard</td>
-            <td className={styles.tableNumber}>2</td>
+            <td>ABC1</td>
+            <td>Lorem ipsum dolor sit amet</td>
+            <td>27/08/2022</td>
           </tr>
           <tr>
-            <th scope="row">Respiratory</th>
-            <td>Technology appraisal</td>
-            <td className={styles.tableNumber}>7</td>
+            <td>XYZ2</td>
+            <td>Aliquam consectetur posuere nibh dapibus consequat</td>
+            <td>25/12/2023</td>
           </tr>
-        </tbody>
-      </Table>
-    </Example>
+        </Table>
+      </Example>
+      <Example title="Table captions">
+        <Table>
+          <caption>Here is a caption!</caption>
+          <tr>
+            <th>Ref</th>
+            <th>Title</th>
+            <th>Date</th>
+          </tr>
+          <tr>
+            <td>ABC1</td>
+            <td>Lorem ipsum dolor sit amet</td>
+            <td>27/08/2022</td>
+          </tr>
+          <tr>
+            <td>XYZ2</td>
+            <td>Aliquam consectetur posuere nibh dapibus consequat</td>
+            <td>25/12/2023</td>
+          </tr>
+        </Table>
+      </Example>
+    </>
   )
 }

@@ -6,20 +6,13 @@ import { Example } from '../../_components/Example'
 
 export function Examples() {
   return (
-    <Example title="Default links and current item">
-      <HorizontalNav aria-label="Navigation component topics">
-        <HorizontalNavLink destination="/portal/components/breadcrumbs">
-          Breadcrumbs
+    <Example title="Horizontal Nav">
+      <HorizontalNav aria-label="My navigation">
+        <HorizontalNavLink destination="/">Home</HorizontalNavLink>
+        <HorizontalNavLink isCurrent destination="/about-us">
+          About
         </HorizontalNavLink>
-        <HorizontalNavLink destination="/portal/components/horizontal-nav" isCurrent>
-          Horizontal navigation
-        </HorizontalNavLink>
-        <HorizontalNavLink destination="/portal/components/in-page-nav">
-          In-page navigation
-        </HorizontalNavLink>
-        <HorizontalNavLink destination="/portal/components/pagination">
-          Pagination
-        </HorizontalNavLink>
+        <HorizontalNavLink destination="/contact">Contact</HorizontalNavLink>
       </HorizontalNav>
     </Example>
   )

@@ -20,7 +20,7 @@ export function ComponentPage({ children, title }: ComponentPageProps) {
       </Link>
       <hr></hr>
       <PageHeader heading={title} preheading="NICE Design System component" />
-      <div className={styles.exampleList}>{children}</div>
+      <div className={styles['example-list']}>{children}</div>
     </Container>
   )
 }

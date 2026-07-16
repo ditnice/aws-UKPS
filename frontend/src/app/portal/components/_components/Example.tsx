@@ -12,10 +12,10 @@ type ExampleProps = {
 export function Example({ children, dark = false, fullWidth = false, title }: ExampleProps) {
   return (
     <div
-      className={`${styles.example}${dark ? ` ${styles.exampleDark}` : ''}${fullWidth ? ` ${styles.exampleFullWidth}` : ''}`}
+      className={`${styles.example}${dark ? ` ${styles['example-dark']}` : ''}${fullWidth ? ` ${styles['example-full-width']}` : ''}`}
     >
-      <h2 className={styles.exampleTitle}>{title}</h2>
-      <div className={styles.exampleBody}>{children}</div>
+      <h2 className={styles['example-title']}>{title}</h2>
+      <div className={styles['example-body']}>{children}</div>
     </div>
   )
 }

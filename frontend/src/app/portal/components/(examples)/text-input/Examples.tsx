@@ -1,54 +1,48 @@
 'use client'
 
-import { type FormEvent, useState } from 'react'
-
+import { FormGroup } from '@nice-digital/nds-form-group'
 import { Input } from '@nice-digital/nds-input'
 
 import { Example } from '../../_components/Example'
-import styles from '../../page.module.scss'
-
-const preventSubmit = (event: FormEvent<HTMLFormElement>) => event.preventDefault()
 
 export function Examples() {
-  const [reference, setReference] = useState('NG123')
-  const [email, setEmail] = useState('')
-
   return (
     <>
-      <Example title="Controlled text and email inputs">
-        <form onSubmit={preventSubmit}>
-          <Input
-            hint="For example, NG123"
-            label="Guidance reference"
-            name="showcase-reference-input"
-            onChange={(event: FormEvent<HTMLInputElement>) =>
-              setReference(event.currentTarget.value)
-            }
-            value={reference}
-          />
-          <Input
-            autoComplete="email"
-            label="Email address"
-            name="showcase-email-input"
-            onChange={(event: FormEvent<HTMLInputElement>) => setEmail(event.currentTarget.value)}
-            type="email"
-            value={email}
-          />
-        </form>
+      <Example title="Overview">
+        <Input label="First name" name="firstname-example" />
       </Example>
-      <Example title="Error and disabled states">
+      <Example title="Example: standard input">
+        <Input label="First name" name="firstname" />
+      </Example>
+      <Example title="Example: grouped text inputs">
+        <FormGroup legend="What is your address">
+          <Input label="Address line 1" name="address-line-1" />
+          <Input label="Address line 2" name="address-line-2" />
+          <Input label="Town or city" name="address-town" />
+          <Input label="County" name="address-county" />
+          <Input label="Postcode" name="address-postcode" />
+        </FormGroup>
+      </Example>
+      <Example title="Example: input with a hint">
+        <Input label="Age" name="age" hint="Please enter in years" />
+      </Example>
+      <Example title="Example: Grouped inputs with a hint">
+        <FormGroup legend="What is your address" hint="This should be a UK address">
+          <Input label="Address line 1" name="address-line-1-hint" />
+          <Input label="Address line 2" name="address-line-2-hint" />
+          <Input label="Town or city" name="address-town-hint" />
+          <Input label="County" name="address-county-hint" />
+          <Input label="Postcode" name="address-postcode-hint" />
+        </FormGroup>
+      </Example>
+      <Example title="Example: input with error">
         <Input
-          aria-describedby="showcase-organisation-error-message"
-          aria-invalid="true"
+          label="Surname"
+          name="surname"
           error
-          errorMessage="Enter an organisation name."
-          label="Organisation name"
-          name="showcase-organisation-error"
+          required
+          errorMessage="Please enter your surname"
         />
-        <span className={styles.visuallyHidden} id="showcase-organisation-error-message">
-          Enter an organisation name.
-        </span>
-        <Input disabled label="Account number" name="showcase-disabled-input" value="UKPS-2048" />
       </Example>
     </>
   )
