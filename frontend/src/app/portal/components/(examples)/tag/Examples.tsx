@@ -17,12 +17,12 @@ export function Examples() {
       </Example>
       <Example title="Phase">
         <>
-          <Tag alpha>Alpha</Tag> <Tag beta>Beta</Tag> <Tag live>Live</Tag>
+          <Tag alpha>Alpha</Tag> <Tag beta>Beta</Tag> <Tag>Live</Tag>
         </>
       </Example>
       <Example title="Guidance">
         <>
-          <Tag new>New</Tag> <Tag updated>Updated</Tag> <Tag consultation>Consultation</Tag>
+          <Tag>New</Tag> <Tag updated>Updated</Tag> <Tag consultation>Consultation</Tag>
         </>
       </Example>
       <Example title="Impact">

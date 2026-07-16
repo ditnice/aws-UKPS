@@ -21,41 +21,49 @@ export function Examples() {
     <>
       <Example title="Default">
         <Table>
-          <tr>
-            <th>Ref</th>
-            <th>Title</th>
-            <th>Date</th>
-          </tr>
-          <tr>
-            <td>ABC1</td>
-            <td>Lorem ipsum dolor sit amet</td>
-            <td>27/08/2022</td>
-          </tr>
-          <tr>
-            <td>XYZ2</td>
-            <td>Aliquam consectetur posuere nibh dapibus consequat</td>
-            <td>25/12/2023</td>
-          </tr>
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Title</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ABC1</td>
+              <td>Lorem ipsum dolor sit amet</td>
+              <td>27/08/2022</td>
+            </tr>
+            <tr>
+              <td>XYZ2</td>
+              <td>Aliquam consectetur posuere nibh dapibus consequat</td>
+              <td>25/12/2023</td>
+            </tr>
+          </tbody>
         </Table>
       </Example>
       <Example title="Table captions">
         <Table>
           <caption>Here is a caption!</caption>
-          <tr>
-            <th>Ref</th>
-            <th>Title</th>
-            <th>Date</th>
-          </tr>
-          <tr>
-            <td>ABC1</td>
-            <td>Lorem ipsum dolor sit amet</td>
-            <td>27/08/2022</td>
-          </tr>
-          <tr>
-            <td>XYZ2</td>
-            <td>Aliquam consectetur posuere nibh dapibus consequat</td>
-            <td>25/12/2023</td>
-          </tr>
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Title</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ABC1</td>
+              <td>Lorem ipsum dolor sit amet</td>
+              <td>27/08/2022</td>
+            </tr>
+            <tr>
+              <td>XYZ2</td>
+              <td>Aliquam consectetur posuere nibh dapibus consequat</td>
+              <td>25/12/2023</td>
+            </tr>
+          </tbody>
         </Table>
       </Example>
     </>
