@@ -28,7 +28,9 @@ internal sealed class OrganisationFaker : Faker<Organisation>
             x => x.LastActive,
             (f, o) =>
                 f.Random.Bool(0.8f)
-                    ? f.Date.Between(o.CreatedAt, DateTime.UtcNow).ToUniversalTime()
+                    ? f
+                        .Date.Between(o.CreatedAt ?? DateTime.UtcNow.AddYears(-1), DateTime.UtcNow)
+                        .ToUniversalTime()
                     : null
         );
     }

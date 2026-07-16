@@ -120,7 +120,7 @@ namespace UKPS.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("country_or_region");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
@@ -228,7 +228,7 @@ namespace UKPS.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 

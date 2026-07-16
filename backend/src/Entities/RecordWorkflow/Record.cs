@@ -1,9 +1,8 @@
-using UKPS.Api.Entities.Common;
 using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.RecordWorkflow;
 
-internal sealed class Record : EntityWithMetaData
+internal sealed class Record
 {
     public int Id { get; set; }
     public int OrganisationId { get; set; }
@@ -22,6 +21,10 @@ internal sealed class Record : EntityWithMetaData
     /// </summary>
     public int? CurrentDraftRevisionId { get; set; }
 
+    /// <summary>
+    /// Immutable after insert. Timestamp of initial row creation / first draft.
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
     public int? CreatedBy { get; set; }
 
     /// <summary>

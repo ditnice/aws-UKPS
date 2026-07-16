@@ -1,9 +1,8 @@
-using UKPS.Api.Entities.Common;
 using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.RecordWorkflow;
 
-internal sealed class RecordRevision : EntityWithMetaData
+internal sealed class RecordRevision
 {
     public int Id { get; set; }
     public int RecordId { get; set; }
@@ -24,6 +23,7 @@ internal sealed class RecordRevision : EntityWithMetaData
 
     public WorkflowStatus WorkflowStatus { get; set; }
     public int CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
     public int? UpdatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public int? SubmittedBy { get; set; }

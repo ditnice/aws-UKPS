@@ -1,9 +1,8 @@
-using UKPS.Api.Entities.Common;
 using UKPS.Api.Enums;
 
 namespace UKPS.Api.Entities.Identity;
 
-internal sealed class TermsAcceptance : EntityWithMetaData
+internal sealed class TermsAcceptance
 {
     public int Id { get; set; }
     public int OrganisationId { get; set; }
@@ -15,6 +14,7 @@ internal sealed class TermsAcceptance : EntityWithMetaData
     public TermsAcceptanceStatus Status { get; set; }
     public DateTime? SignedAt { get; set; }
     public string? IpAddress { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     // Navigation
     public Organisation? Organisation { get; set; }
