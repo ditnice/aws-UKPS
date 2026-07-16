@@ -2,9 +2,10 @@ import type { ReactNode } from 'react'
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
   return (
-    <div>
-      <nav>{/* Authenticated nav */}</nav>
-      <main>{children}</main>
-    </div>
+    <html lang="en">
+      <body>
+        <main>{children}</main>
+      </body>
+    </html>
   )
 }

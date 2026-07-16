@@ -133,9 +133,24 @@ variable "container_port" {
   }
 }
 
-variable "ecr_image_url" {
-  description = "ECR repository image URL"
+variable "ecr_repository_url" {
+  description = "ECR repository URL"
   type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9]+([._/-][a-z0-9]+)*$", var.ecr_repository_url))
+    error_message = "ECR repository URL must be a private AWS ECR repository URL without an image tag or digest."
+  }
+}
+
+variable "image_tag" {
+  description = "Container image tag"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", var.image_tag))
+    error_message = "Image tag must be a valid Docker image tag."
+  }
 }
 
 variable "target_group_arn" {
