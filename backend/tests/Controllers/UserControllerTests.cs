@@ -71,6 +71,32 @@ public class UserControllerTests
     }
 
     [Fact]
+    public async Task GetUsers_ReturnsForbid_WhenNotAllowed()
+    {
+        var sampleId = 1;
+        _mockUserService
+            .GetUsers(
+                Arg.Any<int?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(
+                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
+                    new GetUsersError.NotAllowed(sampleId)
+                )
+            );
+
+        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
+            CreateQuery(),
+            TestContext.Current.CancellationToken
+        );
+
+        result.Result.ShouldBeOfType<ForbidResult>();
+    }
+
+    [Fact]
     public async Task GetUsers_ReturnsBadRequest_WhenQueryIsNull()
     {
         _mockUserService
