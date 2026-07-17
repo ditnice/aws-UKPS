@@ -42,7 +42,7 @@ variable "backend_db_master_username" {
 variable "backend_container_port" {
   description = "Port on which the target container listens"
   type        = number
-  default     = 3000
+  default     = 8080
 }
 
 variable "frontend_container_port" {
