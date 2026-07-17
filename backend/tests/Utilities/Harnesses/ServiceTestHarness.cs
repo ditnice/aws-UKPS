@@ -1,13 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using UKPS.Api.Data;
-using UKPS.Api.Enums;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Interfaces;
 
-namespace UKPS.Api.Tests.Services;
+namespace UKPS.Api.Tests.Utilities.Harnesses;
 
-internal sealed class ServiceTestHarness<TService>
+internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TService>
     where TService : notnull
 {
     public TService Service => _serviceProvider.GetRequiredService<TService>();
@@ -15,11 +14,7 @@ internal sealed class ServiceTestHarness<TService>
 
     private readonly ICurrentUserInfoService _mockCurrentUserInfoService;
     private readonly ServiceProvider _serviceProvider;
-    private CurrentUser _currentUser = new CurrentUser
-    {
-        OrganisationId = 1,
-        UserRole = UserRole.Super,
-    };
+    private CurrentUser _currentUser = AuthorisationTestConstants.DefaultCurrentUser;
 
     public ServiceTestHarness(AppDbContext context)
     {
@@ -33,7 +28,7 @@ internal sealed class ServiceTestHarness<TService>
             .BuildServiceProvider();
     }
 
-    public ServiceTestHarness<TService> UpdateCurrentUser(Func<CurrentUser, CurrentUser> update)
+    public IServiceTestHarness<TService> UpdateCurrentUser(Func<CurrentUser, CurrentUser> update)
     {
         _currentUser = update(_currentUser);
         _mockCurrentUserInfoService.GetCurrentUserInfo().Returns(_currentUser);

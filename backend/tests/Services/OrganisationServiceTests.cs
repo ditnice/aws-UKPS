@@ -1,7 +1,6 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
-using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
@@ -11,61 +10,26 @@ using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data.Fakers;
+using UKPS.Api.Tests.Utilities.Harnesses;
+using GetOrganisationResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.OrganisationDetailsDto,
+    UKPS.Api.Services.Errors.GetOrganisationByIdError
+>;
+using UpdateOrganisationResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.OrganisationDetailsDto,
+    UKPS.Api.Services.Errors.UpdateOrganisationDetailsError
+>;
 
 namespace UKPS.Api.Tests.Services;
 
 [Collection(DatabaseCollection.Name)]
-public class OrganisationServiceTests : DatabaseTestBase
+public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
 {
-    private readonly IOrganisationService _service;
-    private readonly OrganisationFaker _organisationFaker = new();
+    internal IServiceTestHarness<IOrganisationService> ServiceTestHarness =>
+        new ServiceTestHarness<IOrganisationService>(Context);
+    private IOrganisationService Service => ServiceTestHarness.Service;
 
-    public OrganisationServiceTests(PostgresFixture fixture)
-        : base(fixture)
-    {
-        _service = new ServiceTestHarness<IOrganisationService>(Context).Service;
-    }
-
-    [Theory]
-    [InlineData(true, UserRole.Super, true)]
-    [InlineData(false, UserRole.Super, true)]
-    [InlineData(true, UserRole.Champion, true)]
-    [InlineData(false, UserRole.Champion, false)]
-    [InlineData(true, UserRole.Standard, true)]
-    [InlineData(false, UserRole.Standard, false)]
-    public async Task GetOrganisationById_AuthorisesBasedOnUserRoleAndOrganisation(
-        bool organisationIdMatches,
-        UserRole userRole,
-        bool expectedAuthorised
-    )
-    {
-        Organisation organisation = await AddEntity(
-            _organisationFaker.Generate(),
-            TestContext.Current.CancellationToken
-        );
-        int otherOrganisationId = 999_999;
-        int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
-
-        var testHarness = new ServiceTestHarness<IOrganisationService>(Context).UpdateCurrentUser(
-            x => x with { OrganisationId = usersOrganisationId, UserRole = userRole }
-        );
-        var service = testHarness.Service;
-
-        Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await service.GetOrganisationById(
-                organisation.Id,
-                TestContext.Current.CancellationToken
-            );
-
-        if (expectedAuthorised)
-        {
-            result.ShouldBeSuccess();
-        }
-        else
-        {
-            result.ShouldBeError().ShouldBeOfType<GetOrganisationByIdError.NotAllowed>();
-        }
-    }
+    internal readonly OrganisationFaker _organisationFaker = new();
 
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsDto()
@@ -90,8 +54,10 @@ public class OrganisationServiceTests : DatabaseTestBase
             await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
         ).Id;
 
-        Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await _service.GetOrganisationById(id, TestContext.Current.CancellationToken);
+        GetOrganisationResult result = await Service.GetOrganisationById(
+            id,
+            TestContext.Current.CancellationToken
+        );
 
         var dto = result.ShouldBeSuccess();
         dto.ShouldNotBeNull();
@@ -107,6 +73,50 @@ public class OrganisationServiceTests : DatabaseTestBase
         dto.CreatedAt.ShouldBe(new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc));
     }
 
+    [Theory]
+    [InlineData(true, UserRole.Super, true)]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(true, UserRole.Standard, true)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task GetOrganisationById_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        Organisation organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        int otherOrganisationId = 999_999;
+        int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
+
+        var testHarness = ServiceTestHarness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = usersOrganisationId,
+                UserRole = userRole,
+            }
+        );
+        var service = testHarness.Service;
+
+        GetOrganisationResult result = await service.GetOrganisationById(
+            organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        if (expectedAuthorised)
+        {
+            result.ShouldBeSuccess();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<GetOrganisationByIdError.NotAllowed>();
+        }
+    }
+
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
@@ -116,8 +126,10 @@ public class OrganisationServiceTests : DatabaseTestBase
             await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
         ).Id;
 
-        Result<OrganisationDetailsDto, GetOrganisationByIdError> result =
-            await _service.GetOrganisationById(seededId + 1, TestContext.Current.CancellationToken);
+        GetOrganisationResult result = await Service.GetOrganisationById(
+            seededId + 1,
+            TestContext.Current.CancellationToken
+        );
 
         GetOrganisationByIdError.NotFound notFound = result
             .ShouldBeError()
@@ -136,12 +148,11 @@ public class OrganisationServiceTests : DatabaseTestBase
             await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
         ).Id;
 
-        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
-            await _service.UpdateOrganisationDetails(
-                id,
-                CreateUpdateDto(),
-                TestContext.Current.CancellationToken
-            );
+        UpdateOrganisationResult result = await Service.UpdateOrganisationDetails(
+            id,
+            CreateUpdateDto(),
+            TestContext.Current.CancellationToken
+        );
 
         var dto = result.ShouldBeSuccess();
         AssertUpdatedDetails(dto, createdAt, lastActive);
@@ -173,18 +184,22 @@ public class OrganisationServiceTests : DatabaseTestBase
         );
         int otherOrganisationId = 999_999;
         int usersOrganisationId = organisationIdMatches ? organisation.Id : otherOrganisationId;
-        var testHarness = new ServiceTestHarness<IOrganisationService>(Context).UpdateCurrentUser(
-            x => x with { OrganisationId = usersOrganisationId, UserRole = userRole }
+
+        var testHarness = ServiceTestHarness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = usersOrganisationId,
+                UserRole = userRole,
+            }
         );
         var service = testHarness.Service;
 
         var updateCommand = new UpdateOrganisationDetailsDtoFaker().Generate();
-        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
-            await service.UpdateOrganisationDetails(
-                organisation.Id,
-                updateCommand,
-                TestContext.Current.CancellationToken
-            );
+        UpdateOrganisationResult result = await service.UpdateOrganisationDetails(
+            organisation.Id,
+            updateCommand,
+            TestContext.Current.CancellationToken
+        );
 
         if (expectedAuthorised)
         {
@@ -199,18 +214,17 @@ public class OrganisationServiceTests : DatabaseTestBase
     [Fact]
     public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNotFoundError()
     {
-        Result<OrganisationDetailsDto, UpdateOrganisationDetailsError> result =
-            await _service.UpdateOrganisationDetails(
-                99,
-                new UpdateOrganisationDetailsDto
-                {
-                    OrganisationName = "New Pharma Ltd",
-                    HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-                    HeadOfficeEmail = "new@example.com",
-                    HeadOfficeTelephone = "020 1111 1111",
-                },
-                TestContext.Current.CancellationToken
-            );
+        UpdateOrganisationResult result = await Service.UpdateOrganisationDetails(
+            99,
+            new UpdateOrganisationDetailsDto
+            {
+                OrganisationName = "New Pharma Ltd",
+                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+                HeadOfficeEmail = "new@example.com",
+                HeadOfficeTelephone = "020 1111 1111",
+            },
+            TestContext.Current.CancellationToken
+        );
 
         UpdateOrganisationDetailsError.NotFound notFound = result
             .ShouldBeError()
@@ -290,7 +304,8 @@ public class OrganisationServiceTests : DatabaseTestBase
         saved.CreatedAt.ShouldBe(createdAt);
     }
 
-    private sealed class UpdateOrganisationDetailsDtoFaker : Faker<UpdateOrganisationDetailsDto>
+    protected internal sealed class UpdateOrganisationDetailsDtoFaker
+        : Faker<UpdateOrganisationDetailsDto>
     {
         public UpdateOrganisationDetailsDtoFaker()
         {
