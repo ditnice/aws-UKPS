@@ -72,6 +72,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
         Name = nameof(DeactivateMembership)
     )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> DeactivateMembership(
         int organisationId,
@@ -106,6 +107,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
         Name = nameof(UpdateUserRole)
     )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> UpdateUserRole(
         int organisationId,
