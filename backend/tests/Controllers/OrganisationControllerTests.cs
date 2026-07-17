@@ -9,6 +9,14 @@ using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
+using DeactivateUserMembershipResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.OrganisationMembershipDto,
+    UKPS.Api.Services.Errors.OrganisationMembershipDeactivateUserError
+>;
+using UpdateUserRoleResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.OrganisationMembershipDto,
+    UKPS.Api.Services.Errors.OrganisationMembershipUpdateUserRoleError
+>;
 
 namespace UKPS.Api.Tests.Controllers;
 
@@ -17,11 +25,14 @@ public class OrganisationControllerTests
     private static readonly DateTime _createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
     private static readonly DateTime _lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
     private readonly IOrganisationService _organisationServiceMock;
+    private readonly IOrganisationMembershipService _organisationMembershipService;
     private readonly OrganisationController _controller;
 
     public OrganisationControllerTests()
     {
+        _organisationMembershipService = Substitute.For<IOrganisationMembershipService>();
         _organisationServiceMock = Substitute.For<IOrganisationService>();
+        _organisationServiceMock.Memberships.Returns(_organisationMembershipService);
 
         _organisationServiceMock
             .GetOrganisationById(Arg.Any<int>(), TestContext.Current.CancellationToken)
@@ -305,6 +316,48 @@ public class OrganisationControllerTests
                 StringComparer.Ordinal
             )
         );
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_UserIsNotAuthorised_ReturnsForbidResult()
+    {
+        _organisationMembershipService
+            .DeactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                DeactivateUserMembershipResult.Err(
+                    new OrganisationMembershipDeactivateUserError.NotAllowed(1)
+                )
+            );
+        ActionResult<OrganisationMembershipDto> result = await _controller.DeactivateMembership(
+            1,
+            1,
+            TestContext.Current.CancellationToken
+        );
+        result.Result.ShouldBeOfType<ForbidResult>();
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_UserIsNotAuthorised_ReturnsForbidResult()
+    {
+        _organisationMembershipService
+            .UpdateUserRole(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrgMembershipUserRoleCommandDto>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                UpdateUserRoleResult.Err(
+                    new OrganisationMembershipUpdateUserRoleError.NotAllowed(1)
+                )
+            );
+        ActionResult<OrganisationMembershipDto> result = await _controller.UpdateUserRole(
+            1,
+            1,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
+        result.Result.ShouldBeOfType<ForbidResult>();
     }
 
     private static OrganisationDetailsDto CreateOrganisationDetailsDto() =>
