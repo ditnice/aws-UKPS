@@ -1,7 +1,7 @@
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
-using UKPS.Api.Enums;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Users;
 

@@ -3,8 +3,8 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
-using UKPS.Api.Data;
-using UKPS.Api.Entities.Identity;
+using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence.Entities.Identity;
 
 namespace UKPS.Api.Application.Organisations;
 

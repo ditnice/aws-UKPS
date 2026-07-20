@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using UKPS.Api.Enums;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.Utilities;
 
 namespace UKPS.Api.Tests.Fixtures;

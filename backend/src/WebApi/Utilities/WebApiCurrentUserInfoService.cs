@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Security.Claims;
 using UKPS.Api.Application.InternalServices.Identity;
-using UKPS.Api.Enums;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.WebApi.Utilities;
 

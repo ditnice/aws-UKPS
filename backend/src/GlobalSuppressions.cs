@@ -21,7 +21,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1515:Consider making public types internal",
     Justification = "Enums are public HTTP API contract values used by DTOs and JSON serialization.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Enums"
+    Target = "~N:UKPS.Api.Persistence.Enums"
 )]
 
 [assembly: SuppressMessage(
@@ -54,4 +54,11 @@ using System.Diagnostics.CodeAnalysis;
     Justification = "Error unions are part of public service interface signatures.",
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.Services.Errors"
+)]
+[assembly: SuppressMessage(
+    "",
+    "",
+    Justification = "Migrations are generated so don't check for warnings.",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api.Persistence.Migrations"
 )]

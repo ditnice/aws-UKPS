@@ -1,5 +1,5 @@
 using UKPS.Api.Application.InternalServices.Identity;
-using UKPS.Api.Enums;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Tests.Utilities.Harnesses;
 

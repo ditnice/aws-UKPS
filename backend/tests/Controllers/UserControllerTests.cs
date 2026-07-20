@@ -6,7 +6,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
-using UKPS.Api.Enums;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.Controllers;
 
 namespace UKPS.Api.Tests.Controllers;

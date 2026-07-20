@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
-using UKPS.Api.Data;
-using UKPS.Api.Entities.Identity;
-using UKPS.Api.Enums;
+using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using DeactivateUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipDeactivateUserError

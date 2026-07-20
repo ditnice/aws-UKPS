@@ -3,9 +3,9 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
-using UKPS.Api.Data;
-using UKPS.Api.Entities.Identity;
-using UKPS.Api.Enums;
+using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError

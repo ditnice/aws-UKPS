@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using UKPS.Api.Application;
 using UKPS.Api.Application.InternalServices.Identity;
-using UKPS.Api.Data;
+using UKPS.Api.Persistence.Data;
 
 namespace UKPS.Api.Tests.Utilities.Harnesses;
 
