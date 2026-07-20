@@ -1,4 +1,4 @@
-minimumReleaseAge: 7200 # 5 days
+minimumReleaseAge: 10080 # 7 days
 
 allowBuilds:
   esbuild: true
