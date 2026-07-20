@@ -6,7 +6,7 @@ namespace UKPS.Api.Services.Errors;
 public abstract record GetOrganisationByIdError
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="GetOrganisationByIdError"/> class.
+    /// Initialises a new instance of the <see cref="GetOrganisationByIdError"/> class.
     /// </summary>
     private protected GetOrganisationByIdError() { }
 
