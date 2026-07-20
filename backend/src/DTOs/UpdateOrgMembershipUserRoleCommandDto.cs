@@ -9,7 +9,7 @@ namespace UKPS.Api.DTOs;
 public record UpdateOrgMembershipUserRoleCommandDto
 {
     /// <summary>
-    /// Gets or initializes the user role to be updated in the organisation membership.
+    /// Gets or initialises the user role to be updated in the organisation membership.
     /// </summary>
     /// <value>
     /// The new <see cref="UserRole"/> to assign to the user.
