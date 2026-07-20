@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Organisations.Dtos;
-using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;

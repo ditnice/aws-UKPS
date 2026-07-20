@@ -3,7 +3,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
-using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using GetUsersResult = UKPS.Api.Application.Common.Result<

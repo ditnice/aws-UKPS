@@ -1,4 +1,4 @@
-using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence;
 
 namespace UKPS.Api.Tests.Fixtures;
 

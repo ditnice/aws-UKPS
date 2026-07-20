@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Respawn;
 using Respawn.Graph;
 using Testcontainers.PostgreSql;
-using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence;
 
 namespace UKPS.Api.Tests.Fixtures;
 

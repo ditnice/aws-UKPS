@@ -9,7 +9,7 @@ using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Entities.UserFeatures;
 using UKPS.Api.Persistence.Entities.VaccinesRevisionContent;
 
-namespace UKPS.Api.Persistence.Data;
+namespace UKPS.Api.Persistence;
 
 internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {

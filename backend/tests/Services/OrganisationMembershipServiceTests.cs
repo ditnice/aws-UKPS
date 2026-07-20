@@ -4,7 +4,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
-using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;

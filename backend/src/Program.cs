@@ -5,7 +5,7 @@ using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using UKPS.Api.Application;
 using UKPS.Api.Application.InternalServices.Identity;
-using UKPS.Api.Persistence.Data;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.WebApi.Utilities;
 
