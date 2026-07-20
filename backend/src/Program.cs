@@ -5,6 +5,7 @@ using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using UKPS.Api.Controllers.Utilities;
 using UKPS.Api.Data;
+using UKPS.Api.Data.Seeding;
 using UKPS.Api.Services;
 using UKPS.Api.Services.Interfaces;
 
@@ -23,6 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserInfoService, WebApiCurrentUserInfoService>();
 builder.Services.AddUkpsServices();
+builder.Services.AddSeedingServices();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -73,6 +75,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapHealthChecks("/health");
+
+var isOpenApiGeneration = Environment.CommandLine.Contains(
+    "getdocument",
+    StringComparison.OrdinalIgnoreCase
+);
+if (!isOpenApiGeneration)
+{
+    await app.MigrateDatabase();
+    await app.SeedData();
+}
 
 await app.RunAsync();
 

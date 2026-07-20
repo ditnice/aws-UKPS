@@ -2,7 +2,7 @@ using Bogus;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 
-namespace UKPS.Api.Tests.Utilities.Data.Fakers;
+namespace UKPS.Api.Data.Fakers;
 
 internal sealed class UserFaker : Faker<User>
 {
