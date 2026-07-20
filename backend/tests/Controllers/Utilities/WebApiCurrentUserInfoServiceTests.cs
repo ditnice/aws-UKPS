@@ -3,9 +3,9 @@ using Bogus;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Shouldly;
-using UKPS.Api.Controllers.Utilities;
 using UKPS.Api.Enums;
 using UKPS.Api.Services.Interfaces;
+using UKPS.Api.WebApi.Controllers.Utilities;
 
 namespace UKPS.Api.Tests.Controllers.Utilities;
 

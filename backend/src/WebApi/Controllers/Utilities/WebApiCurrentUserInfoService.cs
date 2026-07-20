@@ -3,7 +3,7 @@ using System.Security.Claims;
 using UKPS.Api.Enums;
 using UKPS.Api.Services.Interfaces;
 
-namespace UKPS.Api.Controllers.Utilities;
+namespace UKPS.Api.WebApi.Controllers.Utilities;
 
 internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
 {

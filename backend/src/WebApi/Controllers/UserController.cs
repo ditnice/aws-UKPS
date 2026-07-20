@@ -4,7 +4,7 @@ using UKPS.Api.DTOs;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 
-namespace UKPS.Api.Controllers;
+namespace UKPS.Api.WebApi.Controllers;
 
 /// <summary>
 /// Controller responsible for managing user-related operations.

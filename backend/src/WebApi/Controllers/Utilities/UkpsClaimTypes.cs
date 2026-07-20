@@ -1,4 +1,4 @@
-namespace UKPS.Api.Controllers.Utilities;
+namespace UKPS.Api.WebApi.Controllers.Utilities;
 
 /// <summary>
 /// Defines the custom claim types used by the UKPS application.

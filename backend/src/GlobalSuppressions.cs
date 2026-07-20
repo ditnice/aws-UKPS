@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1515:Consider making public types internal",
     Justification = "ASP.NET Core controller discovery requires public controller types.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Controllers"
+    Target = "~N:UKPS.Api.WebApi.Controllers"
 )]
 
 [assembly: SuppressMessage(

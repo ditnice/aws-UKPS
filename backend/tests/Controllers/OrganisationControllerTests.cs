@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Shouldly;
 using UKPS.Api.Common;
-using UKPS.Api.Controllers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
+using UKPS.Api.WebApi.Controllers;
 using DeactivateUserMembershipResult = UKPS.Api.Common.Result<
     UKPS.Api.DTOs.OrganisationMembershipDto,
     UKPS.Api.Services.Errors.OrganisationMembershipDeactivateUserError
