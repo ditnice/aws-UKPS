@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from 'react'
 
-import { Table } from '@nice-digital/nds-table'
+import { Table } from '@/components/Table/Table'
 
 import { Example } from '../../_components/Example'
 
@@ -45,6 +45,52 @@ export function Examples() {
       <Example title="Table captions">
         <Table>
           <caption>Here is a caption!</caption>
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Title</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ABC1</td>
+              <td>Lorem ipsum dolor sit amet</td>
+              <td>27/08/2022</td>
+            </tr>
+            <tr>
+              <td>XYZ2</td>
+              <td>Aliquam consectetur posuere nibh dapibus consequat</td>
+              <td>25/12/2023</td>
+            </tr>
+          </tbody>
+        </Table>
+      </Example>
+      <Example title="Full width, columns sized by content">
+        <Table columnWidth="content">
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Title</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ABC1</td>
+              <td>Lorem ipsum dolor sit amet</td>
+              <td>27/08/2022</td>
+            </tr>
+            <tr>
+              <td>XYZ2</td>
+              <td>Aliquam consectetur posuere nibh dapibus consequat</td>
+              <td>25/12/2023</td>
+            </tr>
+          </tbody>
+        </Table>
+      </Example>
+      <Example title="Full width, equal columns">
+        <Table columnWidth="equal">
           <thead>
             <tr>
               <th>Ref</th>
