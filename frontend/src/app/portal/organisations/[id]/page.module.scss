@@ -1,0 +1,29 @@
+@use '@nice-digital/nds-core/scss/spacing';
+@use '@nice-digital/nds-core/scss/utils';
+
+.table-toolbar {
+  align-items: center;
+  display: flex;
+  gap: utils.rem(spacing.$medium);
+  justify-content: space-between;
+
+  // FilterSummary floats its own count/sorting internally; stop it stretching
+  // to fill the toolbar so the button sits immediately to its right.
+  > :first-child {
+    flex: 0 1 auto;
+    margin-bottom: 0;
+  }
+
+  > :last-child {
+    flex-shrink: 0;
+  }
+}
+
+// The design system sizes the count to 50% of the (previously full-width)
+// FilterSummary; as a flex item here it should just take its own content
+// width. The wrapper class scopes this override to this specific
+// FilterSummary instance, not every one inside a `.table-toolbar`.
+.users-filter-summary [class~='filter-summary__count'] {
+  float: none;
+  width: auto;
+}
