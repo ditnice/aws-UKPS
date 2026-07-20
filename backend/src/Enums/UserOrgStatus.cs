@@ -1,5 +1,8 @@
 namespace UKPS.Api.Enums;
 
+/// <summary>
+/// Represents the status of a user's association with an organisation.
+/// </summary>
 public enum UserOrgStatus
 {
     /// <summary>User has requested access and is awaiting review.</summary>

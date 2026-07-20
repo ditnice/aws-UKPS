@@ -6,10 +6,32 @@ using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Controllers;
 
+/// <summary>
+/// Provides endpoints for retrieving and managing organisations and their memberships.
+/// </summary>
+/// <param name="organisationService">
+/// Service used to retrieve and update organisation data and manage organisation memberships.
+/// </param>
 [ApiController]
 [Route("organisations")]
 public class OrganisationController(IOrganisationService organisationService) : ControllerBase
 {
+    /// <summary>
+    /// Retrieves an organisation by its unique identifier.
+    /// </summary>
+    /// <param name="id">The identifier of the organisation to retrieve.</param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="OrganisationDetailsDto"/> containing the organisation details if found.
+    /// </returns>
+    /// <response code="200">
+    /// The organisation was found and its details were returned.
+    /// </response>
+    /// <response code="404">
+    /// No organisation exists with the specified identifier.
+    /// </response>
     [HttpGet("{id:int}", Name = nameof(GetOrganisationById))]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -34,6 +56,28 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
+    /// <summary>
+    /// Updates the details of an existing organisation.
+    /// </summary>
+    /// <param name="id">The identifier of the organisation to update.</param>
+    /// <param name="organisationDetails">
+    /// The updated organisation details.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// The updated <see cref="OrganisationDetailsDto"/>.
+    /// </returns>
+    /// <response code="200">
+    /// The organisation was successfully updated.
+    /// </response>
+    /// <response code="400">
+    /// The supplied organisation details failed validation.
+    /// </response>
+    /// <response code="404">
+    /// No organisation exists with the specified identifier.
+    /// </response>
     [HttpPut("{id:int}", Name = nameof(UpdateOrganisationDetails))]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -69,6 +113,27 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
+    /// <summary>
+    /// Deactivates an organisation membership.
+    /// </summary>
+    /// <param name="organisationId">
+    /// The identifier of the organisation that owns the membership.
+    /// </param>
+    /// <param name="membershipId">
+    /// The identifier of the membership to deactivate.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// The updated <see cref="OrganisationMembershipDto"/> representing the deactivated membership.
+    /// </returns>
+    /// <response code="200">
+    /// The membership was successfully deactivated.
+    /// </response>
+    /// <response code="404">
+    /// The specified organisation membership could not be found.
+    /// </response>
     [HttpPatch(
         "{organisationId:int}/memberships/{membershipId}/deactivate",
         Name = nameof(DeactivateMembership)
@@ -104,6 +169,30 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
+    /// <summary>
+    /// Updates the role assigned to a user within an organisation membership.
+    /// </summary>
+    /// <param name="organisationId">
+    /// The identifier of the organisation that owns the membership.
+    /// </param>
+    /// <param name="membershipId">
+    /// The identifier of the membership to update.
+    /// </param>
+    /// <param name="command">
+    /// The request containing the new role assignment details.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// The updated <see cref="OrganisationMembershipDto"/>.
+    /// </returns>
+    /// <response code="200">
+    /// The membership role was successfully updated.
+    /// </response>
+    /// <response code="404">
+    /// The specified organisation membership could not be found.
+    /// </response>
     [HttpPatch(
         "{organisationId:int}/memberships/{membershipId}/update-role",
         Name = nameof(UpdateUserRole)
@@ -124,6 +213,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
             command,
             cancellationToken
         );
+
         return result.Match<ActionResult<OrganisationMembershipDto>>(
             x => Ok(x),
             x =>
