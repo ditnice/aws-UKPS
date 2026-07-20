@@ -53,7 +53,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
 }
 
 resource "aws_iam_role_policy" "ecs_execution_custom" {
-  count = var.execution_role_policy_json == null ? 0 : 1
+  count = var.attach_execution_role_policy ? 1 : 0
 
   name   = "${var.project}-${var.environment}-${var.service_name}-ecs-execution-custom"
   role   = aws_iam_role.ecs_execution_role.id
@@ -61,7 +61,7 @@ resource "aws_iam_role_policy" "ecs_execution_custom" {
 }
 
 resource "aws_iam_role_policy" "ecs_task_custom" {
-  count = var.task_role_policy_json == null ? 0 : 1
+  count = var.attach_task_role_policy ? 1 : 0
 
   name   = "${var.project}-${var.environment}-${var.service_name}-ecs-task-custom"
   role   = aws_iam_role.ecs_task_role.id

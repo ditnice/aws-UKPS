@@ -171,8 +171,10 @@ module "ecs_backend" {
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
   }
-  execution_role_policy_json = data.aws_iam_policy_document.backend_cognito_secret.json
-  task_role_policy_json      = data.aws_iam_policy_document.backend_cognito.json
+  attach_execution_role_policy = true
+  execution_role_policy_json   = data.aws_iam_policy_document.backend_cognito_secret.json
+  attach_task_role_policy      = true
+  task_role_policy_json        = data.aws_iam_policy_document.backend_cognito.json
 }
 
 # ECS - Backend Alerts

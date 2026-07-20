@@ -44,6 +44,8 @@ No modules.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alb_security_group_id"></a> [alb\_security\_group\_id](#input\_alb\_security\_group\_id) | ID of the ALB security group allowed to reach ECS tasks | `string` | n/a | yes |
+| <a name="input_attach_execution_role_policy"></a> [attach\_execution\_role\_policy](#input\_attach\_execution\_role\_policy) | Whether to attach the custom ECS task execution-role policy | `bool` | `false` | no |
+| <a name="input_attach_task_role_policy"></a> [attach\_task\_role\_policy](#input\_attach\_task\_role\_policy) | Whether to attach the custom ECS task-role policy | `bool` | `false` | no |
 | <a name="input_cloudwatch_kms_arn"></a> [cloudwatch\_kms\_arn](#input\_cloudwatch\_kms\_arn) | The arn of the kms key used for encrypting the cloudwatch log groups created by this module. | `string` | n/a | yes |
 | <a name="input_cloudwatch_log_retention"></a> [cloudwatch\_log\_retention](#input\_cloudwatch\_log\_retention) | The number of days to retain the logs in CloudWatch | `number` | `365` | no |
 | <a name="input_container_environment"></a> [container\_environment](#input\_container\_environment) | Plaintext environment variables supplied to the application container | `map(string)` | `{}` | no |

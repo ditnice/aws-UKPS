@@ -182,6 +182,20 @@ variable "container_secrets" {
   }
 }
 
+variable "attach_execution_role_policy" {
+  description = "Whether to attach the custom ECS task execution-role policy"
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "attach_task_role_policy" {
+  description = "Whether to attach the custom ECS task-role policy"
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
 variable "execution_role_policy_json" {
   description = "Optional IAM policy JSON attached to the ECS task execution role before the service starts"
   type        = string
@@ -190,6 +204,11 @@ variable "execution_role_policy_json" {
   validation {
     condition     = var.execution_role_policy_json == null || can(jsondecode(var.execution_role_policy_json))
     error_message = "Execution role policy must be valid JSON when provided."
+  }
+
+  validation {
+    condition     = !var.attach_execution_role_policy || var.execution_role_policy_json != null
+    error_message = "Execution role policy must be provided when attach_execution_role_policy is true."
   }
 }
 
@@ -201,6 +220,11 @@ variable "task_role_policy_json" {
   validation {
     condition     = var.task_role_policy_json == null || can(jsondecode(var.task_role_policy_json))
     error_message = "Task role policy must be valid JSON when provided."
+  }
+
+  validation {
+    condition     = !var.attach_task_role_policy || var.task_role_policy_json != null
+    error_message = "Task role policy must be provided when attach_task_role_policy is true."
   }
 }
 
