@@ -153,6 +153,57 @@ variable "image_tag" {
   }
 }
 
+variable "container_environment" {
+  description = "Plaintext environment variables supplied to the application container"
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition     = alltrue([for name in keys(var.container_environment) : can(regex("^[A-Za-z_][A-Za-z0-9_]*$", name))])
+    error_message = "Container environment variable names must contain only letters, numbers, and underscores and must not start with a number."
+  }
+}
+
+variable "container_secrets" {
+  description = "Map of container environment variable names to Secrets Manager or SSM valueFrom references"
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition     = alltrue([for name in keys(var.container_secrets) : can(regex("^[A-Za-z_][A-Za-z0-9_]*$", name))])
+    error_message = "Container secret names must contain only letters, numbers, and underscores and must not start with a number."
+  }
+
+  validation {
+    condition     = alltrue([for reference in values(var.container_secrets) : can(regex("^arn:aws[a-zA-Z-]*:(secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:.+|ssm:[a-z0-9-]+:[0-9]{12}:parameter/.+)$", reference))])
+    error_message = "Container secret valueFrom references must be valid Secrets Manager secret or SSM parameter ARNs."
+  }
+}
+
+variable "execution_role_policy_json" {
+  description = "Optional IAM policy JSON attached to the ECS task execution role before the service starts"
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.execution_role_policy_json == null || can(jsondecode(var.execution_role_policy_json))
+    error_message = "Execution role policy must be valid JSON when provided."
+  }
+}
+
+variable "task_role_policy_json" {
+  description = "Optional IAM policy JSON attached to the ECS task role before the service starts"
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.task_role_policy_json == null || can(jsondecode(var.task_role_policy_json))
+    error_message = "Task role policy must be valid JSON when provided."
+  }
+}
+
 variable "target_group_arn" {
   description = "ARN of the ALB target group used by the ECS service"
   type        = string
@@ -180,6 +231,18 @@ variable "ecs_egress_cidr_blocks" {
   validation {
     condition     = length(var.ecs_egress_cidr_blocks) > 0 && alltrue([for cidr_block in var.ecs_egress_cidr_blocks : can(cidrhost(cidr_block, 0))])
     error_message = "At least one ECS egress CIDR block must be provided, and all values must be valid CIDR blocks."
+  }
+}
+
+variable "ecs_https_egress_cidr_blocks" {
+  description = "CIDR blocks allowed for ECS task HTTPS egress"
+  type        = list(string)
+  default     = []
+  nullable    = false
+
+  validation {
+    condition     = alltrue([for cidr_block in var.ecs_https_egress_cidr_blocks : can(cidrhost(cidr_block, 0))])
+    error_message = "All ECS HTTPS egress values must be valid CIDR blocks."
   }
 }
 

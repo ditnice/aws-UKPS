@@ -5,7 +5,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10, < 2.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11, < 2.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 
 ## Providers
@@ -23,6 +23,7 @@
 | <a name="module_aurora_frontend"></a> [aurora\_frontend](#module\_aurora\_frontend) | ../../modules/aurora | n/a |
 | <a name="module_backend_aurora_alerts"></a> [backend\_aurora\_alerts](#module\_backend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
 | <a name="module_backend_ecs_alerts"></a> [backend\_ecs\_alerts](#module\_backend\_ecs\_alerts) | ../../modules/cloudwatch/ecs-alerts | n/a |
+| <a name="module_cognito"></a> [cognito](#module\_cognito) | ../../modules/cognito | n/a |
 | <a name="module_ecs_backend"></a> [ecs\_backend](#module\_ecs\_backend) | ../../modules/ecs | n/a |
 | <a name="module_ecs_frontend"></a> [ecs\_frontend](#module\_ecs\_frontend) | ../../modules/ecs | n/a |
 | <a name="module_frontend_aurora_alerts"></a> [frontend\_aurora\_alerts](#module\_frontend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
@@ -37,6 +38,8 @@
 | Name | Type |
 | ---- | ---- |
 | [aws_db_subnet_group.aurora](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group) | resource |
+| [aws_iam_policy_document.backend_cognito](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.backend_cognito_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
@@ -55,6 +58,9 @@
 | <a name="input_backend_db_name"></a> [backend\_db\_name](#input\_backend\_db\_name) | Name of the backend database | `string` | `"ukpsdev_backend"` | no |
 | <a name="input_backend_image_repository_url"></a> [backend\_image\_repository\_url](#input\_backend\_image\_repository\_url) | Container image repository URL for the backend service, without an image tag or digest | `string` | n/a | yes |
 | <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain used to build workload hostnames | `string` | `"ukps.nice.org.uk"` | no |
+| <a name="input_cognito_email_from_address"></a> [cognito\_email\_from\_address](#input\_cognito\_email\_from\_address) | Verified sender address for authentication email | `string` | n/a | yes |
+| <a name="input_cognito_email_reply_to_address"></a> [cognito\_email\_reply\_to\_address](#input\_cognito\_email\_reply\_to\_address) | Reply-to address for authentication email | `string` | n/a | yes |
+| <a name="input_cognito_ses_identity_arn"></a> [cognito\_ses\_identity\_arn](#input\_cognito\_ses\_identity\_arn) | ARN of the verified SES identity used for authentication email | `string` | n/a | yes |
 | <a name="input_connection_threshold"></a> [connection\_threshold](#input\_connection\_threshold) | Threshold for the number of database connections to trigger an alarm | `number` | `100` | no |
 | <a name="input_ecs_backend_cpu_allocation"></a> [ecs\_backend\_cpu\_allocation](#input\_ecs\_backend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
 | <a name="input_ecs_backend_memory_allocation"></a> [ecs\_backend\_memory\_allocation](#input\_ecs\_backend\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |
@@ -79,6 +85,10 @@
 | <a name="output_backend_ecs_cluster_name"></a> [backend\_ecs\_cluster\_name](#output\_backend\_ecs\_cluster\_name) | Dev ECS cluster name |
 | <a name="output_backend_host_name"></a> [backend\_host\_name](#output\_backend\_host\_name) | Backend hostname routed by the dev ALB listener |
 | <a name="output_backend_target_group_arn"></a> [backend\_target\_group\_arn](#output\_backend\_target\_group\_arn) | Backend ALB target group ARN |
+| <a name="output_cognito_app_client_id"></a> [cognito\_app\_client\_id](#output\_cognito\_app\_client\_id) | ID of the dev Cognito backend app client |
+| <a name="output_cognito_user_pool_arn"></a> [cognito\_user\_pool\_arn](#output\_cognito\_user\_pool\_arn) | ARN of the dev Cognito user pool |
+| <a name="output_cognito_user_pool_id"></a> [cognito\_user\_pool\_id](#output\_cognito\_user\_pool\_id) | ID of the dev Cognito user pool |
+| <a name="output_cognito_user_pool_issuer"></a> [cognito\_user\_pool\_issuer](#output\_cognito\_user\_pool\_issuer) | OIDC issuer URL of the dev Cognito user pool |
 | <a name="output_frontend_aurora_endpoint"></a> [frontend\_aurora\_endpoint](#output\_frontend\_aurora\_endpoint) | Dev Aurora writer endpoint |
 | <a name="output_frontend_ecs_cluster_name"></a> [frontend\_ecs\_cluster\_name](#output\_frontend\_ecs\_cluster\_name) | Dev ECS cluster name |
 | <a name="output_frontend_host_name"></a> [frontend\_host\_name](#output\_frontend\_host\_name) | Frontend hostname routed by the dev ALB listener |

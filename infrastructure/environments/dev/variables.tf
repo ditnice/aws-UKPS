@@ -27,6 +27,36 @@ variable "base_domain_name" {
   }
 }
 
+variable "cognito_ses_identity_arn" {
+  description = "ARN of the verified SES identity used for authentication email"
+  type        = string
+
+  validation {
+    condition     = can(regex("^arn:aws[a-zA-Z-]*:ses:[a-z0-9-]+:[0-9]{12}:identity/.+$", var.cognito_ses_identity_arn))
+    error_message = "Cognito SES identity ARN must be a valid SES identity ARN."
+  }
+}
+
+variable "cognito_email_from_address" {
+  description = "Verified sender address for authentication email"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.cognito_email_from_address))
+    error_message = "Cognito email from address must be a valid email address."
+  }
+}
+
+variable "cognito_email_reply_to_address" {
+  description = "Reply-to address for authentication email"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.cognito_email_reply_to_address))
+    error_message = "Cognito email reply-to address must be a valid email address."
+  }
+}
+
 variable "frontend_db_master_username" {
   description = "Master username for the Aurora cluster"
   type        = string

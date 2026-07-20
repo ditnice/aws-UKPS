@@ -55,6 +55,18 @@ variable "deletion_window_in_days" {
   }
 }
 
+variable "additional_cloudwatch_log_group_names" {
+  description = "Additional exact CloudWatch log group names that may use the application KMS key"
+  type        = list(string)
+  default     = []
+  nullable    = false
+
+  validation {
+    condition     = alltrue([for name in var.additional_cloudwatch_log_group_names : startswith(name, "/") && !strcontains(name, "*")])
+    error_message = "CloudWatch log group names must start with a slash and must not contain wildcards."
+  }
+}
+
 variable "tags" {
   description = "Additional tags to apply to KMS keys"
   type        = map(string)

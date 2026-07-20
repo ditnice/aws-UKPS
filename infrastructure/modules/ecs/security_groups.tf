@@ -28,3 +28,15 @@ resource "aws_vpc_security_group_egress_rule" "ecs_egress" {
   ip_protocol       = "-1"
   security_group_id = aws_security_group.ecs_sg.id
 }
+
+#trivy:ignore:AVD-AWS-0104 Callers must explicitly opt into HTTPS-only public egress for services without private endpoints or managed prefix lists.
+resource "aws_vpc_security_group_egress_rule" "ecs_https_egress" {
+  for_each = toset(var.ecs_https_egress_cidr_blocks)
+
+  cidr_ipv4         = each.key
+  description       = "Allow ECS task HTTPS egress"
+  from_port         = 443
+  ip_protocol       = "tcp"
+  security_group_id = aws_security_group.ecs_sg.id
+  to_port           = 443
+}
