@@ -86,6 +86,11 @@ export const componentDefinitions = [
     label: 'Stacked Nav',
     slug: 'stacked-nav',
   },
+  {
+    description: 'Summarise key-value information with optional actions.',
+    label: 'Summary List',
+    slug: 'summary-list',
+  },
   { description: 'Present data for comparison and scanning.', label: 'Table', slug: 'table' },
   { description: 'Switch between related panes of content.', label: 'Tabs', slug: 'tabs' },
   { description: 'Label, categorise or highlight an item.', label: 'Tag', slug: 'tag' },

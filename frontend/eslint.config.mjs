@@ -69,6 +69,23 @@ const eslintConfig = [
     },
   },
   {
+    files: ['**/*.{ts,tsx}'],
+    ignores: ['src/components/Table/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@nice-digital/nds-table',
+              message: 'Use the local wrapper @/components/Table/Table instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     ignores: [
       '.next/',
       'next-env.d.ts',

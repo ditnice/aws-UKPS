@@ -1,0 +1,127 @@
+@use '@nice-digital/nds-core/scss/media-queries';
+@use '@/styles/colours';
+@use '@/styles/spacing';
+
+.summary-list {
+  margin: 0 0 spacing.$large * 1px;
+
+  @include media-queries.mq($from: sm) {
+    border-collapse: collapse;
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+  }
+}
+
+.summary-list__row {
+  border-bottom: 1px solid colours.$border;
+  margin-bottom: spacing.$medium * 1px;
+
+  @include media-queries.mq($from: sm) {
+    display: table-row;
+    margin-bottom: 0;
+  }
+}
+
+.summary-list__row:not(.summary-list__row--no-actions) > :last-child {
+  @include media-queries.mq($from: sm) {
+    padding-right: 0;
+  }
+}
+
+.summary-list__row--no-actions {
+  @include media-queries.mq($from: sm) {
+    &:after {
+      content: '';
+      display: table-cell;
+      width: 20%;
+    }
+  }
+}
+
+.summary-list__key,
+.summary-list__value,
+.summary-list__actions {
+  margin: 0;
+
+  @include media-queries.mq($from: sm) {
+    display: table-cell;
+    padding: spacing.$small * 1px spacing.$medium * 1px spacing.$small * 1px 0;
+    vertical-align: top;
+  }
+}
+
+.summary-list__key,
+.summary-list__value {
+  overflow-wrap: break-word;
+}
+
+.summary-list__key {
+  font-weight: bold;
+  margin-bottom: spacing.$x-small * 1px;
+
+  @include media-queries.mq($from: sm) {
+    width: 30%;
+  }
+}
+
+.summary-list__value {
+  margin-bottom: spacing.$medium * 1px;
+
+  > p {
+    margin-bottom: spacing.$small * 1px;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  @include media-queries.mq($from: sm) {
+    margin-bottom: 0;
+  }
+}
+
+.summary-list__actions {
+  margin-bottom: spacing.$medium * 1px;
+
+  @include media-queries.mq($from: sm) {
+    margin-bottom: 0;
+    text-align: right;
+    width: 20%;
+  }
+}
+
+.summary-list__actions-list {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.summary-list__actions-list-item {
+  display: inline-block;
+  margin-bottom: 0;
+
+  &:not(:last-child) {
+    border-right: 1px solid colours.$border;
+    margin-right: spacing.$small * 1px;
+    padding-right: spacing.$small * 1px;
+  }
+
+  a:focus {
+    isolation: isolate;
+  }
+
+  @include media-queries.mq($from: sm) {
+    &:not(:last-child) {
+      border-right: 0;
+      margin-right: 0;
+      padding-right: 0;
+    }
+
+    &:not(:first-child) {
+      border-left: 1px solid colours.$border;
+      margin-left: spacing.$small * 1px;
+      padding-left: spacing.$small * 1px;
+    }
+  }
+}
