@@ -31,7 +31,10 @@ internal sealed class OrganisationService : IOrganisationService
         _organisationAuthoriser = organisationAuthoriser;
     }
 
-    public async Task<GetOrganisationResult> GetOrganisationById(int id)
+    public async Task<GetOrganisationResult> GetOrganisationById(
+        int id,
+        CancellationToken cancellationToken
+    )
     {
         if (!_organisationAuthoriser.CanPerformOperationOnOrganisation(Operation.Read, id))
         {
@@ -39,7 +42,7 @@ internal sealed class OrganisationService : IOrganisationService
         }
         var organisation = await _dbContext
             .Organisations.AsNoTracking()
-            .SingleOrDefaultAsync(o => o.Id == id);
+            .SingleOrDefaultAsync(o => o.Id == id, cancellationToken);
 
         return organisation is null
             ? GetOrganisationResult.Err(new GetOrganisationByIdError.NotFound(id))
@@ -48,14 +51,18 @@ internal sealed class OrganisationService : IOrganisationService
 
     public async Task<UpdateOrganisationResult> UpdateOrganisationDetails(
         int id,
-        UpdateOrganisationDetailsDto organisationDetails
+        UpdateOrganisationDetailsDto organisationDetails,
+        CancellationToken cancellationToken
     )
     {
         if (!_organisationAuthoriser.CanPerformOperationOnOrganisation(Operation.Update, id))
         {
             return UpdateOrganisationResult.Err(new UpdateOrganisationDetailsError.NotAllowed(id));
         }
-        var organisation = await _dbContext.Organisations.SingleOrDefaultAsync(o => o.Id == id);
+        var organisation = await _dbContext.Organisations.SingleOrDefaultAsync(
+            o => o.Id == id,
+            cancellationToken
+        );
 
         if (organisation is null)
         {
@@ -67,7 +74,7 @@ internal sealed class OrganisationService : IOrganisationService
         organisation.HeadOfficeEmail = organisationDetails.HeadOfficeEmail;
         organisation.HeadOfficeTelephone = organisationDetails.HeadOfficeTelephone;
 
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return UpdateOrganisationResult.Ok(MapToDto(organisation));
     }

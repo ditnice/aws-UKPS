@@ -1,0 +1,40 @@
+{
+  "extends": ["stylelint-config-standard-scss"],
+  "plugins": ["stylelint-scss", "stylelint-order", "stylelint-selector-bem-pattern"],
+  "rules": {
+    "at-rule-no-unknown": null,
+    "scss/operator-no-newline-after": null,
+    "scss/at-rule-no-unknown": true,
+    "selector-pseudo-element-colon-notation": "single",
+    "declaration-empty-line-before": "never",
+    "at-rule-empty-line-before": null,
+    "scss/at-else-closing-brace-newline-after": "always-last-in-chain",
+    "scss/at-else-closing-brace-space-after": "always-intermediate",
+    "scss/at-else-empty-line-before": "never",
+    "scss/at-if-closing-brace-newline-after": "always-last-in-chain",
+    "scss/at-if-closing-brace-space-after": "always-intermediate",
+    "order/order": [
+      "dollar-variables",
+      "custom-properties",
+      {
+        "type": "at-rule",
+        "name": "include",
+        "hasBlock": false
+      },
+      "declarations",
+      "rules",
+      {
+        "type": "at-rule",
+        "name": "include",
+        "hasBlock": true
+      }
+    ],
+    "order/properties-alphabetical-order": true,
+    "selector-class-pattern": null,
+    "plugin/selector-bem-pattern": {
+      "preset": "bem"
+    },
+    "scss/double-slash-comment-empty-line-before": null
+  },
+  "ignoreFiles": [".next/**", "node_modules/**", "src/app/[(]payload[)]/**"]
+}

@@ -4,12 +4,12 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Data;
+using UKPS.Api.Data.Fakers;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.Data;
-using UKPS.Api.Tests.Utilities.Data.Fakers;
 
 namespace UKPS.Api.Tests.Integration;
 
@@ -72,6 +72,36 @@ public class OrganisationEndpointTests : DatabaseTestBase
             CreatedAt = organisation.CreatedAt,
         };
         dto.ShouldBe(expectedDto);
+    }
+
+    [Fact]
+    public async Task GetOrganisationById_OrganisationExists_ReturnsEnumsAsStrings()
+    {
+        Organisation organisation = new OrganisationFaker()
+            .Generate()
+            .Update(x =>
+            {
+                x.Id = 1;
+                x.OrganisationType = OrganisationType.PharmaCompany;
+                x.AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both;
+                x.Status = UserOrgStatus.Active;
+            });
+        Context.Organisations.Add(organisation);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var uri = new Uri("/organisations/1", UriKind.Relative);
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            uri,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        string json = await response.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken
+        );
+        json.ShouldContain("\"organisationType\":\"PharmaCompany\"");
+        json.ShouldContain("\"allowedPharmaceuticalEntity\":\"Both\"");
+        json.ShouldContain("\"status\":\"Active\"");
     }
 
     [Fact]
@@ -314,6 +344,25 @@ public class OrganisationEndpointTests : DatabaseTestBase
             Encoding.UTF8,
             "application/json"
         );
+
+        HttpResponseMessage response = await _httpClient.PatchAsync(
+            uri,
+            content,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_NumericEnumValue_ReturnsBadRequest()
+    {
+        UserOrgMembership membership = await SeedMembership();
+        var uri = new Uri(
+            $"/organisations/{membership.OrganisationId}/memberships/{membership.Id}/update-role",
+            UriKind.Relative
+        );
+        using StringContent content = new("""{"userRole":1}""", Encoding.UTF8, "application/json");
 
         HttpResponseMessage response = await _httpClient.PatchAsync(
             uri,

@@ -1,0 +1,40 @@
+@use '@/styles/colours';
+@use '@/styles/spacing';
+
+.example-list {
+  display: grid;
+  gap: spacing.$large * 1px;
+  padding-bottom: spacing.$large * 1px;
+}
+
+.example {
+  border: 1px solid colours.$border;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.example-dark {
+  background: colours.$full-bleed-background-dark;
+  color: colours.$text-inverse;
+}
+
+.example-full-width {
+  overflow: visible;
+}
+
+.example-title {
+  background: colours.$fill-page-background;
+  border-bottom: 1px solid colours.$border;
+  color: colours.$text;
+  font-size: 1rem;
+  margin: 0;
+  padding: spacing.$small * 1px spacing.$medium * 1px;
+}
+
+.example-body {
+  padding: spacing.$large * 1px;
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}

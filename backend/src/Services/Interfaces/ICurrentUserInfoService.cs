@@ -1,5 +1,8 @@
 namespace UKPS.Api.Services.Interfaces;
 
+/// <summary>
+/// A service for retrieving information about the current user of the system.
+/// </summary>
 public interface ICurrentUserInfoService
 {
     /// <summary>

@@ -1,0 +1,25 @@
+diff --git a/es/FilterPanel.js b/es/FilterPanel.js
+index fd190ff7246d8bb479260428ac5df7f1a155a6eb..0a7509c3af9c9739117e5fe19665d317b2519d45 100644
+--- a/es/FilterPanel.js
++++ b/es/FilterPanel.js
+@@ -57,6 +57,7 @@ const FilterPanel = (props) => {
+     const { heading = "Filter", children, className, fallback, onSubmit, headingLevel = 2, innerRef } = props, rest = __rest(props, ["heading", "children", "className", "fallback", "onSubmit", "headingLevel", "innerRef"]);
+     const [isExpanded, setIsExpanded] = (0, react_1.useState)(true);
+     const [canUseDOM, setCanUseDOM] = (0, react_1.useState)(false);
++    const bodyId = (0, react_1.useId)();
+     (0, react_1.useEffect)(() => {
+         setCanUseDOM(true);
+     }, []);
+@@ -77,10 +78,10 @@ const FilterPanel = (props) => {
+             return clonedChild;
+         }
+     });
+-    return ((0, jsx_runtime_1.jsx)("form", Object.assign({ onSubmit: onSubmit }, fallback, rest, { ref: innerRef, children: (0, jsx_runtime_1.jsxs)("div", { className: (0, classnames_1.default)(["filter-panel", className]), "data-component": "filter-panel", children: [(0, jsx_runtime_1.jsx)(HeadingLevel, { className: "filter-panel__heading", children: (0, jsx_runtime_1.jsxs)("button", { "aria-expanded": isExpanded, "aria-controls": "filter-panel-body", onClick: handleClick, type: "button", children: [(0, jsx_runtime_1.jsx)(ChevronDown_1.default, { className: (0, classnames_1.default)([
++    return ((0, jsx_runtime_1.jsx)("form", Object.assign({ onSubmit: onSubmit }, fallback, rest, { ref: innerRef, children: (0, jsx_runtime_1.jsxs)("div", { className: (0, classnames_1.default)(["filter-panel", className]), "data-component": "filter-panel", children: [(0, jsx_runtime_1.jsx)(HeadingLevel, { className: "filter-panel__heading", children: (0, jsx_runtime_1.jsxs)("button", { "aria-expanded": isExpanded, "aria-controls": bodyId, onClick: handleClick, type: "button", children: [(0, jsx_runtime_1.jsx)(ChevronDown_1.default, { className: (0, classnames_1.default)([
+                                     "filter-panel__heading-icon",
+                                     isExpanded && "filter-panel__heading-icon--expanded"
+-                                ]) }), heading] }) }), (0, jsx_runtime_1.jsxs)("div", { id: "filter-panel-body", className: "filter-panel__body", "aria-hidden": !isExpanded, children: [clonedChildren, !canUseDOM && ((0, jsx_runtime_1.jsx)("button", { type: "submit", className: "btn filter-panel__submit", children: "Apply filters" }))] })] }) })));
++                                ]) }), heading] }) }), (0, jsx_runtime_1.jsxs)("div", { id: bodyId, className: "filter-panel__body", "aria-hidden": !isExpanded, children: [clonedChildren, !canUseDOM && ((0, jsx_runtime_1.jsx)("button", { type: "submit", className: "btn filter-panel__submit", children: "Apply filters" }))] })] }) })));
+ };
+ exports.FilterPanel = FilterPanel;
+ exports.default = exports.FilterPanel;

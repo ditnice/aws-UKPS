@@ -1,7 +1,7 @@
 [
   {
     "name": "container",
-    "image": "${image}",
+    "image": "${image_repository_url}:${image_tag}",
     "essential": true,
     "portMappings": [
       {

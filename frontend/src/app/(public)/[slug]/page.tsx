@@ -6,7 +6,7 @@ interface Props {
 
 export default async function CmsPage({ params }: Props) {
   const { slug } = await params
-  // TODO: query Payload Pages collection (Step 6)
+  // TODO: Query Payload for the requested public page slug and call notFound() only when no CMS page exists.
   void slug
   notFound()
 }
