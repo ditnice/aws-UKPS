@@ -13,7 +13,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1515:Consider making public types internal",
     Justification = "DTOs are public HTTP API contracts exposed by controller actions.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.DTOs"
+    Target = "~N:UKPS.Api.Application"
 )]
 
 [assembly: SuppressMessage(
@@ -45,7 +45,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1034:Nested types should not be visible",
     Justification = "Nested variant records model closed error unions narrowed via pattern matching.",
     Scope = "namespaceanddescendants",
-    Target = "~N:UKPS.Api.Services.Errors"
+    Target = "~N:UKPS.Api.Application"
 )]
 
 [assembly: SuppressMessage(

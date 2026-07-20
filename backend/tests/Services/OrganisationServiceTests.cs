@@ -1,23 +1,23 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
+using UKPS.Api.Application.Organisations;
+using UKPS.Api.Application.Organisations.Dtos;
+using UKPS.Api.Application.Organisations.Errors;
 using UKPS.Api.Data;
 using UKPS.Api.Data.Fakers;
-using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
-using UKPS.Api.Services.Errors;
-using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using GetOrganisationResult = UKPS.Api.Common.Result<
-    UKPS.Api.DTOs.OrganisationDetailsDto,
-    UKPS.Api.Services.Errors.GetOrganisationByIdError
+using GetOrganisationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Organisations.Dtos.OrganisationDetailsDto,
+    UKPS.Api.Application.Organisations.Errors.GetOrganisationByIdError
 >;
-using UpdateOrganisationResult = UKPS.Api.Common.Result<
-    UKPS.Api.DTOs.OrganisationDetailsDto,
-    UKPS.Api.Services.Errors.UpdateOrganisationDetailsError
+using UpdateOrganisationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Organisations.Dtos.OrganisationDetailsDto,
+    UKPS.Api.Application.Organisations.Errors.UpdateOrganisationDetailsError
 >;
 
 namespace UKPS.Api.Tests.Services;

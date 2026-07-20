@@ -3,19 +3,19 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Shouldly;
-using UKPS.Api.Common;
-using UKPS.Api.DTOs;
+using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Organisations;
+using UKPS.Api.Application.Organisations.Dtos;
+using UKPS.Api.Application.Organisations.Errors;
 using UKPS.Api.Enums;
-using UKPS.Api.Services.Errors;
-using UKPS.Api.Services.Interfaces;
 using UKPS.Api.WebApi.Controllers;
-using DeactivateUserMembershipResult = UKPS.Api.Common.Result<
-    UKPS.Api.DTOs.OrganisationMembershipDto,
-    UKPS.Api.Services.Errors.OrganisationMembershipDeactivateUserError
+using DeactivateUserMembershipResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
+    UKPS.Api.Application.Organisations.Errors.OrganisationMembershipDeactivateUserError
 >;
-using UpdateUserRoleResult = UKPS.Api.Common.Result<
-    UKPS.Api.DTOs.OrganisationMembershipDto,
-    UKPS.Api.Services.Errors.OrganisationMembershipUpdateUserRoleError
+using UpdateUserRoleResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
+    UKPS.Api.Application.Organisations.Errors.OrganisationMembershipUpdateUserRoleError
 >;
 
 namespace UKPS.Api.Tests.Controllers;

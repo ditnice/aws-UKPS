@@ -1,8 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using Shouldly;
+using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Data.Fakers;
-using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
 using UKPS.Api.Enums;
 using UKPS.Api.Tests.Fixtures;

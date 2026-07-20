@@ -2,11 +2,11 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Shouldly;
-using UKPS.Api.Common;
-using UKPS.Api.DTOs;
+using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Users;
+using UKPS.Api.Application.Users.Dtos;
+using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Enums;
-using UKPS.Api.Services.Errors;
-using UKPS.Api.Services.Interfaces;
 using UKPS.Api.WebApi.Controllers;
 
 namespace UKPS.Api.Tests.Controllers;

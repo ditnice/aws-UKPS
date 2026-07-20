@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using UKPS.Api.DTOs;
-using UKPS.Api.Services.Errors;
-using UKPS.Api.Services.Interfaces;
+using UKPS.Api.Application.Organisations;
+using UKPS.Api.Application.Organisations.Dtos;
+using UKPS.Api.Application.Organisations.Errors;
 
 namespace UKPS.Api.WebApi.Controllers;
 

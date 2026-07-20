@@ -1,5 +1,5 @@
 using Shouldly;
-using UKPS.Api.Common;
+using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Tests.Utilities.AssertionHelpers;
 
