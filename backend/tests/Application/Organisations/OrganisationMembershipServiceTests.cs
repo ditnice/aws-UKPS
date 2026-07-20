@@ -8,12 +8,12 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
-using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
+using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
 
-namespace UKPS.Api.Tests.Services;
+namespace UKPS.Api.Tests.Application.Organisations;
 
 [Collection(DatabaseCollection.Name)]
 public class OrganisationMembershipServiceTests : DatabaseTestBase

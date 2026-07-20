@@ -6,8 +6,8 @@ using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
-using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.Data;
+using UKPS.Api.Tests.Utilities.Fixtures;
 
 namespace UKPS.Api.Tests.Integration;
 

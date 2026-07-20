@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using UKPS.Api.Persistence.Data.Seeding;
 
-namespace UKPS.Api.Tests.Fixtures;
+namespace UKPS.Api.Tests.Utilities.Fixtures;
 
 public sealed class ApiFactory(string connectionString) : WebApplicationFactory<Program>
 {

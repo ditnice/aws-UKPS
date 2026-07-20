@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Shouldly;
 using UKPS.Api.Persistence.Data.Fakers;
-using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.Data;
+using UKPS.Api.Tests.Utilities.Fixtures;
 
-namespace UKPS.Api.Tests.Data;
+namespace UKPS.Api.Tests.Persistence;
 
 [Collection(DatabaseCollection.Name)]
 public class DatabaseConstraintTests : DatabaseTestBase

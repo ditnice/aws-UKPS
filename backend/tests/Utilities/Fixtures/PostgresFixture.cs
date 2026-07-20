@@ -6,7 +6,7 @@ using Respawn.Graph;
 using Testcontainers.PostgreSql;
 using UKPS.Api.Persistence;
 
-namespace UKPS.Api.Tests.Fixtures;
+namespace UKPS.Api.Tests.Utilities.Fixtures;
 
 public sealed class PostgresFixture : IAsyncLifetime
 {

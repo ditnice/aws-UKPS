@@ -18,7 +18,7 @@ using UpdateUserRoleResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipUpdateUserRoleError
 >;
 
-namespace UKPS.Api.Tests.Controllers;
+namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class OrganisationControllerTests
 {

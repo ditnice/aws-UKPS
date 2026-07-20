@@ -2,7 +2,7 @@ using System.Security.Claims;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.Utilities;
 
-namespace UKPS.Api.Tests.Fixtures;
+namespace UKPS.Api.Tests.Utilities.Fixtures;
 
 public class TestAuthenticationOptions
 {

@@ -9,7 +9,7 @@ using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.Controllers;
 
-namespace UKPS.Api.Tests.Controllers;
+namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class UserControllerTests
 {

@@ -1,6 +1,6 @@
 using UKPS.Api.Persistence;
 
-namespace UKPS.Api.Tests.Fixtures;
+namespace UKPS.Api.Tests.Utilities.Fixtures;
 
 public abstract class DatabaseTestBase : IAsyncLifetime
 {

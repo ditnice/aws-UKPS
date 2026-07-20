@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace UKPS.Api.Tests.Fixtures;
+namespace UKPS.Api.Tests.Utilities.Fixtures;
 
 public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace UKPS.Api.Tests.Fixtures;
+namespace UKPS.Api.Tests.Utilities.Fixtures;
 
 [SuppressMessage(
     "Naming",

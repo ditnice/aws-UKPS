@@ -7,7 +7,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.Utilities;
 
-namespace UKPS.Api.Tests.Controllers.Utilities;
+namespace UKPS.Api.Tests.WebApi.Utilities;
 
 public class WebApiCurrentUserInfoServiceTests
 {

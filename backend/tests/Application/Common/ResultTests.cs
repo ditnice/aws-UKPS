@@ -2,7 +2,7 @@ using System.Globalization;
 using Shouldly;
 using UKPS.Api.Application.Common;
 
-namespace UKPS.Api.Tests.Common;
+namespace UKPS.Api.Tests.Application.Common;
 
 public class ResultTests
 {
