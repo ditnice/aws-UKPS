@@ -12,5 +12,4 @@ public sealed record UserDetailsDto
     public required string? JobTitle { get; init; }
     public required string? WorkPhone { get; init; }
     public required string WorkEmail { get; init; }
-
 }

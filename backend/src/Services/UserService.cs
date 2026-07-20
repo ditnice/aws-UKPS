@@ -114,47 +114,48 @@ internal sealed class UserService(
     }
 
     public async Task<Result<UserDetailsDto, CreateUserError>> CreateUser(
-        CreateUserRequestDto command
+        CreateUserRequestDto createUserRequestDto
     )
     {
-        var organisation = await dbContext.Organisations.FindAsync(command.OrganisationId);
+        var organisation = await dbContext.Organisations.FindAsync(
+            createUserRequestDto.OrganisationId
+        );
 
         if (organisation is null)
         {
             return Result<UserDetailsDto, CreateUserError>.Err(
-            new CreateUserError.NotFound(command.OrganisationId));
+                new CreateUserError.NotFound(createUserRequestDto.OrganisationId)
+            );
         }
         var user = new User()
         {
-            Username = command.Username,
+            Username = createUserRequestDto.Username,
             UserType = UserType.PharmaUser,
-            Title = command.Title,
-            FirstName = command.FirstName,
-            LastName = command.LastName,
-            JobTitle = command.JobTitle,
-            WorkTelephone = command.WorkTelephone,
-            WorkEmail = command.WorkEmail,
+            Title = createUserRequestDto.Title,
+            FirstName = createUserRequestDto.FirstName,
+            LastName = createUserRequestDto.LastName,
+            JobTitle = createUserRequestDto.JobTitle,
+            WorkTelephone = createUserRequestDto.WorkTelephone,
+            WorkEmail = createUserRequestDto.WorkEmail,
         };
 
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync();
 
         var userId = user.Id;
-        // Create UserOrgMembership, default to Standard User
-        var userOrgMembership = new UserOrgMembership()
+        _ = new UserOrgMembership()
         {
             UserId = userId,
-            OrganisationId = command.OrganisationId,
+            OrganisationId = createUserRequestDto.OrganisationId,
             UserRole = UserRole.Standard,
             Status = UserOrgStatus.RequestedAccess,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
         };
         return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
     }
+
     private static UserDetailsDto MapToDto(User user)
     {
-        var organisationIds = user.UserOrgMemberships.Select((x) => x.OrganisationId);
-        //bool onlyOneOrg = organisationIds.Distinct().Count()=1;
         return new()
         {
             Username = user.Username,

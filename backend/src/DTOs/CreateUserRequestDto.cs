@@ -10,7 +10,7 @@ public sealed record CreateUserRequestDto
     public required string FirstName { get; init; }
     public required string LastName { get; init; }
     public required string JobTitle { get; init; }
-    public required string WorkTelehone { get; init; }
+    public required string WorkTelephone { get; init; }
     public required string WorkEmail { get; init; }
     public required int OrganisationId { get; init; }
 }
