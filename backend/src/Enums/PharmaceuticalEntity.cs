@@ -1,6 +1,8 @@
 namespace UKPS.Api.Enums;
 
 /// <summary>
+/// Flags enum stored as integer. Only Organisation uses Both;
+/// UserOrgMembership and TermsAcceptance use Medicines or Vaccines only.
 /// Represents the types of pharmaceutical entities.
 /// </summary>
 [Flags]
