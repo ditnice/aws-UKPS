@@ -1,3 +1,7 @@
+# Delays new package versions becoming installable, giving the ecosystem time to
+# catch and yank compromised releases before they reach us.
+minimumReleaseAge: 7200 # 5 days, in minutes
+
 allowBuilds:
   esbuild: true
   sharp: true
