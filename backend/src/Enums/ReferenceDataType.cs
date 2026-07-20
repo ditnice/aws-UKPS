@@ -1,8 +1,9 @@
 namespace UKPS.Api.Enums;
 
+[Flags]
 public enum ReferenceDataType
 {
-    MedicinesOnly = 0,
-    VaccinesOnly = 1,
-    Shared = 2,
+    MedicinesOnly = 1,
+    VaccinesOnly = 2,
+    Shared = MedicinesOnly | VaccinesOnly,
 }

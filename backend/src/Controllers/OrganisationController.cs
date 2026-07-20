@@ -26,6 +26,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 error switch
                 {
                     GetOrganisationByIdError.NotFound => NotFound(),
+                    GetOrganisationByIdError.NotAllowed => Forbid(),
                     _ => throw new UnreachableException(
                         "Unhandled GetOrganisationByIdError variant."
                     ),
@@ -60,6 +61,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 error switch
                 {
                     UpdateOrganisationDetailsError.NotFound => NotFound(),
+                    UpdateOrganisationDetailsError.NotAllowed => Forbid(),
                     _ => throw new UnreachableException(
                         "Unhandled UpdateOrganisationDetailsError variant."
                     ),
@@ -72,6 +74,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
         Name = nameof(DeactivateMembership)
     )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> DeactivateMembership(
         int organisationId,
@@ -93,6 +96,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
                     OrganisationMembershipDeactivateUserError.NotFound => NotFound(
                         $"Could not find a membership with organisation ID = {organisationId} and membership ID = {membershipId}."
                     ),
+                    OrganisationMembershipDeactivateUserError.NotAllowed => Forbid(
+                        "The user is not authorised to perform this action."
+                    ),
                     _ => throw new UnreachableException(),
                 }
         );
@@ -103,6 +109,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
         Name = nameof(UpdateUserRole)
     )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> UpdateUserRole(
         int organisationId,
@@ -124,6 +131,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 {
                     OrganisationMembershipUpdateUserRoleError.NotFound notFound => NotFound(
                         $"Could not find a membership with organisation ID = {notFound.OrganisationId} and membership ID = {notFound.MembershipId}."
+                    ),
+                    OrganisationMembershipUpdateUserRoleError.NotAllowed => Forbid(
+                        "The user is not authorised to perform this action."
                     ),
                     _ => throw new UnreachableException(),
                 }

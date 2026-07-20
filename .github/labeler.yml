@@ -1,0 +1,51 @@
+infrastructure:
+  - changed-files:
+      - any-glob-to-any-file:
+          - infrastructure/**
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - backend/**
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - frontend/**
+
+docker:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docker-compose.yml
+          - "**/Dockerfile"
+          - "**/.dockerignore"
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/dependabot.yml
+          - frontend/package.json
+          - frontend/pnpm-lock.yaml
+          - backend/**/*.csproj
+          - backend/**/*.props
+          - backend/**/*.targets
+          - backend/dotnet-tools.json
+          - infrastructure/**/versions.tf
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - README.md
+          - "**/README.md"
+          - documentation/**
+          - "**/*.md"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - backend/tests/**
+          - frontend/tests/**
+          - frontend/playwright.config.*
+          - frontend/vitest.config.*
+          - "**/*.test.*"
+          - "**/*.spec.*"

@@ -9,7 +9,9 @@ using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
+using UKPS.Api.Tests.Utilities.Harnesses;
 
 namespace UKPS.Api.Tests.Services;
 
@@ -46,8 +48,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        result.IsOk.ShouldBeTrue();
-        result.Value.UserRole.ShouldBe(userRole);
+        var dto = result.ShouldBeSuccess();
+        dto.UserRole.ShouldBe(userRole);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
@@ -89,12 +91,13 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
 
         if (expectedAuthorised)
         {
-            Assert.True(result.IsOk);
+            result.ShouldBeSuccess();
             return;
         }
 
-        Assert.True(result.IsErr);
-        Assert.IsType<OrganisationMembershipUpdateUserRoleError.NotAllowed>(result.Error);
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotAllowed>();
     }
 
     [Fact]
@@ -109,8 +112,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        result.IsErr.ShouldBeTrue();
-        result.Error.ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotFound>();
+        result.ShouldBeError().ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotFound>();
     }
 
     [Fact]
@@ -125,8 +127,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        result.IsErr.ShouldBeTrue();
-        result.Error.ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotFound>();
+        result.ShouldBeError().ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotFound>();
     }
 
     [Fact]
@@ -139,8 +140,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        result.IsOk.ShouldBeTrue();
-        result.Value.Status.ShouldBe(UserOrgStatus.Inactive);
+        var dto = result.ShouldBeSuccess();
+        dto.Status.ShouldBe(UserOrgStatus.Inactive);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
@@ -182,12 +183,13 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
 
         if (expectedAuthorised)
         {
-            Assert.True(result.IsOk);
+            result.ShouldBeSuccess();
             return;
         }
 
-        Assert.True(result.IsErr);
-        Assert.IsType<OrganisationMembershipDeactivateUserError.NotAllowed>(result.Error);
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotAllowed>();
     }
 
     [Fact]
@@ -202,8 +204,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        result.IsOk.ShouldBeTrue();
-        result.Value.Status.ShouldBe(UserOrgStatus.Inactive);
+        var dto = result.ShouldBeSuccess();
+        dto.Status.ShouldBe(UserOrgStatus.Inactive);
     }
 
     [Fact]
@@ -216,8 +218,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        result.IsErr.ShouldBeTrue();
-        result.Error.ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
+        result.ShouldBeError().ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
     }
 
     [Fact]
@@ -230,8 +231,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             CancellationToken.None
         );
 
-        result.IsErr.ShouldBeTrue();
-        result.Error.ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
+        result.ShouldBeError().ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
     }
 
     private async Task<UserOrgMembership> SetupUserOrgMembership(

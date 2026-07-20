@@ -14,7 +14,7 @@ internal sealed class TermsAcceptance
     public TermsAcceptanceStatus Status { get; set; }
     public DateTime? SignedAt { get; set; }
     public string? IpAddress { get; set; }
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     // Navigation
     public Organisation? Organisation { get; set; }
