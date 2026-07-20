@@ -13,23 +13,31 @@ namespace UKPS.Api.Tests.Controllers;
 
 public class UserControllerTests
 {
+    private readonly IUserService _mockUserService = Substitute.For<IUserService>();
+    private readonly UserController _controller;
+
+    public UserControllerTests()
+    {
+        _controller = new UserController(_mockUserService);
+    }
+
     [Fact]
     public async Task GetUsers_ReturnsOk_WhenOrganisationExists()
     {
         PaginatedResponseDto<UserListItemDto> expected = CreatePaginatedResponse();
-        var mockUserService = Substitute.For<IUserService>();
-        mockUserService
+        _mockUserService
             .GetUsers(
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(expected));
-        UserController controller = new(mockUserService);
 
-        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
-            CreateQuery()
+        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
+            CreateQuery(),
+            TestContext.Current.CancellationToken
         );
 
         OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -39,23 +47,23 @@ public class UserControllerTests
     [Fact]
     public async Task GetUsers_ReturnsNotFound_WhenOrganisationDoesNotExist()
     {
-        var mockUserService = Substitute.For<IUserService>();
-        mockUserService
+        _mockUserService
             .GetUsers(
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
                     new GetUsersError.OrganisationNotFound(1)
                 )
             );
-        UserController controller = new(mockUserService);
 
-        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
-            CreateQuery()
+        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
+            CreateQuery(),
+            TestContext.Current.CancellationToken
         );
 
         BadRequestObjectResult badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
@@ -63,25 +71,51 @@ public class UserControllerTests
     }
 
     [Fact]
-    public async Task GetUsers_ReturnsBadRequest_WhenQueryIsNull()
+    public async Task GetUsers_ReturnsForbid_WhenNotAllowed()
     {
-        var mockUserService = Substitute.For<IUserService>();
-        mockUserService
+        var sampleId = 1;
+        _mockUserService
             .GetUsers(
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(
+                Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
+                    new GetUsersError.NotAllowed(sampleId)
+                )
+            );
+
+        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
+            CreateQuery(),
+            TestContext.Current.CancellationToken
+        );
+
+        result.Result.ShouldBeOfType<ForbidResult>();
+    }
+
+    [Fact]
+    public async Task GetUsers_ReturnsBadRequest_WhenQueryIsNull()
+    {
+        _mockUserService
+            .GetUsers(
+                Arg.Any<int?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(
                     CreatePaginatedResponse()
                 )
             );
-        UserController controller = new(mockUserService);
 
-        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await controller.GetUsers(
-            null
+        ActionResult<PaginatedResponseDto<UserListItemDto>> result = await _controller.GetUsers(
+            null,
+            TestContext.Current.CancellationToken
         );
 
         result.Result.ShouldBeOfType<BadRequestResult>();
@@ -90,20 +124,19 @@ public class UserControllerTests
     [Fact]
     public async Task GetUsers_PassesQueryValuesToService()
     {
-        var mockUserService = Substitute.For<IUserService>();
-        mockUserService
+        _mockUserService
             .GetUsers(
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
                     new GetUsersError.OrganisationNotFound(1)
                 )
             );
-        UserController controller = new(mockUserService);
         GetUsersQueryDto getUsersQuery = new()
         {
             OrganisationId = 42,
@@ -112,9 +145,9 @@ public class UserControllerTests
             Status = [UserOrgStatus.Active, UserOrgStatus.Inactive],
         };
 
-        await controller.GetUsers(getUsersQuery);
+        await _controller.GetUsers(getUsersQuery, TestContext.Current.CancellationToken);
 
-        await mockUserService
+        await _mockUserService
             .Received()
             .GetUsers(
                 getUsersQuery.OrganisationId,
@@ -122,37 +155,38 @@ public class UserControllerTests
                 getUsersQuery.PageSize,
                 Arg.Is<IReadOnlyCollection<UserOrgStatus>>(statuses =>
                     statuses.SequenceEqual(getUsersQuery.Status)
-                )
+                ),
+                TestContext.Current.CancellationToken
             );
     }
 
     [Fact]
     public async Task GetUsers_PassesNullOrganisationIdToService()
     {
-        var mockUserService = Substitute.For<IUserService>();
-        mockUserService
+        _mockUserService
             .GetUsers(
                 Arg.Any<int?>(),
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             )
             .Returns(
                 Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Err(
                     new GetUsersError.OrganisationNotFound(1)
                 )
             );
-        UserController controller = new(mockUserService);
 
-        await controller.GetUsers(new GetUsersQueryDto());
+        await _controller.GetUsers(new GetUsersQueryDto(), TestContext.Current.CancellationToken);
 
-        await mockUserService
+        await _mockUserService
             .Received(1)
             .GetUsers(
                 null,
                 Arg.Any<int>(),
                 Arg.Any<int>(),
-                Arg.Any<IReadOnlyCollection<UserOrgStatus>>()
+                Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                TestContext.Current.CancellationToken
             );
     }
 

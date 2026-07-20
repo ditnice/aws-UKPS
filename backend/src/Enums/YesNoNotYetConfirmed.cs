@@ -1,8 +1,22 @@
 namespace UKPS.Api.Enums;
 
+/// <summary>
+/// Represents a tri-state enumeration for indicating a "Yes", "No", or "Not Yet Confirmed" status.
+/// </summary>
 public enum YesNoNotYetConfirmed
 {
-    Yes = 0,
+    /// <summary>
+    /// Indicates that the response is "Not Yet Confirmed".
+    /// </summary>
+    NotYetConfirmed = 0,
+
+    /// <summary>
+    /// Indicates a "No" response.
+    /// </summary>
     No = 1,
-    NotYetConfirmed = 2,
+
+    /// <summary>
+    /// Indicates a "Yes" response.
+    /// </summary>
+    Yes = 2,
 }

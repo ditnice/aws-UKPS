@@ -9,6 +9,14 @@ using UKPS.Api.DTOs;
 using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
+using DeactivateUserMembershipResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.OrganisationMembershipDto,
+    UKPS.Api.Services.Errors.OrganisationMembershipDeactivateUserError
+>;
+using UpdateUserRoleResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.OrganisationMembershipDto,
+    UKPS.Api.Services.Errors.OrganisationMembershipUpdateUserRoleError
+>;
 
 namespace UKPS.Api.Tests.Controllers;
 
@@ -17,14 +25,17 @@ public class OrganisationControllerTests
     private static readonly DateTime _createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
     private static readonly DateTime _lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
     private readonly IOrganisationService _organisationServiceMock;
+    private readonly IOrganisationMembershipService _organisationMembershipService;
     private readonly OrganisationController _controller;
 
     public OrganisationControllerTests()
     {
+        _organisationMembershipService = Substitute.For<IOrganisationMembershipService>();
         _organisationServiceMock = Substitute.For<IOrganisationService>();
+        _organisationServiceMock.Memberships.Returns(_organisationMembershipService);
 
         _organisationServiceMock
-            .GetOrganisationById(Arg.Any<int>())
+            .GetOrganisationById(Arg.Any<int>(), TestContext.Current.CancellationToken)
             .Returns(callInfo =>
                 Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
                     new GetOrganisationByIdError.NotFound(callInfo.Arg<int>())
@@ -32,7 +43,11 @@ public class OrganisationControllerTests
             );
 
         _organisationServiceMock
-            .UpdateOrganisationDetails(Arg.Any<int>(), Arg.Any<UpdateOrganisationDetailsDto>())
+            .UpdateOrganisationDetails(
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrganisationDetailsDto>(),
+                TestContext.Current.CancellationToken
+            )
             .Returns(callInfo =>
                 Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
                     new UpdateOrganisationDetailsError.NotFound(callInfo.Arg<int>())
@@ -59,10 +74,13 @@ public class OrganisationControllerTests
             CreatedAt = _createdAt,
         };
         _organisationServiceMock
-            .GetOrganisationById(1)
+            .GetOrganisationById(1, TestContext.Current.CancellationToken)
             .Returns(Result<OrganisationDetailsDto, GetOrganisationByIdError>.Ok(expected));
 
-        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(1);
+        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(
+            1,
+            TestContext.Current.CancellationToken
+        );
 
         OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
         ok.Value.ShouldBe(expected);
@@ -71,9 +89,31 @@ public class OrganisationControllerTests
     [Fact]
     public async Task GetOrganisationById_OrganisationDoesNotExist_ReturnsNotFound()
     {
-        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(99);
+        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(
+            99,
+            TestContext.Current.CancellationToken
+        );
 
         result.Result.ShouldBeOfType<NotFoundResult>();
+    }
+
+    [Fact]
+    public async Task GetOrganisationById_ActionNotAllowed_ReturnsForbidden()
+    {
+        var sampleOrganisationId = 1;
+        _organisationServiceMock
+            .GetOrganisationById(sampleOrganisationId, TestContext.Current.CancellationToken)
+            .Returns(
+                Result<OrganisationDetailsDto, GetOrganisationByIdError>.Err(
+                    new GetOrganisationByIdError.NotAllowed(sampleOrganisationId)
+                )
+            );
+        ActionResult<OrganisationDetailsDto> result = await _controller.GetOrganisationById(
+            1,
+            TestContext.Current.CancellationToken
+        );
+
+        result.Result.ShouldBeOfType<ForbidResult>();
     }
 
     [Fact]
@@ -81,9 +121,11 @@ public class OrganisationControllerTests
     {
         var expectedId = 42;
 
-        await _controller.GetOrganisationById(42);
+        await _controller.GetOrganisationById(42, TestContext.Current.CancellationToken);
 
-        await _organisationServiceMock.Received(1).GetOrganisationById(expectedId);
+        await _organisationServiceMock
+            .Received(1)
+            .GetOrganisationById(expectedId, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -91,12 +133,17 @@ public class OrganisationControllerTests
     {
         OrganisationDetailsDto expected = CreateOrganisationDetailsDto();
         _organisationServiceMock
-            .UpdateOrganisationDetails(Arg.Any<int>(), Arg.Any<UpdateOrganisationDetailsDto>())
+            .UpdateOrganisationDetails(
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrganisationDetailsDto>(),
+                TestContext.Current.CancellationToken
+            )
             .Returns(Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Ok(expected));
 
         ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             1,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
         OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -104,11 +151,36 @@ public class OrganisationControllerTests
     }
 
     [Fact]
+    public async Task UpdateOrganisation_ActionNotAllowed_ReturnsForbidden()
+    {
+        var sampleOrganisationId = 1;
+        _organisationServiceMock
+            .UpdateOrganisationDetails(
+                sampleOrganisationId,
+                Arg.Any<UpdateOrganisationDetailsDto>(),
+                TestContext.Current.CancellationToken
+            )
+            .Returns(
+                Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>.Err(
+                    new UpdateOrganisationDetailsError.NotAllowed(sampleOrganisationId)
+                )
+            );
+        ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
+            sampleOrganisationId,
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
+        );
+
+        result.Result.ShouldBeOfType<ForbidResult>();
+    }
+
+    [Fact]
     public async Task UpdateOrganisationDetails_OrganisationDoesNotExist_ReturnsNotFound()
     {
         ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             99,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
         result.Result.ShouldBeOfType<NotFoundResult>();
@@ -120,8 +192,18 @@ public class OrganisationControllerTests
         var exampleOrgId = 42;
         UpdateOrganisationDetailsDto request = CreateUpdateOrganisationDetailsDto();
 
-        await _controller.UpdateOrganisationDetails(42, request);
-        await _organisationServiceMock.Received(1).UpdateOrganisationDetails(exampleOrgId, request);
+        await _controller.UpdateOrganisationDetails(
+            42,
+            request,
+            TestContext.Current.CancellationToken
+        );
+        await _organisationServiceMock
+            .Received(1)
+            .UpdateOrganisationDetails(
+                exampleOrgId,
+                request,
+                TestContext.Current.CancellationToken
+            );
     }
 
     [Fact]
@@ -134,7 +216,8 @@ public class OrganisationControllerTests
 
         ActionResult<OrganisationDetailsDto> result = await _controller.UpdateOrganisationDetails(
             1,
-            CreateUpdateOrganisationDetailsDto()
+            CreateUpdateOrganisationDetailsDto(),
+            TestContext.Current.CancellationToken
         );
 
         BadRequestObjectResult badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
@@ -233,6 +316,48 @@ public class OrganisationControllerTests
                 StringComparer.Ordinal
             )
         );
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_UserIsNotAuthorised_ReturnsForbidResult()
+    {
+        _organisationMembershipService
+            .DeactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                DeactivateUserMembershipResult.Err(
+                    new OrganisationMembershipDeactivateUserError.NotAllowed(1)
+                )
+            );
+        ActionResult<OrganisationMembershipDto> result = await _controller.DeactivateMembership(
+            1,
+            1,
+            TestContext.Current.CancellationToken
+        );
+        result.Result.ShouldBeOfType<ForbidResult>();
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_UserIsNotAuthorised_ReturnsForbidResult()
+    {
+        _organisationMembershipService
+            .UpdateUserRole(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrgMembershipUserRoleCommandDto>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                UpdateUserRoleResult.Err(
+                    new OrganisationMembershipUpdateUserRoleError.NotAllowed(1)
+                )
+            );
+        ActionResult<OrganisationMembershipDto> result = await _controller.UpdateUserRole(
+            1,
+            1,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
+        result.Result.ShouldBeOfType<ForbidResult>();
     }
 
     private static OrganisationDetailsDto CreateOrganisationDetailsDto() =>

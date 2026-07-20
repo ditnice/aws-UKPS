@@ -6,10 +6,16 @@ updates:
       interval: daily
       time: "07:00"
       timezone: Europe/London
+    cooldown:
+      default-days: 5
     groups:
       frontend-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
       - frontend
@@ -24,6 +30,10 @@ updates:
       backend-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
       - backend
@@ -34,6 +44,10 @@ updates:
       interval: daily
       time: "07:00"
       timezone: Europe/London
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
       - docker
@@ -45,6 +59,10 @@ updates:
       interval: daily
       time: "07:00"
       timezone: Europe/London
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
       - docker
@@ -59,10 +77,13 @@ updates:
       - /infrastructure/environments/test
       - /infrastructure/modules/alb
       - /infrastructure/modules/aurora
-      - /infrastructure/modules/ecr
+      - /infrastructure/modules/cloudwatch/ecs-alerts
+      - /infrastructure/modules/cloudwatch/rds-alerts
       - /infrastructure/modules/ecs
+      - /infrastructure/modules/kms
       - /infrastructure/modules/networking
       - /infrastructure/modules/s3
+      - /infrastructure/modules/sns
     schedule:
       interval: daily
       time: "07:00"
@@ -71,6 +92,10 @@ updates:
       terraform-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
       - infrastructure
