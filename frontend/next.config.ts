@@ -1,12 +1,6 @@
-import path from 'path'
-import { fileURLToPath } from 'url'
-
 import { withPayload } from '@payloadcms/next/withPayload'
 
 import type { NextConfig } from 'next'
-
-const __filename = fileURLToPath(import.meta.url)
-const dirname = path.dirname(__filename)
 
 const niceDesignSystemPackages = [
   '@nice-digital/design-system',
@@ -59,9 +53,6 @@ const nextConfig: NextConfig = {
     }
 
     return webpackConfig
-  },
-  turbopack: {
-    root: path.resolve(dirname),
   },
   transpilePackages: niceDesignSystemPackages,
 }
