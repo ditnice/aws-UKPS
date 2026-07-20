@@ -11,12 +11,12 @@ public enum PimDesignationStatus
     DecisionPending = 0,
 
     /// <summary>
-    /// Indicates that the designation has been granted.
-    /// </summary>
-    Granted = 2,
-
-    /// <summary>
     /// Indicates that the designation has not been granted.
     /// </summary>
     NotGranted = 1,
+
+    /// <summary>
+    /// Indicates that the designation has been granted.
+    /// </summary>
+    Granted = 2,
 }

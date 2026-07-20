@@ -23,7 +23,7 @@ public sealed record UserListItemDto
     public UserRole Role { get; init; }
 
     /// <summary>
-    /// Gets the organizational status of the user.
+    /// Gets the organisational status of the user.
     /// </summary>
     public UserOrgStatus Status { get; init; }
 

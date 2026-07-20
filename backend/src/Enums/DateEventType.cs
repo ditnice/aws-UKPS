@@ -11,7 +11,7 @@ public enum DateEventType
     UkSubmission = 0,
 
     /// <summary>
-    /// Represents the UK license event.
+    /// Represents the UK licence event.
     /// </summary>
     UkLicence = 1,
 
@@ -26,7 +26,7 @@ public enum DateEventType
     IntlSubmission = 3,
 
     /// <summary>
-    /// Represents the international license event.
+    /// Represents the international licence event.
     /// </summary>
     IntlLicence = 4,
 
