@@ -1,4 +1,4 @@
-namespace UKPS.Api.WebApi.Utilities;
+namespace UKPS.Api.WebApi.InternalServices.Identity;
 
 /// <summary>
 /// Defines the custom claim types used by the UKPS application.

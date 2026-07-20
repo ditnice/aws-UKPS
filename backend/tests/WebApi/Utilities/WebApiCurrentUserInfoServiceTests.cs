@@ -5,7 +5,7 @@ using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence.Enums;
-using UKPS.Api.WebApi.Utilities;
+using UKPS.Api.WebApi.InternalServices.Identity;
 
 namespace UKPS.Api.Tests.WebApi.Utilities;
 
