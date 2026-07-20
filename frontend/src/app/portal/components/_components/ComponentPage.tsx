@@ -16,7 +16,7 @@ type ComponentPageProps = {
 
 export function ComponentPage({ children, custom = false, title }: ComponentPageProps) {
   return (
-    <Container>
+    <>
       <Link href="/portal/components" prefetch={false}>
         Back to components
       </Link>
@@ -34,6 +34,6 @@ export function ComponentPage({ children, custom = false, title }: ComponentPage
         }
       />
       <div className={styles['example-list']}>{children}</div>
-    </Container>
+    </>
   )
 }
