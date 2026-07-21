@@ -28,6 +28,41 @@ output "backend_host_name" {
   value       = module.alb.backend_host_name
 }
 
+output "base_domain_name_servers" {
+  description = "Route53 authoritative name servers for the base domain"
+  value       = module.r53.base_domain_name_servers
+}
+
+output "base_domain_zone_id" {
+  description = "Route53 hosted zone ID for the base domain"
+  value       = module.r53.base_domain_zone_id
+}
+
+output "cloudfront_distribution_domain_name" {
+  description = "Domain name of the CloudFront distribution"
+  value       = module.networking.cloudfront_distribution_domain_name
+}
+
+output "cloudfront_distribution_aliases" {
+  description = "Alternate domain names configured on the CloudFront distribution"
+  value       = module.networking.cloudfront_distribution_aliases
+}
+
+output "cloudfront_distribution_status" {
+  description = "Deployment status of the CloudFront distribution"
+  value       = module.networking.cloudfront_distribution_status
+}
+
+output "route53_a_record_fqdns" {
+  description = "FQDNs of the Route53 A records"
+  value       = module.r53.a_record_fqdns
+}
+
+output "route53_aaaa_record_fqdns" {
+  description = "FQDNs of the Route53 AAAA records"
+  value       = module.r53.aaaa_record_fqdns
+}
+
 output "frontend_target_group_arn" {
   description = "Frontend ALB target group ARN"
   value       = module.alb.frontend_target_group_arn

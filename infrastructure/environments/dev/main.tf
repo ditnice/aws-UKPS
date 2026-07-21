@@ -7,7 +7,8 @@ locals {
 module "networking" {
   source = "../../modules/networking"
 
-  environment = local.environment
+  environment                = local.environment
+  cloudfront_distribution_id = var.cloudfront_distribution_id
 }
 
 module "kms_frontend" {
@@ -55,6 +56,19 @@ module "alb" {
       port = var.backend_container_port
     }
   }
+}
+
+module "r53" {
+  source = "../../modules/r53"
+
+  project                                = local.project
+  environment                            = local.environment
+  base_domain_name                       = var.base_domain_name
+  fqdns                                  = [module.alb.frontend_host_name, module.alb.backend_host_name]
+  cloudfront_distribution_aliases        = module.networking.cloudfront_distribution_aliases
+  cloudfront_distribution_domain_name    = module.networking.cloudfront_distribution_domain_name
+  cloudfront_distribution_hosted_zone_id = module.networking.cloudfront_distribution_hosted_zone_id
+  cloudfront_distribution_status         = module.networking.cloudfront_distribution_status
 }
 
 

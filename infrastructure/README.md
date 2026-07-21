@@ -28,10 +28,10 @@ The `dev` environment requires these values to be supplied manually because they
 | Terraform variable | Description | Example |
 | --- | --- | --- |
 | `frontend_image_repository_url` | Container image repository URL used by the frontend ECS service. Do not include a tag or digest. | `628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend` |
-| `frontend_image_tag` | Container image tag used by the frontend ECS service. | `1.2.3` |
 | `backend_image_repository_url` | Container image repository URL used by the backend ECS service. Do not include a tag or digest. | `628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend` |
-| `backend_image_tag` | Container image tag used by the backend ECS service. | `1.2.3` |
+| `image_tag` | Container image tag used by both frontend and backend ECS services. | `1.2.3` |
 | `sns_alarm_emails` | Map of labels to email addresses subscribed to alarm SNS topics. Subscribers must confirm the AWS SNS email confirmation before receiving alerts. | `{ platform = "platform@example.org", service = "service@example.org" }` |
+| `cloudfront_distribution_id` | ID of the existing CloudFront distribution used by the Route53 alias records. | `E123ABC456DEF` |
 
 Optional inputs can be left as defaults for a standard `dev` deployment. Override them only when the environment needs different sizing, ports, domains, database settings, or alarm thresholds.
 
@@ -43,8 +43,8 @@ Example using SemVer image tags:
 
 ```bash
 export TF_VAR_frontend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend"
-export TF_VAR_frontend_image_tag="1.2.3"
 export TF_VAR_backend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend"
-export TF_VAR_backend_image_tag="1.2.3"
+export TF_VAR_image_tag="1.2.3"
 export TF_VAR_sns_alarm_emails='{ platform = "platform@example.org", service = "service@example.org" }'
+export TF_VAR_cloudfront_distribution_id="E123ABC456DEF"
 ```

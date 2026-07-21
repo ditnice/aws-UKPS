@@ -30,6 +30,7 @@
 | <a name="module_kms_backend"></a> [kms\_backend](#module\_kms\_backend) | ../../modules/kms | n/a |
 | <a name="module_kms_frontend"></a> [kms\_frontend](#module\_kms\_frontend) | ../../modules/kms | n/a |
 | <a name="module_networking"></a> [networking](#module\_networking) | ../../modules/networking | n/a |
+| <a name="module_r53"></a> [r53](#module\_r53) | ../../modules/r53 | n/a |
 | <a name="module_sns"></a> [sns](#module\_sns) | ../../modules/sns | n/a |
 
 ## Resources
@@ -55,6 +56,7 @@
 | <a name="input_backend_db_name"></a> [backend\_db\_name](#input\_backend\_db\_name) | Name of the backend database | `string` | `"ukpsdev_backend"` | no |
 | <a name="input_backend_image_repository_url"></a> [backend\_image\_repository\_url](#input\_backend\_image\_repository\_url) | Container image repository URL for the backend service, without an image tag or digest | `string` | n/a | yes |
 | <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain used to build workload hostnames | `string` | `"ukps.nice.org.uk"` | no |
+| <a name="input_cloudfront_distribution_id"></a> [cloudfront\_distribution\_id](#input\_cloudfront\_distribution\_id) | ID of the existing CloudFront distribution used by the Route53 alias records | `string` | n/a | yes |
 | <a name="input_connection_threshold"></a> [connection\_threshold](#input\_connection\_threshold) | Threshold for the number of database connections to trigger an alarm | `number` | `100` | no |
 | <a name="input_ecs_backend_cpu_allocation"></a> [ecs\_backend\_cpu\_allocation](#input\_ecs\_backend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
 | <a name="input_ecs_backend_memory_allocation"></a> [ecs\_backend\_memory\_allocation](#input\_ecs\_backend\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |
@@ -79,8 +81,15 @@
 | <a name="output_backend_ecs_cluster_name"></a> [backend\_ecs\_cluster\_name](#output\_backend\_ecs\_cluster\_name) | Dev ECS cluster name |
 | <a name="output_backend_host_name"></a> [backend\_host\_name](#output\_backend\_host\_name) | Backend hostname routed by the dev ALB listener |
 | <a name="output_backend_target_group_arn"></a> [backend\_target\_group\_arn](#output\_backend\_target\_group\_arn) | Backend ALB target group ARN |
+| <a name="output_base_domain_name_servers"></a> [base\_domain\_name\_servers](#output\_base\_domain\_name\_servers) | Route53 authoritative name servers for the base domain |
+| <a name="output_base_domain_zone_id"></a> [base\_domain\_zone\_id](#output\_base\_domain\_zone\_id) | Route53 hosted zone ID for the base domain |
+| <a name="output_cloudfront_distribution_aliases"></a> [cloudfront\_distribution\_aliases](#output\_cloudfront\_distribution\_aliases) | Alternate domain names configured on the CloudFront distribution |
+| <a name="output_cloudfront_distribution_domain_name"></a> [cloudfront\_distribution\_domain\_name](#output\_cloudfront\_distribution\_domain\_name) | Domain name of the CloudFront distribution |
+| <a name="output_cloudfront_distribution_status"></a> [cloudfront\_distribution\_status](#output\_cloudfront\_distribution\_status) | Deployment status of the CloudFront distribution |
 | <a name="output_frontend_aurora_endpoint"></a> [frontend\_aurora\_endpoint](#output\_frontend\_aurora\_endpoint) | Dev Aurora writer endpoint |
 | <a name="output_frontend_ecs_cluster_name"></a> [frontend\_ecs\_cluster\_name](#output\_frontend\_ecs\_cluster\_name) | Dev ECS cluster name |
 | <a name="output_frontend_host_name"></a> [frontend\_host\_name](#output\_frontend\_host\_name) | Frontend hostname routed by the dev ALB listener |
 | <a name="output_frontend_target_group_arn"></a> [frontend\_target\_group\_arn](#output\_frontend\_target\_group\_arn) | Frontend ALB target group ARN |
+| <a name="output_route53_a_record_fqdns"></a> [route53\_a\_record\_fqdns](#output\_route53\_a\_record\_fqdns) | FQDNs of the Route53 A records |
+| <a name="output_route53_aaaa_record_fqdns"></a> [route53\_aaaa\_record\_fqdns](#output\_route53\_aaaa\_record\_fqdns) | FQDNs of the Route53 AAAA records |
 <!-- END_TF_DOCS -->
