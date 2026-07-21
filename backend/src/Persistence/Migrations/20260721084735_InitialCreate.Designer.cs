@@ -6,14 +6,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using UKPS.Api.Persistence;
 
 #nullable disable
 
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260720144617_UpdatedNamespacesForThEntities")]
-    partial class UpdatedNamespacesForThEntities
+    [Migration("20260721084735_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -2732,7 +2733,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_organisation_audits_app_user_updated_by");
+                        .HasConstraintName("fk_organisation_audits_users_updated_by");
 
                     b.Navigation("Organisation");
 
@@ -3052,7 +3053,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ReviewedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_qa_reviews_users_reviewed_by");
+                        .HasConstraintName("fk_qa_reviews_app_user_reviewed_by");
 
                     b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", "Revision")
                         .WithMany("QaReviews")
@@ -3079,7 +3080,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ResolvedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_qa_review_items_users_resolved_by");
+                        .HasConstraintName("fk_qa_review_items_app_user_resolved_by");
 
                     b.Navigation("QaReview");
 

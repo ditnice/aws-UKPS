@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UKPS.Api.Persistence.Entities.Identity;
 
-namespace UKPS.Api.Persistence.Configurations.figurations.Identity;
+namespace UKPS.Api.Persistence.Configurations.Identity;
 
 internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {

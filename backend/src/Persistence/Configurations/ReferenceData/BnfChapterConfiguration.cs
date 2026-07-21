@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 
-namespace UKPS.Api.Persistence.Configurations.figurations.ReferenceData;
+namespace UKPS.Api.Persistence.Configurations.ReferenceData;
 
 internal sealed class BnfChapterConfiguration : IEntityTypeConfiguration<BnfChapter>
 {

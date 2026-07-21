@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-namespace UKPS.Api.Persistence.Configurations.figurations.figurations.figurations.figurations.MedicinesRevisionContent;
+namespace UKPS.Api.Persistence.Configurations.MedicinesRevisionContent;
 
 internal sealed class MedicinesCompanyInfoConfiguration
     : IEntityTypeConfiguration<MedicinesCompanyInfo>

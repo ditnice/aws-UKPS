@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 
-namespace UKPS.Api.Persistence.Configurations.figurations.figurations.RecordWorkflow;
+namespace UKPS.Api.Persistence.Configurations.RecordWorkflow;
 
 internal sealed class QaReviewConfiguration : IEntityTypeConfiguration<QaReview>
 {
