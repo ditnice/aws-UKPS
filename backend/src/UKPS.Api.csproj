@@ -28,6 +28,6 @@
     Once this package is updated to not have a vulnerable dependency this can be removed. -->
     <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.16.15" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.16.16" />
   </ItemGroup>
 </Project>
