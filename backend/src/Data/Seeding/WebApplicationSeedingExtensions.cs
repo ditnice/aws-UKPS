@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace UKPS.Api.Data.Seeding;
 
 internal static class WebApplicationSeedingExtensions

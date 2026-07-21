@@ -230,6 +230,16 @@ public class OrganisationController(IOrganisationService organisationService) : 
         );
     }
 
+    /// <summary>
+    /// Creates a new organisation.
+    /// </summary>
+    /// <param name="organisation">
+    /// The details required to create the organisation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult{TValue}"/> containing the created organisation's details if the
+    /// operation is successful, or an appropriate HTTP error response if the request fails.
+    /// </returns>
     [HttpPost]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -246,6 +256,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 {
                     CreateOrganisationError.OrganisationNameConflict => Conflict(
                         "An organisation with this name already exists."
+                    ),
+                    CreateOrganisationError.MissingFields => BadRequest(
+                        "Some of the data required is missing."
                     ),
                     _ => throw new UnreachableException(),
                 }
