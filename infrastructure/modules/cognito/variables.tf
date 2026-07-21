@@ -43,7 +43,7 @@ variable "kms_key_arn" {
 }
 
 variable "ses_identity_arn" {
-  description = "ARN of the verified SES identity used for authentication email"
+  description = "ARN of the verified SES identity in the deployment account and provider region used for authentication email"
   type        = string
   nullable    = false
 

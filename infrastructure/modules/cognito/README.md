@@ -9,10 +9,10 @@ The app client secret is not exposed as an output, but remains in Terraform
 state because it is returned by the Cognito app-client resource. Terraform
 state and saved plan artifacts must be handled as sensitive data.
 
-The supplied SES identity must already be verified and available to Cognito.
-The SES account must be out of the sandbox before recovery messages can be
-sent to unverified recipients. The same SES configuration set supports
-backend-generated setup links and Cognito password-recovery messages.
+The supplied SES identity must already be verified in the deployment account
+and provider region. The SES account must be out of the sandbox before recovery
+messages can be sent to unverified recipients. The same SES configuration set
+supports backend-generated setup links and Cognito password-recovery messages.
 
 Threat protection is deliberately fixed in audit-only mode. Cognito log
 delivery is best effort and does not replace CloudTrail.
@@ -59,6 +59,8 @@ No modules.
 | [aws_secretsmanager_secret.client](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_secretsmanager_secret_version.client](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
 | [aws_sesv2_configuration_set.cognito](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sesv2_configuration_set) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
@@ -73,7 +75,7 @@ No modules.
 | <a name="input_project"></a> [project](#input\_project) | Name of the project used in Cognito resource names and tags | `string` | n/a | yes |
 | <a name="input_security_alarm_topic_arn"></a> [security\_alarm\_topic\_arn](#input\_security\_alarm\_topic\_arn) | ARN of the SNS topic that receives Cognito security alarms | `string` | n/a | yes |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Short workload name used in Cognito resource names | `string` | n/a | yes |
-| <a name="input_ses_identity_arn"></a> [ses\_identity\_arn](#input\_ses\_identity\_arn) | ARN of the verified SES identity used for authentication email | `string` | n/a | yes |
+| <a name="input_ses_identity_arn"></a> [ses\_identity\_arn](#input\_ses\_identity\_arn) | ARN of the verified SES identity in the deployment account and provider region used for authentication email | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional tags to apply to supported Cognito resources | `map(string)` | `{}` | no |
 
 ## Outputs

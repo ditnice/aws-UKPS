@@ -28,7 +28,7 @@ variable "base_domain_name" {
 }
 
 variable "cognito_ses_identity_arn" {
-  description = "ARN of the verified SES identity used for authentication email"
+  description = "ARN of the verified SES identity in the deployment account and region used for authentication email"
   type        = string
 
   validation {

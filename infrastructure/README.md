@@ -30,7 +30,7 @@ The `dev` environment requires these values to be supplied manually because they
 | `frontend_image_repository_url` | Container image repository URL used by the frontend ECS service. Do not include a tag or digest. | `628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend` |
 | `backend_image_repository_url` | Container image repository URL used by the backend ECS service. Do not include a tag or digest. | `628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend` |
 | `image_tag` | Container image tag used by the frontend and backend ECS services. | `1.2.3` |
-| `cognito_ses_identity_arn` | ARN of the verified SES identity used for authentication email. | `arn:aws:ses:eu-west-2:628270103586:identity/ukps.nice.org.uk` |
+| `cognito_ses_identity_arn` | ARN of the verified SES identity in the deployment account and region used for authentication email. | `arn:aws:ses:eu-west-2:628270103586:identity/ukps.nice.org.uk` |
 | `cognito_email_from_address` | Verified sender address for authentication email. | `no-reply@ukps.nice.org.uk` |
 | `cognito_email_reply_to_address` | Reply-to address for authentication email. | `support@ukps.nice.org.uk` |
 | `sns_alarm_emails` | Map of labels to email addresses subscribed to alarm SNS topics. Subscribers must confirm the AWS SNS email confirmation before receiving alerts. | `{ platform = "platform@example.org", service = "service@example.org" }` |

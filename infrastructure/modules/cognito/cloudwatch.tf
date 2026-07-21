@@ -2,7 +2,7 @@ locals {
   cognito_log_alarms = {
     compromised-credentials = {
       description = "Cognito detected compromised credentials"
-      pattern     = "{ $.message.compromisedCredentialDetected = true }"
+      pattern     = "{ $.message.compromisedCredentialDetected = \"true\" }"
     }
     risky-authentication = {
       description = "Cognito detected a high-risk or blocked authentication"

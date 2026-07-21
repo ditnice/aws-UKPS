@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
 data "aws_region" "current" {}
 
 locals {
@@ -72,6 +74,11 @@ resource "aws_cognito_user_pool" "users" {
 
   lifecycle {
     prevent_destroy = true
+
+    precondition {
+      condition     = startswith(var.ses_identity_arn, "arn:${data.aws_partition.current.partition}:ses:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:identity/")
+      error_message = "SES identity ARN must belong to the current AWS account, partition, and provider region."
+    }
   }
 }
 

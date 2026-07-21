@@ -27,6 +27,7 @@ data "aws_iam_policy_document" "backend_cognito" {
     actions = [
       "cognito-idp:AdminCreateUser",
       "cognito-idp:AdminInitiateAuth",
+      "cognito-idp:AdminRespondToAuthChallenge",
       "cognito-idp:AdminSetUserPassword",
       "cognito-idp:AdminUpdateUserAttributes",
     ]
