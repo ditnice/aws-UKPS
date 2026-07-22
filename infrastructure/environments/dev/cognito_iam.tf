@@ -35,10 +35,13 @@ data "aws_iam_policy_document" "backend_cognito" {
   }
 
   statement {
-    sid       = "SendUserSetupEmail"
-    effect    = "Allow"
-    actions   = ["ses:SendEmail"]
-    resources = [var.cognito_ses_identity_arn]
+    sid     = "SendUserSetupEmail"
+    effect  = "Allow"
+    actions = ["ses:SendEmail"]
+    resources = [
+      var.cognito_ses_identity_arn,
+      module.cognito.ses_configuration_set_arn,
+    ]
 
     condition {
       test     = "StringEquals"

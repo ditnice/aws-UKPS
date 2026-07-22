@@ -84,6 +84,7 @@ No modules.
 | ---- | ----------- |
 | <a name="output_app_client_id"></a> [app\_client\_id](#output\_app\_client\_id) | ID of the confidential backend app client |
 | <a name="output_client_secret_arn"></a> [client\_secret\_arn](#output\_client\_secret\_arn) | ARN of the Secrets Manager secret containing the app client configuration |
+| <a name="output_ses_configuration_set_arn"></a> [ses\_configuration\_set\_arn](#output\_ses\_configuration\_set\_arn) | ARN of the SES configuration set used for authentication email |
 | <a name="output_ses_configuration_set_name"></a> [ses\_configuration\_set\_name](#output\_ses\_configuration\_set\_name) | Name of the SES configuration set used for authentication email |
 | <a name="output_user_pool_arn"></a> [user\_pool\_arn](#output\_user\_pool\_arn) | ARN of the Cognito user pool |
 | <a name="output_user_pool_id"></a> [user\_pool\_id](#output\_user\_pool\_id) | ID of the Cognito user pool |

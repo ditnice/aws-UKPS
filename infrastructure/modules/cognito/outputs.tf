@@ -29,3 +29,8 @@ output "ses_configuration_set_name" {
   description = "Name of the SES configuration set used for authentication email"
   value       = aws_sesv2_configuration_set.cognito.configuration_set_name
 }
+
+output "ses_configuration_set_arn" {
+  description = "ARN of the SES configuration set used for authentication email"
+  value       = aws_sesv2_configuration_set.cognito.arn
+}
