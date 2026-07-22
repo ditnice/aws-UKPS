@@ -26,11 +26,11 @@ output "client_secret_arn" {
 }
 
 output "ses_configuration_set_name" {
-  description = "Name of the SES configuration set used for authentication email"
-  value       = aws_sesv2_configuration_set.cognito.configuration_set_name
+  description = "Name of the SES configuration set used for authentication email, when SES developer email sending is enabled"
+  value       = local.use_developer_email_sending ? aws_sesv2_configuration_set.cognito[0].configuration_set_name : null
 }
 
 output "ses_configuration_set_arn" {
-  description = "ARN of the SES configuration set used for authentication email"
-  value       = aws_sesv2_configuration_set.cognito.arn
+  description = "ARN of the SES configuration set used for authentication email, when SES developer email sending is enabled"
+  value       = local.use_developer_email_sending ? aws_sesv2_configuration_set.cognito[0].arn : null
 }

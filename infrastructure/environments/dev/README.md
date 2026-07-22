@@ -60,7 +60,7 @@
 | <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain used to build workload hostnames | `string` | `"ukps.nice.org.uk"` | no |
 | <a name="input_cognito_email_from_address"></a> [cognito\_email\_from\_address](#input\_cognito\_email\_from\_address) | Verified sender address for authentication email | `string` | n/a | yes |
 | <a name="input_cognito_email_reply_to_address"></a> [cognito\_email\_reply\_to\_address](#input\_cognito\_email\_reply\_to\_address) | Reply-to address for authentication email | `string` | n/a | yes |
-| <a name="input_cognito_ses_identity_arn"></a> [cognito\_ses\_identity\_arn](#input\_cognito\_ses\_identity\_arn) | ARN of the verified SES identity in the deployment account and region used for authentication email | `string` | n/a | yes |
+| <a name="input_cognito_ses_identity_arn"></a> [cognito\_ses\_identity\_arn](#input\_cognito\_ses\_identity\_arn) | ARN of the verified SES identity in the deployment account and region used for authentication email. Leave null to use Cognito default email sending. | `string` | `null` | no |
 | <a name="input_connection_threshold"></a> [connection\_threshold](#input\_connection\_threshold) | Threshold for the number of database connections to trigger an alarm | `number` | `100` | no |
 | <a name="input_ecs_backend_cpu_allocation"></a> [ecs\_backend\_cpu\_allocation](#input\_ecs\_backend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
 | <a name="input_ecs_backend_memory_allocation"></a> [ecs\_backend\_memory\_allocation](#input\_ecs\_backend\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |

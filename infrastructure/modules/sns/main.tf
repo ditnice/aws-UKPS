@@ -13,8 +13,8 @@ resource "aws_sns_topic" "rds_alarms" {
   kms_master_key_id = var.sns_kms_arn
 }
 
-resource "aws_sns_topic" "security_alarms" {
-  name              = "${var.project}-${var.environment}-${var.service_name}-security-alarms"
+resource "aws_sns_topic" "cognito_alarms" {
+  name              = "${var.project}-${var.environment}-${var.service_name}-cognito-alarms"
   kms_master_key_id = coalesce(var.security_sns_kms_arn, var.sns_kms_arn)
 }
 
@@ -42,10 +42,10 @@ resource "aws_sns_topic_subscription" "rds_alarms_email" {
   endpoint  = var.sns_alarm_emails[each.key]
 }
 
-resource "aws_sns_topic_subscription" "security_alarms_email" {
+resource "aws_sns_topic_subscription" "cognito_alarms_email" {
   for_each = nonsensitive(toset(keys(var.sns_alarm_emails)))
 
-  topic_arn = aws_sns_topic.security_alarms.arn
+  topic_arn = aws_sns_topic.cognito_alarms.arn
   protocol  = "email"
   endpoint  = var.sns_alarm_emails[each.key]
 }

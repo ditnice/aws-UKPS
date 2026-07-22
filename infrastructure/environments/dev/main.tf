@@ -53,7 +53,7 @@ module "cognito" {
   ses_identity_arn         = var.cognito_ses_identity_arn
   email_from_address       = var.cognito_email_from_address
   email_reply_to_address   = var.cognito_email_reply_to_address
-  security_alarm_topic_arn = module.sns.security_alarms_topic_arn
+  security_alarm_topic_arn = module.sns.cognito_alarms_topic_arn
   cloudwatch_log_retention = var.ecs_log_retention
 }
 
@@ -157,17 +157,18 @@ module "ecs_backend" {
   # Cognito has no PrivateLink endpoint. Confirm that app subnet routes provide
   # NAT or controlled egress before deploying this service.
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
-  container_environment = {
-    AWS_REGION                  = var.region
-    Cognito__Region             = var.region
-    Cognito__UserPoolId         = module.cognito.user_pool_id
-    Cognito__ClientId           = module.cognito.app_client_id
-    Cognito__Authority          = module.cognito.user_pool_issuer
-    Email__Region               = var.region
-    Email__FromAddress          = var.cognito_email_from_address
-    Email__ReplyToAddress       = var.cognito_email_reply_to_address
+  container_environment = merge({
+    AWS_REGION            = var.region
+    Cognito__Region       = var.region
+    Cognito__UserPoolId   = module.cognito.user_pool_id
+    Cognito__ClientId     = module.cognito.app_client_id
+    Cognito__Authority    = module.cognito.user_pool_issuer
+    Email__Region         = var.region
+    Email__FromAddress    = var.cognito_email_from_address
+    Email__ReplyToAddress = var.cognito_email_reply_to_address
+    }, module.cognito.ses_configuration_set_name == null ? {} : {
     Email__ConfigurationSetName = module.cognito.ses_configuration_set_name
-  }
+  })
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
   }
