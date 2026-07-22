@@ -1,4 +1,6 @@
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Users.Dtos;
+using UKPS.Api.Application.Users.Errors;
 
 namespace UKPS.Api.Application.Users;
 

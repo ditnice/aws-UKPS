@@ -4,11 +4,13 @@ using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.Users;
+using UKPS.Api.Application.Users.Dtos;
+using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using OnBoardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.OnboardUserError>;
+using OnBoardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
 
 namespace UKPS.Api.Tests.Application.Users;
 

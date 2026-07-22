@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace UKPS.Api.Application.Users;
+namespace UKPS.Api.Application.Users.Dtos;
 
 /// <summary>
 /// Represents the data required to onboard a new user.

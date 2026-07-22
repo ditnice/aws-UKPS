@@ -4,6 +4,8 @@ using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.Users.Dtos;
+using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;

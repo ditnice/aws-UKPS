@@ -1,4 +1,4 @@
-namespace UKPS.Api.Application.Users;
+namespace UKPS.Api.Application.Users.Errors;
 
 /// <summary>
 /// Represents errors that can occur when onboarding a user.
