@@ -61,6 +61,11 @@ module "alb" {
 module "r53" {
   source = "../../modules/r53"
 
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
   project                                = local.project
   environment                            = local.environment
   base_domain_name                       = var.base_domain_name

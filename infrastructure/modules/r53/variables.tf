@@ -73,6 +73,17 @@ variable "cloudfront_distribution_status" {
   type        = string
 }
 
+variable "route53_query_log_retention_days" {
+  description = "Number of days to retain Route53 DNS query logs in CloudWatch Logs"
+  type        = number
+  default     = 365
+
+  validation {
+    condition     = contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.route53_query_log_retention_days)
+    error_message = "Route53 query log retention days must be a valid CloudWatch Logs retention value."
+  }
+}
+
 variable "tags" {
   description = "Additional tags to apply to Route53 resources"
   type        = map(string)
