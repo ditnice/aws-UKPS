@@ -10,11 +10,13 @@
         "tags": [
           "Organisation"
         ],
+        "summary": "Retrieves an organisation by its unique identifier.",
         "operationId": "GetOrganisationById",
         "parameters": [
           {
             "name": "id",
             "in": "path",
+            "description": "The identifier of the organisation to retrieve.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -25,7 +27,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "The organisation was found and its details were returned.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -45,7 +47,7 @@
             }
           },
           "404": {
-            "description": "Not Found",
+            "description": "No organisation exists with the specified identifier.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -70,11 +72,13 @@
         "tags": [
           "Organisation"
         ],
+        "summary": "Updates the details of an existing organisation.",
         "operationId": "UpdateOrganisationDetails",
         "parameters": [
           {
             "name": "id",
             "in": "path",
+            "description": "The identifier of the organisation to update.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -84,6 +88,7 @@
           }
         ],
         "requestBody": {
+          "description": "A token that can be used to cancel the operation.",
           "content": {
             "application/json": {
               "schema": {
@@ -105,7 +110,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "The organisation was successfully updated.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -125,7 +130,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "The supplied organisation details failed validation.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -145,7 +150,7 @@
             }
           },
           "404": {
-            "description": "Not Found",
+            "description": "No organisation exists with the specified identifier.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -172,11 +177,13 @@
         "tags": [
           "Organisation"
         ],
+        "summary": "Deactivates an organisation membership.",
         "operationId": "DeactivateMembership",
         "parameters": [
           {
             "name": "organisationId",
             "in": "path",
+            "description": "The identifier of the organisation that owns the membership.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -187,6 +194,7 @@
           {
             "name": "membershipId",
             "in": "path",
+            "description": "The identifier of the membership to deactivate.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -200,7 +208,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "The membership was successfully deactivated.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -240,7 +248,7 @@
             }
           },
           "404": {
-            "description": "Not Found",
+            "description": "The specified organisation membership could not be found.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -267,11 +275,13 @@
         "tags": [
           "Organisation"
         ],
+        "summary": "Updates the role assigned to a user within an organisation membership.",
         "operationId": "UpdateUserRole",
         "parameters": [
           {
             "name": "organisationId",
             "in": "path",
+            "description": "The identifier of the organisation that owns the membership.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -282,6 +292,7 @@
           {
             "name": "membershipId",
             "in": "path",
+            "description": "The identifier of the membership to update.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -294,6 +305,7 @@
           }
         ],
         "requestBody": {
+          "description": "A token that can be used to cancel the operation.",
           "content": {
             "application/json": {
               "schema": {
@@ -315,7 +327,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "The membership role was successfully updated.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -355,7 +367,7 @@
             }
           },
           "404": {
-            "description": "Not Found",
+            "description": "The specified organisation membership could not be found.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -382,11 +394,13 @@
         "tags": [
           "User"
         ],
+        "summary": "Retrieves a paginated list of users based on the specified query parameters.",
         "operationId": "GetUsers",
         "parameters": [
           {
             "name": "OrganisationId",
             "in": "query",
+            "description": "Gets or initialises the optional ID of the organisation to filter users by.",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": [
@@ -399,6 +413,7 @@
           {
             "name": "Page",
             "in": "query",
+            "description": "Gets or initialises the page number for pagination.\nMust be greater than or equal to 1.",
             "schema": {
               "maximum": 2147483647,
               "minimum": 1,
@@ -413,6 +428,7 @@
           {
             "name": "PageSize",
             "in": "query",
+            "description": "Gets or initialises the number of items per page for pagination.\nMust be between 1 and 100.",
             "schema": {
               "maximum": 100,
               "minimum": 1,
@@ -427,6 +443,7 @@
           {
             "name": "Status",
             "in": "query",
+            "description": "Gets or initialises the collection of user organisation statuses to filter users by.",
             "schema": {
               "type": "array",
               "items": {
@@ -437,7 +454,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Returns the paginated list of users.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -457,7 +474,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "Returned if the query parameters are invalid or the organisation is not found.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -477,7 +494,7 @@
             }
           },
           "404": {
-            "description": "Not Found",
+            "description": "Returned if no users are found matching the query parameters.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -517,33 +534,42 @@
               "integer",
               "string"
             ],
+            "description": "Gets the unique identifier of the organisation.",
             "format": "int32"
           },
           "organisationName": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets the name of the organisation."
           },
           "organisationType": {
+            "description": "Gets the type of the organisation.",
             "$ref": "#/components/schemas/OrganisationType"
           },
           "allowedPharmaceuticalEntity": {
+            "description": "Gets the allowed pharmaceutical entity for the organisation.",
             "$ref": "#/components/schemas/PharmaceuticalEntity"
           },
           "countryOrRegion": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Gets the country or region where the organisation is located."
           },
           "headOfficeAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets the address of the organisation's head office."
           },
           "headOfficeEmail": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets the email address of the organisation's head office."
           },
           "headOfficeTelephone": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets the telephone number of the organisation's head office."
           },
           "status": {
+            "description": "Gets the current status of the organisation.",
             "$ref": "#/components/schemas/UserOrgStatus"
           },
           "lastActive": {
@@ -551,6 +577,7 @@
               "null",
               "string"
             ],
+            "description": "Gets the date and time when the organisation was last active.",
             "format": "date-time"
           },
           "createdAt": {
@@ -558,9 +585,11 @@
               "null",
               "string"
             ],
+            "description": "Gets the date and time when the organisation was created.",
             "format": "date-time"
           }
-        }
+        },
+        "description": "Represents the details of an organisation."
       },
       "OrganisationMembershipDto": {
         "required": [
@@ -580,6 +609,7 @@
               "integer",
               "string"
             ],
+            "description": "Gets the unique identifier of the organisation membership.",
             "format": "int32"
           },
           "userId": {
@@ -588,6 +618,7 @@
               "integer",
               "string"
             ],
+            "description": "Gets the unique identifier of the user associated with the membership.",
             "format": "int32"
           },
           "organisationId": {
@@ -596,22 +627,28 @@
               "integer",
               "string"
             ],
+            "description": "Gets the unique identifier of the organisation associated with the membership.",
             "format": "int32"
           },
           "userRole": {
+            "description": "Gets the role of the user within the organisation.",
             "$ref": "#/components/schemas/UserRole"
           },
           "status": {
+            "description": "Gets the status of the user within the organisation.",
             "$ref": "#/components/schemas/UserOrgStatus"
           },
           "allowedPharmaceuticalEntity": {
+            "description": "Gets the pharmaceutical entity that the user is allowed to access.",
             "$ref": "#/components/schemas/PharmaceuticalEntity"
           },
           "createdAt": {
             "type": "string",
+            "description": "Gets the date and time when the organisation membership was created.",
             "format": "date-time"
           }
-        }
+        },
+        "description": "Represents the data transfer object for an organisation membership."
       },
       "OrganisationType": {
         "enum": [
@@ -620,7 +657,8 @@
           "Strategic",
           "Internal"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "Represents the different types of organisations within the system."
       },
       "PaginatedResponseDtoOfUserListItemDto": {
         "required": [
@@ -635,7 +673,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UserListItemDto"
-            }
+            },
+            "description": "Gets the collection of items in the current page."
           },
           "totalCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -643,6 +682,7 @@
               "integer",
               "string"
             ],
+            "description": "Gets the total number of items across all pages.",
             "format": "int32"
           },
           "page": {
@@ -651,6 +691,7 @@
               "integer",
               "string"
             ],
+            "description": "Gets the current page number (1-based index).",
             "format": "int32"
           },
           "pageSize": {
@@ -659,12 +700,15 @@
               "integer",
               "string"
             ],
+            "description": "Gets the number of items per page.",
             "format": "int32"
           }
-        }
+        },
+        "description": "Represents a paginated response containing a collection of items and pagination metadata."
       },
       "PharmaceuticalEntity": {
-        "type": "string"
+        "type": "string",
+        "description": "Flags enum stored as integer. Only Organisation uses Both;\nUserOrgMembership and TermsAcceptance use Medicines or Vaccines only.\nRepresents the types of pharmaceutical entities."
       },
       "ProblemDetails": {
         "type": "object",
@@ -714,18 +758,23 @@
         "type": "object",
         "properties": {
           "organisationName": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets or sets the name of the organisation."
           },
           "headOfficeAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets or sets the head office address of the organisation."
           },
           "headOfficeEmail": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets or sets the email address of the head office."
           },
           "headOfficeTelephone": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets or sets the telephone number of the head office."
           }
-        }
+        },
+        "description": "Represents the data transfer object for updating organisation details."
       },
       "UpdateOrgMembershipUserRoleCommandDto": {
         "required": [
@@ -734,9 +783,11 @@
         "type": "object",
         "properties": {
           "userRole": {
+            "description": "Gets or initialises the user role to be updated in the organisation membership.\nThe new UserRole UpdateOrgMembershipUserRoleCommandDto.UserRole to assign to the user.",
             "$ref": "#/components/schemas/UserRole"
           }
-        }
+        },
+        "description": "Represents a Data Transfer Object (DTO) for updating the user role\nin an organisation membership."
       },
       "UserListItemDto": {
         "type": "object",
@@ -747,18 +798,22 @@
               "integer",
               "string"
             ],
+            "description": "Gets the unique identifier of the user.",
             "format": "int32"
           },
           "emailAddress": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Gets the email address of the user, if available."
           },
           "role": {
+            "description": "Gets the role of the user within the system.",
             "$ref": "#/components/schemas/UserRole"
           },
           "status": {
+            "description": "Gets the organisational status of the user.",
             "$ref": "#/components/schemas/UserOrgStatus"
           },
           "lastActive": {
@@ -766,9 +821,11 @@
               "null",
               "string"
             ],
+            "description": "Gets the date and time when the user was last active, if available.",
             "format": "date-time"
           }
-        }
+        },
+        "description": "Represents a limited summary of a user."
       },
       "UserOrgStatus": {
         "enum": [
@@ -778,7 +835,8 @@
           "Rejected",
           "Inactive"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "Represents the status of a user's association with an organisation."
       },
       "UserRole": {
         "enum": [
@@ -786,7 +844,8 @@
           "Champion",
           "Super"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "Represents the different roles a user can have within the system."
       }
     }
   },
