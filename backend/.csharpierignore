@@ -1,1 +1,1 @@
-src/Migrations/*.cs
+src/Persistence/Migrations/*.cs

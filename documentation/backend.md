@@ -1,3 +1,69 @@
+## Directory Structure
+
+The directory structure should match the following
+
+├── src
+│   ├── Application (Organised by domain)
+│   │   ├── Common
+│   │   ├── InternalServices (Application services for internal use)
+│   │   │   ├── Authorisation
+│   │   │   └── Identity
+│   │   ├── Organisations
+│   │   │   ├── Dtos
+│   │   │   └── Errors
+│   │   └── Users
+│   │       ├── Dtos
+│   │       └── Errors
+│   ├── Persistence
+│   │   ├── Configurations
+│   │   │   ├── Email
+│   │   │   ├── Identity
+│   │   │   ├── MedicinesRevisionContent
+│   │   │   ├── RecordWorkflow
+│   │   │   ├── ReferenceData
+│   │   │   ├── Reporting
+│   │   │   ├── SharedRevisionContent
+│   │   │   ├── UserFeatures
+│   │   │   └── VaccinesRevisionContent
+│   │   ├── Data
+│   │   │   ├── Fakers
+│   │   │   └── Seeding
+│   │   ├── Entities
+│   │   │   ├── Email
+│   │   │   ├── Identity
+│   │   │   ├── MedicinesRevisionContent
+│   │   │   ├── RecordWorkflow
+│   │   │   ├── ReferenceData
+│   │   │   ├── Reporting
+│   │   │   ├── SharedRevisionContent
+│   │   │   ├── UserFeatures
+│   │   │   └── VaccinesRevisionContent
+│   │   ├── Enums
+│   │   └── Migrations
+│   └── WebApi
+│       ├── Controllers
+│       ├── InternalServices
+│       │   └── Identity
+│       └── Properties
+└── tests
+    ├── Application
+    │   ├── Common
+    │   ├── Organisations
+    │   └── Users
+    ├── Integration
+    ├── Persistence
+    ├── TestResults
+    │   └── Coverage
+    ├── Utilities
+    │   ├── AssertionHelpers
+    │   ├── Data
+    │   ├── Fixtures
+    │   └── Harnesses
+    └── WebApi
+        ├── Controllers
+        └── Utilities
+
+
 ## Seeding the Database on Startup
 
 The API can automatically seed the database with development data when it starts.

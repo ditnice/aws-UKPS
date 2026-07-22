@@ -1,5 +1,5 @@
 using Shouldly;
-using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Tests.Utilities.Fixtures;
 
 namespace UKPS.Api.Tests.Integration;
 

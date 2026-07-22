@@ -1,4 +1,0 @@
-namespace UKPS.Api.Entities.ReferenceData;
-
-/// <summary>Values TBC — vaccines only.</summary>
-internal sealed class VaccineDiseaseArea : ReferenceDataBase { }

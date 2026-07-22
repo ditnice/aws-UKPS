@@ -135,7 +135,7 @@ dotnet_naming_style.camel_case_underscore.capitalization = camel_case
 [*{_AssemblyInfo.cs,.notsupported.cs}]
 generated_code = true
 
-[src/Migrations/*.cs]
+[src/Persistence/Migrations/*.cs]
 generated_code = true
 
 # Tests.
