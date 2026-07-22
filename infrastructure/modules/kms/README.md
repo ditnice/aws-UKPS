@@ -3,7 +3,7 @@ KMS Module
 
 Creates two customer-managed KMS keys for a workload:
 
-- `app_key` for application services such as ECR and CloudWatch Logs.
+- `app_key` for application services such as ECR, CloudWatch Logs, Secrets Manager, and encrypted notifications.
 - `data_key` for data services such as Aurora/RDS.
 
 Aliases use the format:
@@ -53,6 +53,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_additional_cloudwatch_log_group_names"></a> [additional\_cloudwatch\_log\_group\_names](#input\_additional\_cloudwatch\_log\_group\_names) | Additional exact CloudWatch log group names that may use the application KMS key | `list(string)` | `[]` | no |
 | <a name="input_deletion_window_in_days"></a> [deletion\_window\_in\_days](#input\_deletion\_window\_in\_days) | Number of days before KMS key deletion after scheduling destruction | `number` | `30` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment used in KMS aliases and tags | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project used in KMS aliases and tags | `string` | n/a | yes |

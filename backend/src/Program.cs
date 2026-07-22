@@ -3,11 +3,11 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
-using UKPS.Api.Controllers.Utilities;
-using UKPS.Api.Data;
-using UKPS.Api.Data.Seeding;
-using UKPS.Api.Services;
-using UKPS.Api.Services.Interfaces;
+using UKPS.Api.Application;
+using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Data.Seeding;
+using UKPS.Api.WebApi.InternalServices.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 

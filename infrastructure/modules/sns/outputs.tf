@@ -12,3 +12,8 @@ output "rds_alarms_topic_arn" {
   description = "ARN of the RDS alarms SNS topic"
   value       = aws_sns_topic.rds_alarms.arn
 }
+
+output "security_alarms_topic_arn" {
+  description = "ARN of the security alarms SNS topic"
+  value       = aws_sns_topic.security_alarms.arn
+}

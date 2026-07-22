@@ -6,7 +6,7 @@ The reusable modules live in `modules/`. Environment compositions live in `envir
 
 ## Requirements
 
-- Terraform `>= 1.10, < 2.0`
+- Terraform `>= 1.11, < 2.0`
 - AWS provider `~> 6.0`
 - AWS credentials with access to the target account
 - Access to the configured S3 state backend
@@ -29,7 +29,10 @@ The `dev` environment requires these values to be supplied manually because they
 | --- | --- | --- |
 | `frontend_image_repository_url` | Container image repository URL used by the frontend ECS service. Do not include a tag or digest. | `628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend` |
 | `backend_image_repository_url` | Container image repository URL used by the backend ECS service. Do not include a tag or digest. | `628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend` |
-| `image_tag` | Container image tag used by both frontend and backend ECS services. | `1.2.3` |
+| `image_tag` | Container image tag used by the frontend and backend ECS services. | `1.2.3` |
+| `cognito_ses_identity_arn` | ARN of the verified SES identity in the deployment account and region used for authentication email. | `arn:aws:ses:eu-west-2:628270103586:identity/ukps.nice.org.uk` |
+| `cognito_email_from_address` | Verified sender address for authentication email. | `no-reply@ukps.nice.org.uk` |
+| `cognito_email_reply_to_address` | Reply-to address for authentication email. | `support@ukps.nice.org.uk` |
 | `sns_alarm_emails` | Map of labels to email addresses subscribed to alarm SNS topics. Subscribers must confirm the AWS SNS email confirmation before receiving alerts. | `{ platform = "platform@example.org", service = "service@example.org" }` |
 | `cloudfront_distribution_id` | ID of the existing CloudFront distribution used by the Route53 alias records. | `E123ABC456DEF` |
 
@@ -45,6 +48,9 @@ Example using SemVer image tags:
 export TF_VAR_frontend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend"
 export TF_VAR_backend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend"
 export TF_VAR_image_tag="1.2.3"
+export TF_VAR_cognito_ses_identity_arn="arn:aws:ses:eu-west-2:628270103586:identity/ukps.nice.org.uk"
+export TF_VAR_cognito_email_from_address="no-reply@ukps.nice.org.uk"
+export TF_VAR_cognito_email_reply_to_address="support@ukps.nice.org.uk"
 export TF_VAR_sns_alarm_emails='{ platform = "platform@example.org", service = "service@example.org" }'
 export TF_VAR_cloudfront_distribution_id="E123ABC456DEF"
 ```

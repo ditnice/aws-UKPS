@@ -72,3 +72,23 @@ output "backend_target_group_arn" {
   description = "Backend ALB target group ARN"
   value       = module.alb.backend_target_group_arn
 }
+
+output "cognito_user_pool_id" {
+  description = "ID of the dev Cognito user pool"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_user_pool_arn" {
+  description = "ARN of the dev Cognito user pool"
+  value       = module.cognito.user_pool_arn
+}
+
+output "cognito_app_client_id" {
+  description = "ID of the dev Cognito backend app client"
+  value       = module.cognito.app_client_id
+}
+
+output "cognito_user_pool_issuer" {
+  description = "OIDC issuer URL of the dev Cognito user pool"
+  value       = module.cognito.user_pool_issuer
+}

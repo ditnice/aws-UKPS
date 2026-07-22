@@ -3,13 +3,13 @@ using System.Net.Http.Json;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
-using UKPS.Api.Data;
-using UKPS.Api.Data.Fakers;
-using UKPS.Api.DTOs;
-using UKPS.Api.Entities.Identity;
-using UKPS.Api.Enums;
-using UKPS.Api.Tests.Fixtures;
+using UKPS.Api.Application.Organisations.Dtos;
+using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Data;
+using UKPS.Api.Tests.Utilities.Fixtures;
 
 namespace UKPS.Api.Tests.Integration;
 

@@ -27,17 +27,35 @@ module "kms_backend" {
   environment  = local.environment
   region       = var.region
   service_name = "backend"
+  additional_cloudwatch_log_group_names = [
+    "/aws/vendedlogs/cognito/${local.project}/${local.environment}/${local.service_name}",
+  ]
 }
 
 # SNS
 module "sns" {
   source = "../../modules/sns"
 
-  project          = local.project
-  environment      = local.environment
-  service_name     = local.service_name
-  sns_kms_arn      = module.kms_frontend.app_key_arn
-  sns_alarm_emails = var.sns_alarm_emails
+  project              = local.project
+  environment          = local.environment
+  service_name         = local.service_name
+  sns_kms_arn          = module.kms_frontend.app_key_arn
+  security_sns_kms_arn = module.kms_backend.app_key_arn
+  sns_alarm_emails     = var.sns_alarm_emails
+}
+
+module "cognito" {
+  source = "../../modules/cognito"
+
+  project                  = local.project
+  environment              = local.environment
+  service_name             = local.service_name
+  kms_key_arn              = module.kms_backend.app_key_arn
+  ses_identity_arn         = var.cognito_ses_identity_arn
+  email_from_address       = var.cognito_email_from_address
+  email_reply_to_address   = var.cognito_email_reply_to_address
+  security_alarm_topic_arn = module.sns.security_alarms_topic_arn
+  cloudwatch_log_retention = var.ecs_log_retention
 }
 
 module "alb" {
@@ -155,6 +173,27 @@ module "ecs_backend" {
   target_group_arn         = module.alb.backend_target_group_arn
   alb_security_group_id    = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
+  # Cognito has no PrivateLink endpoint. Confirm that app subnet routes provide
+  # NAT or controlled egress before deploying this service.
+  ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
+  container_environment = {
+    AWS_REGION                  = var.region
+    Cognito__Region             = var.region
+    Cognito__UserPoolId         = module.cognito.user_pool_id
+    Cognito__ClientId           = module.cognito.app_client_id
+    Cognito__Authority          = module.cognito.user_pool_issuer
+    Email__Region               = var.region
+    Email__FromAddress          = var.cognito_email_from_address
+    Email__ReplyToAddress       = var.cognito_email_reply_to_address
+    Email__ConfigurationSetName = module.cognito.ses_configuration_set_name
+  }
+  container_secrets = {
+    Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
+  }
+  attach_execution_role_policy = true
+  execution_role_policy_json   = data.aws_iam_policy_document.backend_cognito_secret.json
+  attach_task_role_policy      = true
+  task_role_policy_json        = data.aws_iam_policy_document.backend_cognito.json
 }
 
 # ECS - Backend Alerts
