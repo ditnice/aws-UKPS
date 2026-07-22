@@ -102,16 +102,9 @@ repos:
         files: ^backend/.*\.(cs|csproj|props|targets|xml|config|slnx)$
         pass_filenames: false
 
-      - id: backend-dotnet-build
-        name: dotnet build (backend)
-        language: system
-        entry: bash -c 'cd backend && dotnet restore && dotnet build --no-restore'
-        files: ^backend/.*\.(cs|csproj|props|targets)$
-        pass_filenames: false
-
       - id: backend-openapi
         name: Generate OpenAPI spec (backend)
         language: system
-        entry: bash -c 'cd backend && dotnet build src/UKPS.Api.csproj /p:OpenApiDocumentsDirectory=../openapi'
+        entry: bash -c 'cd backend && dotnet restore && dotnet build --no-restore src/UKPS.Api.csproj /p:OpenApiDocumentsDirectory=../openapi'
         files: ^backend/src/.*\.(cs|csproj|json)$
         pass_filenames: false
