@@ -1,4 +1,5 @@
 resource "aws_route53_zone" "base_domain" {
+  # checkov:skip=CKV2_AWS_38: DNSSEC signing is not enabled on the nice.org.uk domain.
   name    = var.base_domain_name
   comment = "Env subdomain for ${var.environment}. Delegated from nice.org.uk"
 
