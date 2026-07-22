@@ -674,7 +674,7 @@
             "items": {
               "$ref": "#/components/schemas/UserListItemDto"
             },
-            "description": "Gets the collection of items in the current page. This is a test. Love. Another lovely test."
+            "description": "Gets the collection of items in the current page. is a test. Love. Ather lovely test."
           },
           "totalCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",

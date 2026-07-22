@@ -7,7 +7,7 @@ namespace UKPS.Api.Application.Common;
 public sealed record PaginatedResponseDto<T>
 {
     /// <summary>
-    /// Gets the collection of items in the current page. This is a test. Love. Ather lovely test.
+    /// Gets the collection of items in the current page. is a test. Love. Ather lovely test.
     /// </summary>
     public required IReadOnlyCollection<T> Items { get; init; }
 
