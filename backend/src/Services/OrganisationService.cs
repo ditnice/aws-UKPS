@@ -1,18 +1,17 @@
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Common;
 using UKPS.Api.Data;
 using UKPS.Api.DTOs;
 using UKPS.Api.Entities.Identity;
+using UKPS.Api.Enums;
 using UKPS.Api.Services.Errors;
 using UKPS.Api.Services.Interfaces;
 
 namespace UKPS.Api.Services;
 
 // Type aliases for Result
-using GetOrganisationResult = Common.Result<OrganisationDetailsDto, GetOrganisationByIdError>;
-using UpdateOrganisationResult = Common.Result<
-    OrganisationDetailsDto,
-    UpdateOrganisationDetailsError
->;
+using GetOrganisationResult = Result<OrganisationDetailsDto, GetOrganisationByIdError>;
+using UpdateOrganisationResult = Result<OrganisationDetailsDto, UpdateOrganisationDetailsError>;
 
 internal sealed class OrganisationService : IOrganisationService
 {
@@ -95,4 +94,61 @@ internal sealed class OrganisationService : IOrganisationService
             LastActive = organisation.LastActive,
             CreatedAt = organisation.CreatedAt,
         };
+
+    public async Task<Result<OrganisationDetailsDto, CreateOrganisationError>> CreateOrganisation(
+        CreateOrganisationDto command,
+        CancellationToken cancellationToken
+    )
+    {
+        if (
+            command.OrganisationName == null
+            || command.HeadOfficeEmail == null
+            || command.HeadOfficeAddress == null
+            || command.HeadOfficeTelephone == null
+        )
+        {
+            return Result<OrganisationDetailsDto, CreateOrganisationError>.Err(
+                new CreateOrganisationError.MissingFields()
+            );
+        }
+
+        bool OrganisationExists = await _dbContext.Organisations.AnyAsync(
+            x => x.OrganisationName == command.OrganisationName,
+            cancellationToken: cancellationToken
+        );
+        if (OrganisationExists)
+        {
+            return Result<OrganisationDetailsDto, CreateOrganisationError>.Err(
+                new CreateOrganisationError.OrganisationNameConflict()
+            );
+        }
+        bool organisationExists = await _dbContext.Organisations.AnyAsync(
+            x => x.OrganisationName == command.OrganisationName,
+            cancellationToken
+        );
+
+        if (organisationExists)
+        {
+            return Result<OrganisationDetailsDto, CreateOrganisationError>.Err(
+                new CreateOrganisationError.OrganisationNameConflict()
+            );
+        }
+
+        var organisation = new Organisation()
+        {
+            OrganisationName = command.OrganisationName,
+            OrganisationType = OrganisationType.PharmaCompany,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
+            HeadOfficeAddress = command.HeadOfficeAddress,
+            HeadOfficeEmail = command.HeadOfficeEmail,
+            HeadOfficeTelephone = command.HeadOfficeTelephone,
+            Status = UserOrgStatus.RequestedAccess, // Check with Williams
+            CountryOrRegion = command.CountryOrRegion,
+            CreatedAt = DateTime.UtcNow,
+            // last active needs to be added
+        };
+        _dbContext.Organisations.Add(organisation);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result<OrganisationDetailsDto, CreateOrganisationError>.Ok(MapToDto(organisation));
+    }
 }

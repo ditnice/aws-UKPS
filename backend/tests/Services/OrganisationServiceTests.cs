@@ -11,6 +11,10 @@ using UKPS.Api.Services.Interfaces;
 using UKPS.Api.Tests.Fixtures;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using CreateOrganisationResult = UKPS.Api.Common.Result<
+    UKPS.Api.DTOs.OrganisationDetailsDto,
+    UKPS.Api.Services.Errors.CreateOrganisationError
+>;
 using GetOrganisationResult = UKPS.Api.Common.Result<
     UKPS.Api.DTOs.OrganisationDetailsDto,
     UKPS.Api.Services.Errors.GetOrganisationByIdError
@@ -230,6 +234,53 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
             .ShouldBeError()
             .ShouldBeOfType<UpdateOrganisationDetailsError.NotFound>();
         notFound.OrganisationId.ShouldBe(99);
+    }
+
+    [Fact]
+    public async Task CreateOrganisation_AllFieldsProvided_ReturnsDto()
+    {
+        CreateOrganisationDto createDto = new()
+        {
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            OrganisationName = "Gov Pharma Ltd",
+            HeadOfficeEmail = "info@pharma.gov.uk",
+            HeadOfficeTelephone = "020 1234 5678",
+        };
+        CreateOrganisationResult result = await Service.CreateOrganisation(
+            createDto,
+            TestContext.Current.CancellationToken
+        );
+
+        OrganisationDetailsDto organisation = result.ShouldBeSuccess();
+
+        organisation.OrganisationName.ShouldBe("Gov Pharma Ltd");
+        organisation.HeadOfficeAddress.ShouldBe("10 Downing Street\nLondon\nSW1A 2AA");
+        organisation.HeadOfficeEmail.ShouldBe("info@pharma.gov.uk");
+        organisation.HeadOfficeTelephone.ShouldBe("020 1234 5678");
+    }
+
+    [Fact]
+    public async Task CreateOrganisation_NameConflict_ReturnsConflict()
+    {
+        Context.Organisations.Add(CreateOrganisation());
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        CreateOrganisationDto createDto = new()
+        {
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            OrganisationName = (
+                await Context.Organisations.SingleAsync(TestContext.Current.CancellationToken)
+            ).OrganisationName,
+            HeadOfficeEmail = "info@pharma.gov.uk",
+            HeadOfficeTelephone = "020 1234 5678",
+        };
+
+        CreateOrganisationResult result = await Service.CreateOrganisation(
+            createDto,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<CreateOrganisationError.OrganisationNameConflict>();
     }
 
     private static Organisation CreateOrganisation() =>
