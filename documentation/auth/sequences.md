@@ -60,15 +60,15 @@ sequenceDiagram
     F->>B: POST /auth/verify-mfa (code + Session)
     B->>C: VerifySoftwareToken (code, Session)
     C-->>B: SUCCESS + new Session
-    B->>C: RespondToAuthChallenge MFA_SETUP (new Session)
-    C-->>B: ID, access, refresh tokens
     B->>C: AdminUpdateUserAttributes (email_verified=true)
     C-->>B: OK
+    B->>C: AdminRespondToAuthChallenge MFA_SETUP (USERNAME + SECRET_HASH + new Session)
+    C-->>B: ID, access, refresh tokens (email_verified=true)
     B-->>F: Set access cookie (Path=/) + refresh cookie (Path=/auth/refresh)
-    Note over B,F: Cookies are Secure + HttpOnly.<br/>ID token is not sent to the browser.
+    Note over B,F: Cookies follow the security contract below.<br/>ID token is not sent to the browser.
     F->>F: Redirect to /dashboard
     F->>B: GET /api/dashboard (access cookie sent automatically)
-    B->>B: Validate access token (JWT signature via Cognito JWKS, expiry, claims)
+    B->>B: Validate access token using the contract below
     B->>P: Query dashboard data for user (sub claim)
     P-->>B: Dashboard data
     B-->>F: 200 dashboard payload
@@ -92,7 +92,7 @@ sequenceDiagram
         B-->>F: Prompt for authenticator code + Session
         U->>F: Enter TOTP code
         F->>B: POST /auth/mfa (code + Session)
-        B->>C: RespondToAuthChallenge (code, Session)
+        B->>C: AdminRespondToAuthChallenge (USERNAME + SECRET_HASH + code + Session)
         C-->>B: ID, access, refresh tokens
     else MFA never completed (interrupted first-time setup)
         C-->>B: Challenge MFA_SETUP + Session
@@ -101,10 +101,10 @@ sequenceDiagram
     end
     Note over B,F: After the selected authentication flow completes successfully
     B-->>F: Set access cookie (Path=/) + refresh cookie (Path=/auth/refresh)
-    Note over B,F: Cookies are Secure + HttpOnly.<br/>ID token is not sent to the browser.
+    Note over B,F: Cookies follow the security contract below.<br/>ID token is not sent to the browser.
     F->>F: Redirect to /dashboard
     F->>B: GET /api/dashboard (access cookie sent automatically)
-    B->>B: Validate access token (JWT signature via Cognito JWKS, expiry, claims)
+    B->>B: Validate access token using the contract below
     B->>P: Query dashboard data for user (sub claim)
     P-->>B: Dashboard data
     B-->>F: 200 dashboard payload
@@ -122,7 +122,7 @@ sequenceDiagram
     B->>B: JWT validation fails (expired)
     B-->>F: 401 TOKEN_EXPIRED
     Note over F: Interceptor catches 401, single-flight guard on
-    F->>B: POST /auth/refresh (refresh cookie, Path=/auth/refresh)
+    F->>B: POST /auth/refresh (refresh cookie + anti-forgery token)
     B->>C: GetTokensFromRefreshToken (refresh token + client credentials)
     alt Refresh token valid
         C-->>B: New ID + access + refresh tokens
@@ -138,3 +138,26 @@ sequenceDiagram
         Note over F: User re-authenticates via Regular login, lands back on returnUrl
     end
 ```
+
+## Cookie and CSRF security contract
+
+- Authentication cookies must be host-only (no `Domain` attribute), `Secure`,
+  `HttpOnly`, and `SameSite=Strict`.
+- The access cookie uses `Path=/`. The refresh cookie uses
+  `Path=/auth/refresh` and must not be sent to other endpoints.
+- Every state-changing request must include an anti-forgery token and have its
+  `Origin` header matched against an exact allowlist. Missing, malformed, or
+  untrusted origins must fail closed.
+- Logout must revoke the Cognito refresh token and expire both cookies using
+  the same path and security attributes with which they were issued.
+
+## Access-token validation contract
+
+- Accept only Cognito access tokens with `token_use=access`; ID tokens must
+  never be accepted as API bearer tokens.
+- Require the exact configured Cognito issuer and app-client `client_id`.
+- Allow only the expected Cognito signing algorithm and validate the token
+  lifetime, including `exp` and `nbf` when present.
+- Resolve the signing key by `kid` from the configured user pool's HTTPS JWKS
+  endpoint. Refresh the JWKS once for an unknown `kid`, then fail closed if the
+  key or signature still cannot be validated.

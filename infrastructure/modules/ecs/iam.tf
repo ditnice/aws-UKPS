@@ -51,3 +51,19 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
   role       = aws_iam_role.ecs_execution_role.id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
+
+resource "aws_iam_role_policy" "ecs_execution_custom" {
+  count = var.attach_execution_role_policy ? 1 : 0
+
+  name   = "${var.project}-${var.environment}-${var.service_name}-ecs-execution-custom"
+  role   = aws_iam_role.ecs_execution_role.id
+  policy = var.execution_role_policy_json
+}
+
+resource "aws_iam_role_policy" "ecs_task_custom" {
+  count = var.attach_task_role_policy ? 1 : 0
+
+  name   = "${var.project}-${var.environment}-${var.service_name}-ecs-task-custom"
+  role   = aws_iam_role.ecs_task_role.id
+  policy = var.task_role_policy_json
+}

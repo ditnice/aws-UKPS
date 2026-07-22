@@ -48,3 +48,14 @@ variable "sns_kms_arn" {
     error_message = "SNS KMS ARN must be a valid AWS KMS key ARN."
   }
 }
+
+variable "security_sns_kms_arn" {
+  description = "ARN of the KMS key used to encrypt the security alarm SNS topic"
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.security_sns_kms_arn == null || can(regex("^arn:aws[a-zA-Z-]*:kms:[a-z0-9-]+:[0-9]{12}:key/(mrk-[0-9a-f]{32}|[0-9a-f-]{36})$", var.security_sns_kms_arn))
+    error_message = "Security SNS KMS ARN must be a valid AWS KMS key ARN."
+  }
+}

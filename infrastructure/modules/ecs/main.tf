@@ -32,6 +32,18 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
       image_repository_url = var.ecr_repository_url
       image_tag            = var.image_tag
       region               = data.aws_region.current.region
+      environment = jsonencode([
+        for name in sort(keys(var.container_environment)) : {
+          name  = name
+          value = var.container_environment[name]
+        }
+      ])
+      secrets = jsonencode([
+        for name in sort(keys(var.container_secrets)) : {
+          name      = name
+          valueFrom = var.container_secrets[name]
+        }
+      ])
     }
   )
 
@@ -82,4 +94,9 @@ resource "aws_ecs_service" "ecs_service" {
     Project     = var.project
     Service     = var.service_name
   })
+
+  depends_on = [
+    aws_iam_role_policy.ecs_execution_custom,
+    aws_iam_role_policy.ecs_task_custom,
+  ]
 }
