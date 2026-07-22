@@ -105,6 +105,6 @@ repos:
       - id: backend-openapi
         name: Generate OpenAPI spec (backend)
         language: system
-        entry: bash -c 'cd backend && dotnet restore && dotnet build --no-restore src/UKPS.Api.csproj /p:OpenApiDocumentsDirectory=../openapi'
+        entry: bash -c 'cd backend && dotnet restore && dotnet build --no-restore src/UKPS.Api.csproj /p:OpenApiDocumentsDirectory=../openapi && git diff --exit-code -- openapi'
         files: ^backend/src/.*\.(cs|csproj|json)$
         pass_filenames: false
