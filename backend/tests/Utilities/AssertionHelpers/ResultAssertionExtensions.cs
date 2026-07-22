@@ -13,11 +13,16 @@ internal static class ResultAssertionExtensions
         return result.Value;
     }
 
-    public static TError ShouldBeError<TValue, TError>(this Result<TValue, TError> result)
-        where TValue : notnull
+    public static void ShouldBeSuccess<TError>(this Result<TError> result)
+        where TError : notnull
+    {
+        result.IsOk.ShouldBeTrue();
+    }
+
+    public static TError ShouldBeError<TError>(this IResult<TError> result)
         where TError : notnull
     {
         result.IsErr.ShouldBeTrue();
-        return result.Error;
+        return result.Error!;
     }
 }
