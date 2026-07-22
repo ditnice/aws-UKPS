@@ -704,7 +704,7 @@
             "format": "int32"
           }
         },
-        "description": "Represents a paginated response containing a collection of items and pagination metadata."
+        "description": "Represents aUpdatedon of items and pagination metadata."
       },
       "PharmaceuticalEntity": {
         "type": "string",

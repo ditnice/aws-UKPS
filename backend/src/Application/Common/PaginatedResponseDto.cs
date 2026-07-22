@@ -1,7 +1,7 @@
 namespace UKPS.Api.Application.Common;
 
 /// <summary>
-/// Represents a paginated response containing a collection of items and pagination metadata.
+/// Represents aUpdatedon of items and pagination metadata.
 /// </summary>
 /// <typeparam name="T">The type of the items in the paginated response.</typeparam>
 public sealed record PaginatedResponseDto<T>
