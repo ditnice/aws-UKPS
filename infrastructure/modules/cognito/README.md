@@ -75,7 +75,7 @@ No modules.
 | <a name="input_project"></a> [project](#input\_project) | Name of the project used in Cognito resource names and tags | `string` | n/a | yes |
 | <a name="input_security_alarm_topic_arn"></a> [security\_alarm\_topic\_arn](#input\_security\_alarm\_topic\_arn) | ARN of the SNS topic that receives Cognito security alarms | `string` | n/a | yes |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Short workload name used in Cognito resource names | `string` | n/a | yes |
-| <a name="input_ses_identity_arn"></a> [ses\_identity\_arn](#input\_ses\_identity\_arn) | ARN of the verified SES identity in the deployment account and provider region used for authentication email | `string` | n/a | yes |
+| <a name="input_ses_identity_arn"></a> [ses\_identity\_arn](#input\_ses\_identity\_arn) | ARN of the verified SES identity in the deployment account and provider region used for authentication email. Leave null to use Cognito default email sending. | `string` | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional tags to apply to supported Cognito resources | `map(string)` | `{}` | no |
 
 ## Outputs
@@ -84,8 +84,8 @@ No modules.
 | ---- | ----------- |
 | <a name="output_app_client_id"></a> [app\_client\_id](#output\_app\_client\_id) | ID of the confidential backend app client |
 | <a name="output_client_secret_arn"></a> [client\_secret\_arn](#output\_client\_secret\_arn) | ARN of the Secrets Manager secret containing the app client configuration |
-| <a name="output_ses_configuration_set_arn"></a> [ses\_configuration\_set\_arn](#output\_ses\_configuration\_set\_arn) | ARN of the SES configuration set used for authentication email |
-| <a name="output_ses_configuration_set_name"></a> [ses\_configuration\_set\_name](#output\_ses\_configuration\_set\_name) | Name of the SES configuration set used for authentication email |
+| <a name="output_ses_configuration_set_arn"></a> [ses\_configuration\_set\_arn](#output\_ses\_configuration\_set\_arn) | ARN of the SES configuration set used for authentication email, when SES developer email sending is enabled |
+| <a name="output_ses_configuration_set_name"></a> [ses\_configuration\_set\_name](#output\_ses\_configuration\_set\_name) | Name of the SES configuration set used for authentication email, when SES developer email sending is enabled |
 | <a name="output_user_pool_arn"></a> [user\_pool\_arn](#output\_user\_pool\_arn) | ARN of the Cognito user pool |
 | <a name="output_user_pool_id"></a> [user\_pool\_id](#output\_user\_pool\_id) | ID of the Cognito user pool |
 | <a name="output_user_pool_issuer"></a> [user\_pool\_issuer](#output\_user\_pool\_issuer) | OIDC issuer URL of the Cognito user pool |

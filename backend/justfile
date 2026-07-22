@@ -14,7 +14,7 @@ run:
     dotnet run --project src --launch-profile http
 
 generate-migration name:
-    dotnet ef migrations add {{name}} --project src --startup-project src --output-dir Migrations
+    dotnet ef migrations add {{name}} --project src --startup-project src --output-dir Persistence/Migrations
 
 openapi:
     dotnet build src/UKPS.Api.csproj /p:OpenApiDocumentsDirectory=../openapi
