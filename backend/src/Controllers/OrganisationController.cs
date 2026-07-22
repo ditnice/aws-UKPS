@@ -236,6 +236,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// <param name="organisation">
     /// The details required to create the organisation.
     /// </param>
+    /// <param name="cancellationToken"></param>
     /// <returns>
     /// An <see cref="ActionResult{TValue}"/> containing the created organisation's details if the
     /// operation is successful, or an appropriate HTTP error response if the request fails.
@@ -245,10 +246,11 @@ public class OrganisationController(IOrganisationService organisationService) : 
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<OrganisationDetailsDto>> CreateOrganisation(
-        CreateOrganisationDto organisation
+        CreateOrganisationDto organisation,
+        CancellationToken cancellationToken
     )
     {
-        var result = await organisationService.CreateOrganisation(organisation);
+        var result = await organisationService.CreateOrganisation(organisation, cancellationToken);
         return result.Match<ActionResult<OrganisationDetailsDto>>(
             x => Ok(x),
             x =>

@@ -96,7 +96,8 @@ internal sealed class OrganisationService : IOrganisationService
         };
 
     public async Task<Result<OrganisationDetailsDto, CreateOrganisationError>> CreateOrganisation(
-        CreateOrganisationDto command
+        CreateOrganisationDto command,
+        CancellationToken cancellationToken
     )
     {
         if (
@@ -111,15 +112,27 @@ internal sealed class OrganisationService : IOrganisationService
             );
         }
 
-        bool OrganisationExists = await _dbContext.Organisations.AnyAsync(x =>
-            x.OrganisationName == command.OrganisationName
+        bool OrganisationExists = await _dbContext.Organisations.AnyAsync(
+            x => x.OrganisationName == command.OrganisationName,
+            cancellationToken: cancellationToken
         );
         if (OrganisationExists)
         {
             return Result<OrganisationDetailsDto, CreateOrganisationError>.Err(
                 new CreateOrganisationError.OrganisationNameConflict()
             );
-        } // or is this checked by the required key word
+        }
+        bool organisationExists = await _dbContext.Organisations.AnyAsync(
+            x => x.OrganisationName == command.OrganisationName,
+            cancellationToken
+        );
+
+        if (organisationExists)
+        {
+            return Result<OrganisationDetailsDto, CreateOrganisationError>.Err(
+                new CreateOrganisationError.OrganisationNameConflict()
+            );
+        }
 
         var organisation = new Organisation()
         {
@@ -135,7 +148,7 @@ internal sealed class OrganisationService : IOrganisationService
             // last active needs to be added
         };
         _dbContext.Organisations.Add(organisation);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return Result<OrganisationDetailsDto, CreateOrganisationError>.Ok(MapToDto(organisation));
     }
 }
