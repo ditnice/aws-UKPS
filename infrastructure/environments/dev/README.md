@@ -30,7 +30,7 @@
 | <a name="module_kms_backend"></a> [kms\_backend](#module\_kms\_backend) | ../../modules/kms | n/a |
 | <a name="module_kms_frontend"></a> [kms\_frontend](#module\_kms\_frontend) | ../../modules/kms | n/a |
 | <a name="module_networking"></a> [networking](#module\_networking) | ../../modules/networking | n/a |
-| <a name="module_r53"></a> [r53](#module\_r53) | ../../modules/r53 | n/a |
+| <a name="module_route53"></a> [route53](#module\_route53) | ../../modules/route53 | n/a |
 | <a name="module_sns"></a> [sns](#module\_sns) | ../../modules/sns | n/a |
 
 ## Resources

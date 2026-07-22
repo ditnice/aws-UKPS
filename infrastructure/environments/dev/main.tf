@@ -58,8 +58,8 @@ module "alb" {
   }
 }
 
-module "r53" {
-  source = "../../modules/r53"
+module "route53" {
+  source = "../../modules/route53"
 
   providers = {
     aws           = aws

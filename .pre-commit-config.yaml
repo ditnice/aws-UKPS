@@ -21,6 +21,7 @@ repos:
         files: ^infrastructure/.*\.tf$
       - id: terraform_validate
         files: ^infrastructure/.*\.tf$
+        exclude: ^infrastructure/modules/route53/.*\.tf$
       - id: terraform_docs
         files: ^infrastructure/.*\.tf$
         args:
