@@ -13,7 +13,6 @@
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
-| <a name="provider_aws.us_east_1"></a> [aws.us\_east\_1](#provider\_aws.us\_east\_1) | ~> 6.0 |
 
 ## Modules
 
@@ -23,15 +22,9 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
-| [aws_cloudwatch_log_group.route53_query_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
-| [aws_cloudwatch_log_resource_policy.route53_query_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_resource_policy) | resource |
-| [aws_kms_alias.route53_query_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
-| [aws_kms_key.route53_query_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
-| [aws_route53_query_log.base_domain](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_query_log) | resource |
 | [aws_route53_record.a](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_record.aaaa](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_zone.base_domain](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 
 ## Inputs
 
@@ -45,7 +38,6 @@ No modules.
 | <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment used in Route53 tags | `string` | n/a | yes |
 | <a name="input_fqdns"></a> [fqdns](#input\_fqdns) | Fully qualified domain names to create A and AAAA records for | `set(string)` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
-| <a name="input_route53_query_log_retention_days"></a> [route53\_query\_log\_retention\_days](#input\_route53\_query\_log\_retention\_days) | Number of days to retain Route53 DNS query logs in CloudWatch Logs | `number` | `365` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional tags to apply to Route53 resources | `map(string)` | `{}` | no |
 
 ## Outputs
