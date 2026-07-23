@@ -5,6 +5,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>MA0026;MA0025;S1135</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

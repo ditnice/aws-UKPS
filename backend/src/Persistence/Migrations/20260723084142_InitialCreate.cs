@@ -280,6 +280,21 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "user_onboarding_records",
+                schema: "ukps",
+                columns: table => new
+                {
+                    setup_token = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_email = table.Column<string>(type: "text", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    created_by = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_user_onboarding_records", x => x.setup_token);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "vaccine_administration_route",
                 schema: "ukps",
                 columns: table => new
@@ -2660,6 +2675,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "user_audits",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "user_onboarding_records",
                 schema: "ukps");
 
             migrationBuilder.DropTable(

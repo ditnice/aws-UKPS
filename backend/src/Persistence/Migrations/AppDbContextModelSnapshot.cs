@@ -395,6 +395,33 @@ namespace UKPS.Api.Persistence.Migrations
                     b.ToTable("user_audits", "ukps");
                 });
 
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", b =>
+                {
+                    b.Property<Guid>("SetupToken")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("setup_token");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("user_email");
+
+                    b.HasKey("SetupToken")
+                        .HasName("pk_user_onboarding_records");
+
+                    b.ToTable("user_onboarding_records", "ukps");
+                });
+
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOrgMembership", b =>
                 {
                     b.Property<int>("Id")

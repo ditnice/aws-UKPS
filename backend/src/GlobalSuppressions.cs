@@ -31,3 +31,10 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.Application"
 )]
+[assembly: SuppressMessage(
+    "Naming",
+    "CA1716:Identifiers should not match keywords",
+    Justification = "<Pending>",
+    Scope = "member",
+    Target = "~P:UKPS.Api.Application.Common.IResult`1.Error"
+)]

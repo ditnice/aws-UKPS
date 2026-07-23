@@ -14,4 +14,9 @@ internal static class UkpsClaimTypes
     /// The claim type representing the role assigned to the user.
     /// </summary>
     public const string UserRole = "user_role";
+
+    /// <summary>
+    /// The claim type representing the email of the user.
+    /// </summary>
+    public const string Email = "email";
 }

@@ -19,7 +19,19 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
 
     public CurrentUser GetCurrentUserInfo()
     {
-        return new CurrentUser { OrganisationId = FindOrganisationId(), UserRole = FindUserRole() };
+        return new CurrentUser
+        {
+            OrganisationId = FindOrganisationId(),
+            UserRole = FindUserRole(),
+            Email = FindUserEmail(),
+        };
+    }
+
+    private string FindUserEmail()
+    {
+        string? userEmailClaim = Principal.FindFirstValue(UkpsClaimTypes.Email);
+        return userEmailClaim
+            ?? throw new InvalidOperationException($"Invalid {UkpsClaimTypes.Email} claim value.");
     }
 
     private int FindOrganisationId()
