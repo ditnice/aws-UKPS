@@ -10,6 +10,7 @@ public class TestAuthenticationOptions
     [
         new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
         new Claim(UkpsClaimTypes.OrganisationId, $"{1}"),
+        new Claim(UkpsClaimTypes.Email, $"example.user@email.com"),
     ];
 
     public ICollection<Claim> Claims { get; } = DefaultClaims.ToList();

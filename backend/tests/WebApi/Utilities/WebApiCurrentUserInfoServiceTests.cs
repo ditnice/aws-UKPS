@@ -11,6 +11,13 @@ namespace UKPS.Api.Tests.WebApi.Utilities;
 
 public class WebApiCurrentUserInfoServiceTests
 {
+    private readonly Claim[] _defaults =
+    [
+        new Claim(UkpsClaimTypes.OrganisationId, $"{0}"),
+        new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
+        new Claim(UkpsClaimTypes.Email, "example.user@email.com"),
+    ];
+
     [Fact]
     public void GetCurrentUserInfo_ShouldReturnCurrentUser_WhenClaimsAreValid()
     {
@@ -19,7 +26,7 @@ public class WebApiCurrentUserInfoServiceTests
         foreach (var userRole in Enum.GetValues<UserRole>())
         {
             var organisationId = faker.Random.Int(min: 0);
-            var service = CreateService(
+            var service = CreateServiceWithOverrides(
                 new Claim(UkpsClaimTypes.OrganisationId, $"{organisationId}"),
                 new Claim(UkpsClaimTypes.UserRole, userRole.ToString())
             );
@@ -31,16 +38,17 @@ public class WebApiCurrentUserInfoServiceTests
         }
     }
 
-    [Fact]
-    public void GetCurrentUserInfo_ShouldThrow_WhenOrganisationIdClaimIsMissing()
+    [Theory]
+    [InlineData(UkpsClaimTypes.OrganisationId)]
+    [InlineData(UkpsClaimTypes.UserRole)]
+    [InlineData(UkpsClaimTypes.Email)]
+    public void GetCurrentUserInfo_ShouldThrow_WhenExpectedClaimIsMissing(string missingClaimType)
     {
-        var service = CreateService(
-            new Claim(UkpsClaimTypes.UserRole, UserRole.Champion.ToString())
-        );
+        var service = CreateServiceWithoutParams(missingClaimType);
 
         var exception = Should.Throw<InvalidOperationException>(() => service.GetCurrentUserInfo());
 
-        exception.Message.ShouldBe($"Invalid {UkpsClaimTypes.OrganisationId} claim value.");
+        exception.Message.ShouldBe($"Invalid {missingClaimType} claim value.");
     }
 
     [Theory]
@@ -49,7 +57,7 @@ public class WebApiCurrentUserInfoServiceTests
     [InlineData("1.5")]
     public void GetCurrentUserInfo_ShouldThrow_WhenOrganisationIdClaimIsInvalid(string claimValue)
     {
-        var service = CreateService(
+        var service = CreateServiceWithOverrides(
             new Claim(UkpsClaimTypes.OrganisationId, claimValue),
             new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString())
         );
@@ -59,21 +67,11 @@ public class WebApiCurrentUserInfoServiceTests
         exception.Message.ShouldBe($"Invalid {UkpsClaimTypes.OrganisationId} claim value.");
     }
 
-    [Fact]
-    public void GetCurrentUserInfo_ShouldThrow_WhenUserRoleClaimIsMissing()
-    {
-        var service = CreateService(new Claim(UkpsClaimTypes.OrganisationId, "123"));
-
-        var exception = Should.Throw<InvalidOperationException>(() => service.GetCurrentUserInfo());
-
-        exception.Message.ShouldBe($"Invalid {UkpsClaimTypes.UserRole} claim value.");
-    }
-
     [Theory]
     [InlineData("123")]
     public void GetCurrentUserInfo_ShouldThrow_WhenUserRoleClaimIsInvalid(string claimValue)
     {
-        var service = CreateService(
+        var service = CreateServiceWithOverrides(
             new Claim(UkpsClaimTypes.OrganisationId, "123"),
             new Claim(UkpsClaimTypes.UserRole, claimValue)
         );
@@ -92,6 +90,27 @@ public class WebApiCurrentUserInfoServiceTests
         var service = new WebApiCurrentUserInfoService(accessor);
 
         Should.Throw<InvalidOperationException>(() => service.GetCurrentUserInfo());
+    }
+
+    private WebApiCurrentUserInfoService CreateServiceWithoutParams(
+        params string[] claimTypesToRemove
+    )
+    {
+        Claim[] claims = _defaults.Where(d => !claimTypesToRemove.Contains(d.Type)).ToArray();
+        return CreateService(claims);
+    }
+
+    private WebApiCurrentUserInfoService CreateServiceWithOverrides(params Claim[] overrides)
+    {
+        Claim[] claims = _defaults
+            .Select(d =>
+                overrides.FirstOrDefault(o =>
+                    string.Equals(o.Type, d.Type, StringComparison.Ordinal)
+                ) ?? d
+            )
+            .ToArray();
+
+        return CreateService(claims);
     }
 
     private static WebApiCurrentUserInfoService CreateService(params Claim[] claims)
