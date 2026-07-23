@@ -33,6 +33,7 @@ The `dev` environment requires these values to be supplied manually because they
 | `cognito_email_from_address` | Verified sender address for authentication email. | `no-reply@ukps.nice.org.uk` |
 | `cognito_email_reply_to_address` | Reply-to address for authentication email. | `support@ukps.nice.org.uk` |
 | `sns_alarm_emails` | Map of labels to email addresses subscribed to alarm SNS topics. Subscribers must confirm the AWS SNS email confirmation before receiving alerts. | `{ platform = "platform@example.org", service = "service@example.org" }` |
+| `cloudfront_distribution_id` | ID of the existing CloudFront distribution used by the Route53 alias records. | `E123ABC456DEF` |
 
 > Note: `cognito_ses_identity_arn` is optional while SES/domain verification is not managed by this stack. Leave it unset to use Cognito default email sending. Once Route 53/SES verification is added to Terraform, set or replace this input with the managed SES identity output to enable Cognito developer email sending.
 
@@ -51,6 +52,7 @@ export TF_VAR_image_tag="1.2.3"
 export TF_VAR_cognito_email_from_address="no-reply@ukps.nice.org.uk"
 export TF_VAR_cognito_email_reply_to_address="support@ukps.nice.org.uk"
 export TF_VAR_sns_alarm_emails='{ platform = "platform@example.org", service = "service@example.org" }'
+export TF_VAR_cloudfront_distribution_id="E123ABC456DEF"
 ```
 
 To enable Cognito developer email sending after SES is ready, also set:
