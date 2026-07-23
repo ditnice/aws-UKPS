@@ -3,12 +3,12 @@ import Link from 'next/link'
 import { Button } from '@nice-digital/nds-button'
 import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
 import { FilterSummary } from '@nice-digital/nds-filters'
-import { Tag } from '@nice-digital/nds-tag'
 
-import { roleLabels, statusLabels } from '@/app/portal/_constants/userLabels'
+import { roleLabels, statusLabels, statusTagColours } from '@/app/portal/_constants/userLabels'
 import { getUsers } from '@/client/generated/sdk.gen'
 import type { UserListItemDto } from '@/client/generated/types.gen'
 import { Table } from '@/components/Table/Table'
+import { Tag } from '@/components/Tag/Tag'
 
 import styles from '../page.module.scss'
 
@@ -40,7 +40,7 @@ function formatDate(date: string | null | undefined): string {
 function renderStatus(status: UserListItemDto['status']) {
   const label = status ? statusLabels[status] : 'N/A'
 
-  return status === 'Active' ? <Tag success>{label}</Tag> : <Tag>{label}</Tag>
+  return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
 function getFirstResult(totalCount: number | string, currentPage: number): number {
@@ -115,14 +115,12 @@ export async function OrganisationUsersTable({
               )}
             </tbody>
           </Table>
-          {getTotalPages(users.totalCount) > 1 ? (
-            <EnhancedPagination
-              currentPage={currentPage}
-              elementType={PaginationLink}
-              mapPageNumberToHref={(pageNumber) => `?page=${pageNumber}`}
-              totalPages={getTotalPages(users.totalCount)}
-            />
-          ) : null}
+          <EnhancedPagination
+            currentPage={currentPage}
+            elementType={PaginationLink}
+            mapPageNumberToHref={(pageNumber) => `?page=${pageNumber}`}
+            totalPages={getTotalPages(users.totalCount)}
+          />
         </>
       )}
     </>

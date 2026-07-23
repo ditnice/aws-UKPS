@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
-import { Container } from '@nice-digital/nds-container'
 import { PageHeader } from '@nice-digital/nds-page-header'
-import { Tag } from '@nice-digital/nds-tag'
+
+import { Tag } from '@/components/Tag/Tag'
 
 import styles from '../page.module.scss'
 

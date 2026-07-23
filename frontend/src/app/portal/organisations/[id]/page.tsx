@@ -45,7 +45,7 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
 
   return (
     <>
-      <PageHeader heading={organisation.organisationName} verticalPadding="loose" />
+      <PageHeader heading={organisation.organisationName} />
 
       <h2>Company details</h2>
       <SummaryList>
