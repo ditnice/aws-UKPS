@@ -92,7 +92,7 @@ repos:
       - id: backend-unused-usings
         name: Remove unused usings (backend)
         language: system
-        entry: bash -c 'cd backend && dotnet format UKPS.Api.slnx --diagnostics IDE0005'
+        entry: bash -c 'cd backend && dotnet format UKPS.Api.slnx'
         files: ^backend/.*\.cs$
         pass_filenames: false
 
