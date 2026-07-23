@@ -1,4 +1,3 @@
-using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
@@ -34,7 +33,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     public UserAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _harness = getTestHarness();
+        _harness = GetTestHarness();
     }
 
     [Fact]
@@ -86,7 +85,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foreach (var userRole in noneSuperAdminRoles)
         {
             IServiceTestHarness<IUserAdministrationService> harnessWithNoneSuperUserAuth =
-                getTestHarness().UpdateCurrentUser(x => x with { UserRole = userRole });
+                GetTestHarness().UpdateCurrentUser(x => x with { UserRole = userRole });
             OnboardUserCommandDto command = _onBoardUserCommandFaker.Generate();
             OnBoardUserResult result = await harnessWithNoneSuperUserAuth.Service.OnboardUser(
                 command,
@@ -96,20 +95,11 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         }
     }
 
-    private IServiceTestHarness<IUserAdministrationService> getTestHarness()
+    private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
         return new ServiceTestHarness<IUserAdministrationService>(Context)
             .UpdateCurrentUser(x => x with { Email = _currentUserEmail })
             .UpdateCurrentTime(_currentTime)
             .ConfigureServices(services => services.AddTransient(_ => _setupLinkCreator));
-    }
-
-    private sealed class OnboardUserCommandDtoFaker : Faker<OnboardUserCommandDto>
-    {
-        public OnboardUserCommandDtoFaker()
-        {
-            UseSeed(12);
-            RuleFor(x => x.NewUserEmail, f => f.Internet.Email());
-        }
     }
 }
