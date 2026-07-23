@@ -284,16 +284,14 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    user_email = table.Column<string>(type: "text", nullable: false),
                     setup_token = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_email = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     created_by = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user_onboarding_records", x => x.id);
+                    table.PrimaryKey("pk_user_onboarding_records", x => x.setup_token);
                 });
 
             migrationBuilder.CreateTable(

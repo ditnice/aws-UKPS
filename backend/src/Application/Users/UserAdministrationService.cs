@@ -57,7 +57,8 @@ internal sealed partial class UserAdministrationService(
         dbContext.UserOnboardingRecords.Add(userOnboardingRecord);
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        LogNewUserOnboardingRecordCreated(userOnboardingRecord.Id);
+        string sanitisedGuid = Sanitise(userOnboardingRecord.SetupToken);
+        LogNewUserOnboardingRecordCreated(sanitisedGuid);
         return userOnboardingRecord;
     }
 
@@ -66,24 +67,27 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
-        var link = setupLinkCreator.GetSetupLink(userOnboardingRecord.SetupToken);
+        string link = setupLinkCreator.GetSetupLink(userOnboardingRecord.SetupToken);
         await emailService.SendEmail(
             userOnboardingRecord.UserEmail,
             new UserSignUpRequestEmail() { Link = link },
             cancellationToken
         );
-        LogSendingUserSignUpRequestEmail(userOnboardingRecord.Id);
+        string sanitisedGuid = Sanitise(userOnboardingRecord.SetupToken);
+        LogSendingUserSignUpRequestEmail(sanitisedGuid);
     }
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "User Onboarding Record Created [Id = {Id}]."
+        Message = "User Onboarding Record Created [Token = {token}...]."
     )]
-    private partial void LogNewUserOnboardingRecordCreated(int id);
+    private partial void LogNewUserOnboardingRecordCreated(string token);
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "User onboarding email sent [Id = {Id}]."
+        Message = "User onboarding email sent [Token = {token}...]."
     )]
-    private partial void LogSendingUserSignUpRequestEmail(int id);
+    private partial void LogSendingUserSignUpRequestEmail(string token);
+
+    private static string Sanitise(Guid guid) => guid.ToString().Substring(0, 8);
 }

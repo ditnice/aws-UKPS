@@ -397,12 +397,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("SetupToken")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid")
+                        .HasColumnName("setup_token");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -413,16 +411,12 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("created_by");
 
-                    b.Property<Guid>("SetupToken")
-                        .HasColumnType("uuid")
-                        .HasColumnName("setup_token");
-
                     b.Property<string>("UserEmail")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("user_email");
 
-                    b.HasKey("Id")
+                    b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
 
                     b.ToTable("user_onboarding_records", "ukps");
