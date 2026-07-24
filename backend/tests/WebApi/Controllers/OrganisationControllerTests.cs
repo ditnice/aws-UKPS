@@ -360,6 +360,37 @@ public class OrganisationControllerTests
         result.Result.ShouldBeOfType<ForbidResult>();
     }
 
+    [Fact]
+    public async Task CreateOrganisation_AllFieldsProvided_ReturnsDto()
+    {
+        CreateOrganisationDto organisation = CreateOrganisationDto();
+        await _controller.CreateOrganisation(organisation, TestContext.Current.CancellationToken);
+        await _organisationServiceMock
+            .Received(1)
+            .CreateOrganisation(organisation, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task CreateOrganisation_NameConflict_ReturnsConflict()
+    {
+        CreateOrganisationDto organisation = CreateOrganisationDto();
+        _organisationServiceMock
+            .CreateOrganisation(organisation, TestContext.Current.CancellationToken)
+            .Returns(
+                Result<OrganisationDetailsDto, CreateOrganisationError>.Err(
+                    new CreateOrganisationError.OrganisationNameConflict()
+                )
+            );
+        ActionResult<OrganisationDetailsDto> result = await _controller.CreateOrganisation(
+            organisation,
+            TestContext.Current.CancellationToken
+        );
+        await _organisationServiceMock
+            .Received(1)
+            .CreateOrganisation(organisation, TestContext.Current.CancellationToken);
+        result.Result.ShouldBeOfType<ConflictObjectResult>();
+    }
+
     private static OrganisationDetailsDto CreateOrganisationDetailsDto() =>
         new()
         {
@@ -406,4 +437,13 @@ public class OrganisationControllerTests
         );
         return validationResults;
     }
+
+    private static CreateOrganisationDto CreateOrganisationDto() =>
+        new()
+        {
+            OrganisationName = "Gov Pharma Ltd",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            HeadOfficeEmail = "info@pharma.gov.uk",
+            HeadOfficeTelephone = "020 1234 5678",
+        };
 }
