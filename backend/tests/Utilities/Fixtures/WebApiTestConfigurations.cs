@@ -1,0 +1,37 @@
+using Microsoft.AspNetCore.Hosting;
+using UKPS.Api.Persistence.Data.Seeding;
+
+namespace UKPS.Api.Tests.Utilities.Fixtures;
+
+public static class WebApiTestConfigurations
+{
+    public static void ConfigureNoDatabase(this IWebHostBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ConfigureDatabase(null, false);
+    }
+
+    public static void ConfigureWithDatabase(this IWebHostBuilder builder, string connectionString)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ConfigureDatabase(connectionString, false);
+    }
+
+    private static void ConfigureDatabase(
+        this IWebHostBuilder builder,
+        string? connectionString,
+        bool reseedOnStartup
+    )
+    {
+        if (connectionString is not null)
+        {
+            builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
+        }
+        builder.UseSetting(
+            $"{SeedingConfiguration.SectionName}:{nameof(SeedingConfiguration.ReseedOnStartup)}",
+            $"{reseedOnStartup}"
+        );
+    }
+}

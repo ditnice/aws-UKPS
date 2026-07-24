@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Amazon.AspNetCore.Identity.Cognito" Version="4.0.2" />
     <PackageReference Include="Bogus" Version="35.6.5" />
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.10" />
@@ -24,6 +25,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.21.0" />
     <!-- TODO URP 300: This overrides the dependency (marked as vulnerable) from the Microsoft.AspNetCore.OpenApi.
     Once this package is updated to not have a vulnerable dependency this can be removed. -->
     <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />

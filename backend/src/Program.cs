@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using UKPS.Api.Application;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
@@ -25,6 +26,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserInfoService, WebApiCurrentUserInfoService>();
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();
+
+builder.Services.Configure<CognitoConfiguration>(
+    builder.Configuration.GetSection(CognitoConfiguration.SectionName)
+);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

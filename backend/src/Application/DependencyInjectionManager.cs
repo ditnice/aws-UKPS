@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users;
@@ -13,6 +14,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped<IOrganisationService, OrganisationService>();
         services.TryAddScoped<IOrganisationMembershipService, OrganisationMembershipService>();
         services.TryAddScoped<IUserService, UserService>();
+        services.AddAuthenticationServices();
 
         return services;
     }
