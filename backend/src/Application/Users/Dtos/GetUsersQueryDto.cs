@@ -36,4 +36,9 @@ public sealed record GetUsersQueryDto
     /// Gets or initialises the collection of user roles to filter users by.
     /// </summary>
     public ICollection<UserRole> Role { get; init; } = [];
+
+    /// <summary>
+    /// Gets or initialises an optional partial, case-insensitive match against the user's email address.
+    /// </summary>
+    public string? Email { get; init; }
 }

@@ -18,6 +18,7 @@ public interface IUserService
     /// <param name="pageSize">The number of users per page.</param>
     /// <param name="statuses">A collection of user organisation statuses to filter by.</param>
     /// <param name="roles">A collection of user roles to filter by.</param>
+    /// <param name="email">An optional partial, case-insensitive match against the user's email address.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a
@@ -30,6 +31,7 @@ public interface IUserService
         int pageSize,
         IReadOnlyCollection<UserOrgStatus> statuses,
         IReadOnlyCollection<UserRole> roles,
+        string? email,
         CancellationToken cancellationToken
     );
 }

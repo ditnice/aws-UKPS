@@ -32,6 +32,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
+                Arg.Any<string?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(expected));
@@ -55,6 +56,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
+                Arg.Any<string?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -83,6 +85,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
+                Arg.Any<string?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -109,6 +112,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
+                Arg.Any<string?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -135,6 +139,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
+                Arg.Any<string?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -149,6 +154,7 @@ public class UserControllerTests
             PageSize = 10,
             Status = [UserOrgStatus.Active, UserOrgStatus.Inactive],
             Role = [UserRole.Champion, UserRole.Super],
+            Email = "smith",
         };
 
         await _controller.GetUsers(getUsersQuery, TestContext.Current.CancellationToken);
@@ -165,6 +171,7 @@ public class UserControllerTests
                 Arg.Is<IReadOnlyCollection<UserRole>>(roles =>
                     roles.SequenceEqual(getUsersQuery.Role)
                 ),
+                getUsersQuery.Email,
                 TestContext.Current.CancellationToken
             );
     }
@@ -179,6 +186,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
+                Arg.Any<string?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -197,6 +205,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
+                Arg.Any<string?>(),
                 TestContext.Current.CancellationToken
             );
     }

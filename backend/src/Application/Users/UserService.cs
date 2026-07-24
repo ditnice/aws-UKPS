@@ -24,30 +24,17 @@ internal sealed class UserService(
         int pageSize,
         IReadOnlyCollection<UserOrgStatus> statuses,
         IReadOnlyCollection<UserRole> roles,
+        string? email,
         CancellationToken cancellationToken
     )
     {
-        if (organisationId.HasValue)
+        GetUsersError? organisationError = await ValidateOrganisationAsync(
+            organisationId,
+            cancellationToken
+        );
+        if (organisationError is not null)
         {
-            bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.Read,
-                organisationId.Value
-            );
-            if (!actionPermitted)
-            {
-                return GetUsersResult.Err(new GetUsersError.NotAllowed(organisationId.Value));
-            }
-            bool organisationExists = await dbContext.Organisations.AnyAsync(
-                o => o.Id == organisationId.Value,
-                cancellationToken
-            );
-
-            if (!organisationExists)
-            {
-                return GetUsersResult.Err(
-                    new GetUsersError.OrganisationNotFound(organisationId.Value)
-                );
-            }
+            return GetUsersResult.Err(organisationError);
         }
 
         var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
@@ -58,7 +45,8 @@ internal sealed class UserService(
             permittedOrganisationIds,
             organisationId,
             statuses,
-            roles
+            roles,
+            email
         );
 
         int totalCount = await organisationMemberships.CountAsync(cancellationToken);
@@ -89,12 +77,42 @@ internal sealed class UserService(
         );
     }
 
+    private async Task<GetUsersError?> ValidateOrganisationAsync(
+        int? organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!organisationId.HasValue)
+        {
+            return null;
+        }
+
+        bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.Read,
+            organisationId.Value
+        );
+        if (!actionPermitted)
+        {
+            return new GetUsersError.NotAllowed(organisationId.Value);
+        }
+
+        bool organisationExists = await dbContext.Organisations.AnyAsync(
+            o => o.Id == organisationId.Value,
+            cancellationToken
+        );
+
+        return organisationExists
+            ? null
+            : new GetUsersError.OrganisationNotFound(organisationId.Value);
+    }
+
     private static IQueryable<UserOrgMembership> ApplyFilters(
         IQueryable<UserOrgMembership> input,
         ValueOrAll<int> permittedOrganisationIds,
         int? organisationId,
         IReadOnlyCollection<UserOrgStatus> statuses,
-        IReadOnlyCollection<UserRole> roles
+        IReadOnlyCollection<UserRole> roles,
+        string? email
     )
     {
         IQueryable<UserOrgMembership> organisationMemberships = input.Where(
@@ -122,6 +140,20 @@ internal sealed class UserService(
             );
         }
 
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            string pattern = $"%{EscapeLikePattern(email)}%";
+            organisationMemberships = organisationMemberships.Where(m =>
+                EF.Functions.ILike(m.User!.WorkEmail, pattern, "\\")
+            );
+        }
+
         return organisationMemberships;
     }
+
+    private static string EscapeLikePattern(string value) =>
+        value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal)
+            .Replace("_", "\\_", StringComparison.Ordinal);
 }
