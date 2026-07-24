@@ -833,7 +833,8 @@
           "AwaitingSetup",
           "Active",
           "Rejected",
-          "Inactive"
+          "Inactive",
+          "Deactivated"
         ],
         "type": "string",
         "description": "Represents the status of a user's association with an organisation."

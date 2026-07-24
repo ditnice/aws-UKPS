@@ -9,15 +9,17 @@ export const roleLabels: Record<UserRole, string> = {
 
 export const statusLabels: Record<UserOrgStatus, string> = {
   Active: 'Active',
-  AwaitingSetup: 'Awaiting setup',
+  AwaitingSetup: 'Pending',
+  Deactivated: 'Deactivated',
   Inactive: 'Inactive',
   Rejected: 'Rejected',
-  RequestedAccess: 'Requested access',
+  RequestedAccess: 'Requested',
 }
 
 export const statusTagColours: Record<UserOrgStatus, TagColour> = {
   Active: 'green',
-  AwaitingSetup: 'teal',
+  AwaitingSetup: 'blue',
+  Deactivated: 'purple',
   Inactive: 'red',
   Rejected: 'grey',
   RequestedAccess: 'yellow',

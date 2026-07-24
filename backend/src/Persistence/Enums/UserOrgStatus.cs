@@ -19,4 +19,7 @@ public enum UserOrgStatus
 
     /// <summary>User is no longer active within the organisation.</summary>
     Inactive = 4,
+
+    /// <summary>User has been deactivated.</summary>
+    Deactivated = 5,
 }
