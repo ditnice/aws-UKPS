@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Persistence.Entities.Email;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;

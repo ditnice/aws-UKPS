@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace UKPS.Api.Persistence.Data.Seeding;
 
 internal sealed class SeedDataWriter

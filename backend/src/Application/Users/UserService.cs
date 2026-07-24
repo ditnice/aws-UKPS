@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.Users.Dtos;

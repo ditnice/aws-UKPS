@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Persistence.Entities.Identity;
 
 namespace UKPS.Api.Persistence.Data.Seeding;
