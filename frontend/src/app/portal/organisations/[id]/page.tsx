@@ -2,16 +2,21 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
 import { Button } from '@nice-digital/nds-button'
+import { Grid, GridItem } from '@nice-digital/nds-grid'
 import { PageHeader } from '@nice-digital/nds-page-header'
 
 import { getOrganisationById } from '@/client/generated/sdk.gen'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
+import { OrganisationFilters } from './_components/OrganisationFilters'
 import { OrganisationUsersTable } from './_components/OrganisationUsersTable'
+
+const pageSizeOptions = [10, 25, 50]
+const defaultPageSize = 10
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; pageSize?: string }>
 }
 
 function parsePage(page: string | undefined): number {
@@ -20,11 +25,18 @@ function parsePage(page: string | undefined): number {
   return Number.isInteger(parsedPage) && parsedPage >= 1 ? parsedPage : 1
 }
 
+function parsePageSize(pageSize: string | undefined): number {
+  const parsedPageSize = Number(pageSize)
+
+  return pageSizeOptions.includes(parsedPageSize) ? parsedPageSize : defaultPageSize
+}
+
 export default async function OrganisationPage({ params, searchParams }: Props) {
   const { id } = await params
-  const { page } = await searchParams
+  const { page, pageSize: pageSizeParam } = await searchParams
   const organisationId = Number(id)
   const currentPage = parsePage(page)
+  const pageSize = parsePageSize(pageSizeParam)
 
   if (!Number.isInteger(organisationId)) {
     notFound()
@@ -47,13 +59,10 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
     <>
       <PageHeader heading={organisation.organisationName} />
 
-      <h2>Company details</h2>
-      <SummaryList>
-        <SummaryListRow
-          label="Company or organisation type"
-          value={organisation.organisationType}
-        />
-        <SummaryListRow label="Company name" value={organisation.organisationName} />
+      <h2>Organisation details</h2>
+      <SummaryList variant="two-column">
+        <SummaryListRow label="Organisation type" value={organisation.organisationType} />
+        <SummaryListRow label="Organisation name" value={organisation.organisationName} />
         <SummaryListRow label="Head office address" value={organisation.headOfficeAddress} />
         <SummaryListRow
           label="Head office email address"
@@ -68,9 +77,20 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
       <Button variant={Button.variants.secondary}>Edit details</Button>
 
       <h2>Search and filter</h2>
-      <Suspense fallback={<p>Loading users...</p>} key={currentPage}>
-        <OrganisationUsersTable currentPage={currentPage} organisationId={organisationId} />
-      </Suspense>
+      <Grid gutter="loose">
+        <GridItem cols={12} md={4} lg={3} elementType="section" aria-label="Filter results">
+          <OrganisationFilters />
+        </GridItem>
+        <GridItem cols={12} md={8} lg={9} elementType="section" aria-labelledby="filter-summary">
+          <Suspense fallback={<p>Loading users...</p>} key={`${currentPage}-${pageSize}`}>
+            <OrganisationUsersTable
+              currentPage={currentPage}
+              organisationId={organisationId}
+              pageSize={pageSize}
+            />
+          </Suspense>
+        </GridItem>
+      </Grid>
     </>
   )
 }

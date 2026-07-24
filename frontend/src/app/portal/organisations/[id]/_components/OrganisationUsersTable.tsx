@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Button } from '@nice-digital/nds-button'
 import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
 import { FilterSummary } from '@nice-digital/nds-filters'
+import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import { roleLabels, statusLabels, statusTagColours } from '@/app/portal/_constants/userLabels'
 import { getUsers } from '@/client/generated/sdk.gen'
@@ -17,9 +18,10 @@ import type { ComponentProps } from 'react'
 interface OrganisationUsersTableProps {
   currentPage: number
   organisationId: number
+  pageSize: number
 }
 
-const pageSize = 5
+const resultsPerPage = [10, 25, 50]
 
 function PaginationLink({ children, ...props }: ComponentProps<typeof Link>) {
   return (
@@ -43,21 +45,26 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
-function getFirstResult(totalCount: number | string, currentPage: number): number {
+function getFirstResult(
+  totalCount: number | string,
+  currentPage: number,
+  pageSize: number,
+): number {
   return Number(totalCount) === 0 ? 0 : (currentPage - 1) * pageSize + 1
 }
 
-function getLastResult(totalCount: number | string, currentPage: number): number {
+function getLastResult(totalCount: number | string, currentPage: number, pageSize: number): number {
   return Math.min(currentPage * pageSize, Number(totalCount))
 }
 
-function getTotalPages(totalCount: number | string): number {
+function getTotalPages(totalCount: number | string, pageSize: number): number {
   return Math.ceil(Number(totalCount) / pageSize)
 }
 
 export async function OrganisationUsersTable({
   currentPage,
   organisationId,
+  pageSize,
 }: OrganisationUsersTableProps) {
   const { data: users, error: usersError } = await getUsers({
     query: {
@@ -72,10 +79,11 @@ export async function OrganisationUsersTable({
       <div className={styles['table-toolbar']}>
         <FilterSummary className={styles['users-filter-summary']}>
           {users
-            ? `Showing results ${getFirstResult(users.totalCount, currentPage)} to ${getLastResult(
+            ? `Showing results ${getFirstResult(
                 users.totalCount,
                 currentPage,
-              )} of ${users.totalCount}`
+                pageSize,
+              )} to ${getLastResult(users.totalCount, currentPage, pageSize)} of ${users.totalCount}`
             : 'Showing results'}
         </FilterSummary>
         <Button>Add a new user</Button>
@@ -115,12 +123,31 @@ export async function OrganisationUsersTable({
               )}
             </tbody>
           </Table>
-          <EnhancedPagination
-            currentPage={currentPage}
-            elementType={PaginationLink}
-            mapPageNumberToHref={(pageNumber) => `?page=${pageNumber}`}
-            totalPages={getTotalPages(users.totalCount)}
-          />
+
+          <Grid verticalAlignment="middle">
+            <GridItem cols={12} sm={6}>
+              <EnhancedPagination
+                currentPage={currentPage}
+                elementType={PaginationLink}
+                mapPageNumberToHref={(pageNumber) => `?page=${pageNumber}&pageSize=${pageSize}`}
+                totalPages={getTotalPages(users.totalCount, pageSize)}
+              />
+            </GridItem>
+            <GridItem cols={12} sm={6} className="text-right">
+              <p className={styles.resultsPerPageHeading}>Results per page</p>
+              <ol className={`list list--piped ${styles.resultsPerPageList}`}>
+                {resultsPerPage.map((count) => (
+                  <li key={count}>
+                    {pageSize === count ? (
+                      count
+                    ) : (
+                      <PaginationLink href={`?page=1&pageSize=${count}`}>{count}</PaginationLink>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </GridItem>
+          </Grid>
         </>
       )}
     </>
