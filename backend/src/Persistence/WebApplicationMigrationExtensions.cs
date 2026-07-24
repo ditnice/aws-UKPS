@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace UKPS.Api.Persistence;
 
 internal static class WebApplicationMigrationExtensions
