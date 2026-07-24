@@ -9,5 +9,12 @@ internal sealed class UserOnboardingRecordConfiguration
     public void Configure(EntityTypeBuilder<UserOnboardingRecord> builder)
     {
         builder.HasKey(x => x.SetupToken);
+
+        builder
+            .HasOne(x => x.NewUserOrganisation)
+            .WithMany()
+            .HasForeignKey(x => x.NewUserOrganisationId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

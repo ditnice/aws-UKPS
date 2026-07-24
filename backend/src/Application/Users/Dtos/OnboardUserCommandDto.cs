@@ -13,4 +13,10 @@ public record OnboardUserCommandDto
     [Required]
     [EmailAddress]
     public required string NewUserEmail { get; init; }
+
+    /// <summary>
+    /// Specifies the organisation that the new user will be created for.
+    /// </summary>
+    [Required]
+    public required int OrganisationId { get; init; }
 }

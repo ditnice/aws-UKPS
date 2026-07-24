@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Shouldly;
+using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 
@@ -11,9 +13,10 @@ namespace UKPS.Api.Tests.Persistence;
 public class DatabaseConstraintTests : DatabaseTestBase
 {
     private const string UniqueViolationSqlState = "23505";
-    private readonly UserFaker _userFaker = new UserFaker();
-    private readonly OrganisationFaker _organisationFaker = new OrganisationFaker();
-    private readonly UserOrgMembershipFaker _membershipFaker = new UserOrgMembershipFaker();
+    private readonly UserFaker _userFaker = new();
+    private readonly OrganisationFaker _organisationFaker = new();
+    private readonly UserOrgMembershipFaker _membershipFaker = new();
+    private readonly UserOnboardingRecordFaker _userOnboardingRecordFaker = new();
 
     public DatabaseConstraintTests(PostgresFixture fixture)
         : base(fixture) { }
@@ -78,6 +81,23 @@ public class DatabaseConstraintTests : DatabaseTestBase
             Context.SaveChangesAsync()
         );
         AssertUniqueViolation(exception);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_InvalidOrganisationReference_ThrowDbUpdateException()
+    {
+        UserOnboardingRecord entity = _userOnboardingRecordFaker
+            .RuleFor(x => x.NewUserOrganisationId, _ => 999)
+            .Generate();
+        Context.Add(entity);
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        PostgresException postgresException =
+            exception.InnerException.ShouldBeOfType<PostgresException>();
+        postgresException.ConstraintName.ShouldBe(
+            ConstraintNames.UserOnboardingRequiresOrganisation
+        );
     }
 
     private static void AssertUniqueViolation(DbUpdateException exception)
