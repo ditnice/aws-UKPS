@@ -155,7 +155,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users?page=1&pageSize=20&status=Active&status=Inactive",
+              "raw": "{{baseUrl}}/users?page=1&pageSize=20&status=Active&status=Inactive&role=Champion&role=Super",
               "host": ["{{baseUrl}}"],
               "path": ["users"],
               "query": [
@@ -184,10 +184,20 @@
                   "key": "status",
                   "value": "Inactive",
                   "description": "Optional repeated UserOrgStatus filter"
+                },
+                {
+                  "key": "role",
+                  "value": "Champion",
+                  "description": "Optional repeated UserRole filter"
+                },
+                {
+                  "key": "role",
+                  "value": "Super",
+                  "description": "Optional repeated UserRole filter"
                 }
               ]
             },
-            "description": "Returns a paginated list of users. Optionally filter by organisationId. Returns 404 only when organisationId is supplied and no organisation with that ID exists. Status can be supplied as repeated query parameters."
+            "description": "Returns a paginated list of users. Optionally filter by organisationId. Returns 404 only when organisationId is supplied and no organisation with that ID exists. Status and Role can each be supplied as repeated query parameters."
           },
           "response": [
             {

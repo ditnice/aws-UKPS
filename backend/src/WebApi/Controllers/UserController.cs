@@ -17,7 +17,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// <summary>
     /// Retrieves a paginated list of users based on the specified query parameters.
     /// </summary>
-    /// <param name="getUsersQuery">The query parameters for retrieving users, including organisation ID, page, page size, and status filters.</param>
+    /// <param name="getUsersQuery">The query parameters for retrieving users, including organisation ID, page, page size, status, and role filters.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// A paginated response containing a list of users if successful, or an appropriate error response if the request fails.
@@ -44,6 +44,7 @@ public class UserController(IUserService userService) : ControllerBase
             getUsersQuery.Page,
             getUsersQuery.PageSize,
             getUsersQuery.Status.ToArray(),
+            getUsersQuery.Role.ToArray(),
             cancellationToken
         );
 

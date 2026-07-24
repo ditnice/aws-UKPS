@@ -23,6 +23,7 @@ internal sealed class UserService(
         int page,
         int pageSize,
         IReadOnlyCollection<UserOrgStatus> statuses,
+        IReadOnlyCollection<UserRole> roles,
         CancellationToken cancellationToken
     )
     {
@@ -56,7 +57,8 @@ internal sealed class UserService(
             dbContext.UserOrgMemberships.AsNoTracking(),
             permittedOrganisationIds,
             organisationId,
-            statuses
+            statuses,
+            roles
         );
 
         int totalCount = await organisationMemberships.CountAsync(cancellationToken);
@@ -91,7 +93,8 @@ internal sealed class UserService(
         IQueryable<UserOrgMembership> input,
         ValueOrAll<int> permittedOrganisationIds,
         int? organisationId,
-        IReadOnlyCollection<UserOrgStatus> statuses
+        IReadOnlyCollection<UserOrgStatus> statuses,
+        IReadOnlyCollection<UserRole> roles
     )
     {
         IQueryable<UserOrgMembership> organisationMemberships = input.Where(
@@ -109,6 +112,13 @@ internal sealed class UserService(
         {
             organisationMemberships = organisationMemberships.Where(m =>
                 statuses.Contains(m.Status)
+            );
+        }
+
+        if (roles.Count > 0)
+        {
+            organisationMemberships = organisationMemberships.Where(m =>
+                roles.Contains(m.UserRole)
             );
         }
 

@@ -31,6 +31,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                Arg.Any<IReadOnlyCollection<UserRole>>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(expected));
@@ -53,6 +54,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                Arg.Any<IReadOnlyCollection<UserRole>>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -80,6 +82,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                Arg.Any<IReadOnlyCollection<UserRole>>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -105,6 +108,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                Arg.Any<IReadOnlyCollection<UserRole>>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -130,6 +134,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                Arg.Any<IReadOnlyCollection<UserRole>>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -143,6 +148,7 @@ public class UserControllerTests
             Page = 3,
             PageSize = 10,
             Status = [UserOrgStatus.Active, UserOrgStatus.Inactive],
+            Role = [UserRole.Champion, UserRole.Super],
         };
 
         await _controller.GetUsers(getUsersQuery, TestContext.Current.CancellationToken);
@@ -155,6 +161,9 @@ public class UserControllerTests
                 getUsersQuery.PageSize,
                 Arg.Is<IReadOnlyCollection<UserOrgStatus>>(statuses =>
                     statuses.SequenceEqual(getUsersQuery.Status)
+                ),
+                Arg.Is<IReadOnlyCollection<UserRole>>(roles =>
+                    roles.SequenceEqual(getUsersQuery.Role)
                 ),
                 TestContext.Current.CancellationToken
             );
@@ -169,6 +178,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                Arg.Any<IReadOnlyCollection<UserRole>>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -186,6 +196,7 @@ public class UserControllerTests
                 Arg.Any<int>(),
                 Arg.Any<int>(),
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
+                Arg.Any<IReadOnlyCollection<UserRole>>(),
                 TestContext.Current.CancellationToken
             );
     }

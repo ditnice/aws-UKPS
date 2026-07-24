@@ -31,4 +31,9 @@ public sealed record GetUsersQueryDto
     /// Gets or initialises the collection of user organisation statuses to filter users by.
     /// </summary>
     public ICollection<UserOrgStatus> Status { get; init; } = [];
+
+    /// <summary>
+    /// Gets or initialises the collection of user roles to filter users by.
+    /// </summary>
+    public ICollection<UserRole> Role { get; init; } = [];
 }
