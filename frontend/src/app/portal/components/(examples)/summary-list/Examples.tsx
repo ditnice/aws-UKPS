@@ -10,7 +10,7 @@ export function Examples() {
   return (
     <>
       <Example title="Without actions">
-        <SummaryList>
+        <SummaryList variant="two-column">
           <SummaryListRow label="Name" value="Sarah Philips" />
           <SummaryListRow label="Date of birth" value="5 January 1978" />
           <SummaryListRow

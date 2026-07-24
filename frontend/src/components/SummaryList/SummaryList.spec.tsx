@@ -77,4 +77,17 @@ describe('SummaryList', () => {
     expect(within(actionsList as HTMLElement).getAllByRole('listitem').length).toBe(2)
     expect(screen.getByText('sarah.philips@example.com').tagName).toBe('P')
   })
+
+  it('supports a two-column variant for lists without actions', () => {
+    const { container } = render(
+      <SummaryList variant="two-column">
+        <SummaryListRow label="Name" value="Sarah Philips" />
+        <SummaryListRow label="Status" value="Active" />
+      </SummaryList>,
+    )
+
+    const list = container.querySelector('dl')
+    expect(list?.className).toContain('summary-list--two-column')
+    expect(container.querySelector('[class*="summary-list__row--no-actions"]')).toBeNull()
+  })
 })

@@ -20,6 +20,7 @@ export type SummaryListRowProps = {
 
 type InternalSummaryListRowProps = SummaryListRowProps & {
   listHasActions?: boolean
+  variant?: SummaryListVariant
 }
 
 type ValidSummaryListRow = ReactElement<InternalSummaryListRowProps> | boolean | null | undefined
@@ -27,7 +28,10 @@ type ValidSummaryListRow = ReactElement<InternalSummaryListRowProps> | boolean |
 type SummaryListProps = {
   children: ValidSummaryListRow | readonly ValidSummaryListRow[]
   className?: string
+  variant?: SummaryListVariant
 }
+
+type SummaryListVariant = 'default' | 'two-column'
 
 export function SummaryListAction({ children, href, visuallyHiddenText }: SummaryListActionProps) {
   return (
@@ -41,12 +45,13 @@ export function SummaryListRow({
   children,
   label,
   listHasActions = false,
+  variant = 'default',
   value,
 }: InternalSummaryListRowProps) {
   const actions = Children.toArray(children).filter(
     (child): child is ReactElement<SummaryListActionProps> => isValidElement(child),
   )
-  const rowClassName = `${styles['summary-list__row']}${listHasActions && actions.length === 0 ? ` ${styles['summary-list__row--no-actions']}` : ''}`
+  const rowClassName = `${styles['summary-list__row']}${listHasActions && actions.length === 0 && variant !== 'two-column' ? ` ${styles['summary-list__row--no-actions']}` : ''}`
 
   return (
     <div className={rowClassName}>
@@ -71,16 +76,16 @@ export function SummaryListRow({
   )
 }
 
-export function SummaryList({ children, className }: SummaryListProps) {
+export function SummaryList({ children, className, variant = 'default' }: SummaryListProps) {
   const rows = Children.toArray(children).filter(
     (child): child is ReactElement<InternalSummaryListRowProps> => isValidElement(child),
   )
   const hasActions = rows.some((row) => Children.toArray(row.props.children).length > 0)
-  const rootClassName = `${styles['summary-list']}${className ? ` ${className}` : ''}`
+  const rootClassName = `${styles['summary-list']}${variant === 'two-column' ? ` ${styles['summary-list--two-column']}` : ''}${className ? ` ${className}` : ''}`
 
   return (
     <dl className={rootClassName}>
-      {rows.map((row) => cloneElement(row, { listHasActions: hasActions }))}
+      {rows.map((row) => cloneElement(row, { listHasActions: hasActions, variant }))}
     </dl>
   )
 }

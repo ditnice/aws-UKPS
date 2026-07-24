@@ -13,6 +13,15 @@
   }
 }
 
+.summary-list--two-column {
+  @include media-queries.mq($from: sm) {
+    .summary-list__key,
+    .summary-list__value {
+      width: 50%;
+    }
+  }
+}
+
 .summary-list__row {
   border-bottom: 1px solid colours.$border;
   margin-bottom: spacing.$medium * 1px;
