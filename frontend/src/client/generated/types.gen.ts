@@ -11,7 +11,7 @@ export type OrganisationDetailsDto = {
     /**
      * Gets the unique identifier of the organisation.
      */
-    id?: number | string;
+    id: number | string;
     /**
      * Gets the name of the organisation.
      */
@@ -19,11 +19,11 @@ export type OrganisationDetailsDto = {
     /**
      * Gets the type of the organisation.
      */
-    organisationType?: OrganisationType;
+    organisationType: OrganisationType;
     /**
      * Gets the allowed pharmaceutical entity for the organisation.
      */
-    allowedPharmaceuticalEntity?: PharmaceuticalEntity;
+    allowedPharmaceuticalEntity: PharmaceuticalEntity;
     /**
      * Gets the country or region where the organisation is located.
      */
@@ -43,7 +43,7 @@ export type OrganisationDetailsDto = {
     /**
      * Gets the current status of the organisation.
      */
-    status?: UserOrgStatus;
+    status: UserOrgStatus;
     /**
      * Gets the date and time when the organisation was last active.
      */
@@ -171,7 +171,7 @@ export type UserListItemDto = {
     /**
      * Gets the unique identifier of the user.
      */
-    userId?: number | string;
+    userId: number | string;
     /**
      * Gets the email address of the user, if available.
      */
@@ -179,11 +179,11 @@ export type UserListItemDto = {
     /**
      * Gets the role of the user within the system.
      */
-    role?: UserRole;
+    role: UserRole;
     /**
      * Gets the organisational status of the user.
      */
-    status?: UserOrgStatus;
+    status: UserOrgStatus;
     /**
      * Gets the date and time when the user was last active, if available.
      */

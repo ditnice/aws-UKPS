@@ -524,7 +524,11 @@
           "organisationName",
           "headOfficeAddress",
           "headOfficeEmail",
-          "headOfficeTelephone"
+          "headOfficeTelephone",
+          "id",
+          "organisationType",
+          "allowedPharmaceuticalEntity",
+          "status"
         ],
         "type": "object",
         "properties": {
@@ -790,6 +794,11 @@
         "description": "Represents a Data Transfer Object (DTO) for updating the user role\nin an organisation membership."
       },
       "UserListItemDto": {
+        "required": [
+          "userId",
+          "role",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "userId": {

@@ -46,6 +46,26 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
+function renderActions(status: UserListItemDto['status']) {
+  switch (status) {
+    case 'Active':
+    case 'Inactive':
+      return <a>Edit role</a>
+    case 'Deactivated':
+      return <a>Reactivate</a>
+    case 'RequestedAccess':
+      return (
+        <>
+          <a>Approve</a>
+          <br></br>
+          <a>Reject</a>
+        </>
+      )
+    default:
+      return 'Not applicable'
+  }
+}
+
 function getFirstResult(
   totalCount: number | string,
   currentPage: number,
@@ -123,9 +143,7 @@ export async function OrganisationUsersTable({
                     <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
                     <td>{renderStatus(user.status)}</td>
                     <td>{formatDate(user.lastActive)}</td>
-                    <td>
-                      <a>Edit role</a>
-                    </td>
+                    <td>{renderActions(user.status)}</td>
                   </tr>
                 ))
               ) : (

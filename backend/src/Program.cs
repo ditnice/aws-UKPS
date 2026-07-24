@@ -52,6 +52,19 @@ builder.Services.AddOpenApi(options =>
                 schema.Type = JsonSchemaType.String;
             }
 
+            if (schema.Properties is not null)
+            {
+                foreach (var property in context.JsonTypeInfo.Properties)
+                {
+                    if (!property.IsGetNullable && schema.Properties.ContainsKey(property.Name))
+                    {
+                        (schema.Required ??= new HashSet<string>(StringComparer.Ordinal)).Add(
+                            property.Name
+                        );
+                    }
+                }
+            }
+
             return Task.CompletedTask;
         }
     );
