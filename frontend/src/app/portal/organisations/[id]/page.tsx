@@ -6,6 +6,7 @@ import { Grid, GridItem } from '@nice-digital/nds-grid'
 import { PageHeader } from '@nice-digital/nds-page-header'
 
 import { getOrganisationById } from '@/client/generated/sdk.gen'
+import type { UserOrgStatus } from '@/client/generated/types.gen'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
 import { OrganisationFilters } from './_components/OrganisationFilters'
@@ -13,10 +14,18 @@ import { OrganisationUsersTable } from './_components/OrganisationUsersTable'
 
 const pageSizeOptions = [10, 25, 50]
 const defaultPageSize = 10
+// Rejected is excluded as it's not filterable and the backend never returns it
+const validStatuses: UserOrgStatus[] = [
+  'RequestedAccess',
+  'AwaitingSetup',
+  'Active',
+  'Inactive',
+  'Deactivated',
+]
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ page?: string; pageSize?: string }>
+  searchParams: Promise<{ page?: string; pageSize?: string; status?: string | string[] }>
 }
 
 function parsePage(page: string | undefined): number {
@@ -31,12 +40,21 @@ function parsePageSize(pageSize: string | undefined): number {
   return pageSizeOptions.includes(parsedPageSize) ? parsedPageSize : defaultPageSize
 }
 
+function parseStatus(status: string | string[] | undefined): UserOrgStatus[] {
+  const values = Array.isArray(status) ? status : status ? [status] : []
+
+  return values.filter((value): value is UserOrgStatus =>
+    validStatuses.includes(value as UserOrgStatus),
+  )
+}
+
 export default async function OrganisationPage({ params, searchParams }: Props) {
   const { id } = await params
-  const { page, pageSize: pageSizeParam } = await searchParams
+  const { page, pageSize: pageSizeParam, status: statusParam } = await searchParams
   const organisationId = Number(id)
   const currentPage = parsePage(page)
   const pageSize = parsePageSize(pageSizeParam)
+  const status = parseStatus(statusParam)
 
   if (!Number.isInteger(organisationId)) {
     notFound()
@@ -82,11 +100,15 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
           <OrganisationFilters />
         </GridItem>
         <GridItem cols={12} md={8} lg={9} elementType="section" aria-labelledby="filter-summary">
-          <Suspense fallback={<p>Loading users...</p>} key={`${currentPage}-${pageSize}`}>
+          <Suspense
+            fallback={<p>Loading users...</p>}
+            key={`${currentPage}-${pageSize}-${status.join(',')}`}
+          >
             <OrganisationUsersTable
               currentPage={currentPage}
               organisationId={organisationId}
               pageSize={pageSize}
+              status={status}
             />
           </Suspense>
         </GridItem>

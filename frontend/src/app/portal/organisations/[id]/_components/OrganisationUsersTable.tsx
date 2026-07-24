@@ -7,7 +7,7 @@ import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import { roleLabels, statusLabels, statusTagColours } from '@/app/portal/_constants/userLabels'
 import { getUsers } from '@/client/generated/sdk.gen'
-import type { UserListItemDto } from '@/client/generated/types.gen'
+import type { UserListItemDto, UserOrgStatus } from '@/client/generated/types.gen'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
 
@@ -19,6 +19,7 @@ interface OrganisationUsersTableProps {
   currentPage: number
   organisationId: number
   pageSize: number
+  status: UserOrgStatus[]
 }
 
 const resultsPerPage = [10, 25, 50]
@@ -61,16 +62,27 @@ function getTotalPages(totalCount: number | string, pageSize: number): number {
   return Math.ceil(Number(totalCount) / pageSize)
 }
 
+function buildHref(page: number, pageSize: number, status: UserOrgStatus[]): string {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('pageSize', String(pageSize))
+  status.forEach((value) => params.append('status', value))
+
+  return `?${params.toString()}`
+}
+
 export async function OrganisationUsersTable({
   currentPage,
   organisationId,
   pageSize,
+  status,
 }: OrganisationUsersTableProps) {
   const { data: users, error: usersError } = await getUsers({
     query: {
       OrganisationId: organisationId,
       Page: currentPage,
       PageSize: pageSize,
+      Status: status.length ? status : undefined,
     },
   })
 
@@ -129,7 +141,7 @@ export async function OrganisationUsersTable({
               <EnhancedPagination
                 currentPage={currentPage}
                 elementType={PaginationLink}
-                mapPageNumberToHref={(pageNumber) => `?page=${pageNumber}&pageSize=${pageSize}`}
+                mapPageNumberToHref={(pageNumber) => buildHref(pageNumber, pageSize, status)}
                 totalPages={getTotalPages(users.totalCount, pageSize)}
               />
             </GridItem>
@@ -141,7 +153,7 @@ export async function OrganisationUsersTable({
                     {pageSize === count ? (
                       count
                     ) : (
-                      <PaginationLink href={`?page=1&pageSize=${count}`}>{count}</PaginationLink>
+                      <PaginationLink href={buildHref(1, count, status)}>{count}</PaginationLink>
                     )}
                   </li>
                 ))}
