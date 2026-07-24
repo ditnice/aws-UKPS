@@ -35,7 +35,7 @@ internal sealed partial class UserAdministrationService(
             command.NewUserEmail,
             cancellationToken
         );
-        await SendUserSignUpRequestedEmil(userOnboardingRecord, cancellationToken);
+        await SendUserSignUpRequestedEmail(userOnboardingRecord, cancellationToken);
 
         return Result<OnboardUserError>.Ok();
     }
@@ -61,7 +61,7 @@ internal sealed partial class UserAdministrationService(
         return userOnboardingRecord;
     }
 
-    private async Task SendUserSignUpRequestedEmil(
+    private async Task SendUserSignUpRequestedEmail(
         UserOnboardingRecord userOnboardingRecord,
         CancellationToken cancellationToken
     )
