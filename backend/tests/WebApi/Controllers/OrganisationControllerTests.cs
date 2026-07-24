@@ -364,7 +364,13 @@ public class OrganisationControllerTests
     public async Task CreateOrganisation_AllFieldsProvided_ReturnsDto()
     {
         CreateOrganisationDto organisation = CreateOrganisationDto();
+        OrganisationDetailsDto details = CreateOrganisationDetailsDto();
+        _organisationServiceMock
+            .CreateOrganisation(Arg.Any<CreateOrganisationDto>(), Arg.Any<CancellationToken>())
+            .Returns(Result<OrganisationDetailsDto, CreateOrganisationError>.Ok(details));
+
         await _controller.CreateOrganisation(organisation, TestContext.Current.CancellationToken);
+
         await _organisationServiceMock
             .Received(1)
             .CreateOrganisation(organisation, TestContext.Current.CancellationToken);
