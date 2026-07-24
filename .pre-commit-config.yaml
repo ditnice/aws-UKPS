@@ -90,7 +90,7 @@ repos:
   - repo: local
     hooks:
       - id: backend-unused-usings
-        name: Remove unused usings (backend)
+        name: Run Dotnet Formatter
         language: system
         entry: bash -c 'cd backend && dotnet format UKPS.Api.slnx'
         files: ^backend/.*\.cs$
