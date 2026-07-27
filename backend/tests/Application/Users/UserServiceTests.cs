@@ -60,8 +60,13 @@ public class UserServiceTests : DatabaseTestBase
     public async Task GetUsers_MapsUserMembershipFields_WhenUsersExist()
     {
         var organisation = _organisationFaker.Generate();
+        var lastActive = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
         var user = _userFaker.Generate();
-        user.Update(x => x.WorkEmail = "user@example.com");
+        user.Update(x =>
+        {
+            x.WorkEmail = "user@example.com";
+            x.LastActive = lastActive;
+        });
         var membership = _userOrgMembershipFaker.Generate();
         membership.Update(x =>
         {
@@ -85,7 +90,7 @@ public class UserServiceTests : DatabaseTestBase
         item.EmailAddress.ShouldBe(user.WorkEmail);
         item.Role.ShouldBe(UserRole.Champion);
         item.Status.ShouldBe(UserOrgStatus.Active);
-        item.LastActive.ShouldBeNull();
+        item.LastActive.ShouldBe(lastActive);
     }
 
     [Fact]
@@ -124,6 +129,64 @@ public class UserServiceTests : DatabaseTestBase
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([2, 3]);
+    }
+
+    [Fact]
+    public async Task GetUsers_ExcludesRejectedUsers_ByDefault()
+    {
+        UserOrgStatus[] userOrgStatuses =
+        [
+            UserOrgStatus.Active,
+            UserOrgStatus.Rejected,
+            UserOrgStatus.Inactive,
+        ];
+        Organisation organisation = _organisationFaker.Generate();
+        var data = userOrgStatuses.Select(s =>
+        {
+            var user = _userFaker.Generate();
+            var membership = _userOrgMembershipFaker.Generate();
+            membership.User = user;
+            membership.Organisation = organisation;
+            membership.Status = s;
+            return membership;
+        });
+        Context.UserOrgMemberships.AddRange(data);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await _service.GetUsers(1, 1, 20, [], [], null, TestContext.Current.CancellationToken);
+
+        PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
+        dto.TotalCount.ShouldBe(2);
+        dto.Items.ShouldAllBe(i => i.Status != UserOrgStatus.Rejected);
+    }
+
+    [Fact]
+    public async Task GetUsers_ExcludesRejectedUsers_EvenWhenExplicitlyRequested()
+    {
+        Organisation organisation = _organisationFaker.Generate();
+        var user = _userFaker.Generate();
+        var membership = _userOrgMembershipFaker.Generate();
+        membership.User = user;
+        membership.Organisation = organisation;
+        membership.Status = UserOrgStatus.Rejected;
+        Context.UserOrgMemberships.Add(membership);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
+            await _service.GetUsers(
+                1,
+                1,
+                20,
+                [UserOrgStatus.Rejected],
+                [],
+                null,
+                TestContext.Current.CancellationToken
+            );
+
+        PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
+        dto.Items.ShouldBeEmpty();
+        dto.TotalCount.ShouldBe(0);
     }
 
     [Fact]
@@ -422,6 +485,7 @@ public class UserServiceTests : DatabaseTestBase
                     x.Id = 1;
                     x.UserId = 10;
                     x.OrganisationId = 1;
+                    x.Status = UserOrgStatus.Active;
                 })
         );
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);

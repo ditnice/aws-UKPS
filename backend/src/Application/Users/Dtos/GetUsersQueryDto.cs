@@ -29,6 +29,8 @@ public sealed record GetUsersQueryDto
 
     /// <summary>
     /// Gets or initialises the collection of user organisation statuses to filter users by.
+    /// Users with a <see cref="UserOrgStatus.Rejected"/> status are always excluded from
+    /// results, regardless of the values supplied here.
     /// </summary>
     public ICollection<UserOrgStatus> Status { get; init; } = [];
 

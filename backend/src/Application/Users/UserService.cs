@@ -61,8 +61,7 @@ internal sealed class UserService(
                 EmailAddress = m.User.WorkEmail,
                 Role = m.UserRole,
                 Status = m.Status,
-                // No user-level last-active source exists yet.
-                LastActive = null,
+                LastActive = m.User.LastActive,
             })
             .ToListAsync(cancellationToken);
 
@@ -115,9 +114,9 @@ internal sealed class UserService(
         string? email
     )
     {
-        IQueryable<UserOrgMembership> organisationMemberships = input.Where(
-            permittedOrganisationIds.Contains<UserOrgMembership>(x => x.OrganisationId)
-        );
+        IQueryable<UserOrgMembership> organisationMemberships = input
+            .Where(permittedOrganisationIds.Contains<UserOrgMembership>(x => x.OrganisationId))
+            .Where(m => m.Status != UserOrgStatus.Rejected);
 
         if (organisationId.HasValue)
         {
