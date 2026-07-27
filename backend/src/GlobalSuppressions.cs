@@ -38,3 +38,10 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "member",
     Target = "~P:UKPS.Api.Application.Common.IResult`1.Error"
 )]
+[assembly: SuppressMessage(
+    "Maintainability",
+    "CA1515:Consider making public types internal",
+    Justification = "Interfaces need to be made public for mocking.",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api.Persistence"
+)]

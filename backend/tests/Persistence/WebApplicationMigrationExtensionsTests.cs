@@ -24,7 +24,10 @@ public sealed class WebApplicationMigrationExtensionsTests
     {
         IDatabaseMigrator migrator = Substitute.For<IDatabaseMigrator>();
 
-        WebApplication app = CreateApplication(migrator, new Dictionary<string, string?>());
+        using WebApplication app = CreateApplication(
+            migrator,
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+        );
 
         await app.MigrateDatabase();
 
@@ -36,9 +39,9 @@ public sealed class WebApplicationMigrationExtensionsTests
     {
         IDatabaseMigrator migrator = Substitute.For<IDatabaseMigrator>();
 
-        WebApplication app = CreateApplication(
+        using WebApplication app = CreateApplication(
             migrator,
-            new Dictionary<string, string?>
+            new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 [$"{DatabaseConfiguration.SectionName}:MigrateOnStartup"] = "false",
             }
@@ -54,9 +57,9 @@ public sealed class WebApplicationMigrationExtensionsTests
     {
         IDatabaseMigrator migrator = Substitute.For<IDatabaseMigrator>();
 
-        WebApplication app = CreateApplication(
+        using WebApplication app = CreateApplication(
             migrator,
-            new Dictionary<string, string?>
+            new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 [$"{DatabaseConfiguration.SectionName}:MigrateOnStartup"] = "true",
             }

@@ -2,17 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace UKPS.Api.Persistence;
 
-public interface IDatabaseMigrator
-{
-    Task MigrateAsync(CancellationToken cancellationToken);
-}
-
-internal sealed class DatabaseMigrator(AppDbContext dbContext) : IDatabaseMigrator
-{
-    public Task MigrateAsync(CancellationToken cancellationToken) =>
-        dbContext.Database.MigrateAsync(cancellationToken);
-}
-
 internal static class WebApplicationMigrationExtensions
 {
     public static async Task MigrateDatabase(this WebApplication app)
