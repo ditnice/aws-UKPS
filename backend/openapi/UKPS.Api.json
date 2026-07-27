@@ -612,7 +612,7 @@
         ],
         "summary": "Creates a new user.",
         "requestBody": {
-          "description": "The details required to create the user.",
+          "description": "A token used to cancel the operation&gt;",
           "content": {
             "application/json": {
               "schema": {

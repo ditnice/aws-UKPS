@@ -122,17 +122,6 @@ internal sealed class OrganisationService : IOrganisationService
                 new CreateOrganisationError.OrganisationNameConflict()
             );
         }
-        bool organisationExists = await _dbContext.Organisations.AnyAsync(
-            x => x.OrganisationName == command.OrganisationName,
-            cancellationToken
-        );
-
-        if (organisationExists)
-        {
-            return Result<OrganisationDetailsDto, CreateOrganisationError>.Err(
-                new CreateOrganisationError.OrganisationNameConflict()
-            );
-        }
 
         var organisation = new Organisation()
         {

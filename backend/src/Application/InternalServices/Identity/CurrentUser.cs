@@ -16,4 +16,9 @@ public sealed record CurrentUser
     /// Gets the role of the current user within the system.
     /// </summary>
     public required UserRole UserRole { get; init; }
+
+    /// <summary>
+    /// The email address of the current user.
+    /// </summary>
+    public required string Email { get; init; }
 }

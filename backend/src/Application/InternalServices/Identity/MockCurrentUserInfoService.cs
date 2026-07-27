@@ -12,6 +12,11 @@ internal sealed class MockCurrentUserInfoService : ICurrentUserInfoService
 {
     public CurrentUser GetCurrentUserInfo()
     {
-        return new CurrentUser { OrganisationId = 1, UserRole = UserRole.Super };
+        return new CurrentUser
+        {
+            OrganisationId = 1,
+            UserRole = UserRole.Super,
+            Email = "exampleuser@email.com",
+        };
     }
 }
