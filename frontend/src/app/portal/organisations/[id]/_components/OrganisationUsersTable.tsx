@@ -13,7 +13,7 @@ import {
   type LastActivePreset,
 } from '@/app/portal/_constants/userLabels'
 import { getUsers } from '@/client/generated/sdk.gen'
-import type { UserListItemDto, UserOrgStatus } from '@/client/generated/types.gen'
+import type { UserListItemDto, UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
 
@@ -26,6 +26,7 @@ interface OrganisationUsersTableProps {
   organisationId: number
   pageSize: number
   status: UserOrgStatus[]
+  role: UserRole[]
   email?: string
   lastActive?: LastActivePreset
 }
@@ -94,6 +95,7 @@ function buildHref(
   page: number,
   pageSize: number,
   status: UserOrgStatus[],
+  role: UserRole[],
   email: string | undefined,
   lastActive: LastActivePreset | undefined,
 ): string {
@@ -101,6 +103,7 @@ function buildHref(
   params.set('page', String(page))
   params.set('pageSize', String(pageSize))
   status.forEach((value) => params.append('status', value))
+  role.forEach((value) => params.append('role', value))
   if (email) {
     params.set('email', email)
   }
@@ -122,6 +125,7 @@ export async function OrganisationUsersTable({
   organisationId,
   pageSize,
   status,
+  role,
   email,
   lastActive,
 }: OrganisationUsersTableProps) {
@@ -131,6 +135,7 @@ export async function OrganisationUsersTable({
       Page: currentPage,
       PageSize: pageSize,
       Status: status.length ? status : undefined,
+      Role: role.length ? role : undefined,
       Email: email,
       LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
     },
@@ -190,7 +195,7 @@ export async function OrganisationUsersTable({
                 currentPage={currentPage}
                 elementType={PaginationLink}
                 mapPageNumberToHref={(pageNumber) =>
-                  buildHref(pageNumber, pageSize, status, email, lastActive)
+                  buildHref(pageNumber, pageSize, status, role, email, lastActive)
                 }
                 totalPages={getTotalPages(users.totalCount, pageSize)}
               />
@@ -203,7 +208,7 @@ export async function OrganisationUsersTable({
                     {pageSize === count ? (
                       count
                     ) : (
-                      <PaginationLink href={buildHref(1, count, status, email, lastActive)}>
+                      <PaginationLink href={buildHref(1, count, status, role, email, lastActive)}>
                         {count}
                       </PaginationLink>
                     )}

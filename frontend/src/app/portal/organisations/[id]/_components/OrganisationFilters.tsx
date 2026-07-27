@@ -7,10 +7,11 @@ import { FilterByInput, FilterGroup, FilterOption, FilterPanel } from '@nice-dig
 import {
   lastActiveLabels,
   lastActivePresets,
+  roleLabels,
   statusLabels,
   type LastActivePreset,
 } from '@/app/portal/_constants/userLabels'
-import type { UserOrgStatus } from '@/client/generated/types.gen'
+import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 
 import type { ChangeEvent, SubmitEvent } from 'react'
 
@@ -19,12 +20,15 @@ const filterableStatuses = (Object.keys(statusLabels) as UserOrgStatus[]).filter
   (status) => status !== 'Rejected',
 )
 
+const filterableRoles = Object.keys(roleLabels) as UserRole[]
+
 export function OrganisationFilters() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const selectedStatuses = searchParams.getAll('status')
+  const selectedRoles = searchParams.getAll('role')
   const selectedLastActive = searchParams.get('lastActive')
 
   function handleStatusChanged(status: UserOrgStatus, isSelected: boolean) {
@@ -35,6 +39,19 @@ export function OrganisationFilters() {
     const params = new URLSearchParams(searchParams.toString())
     params.delete('status')
     nextStatuses.forEach((value) => params.append('status', value))
+    params.set('page', '1')
+
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
+
+  function handleRoleChanged(role: UserRole, isSelected: boolean) {
+    const nextRoles = isSelected
+      ? [...selectedRoles, role]
+      : selectedRoles.filter((value) => value !== role)
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('role')
+    nextRoles.forEach((value) => params.append('role', value))
     params.set('page', '1')
 
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
@@ -82,20 +99,18 @@ export function OrganisationFilters() {
       ></FilterByInput>
 
       <FilterGroup heading="Role" id="filter-role">
-        <FilterOption
-          isSelected={false}
-          value="Standard user"
-          onChanged={() => console.log('Changed!')}
-        >
-          Standard user
-        </FilterOption>
-        <FilterOption
-          isSelected={false}
-          value="Champion user"
-          onChanged={() => console.log('Changed!')}
-        >
-          Champion user
-        </FilterOption>
+        {filterableRoles.map((role) => (
+          <FilterOption
+            key={role}
+            isSelected={selectedRoles.includes(role)}
+            value={role}
+            onChanged={(e: ChangeEvent<HTMLInputElement>) =>
+              handleRoleChanged(role, e.target.checked)
+            }
+          >
+            {roleLabels[role]}
+          </FilterOption>
+        ))}
       </FilterGroup>
 
       <FilterGroup heading="Last active" id="filter-last-active">

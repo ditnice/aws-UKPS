@@ -5,9 +5,13 @@ import { Button } from '@nice-digital/nds-button'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 import { PageHeader } from '@nice-digital/nds-page-header'
 
-import { lastActivePresets, type LastActivePreset } from '@/app/portal/_constants/userLabels'
+import {
+  lastActivePresets,
+  roleLabels,
+  type LastActivePreset,
+} from '@/app/portal/_constants/userLabels'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
-import type { UserOrgStatus } from '@/client/generated/types.gen'
+import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
 import { OrganisationFilters } from './_components/OrganisationFilters'
@@ -23,6 +27,7 @@ const validStatuses: UserOrgStatus[] = [
   'Inactive',
   'Deactivated',
 ]
+const validRoles = Object.keys(roleLabels) as UserRole[]
 
 interface Props {
   params: Promise<{ id: string }>
@@ -30,6 +35,7 @@ interface Props {
     page?: string
     pageSize?: string
     status?: string | string[]
+    role?: string | string[]
     email?: string
     lastActive?: string
   }>
@@ -55,6 +61,12 @@ function parseStatus(status: string | string[] | undefined): UserOrgStatus[] {
   )
 }
 
+function parseRole(role: string | string[] | undefined): UserRole[] {
+  const values = Array.isArray(role) ? role : role ? [role] : []
+
+  return values.filter((value): value is UserRole => validRoles.includes(value as UserRole))
+}
+
 function parseEmail(email: string | undefined): string | undefined {
   return email?.trim() || undefined
 }
@@ -73,6 +85,7 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
     page,
     pageSize: pageSizeParam,
     status: statusParam,
+    role: roleParam,
     email: emailParam,
     lastActive: lastActiveParam,
   } = await searchParams
@@ -80,6 +93,7 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
   const currentPage = parsePage(page)
   const pageSize = parsePageSize(pageSizeParam)
   const status = parseStatus(statusParam)
+  const role = parseRole(roleParam)
   const email = parseEmail(emailParam)
   const lastActive = parseLastActive(lastActiveParam)
 
@@ -129,13 +143,14 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         <GridItem cols={12} md={8} lg={9} elementType="section" aria-labelledby="filter-summary">
           <Suspense
             fallback={<p>Loading users...</p>}
-            key={`${currentPage}-${pageSize}-${status.join(',')}-${email ?? ''}-${lastActive ?? ''}`}
+            key={`${currentPage}-${pageSize}-${status.join(',')}-${role.join(',')}-${email ?? ''}-${lastActive ?? ''}`}
           >
             <OrganisationUsersTable
               currentPage={currentPage}
               organisationId={organisationId}
               pageSize={pageSize}
               status={status}
+              role={role}
               email={email}
               lastActive={lastActive}
             />
