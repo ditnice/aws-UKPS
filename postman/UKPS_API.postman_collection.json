@@ -143,6 +143,144 @@
               "_postman_previewlanguage": "text"
             }
           ]
+        },
+        {
+          "name": "Deactivate Membership",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/organisations/{{organisationId}}/memberships/{{membershipId}}/deactivate",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "organisations",
+                "{{organisationId}}",
+                "memberships",
+                "{{membershipId}}",
+                "deactivate"
+              ],
+              "variable": [
+                {
+                  "key": "organisationId",
+                  "value": "1",
+                  "description": "The integer ID of the organisation that owns the membership"
+                },
+                {
+                  "key": "membershipId",
+                  "value": "1",
+                  "description": "The integer ID of the membership to deactivate"
+                }
+              ]
+            },
+            "description": "Deactivates a user's membership within an organisation. Returns 404 if no membership exists with the given organisation ID and membership ID."
+          },
+          "response": [
+            {
+              "name": "200 OK - Membership deactivated",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"userId\": 1,\n  \"organisationId\": 1,\n  \"userRole\": \"Standard\",\n  \"status\": \"Deactivated\",\n  \"allowedPharmaceuticalEntity\": 3,\n  \"createdAt\": \"2025-01-15T10:30:00Z\"\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "403 Forbidden - Not allowed",
+              "status": "Forbidden",
+              "code": 403,
+              "header": [],
+              "body": "The user is not authorised to perform this action.",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "404 Not Found - Membership does not exist",
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "Could not find a membership with organisation ID = 1 and membership ID = 9999.",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Update Membership Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userRole\": \"Champion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/organisations/{{organisationId}}/memberships/{{membershipId}}/update-role",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "organisations",
+                "{{organisationId}}",
+                "memberships",
+                "{{membershipId}}",
+                "update-role"
+              ],
+              "variable": [
+                {
+                  "key": "organisationId",
+                  "value": "1",
+                  "description": "The integer ID of the organisation that owns the membership"
+                },
+                {
+                  "key": "membershipId",
+                  "value": "1",
+                  "description": "The integer ID of the membership to update"
+                }
+              ]
+            },
+            "description": "Updates the role assigned to a user's membership within an organisation. Returns 404 if no membership exists with the given organisation ID and membership ID."
+          },
+          "response": [
+            {
+              "name": "200 OK - Role updated",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"userId\": 1,\n  \"organisationId\": 1,\n  \"userRole\": \"Champion\",\n  \"status\": \"Active\",\n  \"allowedPharmaceuticalEntity\": 3,\n  \"createdAt\": \"2025-01-15T10:30:00Z\"\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "403 Forbidden - Not allowed",
+              "status": "Forbidden",
+              "code": 403,
+              "header": [],
+              "body": "The user is not authorised to perform this action.",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "404 Not Found - Membership does not exist",
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "Could not find a membership with organisation ID = 1 and membership ID = 9999.",
+              "_postman_previewlanguage": "text"
+            }
+          ]
         }
       ]
     },
@@ -194,10 +332,28 @@
                   "key": "role",
                   "value": "Super",
                   "description": "Optional repeated UserRole filter"
+                },
+                {
+                  "key": "email",
+                  "value": "example.com",
+                  "description": "Optional partial, case-insensitive match against the user's email address",
+                  "disabled": true
+                },
+                {
+                  "key": "lastActiveFrom",
+                  "value": "2026-06-01T00:00:00Z",
+                  "description": "Optional inclusive lower bound on the user's last active timestamp (ISO 8601)",
+                  "disabled": true
+                },
+                {
+                  "key": "lastActiveTo",
+                  "value": "2026-07-01T00:00:00Z",
+                  "description": "Optional inclusive upper bound on the user's last active timestamp (ISO 8601)",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Returns a paginated list of users. Optionally filter by organisationId. Returns 404 only when organisationId is supplied and no organisation with that ID exists. Status and Role can each be supplied as repeated query parameters."
+            "description": "Returns a paginated list of users. Optionally filter by organisationId. Returns 404 only when organisationId is supplied and no organisation with that ID exists. Status and Role can each be supplied as repeated query parameters. Email performs a partial, case-insensitive match. lastActiveFrom/lastActiveTo filter on an inclusive last-active timestamp range."
           },
           "response": [
             {
@@ -210,7 +366,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"userId\": 1,\n      \"emailAddress\": \"user@example.com\",\n      \"role\": \"Standard\",\n      \"status\": \"Active\",\n      \"lastActive\": null\n    },\n    {\n      \"userId\": 2,\n      \"emailAddress\": \"another.user@example.com\",\n      \"role\": \"Champion\",\n      \"status\": \"Inactive\",\n      \"lastActive\": null\n    }\n  ],\n  \"totalCount\": 2,\n  \"page\": 1,\n  \"pageSize\": 20\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"userId\": 1,\n      \"emailAddress\": \"user@example.com\",\n      \"role\": \"Standard\",\n      \"status\": \"Active\",\n      \"lastActive\": \"2026-06-15T14:32:00Z\"\n    },\n    {\n      \"userId\": 2,\n      \"emailAddress\": \"another.user@example.com\",\n      \"role\": \"Champion\",\n      \"status\": \"Inactive\",\n      \"lastActive\": null\n    }\n  ],\n  \"totalCount\": 2,\n  \"page\": 1,\n  \"pageSize\": 20\n}",
               "_postman_previewlanguage": "json"
             },
             {
