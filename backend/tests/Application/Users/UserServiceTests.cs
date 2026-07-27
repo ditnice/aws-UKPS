@@ -10,6 +10,10 @@ using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using CreateUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserDetailsDto,
+    UKPS.Api.Application.Users.Errors.CreateUserError
+>;
 
 namespace UKPS.Api.Tests.Application.Users;
 
@@ -362,6 +366,33 @@ public class UserServiceTests : DatabaseTestBase
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 10]);
+    }
+
+    [Fact]
+    public async Task CreateUser_AllFieldsProvided_ReturnsDto()
+    {
+        CreateUserRequestDto CreateDto = new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkTelephone = "123456789",
+            WorkEmail = "tests@test.com",
+            OrganisationId = 1,
+        };
+        CreateUserResult result = await _service.CreateUser(
+            CreateDto,
+            TestContext.Current.CancellationToken
+        );
+        UserDetailsDto user = result.ShouldBeSuccess();
+        user.Title.ShouldBe("Mr");
+        user.FirstName.ShouldBe("Test1");
+        user.LastName.ShouldBe("Test2");
+        user.JobTitle.ShouldBe("Test3");
+        user.WorkEmail.ShouldBe("tests@test.com");
+        user.WorkPhone.ShouldBe("123456789");
     }
 
     [Theory]
