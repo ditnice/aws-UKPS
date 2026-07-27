@@ -389,6 +389,97 @@
         }
       }
     },
+    "/organisations": {
+      "post": {
+        "tags": [
+          "Organisation"
+        ],
+        "summary": "Creates a new organisation.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganisationDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganisationDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganisationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationMembershipDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationMembershipDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationMembershipDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users": {
       "get": {
         "tags": [
@@ -519,6 +610,41 @@
   },
   "components": {
     "schemas": {
+      "CreateOrganisationDto": {
+        "required": [
+          "organisationName",
+          "headOfficeAddress",
+          "headOfficeEmail",
+          "headOfficeTelephone"
+        ],
+        "type": "object",
+        "properties": {
+          "organisationName": {
+            "type": "string",
+            "description": "Gets or sets the name of the organisation."
+          },
+          "countryOrRegion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets or sets the country or region where the organisation is based, if applicable."
+          },
+          "headOfficeAddress": {
+            "type": "string",
+            "description": "Gets or sets the head office address of the organisation."
+          },
+          "headOfficeEmail": {
+            "type": "string",
+            "description": "Gets or sets the head office email address of the organisation."
+          },
+          "headOfficeTelephone": {
+            "type": "string",
+            "description": "Gets or sets the head office telephone number of the organisation."
+          }
+        },
+        "description": "Represents the information required to create a new organisation."
+      },
       "OrganisationDetailsDto": {
         "required": [
           "organisationName",

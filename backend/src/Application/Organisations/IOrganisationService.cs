@@ -45,4 +45,21 @@ public interface IOrganisationService
         UpdateOrganisationDetailsDto organisationDetails,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Creates a new organisation.
+    /// </summary>
+    /// <param name="command">
+    /// The details required to create the organisation.
+    /// </param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a
+    /// <see cref="Result{TSuccess, TError}"/> object with the created organisation's details
+    /// or an error of type <see cref="CreateOrganisationError"/>.
+    /// </returns>
+    Task<Result<OrganisationDetailsDto, CreateOrganisationError>> CreateOrganisation(
+        CreateOrganisationDto command,
+        CancellationToken cancellationToken
+    );
 }
