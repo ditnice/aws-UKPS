@@ -40,11 +40,11 @@ The directory structure should match the following
 │   │   │   └── VaccinesRevisionContent
 │   │   ├── Enums
 │   │   └── Migrations
-│   └── WebApi
-│       ├── Controllers
-│       ├── InternalServices
-│       │   └── Identity
-│       └── Properties
+│   ├── WebApi
+│   │   ├── Controllers
+│   │   └── InternalServices
+│   │       └── Identity
+│   └── Properties
 └── tests
     ├── Application
     │   ├── Common

@@ -27,13 +27,27 @@ variable "base_domain_name" {
   }
 }
 
-variable "cognito_ses_identity_arn" {
-  description = "ARN of the verified SES identity in the deployment account and region used for authentication email"
+variable "cloudfront_distribution_id" {
+  description = "ID of the existing CloudFront distribution used by the Route53 alias records"
   type        = string
 
   validation {
-    condition     = can(regex("^arn:aws[a-zA-Z-]*:ses:[a-z0-9-]+:[0-9]{12}:identity/.+$", var.cognito_ses_identity_arn))
-    error_message = "Cognito SES identity ARN must be a valid SES identity ARN."
+    condition     = can(regex("^E[A-Z0-9]+$", var.cloudfront_distribution_id))
+    error_message = "CloudFront distribution ID must look like an AWS CloudFront distribution ID, for example E123ABC456DEF."
+  }
+}
+
+variable "cognito_ses_identity_arn" {
+  # TODO: Replace this temporary manual input with a Terraform-managed SES
+  # identity once Route 53/SES domain verification is managed by this stack.
+  description = "ARN of the verified SES identity in the deployment account and region used for authentication email. Leave null to use Cognito default email sending."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.cognito_ses_identity_arn == null || can(regex("^arn:aws[a-zA-Z-]*:ses:[a-z0-9-]+:[0-9]{12}:identity/.+$", var.cognito_ses_identity_arn))
+    error_message = "Cognito SES identity ARN must be null or a valid SES identity ARN."
   }
 }
 

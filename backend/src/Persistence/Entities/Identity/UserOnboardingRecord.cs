@@ -6,6 +6,8 @@ internal class UserOnboardingRecord
     public required string UserEmail { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required string CreatedBy { get; init; }
+    public required int NewUserOrganisationId { get; init; }
+    public Organisation? NewUserOrganisation { get; init; }
 
     internal bool HasExpired(DateTime currentTime, TimeSpan timeSpan)
     {

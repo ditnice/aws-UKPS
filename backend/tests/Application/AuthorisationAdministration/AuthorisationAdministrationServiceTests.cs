@@ -1,3 +1,4 @@
+using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using UKPS.Api.Application.AuthorisationAdministration;
@@ -13,7 +14,7 @@ namespace UKPS.Api.Tests.Application.AuthorisationAdministration;
 [Collection(DatabaseCollection.Name)]
 public class AuthorisationAdministrationServiceTests : DatabaseTestBase
 {
-    private readonly UserOnboardingRecordFaker _userOnboardingRecordFaker = new();
+    private readonly Faker<UserOnboardingRecord> _userOnboardingRecordFaker;
     private readonly IServiceTestHarness<IAuthorisationAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
@@ -22,6 +23,10 @@ public class AuthorisationAdministrationServiceTests : DatabaseTestBase
     public AuthorisationAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
+        _userOnboardingRecordFaker = new UserOnboardingRecordFaker().RuleFor(
+            x => x.NewUserOrganisation,
+            _ => new OrganisationFaker().Generate()
+        );
         _harness = new ServiceTestHarness<IAuthorisationAdministrationService>(Context)
             .UpdateCurrentTime(_testTime)
             .UpdateCurrentUser(x => x with { Email = _currentUser })

@@ -410,4 +410,21 @@ public class OrganisationEndpointTests : DatabaseTestBase
         await Context.SaveChangesAsync();
         return membership;
     }
+
+    [Fact]
+    public async Task CreateOrganisation_FieldsMissing_ReturnsBadRequest()
+    {
+        var uri = new Uri($"/organisations", UriKind.Relative);
+        using StringContent content = new(
+            """{"OrganisationName":""}""",
+            Encoding.UTF8,
+            "application/json"
+        );
+        HttpResponseMessage response = await _httpClient.PostAsync(
+            uri,
+            content,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
 }

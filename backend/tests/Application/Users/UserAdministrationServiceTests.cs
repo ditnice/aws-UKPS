@@ -6,6 +6,8 @@ using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -18,7 +20,6 @@ namespace UKPS.Api.Tests.Application.Users;
 public class UserAdministrationServiceTests : DatabaseTestBase
 {
     private readonly IServiceTestHarness<IUserAdministrationService> _harness;
-    private readonly OnboardUserCommandDtoFaker _onBoardUserCommandFaker = new();
     private readonly DateTime _currentTime = new DateTime(
         2022,
         10,
@@ -34,13 +35,13 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     public UserAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _harness = getTestHarness();
+        _harness = GetTestHarness();
     }
 
     [Fact]
     public async Task OnboardUser_ShouldCreateANewOnboardingRecordInTheDatabase()
     {
-        OnboardUserCommandDto command = _onBoardUserCommandFaker.Generate();
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
         OnBoardUserResult result = await _harness.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
@@ -63,7 +64,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         var testLink = "test link";
         _setupLinkCreator.GetSetupLink(Arg.Any<Guid>()).Returns(testLink);
 
-        OnboardUserCommandDto command = _onBoardUserCommandFaker.Generate();
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
         OnBoardUserResult result = await _harness.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
@@ -78,7 +79,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task OnBoardUser_ShouldReturnNotAllowedResultUnlessASuperUser()
+    public async Task OnBoardUser_ForOtherOtherOrganisations_ShouldReturnNotAllowedResultUnlessASuperUser()
     {
         IEnumerable<UserRole> noneSuperAdminRoles = Enum.GetValues<UserRole>()
             .Except([UserRole.Super]);
@@ -86,8 +87,8 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foreach (var userRole in noneSuperAdminRoles)
         {
             IServiceTestHarness<IUserAdministrationService> harnessWithNoneSuperUserAuth =
-                getTestHarness().UpdateCurrentUser(x => x with { UserRole = userRole });
-            OnboardUserCommandDto command = _onBoardUserCommandFaker.Generate();
+                GetTestHarness().UpdateCurrentUser(x => x with { UserRole = userRole });
+            OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
             OnBoardUserResult result = await harnessWithNoneSuperUserAuth.Service.OnboardUser(
                 command,
                 TestContext.Current.CancellationToken
@@ -96,12 +97,71 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         }
     }
 
-    private IServiceTestHarness<IUserAdministrationService> getTestHarness()
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task OnBoardUser_ForSameOrganisation_ShouldReturnNotAllowedResultUnlessASuperUserOrChampion(
+        UserRole userRole,
+        bool allowed
+    )
+    {
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
+        IServiceTestHarness<IUserAdministrationService> harnessWithNoneSuperUserAuth =
+            GetTestHarness()
+                .UpdateCurrentUser(x =>
+                    x with
+                    {
+                        UserRole = userRole,
+                        OrganisationId = command.OrganisationId,
+                    }
+                );
+        OnBoardUserResult result = await harnessWithNoneSuperUserAuth.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        if (allowed)
+        {
+            result.ShouldBeSuccess();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<OnboardUserError.NotAllowed>();
+        }
+    }
+
+    [Fact]
+    public async Task OnBoardUser_ShouldReturnInvalidOrganisationErrorIfReferencingOrganisationThatDoesNotExist()
+    {
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
+        {
+            OrganisationId = 999,
+        };
+        OnBoardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<OnboardUserError.InvalidOrganisation>();
+    }
+
+    private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
         return new ServiceTestHarness<IUserAdministrationService>(Context)
             .UpdateCurrentUser(x => x with { Email = _currentUserEmail })
             .UpdateCurrentTime(_currentTime)
             .ConfigureServices(services => services.AddTransient(_ => _setupLinkCreator));
+    }
+
+    private async Task<OnboardUserCommandDto> GenerateValidOnboardingCommand()
+    {
+        Faker faker = new Faker();
+        OnboardUserCommandDtoFaker _onBoardUserCommandFaker = new();
+        OrganisationFaker organisationFaker = new();
+        var entity = organisationFaker.Generate();
+        entity.Id = faker.Random.Int(min: 1_000, max: 1_000_000);
+        Organisation organisation = await AddEntity(entity, TestContext.Current.CancellationToken);
+        return _onBoardUserCommandFaker.Generate() with { OrganisationId = organisation.Id };
     }
 
     private sealed class OnboardUserCommandDtoFaker : Faker<OnboardUserCommandDto>
