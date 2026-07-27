@@ -221,4 +221,92 @@ public class ResultTests
 
         result.Equals("not a result").ShouldBeFalse();
     }
+
+    [Fact]
+    public void Ok_ShouldCreateSuccessfulResult()
+    {
+        var result = Result<string>.Ok();
+
+        result.IsOk.ShouldBeTrue();
+        result.IsErr.ShouldBeFalse();
+        result.Error.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Err_ShouldCreateFailedResult()
+    {
+        var error = "Something went wrong";
+
+        var result = Result<string>.Err(error);
+
+        result.IsOk.ShouldBeFalse();
+        result.IsErr.ShouldBeTrue();
+        result.Error.ShouldBe(error);
+    }
+
+    [Fact]
+    public void Default_ShouldNotBeSuccessfulOrFailed()
+    {
+        var result = default(Result<string>);
+
+        result.IsOk.ShouldBeFalse();
+        result.IsErr.ShouldBeFalse();
+        result.Error.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Err_ShouldThrow_WhenErrorIsNull()
+    {
+        Should.Throw<ArgumentNullException>(() => Result<string>.Err(null!));
+    }
+
+    [Fact]
+    public void Match_ShouldInvokeOnOk_WhenResultIsSuccessful()
+    {
+        var result = Result<string>.Ok();
+
+        var matched = result.Match(onOk: () => "success", onErr: _ => "failure");
+
+        matched.ShouldBe("success");
+    }
+
+    [Fact]
+    public void Match_ShouldInvokeOnErr_WhenResultIsFailed()
+    {
+        var result = Result<string>.Err("failure");
+
+        var matched = result.Match(onOk: () => "success", onErr: error => error);
+
+        matched.ShouldBe("failure");
+    }
+
+    [Fact]
+    public void Match_ShouldThrow_WhenResultIsDefault()
+    {
+        var result = default(Result<string>);
+
+        Should.Throw<InvalidOperationException>(() =>
+            result.Match(onOk: () => "success", onErr: _ => "failure")
+        );
+    }
+
+    [Fact]
+    public void Match_ShouldThrow_WhenOnOkIsNull()
+    {
+        var result = Result<string>.Ok();
+
+        Should.Throw<ArgumentNullException>(() =>
+            result.Match<string>(onOk: null!, onErr: _ => "failure")
+        );
+    }
+
+    [Fact]
+    public void Match_ShouldThrow_WhenOnErrIsNull()
+    {
+        var result = Result<string>.Err("failure");
+
+        Should.Throw<ArgumentNullException>(() =>
+            result.Match<string>(onOk: () => "success", onErr: null!)
+        );
+    }
 }
