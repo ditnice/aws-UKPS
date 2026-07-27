@@ -5,7 +5,16 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsNotAsErrors>MA0026;MA0025;S1135</WarningsNotAsErrors>
+    <WarningsNotAsErrors>MA0025;MA0026;S1135</WarningsNotAsErrors>
+
+    <!--
+      MA0025 - This warns about throwing NotImplementedExceptions.
+              This is a valid action during development.
+
+      S1135 & MA0026 - Track uses of TODO tags.
+              TODO comments are permitted during development and should be
+              visible as warnings without blocking builds.
+    -->
   </PropertyGroup>
 
   <ItemGroup>

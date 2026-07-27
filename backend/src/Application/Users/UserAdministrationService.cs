@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -7,13 +9,15 @@ using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
-using UKPS.Api.Persistence.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using OnboardingUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
 
 namespace UKPS.Api.Application.Users;
 
 internal sealed partial class UserAdministrationService(
+    IOrganisationAuthoriser organisationAuthoriser,
     IWebIdentityAdministrationService administerIdentityService,
     ICurrentUserInfoService currentUserInfoService,
     IEmailService emailService,
@@ -23,46 +27,73 @@ internal sealed partial class UserAdministrationService(
     ILogger<UserAdministrationService> logger
 ) : IUserAdministrationService
 {
-    public async Task<Result<OnboardUserError>> OnboardUser(
+    public async Task<OnboardingUserResult> OnboardUser(
         OnboardUserCommandDto command,
         CancellationToken cancellationToken
     )
     {
-        if (currentUserInfoService.GetCurrentUserInfo().UserRole != UserRole.Super)
-        {
-            return Result<OnboardUserError>.Err(new OnboardUserError.NotAllowed());
-        }
-        UserOnboardingRecord userOnboardingRecord = await CreateNewUserOnboardingRecord(
-            command.NewUserEmail,
-            cancellationToken
+        var authorised = organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.SignUpUser,
+            command.OrganisationId
         );
-        await SendUserSignUpRequestedEmil(userOnboardingRecord, cancellationToken);
+        if (!authorised)
+        {
+            return OnboardingUserResult.Err(new OnboardUserError.NotAllowed());
+        }
+        Result<UserOnboardingRecord, OnboardUserError> userOnboardingRecord =
+            await CreateNewUserOnboardingRecord(command, cancellationToken);
 
-        return Result<OnboardUserError>.Ok();
+        if (userOnboardingRecord.IsErr)
+        {
+            return OnboardingUserResult.Err(userOnboardingRecord.Error);
+        }
+        await SendUserSignUpRequestedEmail(userOnboardingRecord.Value!, cancellationToken);
+
+        return OnboardingUserResult.Ok();
     }
 
-    private async Task<UserOnboardingRecord> CreateNewUserOnboardingRecord(
-        string newUserEmail,
+    private async Task<
+        Result<UserOnboardingRecord, OnboardUserError>
+    > CreateNewUserOnboardingRecord(
+        OnboardUserCommandDto command,
         CancellationToken cancellationToken
     )
     {
-        await administerIdentityService.CreateNewUser(newUserEmail, cancellationToken);
+        await administerIdentityService.CreateNewUser(command.NewUserEmail, cancellationToken);
         var userOnboardingRecord = new UserOnboardingRecord()
         {
-            UserEmail = newUserEmail,
+            UserEmail = command.NewUserEmail,
+            NewUserOrganisationId = command.OrganisationId,
             SetupToken = Guid.CreateVersion7(),
             CreatedBy = currentUserInfoService.GetCurrentUserInfo().Email,
             CreatedAt = timeProvider.GetUtcNow(),
         };
         dbContext.UserOnboardingRecords.Add(userOnboardingRecord);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException updateException)
+            when (updateException.InnerException is PostgresException postgresException
+                && string.Equals(
+                    postgresException.ConstraintName,
+                    ConstraintNames.UserOnboardingRequiresOrganisation,
+                    StringComparison.Ordinal
+                )
+            )
+        {
+            return Result<UserOnboardingRecord, OnboardUserError>.Err(
+                new OnboardUserError.InvalidOrganisation()
+            );
+        }
+
         string sanitisedGuid = Sanitise(userOnboardingRecord.SetupToken);
         LogNewUserOnboardingRecordCreated(sanitisedGuid);
-        return userOnboardingRecord;
+        return Result<UserOnboardingRecord, OnboardUserError>.Ok(userOnboardingRecord);
     }
 
-    private async Task SendUserSignUpRequestedEmil(
+    private async Task SendUserSignUpRequestedEmail(
         UserOnboardingRecord userOnboardingRecord,
         CancellationToken cancellationToken
     )

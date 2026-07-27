@@ -411,6 +411,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("created_by");
 
+                    b.Property<int>("NewUserOrganisationId")
+                        .HasColumnType("integer")
+                        .HasColumnName("new_user_organisation_id");
+
                     b.Property<string>("UserEmail")
                         .IsRequired()
                         .HasColumnType("text")
@@ -418,6 +422,9 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
+
+                    b.HasIndex("NewUserOrganisationId")
+                        .HasDatabaseName("ix_user_onboarding_records_new_user_organisation_id");
 
                     b.ToTable("user_onboarding_records", "ukps");
                 });
@@ -2794,6 +2801,18 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("UpdatedByUser");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", b =>
+                {
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "NewUserOrganisation")
+                        .WithMany()
+                        .HasForeignKey("NewUserOrganisationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_onboarding_records_organisations_new_user_organisation");
+
+                    b.Navigation("NewUserOrganisation");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOrgMembership", b =>

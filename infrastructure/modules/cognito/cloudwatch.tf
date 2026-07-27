@@ -32,8 +32,8 @@ resource "aws_cognito_log_delivery_configuration" "cognito" {
   user_pool_id = aws_cognito_user_pool.users.id
 
   log_configurations {
-    event_source = "userAuthEvents"
-    log_level    = "INFO"
+    event_source = "userNotification"
+    log_level    = "ERROR"
 
     cloud_watch_logs_configuration {
       log_group_arn = aws_cloudwatch_log_group.cognito.arn
@@ -41,8 +41,8 @@ resource "aws_cognito_log_delivery_configuration" "cognito" {
   }
 
   log_configurations {
-    event_source = "userNotification"
-    log_level    = "ERROR"
+    event_source = "userAuthEvents"
+    log_level    = "INFO"
 
     cloud_watch_logs_configuration {
       log_group_arn = aws_cloudwatch_log_group.cognito.arn

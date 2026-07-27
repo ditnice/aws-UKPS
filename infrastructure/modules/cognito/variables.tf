@@ -43,13 +43,14 @@ variable "kms_key_arn" {
 }
 
 variable "ses_identity_arn" {
-  description = "ARN of the verified SES identity in the deployment account and provider region used for authentication email"
+  description = "ARN of the verified SES identity in the deployment account and provider region used for authentication email. Leave null to use Cognito default email sending."
   type        = string
-  nullable    = false
+  default     = null
+  nullable    = true
 
   validation {
-    condition     = can(regex("^arn:aws[a-zA-Z-]*:ses:[a-z0-9-]+:[0-9]{12}:identity/.+$", var.ses_identity_arn))
-    error_message = "SES identity ARN must be a valid SES identity ARN."
+    condition     = var.ses_identity_arn == null || can(regex("^arn:aws[a-zA-Z-]*:ses:[a-z0-9-]+:[0-9]{12}:identity/.+$", var.ses_identity_arn))
+    error_message = "SES identity ARN must be null or a valid SES identity ARN."
   }
 }
 

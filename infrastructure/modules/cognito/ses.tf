@@ -1,4 +1,6 @@
 resource "aws_sesv2_configuration_set" "cognito" {
+  count = local.use_developer_email_sending ? 1 : 0
+
   configuration_set_name = "${local.name_prefix}-cognito"
 
   delivery_options {
