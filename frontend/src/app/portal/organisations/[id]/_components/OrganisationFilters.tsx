@@ -20,7 +20,8 @@ const filterableStatuses = (Object.keys(statusLabels) as UserOrgStatus[]).filter
   (status) => status !== 'Rejected',
 )
 
-const filterableRoles = Object.keys(roleLabels) as UserRole[]
+// Super user is not filterable via this UI
+const filterableRoles = (Object.keys(roleLabels) as UserRole[]).filter((role) => role !== 'Super')
 
 export function OrganisationFilters() {
   const router = useRouter()
