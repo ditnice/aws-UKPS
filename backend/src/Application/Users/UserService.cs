@@ -114,4 +114,81 @@ internal sealed class UserService(
 
         return organisationMemberships;
     }
+
+    public async Task<Result<UserDetailsDto, CreateUserError>> CreateUser(
+        CreateUserRequestDto createUserRequestDto,
+        CancellationToken cancellationToken
+    )
+    {
+        var organisation = await dbContext.Organisations.FindAsync(
+            [createUserRequestDto.OrganisationId],
+            cancellationToken
+        );
+        if (organisation is null)
+        {
+            return Result<UserDetailsDto, CreateUserError>.Err(
+                new CreateUserError.NotFound(createUserRequestDto.OrganisationId)
+            );
+        }
+        if (
+            // createUserRequestDto.UserType == null - can this be optional in dto to get rid of error
+            createUserRequestDto.Title == null
+            || createUserRequestDto.FirstName == null
+            || createUserRequestDto.LastName == null
+            || createUserRequestDto.JobTitle == null
+            || createUserRequestDto.WorkTelephone == null
+            || createUserRequestDto.WorkEmail == null
+        )
+        {
+            return Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.MissingFields());
+        }
+        bool UserExists = await dbContext.Users.AnyAsync(
+            x => x.WorkEmail == createUserRequestDto.WorkEmail,
+            cancellationToken: cancellationToken
+        );
+        if (UserExists)
+        {
+            return Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.EmailConflict());
+        }
+        var user = new User()
+        {
+            UserType = UserType.PharmaUser,
+            Title = createUserRequestDto.Title,
+            FirstName = createUserRequestDto.FirstName,
+            LastName = createUserRequestDto.LastName,
+            JobTitle = createUserRequestDto.JobTitle,
+            WorkTelephone = createUserRequestDto.WorkTelephone,
+            WorkEmail = createUserRequestDto.WorkEmail,
+        };
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var userId = user.Id;
+        _ = new UserOrgMembership()
+        {
+            UserId = userId,
+            OrganisationId = createUserRequestDto.OrganisationId,
+            UserRole = UserRole.Standard,
+            Status = UserOrgStatus.RequestedAccess,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
+            // need to add created at
+        };
+        return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
+    }
+
+    private static UserDetailsDto MapToDto(User user)
+    {
+        return new()
+        {
+            UserType = user.UserType,
+            Title = user.Title,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            JobTitle = user.JobTitle,
+            WorkPhone = user.WorkTelephone,
+            WorkEmail = user.WorkEmail,
+        };
+        // May need to be changed as currently can't have one user who is part of multiple organisations
+    }
 }
