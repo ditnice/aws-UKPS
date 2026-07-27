@@ -46,6 +46,8 @@ public class UserController(IUserService userService) : ControllerBase
             getUsersQuery.Status.ToArray(),
             getUsersQuery.Role.ToArray(),
             getUsersQuery.Email,
+            getUsersQuery.LastActiveFrom,
+            getUsersQuery.LastActiveTo,
             cancellationToken
         );
 

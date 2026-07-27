@@ -33,6 +33,8 @@ public class UserControllerTests
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
                 Arg.Any<string?>(),
+                Arg.Any<DateTimeOffset?>(),
+                Arg.Any<DateTimeOffset?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(Result<PaginatedResponseDto<UserListItemDto>, GetUsersError>.Ok(expected));
@@ -57,6 +59,8 @@ public class UserControllerTests
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
                 Arg.Any<string?>(),
+                Arg.Any<DateTimeOffset?>(),
+                Arg.Any<DateTimeOffset?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -86,6 +90,8 @@ public class UserControllerTests
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
                 Arg.Any<string?>(),
+                Arg.Any<DateTimeOffset?>(),
+                Arg.Any<DateTimeOffset?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -113,6 +119,8 @@ public class UserControllerTests
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
                 Arg.Any<string?>(),
+                Arg.Any<DateTimeOffset?>(),
+                Arg.Any<DateTimeOffset?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -140,6 +148,8 @@ public class UserControllerTests
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
                 Arg.Any<string?>(),
+                Arg.Any<DateTimeOffset?>(),
+                Arg.Any<DateTimeOffset?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -155,6 +165,8 @@ public class UserControllerTests
             Status = [UserOrgStatus.Active, UserOrgStatus.Inactive],
             Role = [UserRole.Champion, UserRole.Super],
             Email = "smith",
+            LastActiveFrom = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+            LastActiveTo = new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero),
         };
 
         await _controller.GetUsers(getUsersQuery, TestContext.Current.CancellationToken);
@@ -172,6 +184,8 @@ public class UserControllerTests
                     roles.SequenceEqual(getUsersQuery.Role)
                 ),
                 getUsersQuery.Email,
+                getUsersQuery.LastActiveFrom,
+                getUsersQuery.LastActiveTo,
                 TestContext.Current.CancellationToken
             );
     }
@@ -187,6 +201,8 @@ public class UserControllerTests
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
                 Arg.Any<string?>(),
+                Arg.Any<DateTimeOffset?>(),
+                Arg.Any<DateTimeOffset?>(),
                 TestContext.Current.CancellationToken
             )
             .Returns(
@@ -206,6 +222,8 @@ public class UserControllerTests
                 Arg.Any<IReadOnlyCollection<UserOrgStatus>>(),
                 Arg.Any<IReadOnlyCollection<UserRole>>(),
                 Arg.Any<string?>(),
+                Arg.Any<DateTimeOffset?>(),
+                Arg.Any<DateTimeOffset?>(),
                 TestContext.Current.CancellationToken
             );
     }

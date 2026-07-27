@@ -366,8 +366,26 @@ export type GetUsersData = {
         PageSize?: number | string;
         /**
          * Gets or initialises the collection of user organisation statuses to filter users by.
+         * Users with a UserOrgStatus.Rejected status are always excluded from
+         * results, regardless of the values supplied here.
          */
         Status?: Array<UserOrgStatus>;
+        /**
+         * Gets or initialises the collection of user roles to filter users by.
+         */
+        Role?: Array<UserRole>;
+        /**
+         * Gets or initialises an optional partial, case-insensitive match against the user's email address.
+         */
+        Email?: string;
+        /**
+         * Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.
+         */
+        LastActiveFrom?: string;
+        /**
+         * Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.
+         */
+        LastActiveTo?: string;
     };
     url: '/users';
 };

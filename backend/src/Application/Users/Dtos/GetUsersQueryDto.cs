@@ -43,4 +43,14 @@ public sealed record GetUsersQueryDto
     /// Gets or initialises an optional partial, case-insensitive match against the user's email address.
     /// </summary>
     public string? Email { get; init; }
+
+    /// <summary>
+    /// Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.
+    /// </summary>
+    public DateTimeOffset? LastActiveFrom { get; init; }
+
+    /// <summary>
+    /// Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.
+    /// </summary>
+    public DateTimeOffset? LastActiveTo { get; init; }
 }

@@ -19,6 +19,8 @@ public interface IUserService
     /// <param name="statuses">A collection of user organisation statuses to filter by.</param>
     /// <param name="roles">A collection of user roles to filter by.</param>
     /// <param name="email">An optional partial, case-insensitive match against the user's email address.</param>
+    /// <param name="lastActiveFrom">An optional inclusive lower bound for the user's last active timestamp.</param>
+    /// <param name="lastActiveTo">An optional inclusive upper bound for the user's last active timestamp.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a
@@ -32,6 +34,8 @@ public interface IUserService
         IReadOnlyCollection<UserOrgStatus> statuses,
         IReadOnlyCollection<UserRole> roles,
         string? email,
+        DateTimeOffset? lastActiveFrom,
+        DateTimeOffset? lastActiveTo,
         CancellationToken cancellationToken
     );
 }

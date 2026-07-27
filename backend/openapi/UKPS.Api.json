@@ -469,6 +469,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "LastActiveFrom",
+            "in": "query",
+            "description": "Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "LastActiveTo",
+            "in": "query",
+            "description": "Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
           }
         ],
         "responses": {

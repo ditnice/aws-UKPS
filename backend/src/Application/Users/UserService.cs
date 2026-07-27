@@ -25,6 +25,8 @@ internal sealed class UserService(
         IReadOnlyCollection<UserOrgStatus> statuses,
         IReadOnlyCollection<UserRole> roles,
         string? email,
+        DateTimeOffset? lastActiveFrom,
+        DateTimeOffset? lastActiveTo,
         CancellationToken cancellationToken
     )
     {
@@ -46,7 +48,9 @@ internal sealed class UserService(
             organisationId,
             statuses,
             roles,
-            email
+            email,
+            lastActiveFrom,
+            lastActiveTo
         );
 
         int totalCount = await organisationMemberships.CountAsync(cancellationToken);
@@ -111,7 +115,9 @@ internal sealed class UserService(
         int? organisationId,
         IReadOnlyCollection<UserOrgStatus> statuses,
         IReadOnlyCollection<UserRole> roles,
-        string? email
+        string? email,
+        DateTimeOffset? lastActiveFrom,
+        DateTimeOffset? lastActiveTo
     )
     {
         IQueryable<UserOrgMembership> organisationMemberships = input
@@ -144,6 +150,22 @@ internal sealed class UserService(
             string pattern = $"%{EscapeLikePattern(email)}%";
             organisationMemberships = organisationMemberships.Where(m =>
                 EF.Functions.ILike(m.User!.WorkEmail, pattern, "\\")
+            );
+        }
+
+        if (lastActiveFrom.HasValue)
+        {
+            DateTime from = lastActiveFrom.Value.UtcDateTime;
+            organisationMemberships = organisationMemberships.Where(m =>
+                m.User!.LastActive != null && m.User.LastActive >= from
+            );
+        }
+
+        if (lastActiveTo.HasValue)
+        {
+            DateTime to = lastActiveTo.Value.UtcDateTime;
+            organisationMemberships = organisationMemberships.Where(m =>
+                m.User!.LastActive != null && m.User.LastActive <= to
             );
         }
 
