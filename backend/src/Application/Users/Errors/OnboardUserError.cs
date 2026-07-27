@@ -1,0 +1,19 @@
+namespace UKPS.Api.Application.Users.Errors;
+
+/// <summary>
+/// Represents errors that can occur when onboarding a user.
+/// </summary>
+public abstract record OnboardUserError
+{
+    // TODO URP 410 - Update Onboard User Error to return when duplicate email addresses exist
+
+    /// <summary>
+    /// Indicates that the specified organisation does not exist.
+    /// </summary>
+    public sealed record InvalidOrganisation : OnboardUserError;
+
+    /// <summary>
+    /// Indicates that the current user is not permitted to onboard a new user.
+    /// </summary>
+    internal sealed record NotAllowed : OnboardUserError;
+}

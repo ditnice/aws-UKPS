@@ -1,5 +1,4 @@
 using Bogus;
-using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 

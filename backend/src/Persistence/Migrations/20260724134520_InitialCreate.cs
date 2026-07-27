@@ -494,6 +494,29 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "user_onboarding_records",
+                schema: "ukps",
+                columns: table => new
+                {
+                    setup_token = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_email = table.Column<string>(type: "text", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    created_by = table.Column<string>(type: "text", nullable: false),
+                    new_user_organisation_id = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_user_onboarding_records", x => x.setup_token);
+                    table.ForeignKey(
+                        name: "fk_user_onboarding_records_organisations_new_user_organisation",
+                        column: x => x.new_user_organisation_id,
+                        principalSchema: "ukps",
+                        principalTable: "organisations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "user_org_memberships",
                 schema: "ukps",
                 columns: table => new
@@ -2096,6 +2119,12 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "updated_by");
 
             migrationBuilder.CreateIndex(
+                name: "ix_user_onboarding_records_new_user_organisation_id",
+                schema: "ukps",
+                table: "user_onboarding_records",
+                column: "new_user_organisation_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_user_org_membership_organisation_id",
                 schema: "ukps",
                 table: "user_org_memberships",
@@ -2660,6 +2689,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "user_audits",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "user_onboarding_records",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
