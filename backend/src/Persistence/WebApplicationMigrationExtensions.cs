@@ -2,6 +2,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace UKPS.Api.Persistence;
 
+public interface IDatabaseMigrator
+{
+    Task MigrateAsync(CancellationToken cancellationToken);
+}
+
+internal sealed class DatabaseMigrator(AppDbContext dbContext) : IDatabaseMigrator
+{
+    public Task MigrateAsync(CancellationToken cancellationToken) =>
+        dbContext.Database.MigrateAsync(cancellationToken);
+}
+
 internal static class WebApplicationMigrationExtensions
 {
     public static async Task MigrateDatabase(this WebApplication app)
@@ -20,7 +31,8 @@ internal static class WebApplicationMigrationExtensions
         using var scope = app.Services.CreateScope();
         IHostApplicationLifetime lifetime =
             app.Services.GetRequiredService<IHostApplicationLifetime>();
-        AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await dbContext.Database.MigrateAsync(lifetime.ApplicationStopping);
+        IDatabaseMigrator databaseMigrator =
+            scope.ServiceProvider.GetRequiredService<IDatabaseMigrator>();
+        await databaseMigrator.MigrateAsync(lifetime.ApplicationStopping);
     }
 }

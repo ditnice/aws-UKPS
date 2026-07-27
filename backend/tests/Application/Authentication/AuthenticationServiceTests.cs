@@ -91,6 +91,30 @@ public sealed class AuthenticationServiceTests
     }
 
     [Fact]
+    public async Task Login_ShouldNotCapture_WhenCognitoThrowsNoneNotAuthorizedException()
+    {
+        var request = new LoginRequest { Username = "user@example.com", Password = "password" };
+
+        _cognito
+            .InitiateAuthAsync(Arg.Any<InitiateAuthRequest>(), Arg.Any<CancellationToken>())
+            .Returns<Task<InitiateAuthResponse>>(_ =>
+                throw new InvalidOperationException("Other Exception")
+            );
+
+        await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await _sut.Login(request, CancellationToken.None)
+        );
+    }
+
+    [Fact]
+    public async Task Login_ShouldThrowArgumentException_WhenLoginRequestIsNull()
+    {
+        await Should.ThrowAsync<ArgumentNullException>(async () =>
+            await _sut.Login(null!, CancellationToken.None)
+        );
+    }
+
+    [Fact]
     public async Task Login_ShouldSendCorrectRequestToCognito()
     {
         var request = new LoginRequest { Username = "user@example.com", Password = "password" };

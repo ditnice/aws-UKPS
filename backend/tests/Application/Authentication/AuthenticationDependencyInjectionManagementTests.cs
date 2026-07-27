@@ -75,14 +75,14 @@ public sealed class AuthenticationDependencyInjectionManagementTests
 
         services.AddSingleton(Options.Create(CreateCognitoConfiguration()));
 
+        services.AddAuthenticationServices();
+
         return services;
     }
 
     private static ServiceProvider CreateServiceProvider()
     {
         var services = CreateServices();
-
-        services.AddAuthenticationServices();
 
         return services.BuildServiceProvider();
     }

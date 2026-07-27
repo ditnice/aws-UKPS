@@ -26,6 +26,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserInfoService, WebApiCurrentUserInfoService>();
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();
+builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();
 
 builder.Services.Configure<CognitoConfiguration>(
     builder.Configuration.GetSection(CognitoConfiguration.SectionName)

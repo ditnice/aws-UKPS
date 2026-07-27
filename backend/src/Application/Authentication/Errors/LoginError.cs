@@ -3,7 +3,7 @@ namespace UKPS.Api.Application.Authentication.Errors;
 /// <summary>
 /// Represents an error that can occur during the login process.
 /// </summary>
-public record LoginError
+public abstract record LoginError
 {
     /// <summary>
     /// Prevents direct instantiation of login errors.

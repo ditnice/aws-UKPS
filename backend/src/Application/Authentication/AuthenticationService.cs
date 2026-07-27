@@ -29,6 +29,8 @@ internal class AuthenticationService : IAuthenticationService
         CancellationToken cancellationToken
     )
     {
+        ArgumentNullException.ThrowIfNull(loginRequest);
+
         try
         {
             var cognitoResponse = await _cognito.InitiateAuthAsync(
