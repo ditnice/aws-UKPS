@@ -6,4 +6,5 @@ internal enum Operation
     Create = 1,
     Update = 2,
     Delete = 3,
+    SignUpUser = 4,
 }

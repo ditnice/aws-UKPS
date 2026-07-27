@@ -31,3 +31,10 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.Application"
 )]
+[assembly: SuppressMessage(
+    "Naming",
+    "CA1716:Identifiers should not match keywords",
+    Justification = "Error is a valid property name and restricting it's usage is overkill for something that will not be packaged.",
+    Scope = "member",
+    Target = "~P:UKPS.Api.Application.Common.IResult`1.Error"
+)]
