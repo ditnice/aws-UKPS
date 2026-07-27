@@ -8,6 +8,15 @@ internal static class WebApplicationMigrationExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
+        DatabaseConfiguration? settings = app
+            .Configuration.GetSection(DatabaseConfiguration.SectionName)
+            .Get<DatabaseConfiguration>();
+
+        if (settings is null || !settings.MigrateOnStartup)
+        {
+            return;
+        }
+
         using var scope = app.Services.CreateScope();
         IHostApplicationLifetime lifetime =
             app.Services.GetRequiredService<IHostApplicationLifetime>();

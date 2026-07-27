@@ -30,6 +30,9 @@ builder.Services.AddSeedingServices();
 builder.Services.Configure<CognitoConfiguration>(
     builder.Configuration.GetSection(CognitoConfiguration.SectionName)
 );
+builder.Services.Configure<DatabaseConfiguration>(
+    builder.Configuration.GetSection(DatabaseConfiguration.SectionName)
+);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

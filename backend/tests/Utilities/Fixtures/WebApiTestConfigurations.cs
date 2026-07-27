@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 
 namespace UKPS.Api.Tests.Utilities.Fixtures;
@@ -9,20 +10,25 @@ public static class WebApiTestConfigurations
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        builder.ConfigureDatabase(null, false);
+        builder.ConfigureDatabase(
+            connectionString: null,
+            reseedOnStartup: false,
+            migrateOnStartup: false
+        );
     }
 
     public static void ConfigureWithDatabase(this IWebHostBuilder builder, string connectionString)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        builder.ConfigureDatabase(connectionString, false);
+        builder.ConfigureDatabase(connectionString, reseedOnStartup: false, migrateOnStartup: true);
     }
 
     private static void ConfigureDatabase(
         this IWebHostBuilder builder,
         string? connectionString,
-        bool reseedOnStartup
+        bool reseedOnStartup,
+        bool migrateOnStartup
     )
     {
         if (connectionString is not null)
@@ -32,6 +38,10 @@ public static class WebApiTestConfigurations
         builder.UseSetting(
             $"{SeedingConfiguration.SectionName}:{nameof(SeedingConfiguration.ReseedOnStartup)}",
             $"{reseedOnStartup}"
+        );
+        builder.UseSetting(
+            $"{DatabaseConfiguration.SectionName}:{nameof(DatabaseConfiguration.MigrateOnStartup)}",
+            $"{migrateOnStartup}"
         );
     }
 }
