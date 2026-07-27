@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
@@ -395,6 +396,52 @@ public class UserServiceTests : DatabaseTestBase
         user.WorkPhone.ShouldBe("123456789");
     }
 
+    [Fact]
+    public async Task CreateUser_EmailConflict_ReturnsConflict()
+    {
+        Context.Users.Add(CreateUser());
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        CreateUserRequestDto createDto = new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkTelephone = "123456789",
+            WorkEmail = "tests@test.com",
+            OrganisationId = 1,
+        };
+        CreateUserResult result = await _service.CreateUser(
+            createDto,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<CreateUserError.EmailConflict>();
+    }
+
+    [Fact]
+    public async Task CreateUser_OrgIDNotFound_ReturnsNotFound()
+    {
+        CreateUserRequestDto createDto = new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkTelephone = "123456789",
+            WorkEmail = "tests@test.com",
+            OrganisationId = 999,
+        };
+        CreateUserResult result = await _service.CreateUser(
+            createDto,
+            TestContext.Current.CancellationToken
+        );
+        CreateUserError error = result.ShouldBeError();
+        error.ShouldBeOfType<CreateUserError.NotFound>();
+        ((CreateUserError.NotFound)error).OrganisationId.ShouldBe(9999);
+    }
+
     [Theory]
     [InlineData(UserRole.Super, false)]
     [InlineData(UserRole.Champion, true)]
@@ -499,4 +546,17 @@ public class UserServiceTests : DatabaseTestBase
             result.Error.ShouldBeOfType<GetUsersError.NotAllowed>();
         }
     }
+
+    private static User CreateUser() =>
+        new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkTelephone = "123456789",
+            WorkEmail = "tests@test.com",
+            // will also have last created, last active etc
+        };
 }
