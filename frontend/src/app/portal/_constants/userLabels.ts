@@ -24,3 +24,21 @@ export const statusTagColours: Record<UserOrgStatus, TagColour> = {
   Rejected: 'grey',
   RequestedAccess: 'yellow',
 }
+
+export const lastActivePresets = ['week', 'month', '6months', 'year'] as const
+
+export type LastActivePreset = (typeof lastActivePresets)[number]
+
+export const lastActiveLabels: Record<LastActivePreset, string> = {
+  week: 'In the last week',
+  month: 'In the last month',
+  '6months': 'In the last 6 months',
+  year: 'In the last year',
+}
+
+export const lastActivePresetDays: Record<LastActivePreset, number> = {
+  week: 7,
+  month: 30,
+  '6months': 182,
+  year: 365,
+}

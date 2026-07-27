@@ -5,7 +5,13 @@ import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
 import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
-import { roleLabels, statusLabels, statusTagColours } from '@/app/portal/_constants/userLabels'
+import {
+  lastActivePresetDays,
+  roleLabels,
+  statusLabels,
+  statusTagColours,
+  type LastActivePreset,
+} from '@/app/portal/_constants/userLabels'
 import { getUsers } from '@/client/generated/sdk.gen'
 import type { UserListItemDto, UserOrgStatus } from '@/client/generated/types.gen'
 import { Table } from '@/components/Table/Table'
@@ -20,6 +26,8 @@ interface OrganisationUsersTableProps {
   organisationId: number
   pageSize: number
   status: UserOrgStatus[]
+  email?: string
+  lastActive?: LastActivePreset
 }
 
 const resultsPerPage = [10, 25, 50]
@@ -82,13 +90,31 @@ function getTotalPages(totalCount: number | string, pageSize: number): number {
   return Math.ceil(Number(totalCount) / pageSize)
 }
 
-function buildHref(page: number, pageSize: number, status: UserOrgStatus[]): string {
+function buildHref(
+  page: number,
+  pageSize: number,
+  status: UserOrgStatus[],
+  email: string | undefined,
+  lastActive: LastActivePreset | undefined,
+): string {
   const params = new URLSearchParams()
   params.set('page', String(page))
   params.set('pageSize', String(pageSize))
   status.forEach((value) => params.append('status', value))
+  if (email) {
+    params.set('email', email)
+  }
+  if (lastActive) {
+    params.set('lastActive', lastActive)
+  }
 
   return `?${params.toString()}`
+}
+
+function getLastActiveFromDate(preset: LastActivePreset): string {
+  const days = lastActivePresetDays[preset]
+
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 }
 
 export async function OrganisationUsersTable({
@@ -96,6 +122,8 @@ export async function OrganisationUsersTable({
   organisationId,
   pageSize,
   status,
+  email,
+  lastActive,
 }: OrganisationUsersTableProps) {
   const { data: users, error: usersError } = await getUsers({
     query: {
@@ -103,6 +131,8 @@ export async function OrganisationUsersTable({
       Page: currentPage,
       PageSize: pageSize,
       Status: status.length ? status : undefined,
+      Email: email,
+      LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
     },
   })
 
@@ -159,7 +189,9 @@ export async function OrganisationUsersTable({
               <EnhancedPagination
                 currentPage={currentPage}
                 elementType={PaginationLink}
-                mapPageNumberToHref={(pageNumber) => buildHref(pageNumber, pageSize, status)}
+                mapPageNumberToHref={(pageNumber) =>
+                  buildHref(pageNumber, pageSize, status, email, lastActive)
+                }
                 totalPages={getTotalPages(users.totalCount, pageSize)}
               />
             </GridItem>
@@ -171,7 +203,9 @@ export async function OrganisationUsersTable({
                     {pageSize === count ? (
                       count
                     ) : (
-                      <PaginationLink href={buildHref(1, count, status)}>{count}</PaginationLink>
+                      <PaginationLink href={buildHref(1, count, status, email, lastActive)}>
+                        {count}
+                      </PaginationLink>
                     )}
                   </li>
                 ))}

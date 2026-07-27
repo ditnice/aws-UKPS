@@ -5,6 +5,7 @@ import { Button } from '@nice-digital/nds-button'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 import { PageHeader } from '@nice-digital/nds-page-header'
 
+import { lastActivePresets, type LastActivePreset } from '@/app/portal/_constants/userLabels'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
 import type { UserOrgStatus } from '@/client/generated/types.gen'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
@@ -25,7 +26,13 @@ const validStatuses: UserOrgStatus[] = [
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ page?: string; pageSize?: string; status?: string | string[] }>
+  searchParams: Promise<{
+    page?: string
+    pageSize?: string
+    status?: string | string[]
+    email?: string
+    lastActive?: string
+  }>
 }
 
 function parsePage(page: string | undefined): number {
@@ -48,13 +55,33 @@ function parseStatus(status: string | string[] | undefined): UserOrgStatus[] {
   )
 }
 
+function parseEmail(email: string | undefined): string | undefined {
+  return email?.trim() || undefined
+}
+
+function isLastActivePreset(value: string | undefined): value is LastActivePreset {
+  return lastActivePresets.includes(value as LastActivePreset)
+}
+
+function parseLastActive(lastActive: string | undefined): LastActivePreset | undefined {
+  return isLastActivePreset(lastActive) ? lastActive : undefined
+}
+
 export default async function OrganisationPage({ params, searchParams }: Props) {
   const { id } = await params
-  const { page, pageSize: pageSizeParam, status: statusParam } = await searchParams
+  const {
+    page,
+    pageSize: pageSizeParam,
+    status: statusParam,
+    email: emailParam,
+    lastActive: lastActiveParam,
+  } = await searchParams
   const organisationId = Number(id)
   const currentPage = parsePage(page)
   const pageSize = parsePageSize(pageSizeParam)
   const status = parseStatus(statusParam)
+  const email = parseEmail(emailParam)
+  const lastActive = parseLastActive(lastActiveParam)
 
   if (!Number.isInteger(organisationId)) {
     notFound()
@@ -102,13 +129,15 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         <GridItem cols={12} md={8} lg={9} elementType="section" aria-labelledby="filter-summary">
           <Suspense
             fallback={<p>Loading users...</p>}
-            key={`${currentPage}-${pageSize}-${status.join(',')}`}
+            key={`${currentPage}-${pageSize}-${status.join(',')}-${email ?? ''}-${lastActive ?? ''}`}
           >
             <OrganisationUsersTable
               currentPage={currentPage}
               organisationId={organisationId}
               pageSize={pageSize}
               status={status}
+              email={email}
+              lastActive={lastActive}
             />
           </Suspense>
         </GridItem>
