@@ -130,18 +130,6 @@ internal sealed class UserService(
                 new CreateUserError.NotFound(createUserRequestDto.OrganisationId)
             );
         }
-        if (
-            // createUserRequestDto.UserType == null - can this be optional in dto to get rid of error
-            createUserRequestDto.Title == null
-            || createUserRequestDto.FirstName == null
-            || createUserRequestDto.LastName == null
-            || createUserRequestDto.JobTitle == null
-            || createUserRequestDto.WorkTelephone == null
-            || createUserRequestDto.WorkEmail == null
-        )
-        {
-            return Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.MissingFields());
-        }
         bool UserExists = await dbContext.Users.AnyAsync(
             x => x.WorkEmail == createUserRequestDto.WorkEmail,
             cancellationToken: cancellationToken
@@ -159,6 +147,7 @@ internal sealed class UserService(
             JobTitle = createUserRequestDto.JobTitle,
             WorkTelephone = createUserRequestDto.WorkTelephone,
             WorkEmail = createUserRequestDto.WorkEmail,
+            CreatedAt = DateTime.UtcNow,
         };
 
         dbContext.Users.Add(user);
@@ -172,7 +161,7 @@ internal sealed class UserService(
             UserRole = UserRole.Standard,
             Status = UserOrgStatus.RequestedAccess,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
-            // need to add created at
+            CreatedAt = DateTime.UtcNow,
         };
         return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
     }
@@ -189,6 +178,5 @@ internal sealed class UserService(
             WorkPhone = user.WorkTelephone,
             WorkEmail = user.WorkEmail,
         };
-        // May need to be changed as currently can't have one user who is part of multiple organisations
     }
 }

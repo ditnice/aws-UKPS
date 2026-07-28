@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260727112756_InitialCreate")]
+    [Migration("20260728092709_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -291,6 +291,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("text")
@@ -300,6 +304,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("job_title");
 
+                    b.Property<DateTime?>("LastActive")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_active");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("text")
@@ -308,6 +316,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("text")
                         .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.Property<int>("UserType")
                         .HasColumnType("integer")
