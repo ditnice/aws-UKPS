@@ -6,6 +6,12 @@ internal static class AwsConfigurationExtensions
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
+        bool loadSecrets = configuration.GetValue<bool>("AWS:LoadSecrets");
+        if (!loadSecrets)
+        {
+            return;
+        }
+
         configuration.AddSystemsManager(
             "/aws/reference/secretsmanager/ukps/dev/ukps-service/cognito-client"
         );

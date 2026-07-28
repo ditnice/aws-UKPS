@@ -40,12 +40,13 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                     services.AddSingleton(_mockedService);
                 });
                 builder.ConfigureNoDatabase();
+                builder.UseSetting("AWS:LoadSecrets", $"{false}");
             })
             .CreateClient();
     }
 
     [Fact]
-    public async Task Login_ShouldSetAccessTokenCookieOnSucess()
+    public async Task Login_ShouldSetAccessTokenCookieOnSuccess()
     {
         var accessToken = "48b5becd-f98c-4897-98aa-be37eecb6a68";
         _mockedService

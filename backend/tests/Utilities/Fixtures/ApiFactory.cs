@@ -27,6 +27,7 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
                 );
         });
 
+        builder.UseSetting("AWS:LoadSecrets", $"{false}");
         builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
         builder.UseSetting(
             $"{SeedingConfiguration.SectionName}:{nameof(SeedingConfiguration.ReseedOnStartup)}",
