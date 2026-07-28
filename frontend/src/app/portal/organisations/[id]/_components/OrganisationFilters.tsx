@@ -18,6 +18,40 @@ import type { ChangeEvent, SubmitEvent } from 'react'
 
 type MultiFilterKey = 'status' | 'role'
 
+interface FilterOptionsGroupProps<T extends string> {
+  heading: string
+  id: string
+  options: readonly T[]
+  labels: Record<T, string>
+  /** Single and multi select groups differ only in how selection is derived. */
+  isSelected: (option: T) => boolean
+  onChanged: (option: T, isSelected: boolean) => void
+}
+
+function FilterOptionsGroup<T extends string>({
+  heading,
+  id,
+  options,
+  labels,
+  isSelected,
+  onChanged,
+}: FilterOptionsGroupProps<T>) {
+  return (
+    <FilterGroup heading={heading} id={id}>
+      {options.map((option) => (
+        <FilterOption
+          key={option}
+          isSelected={isSelected(option)}
+          value={option}
+          onChanged={(e: ChangeEvent<HTMLInputElement>) => onChanged(option, e.target.checked)}
+        >
+          {labels[option]}
+        </FilterOption>
+      ))}
+    </FilterGroup>
+  )
+}
+
 export function OrganisationFilters() {
   const router = useRouter()
   const pathname = usePathname()
@@ -84,50 +118,32 @@ export function OrganisationFilters() {
         }}
       ></FilterByInput>
 
-      <FilterGroup heading="Role" id="filter-role">
-        {filterableRoles.map((role) => (
-          <FilterOption
-            key={role}
-            isSelected={selectedRoles.includes(role)}
-            value={role}
-            onChanged={(e: ChangeEvent<HTMLInputElement>) =>
-              handleMultiChanged('role', role, e.target.checked)
-            }
-          >
-            {roleLabels[role]}
-          </FilterOption>
-        ))}
-      </FilterGroup>
+      <FilterOptionsGroup
+        heading="Role"
+        id="filter-role"
+        options={filterableRoles}
+        labels={roleLabels}
+        isSelected={(role) => selectedRoles.includes(role)}
+        onChanged={(role, isSelected) => handleMultiChanged('role', role, isSelected)}
+      />
 
-      <FilterGroup heading="Last active" id="filter-last-active">
-        {lastActivePresets.map((preset) => (
-          <FilterOption
-            key={preset}
-            isSelected={selectedLastActive === preset}
-            value={preset}
-            onChanged={(e: ChangeEvent<HTMLInputElement>) =>
-              handleLastActiveChanged(preset, e.target.checked)
-            }
-          >
-            {lastActiveLabels[preset]}
-          </FilterOption>
-        ))}
-      </FilterGroup>
+      <FilterOptionsGroup
+        heading="Last active"
+        id="filter-last-active"
+        options={lastActivePresets}
+        labels={lastActiveLabels}
+        isSelected={(preset) => selectedLastActive === preset}
+        onChanged={handleLastActiveChanged}
+      />
 
-      <FilterGroup heading="Status" id="filter-status">
-        {filterableStatuses.map((status) => (
-          <FilterOption
-            key={status}
-            isSelected={selectedStatuses.includes(status)}
-            value={status}
-            onChanged={(e: ChangeEvent<HTMLInputElement>) =>
-              handleMultiChanged('status', status, e.target.checked)
-            }
-          >
-            {statusLabels[status]}
-          </FilterOption>
-        ))}
-      </FilterGroup>
+      <FilterOptionsGroup
+        heading="Status"
+        id="filter-status"
+        options={filterableStatuses}
+        labels={statusLabels}
+        isSelected={(status) => selectedStatuses.includes(status)}
+        onChanged={(status, isSelected) => handleMultiChanged('status', status, isSelected)}
+      />
     </FilterPanel>
   )
 }
