@@ -13,8 +13,9 @@ import {
   statusTagColours,
   type LastActivePreset,
 } from '@/app/portal/_constants/userLabels'
+import { buildUserListHref, type UserListQuery } from '@/app/portal/_utils/userListQuery'
 import { getUsers } from '@/client/generated/sdk.gen'
-import type { UserListItemDto, UserOrgStatus, UserRole } from '@/client/generated/types.gen'
+import type { UserListItemDto } from '@/client/generated/types.gen'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
 
@@ -23,13 +24,8 @@ import styles from '../page.module.scss'
 import type { ComponentProps } from 'react'
 
 interface OrganisationUsersTableProps {
-  currentPage: number
   organisationId: number
-  pageSize: number
-  status: UserOrgStatus[]
-  role: UserRole[]
-  email?: string
-  lastActive?: LastActivePreset
+  query: UserListQuery
 }
 
 function PaginationLink({ children, ...props }: ComponentProps<typeof Link>) {
@@ -86,29 +82,6 @@ function getTotalPages(totalCount: number, pageSize: number): number {
   return Math.ceil(totalCount / pageSize)
 }
 
-function buildHref(
-  page: number,
-  pageSize: number,
-  status: UserOrgStatus[],
-  role: UserRole[],
-  email: string | undefined,
-  lastActive: LastActivePreset | undefined,
-): string {
-  const params = new URLSearchParams()
-  params.set('page', String(page))
-  params.set('pageSize', String(pageSize))
-  status.forEach((value) => params.append('status', value))
-  role.forEach((value) => params.append('role', value))
-  if (email) {
-    params.set('email', email)
-  }
-  if (lastActive) {
-    params.set('lastActive', lastActive)
-  }
-
-  return `?${params.toString()}`
-}
-
 function getLastActiveFromDate(preset: LastActivePreset): string {
   const days = lastActivePresetDays[preset]
 
@@ -116,18 +89,15 @@ function getLastActiveFromDate(preset: LastActivePreset): string {
 }
 
 export async function OrganisationUsersTable({
-  currentPage,
   organisationId,
-  pageSize,
-  status,
-  role,
-  email,
-  lastActive,
+  query,
 }: OrganisationUsersTableProps) {
+  const { page, pageSize, status, role, email, lastActive } = query
+
   const { data: users, error: usersError } = await getUsers({
     query: {
       OrganisationId: organisationId,
-      Page: currentPage,
+      Page: page,
       PageSize: pageSize,
       Status: status.length ? status : undefined,
       Role: role.length ? role : undefined,
@@ -143,7 +113,7 @@ export async function OrganisationUsersTable({
       <div className={styles['table-toolbar']}>
         <FilterSummary className={styles['users-filter-summary']}>
           {users
-            ? `Showing results ${getFirstResult(totalCount, currentPage, pageSize)} to ${getLastResult(totalCount, currentPage, pageSize)} of ${totalCount}`
+            ? `Showing results ${getFirstResult(totalCount, page, pageSize)} to ${getLastResult(totalCount, page, pageSize)} of ${totalCount}`
             : 'Showing results'}
         </FilterSummary>
         <Button>Add a new user</Button>
@@ -185,10 +155,10 @@ export async function OrganisationUsersTable({
           <Grid verticalAlignment="middle">
             <GridItem cols={12} sm={6}>
               <EnhancedPagination
-                currentPage={currentPage}
+                currentPage={page}
                 elementType={PaginationLink}
                 mapPageNumberToHref={(pageNumber) =>
-                  buildHref(pageNumber, pageSize, status, role, email, lastActive)
+                  buildUserListHref({ ...query, page: pageNumber })
                 }
                 totalPages={getTotalPages(totalCount, pageSize)}
               />
@@ -201,7 +171,9 @@ export async function OrganisationUsersTable({
                     {pageSize === count ? (
                       count
                     ) : (
-                      <PaginationLink href={buildHref(1, count, status, role, email, lastActive)}>
+                      <PaginationLink
+                        href={buildUserListHref({ ...query, page: 1, pageSize: count })}
+                      >
                         {count}
                       </PaginationLink>
                     )}
