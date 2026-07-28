@@ -10,8 +10,10 @@ public abstract record LoginError
     /// </summary>
     protected LoginError() { }
 
+    internal sealed record NewPasswordRequired : LoginError;
+
     /// <summary>
     /// Represents an error indicating that the supplied credentials were not authorised.
     /// </summary>
-    public record Unauthorised : LoginError;
+    public sealed record Unauthorised : LoginError;
 }

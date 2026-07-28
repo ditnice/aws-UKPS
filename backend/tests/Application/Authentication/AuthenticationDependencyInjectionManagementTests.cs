@@ -92,8 +92,8 @@ public sealed class AuthenticationDependencyInjectionManagementTests
         {
             ClientId = "client-id",
             Region = "eu-west-2",
-            AccessKey = "access-key",
-            SecretKey = "secret-key",
             ServiceUrl = new Uri("https://cognito.example.com"),
+            ClientSecret = "client-secret",
+            UserPoolId = "user-pool-id",
         };
 }

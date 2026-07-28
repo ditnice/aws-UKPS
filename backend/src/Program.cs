@@ -8,9 +8,12 @@ using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
+using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.InternalServices.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.ConfigureAwsSecrets();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options

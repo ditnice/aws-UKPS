@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.Extensions.Options;
@@ -33,21 +35,32 @@ internal class AuthenticationService : IAuthenticationService
 
         try
         {
-            var cognitoResponse = await _cognito.InitiateAuthAsync(
-                new InitiateAuthRequest
+            AdminInitiateAuthResponse cognitoResponse = await _cognito.AdminInitiateAuthAsync(
+                new AdminInitiateAuthRequest
                 {
+                    UserPoolId = _options.Value.UserPoolId,
                     ClientId = _options.Value.ClientId,
-                    AuthFlow = AuthFlowType.USER_PASSWORD_AUTH,
+                    AuthFlow = AuthFlowType.ADMIN_USER_PASSWORD_AUTH,
                     AuthParameters = new Dictionary<string, string>(StringComparer.InvariantCulture)
                     {
                         ["USERNAME"] = loginRequest.Username,
                         ["PASSWORD"] = loginRequest.Password,
+                        ["SECRET_HASH"] = GenerateSecretHash(
+                            loginRequest.Username,
+                            _options.Value.ClientId,
+                            _options.Value.ClientSecret
+                        ),
                     },
                 },
                 cancellationToken
             );
 
-            var auth = cognitoResponse.AuthenticationResult;
+            if (cognitoResponse?.ChallengeName is not null)
+            {
+                return LoginResult.Err(ConvertChallengeToError(cognitoResponse.ChallengeName));
+            }
+
+            var auth = cognitoResponse?.AuthenticationResult;
 
             if (auth is null)
             {
@@ -61,5 +74,27 @@ internal class AuthenticationService : IAuthenticationService
         {
             return LoginResult.Err(new LoginError.Unauthorised());
         }
+    }
+
+    private static LoginError ConvertChallengeToError(ChallengeNameType challengeName)
+    {
+        var challengeToErrorLookup = new Dictionary<ChallengeNameType, LoginError>()
+        {
+            [ChallengeNameType.NEW_PASSWORD_REQUIRED] = new LoginError.NewPasswordRequired(),
+        };
+        return challengeToErrorLookup.TryGetValue(challengeName, out LoginError? err)
+            ? err
+            : throw new NotSupportedException("Unhandled challenge type.");
+    }
+
+    public static string GenerateSecretHash(string username, string clientId, string clientSecret)
+    {
+        var key = Encoding.UTF8.GetBytes(clientSecret);
+        var message = Encoding.UTF8.GetBytes(username + clientId);
+
+        using var hmac = new HMACSHA256(key);
+        var hash = hmac.ComputeHash(message);
+
+        return Convert.ToBase64String(hash);
     }
 }

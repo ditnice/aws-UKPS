@@ -12,19 +12,19 @@ internal static class AuthenticationDependencyInjectionManagement
         services.TryAddScoped<IAuthenticationService, AuthenticationService>();
         services.TryAddScoped<IAmazonCognitoIdentityProvider>(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<CognitoConfiguration>>().Value;
-
+            CognitoConfiguration options = sp.GetRequiredService<
+                IOptions<CognitoConfiguration>
+            >().Value;
+            string serviceUrl =
+                options.ServiceUrl?.AbsoluteUri
+                ?? $"https://cognito-idp.{options.Region}.amazonaws.com";
             var config = new AmazonCognitoIdentityProviderConfig
             {
                 RegionEndpoint = RegionEndpoint.GetBySystemName(options.Region),
-                ServiceURL = options.ServiceUrl?.AbsoluteUri,
+                ServiceURL = serviceUrl,
             };
 
-            return new AmazonCognitoIdentityProviderClient(
-                options.AccessKey,
-                options.SecretKey,
-                config
-            );
+            return new AmazonCognitoIdentityProviderClient(config);
         });
         return services;
     }
