@@ -39,17 +39,7 @@ public class UserController(IUserService userService) : ControllerBase
             return BadRequest();
         }
 
-        var result = await userService.GetUsers(
-            getUsersQuery.OrganisationId,
-            getUsersQuery.Page,
-            getUsersQuery.PageSize,
-            getUsersQuery.Status.ToArray(),
-            getUsersQuery.Role.ToArray(),
-            getUsersQuery.Email,
-            getUsersQuery.LastActiveFrom,
-            getUsersQuery.LastActiveTo,
-            cancellationToken
-        );
+        var result = await userService.GetUsers(getUsersQuery, cancellationToken);
 
         return result.Match<ActionResult<PaginatedResponseDto<UserListItemDto>>>(
             items => Ok(items),

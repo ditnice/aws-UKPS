@@ -19,19 +19,12 @@ internal sealed class UserService(
 ) : IUserService
 {
     public async Task<GetUsersResult> GetUsers(
-        int? organisationId,
-        int page,
-        int pageSize,
-        IReadOnlyCollection<UserOrgStatus> statuses,
-        IReadOnlyCollection<UserRole> roles,
-        string? email,
-        DateTimeOffset? lastActiveFrom,
-        DateTimeOffset? lastActiveTo,
+        GetUsersQueryDto getUsersQuery,
         CancellationToken cancellationToken
     )
     {
         GetUsersError? organisationError = await ValidateOrganisationAsync(
-            organisationId,
+            getUsersQuery.OrganisationId,
             cancellationToken
         );
         if (organisationError is not null)
@@ -45,20 +38,15 @@ internal sealed class UserService(
         var organisationMemberships = ApplyFilters(
             dbContext.UserOrgMemberships.AsNoTracking(),
             permittedOrganisationIds,
-            organisationId,
-            statuses,
-            roles,
-            email,
-            lastActiveFrom,
-            lastActiveTo
+            getUsersQuery
         );
 
         int totalCount = await organisationMemberships.CountAsync(cancellationToken);
 
         List<UserListItemDto> items = await organisationMemberships
             .OrderBy(m => m.User!.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .Skip((getUsersQuery.Page - 1) * getUsersQuery.PageSize)
+            .Take(getUsersQuery.PageSize)
             .Select(m => new UserListItemDto
             {
                 UserId = m.User!.Id,
@@ -74,8 +62,8 @@ internal sealed class UserService(
             {
                 Items = items,
                 TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
+                Page = getUsersQuery.Page,
+                PageSize = getUsersQuery.PageSize,
             }
         );
     }
@@ -112,58 +100,53 @@ internal sealed class UserService(
     private static IQueryable<UserOrgMembership> ApplyFilters(
         IQueryable<UserOrgMembership> input,
         ValueOrAll<int> permittedOrganisationIds,
-        int? organisationId,
-        IReadOnlyCollection<UserOrgStatus> statuses,
-        IReadOnlyCollection<UserRole> roles,
-        string? email,
-        DateTimeOffset? lastActiveFrom,
-        DateTimeOffset? lastActiveTo
+        GetUsersQueryDto getUsersQuery
     )
     {
         IQueryable<UserOrgMembership> organisationMemberships = input
             .Where(permittedOrganisationIds.Contains<UserOrgMembership>(x => x.OrganisationId))
             .Where(m => m.Status != UserOrgStatus.Rejected);
 
-        if (organisationId.HasValue)
+        if (getUsersQuery.OrganisationId.HasValue)
         {
             organisationMemberships = organisationMemberships.Where(m =>
-                m.OrganisationId == organisationId.Value
+                m.OrganisationId == getUsersQuery.OrganisationId.Value
             );
         }
 
-        if (statuses.Count > 0)
+        if (getUsersQuery.Status.Count > 0)
         {
             organisationMemberships = organisationMemberships.Where(m =>
-                statuses.Contains(m.Status)
+                getUsersQuery.Status.Contains(m.Status)
             );
         }
 
-        if (roles.Count > 0)
+        if (getUsersQuery.Role.Count > 0)
         {
             organisationMemberships = organisationMemberships.Where(m =>
-                roles.Contains(m.UserRole)
+                getUsersQuery.Role.Contains(m.UserRole)
             );
         }
 
-        if (!string.IsNullOrWhiteSpace(email))
+        if (!string.IsNullOrWhiteSpace(getUsersQuery.Email))
         {
-            string pattern = $"%{EscapeLikePattern(email)}%";
+            string pattern = $"%{EscapeLikePattern(getUsersQuery.Email)}%";
             organisationMemberships = organisationMemberships.Where(m =>
                 EF.Functions.ILike(m.User!.WorkEmail, pattern, "\\")
             );
         }
 
-        if (lastActiveFrom.HasValue)
+        if (getUsersQuery.LastActiveFrom.HasValue)
         {
-            DateTime from = lastActiveFrom.Value.UtcDateTime;
+            DateTime from = getUsersQuery.LastActiveFrom.Value.UtcDateTime;
             organisationMemberships = organisationMemberships.Where(m =>
                 m.User!.LastActive != null && m.User.LastActive >= from
             );
         }
 
-        if (lastActiveTo.HasValue)
+        if (getUsersQuery.LastActiveTo.HasValue)
         {
-            DateTime to = lastActiveTo.Value.UtcDateTime;
+            DateTime to = getUsersQuery.LastActiveTo.Value.UtcDateTime;
             organisationMemberships = organisationMemberships.Where(m =>
                 m.User!.LastActive != null && m.User.LastActive <= to
             );

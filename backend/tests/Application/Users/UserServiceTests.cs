@@ -32,14 +32,7 @@ public class UserServiceTests : DatabaseTestBase
     {
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                99,
-                1,
-                20,
-                [],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(organisationId: 99),
                 TestContext.Current.CancellationToken
             );
 
@@ -56,17 +49,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                null,
-                null,
-                null,
-                TestContext.Current.CancellationToken
-            );
+            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
 
@@ -100,17 +83,7 @@ public class UserServiceTests : DatabaseTestBase
         Context.UserOrgMemberships.Add(membership);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                null,
-                null,
-                null,
-                TestContext.Current.CancellationToken
-            );
+            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
 
@@ -147,14 +120,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [UserOrgStatus.Active, UserOrgStatus.Inactive],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(status: [UserOrgStatus.Active, UserOrgStatus.Inactive]),
                 TestContext.Current.CancellationToken
             );
 
@@ -186,17 +152,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                null,
-                null,
-                null,
-                TestContext.Current.CancellationToken
-            );
+            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(2);
@@ -217,14 +173,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [UserOrgStatus.Rejected],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(status: [UserOrgStatus.Rejected]),
                 TestContext.Current.CancellationToken
             );
 
@@ -252,14 +201,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [UserRole.Champion, UserRole.Super],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(role: [UserRole.Champion, UserRole.Super]),
                 TestContext.Current.CancellationToken
             );
 
@@ -292,14 +234,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                "SMITH",
-                null,
-                null,
+                CreateGetUsersQuery(email: "SMITH"),
                 TestContext.Current.CancellationToken
             );
 
@@ -328,14 +263,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                "100%off",
-                null,
-                null,
+                CreateGetUsersQuery(email: "100%off"),
                 TestContext.Current.CancellationToken
             );
 
@@ -372,14 +300,10 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                null,
-                new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero),
-                new DateTimeOffset(2026, 4, 1, 0, 0, 0, TimeSpan.Zero),
+                CreateGetUsersQuery(
+                    lastActiveFrom: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero),
+                    lastActiveTo: new DateTimeOffset(2026, 4, 1, 0, 0, 0, TimeSpan.Zero)
+                ),
                 TestContext.Current.CancellationToken
             );
 
@@ -415,14 +339,9 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                null,
-                new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero),
-                null,
+                CreateGetUsersQuery(
+                    lastActiveFrom: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero)
+                ),
                 TestContext.Current.CancellationToken
             );
 
@@ -458,14 +377,9 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                null,
-                null,
-                new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero),
+                CreateGetUsersQuery(
+                    lastActiveTo: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero)
+                ),
                 TestContext.Current.CancellationToken
             );
 
@@ -510,14 +424,9 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                1,
-                20,
-                [],
-                [],
-                null,
-                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
-                null,
+                CreateGetUsersQuery(
+                    lastActiveFrom: new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
+                ),
                 TestContext.Current.CancellationToken
             );
 
@@ -565,14 +474,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                2,
-                1,
-                [],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(page: 2, pageSize: 1),
                 TestContext.Current.CancellationToken
             );
 
@@ -629,14 +531,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                null,
-                1,
-                20,
-                [],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(organisationId: null),
                 TestContext.Current.CancellationToken
             );
 
@@ -692,14 +587,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                null,
-                1,
-                20,
-                [UserOrgStatus.Inactive],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(organisationId: null, status: [UserOrgStatus.Inactive]),
                 TestContext.Current.CancellationToken
             );
 
@@ -738,14 +626,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                1,
-                5,
-                20,
-                [],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(page: 5),
                 TestContext.Current.CancellationToken
             );
 
@@ -795,14 +676,7 @@ public class UserServiceTests : DatabaseTestBase
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await _service.GetUsers(
-                null,
-                1,
-                20,
-                [],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(organisationId: null),
                 TestContext.Current.CancellationToken
             );
 
@@ -855,14 +729,7 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
         var results = await harness.Service.GetUsers(
-            null,
-            1,
-            20,
-            [],
-            [],
-            null,
-            null,
-            null,
+            CreateGetUsersQuery(organisationId: null),
             TestContext.Current.CancellationToken
         );
 
@@ -903,14 +770,7 @@ public class UserServiceTests : DatabaseTestBase
         IUserService service = harness.Service;
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
             await service.GetUsers(
-                otherOrganisation,
-                1,
-                20,
-                [],
-                [],
-                null,
-                null,
-                null,
+                CreateGetUsersQuery(organisationId: otherOrganisation),
                 TestContext.Current.CancellationToken
             );
 
@@ -923,4 +783,26 @@ public class UserServiceTests : DatabaseTestBase
             result.Error.ShouldBeOfType<GetUsersError.NotAllowed>();
         }
     }
+
+    private static GetUsersQueryDto CreateGetUsersQuery(
+        int? organisationId = 1,
+        int page = 1,
+        int pageSize = 20,
+        ICollection<UserOrgStatus>? status = null,
+        ICollection<UserRole>? role = null,
+        string? email = null,
+        DateTimeOffset? lastActiveFrom = null,
+        DateTimeOffset? lastActiveTo = null
+    ) =>
+        new()
+        {
+            OrganisationId = organisationId,
+            Page = page,
+            PageSize = pageSize,
+            Status = status ?? [],
+            Role = role ?? [],
+            Email = email,
+            LastActiveFrom = lastActiveFrom,
+            LastActiveTo = lastActiveTo,
+        };
 }
