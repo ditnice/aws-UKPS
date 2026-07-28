@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
@@ -15,7 +16,8 @@ namespace UKPS.Api.Application.Users;
 
 internal sealed class UserService(
     AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    IDateTimeProvider timeProvider
 ) : IUserService
 {
     public async Task<GetUsersResult> GetUsers(
@@ -119,6 +121,7 @@ internal sealed class UserService(
         CreateUserRequestDto createUserRequestDto,
         CancellationToken cancellationToken
     )
+    // TODO URP 412: Add in authorisation logic
     {
         var organisation = await dbContext.Organisations.FindAsync(
             [createUserRequestDto.OrganisationId],
@@ -147,22 +150,22 @@ internal sealed class UserService(
             JobTitle = createUserRequestDto.JobTitle,
             WorkTelephone = createUserRequestDto.WorkTelephone,
             WorkEmail = createUserRequestDto.WorkEmail,
-            CreatedAt = DateTime.UtcNow,
-        };
+            CreatedAt = timeProvider.GetUtcNow(),
 
+            UserOrgMemberships =
+            [
+                new UserOrgMembership()
+                {
+                    OrganisationId = createUserRequestDto.OrganisationId,
+                    UserRole = UserRole.Standard,
+                    Status = UserOrgStatus.RequestedAccess,
+                    AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
+                    CreatedAt = timeProvider.GetUtcNow(),
+                },
+            ],
+        };
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
-
-        var userId = user.Id;
-        _ = new UserOrgMembership()
-        {
-            UserId = userId,
-            OrganisationId = createUserRequestDto.OrganisationId,
-            UserRole = UserRole.Standard,
-            Status = UserOrgStatus.RequestedAccess,
-            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
-            CreatedAt = DateTime.UtcNow,
-        };
         return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
     }
 
