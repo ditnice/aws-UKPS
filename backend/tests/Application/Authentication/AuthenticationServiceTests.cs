@@ -27,6 +27,13 @@ public sealed class AuthenticationServiceTests
         Password = "password",
     };
 
+    private readonly UpdatePasswordCommand _updatePasswordCommand = new()
+    {
+        AuthenticationSessionId = "auth-session-id",
+        Username = "user@example.com",
+        NewPassword = "new-password",
+    };
+
     public AuthenticationServiceTests()
     {
         _options.Value.Returns(
@@ -117,7 +124,7 @@ public sealed class AuthenticationServiceTests
 
         var result = await _sut.Login(_request, CancellationToken.None);
 
-        result.ShouldBeError().ShouldBeOfType<LoginError.NewPasswordRequired>();
+        result.ShouldBeError().ShouldBeOfType<LoginError.Challenge>();
     }
 
     [Fact]
@@ -191,6 +198,115 @@ public sealed class AuthenticationServiceTests
                     && r.AuthFlow == AuthFlowType.ADMIN_USER_PASSWORD_AUTH
                     && r.AuthParameters["USERNAME"] == _request.Username
                     && r.AuthParameters["PASSWORD"] == _request.Password
+                ),
+                CancellationToken.None
+            );
+    }
+
+    [Fact]
+    public async Task UpdatePassword_ShouldReturnCredentials_WhenPasswordUpdateSucceeds()
+    {
+        var accessToken = "access-token";
+
+        _cognito
+            .AdminRespondToAuthChallengeAsync(
+                Arg.Any<AdminRespondToAuthChallengeRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                new AdminRespondToAuthChallengeResponse
+                {
+                    AuthenticationResult = new AuthenticationResultType
+                    {
+                        AccessToken = accessToken,
+                    },
+                }
+            );
+
+        var result = await _sut.UpdatePassword(_updatePasswordCommand, CancellationToken.None);
+
+        var value = result.ShouldBeSuccess();
+
+        value.AccessToken.ShouldBe(accessToken);
+    }
+
+    [Fact]
+    public async Task UpdatePassword_ShouldReturnUnauthorised_WhenAuthenticationResultIsNull()
+    {
+        _cognito
+            .AdminRespondToAuthChallengeAsync(
+                Arg.Any<AdminRespondToAuthChallengeRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(new AdminRespondToAuthChallengeResponse());
+
+        var result = await _sut.UpdatePassword(_updatePasswordCommand, CancellationToken.None);
+
+        result.ShouldBeError().ShouldBeOfType<UpdatePasswordError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task UpdatePassword_ShouldReturnUnauthorised_WhenCognitoThrowsNotAuthorizedException()
+    {
+        _cognito
+            .AdminRespondToAuthChallengeAsync(
+                Arg.Any<AdminRespondToAuthChallengeRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns<Task<AdminRespondToAuthChallengeResponse>>(_ =>
+                throw new NotAuthorizedException("Invalid credentials")
+            );
+
+        var result = await _sut.UpdatePassword(_updatePasswordCommand, CancellationToken.None);
+
+        result.ShouldBeError().ShouldBeOfType<UpdatePasswordError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task UpdatePassword_ShouldNotCapture_WhenCognitoThrowsNoneNotAuthorizedException()
+    {
+        _cognito
+            .AdminRespondToAuthChallengeAsync(
+                Arg.Any<AdminRespondToAuthChallengeRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns<Task<AdminRespondToAuthChallengeResponse>>(_ =>
+                throw new InvalidOperationException("Other exception")
+            );
+
+        await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await _sut.UpdatePassword(_updatePasswordCommand, CancellationToken.None)
+        );
+    }
+
+    [Fact]
+    public async Task UpdatePassword_ShouldSendCorrectRequestToCognito()
+    {
+        _cognito
+            .AdminRespondToAuthChallengeAsync(
+                Arg.Any<AdminRespondToAuthChallengeRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                new AdminRespondToAuthChallengeResponse
+                {
+                    AuthenticationResult = new AuthenticationResultType { AccessToken = "token" },
+                }
+            );
+
+        await _sut.UpdatePassword(_updatePasswordCommand, CancellationToken.None);
+
+        await _cognito
+            .Received(1)
+            .AdminRespondToAuthChallengeAsync(
+                Arg.Is<AdminRespondToAuthChallengeRequest>(r =>
+                    r.ClientId == ClientId
+                    && r.UserPoolId == UserPoolId
+                    && r.ChallengeName == ChallengeNameType.NEW_PASSWORD_REQUIRED
+                    && r.Session == _updatePasswordCommand.AuthenticationSessionId
+                    && r.ChallengeResponses["USERNAME"] == _updatePasswordCommand.Username
+                    && r.ChallengeResponses["NEW_PASSWORD"] == _updatePasswordCommand.NewPassword
+                    && !string.IsNullOrEmpty(r.ChallengeResponses["SECRET_HASH"])
                 ),
                 CancellationToken.None
             );

@@ -1,20 +1,17 @@
 namespace UKPS.Api.Application.Authentication.Errors;
 
 /// <summary>
-/// Represents an error that can occur during the login process.
+/// Represents an error that occurred while updating a user's password.
 /// </summary>
-public abstract record LoginError
+public abstract record UpdatePasswordError
 {
     /// <summary>
     /// Prevents direct instantiation of login errors.
     /// </summary>
-    protected LoginError() { }
-
-    internal sealed record Challenge(UkpsChallengeType Type, string AuthenticationSessionId)
-        : LoginError;
+    protected UpdatePasswordError() { }
 
     /// <summary>
     /// Represents an error indicating that the supplied credentials were not authorised.
     /// </summary>
-    public sealed record Unauthorised : LoginError;
+    public sealed record Unauthorised : UpdatePasswordError;
 }

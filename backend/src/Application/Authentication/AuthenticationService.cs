@@ -9,6 +9,10 @@ using LoginResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.LoginError
 >;
+using UpdatePasswordResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.UpdatePasswordError
+>;
 
 namespace UKPS.Api.Application.Authentication;
 
@@ -57,7 +61,7 @@ internal class AuthenticationService : IAuthenticationService
 
             if (cognitoResponse?.ChallengeName is not null)
             {
-                return LoginResult.Err(ConvertChallengeToError(cognitoResponse.ChallengeName));
+                return LoginResult.Err(ConvertChallengeToError(cognitoResponse));
             }
 
             var auth = cognitoResponse?.AuthenticationResult;
@@ -76,13 +80,63 @@ internal class AuthenticationService : IAuthenticationService
         }
     }
 
-    private static LoginError ConvertChallengeToError(ChallengeNameType challengeName)
+    public async Task<UpdatePasswordResult> UpdatePassword(
+        UpdatePasswordCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        var challengeToErrorLookup = new Dictionary<ChallengeNameType, LoginError>()
+        try
         {
-            [ChallengeNameType.NEW_PASSWORD_REQUIRED] = new LoginError.NewPasswordRequired(),
-        };
-        return challengeToErrorLookup.TryGetValue(challengeName, out LoginError? err)
+            AdminRespondToAuthChallengeResponse cognitoResponse =
+                await _cognito.AdminRespondToAuthChallengeAsync(
+                    new AdminRespondToAuthChallengeRequest
+                    {
+                        UserPoolId = _options.Value.UserPoolId,
+                        ClientId = _options.Value.ClientId,
+                        ChallengeName = ChallengeNameType.NEW_PASSWORD_REQUIRED,
+                        Session = command.AuthenticationSessionId,
+                        ChallengeResponses = new Dictionary<string, string>(
+                            StringComparer.InvariantCulture
+                        )
+                        {
+                            ["USERNAME"] = command.Username,
+                            ["NEW_PASSWORD"] = command.NewPassword,
+                            ["SECRET_HASH"] = GenerateSecretHash(
+                                command.Username,
+                                _options.Value.ClientId,
+                                _options.Value.ClientSecret
+                            ),
+                        },
+                    },
+                    cancellationToken
+                );
+
+            AuthenticationResultType? auth = cognitoResponse?.AuthenticationResult;
+
+            if (auth is null)
+            {
+                return UpdatePasswordResult.Err(new UpdatePasswordError.Unauthorised());
+            }
+
+            var response = new AuthenticationCredentialsDto { AccessToken = auth.AccessToken };
+            return UpdatePasswordResult.Ok(response);
+        }
+        catch (NotAuthorizedException)
+        {
+            return UpdatePasswordResult.Err(new UpdatePasswordError.Unauthorised());
+        }
+    }
+
+    private static LoginError ConvertChallengeToError(AdminInitiateAuthResponse cognitoResponse)
+    {
+        ChallengeNameType challengeName = cognitoResponse.ChallengeName;
+        return new Dictionary<ChallengeNameType, LoginError>()
+        {
+            [ChallengeNameType.NEW_PASSWORD_REQUIRED] = new LoginError.Challenge(
+                UkpsChallengeType.NewPasswordRequired,
+                cognitoResponse.Session
+            ),
+        }.TryGetValue(challengeName, out LoginError? err)
             ? err
             : throw new NotSupportedException("Unhandled challenge type.");
     }
