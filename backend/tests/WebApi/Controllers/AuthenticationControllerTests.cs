@@ -150,7 +150,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         cookie.ShouldNotBeNull();
         cookie.ShouldContain($" expires=");
         cookie.ShouldContain(" secure");
-        cookie.ShouldContain(" samesite=lax");
+        cookie.ShouldContain(" samesite=strict");
         cookie.ShouldContain(" httponly");
     }
 

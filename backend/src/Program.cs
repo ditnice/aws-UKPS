@@ -53,6 +53,7 @@ builder
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {
+    // Ensure OpenAPI schemas represent enums as strings and mark non-nullable properties as required.
     options.AddSchemaTransformer(
         (schema, context, cancellationToken) =>
         {
@@ -62,6 +63,19 @@ builder.Services.AddOpenApi(options =>
             if (type.IsEnum)
             {
                 schema.Type = JsonSchemaType.String;
+            }
+
+            if (schema.Properties is not null)
+            {
+                foreach (var property in context.JsonTypeInfo.Properties)
+                {
+                    if (!property.IsGetNullable && schema.Properties.ContainsKey(property.Name))
+                    {
+                        (schema.Required ??= new HashSet<string>(StringComparer.Ordinal)).Add(
+                            property.Name
+                        );
+                    }
+                }
             }
 
             return Task.CompletedTask;

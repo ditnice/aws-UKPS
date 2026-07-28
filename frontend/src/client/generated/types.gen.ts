@@ -4,39 +4,122 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+/**
+ * Represents the details of an organisation.
+ */
 export type OrganisationDetailsDto = {
-    id?: number | string;
+    /**
+     * Gets the unique identifier of the organisation.
+     */
+    id: number | string;
+    /**
+     * Gets the name of the organisation.
+     */
     organisationName: string;
-    organisationType?: OrganisationType;
-    allowedPharmaceuticalEntity?: PharmaceuticalEntity;
+    /**
+     * Gets the type of the organisation.
+     */
+    organisationType: OrganisationType;
+    /**
+     * Gets the allowed pharmaceutical entity for the organisation.
+     */
+    allowedPharmaceuticalEntity: PharmaceuticalEntity;
+    /**
+     * Gets the country or region where the organisation is located.
+     */
     countryOrRegion?: null | string;
+    /**
+     * Gets the address of the organisation's head office.
+     */
     headOfficeAddress: string;
+    /**
+     * Gets the email address of the organisation's head office.
+     */
     headOfficeEmail: string;
+    /**
+     * Gets the telephone number of the organisation's head office.
+     */
     headOfficeTelephone: string;
-    status?: UserOrgStatus;
+    /**
+     * Gets the current status of the organisation.
+     */
+    status: UserOrgStatus;
+    /**
+     * Gets the date and time when the organisation was last active.
+     */
     lastActive?: null | string;
+    /**
+     * Gets the date and time when the organisation was created.
+     */
     createdAt?: null | string;
 };
 
+/**
+ * Represents the data transfer object for an organisation membership.
+ */
 export type OrganisationMembershipDto = {
+    /**
+     * Gets the unique identifier of the organisation membership.
+     */
     id: number | string;
+    /**
+     * Gets the unique identifier of the user associated with the membership.
+     */
     userId: number | string;
+    /**
+     * Gets the unique identifier of the organisation associated with the membership.
+     */
     organisationId: number | string;
+    /**
+     * Gets the role of the user within the organisation.
+     */
     userRole: UserRole;
+    /**
+     * Gets the status of the user within the organisation.
+     */
     status: UserOrgStatus;
+    /**
+     * Gets the pharmaceutical entity that the user is allowed to access.
+     */
     allowedPharmaceuticalEntity: PharmaceuticalEntity;
+    /**
+     * Gets the date and time when the organisation membership was created.
+     */
     createdAt: string;
 };
 
+/**
+ * Represents the different types of organisations within the system.
+ */
 export type OrganisationType = 'PharmaCompany' | 'HorizonScanning' | 'Strategic' | 'Internal';
 
+/**
+ * Represents a paginated response containing a collection of items and pagination metadata.
+ */
 export type PaginatedResponseDtoOfUserListItemDto = {
+    /**
+     * Gets the collection of items in the current page.
+     */
     items: Array<UserListItemDto>;
+    /**
+     * Gets the total number of items across all pages.
+     */
     totalCount: number | string;
+    /**
+     * Gets the current page number (1-based index).
+     */
     page: number | string;
+    /**
+     * Gets the number of items per page.
+     */
     pageSize: number | string;
 };
 
+/**
+ * Flags enum stored as integer. Only Organisation uses Both;
+ * UserOrgMembership and TermsAcceptance use Medicines or Vaccines only.
+ * Represents the types of pharmaceutical entities.
+ */
 export type PharmaceuticalEntity = string;
 
 export type ProblemDetails = {
@@ -47,32 +130,82 @@ export type ProblemDetails = {
     instance?: null | string;
 };
 
+/**
+ * Represents the data transfer object for updating organisation details.
+ */
 export type UpdateOrganisationDetailsDto = {
+    /**
+     * Gets or sets the name of the organisation.
+     */
     organisationName: string;
+    /**
+     * Gets or sets the head office address of the organisation.
+     */
     headOfficeAddress: string;
+    /**
+     * Gets or sets the email address of the head office.
+     */
     headOfficeEmail: string;
+    /**
+     * Gets or sets the telephone number of the head office.
+     */
     headOfficeTelephone: string;
 };
 
+/**
+ * Represents a Data Transfer Object (DTO) for updating the user role
+ * in an organisation membership.
+ */
 export type UpdateOrgMembershipUserRoleCommandDto = {
+    /**
+     * Gets or initialises the user role to be updated in the organisation membership.
+     * The new UserRole UpdateOrgMembershipUserRoleCommandDto.UserRole to assign to the user.
+     */
     userRole: UserRole;
 };
 
+/**
+ * Represents a limited summary of a user.
+ */
 export type UserListItemDto = {
-    userId?: number | string;
+    /**
+     * Gets the unique identifier of the user.
+     */
+    userId: number | string;
+    /**
+     * Gets the email address of the user, if available.
+     */
     emailAddress?: null | string;
-    role?: UserRole;
-    status?: UserOrgStatus;
+    /**
+     * Gets the role of the user within the system.
+     */
+    role: UserRole;
+    /**
+     * Gets the organisational status of the user.
+     */
+    status: UserOrgStatus;
+    /**
+     * Gets the date and time when the user was last active, if available.
+     */
     lastActive?: null | string;
 };
 
-export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Rejected' | 'Inactive';
+/**
+ * Represents the status of a user's association with an organisation.
+ */
+export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Rejected' | 'Inactive' | 'Deactivated';
 
+/**
+ * Represents the different roles a user can have within the system.
+ */
 export type UserRole = 'Standard' | 'Champion' | 'Super';
 
 export type GetOrganisationByIdData = {
     body?: never;
     path: {
+        /**
+         * The identifier of the organisation to retrieve.
+         */
         id: number;
     };
     query?: never;
@@ -81,7 +214,7 @@ export type GetOrganisationByIdData = {
 
 export type GetOrganisationByIdErrors = {
     /**
-     * Not Found
+     * No organisation exists with the specified identifier.
      */
     404: ProblemDetails;
 };
@@ -90,7 +223,7 @@ export type GetOrganisationByIdError = GetOrganisationByIdErrors[keyof GetOrgani
 
 export type GetOrganisationByIdResponses = {
     /**
-     * OK
+     * The organisation was found and its details were returned.
      */
     200: OrganisationDetailsDto;
 };
@@ -98,8 +231,14 @@ export type GetOrganisationByIdResponses = {
 export type GetOrganisationByIdResponse = GetOrganisationByIdResponses[keyof GetOrganisationByIdResponses];
 
 export type UpdateOrganisationDetailsData = {
+    /**
+     * A token that can be used to cancel the operation.
+     */
     body: UpdateOrganisationDetailsDto;
     path: {
+        /**
+         * The identifier of the organisation to update.
+         */
         id: number;
     };
     query?: never;
@@ -108,11 +247,11 @@ export type UpdateOrganisationDetailsData = {
 
 export type UpdateOrganisationDetailsErrors = {
     /**
-     * Bad Request
+     * The supplied organisation details failed validation.
      */
     400: ProblemDetails;
     /**
-     * Not Found
+     * No organisation exists with the specified identifier.
      */
     404: ProblemDetails;
 };
@@ -121,7 +260,7 @@ export type UpdateOrganisationDetailsError = UpdateOrganisationDetailsErrors[key
 
 export type UpdateOrganisationDetailsResponses = {
     /**
-     * OK
+     * The organisation was successfully updated.
      */
     200: OrganisationDetailsDto;
 };
@@ -131,7 +270,13 @@ export type UpdateOrganisationDetailsResponse = UpdateOrganisationDetailsRespons
 export type DeactivateMembershipData = {
     body?: never;
     path: {
+        /**
+         * The identifier of the organisation that owns the membership.
+         */
         organisationId: number;
+        /**
+         * The identifier of the membership to deactivate.
+         */
         membershipId: number | string;
     };
     query?: never;
@@ -140,7 +285,11 @@ export type DeactivateMembershipData = {
 
 export type DeactivateMembershipErrors = {
     /**
-     * Not Found
+     * Forbidden
+     */
+    403: ProblemDetails;
+    /**
+     * The specified organisation membership could not be found.
      */
     404: ProblemDetails;
 };
@@ -149,7 +298,7 @@ export type DeactivateMembershipError = DeactivateMembershipErrors[keyof Deactiv
 
 export type DeactivateMembershipResponses = {
     /**
-     * OK
+     * The membership was successfully deactivated.
      */
     200: OrganisationMembershipDto;
 };
@@ -157,9 +306,18 @@ export type DeactivateMembershipResponses = {
 export type DeactivateMembershipResponse = DeactivateMembershipResponses[keyof DeactivateMembershipResponses];
 
 export type UpdateUserRoleData = {
+    /**
+     * A token that can be used to cancel the operation.
+     */
     body: UpdateOrgMembershipUserRoleCommandDto;
     path: {
+        /**
+         * The identifier of the organisation that owns the membership.
+         */
         organisationId: number;
+        /**
+         * The identifier of the membership to update.
+         */
         membershipId: number | string;
     };
     query?: never;
@@ -168,7 +326,11 @@ export type UpdateUserRoleData = {
 
 export type UpdateUserRoleErrors = {
     /**
-     * Not Found
+     * Forbidden
+     */
+    403: ProblemDetails;
+    /**
+     * The specified organisation membership could not be found.
      */
     404: ProblemDetails;
 };
@@ -177,7 +339,7 @@ export type UpdateUserRoleError = UpdateUserRoleErrors[keyof UpdateUserRoleError
 
 export type UpdateUserRoleResponses = {
     /**
-     * OK
+     * The membership role was successfully updated.
      */
     200: OrganisationMembershipDto;
 };
@@ -188,21 +350,53 @@ export type GetUsersData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Gets or initialises the optional ID of the organisation to filter users by.
+         */
         OrganisationId?: number | string;
+        /**
+         * Gets or initialises the page number for pagination.
+         * Must be greater than or equal to 1.
+         */
         Page?: number | string;
+        /**
+         * Gets or initialises the number of items per page for pagination.
+         * Must be between 1 and 100.
+         */
         PageSize?: number | string;
+        /**
+         * Gets or initialises the collection of user organisation statuses to filter users by.
+         * Users with a UserOrgStatus.Rejected status are always excluded from
+         * results, regardless of the values supplied here.
+         */
         Status?: Array<UserOrgStatus>;
+        /**
+         * Gets or initialises the collection of user roles to filter users by.
+         */
+        Role?: Array<UserRole>;
+        /**
+         * Gets or initialises an optional partial, case-insensitive match against the user's email address.
+         */
+        Email?: string;
+        /**
+         * Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.
+         */
+        LastActiveFrom?: string;
+        /**
+         * Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.
+         */
+        LastActiveTo?: string;
     };
     url: '/users';
 };
 
 export type GetUsersErrors = {
     /**
-     * Bad Request
+     * Returned if the query parameters are invalid or the organisation is not found.
      */
     400: ProblemDetails;
     /**
-     * Not Found
+     * Returned if no users are found matching the query parameters.
      */
     404: ProblemDetails;
 };
@@ -211,7 +405,7 @@ export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];
 
 export type GetUsersResponses = {
     /**
-     * OK
+     * Returns the paginated list of users.
      */
     200: PaginatedResponseDtoOfUserListItemDto;
 };

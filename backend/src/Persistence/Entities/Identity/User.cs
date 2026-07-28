@@ -13,6 +13,9 @@ internal sealed class User
     public string? JobTitle { get; set; }
     public string? WorkTelephone { get; set; }
     public required string WorkEmail { get; set; }
+    public required DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public DateTime? LastActive { get; set; }
 
     // Navigation
     public ICollection<UserOrgMembership> UserOrgMemberships { get; set; } = [];

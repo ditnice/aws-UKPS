@@ -613,12 +613,49 @@
           {
             "name": "Status",
             "in": "query",
-            "description": "Gets or initialises the collection of user organisation statuses to filter users by.",
+            "description": "Gets or initialises the collection of user organisation statuses to filter users by.\nUsers with a UserOrgStatus.Rejected status are always excluded from\nresults, regardless of the values supplied here.",
             "schema": {
               "type": "array",
               "items": {
                 "$ref": "#/components/schemas/UserOrgStatus"
               }
+            }
+          },
+          {
+            "name": "Role",
+            "in": "query",
+            "description": "Gets or initialises the collection of user roles to filter users by.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            }
+          },
+          {
+            "name": "Email",
+            "in": "query",
+            "description": "Gets or initialises an optional partial, case-insensitive match against the user's email address.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LastActiveFrom",
+            "in": "query",
+            "description": "Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "LastActiveTo",
+            "in": "query",
+            "description": "Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         ],
@@ -749,7 +786,11 @@
           "organisationName",
           "headOfficeAddress",
           "headOfficeEmail",
-          "headOfficeTelephone"
+          "headOfficeTelephone",
+          "id",
+          "organisationType",
+          "allowedPharmaceuticalEntity",
+          "status"
         ],
         "type": "object",
         "properties": {
@@ -1015,6 +1056,11 @@
         "description": "Represents a Data Transfer Object (DTO) for updating the user role\nin an organisation membership."
       },
       "UserListItemDto": {
+        "required": [
+          "userId",
+          "role",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "userId": {
@@ -1058,7 +1104,8 @@
           "AwaitingSetup",
           "Active",
           "Rejected",
-          "Inactive"
+          "Inactive",
+          "Deactivated"
         ],
         "type": "string",
         "description": "Represents the status of a user's association with an organisation."

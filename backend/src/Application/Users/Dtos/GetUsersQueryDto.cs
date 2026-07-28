@@ -29,6 +29,28 @@ public sealed record GetUsersQueryDto
 
     /// <summary>
     /// Gets or initialises the collection of user organisation statuses to filter users by.
+    /// Users with a <see cref="UserOrgStatus.Rejected"/> status are always excluded from
+    /// results, regardless of the values supplied here.
     /// </summary>
     public ICollection<UserOrgStatus> Status { get; init; } = [];
+
+    /// <summary>
+    /// Gets or initialises the collection of user roles to filter users by.
+    /// </summary>
+    public ICollection<UserRole> Role { get; init; } = [];
+
+    /// <summary>
+    /// Gets or initialises an optional partial, case-insensitive match against the user's email address.
+    /// </summary>
+    public string? Email { get; init; }
+
+    /// <summary>
+    /// Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.
+    /// </summary>
+    public DateTimeOffset? LastActiveFrom { get; init; }
+
+    /// <summary>
+    /// Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.
+    /// </summary>
+    public DateTimeOffset? LastActiveTo { get; init; }
 }

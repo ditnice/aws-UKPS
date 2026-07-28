@@ -70,7 +70,7 @@ public class AuthenticationController : ControllerBase
                 {
                     HttpOnly = true,
                     Secure = true, // HTTPS only
-                    SameSite = SameSiteMode.Lax,
+                    SameSite = SameSiteMode.Strict,
                     Expires = DateTimeOffset.UtcNow.AddMinutes(15),
                 }
             );
