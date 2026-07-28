@@ -371,6 +371,19 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task CreateUser_AllFieldsProvided_ReturnsDto()
     {
+        Context.Organisations.Add(
+            new Organisation
+            {
+                Id = 1,
+                OrganisationName = "Test Organisation",
+                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+                HeadOfficeEmail = "info@pharma.gov.uk",
+                HeadOfficeTelephone = "020 1234 5678",
+            }
+        );
+
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         CreateUserRequestDto CreateDto = new()
         {
             UserType = UserType.PharmaUser,
@@ -398,6 +411,18 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task CreateUser_EmailConflict_ReturnsConflict()
     {
+        Context.Organisations.Add(
+            new Organisation
+            {
+                Id = 1,
+                OrganisationName = "Test Organisation",
+                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+                HeadOfficeEmail = "info@pharma.gov.uk",
+                HeadOfficeTelephone = "020 1234 5678",
+            }
+        );
+
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
         Context.Users.Add(CreateUser());
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
         CreateUserRequestDto createDto = new()

@@ -310,11 +310,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("user_type");
 
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("username");
-
                     b.Property<string>("WorkEmail")
                         .IsRequired()
                         .HasColumnType("text")
@@ -326,10 +321,6 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_app_user");
-
-                    b.HasIndex("Username")
-                        .IsUnique()
-                        .HasDatabaseName("ix_app_user_username");
 
                     b.HasIndex("WorkEmail")
                         .IsUnique()
