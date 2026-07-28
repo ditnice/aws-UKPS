@@ -9,10 +9,6 @@ using LoginResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.LoginError
 >;
-using UpdatePasswordResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
-    UKPS.Api.Application.Authentication.Errors.UpdatePasswordError
->;
 
 namespace UKPS.Api.Application.Authentication;
 
@@ -77,53 +73,6 @@ internal class AuthenticationService : IAuthenticationService
         catch (NotAuthorizedException)
         {
             return LoginResult.Err(new LoginError.Unauthorised());
-        }
-    }
-
-    public async Task<UpdatePasswordResult> UpdatePassword(
-        UpdatePasswordCommand command,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            AdminRespondToAuthChallengeResponse cognitoResponse =
-                await _cognito.AdminRespondToAuthChallengeAsync(
-                    new AdminRespondToAuthChallengeRequest
-                    {
-                        UserPoolId = _options.Value.UserPoolId,
-                        ClientId = _options.Value.ClientId,
-                        ChallengeName = ChallengeNameType.NEW_PASSWORD_REQUIRED,
-                        Session = command.AuthenticationSessionId,
-                        ChallengeResponses = new Dictionary<string, string>(
-                            StringComparer.InvariantCulture
-                        )
-                        {
-                            ["USERNAME"] = command.Username,
-                            ["NEW_PASSWORD"] = command.NewPassword,
-                            ["SECRET_HASH"] = GenerateSecretHash(
-                                command.Username,
-                                _options.Value.ClientId,
-                                _options.Value.ClientSecret
-                            ),
-                        },
-                    },
-                    cancellationToken
-                );
-
-            AuthenticationResultType? auth = cognitoResponse?.AuthenticationResult;
-
-            if (auth is null)
-            {
-                return UpdatePasswordResult.Err(new UpdatePasswordError.Unauthorised());
-            }
-
-            var response = new AuthenticationCredentialsDto { AccessToken = auth.AccessToken };
-            return UpdatePasswordResult.Ok(response);
-        }
-        catch (NotAuthorizedException)
-        {
-            return UpdatePasswordResult.Err(new UpdatePasswordError.Unauthorised());
         }
     }
 
