@@ -99,6 +99,32 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task Login_ShouldReturnUnauthorisedAndChallengeDetailsOnChalleng()
+    {
+        var challengeError = new LoginError.Challenge(
+            UkpsChallengeType.NewPasswordRequired,
+            "session-id"
+        );
+        _mockedService
+            .Login(Arg.Any<LoginRequest>(), Arg.Any<CancellationToken>())
+            .Returns(LoginResult.Err(challengeError));
+
+        HttpResponseMessage response = await _client.PostAsJsonAsync(
+            new Uri(LoginUrl, UriKind.Relative),
+            _defaultLoginRequest,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        LoginError.Challenge? data = await response.Content.ReadFromJsonAsync<LoginError.Challenge>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        data.ShouldBe(challengeError);
+    }
+
+    [Fact]
     public async Task Login_WhenEitherUsernameOrPasswordAreNotSet_ShouldReturnABadRequest()
     {
         Func<LoginRequest, LoginRequest>[] modifiers =

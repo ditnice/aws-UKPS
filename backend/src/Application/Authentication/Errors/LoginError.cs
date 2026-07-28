@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace UKPS.Api.Application.Authentication.Errors;
 
 /// <summary>
@@ -10,8 +12,37 @@ public abstract record LoginError
     /// </summary>
     protected LoginError() { }
 
-    internal sealed record Challenge(UkpsChallengeType Type, string AuthenticationSessionId)
-        : LoginError;
+    /// <summary>
+    /// Represents an authentication challenge that must be completed before authentication can succeed.
+    /// </summary>
+    public sealed record Challenge : LoginError
+    {
+        /// <summary>
+        /// Gets the authentication challenge that must be completed.
+        /// </summary>
+        public required UkpsChallengeType Type { get; init; }
+
+        /// <summary>
+        /// Gets the authentication session identifier required to complete the challenge.
+        /// </summary>
+        public required string AuthenticationSessionId { get; init; }
+
+        /// <summary>
+        /// Initialises a new instance of the <see cref="Challenge"/> record.
+        /// </summary>
+        /// <param name="type">
+        /// The authentication challenge that must be completed.
+        /// </param>
+        /// <param name="authenticationSessionId">
+        /// The authentication session identifier required to complete the challenge.
+        /// </param>
+        [SetsRequiredMembers]
+        public Challenge(UkpsChallengeType type, string authenticationSessionId)
+        {
+            Type = type;
+            AuthenticationSessionId = authenticationSessionId;
+        }
+    }
 
     /// <summary>
     /// Represents an error indicating that the supplied credentials were not authorised.

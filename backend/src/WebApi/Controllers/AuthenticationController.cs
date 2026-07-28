@@ -66,6 +66,7 @@ public class AuthenticationController : ControllerBase
             return error switch
             {
                 LoginError.Unauthorised => Unauthorized(),
+                LoginError.Challenge c => Unauthorized(c),
                 _ => throw new UnreachableException($"Unhandled {nameof(LoginError)} variant."),
             };
         }
