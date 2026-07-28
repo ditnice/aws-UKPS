@@ -19,34 +19,17 @@ internal sealed class UserService(
 ) : IUserService
 {
     public async Task<GetUsersResult> GetUsers(
-        int? organisationId,
-        int page,
-        int pageSize,
-        IReadOnlyCollection<UserOrgStatus> statuses,
+        GetUsersQueryDto getUsersQuery,
         CancellationToken cancellationToken
     )
     {
-        if (organisationId.HasValue)
+        GetUsersError? organisationError = await ValidateOrganisationAsync(
+            getUsersQuery.OrganisationId,
+            cancellationToken
+        );
+        if (organisationError is not null)
         {
-            bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.Read,
-                organisationId.Value
-            );
-            if (!actionPermitted)
-            {
-                return GetUsersResult.Err(new GetUsersError.NotAllowed(organisationId.Value));
-            }
-            bool organisationExists = await dbContext.Organisations.AnyAsync(
-                o => o.Id == organisationId.Value,
-                cancellationToken
-            );
-
-            if (!organisationExists)
-            {
-                return GetUsersResult.Err(
-                    new GetUsersError.OrganisationNotFound(organisationId.Value)
-                );
-            }
+            return GetUsersResult.Err(organisationError);
         }
 
         var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
@@ -55,24 +38,22 @@ internal sealed class UserService(
         var organisationMemberships = ApplyFilters(
             dbContext.UserOrgMemberships.AsNoTracking(),
             permittedOrganisationIds,
-            organisationId,
-            statuses
+            getUsersQuery
         );
 
         int totalCount = await organisationMemberships.CountAsync(cancellationToken);
 
         List<UserListItemDto> items = await organisationMemberships
             .OrderBy(m => m.User!.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .Skip((getUsersQuery.Page - 1) * getUsersQuery.PageSize)
+            .Take(getUsersQuery.PageSize)
             .Select(m => new UserListItemDto
             {
                 UserId = m.User!.Id,
                 EmailAddress = m.User.WorkEmail,
                 Role = m.UserRole,
                 Status = m.Status,
-                // No user-level last-active source exists yet.
-                LastActive = null,
+                LastActive = m.User.LastActive,
             })
             .ToListAsync(cancellationToken);
 
@@ -81,37 +62,102 @@ internal sealed class UserService(
             {
                 Items = items,
                 TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
+                Page = getUsersQuery.Page,
+                PageSize = getUsersQuery.PageSize,
             }
         );
+    }
+
+    private async Task<GetUsersError?> ValidateOrganisationAsync(
+        int? organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!organisationId.HasValue)
+        {
+            return null;
+        }
+
+        bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.Read,
+            organisationId.Value
+        );
+        if (!actionPermitted)
+        {
+            return new GetUsersError.NotAllowed(organisationId.Value);
+        }
+
+        bool organisationExists = await dbContext.Organisations.AnyAsync(
+            o => o.Id == organisationId.Value,
+            cancellationToken
+        );
+
+        return organisationExists
+            ? null
+            : new GetUsersError.OrganisationNotFound(organisationId.Value);
     }
 
     private static IQueryable<UserOrgMembership> ApplyFilters(
         IQueryable<UserOrgMembership> input,
         ValueOrAll<int> permittedOrganisationIds,
-        int? organisationId,
-        IReadOnlyCollection<UserOrgStatus> statuses
+        GetUsersQueryDto getUsersQuery
     )
     {
-        IQueryable<UserOrgMembership> organisationMemberships = input.Where(
-            permittedOrganisationIds.Contains<UserOrgMembership>(x => x.OrganisationId)
-        );
+        IQueryable<UserOrgMembership> organisationMemberships = input
+            .Where(permittedOrganisationIds.Contains<UserOrgMembership>(x => x.OrganisationId))
+            .Where(m => m.Status != UserOrgStatus.Rejected);
 
-        if (organisationId.HasValue)
+        if (getUsersQuery.OrganisationId.HasValue)
         {
             organisationMemberships = organisationMemberships.Where(m =>
-                m.OrganisationId == organisationId.Value
+                m.OrganisationId == getUsersQuery.OrganisationId.Value
             );
         }
 
-        if (statuses.Count > 0)
+        if (getUsersQuery.Status.Count > 0)
         {
             organisationMemberships = organisationMemberships.Where(m =>
-                statuses.Contains(m.Status)
+                getUsersQuery.Status.Contains(m.Status)
+            );
+        }
+
+        if (getUsersQuery.Role.Count > 0)
+        {
+            organisationMemberships = organisationMemberships.Where(m =>
+                getUsersQuery.Role.Contains(m.UserRole)
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(getUsersQuery.Email))
+        {
+            string pattern = $"%{EscapeLikePattern(getUsersQuery.Email)}%";
+            organisationMemberships = organisationMemberships.Where(m =>
+                EF.Functions.ILike(m.User!.WorkEmail, pattern, "\\")
+            );
+        }
+
+        if (getUsersQuery.LastActiveFrom.HasValue)
+        {
+            DateTime from = getUsersQuery.LastActiveFrom.Value.UtcDateTime;
+            organisationMemberships = organisationMemberships.Where(m =>
+                m.User!.LastActive != null && m.User.LastActive >= from
+            );
+        }
+
+        if (getUsersQuery.LastActiveTo.HasValue)
+        {
+            DateTime to = getUsersQuery.LastActiveTo.Value.UtcDateTime;
+            organisationMemberships = organisationMemberships.Where(m =>
+                m.User!.LastActive != null && m.User.LastActive <= to
             );
         }
 
         return organisationMemberships;
     }
+
+    private static string EscapeLikePattern(string value) =>
+        value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal)
+            .Replace("_", "\\_", StringComparison.Ordinal);
 }

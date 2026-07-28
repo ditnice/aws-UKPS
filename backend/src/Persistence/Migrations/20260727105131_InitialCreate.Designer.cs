@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UKPS.Api.Persistence;
@@ -12,9 +13,11 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727105131_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -405,40 +408,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasDatabaseName("ix_user_audit_user_id");
 
                     b.ToTable("user_audits", "ukps");
-                });
-
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", b =>
-                {
-                    b.Property<Guid>("SetupToken")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("setup_token");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<int>("NewUserOrganisationId")
-                        .HasColumnType("integer")
-                        .HasColumnName("new_user_organisation_id");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_email");
-
-                    b.HasKey("SetupToken")
-                        .HasName("pk_user_onboarding_records");
-
-                    b.HasIndex("NewUserOrganisationId")
-                        .HasDatabaseName("ix_user_onboarding_records_new_user_organisation_id");
-
-                    b.ToTable("user_onboarding_records", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOrgMembership", b =>
@@ -2813,18 +2782,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("UpdatedByUser");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", b =>
-                {
-                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "NewUserOrganisation")
-                        .WithMany()
-                        .HasForeignKey("NewUserOrganisationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_user_onboarding_records_organisations_new_user_organisation");
-
-                    b.Navigation("NewUserOrganisation");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOrgMembership", b =>

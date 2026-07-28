@@ -1,0 +1,20 @@
+// The design system table sets `display: block` on the `<table>` element so it
+// can scroll horizontally on narrow viewports. That makes the browser lay the
+// rows out in an anonymous inner table box which shrink-to-fits its content, so
+// the visible table doesn't stretch to fill its container. For the full-width
+// variants the scroll responsibility moves to this wrapper, letting the table
+// keep its native display and have `width: 100%` apply to the real table layout.
+.table-wrapper {
+  overflow-x: auto;
+}
+
+// Two-class selector so this reliably beats the design system's `.table`
+// regardless of stylesheet order.
+.table-wrapper .table--full-width {
+  display: table;
+  overflow: visible;
+}
+
+.table-wrapper .table--equal {
+  table-layout: fixed;
+}

@@ -1,3 +1,4 @@
+import { inter, lora } from '@/app/fonts'
 import { ApplicationLayout } from '@/components/ApplicationLayout'
 import '@/styles/global.scss'
 
@@ -10,7 +11,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html className={`${inter.variable} ${lora.variable}`} lang="en">
       <body>
         <ApplicationLayout>{children}</ApplicationLayout>
       </body>

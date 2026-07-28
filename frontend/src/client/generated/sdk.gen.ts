@@ -18,8 +18,14 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
+/**
+ * Retrieves an organisation by its unique identifier.
+ */
 export const getOrganisationById = <ThrowOnError extends boolean = false>(options: Options<GetOrganisationByIdData, ThrowOnError>): RequestResult<GetOrganisationByIdResponses, GetOrganisationByIdErrors, ThrowOnError> => (options.client ?? client).get<GetOrganisationByIdResponses, GetOrganisationByIdErrors, ThrowOnError>({ url: '/organisations/{id}', ...options });
 
+/**
+ * Updates the details of an existing organisation.
+ */
 export const updateOrganisationDetails = <ThrowOnError extends boolean = false>(options: Options<UpdateOrganisationDetailsData, ThrowOnError>): RequestResult<UpdateOrganisationDetailsResponses, UpdateOrganisationDetailsErrors, ThrowOnError> => (options.client ?? client).put<UpdateOrganisationDetailsResponses, UpdateOrganisationDetailsErrors, ThrowOnError>({
     url: '/organisations/{id}',
     ...options,
@@ -29,8 +35,14 @@ export const updateOrganisationDetails = <ThrowOnError extends boolean = false>(
     }
 });
 
+/**
+ * Deactivates an organisation membership.
+ */
 export const deactivateMembership = <ThrowOnError extends boolean = false>(options: Options<DeactivateMembershipData, ThrowOnError>): RequestResult<DeactivateMembershipResponses, DeactivateMembershipErrors, ThrowOnError> => (options.client ?? client).patch<DeactivateMembershipResponses, DeactivateMembershipErrors, ThrowOnError>({ url: '/organisations/{organisationId}/memberships/{membershipId}/deactivate', ...options });
 
+/**
+ * Updates the role assigned to a user within an organisation membership.
+ */
 export const updateUserRole = <ThrowOnError extends boolean = false>(options: Options<UpdateUserRoleData, ThrowOnError>): RequestResult<UpdateUserRoleResponses, UpdateUserRoleErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUserRoleResponses, UpdateUserRoleErrors, ThrowOnError>({
     url: '/organisations/{organisationId}/memberships/{membershipId}/update-role',
     ...options,
@@ -40,4 +52,7 @@ export const updateUserRole = <ThrowOnError extends boolean = false>(options: Op
     }
 });
 
+/**
+ * Retrieves a paginated list of users based on the specified query parameters.
+ */
 export const getUsers = <ThrowOnError extends boolean = false>(options?: Options<GetUsersData, ThrowOnError>): RequestResult<GetUsersResponses, GetUsersErrors, ThrowOnError> => (options?.client ?? client).get<GetUsersResponses, GetUsersErrors, ThrowOnError>({ url: '/users', ...options });
