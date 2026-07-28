@@ -138,7 +138,7 @@ internal class AuthenticationService : IAuthenticationService
             ),
         }.TryGetValue(challengeName, out LoginError? err)
             ? err
-            : throw new NotSupportedException("Unhandled challenge type.");
+            : throw new NotSupportedException($"Unhandled challenge type [{challengeName}].");
     }
 
     public static string GenerateSecretHash(string username, string clientId, string clientSecret)
