@@ -17,5 +17,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.UserType);
         builder.Property(x => x.FirstName).IsRequired();
         builder.Property(x => x.LastName).IsRequired();
+        builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+        builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
+        builder.Property(x => x.LastActive).HasColumnType("timestamptz");
     }
 }

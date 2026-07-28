@@ -17,7 +17,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// <summary>
     /// Retrieves a paginated list of users based on the specified query parameters.
     /// </summary>
-    /// <param name="getUsersQuery">The query parameters for retrieving users, including organisation ID, page, page size, and status filters.</param>
+    /// <param name="getUsersQuery">The query parameters for retrieving users, including organisation ID, page, page size, status, role, and email filters.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// A paginated response containing a list of users if successful, or an appropriate error response if the request fails.
@@ -39,13 +39,7 @@ public class UserController(IUserService userService) : ControllerBase
             return BadRequest();
         }
 
-        var result = await userService.GetUsers(
-            getUsersQuery.OrganisationId,
-            getUsersQuery.Page,
-            getUsersQuery.PageSize,
-            getUsersQuery.Status.ToArray(),
-            cancellationToken
-        );
+        var result = await userService.GetUsers(getUsersQuery, cancellationToken);
 
         return result.Match<ActionResult<PaginatedResponseDto<UserListItemDto>>>(
             items => Ok(items),

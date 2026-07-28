@@ -5,6 +5,80 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticates a user and creates an authentication session.",
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The user was successfully authenticated and an authentication cookie was created."
+          },
+          "400": {
+            "description": "The supplied request was invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The supplied credentials were invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organisations/{id}": {
       "get": {
         "tags": [
@@ -534,12 +608,49 @@
           {
             "name": "Status",
             "in": "query",
-            "description": "Gets or initialises the collection of user organisation statuses to filter users by.",
+            "description": "Gets or initialises the collection of user organisation statuses to filter users by.\nUsers with a UserOrgStatus.Rejected status are always excluded from\nresults, regardless of the values supplied here.",
             "schema": {
               "type": "array",
               "items": {
                 "$ref": "#/components/schemas/UserOrgStatus"
               }
+            }
+          },
+          {
+            "name": "Role",
+            "in": "query",
+            "description": "Gets or initialises the collection of user roles to filter users by.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            }
+          },
+          {
+            "name": "Email",
+            "in": "query",
+            "description": "Gets or initialises an optional partial, case-insensitive match against the user's email address.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LastActiveFrom",
+            "in": "query",
+            "description": "Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "LastActiveTo",
+            "in": "query",
+            "description": "Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         ],
@@ -807,12 +918,36 @@
         },
         "description": "Represents the information required to create a new user."
       },
+      "LoginRequest": {
+        "required": [
+          "username",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "pattern": ".*\\S.*",
+            "type": "string",
+            "description": "Gets the username used to authenticate with the identity provider."
+          },
+          "password": {
+            "pattern": ".*\\S.*",
+            "type": "string",
+            "description": "Gets the password used to authenticate with the identity provider."
+          }
+        },
+        "description": "Represents the credentials provided by a user when attempting to authenticate."
+      },
       "OrganisationDetailsDto": {
         "required": [
           "organisationName",
           "headOfficeAddress",
           "headOfficeEmail",
-          "headOfficeTelephone"
+          "headOfficeTelephone",
+          "id",
+          "organisationType",
+          "allowedPharmaceuticalEntity",
+          "status"
         ],
         "type": "object",
         "properties": {
@@ -1130,6 +1265,11 @@
         "description": "Represents the details of a user."
       },
       "UserListItemDto": {
+        "required": [
+          "userId",
+          "role",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "userId": {
@@ -1173,7 +1313,8 @@
           "AwaitingSetup",
           "Active",
           "Rejected",
-          "Inactive"
+          "Inactive",
+          "Deactivated"
         ],
         "type": "string",
         "description": "Represents the status of a user's association with an organisation."
@@ -1201,6 +1342,9 @@
     }
   },
   "tags": [
+    {
+      "name": "Authentication"
+    },
     {
       "name": "Organisation"
     },

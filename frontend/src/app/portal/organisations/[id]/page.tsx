@@ -1,13 +1,29 @@
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
+import { Button } from '@nice-digital/nds-button'
+import { Grid, GridItem } from '@nice-digital/nds-grid'
+import { PageHeader } from '@nice-digital/nds-page-header'
+
+import {
+  buildUserListHref,
+  parseUserListQuery,
+  type UserListSearchParams,
+} from '@/app/portal/_utils/userListQuery'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
+import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
+
+import { OrganisationFilters } from './_components/OrganisationFilters'
+import { OrganisationUsersTable } from './_components/OrganisationUsersTable'
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<UserListSearchParams>
 }
 
-export default async function OrganisationPage({ params }: Props) {
+export default async function OrganisationPage({ params, searchParams }: Props) {
   const { id } = await params
+  const query = parseUserListQuery(await searchParams)
   const organisationId = Number(id)
 
   if (!Number.isInteger(organisationId)) {
@@ -28,18 +44,31 @@ export default async function OrganisationPage({ params }: Props) {
   }
 
   return (
-    <section>
-      <h1>{organisation.organisationName}</h1>
-      <dl>
-        <dt>Organisation type</dt>
-        <dd>{organisation.organisationType}</dd>
+    <>
+      <PageHeader heading={organisation.organisationName} />
 
-        <dt>Status</dt>
-        <dd>{organisation.status}</dd>
+      <h2>Organisation details</h2>
+      <SummaryList variant="two-column">
+        <SummaryListRow label="Organisation type" value={organisation.organisationType} />
+        <SummaryListRow label="Organisation name" value={organisation.organisationName} />
+        <SummaryListRow label="Head office address" value={organisation.headOfficeAddress} />
+        <SummaryListRow label="Head office email address" value={organisation.headOfficeEmail} />
+        <SummaryListRow label="Head office phone number" value={organisation.headOfficeTelephone} />
+      </SummaryList>
 
-        <dt>Head office email</dt>
-        <dd>{organisation.headOfficeEmail}</dd>
-      </dl>
-    </section>
+      <Button variant={Button.variants.secondary}>Edit details</Button>
+
+      <h2>Search and filter</h2>
+      <Grid gutter="loose">
+        <GridItem cols={12} md={4} lg={3} elementType="section" aria-label="Filter results">
+          <OrganisationFilters />
+        </GridItem>
+        <GridItem cols={12} md={8} lg={9} elementType="section" aria-labelledby="filter-summary">
+          <Suspense fallback={<p>Loading users...</p>} key={buildUserListHref(query)}>
+            <OrganisationUsersTable organisationId={organisationId} query={query} />
+          </Suspense>
+        </GridItem>
+      </Grid>
+    </>
   )
 }

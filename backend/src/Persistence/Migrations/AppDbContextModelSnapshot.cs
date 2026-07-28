@@ -289,7 +289,7 @@ namespace UKPS.Api.Persistence.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
                     b.Property<string>("FirstName")
@@ -302,7 +302,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("job_title");
 
                     b.Property<DateTime?>("LastActive")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamptz")
                         .HasColumnName("last_active");
 
                     b.Property<string>("LastName")
@@ -315,7 +315,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("title");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamptz")
                         .HasColumnName("updated_at");
 
                     b.Property<int>("UserType")

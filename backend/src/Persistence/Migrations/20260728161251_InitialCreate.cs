@@ -29,9 +29,9 @@ namespace UKPS.Api.Persistence.Migrations
                     job_title = table.Column<string>(type: "text", nullable: true),
                     work_telephone = table.Column<string>(type: "text", nullable: true),
                     work_email = table.Column<string>(type: "text", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    last_active = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
+                    last_active = table.Column<DateTime>(type: "timestamptz", nullable: true)
                 },
                 constraints: table =>
                 {
