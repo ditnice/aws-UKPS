@@ -41,6 +41,7 @@ builder
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {
+    // Ensure OpenAPI schemas represent enums as strings and mark non-nullable properties as required.
     options.AddSchemaTransformer(
         (schema, context, cancellationToken) =>
         {
