@@ -87,10 +87,10 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task Login_ShouldReturnUnauthorisedAndChallengeDetailsOnChalleng()
+    public async Task Login_ShouldReturnUnauthorisedAndChallengeDetailsOnChallenge()
     {
         var challengeError = new LoginError.Challenge(
-            UkpsChallengeType.NewPasswordRequired,
+            UkpsChallengeType.MultiFactorAuthenticationRequired,
             "session-id"
         );
         _mockedService

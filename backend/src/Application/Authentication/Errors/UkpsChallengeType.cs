@@ -7,8 +7,8 @@ namespace UKPS.Api.Application.Authentication.Errors;
 public enum UkpsChallengeType
 {
     /// <summary>
-    /// Indicates that the user must set a new password before authentication
-    /// can be completed.
+    /// Indicates that the user must complete a multi-factor authentication
+    /// challenge before authentication can continue.
     /// </summary>
-    NewPasswordRequired = 0,
+    MultiFactorAuthenticationRequired = 0,
 }

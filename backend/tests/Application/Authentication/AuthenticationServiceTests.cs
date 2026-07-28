@@ -111,13 +111,14 @@ public sealed class AuthenticationServiceTests
             .Returns(
                 new AdminInitiateAuthResponse()
                 {
-                    ChallengeName = ChallengeNameType.NEW_PASSWORD_REQUIRED,
+                    ChallengeName = ChallengeNameType.SOFTWARE_TOKEN_MFA,
                 }
             );
 
         var result = await _sut.Login(_request, CancellationToken.None);
 
-        result.ShouldBeError().ShouldBeOfType<LoginError.Challenge>();
+        var error = result.ShouldBeError().ShouldBeOfType<LoginError.Challenge>();
+        error.Type.ShouldBe(UkpsChallengeType.MultiFactorAuthenticationRequired);
     }
 
     [Fact]

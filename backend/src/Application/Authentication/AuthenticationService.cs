@@ -81,8 +81,8 @@ internal class AuthenticationService : IAuthenticationService
         ChallengeNameType challengeName = cognitoResponse.ChallengeName;
         return new Dictionary<ChallengeNameType, LoginError>()
         {
-            [ChallengeNameType.NEW_PASSWORD_REQUIRED] = new LoginError.Challenge(
-                UkpsChallengeType.NewPasswordRequired,
+            [ChallengeNameType.SOFTWARE_TOKEN_MFA] = new LoginError.Challenge(
+                UkpsChallengeType.MultiFactorAuthenticationRequired,
                 cognitoResponse.Session
             ),
         }.TryGetValue(challengeName, out LoginError? err)
