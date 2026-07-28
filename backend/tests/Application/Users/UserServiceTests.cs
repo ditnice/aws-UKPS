@@ -581,6 +581,5 @@ public class UserServiceTests : DatabaseTestBase
             JobTitle = "Test3",
             WorkTelephone = "123456789",
             WorkEmail = "tests@test.com",
-            // will also have last created, last active etc
         };
 }
