@@ -5,23 +5,18 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { FilterByInput, FilterGroup, FilterOption, FilterPanel } from '@nice-digital/nds-filters'
 
 import {
+  filterableRoles,
+  filterableStatuses,
   lastActiveLabels,
   lastActivePresets,
   roleLabels,
   statusLabels,
   type LastActivePreset,
 } from '@/app/portal/_constants/userLabels'
-import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 
 import type { ChangeEvent, SubmitEvent } from 'react'
 
-// Rejected is not filterable as the backend never returns it
-const filterableStatuses = (Object.keys(statusLabels) as UserOrgStatus[]).filter(
-  (status) => status !== 'Rejected',
-)
-
-// Super user is not filterable via this UI
-const filterableRoles = (Object.keys(roleLabels) as UserRole[]).filter((role) => role !== 'Super')
+type MultiFilterKey = 'status' | 'role'
 
 export function OrganisationFilters() {
   const router = useRouter()
@@ -32,42 +27,34 @@ export function OrganisationFilters() {
   const selectedRoles = searchParams.getAll('role')
   const selectedLastActive = searchParams.get('lastActive')
 
-  function handleStatusChanged(status: UserOrgStatus, isSelected: boolean) {
-    const nextStatuses = isSelected
-      ? [...selectedStatuses, status]
-      : selectedStatuses.filter((value) => value !== status)
-
+  // Every filter change resets to the first page, as the previous page may no
+  // longer exist within the newly filtered results.
+  function updateParams(mutate: (params: URLSearchParams) => void) {
     const params = new URLSearchParams(searchParams.toString())
-    params.delete('status')
-    nextStatuses.forEach((value) => params.append('status', value))
+    mutate(params)
     params.set('page', '1')
 
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
 
-  function handleRoleChanged(role: UserRole, isSelected: boolean) {
-    const nextRoles = isSelected
-      ? [...selectedRoles, role]
-      : selectedRoles.filter((value) => value !== role)
+  function handleMultiChanged(key: MultiFilterKey, value: string, isSelected: boolean) {
+    const selected = searchParams.getAll(key)
+    const next = isSelected ? [...selected, value] : selected.filter((entry) => entry !== value)
 
-    const params = new URLSearchParams(searchParams.toString())
-    params.delete('role')
-    nextRoles.forEach((value) => params.append('role', value))
-    params.set('page', '1')
-
-    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    updateParams((params) => {
+      params.delete(key)
+      next.forEach((entry) => params.append(key, entry))
+    })
   }
 
   function handleLastActiveChanged(preset: LastActivePreset, isSelected: boolean) {
-    const params = new URLSearchParams(searchParams.toString())
-    if (isSelected) {
-      params.set('lastActive', preset)
-    } else {
-      params.delete('lastActive')
-    }
-    params.set('page', '1')
-
-    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    updateParams((params) => {
+      if (isSelected) {
+        params.set('lastActive', preset)
+      } else {
+        params.delete('lastActive')
+      }
+    })
   }
 
   function handleFilterSubmit(event: SubmitEvent<HTMLFormElement>) {
@@ -76,15 +63,13 @@ export function OrganisationFilters() {
     const emailValue = new FormData(event.currentTarget).get('email')
     const email = typeof emailValue === 'string' ? emailValue.trim() : undefined
 
-    const params = new URLSearchParams(searchParams.toString())
-    if (email) {
-      params.set('email', email)
-    } else {
-      params.delete('email')
-    }
-    params.set('page', '1')
-
-    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    updateParams((params) => {
+      if (email) {
+        params.set('email', email)
+      } else {
+        params.delete('email')
+      }
+    })
   }
 
   return (
@@ -106,7 +91,7 @@ export function OrganisationFilters() {
             isSelected={selectedRoles.includes(role)}
             value={role}
             onChanged={(e: ChangeEvent<HTMLInputElement>) =>
-              handleRoleChanged(role, e.target.checked)
+              handleMultiChanged('role', role, e.target.checked)
             }
           >
             {roleLabels[role]}
@@ -136,7 +121,7 @@ export function OrganisationFilters() {
             isSelected={selectedStatuses.includes(status)}
             value={status}
             onChanged={(e: ChangeEvent<HTMLInputElement>) =>
-              handleStatusChanged(status, e.target.checked)
+              handleMultiChanged('status', status, e.target.checked)
             }
           >
             {statusLabels[status]}

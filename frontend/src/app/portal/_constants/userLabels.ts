@@ -25,6 +25,16 @@ export const statusTagColours: Record<UserOrgStatus, TagColour> = {
   RequestedAccess: 'yellow',
 }
 
+// Rejected is not filterable as the backend never returns it
+export const filterableStatuses = (Object.keys(statusLabels) as UserOrgStatus[]).filter(
+  (status) => status !== 'Rejected',
+)
+
+// Super user is not filterable via this UI
+export const filterableRoles = (Object.keys(roleLabels) as UserRole[]).filter(
+  (role) => role !== 'Super',
+)
+
 export const lastActivePresets = ['week', 'month', '6months', 'year'] as const
 
 export type LastActivePreset = (typeof lastActivePresets)[number]

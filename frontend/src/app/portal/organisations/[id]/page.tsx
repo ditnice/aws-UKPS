@@ -5,29 +5,18 @@ import { Button } from '@nice-digital/nds-button'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 import { PageHeader } from '@nice-digital/nds-page-header'
 
+import { defaultPageSize, pageSizeOptions } from '@/app/portal/_constants/pagination'
 import {
+  filterableRoles,
+  filterableStatuses,
   lastActivePresets,
-  roleLabels,
   type LastActivePreset,
 } from '@/app/portal/_constants/userLabels'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
-import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
 import { OrganisationFilters } from './_components/OrganisationFilters'
 import { OrganisationUsersTable } from './_components/OrganisationUsersTable'
-
-const pageSizeOptions = [10, 25, 50]
-const defaultPageSize = 10
-// Rejected is excluded as it's not filterable and the backend never returns it
-const validStatuses: UserOrgStatus[] = [
-  'RequestedAccess',
-  'AwaitingSetup',
-  'Active',
-  'Inactive',
-  'Deactivated',
-]
-const validRoles = Object.keys(roleLabels) as UserRole[]
 
 interface Props {
   params: Promise<{ id: string }>
@@ -53,18 +42,13 @@ function parsePageSize(pageSize: string | undefined): number {
   return pageSizeOptions.includes(parsedPageSize) ? parsedPageSize : defaultPageSize
 }
 
-function parseStatus(status: string | string[] | undefined): UserOrgStatus[] {
-  const values = Array.isArray(status) ? status : status ? [status] : []
+function parseMulti<T extends string>(
+  param: string | string[] | undefined,
+  validValues: readonly T[],
+): T[] {
+  const values = Array.isArray(param) ? param : param ? [param] : []
 
-  return values.filter((value): value is UserOrgStatus =>
-    validStatuses.includes(value as UserOrgStatus),
-  )
-}
-
-function parseRole(role: string | string[] | undefined): UserRole[] {
-  const values = Array.isArray(role) ? role : role ? [role] : []
-
-  return values.filter((value): value is UserRole => validRoles.includes(value as UserRole))
+  return values.filter((value): value is T => validValues.includes(value as T))
 }
 
 function parseEmail(email: string | undefined): string | undefined {
@@ -92,8 +76,8 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
   const organisationId = Number(id)
   const currentPage = parsePage(page)
   const pageSize = parsePageSize(pageSizeParam)
-  const status = parseStatus(statusParam)
-  const role = parseRole(roleParam)
+  const status = parseMulti(statusParam, filterableStatuses)
+  const role = parseMulti(roleParam, filterableRoles)
   const email = parseEmail(emailParam)
   const lastActive = parseLastActive(lastActiveParam)
 
@@ -123,14 +107,8 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         <SummaryListRow label="Organisation type" value={organisation.organisationType} />
         <SummaryListRow label="Organisation name" value={organisation.organisationName} />
         <SummaryListRow label="Head office address" value={organisation.headOfficeAddress} />
-        <SummaryListRow
-          label="Head office email address"
-          value={organisation.headOfficeEmail}
-        ></SummaryListRow>
-        <SummaryListRow
-          label="Head office phone number"
-          value={organisation.headOfficeTelephone}
-        ></SummaryListRow>
+        <SummaryListRow label="Head office email address" value={organisation.headOfficeEmail} />
+        <SummaryListRow label="Head office phone number" value={organisation.headOfficeTelephone} />
       </SummaryList>
 
       <Button variant={Button.variants.secondary}>Edit details</Button>
