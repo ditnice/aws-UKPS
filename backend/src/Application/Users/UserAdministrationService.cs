@@ -18,7 +18,7 @@ namespace UKPS.Api.Application.Users;
 
 internal sealed partial class UserAdministrationService(
     IOrganisationAuthoriser organisationAuthoriser,
-    IWebIdentityAdministrationService administerIdentityService,
+    CognitoWebIdentityAdministrationService administerIdentityService,
     ICurrentUserInfoService currentUserInfoService,
     IEmailService emailService,
     ISetupLinkCreator setupLinkCreator,
@@ -59,7 +59,25 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
-        await administerIdentityService.CreateNewUser(command.NewUserEmail, cancellationToken);
+        var result = await administerIdentityService.CreateNewUser(
+            command.NewUserEmail,
+            cancellationToken
+        );
+
+        if (result.IsErr)
+        {
+            return result.Error switch
+            {
+                CreateNewUserError.UsernameAlreadyExists => Result<
+                    UserOnboardingRecord,
+                    OnboardUserError
+                >.Err(new OnboardUserError.UsernameAlreadyExists()),
+                _ => throw new InvalidOperationException(
+                    $"An unexpected error occurred when creating a new user [{result.Error}]"
+                ),
+            };
+        }
+
         var userOnboardingRecord = new UserOnboardingRecord()
         {
             UserEmail = command.NewUserEmail,

@@ -39,6 +39,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
                     services.AddSingleton(_mockService);
                 });
                 builder.ConfigureNoDatabase();
+                builder.UseSetting("AWS:LoadSecrets", $"{false}");
             })
             .CreateClient();
     }

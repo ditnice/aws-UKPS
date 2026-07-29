@@ -5,7 +5,15 @@ namespace UKPS.Api.Application.Users.Errors;
 /// </summary>
 public abstract record OnboardUserError
 {
-    // TODO URP 410 - Update Onboard User Error to return when duplicate email addresses exist
+    /// <summary>
+    /// Prevents direct instantiation of onboarding errors.
+    /// </summary>
+    protected OnboardUserError() { }
+
+    /// <summary>
+    /// Indicates that a user with the specified username already exists.
+    /// </summary>
+    public sealed record UsernameAlreadyExists : OnboardUserError;
 
     /// <summary>
     /// Indicates that the specified organisation does not exist.

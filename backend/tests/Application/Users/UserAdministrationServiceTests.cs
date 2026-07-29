@@ -1,3 +1,4 @@
+using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -56,6 +57,8 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foundUserRecord.UserEmail.ShouldBe(command.NewUserEmail);
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
+
+        _harness.Cognito.Users.ShouldContain(command.NewUserEmail);
     }
 
     [Fact]
@@ -143,6 +146,22 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         result.ShouldBeError().ShouldBeOfType<OnboardUserError.InvalidOrganisation>();
+    }
+
+    [Fact]
+    public async Task OnBoardUser_WhenUsernameAlreadyInUse_ShouldReturnUsernameAlreadyInUseResult()
+    {
+        var harness = GetTestHarness();
+        harness
+            .Cognito.Mock.WhenForAnyArgs(x => x.AdminCreateUserAsync(default!, default!))
+            .Throws(new UsernameExistsException());
+
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
+        OnBoardUserResult result = await harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<OnboardUserError.UsernameAlreadyExists>();
     }
 
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()

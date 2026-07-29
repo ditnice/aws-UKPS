@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.AuthorisationAdministration;
 using UKPS.Api.Application.InternalServices.Authorisation;
@@ -15,16 +16,13 @@ internal static class DependencyInjectionManager
 {
     public static IServiceCollection AddUkpsServices(this IServiceCollection services)
     {
-        // TODO URP 394: Add implementation for IWebIdentityAdministrationService
-        services.TryAddScoped<IWebIdentityAdministrationService>(static _ =>
-            throw new NotImplementedException()
-        );
+        services.TryAddScoped<CognitoWebIdentityAdministrationService>();
 
         // TODO URP 394: Add implementation for ISetupLinkCreator
-        services.TryAddScoped<ISetupLinkCreator>(static _ => throw new NotImplementedException());
+        services.TryAddScoped(static _ => Substitute.For<ISetupLinkCreator>());
 
         // TODO URP 405: Implement the IEmailService
-        services.TryAddScoped<IEmailService>(static _ => throw new NotImplementedException());
+        services.TryAddScoped(static _ => Substitute.For<IEmailService>());
 
         services.TryAddScoped<IDateTimeProvider, SystemDateTimeProvider>();
         services.TryAddScoped<IOrganisationAuthoriser, OrganisationAuthoriser>();
