@@ -1,4 +1,5 @@
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.SetupTokenValidationError>;
+using UserSetupResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.UserSetupError>;
 
 namespace UKPS.Api.Application.AuthorisationAdministration;
 
@@ -16,4 +17,15 @@ public interface IAuthorisationAdministrationService
     /// A result indicating whether the setup token is valid or the reason validation failed.
     /// </returns>
     Task<SetupTokenValidationResult> Validate(Guid setupToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Completes the user setup process by validating the setup command and creating
+    /// the user's credentials.
+    /// </summary>
+    /// <param name="command">The command containing the setup token and new password details.</param>
+    /// <param name="cancellationToken">The token used to cancel the operation.</param>
+    /// <returns>
+    /// A result indicating whether the user setup completed successfully or the reason it failed.
+    /// </returns>
+    Task<UserSetupResult> SetupUser(SetupUserCommand command, CancellationToken cancellationToken);
 }

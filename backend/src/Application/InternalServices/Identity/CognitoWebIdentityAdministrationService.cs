@@ -2,7 +2,8 @@ using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication;
-using UKPS.Api.Application.Common;
+using CreateNewUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.CreateNewUserError>;
+using UpdatePasswordResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.UpdatePasswordError>;
 
 namespace UKPS.Api.Application.InternalServices.Identity;
 
@@ -20,7 +21,7 @@ internal class CognitoWebIdentityAdministrationService
         _options = options;
     }
 
-    public async Task<Result<CreateNewUserError>> CreateNewUser(
+    public async Task<CreateNewUserResult> CreateNewUser(
         string email,
         CancellationToken cancellationToken
     )
@@ -39,13 +40,43 @@ internal class CognitoWebIdentityAdministrationService
         }
         catch (UsernameExistsException)
         {
-            return Result<CreateNewUserError>.Err(new CreateNewUserError.UsernameAlreadyExists());
+            return CreateNewUserResult.Err(new CreateNewUserError.UsernameAlreadyExists());
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException("Failed to create a new user.", ex);
         }
 
-        return Result<CreateNewUserError>.Ok();
+        return CreateNewUserResult.Ok();
+    }
+
+    internal async Task<UpdatePasswordResult> UpdatePassword(
+        string userEmail,
+        string newPassword,
+        CancellationToken cancellationToken
+    )
+    {
+        var request = new AdminSetUserPasswordRequest
+        {
+            UserPoolId = _options.Value.UserPoolId,
+            Username = userEmail,
+            Password = newPassword,
+            Permanent = true,
+        };
+
+        try
+        {
+            await _cognito.AdminSetUserPasswordAsync(request, cancellationToken);
+        }
+        catch (InvalidPasswordException)
+        {
+            return UpdatePasswordResult.Err(new UpdatePasswordError.InvalidPassword());
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to update the user's password.", ex);
+        }
+
+        return UpdatePasswordResult.Ok();
     }
 }

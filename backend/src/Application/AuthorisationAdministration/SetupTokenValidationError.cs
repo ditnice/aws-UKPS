@@ -14,4 +14,9 @@ public abstract record SetupTokenValidationError
     /// Indicates that the setup token could not be found.
     /// </summary>
     public sealed record DoesNotExist : SetupTokenValidationError;
+
+    /// <summary>
+    /// Indicates that the setup token has already been used and can no longer be validated.
+    /// </summary>
+    public sealed record Consumed : SetupTokenValidationError;
 }
