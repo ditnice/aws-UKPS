@@ -8,11 +8,12 @@ internal static class WebApplicationMigrationExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        DatabaseConfiguration? settings = app
-            .Configuration.GetSection(DatabaseConfiguration.SectionName)
-            .Get<DatabaseConfiguration>();
+        DatabaseConfiguration? settings =
+            app.Configuration.GetSection(DatabaseConfiguration.SectionName)
+                .Get<DatabaseConfiguration>()
+            ?? new DatabaseConfiguration();
 
-        if (settings is null || !settings.MigrateOnStartup)
+        if (!settings.MigrateOnStartup)
         {
             return;
         }
