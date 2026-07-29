@@ -11,6 +11,7 @@ internal class UserOnboardingRecord
 
     internal bool HasExpired(DateTime currentTime, TimeSpan timeSpan)
     {
+        // TODO URP 415 - Device how/if we are going to handle this corrupted entity gracefully.
         if (currentTime < CreatedAt)
         {
             throw new ArgumentException(
