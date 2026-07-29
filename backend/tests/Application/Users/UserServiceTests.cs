@@ -744,7 +744,9 @@ public class UserServiceTests : DatabaseTestBase
         );
 
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        Context.Users.Add(_userFaker.Generate());
+        var existingUser = _userFaker.Generate();
+        existingUser.WorkEmail = "tests@test.com";
+        Context.Users.Add(existingUser);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
         CreateUserRequestDto createDto = new()
         {
