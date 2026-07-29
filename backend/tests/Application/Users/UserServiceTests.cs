@@ -10,6 +10,10 @@ using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using CreateUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserDetailsDto,
+    UKPS.Api.Application.Users.Errors.CreateUserError
+>;
 
 namespace UKPS.Api.Tests.Application.Users;
 
@@ -683,6 +687,106 @@ public class UserServiceTests : DatabaseTestBase
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(2);
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 10]);
+    }
+
+    [Fact]
+    public async Task CreateUser_AllFieldsProvided_ReturnsDto()
+    {
+        Context.Organisations.Add(
+            new Organisation
+            {
+                Id = 1,
+                OrganisationName = "Test Organisation",
+                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+                HeadOfficeEmail = "info@pharma.gov.uk",
+                HeadOfficeTelephone = "020 1234 5678",
+            }
+        );
+
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        CreateUserRequestDto CreateDto = new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkTelephone = "123456789",
+            WorkEmail = "tests@test.com",
+            OrganisationId = 1,
+        };
+        CreateUserResult result = await _service.CreateUser(
+            CreateDto,
+            TestContext.Current.CancellationToken
+        );
+        UserDetailsDto user = result.ShouldBeSuccess();
+        user.Title.ShouldBe("Mr");
+        user.FirstName.ShouldBe("Test1");
+        user.LastName.ShouldBe("Test2");
+        user.JobTitle.ShouldBe("Test3");
+        user.WorkEmail.ShouldBe("tests@test.com");
+        user.WorkPhone.ShouldBe("123456789");
+    }
+
+    [Fact]
+    public async Task CreateUser_EmailConflict_ReturnsConflict()
+    {
+        Context.Organisations.Add(
+            new Organisation
+            {
+                Id = 1,
+                OrganisationName = "Test Organisation",
+                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+                HeadOfficeEmail = "info@pharma.gov.uk",
+                HeadOfficeTelephone = "020 1234 5678",
+            }
+        );
+
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var existingUser = _userFaker.Generate();
+        existingUser.WorkEmail = "tests@test.com";
+        Context.Users.Add(existingUser);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        CreateUserRequestDto createDto = new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkTelephone = "123456789",
+            WorkEmail = "tests@test.com",
+            OrganisationId = 1,
+        };
+        CreateUserResult result = await _service.CreateUser(
+            createDto,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<CreateUserError.EmailConflict>();
+    }
+
+    [Fact]
+    public async Task CreateUser_OrgIDNotFound_ReturnsNotFound()
+    {
+        CreateUserRequestDto createDto = new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkTelephone = "123456789",
+            WorkEmail = "tests@test.com",
+            OrganisationId = 999,
+        };
+        CreateUserResult result = await _service.CreateUser(
+            createDto,
+            TestContext.Current.CancellationToken
+        );
+        CreateUserError error = result.ShouldBeError();
+        error.ShouldBeOfType<CreateUserError.NotFound>();
+        ((CreateUserError.NotFound)error).OrganisationId.ShouldBe(999);
     }
 
     [Theory]

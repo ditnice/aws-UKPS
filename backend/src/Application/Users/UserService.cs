@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
@@ -15,7 +16,8 @@ namespace UKPS.Api.Application.Users;
 
 internal sealed class UserService(
     AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    IDateTimeProvider timeProvider
 ) : IUserService
 {
     public async Task<GetUsersResult> GetUsers(
@@ -153,6 +155,72 @@ internal sealed class UserService(
         }
 
         return organisationMemberships;
+    }
+
+    public async Task<Result<UserDetailsDto, CreateUserError>> CreateUser(
+        CreateUserRequestDto createUserRequestDto,
+        CancellationToken cancellationToken
+    )
+    // TODO URP 412: Add in authorisation logic
+    {
+        var organisation = await dbContext.Organisations.FindAsync(
+            [createUserRequestDto.OrganisationId],
+            cancellationToken
+        );
+        if (organisation is null)
+        {
+            return Result<UserDetailsDto, CreateUserError>.Err(
+                new CreateUserError.NotFound(createUserRequestDto.OrganisationId)
+            );
+        }
+        bool UserExists = await dbContext.Users.AnyAsync(
+            x => x.WorkEmail == createUserRequestDto.WorkEmail,
+            cancellationToken: cancellationToken
+        );
+        if (UserExists)
+        {
+            return Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.EmailConflict());
+        }
+        var user = new User()
+        {
+            UserType = UserType.PharmaUser,
+            Title = createUserRequestDto.Title,
+            FirstName = createUserRequestDto.FirstName,
+            LastName = createUserRequestDto.LastName,
+            JobTitle = createUserRequestDto.JobTitle,
+            WorkTelephone = createUserRequestDto.WorkTelephone,
+            WorkEmail = createUserRequestDto.WorkEmail,
+            CreatedAt = timeProvider.GetUtcNow(),
+
+            UserOrgMemberships =
+            [
+                new UserOrgMembership()
+                {
+                    OrganisationId = createUserRequestDto.OrganisationId,
+                    UserRole = UserRole.Standard,
+                    Status = UserOrgStatus.RequestedAccess,
+                    AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
+                    CreatedAt = timeProvider.GetUtcNow(),
+                },
+            ],
+        };
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
+    }
+
+    private static UserDetailsDto MapToDto(User user)
+    {
+        return new()
+        {
+            UserType = user.UserType,
+            Title = user.Title,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            JobTitle = user.JobTitle,
+            WorkPhone = user.WorkTelephone,
+            WorkEmail = user.WorkEmail,
+        };
     }
 
     private static string EscapeLikePattern(string value) =>
