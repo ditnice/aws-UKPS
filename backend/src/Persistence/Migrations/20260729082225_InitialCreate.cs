@@ -22,7 +22,6 @@ namespace UKPS.Api.Persistence.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    username = table.Column<string>(type: "text", nullable: false),
                     user_type = table.Column<int>(type: "integer", nullable: false),
                     title = table.Column<string>(type: "text", nullable: true),
                     first_name = table.Column<string>(type: "text", nullable: false),
@@ -1632,13 +1631,6 @@ namespace UKPS.Api.Persistence.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "ix_app_user_username",
-                schema: "ukps",
-                table: "app_user",
-                column: "username",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_app_user_work_email",
