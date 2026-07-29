@@ -786,7 +786,7 @@ public class UserServiceTests : DatabaseTestBase
         );
         CreateUserError error = result.ShouldBeError();
         error.ShouldBeOfType<CreateUserError.NotFound>();
-        ((CreateUserError.NotFound)error).OrganisationId.ShouldBe(9999);
+        ((CreateUserError.NotFound)error).OrganisationId.ShouldBe(999);
     }
 
     [Theory]
