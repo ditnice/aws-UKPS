@@ -29,4 +29,23 @@ public abstract record UserSetupError
     /// Indicates that the setup token could not be found.
     /// </summary>
     public sealed record DoesNotExist : UserSetupError;
+
+    internal TResult Match<TResult>(
+        Func<TResult> consumed,
+        Func<TResult> invalidPassword,
+        Func<TResult> expired,
+        Func<TResult> doesNotExist
+    )
+    {
+        return this switch
+        {
+            Consumed => consumed(),
+            InvalidPassword => invalidPassword(),
+            Expired => expired(),
+            DoesNotExist => doesNotExist(),
+            _ => throw new InvalidOperationException(
+                $"Unknown {nameof(UserSetupError)} type: {GetType().Name}"
+            ),
+        };
+    }
 }

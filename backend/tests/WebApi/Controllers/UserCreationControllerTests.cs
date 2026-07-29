@@ -86,6 +86,36 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
+    public async Task Post_WhenUserNameAlreadyExist_ShouldReturnBadRequest()
+    {
+        _mockService
+            .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(Result<OnboardUserError>.Err(new OnboardUserError.UsernameAlreadyExists()));
+        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
+        var response = await _client.PostAsJsonAsync(
+            OnBoardEndpoint,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Post_WhenInvalidOrganisation_ShouldReturnBadRequest()
+    {
+        _mockService
+            .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(Result<OnboardUserError>.Err(new OnboardUserError.InvalidOrganisation()));
+        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
+        var response = await _client.PostAsJsonAsync(
+            OnBoardEndpoint,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Post_WhenEmailNotSet_ShouldReturnHttpBadRequest()
     {
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate() with

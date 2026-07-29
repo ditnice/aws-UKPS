@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace UKPS.Api.Application.AuthorisationAdministration;
 
 /// <summary>
@@ -19,4 +21,19 @@ public abstract record SetupTokenValidationError
     /// Indicates that the setup token has already been used and can no longer be validated.
     /// </summary>
     public sealed record Consumed : SetupTokenValidationError;
+
+    internal TResult Match<TResult>(
+        Func<Expired, TResult> expired,
+        Func<DoesNotExist, TResult> doesNotExist,
+        Func<Consumed, TResult> consumed
+    )
+    {
+        return this switch
+        {
+            Expired x => expired(x),
+            DoesNotExist x => doesNotExist(x),
+            Consumed x => consumed(x),
+            _ => throw new UnreachableException("Unknown setup token validation error."),
+        };
+    }
 }

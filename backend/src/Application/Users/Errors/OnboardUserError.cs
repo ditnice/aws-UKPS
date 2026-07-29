@@ -23,5 +23,20 @@ public abstract record OnboardUserError
     /// <summary>
     /// Indicates that the current user is not permitted to onboard a new user.
     /// </summary>
-    internal sealed record NotAllowed : OnboardUserError;
+    public sealed record NotAllowed : OnboardUserError;
+
+    internal TResult Match<TResult>(
+        Func<UsernameAlreadyExists, TResult> usernameAlreadyExists,
+        Func<InvalidOrganisation, TResult> invalidOrganisation,
+        Func<NotAllowed, TResult> notAllowed
+    )
+    {
+        return this switch
+        {
+            UsernameAlreadyExists x => usernameAlreadyExists(x),
+            InvalidOrganisation x => invalidOrganisation(x),
+            NotAllowed x => notAllowed(x),
+            _ => throw new InvalidOperationException("Unknown onboarding user error."),
+        };
+    }
 }

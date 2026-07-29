@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -9,6 +10,8 @@ using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.AuthorisationAdministration;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using LoginResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
@@ -20,6 +23,12 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string LoginUrl = "/auth/login";
+    private const string ValidateSetupTokenUrl = "/auth/validate-setup-token";
+    private const string SetupUserUrl = "/auth/setup-user";
+
+    private readonly IAuthorisationAdministrationService _mockedAuthorisationService =
+        Substitute.For<IAuthorisationAdministrationService>();
+    private readonly Guid _defaultSetupToken = Guid.Parse("48b5becd-f98c-4897-98aa-be37eecb6a68");
     private readonly IAuthenticationService _mockedService =
         Substitute.For<IAuthenticationService>();
     private readonly HttpClient _client;
@@ -27,6 +36,11 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     {
         Username = "username",
         Password = "password",
+    };
+    private readonly SetupUserCommand _defaultSetupUserCommand = new()
+    {
+        NewPassword = "password",
+        SetupToken = Guid.Parse("48b5becd-f98c-4897-98aa-be37eecb6a68"),
     };
 
     public AuthenticationControllerTests(WebApplicationFactory<Program> factory)
@@ -39,7 +53,9 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                 builder.ConfigureServices(services =>
                 {
                     services.RemoveAll<IAuthenticationService>();
+                    services.RemoveAll<IAuthorisationAdministrationService>();
                     services.AddSingleton(_mockedService);
+                    services.AddSingleton(_mockedAuthorisationService);
                 });
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
@@ -134,6 +150,163 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
             AssertCookieDoesNotExist(response.Headers);
         }
+    }
+
+    [Fact]
+    public async Task ValidateSetupToken_ShouldReturnOkOnValidToken()
+    {
+        _mockedAuthorisationService
+            .Validate(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Result<SetupTokenValidationError>.Ok());
+
+        var response = await _client.GetAsync(
+            new Uri($"{ValidateSetupTokenUrl}?setupToken={_defaultSetupToken}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ValidateSetupToken_ShouldReturnUnauthorizedWhenTokenHasExpired()
+    {
+        _mockedAuthorisationService
+            .Validate(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<SetupTokenValidationError>.Err(new SetupTokenValidationError.Expired())
+            );
+
+        var response = await _client.GetAsync(
+            new Uri($"{ValidateSetupTokenUrl}?setupToken={_defaultSetupToken}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ValidateSetupToken_ShouldReturnNotFoundWhenTokenDoesNotExist()
+    {
+        _mockedAuthorisationService
+            .Validate(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<SetupTokenValidationError>.Err(new SetupTokenValidationError.DoesNotExist())
+            );
+
+        var response = await _client.GetAsync(
+            new Uri($"{ValidateSetupTokenUrl}?setupToken={_defaultSetupToken}"),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task ValidateSetupToken_ShouldReturnUnauthorizedWhenTokenHasBeenConsumed()
+    {
+        _mockedAuthorisationService
+            .Validate(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<SetupTokenValidationError>.Err(new SetupTokenValidationError.Consumed())
+            );
+
+        var response = await _client.GetAsync(
+            new Uri($"{ValidateSetupTokenUrl}?setupToken={_defaultSetupToken}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ValidateSetupToken_WhenTokenIsMissing_ShouldReturnBadRequest()
+    {
+        var response = await _client.GetAsync(
+            new Uri(ValidateSetupTokenUrl, UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task SetupUser_ShouldReturnOkOnSuccess()
+    {
+        _mockedAuthorisationService
+            .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
+            .Returns(Result<UserSetupError>.Ok());
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(SetupUserUrl, UriKind.Relative),
+            _defaultSetupUserCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task SetupUser_ShouldReturnUnauthorizedWhenTokenHasBeenConsumed()
+    {
+        _mockedAuthorisationService
+            .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
+            .Returns(Result<UserSetupError>.Err(new UserSetupError.Consumed()));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(SetupUserUrl, UriKind.Relative),
+            _defaultSetupUserCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task SetupUser_ShouldReturnBadRequestWhenPasswordIsInvalid()
+    {
+        _mockedAuthorisationService
+            .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
+            .Returns(Result<UserSetupError>.Err(new UserSetupError.InvalidPassword()));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(SetupUserUrl, UriKind.Relative),
+            _defaultSetupUserCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task SetupUser_ShouldReturnUnauthorizedWhenTokenHasExpired()
+    {
+        _mockedAuthorisationService
+            .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
+            .Returns(Result<UserSetupError>.Err(new UserSetupError.Expired()));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(SetupUserUrl, UriKind.Relative),
+            _defaultSetupUserCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task SetupUser_ShouldReturnNotFoundWhenTokenDoesNotExist()
+    {
+        _mockedAuthorisationService
+            .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
+            .Returns(Result<UserSetupError>.Err(new UserSetupError.DoesNotExist()));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(SetupUserUrl, UriKind.Relative),
+            _defaultSetupUserCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     private static void AssertCookieExistsAndValidateCookie(
