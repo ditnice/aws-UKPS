@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 
 namespace UKPS.Api.Tests.Utilities.Fixtures;
@@ -31,6 +32,10 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
         builder.UseSetting(
             $"{SeedingConfiguration.SectionName}:{nameof(SeedingConfiguration.ReseedOnStartup)}",
             $"{false}"
+        );
+        builder.UseSetting(
+            $"{DatabaseConfiguration.SectionName}:{nameof(DatabaseConfiguration.MigrateOnStartup)}",
+            $"{true}"
         );
     }
 }
