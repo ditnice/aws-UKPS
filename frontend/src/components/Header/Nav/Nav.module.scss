@@ -30,29 +30,10 @@
   }
 }
 
-// .myAccount {
-//   @include media-queries.mq($from: md) {
-//     display: none;
-//   }
-// }
-
-// .myAccountHeading {
-//   border: utils.rem(spacing.$x-small) solid $nav-background;
-//   font-size: 100%;
-//   margin: 0;
-//   padding: utils.rem(spacing.$small spacing.$medium);
-// }
-
 .menuWrapper {
   background: variables.$nice-teal;
   color: variables.$white;
 }
-
-// @include media-queries.mq($from: md) {
-//   .wrapperWithSubLinks {
-//     padding-bottom: utils.rem(header-settings.$sub-nav-height);
-//   }
-// }
 
 .menuList {
   @extend %menu-list;
