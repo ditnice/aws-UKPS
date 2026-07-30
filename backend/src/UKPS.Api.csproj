@@ -27,7 +27,7 @@
     </PackageReference>
     <!-- TODO URP 411: This overrides the dependency (marked as vulnerable) from the Microsoft.AspNetCore.OpenApi.
     Once this package is updated to not have a vulnerable dependency this can be removed. -->
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.21.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.22.0" />
     <!-- TODO URP 300: This overrides the dependency (marked as vulnerable) from the Microsoft.AspNetCore.OpenApi.
     Once this package is updated to not have a vulnerable dependency this can be removed. -->
     <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
