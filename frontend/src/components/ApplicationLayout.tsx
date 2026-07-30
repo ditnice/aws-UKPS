@@ -11,8 +11,6 @@ export function ApplicationLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <MyHeader skipLinkId="content-start"></MyHeader>
-
-      <Header auth={false} search={false} skipLinkId="content-start" />
       <Main id="content-start">
         <Container>{children}</Container>
       </Main>
