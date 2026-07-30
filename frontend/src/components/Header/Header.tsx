@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useState } from 'react'
 
 import styles from './Header.module.scss'
@@ -27,15 +28,14 @@ export function Header({ skipLinkId }: HeaderProps) {
               <SkipLink to={`#${skipLinkId}`}>Skip to content</SkipLink>
             </li>
             <li>
-              <SkipLink to="https://www.nice.org.uk/accessibility">Accessibility help</SkipLink>
+              <SkipLink to="/accessibility">Accessibility help</SkipLink>
             </li>
           </ul>
           <div className={styles.container}>
-            <a
-              href="https://www.nice.org.uk/"
+            <Link
+              href="/"
               aria-label="NICE: National Institute for Health and Care Excellence homepage"
               className={styles.home}
-              // onClick={handleLogoClick} TODO - make this do something
               data-tracking="Logo"
             >
               <Image
@@ -46,13 +46,8 @@ export function Header({ skipLinkId }: HeaderProps) {
                 height={82}
                 priority
               />
-            </a>
+            </Link>
             <div className={styles.wrapper}>
-              {/* <div className={styles.search}>
-                {search && (
-                  <Search skipLinkId={skipLinkId} onNavigating={onNavigating} {...search} />
-                )}
-              </div> */}
               <button
                 className={styles.mobileMenuBtn}
                 id="header-menu-button"
@@ -65,26 +60,9 @@ export function Header({ skipLinkId }: HeaderProps) {
               >
                 {isExpanded ? 'Close' : 'Menu'}
               </button>
-              {/* {auth !== false && (
-                <div className={styles.account}>
-                  <Account
-                    onLoginStatusChecked={handleLoginStatusChecked}
-                    isLoggedIn={isLoggedIn}
-                    accountsData={accountsData}
-                    {...auth}
-                  />
-                </div>
-              )} */}
             </div>
           </div>
-          <Nav
-            // skipLinkId={skipLinkId}
-            // service={service}
-            isExpanded={isExpanded}
-            // accountsLinks={accountsData && accountsData.links}
-            // onNavigating={onNavigating}
-            // additionalSubMenuItems={additionalSubMenuItems}
-          />
+          <Nav isExpanded={isExpanded} />
         </header>
       </div>
     </>

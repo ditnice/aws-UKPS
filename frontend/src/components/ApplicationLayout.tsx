@@ -1,6 +1,6 @@
 'use client'
 
-import { Footer, Header, Main } from '@nice-digital/global-nav'
+import { Footer, Main } from '@nice-digital/global-nav'
 import { Container } from '@nice-digital/nds-container'
 
 import { Header as MyHeader } from './Header/Header'
