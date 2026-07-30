@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace UKPS.Api.Application.AuthorisationAdministration;
+namespace UKPS.Api.Application.Authentication.Errors;
 
 /// <summary>
 /// Represents an error that can occur when validating a setup token.

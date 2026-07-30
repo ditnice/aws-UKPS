@@ -3,25 +3,27 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Shouldly;
 using UKPS.Api.Application.Authentication;
-using UKPS.Api.Application.AuthorisationAdministration;
+using UKPS.Api.Application.Authentication.Dtos;
+using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.SetupTokenValidationError>;
+using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using UserSetupResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.AuthorisationAdministration.MultiFactorAuthenticationSetupDto,
-    UKPS.Api.Application.AuthorisationAdministration.UserSetupError
+    UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
 
-namespace UKPS.Api.Tests.Application.AuthorisationAdministration;
+namespace UKPS.Api.Tests.Application.Authentication;
 
 [Collection(DatabaseCollection.Name)]
-public class AuthorisationAdministrationServiceTests : DatabaseTestBase
+public class IdentityAdministrationServiceTests : DatabaseTestBase
 {
     private readonly Faker<UserOnboardingRecord> _userOnboardingRecordFaker;
-    private readonly IServiceTestHarness<IAuthorisationAdministrationService> _harness;
+    private readonly IServiceTestHarness<IIdentityAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
     private readonly string _targetUser = "target.user@email.com";
@@ -32,7 +34,7 @@ public class AuthorisationAdministrationServiceTests : DatabaseTestBase
         NewPassword = "9U26=e6p9g[R",
     };
 
-    public AuthorisationAdministrationServiceTests(PostgresFixture fixture)
+    public IdentityAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
         _userOnboardingRecordFaker = new UserOnboardingRecordFaker()
@@ -209,9 +211,68 @@ public class AuthorisationAdministrationServiceTests : DatabaseTestBase
         validationResult.ShouldBeError().ShouldBeOfType<UserSetupError.Consumed>();
     }
 
-    private IServiceTestHarness<IAuthorisationAdministrationService> CreateTestHarness()
+    [Fact]
+    public async Task VerifyMultiFactorAuthentication_ShouldSetupMfa()
     {
-        return new ServiceTestHarness<IAuthorisationAdministrationService>(Context)
+        var (setupToken, session) = await CreateAndDoInitialUserSetup();
+
+        var result = await _harness.Service.VerifyMultiFactorAuthentication(
+            new VerifyMultiFactorAuthenticationCommand()
+            {
+                SetupToken = setupToken,
+                Code = _harness.Cognito.ValidMfaCode,
+                AuthenticationSession = session,
+            },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        _harness.Cognito.GetUser(_targetUser).ShouldNotBeNull().MfaSetup.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task VerifyMultiFactorAuthentication_WhenSuppliedIncorrectCode_ShouldNotSetupMfaAndReturnInvalidCodeError()
+    {
+        var (setupToken, session) = await CreateAndDoInitialUserSetup();
+
+        Result<VerifyMultiFactorAuthenticationError> result =
+            await _harness.Service.VerifyMultiFactorAuthentication(
+                new VerifyMultiFactorAuthenticationCommand()
+                {
+                    SetupToken = setupToken,
+                    Code = "9999",
+                    AuthenticationSession = session,
+                },
+                TestContext.Current.CancellationToken
+            );
+        result.ShouldBeError().ShouldBeOfType<VerifyMultiFactorAuthenticationError.InvalidCode>();
+
+        _harness.Cognito.GetUser(_targetUser).ShouldNotBeNull().MfaSetup.ShouldBeFalse();
+    }
+
+    private async Task<(Guid SetupToken, string Session)> CreateAndDoInitialUserSetup()
+    {
+        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
+        UserOnboardingRecord entity = _userOnboardingRecordFaker
+            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
+            .Generate();
+        await AddEntity(entity, TestContext.Current.CancellationToken);
+        _harness.Cognito.AddCurrentUser(new() { Username = _targetUser });
+
+        UserSetupResult validationResult = await _harness.Service.SetupUser(
+            _validSetupUserCommand with
+            {
+                SetupToken = entity.SetupToken,
+            },
+            TestContext.Current.CancellationToken
+        );
+        var setupData = validationResult.ShouldBeSuccess();
+        return (entity.SetupToken, setupData.AuthenticationSession);
+    }
+
+    private IServiceTestHarness<IIdentityAdministrationService> CreateTestHarness()
+    {
+        return new ServiceTestHarness<IIdentityAdministrationService>(Context)
             .UpdateCurrentTime(_testTime)
             .UpdateCurrentUser(x => x with { Email = _currentUser })
             .ConfigureServices(services =>

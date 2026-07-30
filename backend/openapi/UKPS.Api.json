@@ -275,6 +275,38 @@
         }
       }
     },
+    "/auth/verify-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/organisations/{id}": {
       "get": {
         "tags": [
@@ -1207,7 +1239,8 @@
       },
       "MultiFactorAuthenticationSetupDto": {
         "required": [
-          "otpAuthUri"
+          "otpAuthUri",
+          "authenticationSessionId"
         ],
         "type": "object",
         "properties": {
@@ -1215,6 +1248,9 @@
             "type": "string",
             "description": "Gets the OTP authentication URI used to configure an authenticator application.",
             "format": "uri"
+          },
+          "authenticationSessionId": {
+            "type": "string"
           }
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
@@ -1661,6 +1697,25 @@
         ],
         "type": "string",
         "description": "Represents the different types of users in the system."
+      },
+      "VerifyMultiFactorAuthenticationCommand": {
+        "required": [
+          "setupToken",
+          "code",
+          "authenticationSessionId"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "authenticationSessionId": {
+            "type": "string"
+          }
+        }
       }
     }
   },

@@ -4,20 +4,21 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.Authentication;
+using UKPS.Api.Application.InternalServices.Identity;
 
 namespace UKPS.Api.Tests.Application.Authentication;
 
 public sealed class AuthenticationDependencyInjectionManagementTests
 {
     [Fact]
-    public void AddAuthenticationServices_ShouldRegisterAuthenticationService()
+    public void AddAuthenticationServices_ShouldRegisterIdentityService()
     {
         using var provider = CreateServiceProvider();
 
-        var service = provider.GetService<IAuthenticationService>();
+        var service = provider.GetService<IIdentityService>();
 
         service.ShouldNotBeNull();
-        service.ShouldBeOfType<AuthenticationService>();
+        service.ShouldBeOfType<CognitoIdentityService>();
     }
 
     [Fact]
@@ -37,7 +38,7 @@ public sealed class AuthenticationDependencyInjectionManagementTests
         var services = CreateServices();
 
         var authenticationRegistration = services.Single(x =>
-            x.ServiceType == typeof(IAuthenticationService)
+            x.ServiceType == typeof(IIdentityService)
         );
 
         authenticationRegistration.Lifetime.ShouldBe(ServiceLifetime.Scoped);
@@ -54,7 +55,7 @@ public sealed class AuthenticationDependencyInjectionManagementTests
     {
         var services = CreateServices();
 
-        var authenticationService = Substitute.For<IAuthenticationService>();
+        var authenticationService = Substitute.For<IIdentityService>();
         var cognito = Substitute.For<IAmazonCognitoIdentityProvider>();
 
         services.AddScoped(_ => authenticationService);
@@ -64,7 +65,7 @@ public sealed class AuthenticationDependencyInjectionManagementTests
 
         using var provider = services.BuildServiceProvider();
 
-        provider.GetRequiredService<IAuthenticationService>().ShouldBe(authenticationService);
+        provider.GetRequiredService<IIdentityService>().ShouldBe(authenticationService);
 
         provider.GetRequiredService<IAmazonCognitoIdentityProvider>().ShouldBe(cognito);
     }

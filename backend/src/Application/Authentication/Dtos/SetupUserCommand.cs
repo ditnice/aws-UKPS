@@ -1,4 +1,4 @@
-namespace UKPS.Api.Application.AuthorisationAdministration;
+namespace UKPS.Api.Application.Authentication.Dtos;
 
 /// <summary>
 /// Represents the command used to complete user setup by validating a setup token

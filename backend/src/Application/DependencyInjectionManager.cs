@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using UKPS.Api.Application.Authentication;
-using UKPS.Api.Application.AuthorisationAdministration;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
@@ -16,7 +15,7 @@ internal static class DependencyInjectionManager
 {
     public static IServiceCollection AddUkpsServices(this IServiceCollection services)
     {
-        services.TryAddScoped<CognitoWebIdentityAdministrationService>();
+        services.TryAddScoped<IIdentityService, CognitoIdentityService>();
 
         // TODO URP 394: Add implementation for ISetupLinkCreator
         services.TryAddScoped(static _ => Substitute.For<ISetupLinkCreator>());
@@ -31,10 +30,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped<IUserService, UserService>();
         services.AddAuthenticationServices();
         services.TryAddScoped<IUserAdministrationService, UserAdministrationService>();
-        services.TryAddScoped<
-            IAuthorisationAdministrationService,
-            AuthorisationAdministrationService
-        >();
+        services.TryAddScoped<IIdentityAdministrationService, IdentityAdministrationService>();
 
         return services;
     }

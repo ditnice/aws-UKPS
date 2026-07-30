@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.Extensions.Options;
+using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -10,30 +12,31 @@ using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
 >;
-using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.SetupTokenValidationError>;
+using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.AuthorisationAdministration.MultiFactorAuthenticationSetupDto,
-    UKPS.Api.Application.AuthorisationAdministration.UserSetupError
+    UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
+using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError>;
 
-namespace UKPS.Api.Application.AuthorisationAdministration;
+namespace UKPS.Api.Application.Authentication;
 
-internal class AuthorisationAdministrationService : IAuthorisationAdministrationService
+internal class IdentityAdministrationService : IIdentityAdministrationService
 {
     private readonly AppDbContext _appDbContext;
-    private readonly CognitoWebIdentityAdministrationService _webIdentityAdministrationService;
+    private readonly IIdentityService _identityService;
     private readonly IOptions<UserOnboardingConfiguration> _options;
     private readonly IDateTimeProvider _dateTimeProvider;
 
-    public AuthorisationAdministrationService(
+    public IdentityAdministrationService(
         AppDbContext appDbContext,
-        CognitoWebIdentityAdministrationService webIdentityAdministrationService,
+        IIdentityService identityService,
         IOptions<UserOnboardingConfiguration> options,
         IDateTimeProvider dateTimeProvider
     )
     {
         _appDbContext = appDbContext;
-        _webIdentityAdministrationService = webIdentityAdministrationService;
+        _identityService = identityService;
         _options = options;
         _dateTimeProvider = dateTimeProvider;
     }
@@ -75,12 +78,11 @@ internal class AuthorisationAdministrationService : IAuthorisationAdministration
 
         await _appDbContext.SaveChangesAsync(cancellationToken);
 
-        Result<UpdatePasswordError> updatePasswordResult =
-            await _webIdentityAdministrationService.UpdatePassword(
-                userRecord.UserEmail,
-                command.NewPassword,
-                cancellationToken
-            );
+        Result<UpdatePasswordError> updatePasswordResult = await _identityService.UpdatePassword(
+            userRecord.UserEmail,
+            command.NewPassword,
+            cancellationToken
+        );
 
         if (updatePasswordResult.IsErr)
         {
@@ -90,23 +92,55 @@ internal class AuthorisationAdministrationService : IAuthorisationAdministration
             return SetupUserResult.Err(error);
         }
 
-        Uri otpAuthUri = await InitiateAuthenticationAndGetOtp(
+        (Uri otpAuthUri, string session) = await InitiateAuthenticationAndGetOtp(
             userRecord.UserEmail,
             command.NewPassword,
             cancellationToken
         );
 
-        return SetupUserResult.Ok(new() { OtpAuthUri = otpAuthUri });
+        return SetupUserResult.Ok(
+            new() { OtpAuthUri = otpAuthUri, AuthenticationSession = session }
+        );
     }
 
-    private async Task<Uri> InitiateAuthenticationAndGetOtp(
+    public async Task<VerifyMultiFactorAuthenticationResult> VerifyMultiFactorAuthentication(
+        VerifyMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        UserOnboardingRecord? userRecord =
+            await _appDbContext.UserOnboardingRecords.FindAsync(
+                [command.SetupToken],
+                cancellationToken: cancellationToken
+            ) ?? throw new InvalidOperationException();
+
+        try
+        {
+            await _identityService.VerifySoftwareToken(
+                userRecord.UserEmail,
+                command.AuthenticationSession,
+                command.Code,
+                cancellationToken
+            );
+            await _identityService.MarkEmailAsVerified(userRecord.UserEmail, cancellationToken);
+            return VerifyMultiFactorAuthenticationResult.Ok();
+        }
+        catch (CodeMismatchException)
+        {
+            return VerifyMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.InvalidCode()
+            );
+        }
+    }
+
+    private async Task<(Uri, string)> InitiateAuthenticationAndGetOtp(
         string userEmail,
         string newPassword,
         CancellationToken cancellationToken
     )
     {
         InitiateAuthenticationResult initiateAuthenticationResult =
-            await _webIdentityAdministrationService.InitiateAuthentication(
+            await _identityService.InitiateAuthentication(
                 userEmail,
                 newPassword,
                 cancellationToken
@@ -118,13 +152,13 @@ internal class AuthorisationAdministrationService : IAuthorisationAdministration
                 ? value
                 : throw new InvalidOperationException("Unexpected challenge");
 
-        var result = await _webIdentityAdministrationService.AssociateSoftwareToken(
+        var result = await _identityService.AssociateSoftwareToken(
             challenge.AuthenticationSessionId,
             cancellationToken
         );
 
         string issuer = "UKPS";
-        return new Uri(
+        var uri = new Uri(
             $"otpauth://totp/{Uri.EscapeDataString($"{issuer}:{userEmail}")}"
                 + $"?secret={Uri.EscapeDataString(result.Secret)}"
                 + $"&issuer={Uri.EscapeDataString(issuer)}"
@@ -132,6 +166,7 @@ internal class AuthorisationAdministrationService : IAuthorisationAdministration
                 + $"&digits=6"
                 + $"&period=30"
         );
+        return (uri, result.AuthenticationSession);
     }
 
     public async Task<SetupTokenValidationResult> Validate(

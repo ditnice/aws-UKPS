@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersData, PostUsersErrors, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -17,6 +17,44 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+/**
+ * Authenticates a user and creates an authentication session.
+ */
+export const postAuthLogin = <ThrowOnError extends boolean = false>(options: Options<PostAuthLoginData, ThrowOnError>): RequestResult<PostAuthLoginResponses, PostAuthLoginErrors, ThrowOnError> => (options.client ?? client).post<PostAuthLoginResponses, PostAuthLoginErrors, ThrowOnError>({
+    url: '/auth/login',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Validates whether a user setup token is valid and can be used to complete the user setup process.
+ */
+export const getAuthValidateSetupToken = <ThrowOnError extends boolean = false>(options: Options<GetAuthValidateSetupTokenData, ThrowOnError>): RequestResult<GetAuthValidateSetupTokenResponses, GetAuthValidateSetupTokenErrors, ThrowOnError> => (options.client ?? client).get<GetAuthValidateSetupTokenResponses, GetAuthValidateSetupTokenErrors, ThrowOnError>({ url: '/auth/validate-setup-token', ...options });
+
+/**
+ * Completes the setup process for a user account using a valid setup token.
+ */
+export const postAuthSetupUser = <ThrowOnError extends boolean = false>(options: Options<PostAuthSetupUserData, ThrowOnError>): RequestResult<PostAuthSetupUserResponses, PostAuthSetupUserErrors, ThrowOnError> => (options.client ?? client).post<PostAuthSetupUserResponses, PostAuthSetupUserErrors, ThrowOnError>({
+    url: '/auth/setup-user',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthVerifyMfaData, ThrowOnError>): RequestResult<PostAuthVerifyMfaResponses, unknown, ThrowOnError> => (options.client ?? client).post<PostAuthVerifyMfaResponses, unknown, ThrowOnError>({
+    url: '/auth/verify-mfa',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Retrieves an organisation by its unique identifier.
@@ -53,6 +91,42 @@ export const updateUserRole = <ThrowOnError extends boolean = false>(options: Op
 });
 
 /**
+ * Creates a new organisation.
+ */
+export const postOrganisations = <ThrowOnError extends boolean = false>(options: Options<PostOrganisationsData, ThrowOnError>): RequestResult<PostOrganisationsResponses, PostOrganisationsErrors, ThrowOnError> => (options.client ?? client).post<PostOrganisationsResponses, PostOrganisationsErrors, ThrowOnError>({
+    url: '/organisations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Retrieves a paginated list of users based on the specified query parameters.
  */
 export const getUsers = <ThrowOnError extends boolean = false>(options?: Options<GetUsersData, ThrowOnError>): RequestResult<GetUsersResponses, GetUsersErrors, ThrowOnError> => (options?.client ?? client).get<GetUsersResponses, GetUsersErrors, ThrowOnError>({ url: '/users', ...options });
+
+/**
+ * Creates a new user.
+ */
+export const postUsers = <ThrowOnError extends boolean = false>(options: Options<PostUsersData, ThrowOnError>): RequestResult<PostUsersResponses, PostUsersErrors, ThrowOnError> => (options.client ?? client).post<PostUsersResponses, PostUsersErrors, ThrowOnError>({
+    url: '/users',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Creates a new user account and initiates the onboarding process.
+ */
+export const postUsersOnboard = <ThrowOnError extends boolean = false>(options: Options<PostUsersOnboardData, ThrowOnError>): RequestResult<unknown, PostUsersOnboardErrors, ThrowOnError> => (options.client ?? client).post<unknown, PostUsersOnboardErrors, ThrowOnError>({
+    url: '/users/onboard',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});

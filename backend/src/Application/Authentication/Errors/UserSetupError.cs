@@ -1,4 +1,4 @@
-namespace UKPS.Api.Application.AuthorisationAdministration;
+namespace UKPS.Api.Application.Authentication.Errors;
 
 /// <summary>
 /// Represents errors that can occur during the user setup process.

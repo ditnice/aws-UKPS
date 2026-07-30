@@ -15,12 +15,12 @@ using UpdatePasswordResult = UKPS.Api.Application.Common.Result<UKPS.Api.Applica
 
 namespace UKPS.Api.Application.InternalServices.Identity;
 
-internal class CognitoWebIdentityAdministrationService
+internal class CognitoIdentityService : IIdentityService
 {
     private readonly IAmazonCognitoIdentityProvider _cognito;
     private readonly IOptions<CognitoConfiguration> _options;
 
-    public CognitoWebIdentityAdministrationService(
+    public CognitoIdentityService(
         IAmazonCognitoIdentityProvider cognito,
         IOptions<CognitoConfiguration> options
     )
@@ -58,7 +58,7 @@ internal class CognitoWebIdentityAdministrationService
         return CreateNewUserResult.Ok();
     }
 
-    internal async Task<UpdatePasswordResult> UpdatePassword(
+    public async Task<UpdatePasswordResult> UpdatePassword(
         string userEmail,
         string newPassword,
         CancellationToken cancellationToken
@@ -88,7 +88,7 @@ internal class CognitoWebIdentityAdministrationService
         return UpdatePasswordResult.Ok();
     }
 
-    internal async Task<InitiatedAuthenticationResult> InitiateAuthentication(
+    public async Task<InitiatedAuthenticationResult> InitiateAuthentication(
         string userEmail,
         string newPassword,
         CancellationToken cancellationToken
@@ -141,7 +141,7 @@ internal class CognitoWebIdentityAdministrationService
         }
     }
 
-    internal async Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
+    public async Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
         string authenticationSessionId,
         CancellationToken cancellationToken
     )
@@ -154,8 +154,54 @@ internal class CognitoWebIdentityAdministrationService
         return new()
         {
             Secret = associateResponse.SecretCode,
-            AuthenticationSessionId = associateResponse.Session,
+            AuthenticationSession = associateResponse.Session,
         };
+    }
+
+    public async Task VerifySoftwareToken(
+        string username,
+        string authenticationSessionId,
+        string code,
+        CancellationToken cancellationToken
+    )
+    {
+        VerifySoftwareTokenResponse verifyResponse = await _cognito.VerifySoftwareTokenAsync(
+            new VerifySoftwareTokenRequest { Session = authenticationSessionId, UserCode = code },
+            cancellationToken
+        );
+        await _cognito.AdminRespondToAuthChallengeAsync(
+            new AdminRespondToAuthChallengeRequest
+            {
+                UserPoolId = _options.Value.UserPoolId,
+                ClientId = _options.Value.ClientId,
+                ChallengeName = ChallengeNameType.MFA_SETUP,
+                Session = verifyResponse.Session,
+                ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["USERNAME"] = username,
+                    ["SECRET_HASH"] = GenerateSecretHash(
+                        username,
+                        _options.Value.ClientId,
+                        _options.Value.ClientSecret
+                    ),
+                    ["SOFTWARE_TOKEN_MFA_CODE"] = code,
+                },
+            },
+            cancellationToken
+        );
+    }
+
+    public async Task MarkEmailAsVerified(string username, CancellationToken cancellationToken)
+    {
+        await _cognito.AdminUpdateUserAttributesAsync(
+            new AdminUpdateUserAttributesRequest
+            {
+                UserPoolId = _options.Value.UserPoolId,
+                Username = username,
+                UserAttributes = [new AttributeType { Name = "email_verified", Value = "true" }],
+            },
+            cancellationToken
+        );
     }
 
     private static InitiateAuthenticationError ConvertChallengeToError(
@@ -180,7 +226,7 @@ internal class CognitoWebIdentityAdministrationService
             : throw new NotSupportedException($"Unhandled challenge type [{challengeName}].");
     }
 
-    public static string GenerateSecretHash(string username, string clientId, string clientSecret)
+    private static string GenerateSecretHash(string username, string clientId, string clientSecret)
     {
         var key = Encoding.UTF8.GetBytes(clientSecret);
         var message = Encoding.UTF8.GetBytes(username + clientId);

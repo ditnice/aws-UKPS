@@ -18,7 +18,7 @@ namespace UKPS.Api.Application.Users;
 
 internal sealed partial class UserAdministrationService(
     IOrganisationAuthoriser organisationAuthoriser,
-    CognitoWebIdentityAdministrationService administerIdentityService,
+    IIdentityService administerIdentityService,
     ICurrentUserInfoService currentUserInfoService,
     IEmailService emailService,
     ISetupLinkCreator setupLinkCreator,
