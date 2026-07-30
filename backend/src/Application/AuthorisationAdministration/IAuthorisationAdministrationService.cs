@@ -1,5 +1,8 @@
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.SetupTokenValidationError>;
-using UserSetupResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.UserSetupError>;
+using SetupUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.AuthorisationAdministration.MultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.AuthorisationAdministration.UserSetupError
+>;
 
 namespace UKPS.Api.Application.AuthorisationAdministration;
 
@@ -27,5 +30,5 @@ public interface IAuthorisationAdministrationService
     /// <returns>
     /// A result indicating whether the user setup completed successfully or the reason it failed.
     /// </returns>
-    Task<UserSetupResult> SetupUser(SetupUserCommand command, CancellationToken cancellationToken);
+    Task<SetupUserResult> SetupUser(SetupUserCommand command, CancellationToken cancellationToken);
 }

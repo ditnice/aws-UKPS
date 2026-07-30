@@ -6,6 +6,10 @@ using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.AuthorisationAdministration;
 using UKPS.Api.Application.Common;
+using SetupUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.AuthorisationAdministration.MultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.AuthorisationAdministration.UserSetupError
+>;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -193,7 +197,7 @@ public class AuthenticationController : ControllerBase
     /// Returns <see cref="StatusCodes.Status404NotFound"/> when the setup token cannot be found.
     /// </returns>
     [HttpPost("setup-user")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<MultiFactorAuthenticationSetupDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -202,7 +206,7 @@ public class AuthenticationController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        Result<UserSetupError> result = await _authorisationAdministrationService.SetupUser(
+        SetupUserResult result = await _authorisationAdministrationService.SetupUser(
             setupUserCommand,
             cancellationToken
         );

@@ -1,11 +1,20 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
+using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
+using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
+>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.SetupTokenValidationError>;
+using SetupUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.AuthorisationAdministration.MultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.AuthorisationAdministration.UserSetupError
+>;
 
 namespace UKPS.Api.Application.AuthorisationAdministration;
 
@@ -29,7 +38,7 @@ internal class AuthorisationAdministrationService : IAuthorisationAdministration
         _dateTimeProvider = dateTimeProvider;
     }
 
-    public async Task<Result<UserSetupError>> SetupUser(
+    public async Task<SetupUserResult> SetupUser(
         SetupUserCommand command,
         CancellationToken cancellationToken
     )
@@ -41,7 +50,7 @@ internal class AuthorisationAdministrationService : IAuthorisationAdministration
 
         if (userRecord is null)
         {
-            return Result<UserSetupError>.Err(new UserSetupError.DoesNotExist());
+            return SetupUserResult.Err(new UserSetupError.DoesNotExist());
         }
 
         TimeSpan timeSpan = TimeSpan.FromSeconds(_options.Value.SetupTokenExpiryTimeSeconds);
@@ -54,10 +63,8 @@ internal class AuthorisationAdministrationService : IAuthorisationAdministration
         {
             return state switch
             {
-                SetupTokenState.Consumed => Result<UserSetupError>.Err(
-                    new UserSetupError.Consumed()
-                ),
-                SetupTokenState.Expired => Result<UserSetupError>.Err(new UserSetupError.Expired()),
+                SetupTokenState.Consumed => SetupUserResult.Err(new UserSetupError.Consumed()),
+                SetupTokenState.Expired => SetupUserResult.Err(new UserSetupError.Expired()),
                 _ => throw new UnreachableException(
                     $"Unexpected setup token state '{state}' encountered when validating setup token."
                 ),
@@ -68,21 +75,63 @@ internal class AuthorisationAdministrationService : IAuthorisationAdministration
 
         await _appDbContext.SaveChangesAsync(cancellationToken);
 
-        Result<UpdatePasswordError> result = await _webIdentityAdministrationService.UpdatePassword(
+        Result<UpdatePasswordError> updatePasswordResult =
+            await _webIdentityAdministrationService.UpdatePassword(
+                userRecord.UserEmail,
+                command.NewPassword,
+                cancellationToken
+            );
+
+        if (updatePasswordResult.IsErr)
+        {
+            UserSetupError error = updatePasswordResult.Error.Match(
+                invalidPassword: _ => new UserSetupError.InvalidPassword()
+            );
+            return SetupUserResult.Err(error);
+        }
+
+        Uri otpAuthUri = await InitiateAuthenticationAndGetOtp(
             userRecord.UserEmail,
             command.NewPassword,
             cancellationToken
         );
 
-        if (result.IsErr)
-        {
-            UserSetupError error = result.Error.Match(
-                invalidPassword: _ => new UserSetupError.InvalidPassword()
-            );
-            return Result<UserSetupError>.Err(error);
-        }
+        return SetupUserResult.Ok(new() { OtpAuthUri = otpAuthUri });
+    }
 
-        return Result<UserSetupError>.Ok();
+    private async Task<Uri> InitiateAuthenticationAndGetOtp(
+        string userEmail,
+        string newPassword,
+        CancellationToken cancellationToken
+    )
+    {
+        InitiateAuthenticationResult initiateAuthenticationResult =
+            await _webIdentityAdministrationService.InitiateAuthentication(
+                userEmail,
+                newPassword,
+                cancellationToken
+            );
+
+        var challenge =
+            initiateAuthenticationResult.Error is InitiateAuthenticationError.Challenge value
+            && value.ChallengeType == UkpsChallengeType.MultiFactorAuthenticationSetupRequired
+                ? value
+                : throw new InvalidOperationException("Unexpected challenge");
+
+        var result = await _webIdentityAdministrationService.AssociateSoftwareToken(
+            challenge.AuthenticationSessionId,
+            cancellationToken
+        );
+
+        string issuer = "UKPS";
+        return new Uri(
+            $"otpauth://totp/{Uri.EscapeDataString($"{issuer}:{userEmail}")}"
+                + $"?secret={Uri.EscapeDataString(result.Secret)}"
+                + $"&issuer={Uri.EscapeDataString(issuer)}"
+                + $"&algorithm=SHA1"
+                + $"&digits=6"
+                + $"&period=30"
+        );
     }
 
     public async Task<SetupTokenValidationResult> Validate(

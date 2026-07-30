@@ -17,6 +17,10 @@ using LoginResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.LoginError
 >;
+using SetupUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.AuthorisationAdministration.MultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.AuthorisationAdministration.UserSetupError
+>;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -232,9 +236,13 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task SetupUser_ShouldReturnOkOnSuccess()
     {
+        var exampleResponse = new MultiFactorAuthenticationSetupDto()
+        {
+            OtpAuthUri = new("Example Response"),
+        };
         _mockedAuthorisationService
             .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result<UserSetupError>.Ok());
+            .Returns(SetupUserResult.Ok(exampleResponse));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(SetupUserUrl, UriKind.Relative),
@@ -243,6 +251,15 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var responseBody =
+            await response.Content.ReadFromJsonAsync<MultiFactorAuthenticationSetupDto>(
+                TestJsonOptions.Default,
+                TestContext.Current.CancellationToken
+            );
+
+        responseBody.ShouldNotBeNull();
+        responseBody.ShouldBeEquivalentTo(exampleResponse);
     }
 
     [Fact]
@@ -250,7 +267,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     {
         _mockedAuthorisationService
             .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result<UserSetupError>.Err(new UserSetupError.Consumed()));
+            .Returns(SetupUserResult.Err(new UserSetupError.Consumed()));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(SetupUserUrl, UriKind.Relative),
@@ -266,7 +283,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     {
         _mockedAuthorisationService
             .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result<UserSetupError>.Err(new UserSetupError.InvalidPassword()));
+            .Returns(SetupUserResult.Err(new UserSetupError.InvalidPassword()));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(SetupUserUrl, UriKind.Relative),
@@ -282,7 +299,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     {
         _mockedAuthorisationService
             .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result<UserSetupError>.Err(new UserSetupError.Expired()));
+            .Returns(SetupUserResult.Err(new UserSetupError.Expired()));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(SetupUserUrl, UriKind.Relative),
@@ -298,7 +315,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     {
         _mockedAuthorisationService
             .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result<UserSetupError>.Err(new UserSetupError.DoesNotExist()));
+            .Returns(SetupUserResult.Err(new UserSetupError.DoesNotExist()));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(SetupUserUrl, UriKind.Relative),

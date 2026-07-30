@@ -1,6 +1,8 @@
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Shouldly;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.AuthorisationAdministration;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -8,7 +10,10 @@ using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.SetupTokenValidationError>;
-using UserSetupResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.AuthorisationAdministration.UserSetupError>;
+using UserSetupResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.AuthorisationAdministration.MultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.AuthorisationAdministration.UserSetupError
+>;
 
 namespace UKPS.Api.Tests.Application.AuthorisationAdministration;
 
@@ -19,6 +24,7 @@ public class AuthorisationAdministrationServiceTests : DatabaseTestBase
     private readonly IServiceTestHarness<IAuthorisationAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
+    private readonly string _targetUser = "target.user@email.com";
     private TimeSpan _testExpiryTokenTime = TimeSpan.FromMinutes(15);
     private readonly SetupUserCommand _validSetupUserCommand = new()
     {
@@ -29,10 +35,9 @@ public class AuthorisationAdministrationServiceTests : DatabaseTestBase
     public AuthorisationAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _userOnboardingRecordFaker = new UserOnboardingRecordFaker().RuleFor(
-            x => x.NewUserOrganisation,
-            _ => new OrganisationFaker().Generate()
-        );
+        _userOnboardingRecordFaker = new UserOnboardingRecordFaker()
+            .RuleFor(x => x.NewUserOrganisation, _ => new OrganisationFaker().Generate())
+            .RuleFor(x => x.UserEmail, _ => _targetUser);
         _harness = CreateTestHarness();
     }
 
@@ -127,6 +132,7 @@ public class AuthorisationAdministrationServiceTests : DatabaseTestBase
             .RuleFor(x => x.CreatedAt, _ => createdAtTime)
             .Generate();
         await AddEntity(entity, TestContext.Current.CancellationToken);
+        _harness.Cognito.AddCurrentUser(new() { Username = _targetUser });
 
         UserSetupResult result = await _harness.Service.SetupUser(
             _validSetupUserCommand with
@@ -215,6 +221,18 @@ public class AuthorisationAdministrationServiceTests : DatabaseTestBase
                     .Configure(options =>
                         options.SetupTokenExpiryTimeSeconds = (int)_testExpiryTokenTime.TotalSeconds
                     );
+                services.AddSingleton(
+                    Options.Create(
+                        new CognitoConfiguration
+                        {
+                            ClientId = "client-id",
+                            Region = "eu-west-2",
+                            ServiceUrl = new Uri("https://cognito.example.com"),
+                            ClientSecret = "client-secret",
+                            UserPoolId = "user-pool-id",
+                        }
+                    )
+                );
                 return services;
             });
     }

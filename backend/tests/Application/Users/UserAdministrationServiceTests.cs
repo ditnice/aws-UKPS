@@ -30,6 +30,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         20,
         DateTimeKind.Utc
     );
+    private readonly string _targetUserEmail = "target.user@email.com";
     private readonly string _currentUserEmail = "current.user@email.com";
     private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
 
@@ -58,7 +59,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
 
-        _harness.Cognito.Users.ShouldContain(command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
     }
 
     [Fact]
@@ -166,10 +167,14 @@ public class UserAdministrationServiceTests : DatabaseTestBase
 
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
-        return new ServiceTestHarness<IUserAdministrationService>(Context)
+        var harness = new ServiceTestHarness<IUserAdministrationService>(Context)
             .UpdateCurrentUser(x => x with { Email = _currentUserEmail })
             .UpdateCurrentTime(_currentTime)
             .ConfigureServices(services => services.AddTransient(_ => _setupLinkCreator));
+
+        harness.Cognito.AddCurrentUser(new MockUser() { Username = _targetUserEmail });
+
+        return harness;
     }
 
     private async Task<OnboardUserCommandDto> GenerateValidOnboardingCommand()
