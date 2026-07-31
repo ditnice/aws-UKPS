@@ -26,7 +26,7 @@ export default function ExampleAuthenticationPage() {
         },
       })
       setOtpLink(response.data?.otpAuthUri)
-      setAuthSession(response.data?.authenticationSessionId)
+      setAuthSession(response.data?.authenticationSession)
     } catch (error) {
       console.error('Error:', error)
     }
@@ -44,7 +44,7 @@ export default function ExampleAuthenticationPage() {
       const response = await postAuthVerifyMfa({
         body: {
           code,
-          authenticationSessionId: authSession,
+          authenticationSession: authSession,
           setupToken,
         },
       })
