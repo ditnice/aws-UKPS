@@ -50,6 +50,7 @@ builder
     });
 
 // Add CORS to allow any origin, method, and header
+// TODO URP 421 - Update CORs policy to be less permissive
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
