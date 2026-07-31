@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
+import { Breadcrumb, Breadcrumbs } from '@nice-digital/nds-breadcrumbs'
 import { Button } from '@nice-digital/nds-button'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 import { PageHeader } from '@nice-digital/nds-page-header'
@@ -48,6 +49,10 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
 
   return (
     <>
+      <Breadcrumbs>
+        <Breadcrumb to="/portal">Dashboard</Breadcrumb>
+      </Breadcrumbs>
+
       <PageHeader heading={organisation.organisationName} />
 
       <h2>Organisation details</h2>
@@ -59,7 +64,12 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         <SummaryListRow label="Head office phone number" value={organisation.headOfficeTelephone} />
       </SummaryList>
 
-      <Button variant={Button.variants.secondary}>Edit details</Button>
+      <Button
+        variant={Button.variants.secondary}
+        to={`/portal/organisations/${organisationId}/edit`}
+      >
+        Edit details
+      </Button>
 
       <h2>Search and filter</h2>
       <Grid gutter="loose">
