@@ -161,7 +161,9 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     {
         if (challenge.ChallengeType != UkpsChallengeType.MultiFactorAuthenticationSetupRequired)
         {
-            throw new InvalidOperationException("Unexpected challenge");
+            throw new InvalidOperationException(
+                $"Unexpected challenge [{challenge.ChallengeType}]."
+            );
         }
 
         var result = await _identityService.AssociateSoftwareToken(
@@ -169,18 +171,12 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             cancellationToken
         );
 
-        string issuer = "UKPS";
-        var otpAuthUri = new Uri(
-            $"otpauth://totp/{Uri.EscapeDataString($"{issuer}:{userEmail}")}"
-                + $"?secret={Uri.EscapeDataString(result.Secret)}"
-                + $"&issuer={Uri.EscapeDataString(issuer)}"
-                + $"&algorithm=SHA1"
-                + $"&digits=6"
-                + $"&period=30"
-        );
-
         return SetupUserResult.Ok(
-            new() { OtpAuthUri = otpAuthUri, AuthenticationSession = result.AuthenticationSession }
+            new()
+            {
+                OtpAuthUri = new OptAuthUri(userEmail, result.Secret).ToUri(),
+                AuthenticationSession = result.AuthenticationSession,
+            }
         );
     }
 
