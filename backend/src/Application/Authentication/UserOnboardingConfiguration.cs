@@ -1,4 +1,4 @@
-namespace UKPS.Api.Application.AuthorisationAdministration;
+namespace UKPS.Api.Application.Authentication;
 
 internal sealed record UserOnboardingConfiguration
 {

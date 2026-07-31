@@ -8,9 +8,11 @@ using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
-using UKPS.Api.WebApi.InternalServices.Identity;
+using UKPS.Api.WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.ConfigureAwsSecrets();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options
@@ -23,7 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserInfoService, WebApiCurrentUserInfoService>();
+builder.Services.AddScoped<ICurrentUserInfoService, MockCurrentUserInfoService>();
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();
 builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();
@@ -46,6 +48,16 @@ builder
     {
         ConfigureJsonEnums(options.JsonSerializerOptions);
     });
+
+// Add CORS to allow any origin, method, and header
+// TODO URP 421 - Update CORs policy to be less permissive
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
@@ -92,6 +104,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Use CORS middleware
+app.UseCors();
 
 app.UseAuthorization();
 

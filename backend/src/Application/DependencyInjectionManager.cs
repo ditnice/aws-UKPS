@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
 using UKPS.Api.Application.Authentication;
-using UKPS.Api.Application.AuthorisationAdministration;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
@@ -15,16 +15,13 @@ internal static class DependencyInjectionManager
 {
     public static IServiceCollection AddUkpsServices(this IServiceCollection services)
     {
-        // TODO URP 394: Add implementation for IWebIdentityAdministrationService
-        services.TryAddScoped<IWebIdentityAdministrationService>(static _ =>
-            throw new NotImplementedException()
-        );
+        services.TryAddScoped<IIdentityService, CognitoIdentityService>();
 
         // TODO URP 394: Add implementation for ISetupLinkCreator
-        services.TryAddScoped<ISetupLinkCreator>(static _ => throw new NotImplementedException());
+        services.TryAddScoped(static _ => Substitute.For<ISetupLinkCreator>());
 
         // TODO URP 405: Implement the IEmailService
-        services.TryAddScoped<IEmailService>(static _ => throw new NotImplementedException());
+        services.TryAddScoped(static _ => Substitute.For<IEmailService>());
 
         services.TryAddScoped<IDateTimeProvider, SystemDateTimeProvider>();
         services.TryAddScoped<IOrganisationAuthoriser, OrganisationAuthoriser>();
@@ -33,10 +30,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped<IUserService, UserService>();
         services.AddAuthenticationServices();
         services.TryAddScoped<IUserAdministrationService, UserAdministrationService>();
-        services.TryAddScoped<
-            IAuthorisationAdministrationService,
-            AuthorisationAdministrationService
-        >();
+        services.TryAddScoped<IIdentityAdministrationService, IdentityAdministrationService>();
 
         return services;
     }

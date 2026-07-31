@@ -6,10 +6,16 @@ internal class UserOnboardingRecord
     public required string UserEmail { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required string CreatedBy { get; init; }
+    public DateTime? ConsumedAt { get; private set; }
     public required int NewUserOrganisationId { get; init; }
     public Organisation? NewUserOrganisation { get; init; }
 
-    internal bool HasExpired(DateTime currentTime, TimeSpan timeSpan)
+    internal void MarkAsConsumed(DateTime dateTime)
+    {
+        ConsumedAt = dateTime;
+    }
+
+    internal SetupTokenState GetCurrentState(DateTime currentTime, TimeSpan expiryTime)
     {
         // TODO URP 415 - Device how/if we are going to handle this corrupted entity gracefully.
         if (currentTime < CreatedAt)
@@ -20,6 +26,16 @@ internal class UserOnboardingRecord
             );
         }
 
-        return currentTime > CreatedAt.Add(timeSpan);
+        if (ConsumedAt is not null)
+        {
+            return SetupTokenState.Consumed;
+        }
+
+        if (currentTime > CreatedAt.Add(expiryTime))
+        {
+            return SetupTokenState.Expired;
+        }
+
+        return SetupTokenState.Valid;
     }
 }

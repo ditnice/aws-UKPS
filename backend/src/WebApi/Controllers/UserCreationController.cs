@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
@@ -52,20 +51,21 @@ public class UserCreationController(IUserAdministrationService userAdministratio
             command,
             cancellationToken
         );
-        return result.Match<ActionResult>(
+        return result.Match(
             Created,
             err =>
-                err switch
-                {
-                    OnboardUserError.NotAllowed => Problem(
-                        title: "Forbidden",
-                        detail: "You do not have permission to perform this action.",
-                        statusCode: StatusCodes.Status403Forbidden
-                    ),
-                    _ => throw new UnreachableException(
-                        $"Unhandled {nameof(OnboardUserError)} variant."
-                    ),
-                }
+                err.Match<ActionResult>(
+                    usernameAlreadyExists: _ =>
+                        BadRequest("A user with the specified username already exists."),
+                    invalidOrganisation: _ =>
+                        BadRequest("The specified organisation does not exist."),
+                    notAllowed: _ =>
+                        Problem(
+                            title: "Forbidden",
+                            detail: "You do not have permission to perform this action.",
+                            statusCode: StatusCodes.Status403Forbidden
+                        )
+                )
         );
     }
 }

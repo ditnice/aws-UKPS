@@ -1,8 +1,15 @@
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.Common;
+using UKPS.Api.Application.InternalServices.Identity;
+using SetupUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.UserSetupError
+>;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -17,17 +24,45 @@ namespace UKPS.Api.WebApi.Controllers;
 [Route("auth")]
 public class AuthenticationController : ControllerBase
 {
-    private readonly IAuthenticationService _authenticationService;
+    private readonly IIdentityService _webIdentityAdministrationService;
+    private readonly IIdentityAdministrationService _authorisationAdministrationService;
+    private readonly ProblemDetails _setupTokenExpiredDetails = new ProblemDetails
+    {
+        Title = "Setup token has expired.",
+        Detail =
+            "The setup token has expired and can no longer be used. Request a new setup token and try again.",
+        Status = StatusCodes.Status401Unauthorized,
+    };
+    private readonly ProblemDetails _setupTokenNotFound = new ProblemDetails
+    {
+        Title = "Setup token not found.",
+        Detail = "The supplied setup token does not exist.",
+        Status = StatusCodes.Status404NotFound,
+    };
+    private readonly ProblemDetails _setupTokenConsumed = new ProblemDetails
+    {
+        Title = "Setup token has already been used.",
+        Detail = "The setup token has already been consumed and cannot be used again.",
+        Status = StatusCodes.Status401Unauthorized,
+    };
 
     /// <summary>
     /// Initialises a new instance of the <see cref="AuthenticationController"/> class.
     /// </summary>
-    /// <param name="authenticationService">
+    /// <param name="webIdentityAdministrationService">
     /// The service responsible for handling authentication operations.
     /// </param>
-    public AuthenticationController(IAuthenticationService authenticationService)
+    /// <param name="authorisationAdministrationService">
+    /// The service responsible for managing authorisation administration operations,
+    /// such as user onboarding, setup token validation, and password management.
+    /// </param>
+    public AuthenticationController(
+        IIdentityService webIdentityAdministrationService,
+        IIdentityAdministrationService authorisationAdministrationService
+    )
     {
-        _authenticationService = authenticationService;
+        _webIdentityAdministrationService = webIdentityAdministrationService;
+        _authorisationAdministrationService = authorisationAdministrationService;
     }
 
     /// <summary>
@@ -78,20 +113,173 @@ public class AuthenticationController : ControllerBase
             return Ok();
         }
 
-        ActionResult HandleLoginError(LoginError error)
+        ActionResult HandleLoginError(InitiateAuthenticationError error)
         {
             return error switch
             {
-                LoginError.Unauthorised => Unauthorized(),
-                _ => throw new UnreachableException($"Unhandled {nameof(LoginError)} variant."),
+                InitiateAuthenticationError.Unauthorised => Unauthorized(),
+                InitiateAuthenticationError.Challenge c => Unauthorized(c),
+                _ => throw new UnreachableException(
+                    $"Unhandled {nameof(InitiateAuthenticationError)} variant."
+                ),
             };
         }
 
         ArgumentNullException.ThrowIfNull(request);
 
-        return (await _authenticationService.Login(request, cancellationToken)).Match(
-            HandleLoginSuccess,
-            HandleLoginError
+        return (
+            await _webIdentityAdministrationService.InitiateAuthentication(
+                request.Username,
+                request.Password,
+                cancellationToken
+            )
+        ).Match(HandleLoginSuccess, HandleLoginError);
+    }
+
+    /// <summary>
+    /// Validates whether a user setup token is valid and can be used to complete the user setup process.
+    /// </summary>
+    /// <param name="setupToken">
+    /// The unique identifier of the setup token to validate.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="OkResult"/> if the setup token is valid.
+    /// Returns <see cref="UnauthorizedObjectResult"/> if the setup token has expired or has already been consumed.
+    /// Returns <see cref="NotFoundObjectResult"/> if the specified setup token does not exist.
+    /// </returns>
+    /// <response code="200">
+    /// The setup token is valid and can be used.
+    /// </response>
+    /// <response code="401">
+    /// The setup token has expired or has already been consumed.
+    /// </response>
+    /// <response code="404">
+    /// The specified setup token does not exist.
+    /// </response>
+    [HttpGet("validate-setup-token")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> ValidateSetupToken(
+        [Required] Guid setupToken,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<SetupTokenValidationError> result =
+            await _authorisationAdministrationService.Validate(setupToken, cancellationToken);
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(
+                    expired: _ => Unauthorized(_setupTokenExpiredDetails),
+                    doesNotExist: _ => NotFound(_setupTokenNotFound),
+                    consumed: _ => Unauthorized(_setupTokenConsumed)
+                )
+        );
+    }
+
+    /// <summary>
+    /// Completes the setup process for a user account using a valid setup token.
+    /// </summary>
+    /// <param name="setupUserCommand">
+    /// The command containing the setup token and user details required to initialise the account.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult"/> indicating whether the user setup was completed successfully.
+    /// Returns <see cref="StatusCodes.Status200OK"/> when setup completes successfully.
+    /// Returns <see cref="StatusCodes.Status400BadRequest"/> when the supplied password does not
+    /// meet the required standards.
+    /// Returns <see cref="StatusCodes.Status401Unauthorized"/> when the setup token has expired
+    /// or has already been consumed.
+    /// Returns <see cref="StatusCodes.Status404NotFound"/> when the setup token cannot be found.
+    /// </returns>
+    [HttpPost("setup-user")]
+    [ProducesResponseType<MultiFactorAuthenticationSetupDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SetupUser(
+        [FromBody] SetupUserCommand setupUserCommand,
+        CancellationToken cancellationToken
+    )
+    {
+        SetupUserResult result = await _authorisationAdministrationService.SetupUser(
+            setupUserCommand,
+            cancellationToken
+        );
+
+        return result.Match(
+            Ok,
+            err =>
+            {
+                return err.Match<ActionResult>(
+                    consumed: () => Unauthorized(_setupTokenConsumed),
+                    invalidPassword: () =>
+                        BadRequest("The password does not meet the expected standards."),
+                    expired: () => Unauthorized(_setupTokenExpiredDetails),
+                    doesNotExist: () => NotFound(_setupTokenNotFound),
+                    unauthorised: () => Unauthorized()
+                );
+            }
+        );
+    }
+
+    /// <summary>
+    /// Verifies the user's multi-factor authentication setup by validating the
+    /// provided authentication code.
+    /// </summary>
+    /// <param name="command">
+    /// The command containing the setup token, authentication code, and authentication
+    /// session required to complete multi-factor authentication verification.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous verification operation.
+    /// </returns>
+    /// <response code="200">
+    /// The multi-factor authentication setup was successfully verified.
+    /// </response>
+    /// <response code="400">
+    /// The request contained invalid data or the multi-factor authentication
+    /// verification could not be completed.
+    /// </response>
+    [HttpPost("verify-mfa")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> VerifyMultiFactorAuthentication(
+        [FromBody] VerifyMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<VerifyMultiFactorAuthenticationError> result =
+            await _authorisationAdministrationService.VerifyMultiFactorAuthentication(
+                command,
+                cancellationToken
+            );
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(invalidCode: _ =>
+                    BadRequest(
+                        new ProblemDetails
+                        {
+                            Title = "Invalid multi-factor authentication code.",
+                            Detail = "The supplied authentication code is invalid or has expired.",
+                            Status = StatusCodes.Status400BadRequest,
+                        }
+                    )
+                )
         );
     }
 }

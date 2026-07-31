@@ -5,6 +5,109 @@ export type ClientOptions = {
 };
 
 /**
+ * Represents the information required to create a new organisation.
+ */
+export type CreateOrganisationDto = {
+    /**
+     * Gets or sets the name of the organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets or sets the country or region where the organisation is based, if applicable.
+     */
+    countryOrRegion?: null | string;
+    /**
+     * Gets or sets the head office address of the organisation.
+     */
+    headOfficeAddress: string;
+    /**
+     * Gets or sets the head office email address of the organisation.
+     */
+    headOfficeEmail: string;
+    /**
+     * Gets or sets the head office telephone number of the organisation.
+     */
+    headOfficeTelephone: string;
+};
+
+/**
+ * Represents the information required to create a new user.
+ */
+export type CreateUserRequestDto = {
+    /**
+     * Gets the type of user to create.
+     */
+    userType: UserType;
+    /**
+     * Gets the user's title (for example, Mr, Mrs, Ms, or Dr).
+     */
+    title: string;
+    /**
+     * Gets the user's first name.
+     */
+    firstName: string;
+    /**
+     * Gets the user's last name.
+     */
+    lastName: string;
+    /**
+     * Gets the user's job title.
+     */
+    jobTitle: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the identifier of the organisation the user belongs to.
+     */
+    organisationId: number | string;
+};
+
+/**
+ * Represents the credentials provided by a user when attempting to authenticate.
+ */
+export type LoginRequest = {
+    /**
+     * Gets the username used to authenticate with the identity provider.
+     */
+    username: string;
+    /**
+     * Gets the password used to authenticate with the identity provider.
+     */
+    password: string;
+};
+
+/**
+ * Represents the details required for a user to complete multi-factor authentication setup.
+ */
+export type MultiFactorAuthenticationSetupDto = {
+    /**
+     * Gets the OTP authentication URI used to configure an authenticator application.
+     */
+    otpAuthUri: string;
+    authenticationSessionId: string;
+};
+
+/**
+ * Represents the data required to onboard a new user.
+ */
+export type OnboardUserCommandDto = {
+    /**
+     * Gets the email address of the user to onboard.
+     */
+    newUserEmail: string;
+    /**
+     * Specifies the organisation that the new user will be created for.
+     */
+    organisationId: number | string;
+};
+
+/**
  * Represents the details of an organisation.
  */
 export type OrganisationDetailsDto = {
@@ -131,6 +234,21 @@ export type ProblemDetails = {
 };
 
 /**
+ * Represents the command used to complete user setup by validating a setup token
+ * and assigning a new password to the user.
+ */
+export type SetupUserCommand = {
+    /**
+     * Gets the unique token used to identify and validate the pending user setup request.
+     */
+    setupToken: string;
+    /**
+     * Gets the new password to assign to the user account.
+     */
+    newPassword: string;
+};
+
+/**
  * Represents the data transfer object for updating organisation details.
  */
 export type UpdateOrganisationDetailsDto = {
@@ -162,6 +280,40 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
      * The new UserRole UpdateOrgMembershipUserRoleCommandDto.UserRole to assign to the user.
      */
     userRole: UserRole;
+};
+
+/**
+ * Represents the details of a user.
+ */
+export type UserDetailsDto = {
+    /**
+     * Gets the user's type.
+     */
+    userType: UserType;
+    /**
+     * Gets the user's title (for example, Mr, Mrs, Ms, or Dr), if available.
+     */
+    title: null | string;
+    /**
+     * Gets the user's first name.
+     */
+    firstName: string;
+    /**
+     * Gets the user's last name.
+     */
+    lastName: string;
+    /**
+     * Gets the user's job title, if available.
+     */
+    jobTitle: null | string;
+    /**
+     * Gets the user's work telephone number, if available.
+     */
+    workPhone: null | string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
 };
 
 /**
@@ -199,6 +351,133 @@ export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Re
  * Represents the different roles a user can have within the system.
  */
 export type UserRole = 'Standard' | 'Champion' | 'Super';
+
+/**
+ * Represents the different types of users in the system.
+ */
+export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUser' | 'ItAdmin';
+
+export type VerifyMultiFactorAuthenticationCommand = {
+    setupToken: string;
+    code: string;
+    authenticationSessionId: string;
+};
+
+export type PostAuthLoginData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: LoginRequest;
+    path?: never;
+    query?: never;
+    url: '/auth/login';
+};
+
+export type PostAuthLoginErrors = {
+    /**
+     * The supplied request was invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * The supplied credentials were invalid.
+     */
+    401: ProblemDetails;
+};
+
+export type PostAuthLoginError = PostAuthLoginErrors[keyof PostAuthLoginErrors];
+
+export type PostAuthLoginResponses = {
+    /**
+     * The user was successfully authenticated and an authentication cookie was created.
+     */
+    200: unknown;
+};
+
+export type GetAuthValidateSetupTokenData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The unique identifier of the setup token to validate.
+         */
+        setupToken: string;
+    };
+    url: '/auth/validate-setup-token';
+};
+
+export type GetAuthValidateSetupTokenErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * The setup token has expired or has already been consumed.
+     */
+    401: ProblemDetails;
+    /**
+     * The specified setup token does not exist.
+     */
+    404: ProblemDetails;
+};
+
+export type GetAuthValidateSetupTokenError = GetAuthValidateSetupTokenErrors[keyof GetAuthValidateSetupTokenErrors];
+
+export type GetAuthValidateSetupTokenResponses = {
+    /**
+     * The setup token is valid and can be used.
+     */
+    200: unknown;
+};
+
+export type PostAuthSetupUserData = {
+    /**
+     * A token that can be used to cancel the asynchronous operation.
+     */
+    body: SetupUserCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/setup-user';
+};
+
+export type PostAuthSetupUserErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+};
+
+export type PostAuthSetupUserError = PostAuthSetupUserErrors[keyof PostAuthSetupUserErrors];
+
+export type PostAuthSetupUserResponses = {
+    /**
+     * OK
+     */
+    200: MultiFactorAuthenticationSetupDto;
+};
+
+export type PostAuthSetupUserResponse = PostAuthSetupUserResponses[keyof PostAuthSetupUserResponses];
+
+export type PostAuthVerifyMfaData = {
+    body: VerifyMultiFactorAuthenticationCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/verify-mfa';
+};
+
+export type PostAuthVerifyMfaResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetOrganisationByIdData = {
     body?: never;
@@ -346,6 +625,35 @@ export type UpdateUserRoleResponses = {
 
 export type UpdateUserRoleResponse = UpdateUserRoleResponses[keyof UpdateUserRoleResponses];
 
+export type PostOrganisationsData = {
+    body: CreateOrganisationDto;
+    path?: never;
+    query?: never;
+    url: '/organisations';
+};
+
+export type PostOrganisationsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
+};
+
+export type PostOrganisationsError = PostOrganisationsErrors[keyof PostOrganisationsErrors];
+
+export type PostOrganisationsResponses = {
+    /**
+     * OK
+     */
+    200: OrganisationMembershipDto;
+};
+
+export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
+
 export type GetUsersData = {
     body?: never;
     path?: never;
@@ -411,3 +719,62 @@ export type GetUsersResponses = {
 };
 
 export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
+
+export type PostUsersData = {
+    /**
+     * A token used to cancel the operation&gt;
+     */
+    body: CreateUserRequestDto;
+    path?: never;
+    query?: never;
+    url: '/users';
+};
+
+export type PostUsersErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
+};
+
+export type PostUsersError = PostUsersErrors[keyof PostUsersErrors];
+
+export type PostUsersResponses = {
+    /**
+     * OK
+     */
+    200: UserDetailsDto;
+};
+
+export type PostUsersResponse = PostUsersResponses[keyof PostUsersResponses];
+
+export type PostUsersOnboardData = {
+    /**
+     * A token that can be used to cancel the operation.
+     */
+    body: OnboardUserCommandDto;
+    path?: never;
+    query?: never;
+    url: '/users/onboard';
+};
+
+export type PostUsersOnboardErrors = {
+    /**
+     * The request was invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * The current user does not have permission to onboard users.
+     */
+    403: ProblemDetails;
+};
+
+export type PostUsersOnboardError = PostUsersOnboardErrors[keyof PostUsersOnboardErrors];

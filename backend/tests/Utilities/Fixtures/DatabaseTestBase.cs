@@ -16,7 +16,7 @@ public abstract class DatabaseTestBase : IAsyncLifetime
 
     internal AppDbContext Context { get; }
 
-    public async ValueTask InitializeAsync() => await Fixture.ResetDatabaseAsync();
+    public virtual async ValueTask InitializeAsync() => await Fixture.ResetDatabaseAsync();
 
     protected async Task<T> AddEntity<T>(T entity, CancellationToken cancellationToken)
         where T : class

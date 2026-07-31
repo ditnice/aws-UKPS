@@ -1,4 +1,4 @@
-import 'server-only'
+// import 'server-only'
 
 import type { CreateClientConfig } from './generated/client.gen'
 

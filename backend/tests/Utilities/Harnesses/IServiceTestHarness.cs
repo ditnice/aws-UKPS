@@ -11,6 +11,7 @@ internal interface IServiceTestHarness<TService>
     TService Service { get; }
     AppDbContext Context { get; }
     MockEmailService Emails { get; }
+    MockAmazonCognitoIdentityProvider Cognito { get; }
 
     IServiceTestHarness<TService> UpdateCurrentUser(Func<CurrentUser, CurrentUser> update);
     IServiceTestHarness<TService> UpdateCurrentTime(DateTime dateTime);

@@ -1,3 +1,4 @@
+using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -29,6 +30,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         20,
         DateTimeKind.Utc
     );
+    private readonly string _targetUserEmail = "target.user@email.com";
     private readonly string _currentUserEmail = "current.user@email.com";
     private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
 
@@ -56,6 +58,8 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foundUserRecord.UserEmail.ShouldBe(command.NewUserEmail);
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
+
+        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
     }
 
     [Fact]
@@ -145,12 +149,32 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<OnboardUserError.InvalidOrganisation>();
     }
 
+    [Fact]
+    public async Task OnBoardUser_WhenUsernameAlreadyInUse_ShouldReturnUsernameAlreadyInUseResult()
+    {
+        var harness = GetTestHarness();
+        harness
+            .Cognito.Mock.WhenForAnyArgs(x => x.AdminCreateUserAsync(default!, default!))
+            .Throws(new UsernameExistsException());
+
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
+        OnBoardUserResult result = await harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<OnboardUserError.UsernameAlreadyExists>();
+    }
+
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
-        return new ServiceTestHarness<IUserAdministrationService>(Context)
+        var harness = new ServiceTestHarness<IUserAdministrationService>(Context)
             .UpdateCurrentUser(x => x with { Email = _currentUserEmail })
             .UpdateCurrentTime(_currentTime)
             .ConfigureServices(services => services.AddTransient(_ => _setupLinkCreator));
+
+        harness.Cognito.AddCurrentUser(new MockUser() { Username = _targetUserEmail });
+
+        return harness;
     }
 
     private async Task<OnboardUserCommandDto> GenerateValidOnboardingCommand()
