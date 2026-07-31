@@ -56,11 +56,9 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         bool expectToPassValidation
     )
     {
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(minutesInThePast);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(
+            createdMinutesInThePast: minutesInThePast
+        );
 
         SetupTokenValidationResult result = await _harness.Service.Validate(
             entity.SetupToken,
@@ -91,11 +89,9 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task Validate_WhenReferencingASetupTokenThatWasCreatedInTheFuture_ShouldThrowArgumentException()
     {
-        DateTime createdAtTime = _testTime + TimeSpan.FromMinutes(10);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(
+            createdMinutesInThePast: -10
+        );
 
         Func<Task<SetupTokenValidationResult>> act = () =>
             _harness.Service.Validate(entity.SetupToken, TestContext.Current.CancellationToken);
@@ -106,12 +102,10 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task Validate_WhenReferencingASetupTokenThatHasAlreadyBeenConsumed_ReturnsConsumedError()
     {
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        entity.MarkAsConsumed(_testTime);
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(
+            createdMinutesInThePast: 15,
+            consumedMinutesInThePast: 0
+        );
 
         var futureHarness = _harness.UpdateCurrentTime(_testTime + TimeSpan.FromMinutes(5));
 
@@ -132,11 +126,10 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         bool expectToPassValidation
     )
     {
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(minutesInThePast);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(
+            createdMinutesInThePast: minutesInThePast
+        );
+
         _harness.Cognito.AddCurrentUser(new() { Username = _targetUser });
 
         UserSetupResult result = await _harness.Service.SetupUser(
@@ -167,11 +160,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             )
             .Throws(new NotAuthorizedException());
 
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 10);
 
         UserSetupResult validationResult = await _harness.Service.SetupUser(
             _validSetupUserCommand with
@@ -193,11 +182,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             )
             .Returns(new AdminInitiateAuthResponse());
 
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 10);
 
         UserSetupResult validationResult = await _harness.Service.SetupUser(
             _validSetupUserCommand with
@@ -219,11 +204,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             )
             .Returns((AdminInitiateAuthResponse)null!);
 
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 10);
 
         UserSetupResult validationResult = await _harness.Service.SetupUser(
             _validSetupUserCommand with
@@ -238,11 +219,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task SetupUser_WhenProvidingInvalidPassword_ShouldReturnInvalidPasswordError()
     {
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 15);
 
         UserSetupResult validationResult = await _harness.Service.SetupUser(
             _validSetupUserCommand with
@@ -272,11 +249,9 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task SetupUser_WhenReferencingASetupTokenThatWasCreatedInTheFuture_ShouldThrowArgumentException()
     {
-        DateTime createdAtTime = _testTime + TimeSpan.FromMinutes(10);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(
+            createdMinutesInThePast: -10
+        );
 
         Func<Task<UserSetupResult>> act = () =>
             _harness.Service.SetupUser(
@@ -293,12 +268,10 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task SetupUser_WhenReferencingASetupTokenThatHasAlreadyBeenConsumed_ReturnsConsumedError()
     {
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        entity.MarkAsConsumed(_testTime);
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(
+            createdMinutesInThePast: 15,
+            consumedMinutesInThePast: 0
+        );
 
         var futureHarness = _harness.UpdateCurrentTime(_testTime + TimeSpan.FromMinutes(5));
 
@@ -353,11 +326,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
 
     private async Task<(Guid SetupToken, string Session)> CreateAndDoInitialUserSetup()
     {
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-        await AddEntity(entity, TestContext.Current.CancellationToken);
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 15);
         _harness.Cognito.AddCurrentUser(new() { Username = _targetUser });
 
         UserSetupResult validationResult = await _harness.Service.SetupUser(
@@ -369,6 +338,24 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         );
         var setupData = validationResult.ShouldBeSuccess();
         return (entity.SetupToken, setupData.AuthenticationSession);
+    }
+
+    private async Task<UserOnboardingRecord> CreateUserOnboardingRecord(
+        int createdMinutesInThePast,
+        int? consumedMinutesInThePast = null
+    )
+    {
+        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(createdMinutesInThePast);
+        UserOnboardingRecord entity = _userOnboardingRecordFaker
+            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
+            .Generate();
+
+        if (consumedMinutesInThePast is { } value)
+        {
+            DateTime consumedAtTime = _testTime - TimeSpan.FromMinutes(value);
+            entity.MarkAsConsumed(consumedAtTime);
+        }
+        return await AddEntity(entity, TestContext.Current.CancellationToken);
     }
 
     private IServiceTestHarness<IIdentityAdministrationService> CreateTestHarness()
