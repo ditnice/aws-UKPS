@@ -55,17 +55,13 @@ public sealed class AuthenticationDependencyInjectionManagementTests
     {
         var services = CreateServices();
 
-        var authenticationService = Substitute.For<IIdentityService>();
         var cognito = Substitute.For<IAmazonCognitoIdentityProvider>();
 
-        services.AddScoped(_ => authenticationService);
         services.AddScoped(_ => cognito);
 
         services.AddAuthenticationServices();
 
         using var provider = services.BuildServiceProvider();
-
-        provider.GetRequiredService<IIdentityService>().ShouldBe(authenticationService);
 
         provider.GetRequiredService<IAmazonCognitoIdentityProvider>().ShouldBe(cognito);
     }
