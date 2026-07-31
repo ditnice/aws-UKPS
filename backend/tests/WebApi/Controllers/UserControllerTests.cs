@@ -213,6 +213,25 @@ public class UserControllerTests
         conflict.Value.ShouldBe("A user with that email is already registered.");
     }
 
+    [Fact]
+    public async Task CreateUser_FieldsMissing_ReturnsBadRequest()
+    {
+        CreateUserRequestDto request = CreateUserRequestDto();
+
+        _mockUserService
+            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
+            .Returns(
+                Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.MissingFields())
+            );
+        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
+            request,
+            TestContext.Current.CancellationToken
+        );
+        result
+            .Result.ShouldBeOfType<BadRequestObjectResult>()
+            .Value.ShouldBe("Some of the data required is missing.");
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
