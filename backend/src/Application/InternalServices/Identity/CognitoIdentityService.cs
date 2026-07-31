@@ -50,10 +50,6 @@ internal class CognitoIdentityService : IIdentityService
         {
             return CreateNewUserResult.Err(new CreateNewUserError.UsernameAlreadyExists());
         }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Failed to create a new user.", ex);
-        }
 
         return CreateNewUserResult.Ok();
     }
@@ -79,10 +75,6 @@ internal class CognitoIdentityService : IIdentityService
         catch (InvalidPasswordException)
         {
             return UpdatePasswordResult.Err(new UpdatePasswordError.InvalidPassword());
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Failed to update the user's password.", ex);
         }
 
         return UpdatePasswordResult.Ok();

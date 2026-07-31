@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using UKPS.Api.Application.Authentication.Errors;
 
@@ -47,4 +48,15 @@ public abstract record InitiateAuthenticationError
             AuthenticationSessionId = authenticationSessionId;
         }
     }
+
+    internal TResult Match<TResult>(
+        Func<TResult> unauthorised,
+        Func<Challenge, TResult> challenge
+    ) =>
+        this switch
+        {
+            Unauthorised => unauthorised(),
+            Challenge c => challenge(c),
+            _ => throw new UnreachableException(),
+        };
 }

@@ -1,6 +1,9 @@
+using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
@@ -152,6 +155,104 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         {
             result.ShouldBeError().ShouldBeOfType<UserSetupError.Expired>();
         }
+    }
+
+    [Fact]
+    public async Task SetupUser_WhenCognitoThrowsAnNotAuthorizedException_ShouldReturnNotAuthorisedResult()
+    {
+        _harness
+            .Cognito.Mock.AdminInitiateAuthAsync(
+                Arg.Any<AdminInitiateAuthRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Throws(new NotAuthorizedException());
+
+        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
+        UserOnboardingRecord entity = _userOnboardingRecordFaker
+            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
+            .Generate();
+        await AddEntity(entity, TestContext.Current.CancellationToken);
+
+        UserSetupResult validationResult = await _harness.Service.SetupUser(
+            _validSetupUserCommand with
+            {
+                SetupToken = entity.SetupToken,
+            },
+            TestContext.Current.CancellationToken
+        );
+        validationResult.ShouldBeError().ShouldBeOfType<UserSetupError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task SetupUser_WhenCognitoReturnsANullAuthenticationResult_ShouldReturnNotAuthorisedResult()
+    {
+        _harness
+            .Cognito.Mock.AdminInitiateAuthAsync(
+                Arg.Any<AdminInitiateAuthRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(new AdminInitiateAuthResponse());
+
+        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
+        UserOnboardingRecord entity = _userOnboardingRecordFaker
+            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
+            .Generate();
+        await AddEntity(entity, TestContext.Current.CancellationToken);
+
+        UserSetupResult validationResult = await _harness.Service.SetupUser(
+            _validSetupUserCommand with
+            {
+                SetupToken = entity.SetupToken,
+            },
+            TestContext.Current.CancellationToken
+        );
+        validationResult.ShouldBeError().ShouldBeOfType<UserSetupError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task SetupUser_WhenCognitoReturnsANullResponse_ShouldReturnNotAuthorisedResult()
+    {
+        _harness
+            .Cognito.Mock.AdminInitiateAuthAsync(
+                Arg.Any<AdminInitiateAuthRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns((AdminInitiateAuthResponse)null!);
+
+        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
+        UserOnboardingRecord entity = _userOnboardingRecordFaker
+            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
+            .Generate();
+        await AddEntity(entity, TestContext.Current.CancellationToken);
+
+        UserSetupResult validationResult = await _harness.Service.SetupUser(
+            _validSetupUserCommand with
+            {
+                SetupToken = entity.SetupToken,
+            },
+            TestContext.Current.CancellationToken
+        );
+        validationResult.ShouldBeError().ShouldBeOfType<UserSetupError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task SetupUser_WhenProvidingInvalidPassword_ShouldReturnInvalidPasswordError()
+    {
+        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(15);
+        UserOnboardingRecord entity = _userOnboardingRecordFaker
+            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
+            .Generate();
+        await AddEntity(entity, TestContext.Current.CancellationToken);
+
+        UserSetupResult validationResult = await _harness.Service.SetupUser(
+            _validSetupUserCommand with
+            {
+                SetupToken = entity.SetupToken,
+                NewPassword = _harness.Cognito.InvalidPassword,
+            },
+            TestContext.Current.CancellationToken
+        );
+        validationResult.ShouldBeError().ShouldBeOfType<UserSetupError.InvalidPassword>();
     }
 
     [Fact]

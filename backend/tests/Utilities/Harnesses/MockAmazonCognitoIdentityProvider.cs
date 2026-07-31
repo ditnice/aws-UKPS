@@ -8,6 +8,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
 {
     public string ValidMfaCode { get; } = "123456";
     public string ValidAuthenticationSession { get; } = "valid-auth-session";
+    public string InvalidPassword { get; } = "invalid-password";
     public IReadOnlyCollection<MockUser> Users => _users;
 
     public IAmazonCognitoIdentityProvider Mock { get; init; } =
@@ -24,6 +25,23 @@ internal sealed class MockAmazonCognitoIdentityProvider
             {
                 var request = callInfo.Arg<AdminCreateUserRequest>();
                 _users.Add(new() { Username = request.Username });
+            });
+
+        Mock.AdminSetUserPasswordAsync(
+                Arg.Any<AdminSetUserPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<AdminSetUserPasswordRequest>();
+                var password = request.Password;
+
+                if (string.Equals(password, InvalidPassword, StringComparison.Ordinal))
+                {
+                    throw new InvalidPasswordException();
+                }
+
+                return Task.FromResult(new AdminSetUserPasswordResponse());
             });
 
         Mock.AdminInitiateAuthAsync(

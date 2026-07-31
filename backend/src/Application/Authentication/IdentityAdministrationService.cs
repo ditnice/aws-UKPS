@@ -92,14 +92,10 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             return SetupUserResult.Err(error);
         }
 
-        (Uri otpAuthUri, string session) = await InitiateAuthenticationAndGetOtp(
+        return await InitiateAuthenticationAndGetOtp(
             userRecord.UserEmail,
             command.NewPassword,
             cancellationToken
-        );
-
-        return SetupUserResult.Ok(
-            new() { OtpAuthUri = otpAuthUri, AuthenticationSession = session }
         );
     }
 
@@ -133,7 +129,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         }
     }
 
-    private async Task<(Uri, string)> InitiateAuthenticationAndGetOtp(
+    private async Task<SetupUserResult> InitiateAuthenticationAndGetOtp(
         string userEmail,
         string newPassword,
         CancellationToken cancellationToken
@@ -146,11 +142,27 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
                 cancellationToken
             );
 
-        var challenge =
-            initiateAuthenticationResult.Error is InitiateAuthenticationError.Challenge value
-            && value.ChallengeType == UkpsChallengeType.MultiFactorAuthenticationSetupRequired
-                ? value
-                : throw new InvalidOperationException("Unexpected challenge");
+        return await initiateAuthenticationResult.Match(
+            _ => throw new InvalidOperationException(),
+            err =>
+                err.Match(
+                    unauthorised: () =>
+                        Task.FromResult(SetupUserResult.Err(new UserSetupError.Unauthorised())),
+                    challenge: c => HandleChallenge(userEmail, c, cancellationToken)
+                )
+        );
+    }
+
+    private async Task<SetupUserResult> HandleChallenge(
+        string userEmail,
+        InitiateAuthenticationError.Challenge challenge,
+        CancellationToken cancellationToken
+    )
+    {
+        if (challenge.ChallengeType != UkpsChallengeType.MultiFactorAuthenticationSetupRequired)
+        {
+            throw new InvalidOperationException("Unexpected challenge");
+        }
 
         var result = await _identityService.AssociateSoftwareToken(
             challenge.AuthenticationSessionId,
@@ -158,7 +170,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         );
 
         string issuer = "UKPS";
-        var uri = new Uri(
+        var otpAuthUri = new Uri(
             $"otpauth://totp/{Uri.EscapeDataString($"{issuer}:{userEmail}")}"
                 + $"?secret={Uri.EscapeDataString(result.Secret)}"
                 + $"&issuer={Uri.EscapeDataString(issuer)}"
@@ -166,7 +178,10 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
                 + $"&digits=6"
                 + $"&period=30"
         );
-        return (uri, result.AuthenticationSession);
+
+        return SetupUserResult.Ok(
+            new() { OtpAuthUri = otpAuthUri, AuthenticationSession = result.AuthenticationSession }
+        );
     }
 
     public async Task<SetupTokenValidationResult> Validate(

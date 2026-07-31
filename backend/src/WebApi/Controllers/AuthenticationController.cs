@@ -119,7 +119,9 @@ public class AuthenticationController : ControllerBase
             {
                 InitiateAuthenticationError.Unauthorised => Unauthorized(),
                 InitiateAuthenticationError.Challenge c => Unauthorized(c),
-                _ => throw new UnreachableException($"Unhandled {nameof(LoginError)} variant."),
+                _ => throw new UnreachableException(
+                    $"Unhandled {nameof(InitiateAuthenticationError)} variant."
+                ),
             };
         }
 
@@ -223,7 +225,8 @@ public class AuthenticationController : ControllerBase
                     invalidPassword: () =>
                         BadRequest("The password does not meet the expected standards."),
                     expired: () => Unauthorized(_setupTokenExpiredDetails),
-                    doesNotExist: () => NotFound(_setupTokenNotFound)
+                    doesNotExist: () => NotFound(_setupTokenNotFound),
+                    unauthorised: () => Unauthorized()
                 );
             }
         );

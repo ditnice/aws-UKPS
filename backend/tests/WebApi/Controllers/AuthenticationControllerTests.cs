@@ -223,7 +223,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             );
 
         var response = await _client.GetAsync(
-            new Uri($"{ValidateSetupTokenUrl}?setupToken={_defaultSetupToken}"),
+            new Uri($"{ValidateSetupTokenUrl}?setupToken={_defaultSetupToken}", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -346,6 +346,22 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task SetupUser_ShouldReturnUnauthorisedResultWhenNotAuthorised()
+    {
+        _mockedAuthorisationService
+            .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
+            .Returns(SetupUserResult.Err(new UserSetupError.Unauthorised()));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(SetupUserUrl, UriKind.Relative),
+            _defaultSetupUserCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
