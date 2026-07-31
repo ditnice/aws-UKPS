@@ -64,36 +64,74 @@ describe('EditOrganisationDetailsForm', () => {
     )
   })
 
-  it('shows a required error for each field left empty on submit, and does not submit', () => {
+  it('shows a required error when the company name is left empty on submit', () => {
     renderForm()
 
     fireEvent.change(screen.getByLabelText('Company name'), { target: { value: '' } })
-    fireEvent.change(screen.getByLabelText('Company address'), { target: { value: '' } })
-    fireEvent.change(screen.getByLabelText('Company email address'), { target: { value: '' } })
-    fireEvent.change(screen.getByLabelText('Company phone number'), { target: { value: '' } })
-
     submit()
 
-    expect(screen.getByText(COMPANY_NAME_REQUIRED_ERROR_MESSAGE)).toBeDefined()
-    expect(screen.getByText(ADDRESS_REQUIRED_ERROR_MESSAGE)).toBeDefined()
-    expect(screen.getByText(EMAIL_REQUIRED_ERROR_MESSAGE)).toBeDefined()
-    expect(screen.getByText(PHONE_REQUIRED_ERROR_MESSAGE)).toBeDefined()
+    expect(
+      screen.getByText(COMPANY_NAME_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+    ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
-  it('shows a format error for an invalid email or phone number, and does not submit', () => {
+  it('shows a required error when the company address is left empty on submit', () => {
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Company address'), { target: { value: '' } })
+    submit()
+
+    expect(
+      screen.getByText(ADDRESS_REQUIRED_ERROR_MESSAGE, { selector: '.textarea__error' }),
+    ).toBeDefined()
+    expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
+  })
+
+  it('shows a required error when the email address is left empty on submit', () => {
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Company email address'), { target: { value: '' } })
+    submit()
+
+    expect(
+      screen.getByText(EMAIL_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+    ).toBeDefined()
+    expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
+  })
+
+  it('shows a required error when the phone number is left empty on submit', () => {
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Company phone number'), { target: { value: '' } })
+    submit()
+
+    expect(
+      screen.getByText(PHONE_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+    ).toBeDefined()
+    expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
+  })
+
+  it('shows a format error when the email address is invalid on submit', () => {
     renderForm()
 
     fireEvent.change(screen.getByLabelText('Company email address'), {
       target: { value: 'not-an-email' },
     })
-    fireEvent.change(screen.getByLabelText('Company phone number'), { target: { value: '123' } })
-
     submit()
 
     expect(
       screen.getByText(EMAIL_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
     ).toBeDefined()
+    expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
+  })
+
+  it('shows a format error when the phone number is invalid on submit', () => {
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Company phone number'), { target: { value: '123' } })
+    submit()
+
     expect(
       screen.getByText(PHONE_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
     ).toBeDefined()

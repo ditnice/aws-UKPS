@@ -17,28 +17,22 @@ import {
   PHONE_REQUIRED_ERROR_MESSAGE,
 } from '@/app/common/ErrorMessages'
 import { isValidEmail, isValidPhoneNumber } from '@/app/common/RegEx'
+import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
 
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
 
 import type { ChangeEvent, SubmitEvent } from 'react'
 
-export interface OrganisationDetailsFormValues {
-  organisationName: string
-  headOfficeAddress: string
-  headOfficeEmail: string
-  headOfficeTelephone: string
-}
-
 export type OrganisationDetailsFormErrors = Partial<
-  Record<keyof OrganisationDetailsFormValues, string>
+  Record<keyof UpdateOrganisationDetailsDto, string>
 >
 
-export type EditOrganisationDetailsFormProps = OrganisationDetailsFormValues & {
+export type EditOrganisationDetailsFormProps = UpdateOrganisationDetailsDto & {
   organisationId: number
 }
 
 function validateOrganisationDetailsForm(
-  values: OrganisationDetailsFormValues,
+  values: UpdateOrganisationDetailsDto,
 ): OrganisationDetailsFormErrors {
   const errors: OrganisationDetailsFormErrors = {}
 
@@ -74,7 +68,7 @@ export function EditOrganisationDetailsForm({
 }: EditOrganisationDetailsFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [values, setValues] = useState<OrganisationDetailsFormValues>({
+  const [values, setValues] = useState<UpdateOrganisationDetailsDto>({
     organisationName,
     headOfficeAddress,
     headOfficeEmail,
@@ -83,7 +77,7 @@ export function EditOrganisationDetailsForm({
   const [errors, setErrors] = useState<OrganisationDetailsFormErrors>({})
   const [submitError, setSubmitError] = useState<string>()
 
-  function handleChange(field: keyof OrganisationDetailsFormValues) {
+  function handleChange(field: keyof UpdateOrganisationDetailsDto) {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setValues((current) => ({ ...current, [field]: event.target.value }))
     }

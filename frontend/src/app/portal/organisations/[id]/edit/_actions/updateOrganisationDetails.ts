@@ -3,15 +3,14 @@
 import { revalidatePath } from 'next/cache'
 
 import { updateOrganisationDetails } from '@/client/generated/sdk.gen'
-
-import type { OrganisationDetailsFormValues } from '../_components/EditOrganisationDetailsForm'
+import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
 
 export type UpdateOrganisationDetailsResult =
   { status: 'success' } | { status: 'error'; message: string }
 
 export async function updateOrganisationDetailsAction(
   organisationId: number,
-  values: OrganisationDetailsFormValues,
+  values: UpdateOrganisationDetailsDto,
 ): Promise<UpdateOrganisationDetailsResult> {
   const { error } = await updateOrganisationDetails({
     path: { id: organisationId },
