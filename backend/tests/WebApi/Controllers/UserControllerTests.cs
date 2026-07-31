@@ -191,8 +191,26 @@ public class UserControllerTests
             request,
             TestContext.Current.CancellationToken
         );
-        NotFoundObjectResult notFound = result.Result.ShouldBeOfType<NotFoundObjectResult>();
-        notFound.Value.ShouldBe("There is no organisation with that Organisation ID.");
+        result
+            .Result.ShouldBeOfType<NotFoundObjectResult>()
+            .Value.ShouldBe("There is no organisation with that Organisation ID.");
+    }
+
+    [Fact]
+    public async Task CreateUser_EmailConflict_ReturnsConflict()
+    {
+        CreateUserRequestDto request = CreateUserRequestDto();
+        _mockUserService
+            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
+            .Returns(
+                Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.EmailConflict())
+            );
+        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
+            request,
+            TestContext.Current.CancellationToken
+        );
+        ConflictObjectResult conflict = result.Result.ShouldBeOfType<ConflictObjectResult>();
+        conflict.Value.ShouldBe("A user with that email is already registered.");
     }
 
     [Theory]
