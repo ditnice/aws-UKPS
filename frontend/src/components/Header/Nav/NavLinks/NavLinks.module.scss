@@ -1,0 +1,40 @@
+@use '@/styles/colours';
+@use '@/styles/utils';
+@use '@/styles/spacing';
+@use '@/styles/media-queries';
+@use '../nav-shared';
+
+.menuList {
+  @extend %menu-list;
+}
+
+a.link {
+  @extend %link-styling;
+  column-gap: utils.rem(spacing.$small);
+  padding: utils.rem(spacing.$small);
+
+  &:visited {
+    color: colours.$text-inverse !important;
+  }
+
+  &[aria-current='true'],
+  &[aria-current='page'],
+  &:hover {
+    color: colours.$text !important;
+  }
+
+  // reduce chevron size on smaller viewport to prevent back-to-top floating issue when site is wider than content
+  svg {
+    max-height: 0.8rem;
+    max-width: 0.8rem;
+  }
+
+  @include media-queries.mq($from: lg) {
+    padding: utils.rem(spacing.$medium);
+
+    svg {
+      max-height: 1rem;
+      max-width: 1rem;
+    }
+  }
+}
