@@ -157,6 +157,44 @@ public class UserControllerTests
         validationResults.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task CreateUser_IsValid_ReturnsDto()
+    {
+        CreateUserRequestDto request = CreateUserRequestDto();
+        UserDetailsDto expected = UserDetailsDto();
+
+        _mockUserService
+            .CreateUser(request, TestContext.Current.CancellationToken)
+            .Returns(Result<UserDetailsDto, CreateUserError>.Ok(expected));
+
+        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
+            request,
+            TestContext.Current.CancellationToken
+        );
+
+        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task CreateUser_OrgNotFound_ReturnsNotFound()
+    {
+        CreateUserRequestDto request = CreateUserRequestDto();
+        _mockUserService
+            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
+            .Returns(
+                Result<UserDetailsDto, CreateUserError>.Err(
+                    new CreateUserError.NotFound(request.OrganisationId)
+                )
+            );
+        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
+            request,
+            TestContext.Current.CancellationToken
+        );
+        NotFoundObjectResult notFound = result.Result.ShouldBeOfType<NotFoundObjectResult>();
+        notFound.Value.ShouldBe("There is no organisation with that Organisation ID.");
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -233,4 +271,29 @@ public class UserControllerTests
 
         return validationResults;
     }
+
+    private static UserDetailsDto UserDetailsDto() =>
+        new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkPhone = "0123456789",
+            WorkEmail = "user@example.com",
+        };
+
+    private static CreateUserRequestDto CreateUserRequestDto() =>
+        new()
+        {
+            UserType = UserType.PharmaUser,
+            Title = "Mr",
+            FirstName = "Test1",
+            LastName = "Test2",
+            JobTitle = "Test3",
+            WorkTelephone = "0123456789",
+            WorkEmail = "user@example.com",
+            OrganisationId = 1,
+        };
 }
