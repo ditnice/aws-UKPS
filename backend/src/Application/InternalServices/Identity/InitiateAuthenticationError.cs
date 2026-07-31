@@ -29,7 +29,7 @@ public abstract record InitiateAuthenticationError
         /// Gets the authentication session identifier that must be supplied when responding
         /// to the challenge.
         /// </summary>
-        public required string AuthenticationSessionId { get; init; }
+        public required string AuthenticationSession { get; init; }
 
         /// <summary>
         /// Initialises a new instance of the <see cref="Challenge"/> record.
@@ -45,8 +45,13 @@ public abstract record InitiateAuthenticationError
         public Challenge(UkpsChallengeType challengeType, string authenticationSessionId)
         {
             ChallengeType = challengeType;
-            AuthenticationSessionId = authenticationSessionId;
+            AuthenticationSession = authenticationSessionId;
         }
+
+        /// <summary>
+        /// Initialises a new instance of the <see cref="Challenge"/> record.
+        /// </summary>
+        public Challenge() { }
     }
 
     internal TResult Match<TResult>(

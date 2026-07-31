@@ -24,7 +24,7 @@ namespace UKPS.Api.WebApi.Controllers;
 [Route("auth")]
 public class AuthenticationController : ControllerBase
 {
-    private readonly IIdentityService _webIdentityAdministrationService;
+    private readonly ILoginService _loginService;
     private readonly IIdentityAdministrationService _authorisationAdministrationService;
     private readonly ProblemDetails _setupTokenExpiredDetails = new ProblemDetails
     {
@@ -49,19 +49,19 @@ public class AuthenticationController : ControllerBase
     /// <summary>
     /// Initialises a new instance of the <see cref="AuthenticationController"/> class.
     /// </summary>
-    /// <param name="webIdentityAdministrationService">
-    /// The service responsible for handling authentication operations.
+    /// <param name="loginService">
+    /// The service responsible for handling login and associated requests.
     /// </param>
     /// <param name="authorisationAdministrationService">
     /// The service responsible for managing authorisation administration operations,
     /// such as user onboarding, setup token validation, and password management.
     /// </param>
     public AuthenticationController(
-        IIdentityService webIdentityAdministrationService,
+        ILoginService loginService,
         IIdentityAdministrationService authorisationAdministrationService
     )
     {
-        _webIdentityAdministrationService = webIdentityAdministrationService;
+        _loginService = loginService;
         _authorisationAdministrationService = authorisationAdministrationService;
     }
 
@@ -96,41 +96,49 @@ public class AuthenticationController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        ActionResult HandleLoginSuccess(AuthenticationCredentialsDto dto)
-        {
-            Response.Cookies.Append(
-                "access_token",
-                dto.AccessToken,
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true, // HTTPS only
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(15),
-                }
-            );
+        return (await _loginService.Login(request, cancellationToken)).Match(
+            HandleLoginSuccess,
+            HandleLoginError
+        );
+    }
 
-            return Ok();
-        }
-
-        ActionResult HandleLoginError(InitiateAuthenticationError error)
-        {
-            return error switch
-            {
-                InitiateAuthenticationError.Unauthorised => Unauthorized(),
-                InitiateAuthenticationError.Challenge c => Unauthorized(c),
-                _ => throw new UnreachableException(
-                    $"Unhandled {nameof(InitiateAuthenticationError)} variant."
-                ),
-            };
-        }
-
-        ArgumentNullException.ThrowIfNull(request);
-
+    /// <summary>
+    /// Completes a multi-factor authentication challenge for an existing authentication session.
+    /// </summary>
+    /// <param name="command">
+    /// The authentication session identifier and multi-factor authentication code
+    /// required to complete the authentication challenge.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token to monitor for cancellation requests.
+    /// </param>
+    /// <returns>
+    /// An <see cref="OkResult"/> when the multi-factor authentication challenge is
+    /// successfully completed, or an <see cref="UnauthorizedResult"/> when the
+    /// authentication session or verification code is invalid.
+    /// </returns>
+    /// <response code="200">
+    /// The multi-factor authentication challenge was successfully completed and an
+    /// authentication cookie was created.
+    /// </response>
+    /// <response code="400">
+    /// The supplied request was invalid.
+    /// </response>
+    /// <response code="401">
+    /// The authentication session or verification code was invalid.
+    /// </response>
+    [HttpPost("mfa")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> RespondToMultiFactorAuthenticationChallenge(
+        [FromBody] RespondToMultiFactorAuthenticationChallengeCommand command,
+        CancellationToken cancellationToken
+    )
+    {
         return (
-            await _webIdentityAdministrationService.InitiateAuthentication(
-                request.Username,
-                request.Password,
+            await _loginService.RespondToMultiFactorAuthenticationChallenge(
+                command,
                 cancellationToken
             )
         ).Match(HandleLoginSuccess, HandleLoginError);
@@ -281,5 +289,34 @@ public class AuthenticationController : ControllerBase
                     )
                 )
         );
+    }
+
+    private ActionResult HandleLoginSuccess(AuthenticationCredentialsDto dto)
+    {
+        Response.Cookies.Append(
+            "access_token",
+            dto.AccessToken,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // HTTPS only
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+            }
+        );
+
+        return Ok();
+    }
+
+    private ActionResult HandleLoginError(InitiateAuthenticationError error)
+    {
+        return error switch
+        {
+            InitiateAuthenticationError.Unauthorised => Unauthorized(),
+            InitiateAuthenticationError.Challenge c => Unauthorized(c),
+            _ => throw new UnreachableException(
+                $"Unhandled {nameof(InitiateAuthenticationError)} variant."
+            ),
+        };
     }
 }

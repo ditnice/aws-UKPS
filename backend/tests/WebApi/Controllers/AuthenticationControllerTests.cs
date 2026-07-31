@@ -28,20 +28,28 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string LoginUrl = "/auth/login";
+    private const string RespondToMultiFactorAuthenticationChallengeUrl = "/auth/mfa";
     private const string ValidateSetupTokenUrl = "/auth/validate-setup-token";
     private const string SetupUserUrl = "/auth/setup-user";
     private const string VerifyMultiFactorAuthenticationUrl = "/auth/verify-mfa";
 
     private readonly IIdentityAdministrationService _mockedAuthorisationService =
         Substitute.For<IIdentityAdministrationService>();
+    private readonly ILoginService _mockedLoginService = Substitute.For<ILoginService>();
     private readonly Guid _defaultSetupToken = Guid.Parse("48b5becd-f98c-4897-98aa-be37eecb6a68");
-    private readonly IIdentityService _mockedIdentityService = Substitute.For<IIdentityService>();
     private readonly HttpClient _client;
     private readonly LoginRequest _defaultLoginRequest = new()
     {
         Username = "username",
         Password = "password",
     };
+    private readonly RespondToMultiFactorAuthenticationChallengeCommand _respondToMultiFactorAuthenticationChallengeCommand =
+        new()
+        {
+            Username = "username",
+            Code = "code",
+            AuthenticationSession = "authentication-session",
+        };
     private readonly SetupUserCommand _defaultSetupUserCommand = new()
     {
         NewPassword = "password",
@@ -64,9 +72,9 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             {
                 builder.ConfigureServices(services =>
                 {
-                    services.RemoveAll<IIdentityService>();
+                    services.RemoveAll<ILoginService>();
                     services.RemoveAll<IIdentityAdministrationService>();
-                    services.AddSingleton(_mockedIdentityService);
+                    services.AddSingleton(_mockedLoginService);
                     services.AddSingleton(_mockedAuthorisationService);
                 });
                 builder.ConfigureNoDatabase();
@@ -79,12 +87,8 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     public async Task Login_ShouldSetAccessTokenCookieOnSuccess()
     {
         var accessToken = "48b5becd-f98c-4897-98aa-be37eecb6a68";
-        _mockedIdentityService
-            .InitiateAuthentication(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<CancellationToken>()
-            )
+        _mockedLoginService
+            .Login(Arg.Any<LoginRequest>(), Arg.Any<CancellationToken>())
             .Returns(
                 InitiatedAuthenticationResult.Ok(
                     new AuthenticationCredentialsDto() { AccessToken = accessToken }
@@ -105,12 +109,8 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task Login_ShouldReturnUnauthorisedOnUnauthorised()
     {
-        _mockedIdentityService
-            .InitiateAuthentication(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<CancellationToken>()
-            )
+        _mockedLoginService
+            .Login(Arg.Any<LoginRequest>(), Arg.Any<CancellationToken>())
             .Returns(
                 InitiatedAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised())
             );
@@ -133,12 +133,8 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             UkpsChallengeType.MultiFactorAuthenticationRequired,
             "session-id"
         );
-        _mockedIdentityService
-            .InitiateAuthentication(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<CancellationToken>()
-            )
+        _mockedLoginService
+            .Login(Arg.Any<LoginRequest>(), Arg.Any<CancellationToken>())
             .Returns(InitiatedAuthenticationResult.Err(challengeError));
 
         HttpResponseMessage response = await _client.PostAsJsonAsync(
@@ -173,6 +169,114 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             var response = await _client.PostAsJsonAsync(
                 new Uri(LoginUrl, UriKind.Relative),
                 modifier(_defaultLoginRequest),
+                TestContext.Current.CancellationToken
+            );
+
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            AssertCookieDoesNotExist(response.Headers);
+        }
+    }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_ShouldSetAccessTokenCookieOnSuccess()
+    {
+        var accessToken = "48b5becd-f98c-4897-98aa-be37eecb6a68";
+        _mockedLoginService
+            .RespondToMultiFactorAuthenticationChallenge(
+                Arg.Any<RespondToMultiFactorAuthenticationChallengeCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                InitiatedAuthenticationResult.Ok(
+                    new AuthenticationCredentialsDto() { AccessToken = accessToken }
+                )
+            );
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(RespondToMultiFactorAuthenticationChallengeUrl, UriKind.Relative),
+            _respondToMultiFactorAuthenticationChallengeCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        AssertCookieExistsAndValidateCookie(response.Headers, accessToken);
+    }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_ShouldReturnUnauthorisedOnUnauthorised()
+    {
+        _mockedLoginService
+            .RespondToMultiFactorAuthenticationChallenge(
+                Arg.Any<RespondToMultiFactorAuthenticationChallengeCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                InitiatedAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised())
+            );
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(RespondToMultiFactorAuthenticationChallengeUrl, UriKind.Relative),
+            _respondToMultiFactorAuthenticationChallengeCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        AssertCookieDoesNotExist(response.Headers);
+    }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_ShouldReturnUnauthorisedAndChallengeDetailsOnChallenge()
+    {
+        var challengeError = new InitiateAuthenticationError.Challenge(
+            UkpsChallengeType.MultiFactorAuthenticationRequired,
+            "session-id"
+        );
+        _mockedLoginService
+            .RespondToMultiFactorAuthenticationChallenge(
+                Arg.Any<RespondToMultiFactorAuthenticationChallengeCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(InitiatedAuthenticationResult.Err(challengeError));
+
+        HttpResponseMessage response = await _client.PostAsJsonAsync(
+            new Uri(RespondToMultiFactorAuthenticationChallengeUrl, UriKind.Relative),
+            _respondToMultiFactorAuthenticationChallengeCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        InitiateAuthenticationError.Challenge? data =
+            await response.Content.ReadFromJsonAsync<InitiateAuthenticationError.Challenge>(
+                TestJsonOptions.Default,
+                TestContext.Current.CancellationToken
+            );
+        data.ShouldBe(challengeError);
+    }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_WhenInvalidParametersProvided_ShouldReturnABadRequest()
+    {
+        Func<
+            RespondToMultiFactorAuthenticationChallengeCommand,
+            RespondToMultiFactorAuthenticationChallengeCommand
+        >[] modifiers =
+        [
+            (x) => x with { Username = null! },
+            (x) => x with { Username = string.Empty },
+            (x) => x with { Code = null! },
+            (x) => x with { Code = string.Empty },
+            (x) => x with { AuthenticationSession = null! },
+            (x) => x with { AuthenticationSession = string.Empty },
+        ];
+
+        foreach (var modifier in modifiers)
+        {
+            var response = await _client.PostAsJsonAsync(
+                new Uri(RespondToMultiFactorAuthenticationChallengeUrl, UriKind.Relative),
+                modifier(_respondToMultiFactorAuthenticationChallengeCommand),
                 TestContext.Current.CancellationToken
             );
 
