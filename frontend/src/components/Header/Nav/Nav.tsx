@@ -16,11 +16,7 @@ export function Nav({ isExpanded }: NavProps) {
           [styles.wrapperExpanded]: isExpanded,
         })}
       >
-        <nav
-          className={styles.nav}
-          aria-label="primary navigation"
-          data-tracking="Primary navigation"
-        >
+        <nav className={styles.nav} aria-label="primary navigation">
           <div className={styles.menuWrapper}>
             <NavLinks />
           </div>
