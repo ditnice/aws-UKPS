@@ -20,7 +20,7 @@ export type InputProps = NdsInputProps & {
   width?: InputWidth
 }
 
-const inputWidthStyles: Record<InputWidth, CSSProperties> = {
+export const inputWidthStyles: Record<InputWidth, CSSProperties> = {
   2: { maxWidth: '2.75em' },
   3: { maxWidth: '3.75em' },
   4: { maxWidth: '4.5em' },

@@ -38,6 +38,11 @@ export const componentDefinitions = [
     slug: 'column-list',
   },
   { description: 'Keep page content aligned and readable.', label: 'Container', slug: 'container' },
+  {
+    description: 'Let users reveal additional detail only when needed.',
+    label: 'Details',
+    slug: 'details',
+  },
   { description: 'Narrow a long list of results.', label: 'Filters', slug: 'filters' },
   {
     description: 'Show a relationship between form controls.',
@@ -74,6 +79,11 @@ export const componentDefinitions = [
     description: 'Highlight or separate related supporting content.',
     label: 'Panel',
     slug: 'panel',
+  },
+  {
+    description: 'Let users optionally reveal a masked password value.',
+    label: 'Password input',
+    slug: 'password-input',
   },
   {
     description: 'Identify an alpha or beta service.',
