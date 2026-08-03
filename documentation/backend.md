@@ -3,66 +3,65 @@
 The directory structure should match the following
 
 ├── src
-│   ├── Application (Organised by domain)
-│   │   ├── Common
-│   │   ├── InternalServices (Application services for internal use)
-│   │   │   ├── Authorisation
-│   │   │   └── Identity
-│   │   ├── Organisations
-│   │   │   ├── Dtos
-│   │   │   └── Errors
-│   │   └── Users
-│   │       ├── Dtos
-│   │       └── Errors
-│   ├── Persistence
-│   │   ├── Configurations
-│   │   │   ├── Email
-│   │   │   ├── Identity
-│   │   │   ├── MedicinesRevisionContent
-│   │   │   ├── RecordWorkflow
-│   │   │   ├── ReferenceData
-│   │   │   ├── Reporting
-│   │   │   ├── SharedRevisionContent
-│   │   │   ├── UserFeatures
-│   │   │   └── VaccinesRevisionContent
-│   │   ├── Data
-│   │   │   ├── Fakers
-│   │   │   └── Seeding
-│   │   ├── Entities
-│   │   │   ├── Email
-│   │   │   ├── Identity
-│   │   │   ├── MedicinesRevisionContent
-│   │   │   ├── RecordWorkflow
-│   │   │   ├── ReferenceData
-│   │   │   ├── Reporting
-│   │   │   ├── SharedRevisionContent
-│   │   │   ├── UserFeatures
-│   │   │   └── VaccinesRevisionContent
-│   │   ├── Enums
-│   │   └── Migrations
-│   ├── WebApi
-│   │   ├── Controllers
-│   │   └── InternalServices
-│   │       └── Identity
-│   └── Properties
+│ ├── Application (Organised by domain)
+│ │ ├── Common
+│ │ ├── InternalServices (Application services for internal use)
+│ │ │ ├── Authorisation
+│ │ │ └── Identity
+│ │ ├── Organisations
+│ │ │ ├── Dtos
+│ │ │ └── Errors
+│ │ └── Users
+│ │ ├── Dtos
+│ │ └── Errors
+│ ├── Persistence
+│ │ ├── Configurations
+│ │ │ ├── Email
+│ │ │ ├── Identity
+│ │ │ ├── MedicinesRevisionContent
+│ │ │ ├── RecordWorkflow
+│ │ │ ├── ReferenceData
+│ │ │ ├── Reporting
+│ │ │ ├── SharedRevisionContent
+│ │ │ ├── UserFeatures
+│ │ │ └── VaccinesRevisionContent
+│ │ ├── Data
+│ │ │ ├── Fakers
+│ │ │ └── Seeding
+│ │ ├── Entities
+│ │ │ ├── Email
+│ │ │ ├── Identity
+│ │ │ ├── MedicinesRevisionContent
+│ │ │ ├── RecordWorkflow
+│ │ │ ├── ReferenceData
+│ │ │ ├── Reporting
+│ │ │ ├── SharedRevisionContent
+│ │ │ ├── UserFeatures
+│ │ │ └── VaccinesRevisionContent
+│ │ ├── Enums
+│ │ └── Migrations
+│ ├── WebApi
+│ │ ├── Controllers
+│ │ └── InternalServices
+│ │ └── Identity
+│ └── Properties
 └── tests
-    ├── Application
-    │   ├── Common
-    │   ├── Organisations
-    │   └── Users
-    ├── Integration
-    ├── Persistence
-    ├── TestResults
-    │   └── Coverage
-    ├── Utilities
-    │   ├── AssertionHelpers
-    │   ├── Data
-    │   ├── Fixtures
-    │   └── Harnesses
-    └── WebApi
-        ├── Controllers
-        └── Utilities
-
+├── Application
+│ ├── Common
+│ ├── Organisations
+│ └── Users
+├── Integration
+├── Persistence
+├── TestResults
+│ └── Coverage
+├── Utilities
+│ ├── AssertionHelpers
+│ ├── Data
+│ ├── Fixtures
+│ └── Harnesses
+└── WebApi
+├── Controllers
+└── Utilities
 
 ## Seeding the Database on Startup
 
@@ -92,4 +91,28 @@ After the database has been reseeded, it is recommended to set `ReseedOnStartup`
     "ReseedOnStartup": false
   }
 }
+```
+
+## Certificates
+
+For local development, to use HTTPS you need to install certificates locally on you machine. To do this do the following:
+
+1. Ensure the the 'certutil' is installed on your machine
+
+```
+sudo apt update
+sudo apt install libnss3-tools
+```
+
+2. Clean and trust asp net core dev certificates
+
+```
+dotnet dev-certs https --clean
+dotnet dev-certs https --trust
+```
+
+3. Check the certificate and been installed and trusted
+
+```
+dotnet dev-certs https --check --trust
 ```
