@@ -1,7 +1,8 @@
 'use client'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
-import { Input } from '@nice-digital/nds-input'
+
+import { Input } from '@/components/Input/Input'
 
 import { Example } from '../../_components/Example'
 
@@ -43,6 +44,22 @@ export function Examples() {
           required
           errorMessage="Please enter your surname"
         />
+      </Example>
+      <Example title="Example: fixed width">
+        <Input label="20 characters" name="width-20" width={20} />
+        <Input label="10 characters" name="width-10" width={10} />
+        <Input label="5 characters" name="width-5" width={5} />
+        <Input label="4 characters" name="width-4" width={4} />
+        <Input label="3 characters" name="width-3" width={3} />
+        <Input label="2 characters" name="width-2" width={2} />
+      </Example>
+      <Example title="Example: fluid width">
+        <Input label="Full width" name="width-full" width="full" />
+        <Input label="Three-quarters width" name="width-three-quarters" width="three-quarters" />
+        <Input label="Two-thirds width" name="width-two-thirds" width="two-thirds" />
+        <Input label="One-half width" name="width-one-half" width="one-half" />
+        <Input label="One-third width" name="width-one-third" width="one-third" />
+        <Input label="One-quarter width" name="width-one-quarter" width="one-quarter" />
       </Example>
     </>
   )
