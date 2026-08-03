@@ -6,6 +6,7 @@ using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.WebApi.CustomResponses;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
@@ -89,8 +90,8 @@ public class AuthenticationController : ControllerBase
     /// </response>
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken
@@ -129,8 +130,8 @@ public class AuthenticationController : ControllerBase
     /// </response>
     [HttpPost("mfa")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> RespondToMultiFactorAuthenticationChallenge(
         [FromBody] RespondToMultiFactorAuthenticationChallengeCommand command,
         CancellationToken cancellationToken
@@ -293,6 +294,7 @@ public class AuthenticationController : ControllerBase
 
     private ActionResult HandleLoginSuccess(AuthenticationCredentialsDto dto)
     {
+        var expires = DateTimeOffset.UtcNow.AddMinutes(15);
         Response.Cookies.Append(
             "access_token",
             dto.AccessToken,
@@ -301,8 +303,14 @@ public class AuthenticationController : ControllerBase
                 HttpOnly = true,
                 Secure = true, // HTTPS only
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+                Expires = expires,
             }
+        );
+
+        Response.Cookies.Append(
+            "example_cookie",
+            "example_value",
+            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(1) }
         );
 
         return Ok();
@@ -312,8 +320,12 @@ public class AuthenticationController : ControllerBase
     {
         return error switch
         {
-            InitiateAuthenticationError.Unauthorised => Unauthorized(),
-            InitiateAuthenticationError.Challenge c => Unauthorized(c),
+            InitiateAuthenticationError.Unauthorised => Unauthorized(
+                AuthenticationProblemDetails.Unauthorised()
+            ),
+            InitiateAuthenticationError.Challenge c => Unauthorized(
+                AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
+            ),
             _ => throw new UnreachableException(
                 $"Unhandled {nameof(InitiateAuthenticationError)} variant."
             ),

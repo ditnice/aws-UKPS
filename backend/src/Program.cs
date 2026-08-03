@@ -49,15 +49,16 @@ builder
         ConfigureJsonEnums(options.JsonSerializerOptions);
     });
 
-// Add CORS to allow any origin, method, and header
-// TODO URP 421 - Update CORs policy to be less permissive
+// Add CORS to allow only http://localhost:3000
 builder.Services.AddCors(options =>
-{
     options.AddDefaultPolicy(policy =>
-    {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-    });
-});
+        policy
+            .WithOrigins("http://localhost:3000", "https://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials()
+    )
+);
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>

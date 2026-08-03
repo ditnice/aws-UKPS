@@ -4,6 +4,16 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export type AuthenticationProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number | string;
+    detail?: null | string;
+    instance?: null | string;
+    challengeType?: null | UkpsChallengeType;
+    authenticationSession?: null | string;
+};
+
 /**
  * Represents the information required to create a new organisation.
  */
@@ -273,6 +283,8 @@ export type SetupUserCommand = {
     newPassword: string;
 };
 
+export type UkpsChallengeType = 'MultiFactorAuthenticationRequired' | 'MultiFactorAuthenticationSetupRequired';
+
 /**
  * Represents the data transfer object for updating organisation details.
  */
@@ -415,11 +427,11 @@ export type PostAuthLoginErrors = {
     /**
      * The supplied request was invalid.
      */
-    400: ProblemDetails;
+    400: AuthenticationProblemDetails;
     /**
      * The supplied credentials were invalid.
      */
-    401: ProblemDetails;
+    401: AuthenticationProblemDetails;
 };
 
 export type PostAuthLoginError = PostAuthLoginErrors[keyof PostAuthLoginErrors];
@@ -445,11 +457,11 @@ export type PostAuthMfaErrors = {
     /**
      * The supplied request was invalid.
      */
-    400: ProblemDetails;
+    400: AuthenticationProblemDetails;
     /**
      * The authentication session or verification code was invalid.
      */
-    401: ProblemDetails;
+    401: AuthenticationProblemDetails;
 };
 
 export type PostAuthMfaError = PostAuthMfaErrors[keyof PostAuthMfaErrors];
