@@ -1,0 +1,148 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Details > closes again when the summary is clicked a second time 1`] = `
+<DocumentFragment>
+  <details
+    class="_details_17856e"
+    data-component="details"
+  >
+    <summary
+      class="_summary_17856e"
+    >
+      <span
+        class="_summary-text_17856e"
+      >
+        Help with nationality
+      </span>
+    </summary>
+    <div
+      class="_text_17856e"
+    >
+      Some content
+    </div>
+  </details>
+</DocumentFragment>
+`;
+
+exports[`Details > forwards native attributes to the details element 1`] = `
+<DocumentFragment>
+  <details
+    class="_details_17856e"
+    data-component="details"
+    id="nationality-details"
+  >
+    <summary
+      class="_summary_17856e"
+    >
+      <span
+        class="_summary-text_17856e"
+      >
+        Help with nationality
+      </span>
+    </summary>
+    <div
+      class="_text_17856e"
+    >
+      Some content
+    </div>
+  </details>
+</DocumentFragment>
+`;
+
+exports[`Details > preserves custom class names 1`] = `
+<DocumentFragment>
+  <details
+    class="_details_17856e additional-class"
+    data-component="details"
+  >
+    <summary
+      class="_summary_17856e"
+    >
+      <span
+        class="_summary-text_17856e"
+      >
+        Help with nationality
+      </span>
+    </summary>
+    <div
+      class="_text_17856e"
+    >
+      Some content
+    </div>
+  </details>
+</DocumentFragment>
+`;
+
+exports[`Details > renders closed by default with the given summary text and content 1`] = `
+<DocumentFragment>
+  <details
+    class="_details_17856e"
+    data-component="details"
+  >
+    <summary
+      class="_summary_17856e"
+    >
+      <span
+        class="_summary-text_17856e"
+      >
+        Help with nationality
+      </span>
+    </summary>
+    <div
+      class="_text_17856e"
+    >
+      Some content
+    </div>
+  </details>
+</DocumentFragment>
+`;
+
+exports[`Details > renders open when the open prop is set 1`] = `
+<DocumentFragment>
+  <details
+    class="_details_17856e"
+    data-component="details"
+    open=""
+  >
+    <summary
+      class="_summary_17856e"
+    >
+      <span
+        class="_summary-text_17856e"
+      >
+        Help with nationality
+      </span>
+    </summary>
+    <div
+      class="_text_17856e"
+    >
+      Some content
+    </div>
+  </details>
+</DocumentFragment>
+`;
+
+exports[`Details > toggles open when the summary is clicked 1`] = `
+<DocumentFragment>
+  <details
+    class="_details_17856e"
+    data-component="details"
+    open=""
+  >
+    <summary
+      class="_summary_17856e"
+    >
+      <span
+        class="_summary-text_17856e"
+      >
+        Help with nationality
+      </span>
+    </summary>
+    <div
+      class="_text_17856e"
+    >
+      Some content
+    </div>
+  </details>
+</DocumentFragment>
+`;
