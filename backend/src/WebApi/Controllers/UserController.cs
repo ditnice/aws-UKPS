@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
@@ -10,6 +11,7 @@ namespace UKPS.Api.WebApi.Controllers;
 /// <summary>
 /// Controller responsible for managing user-related operations.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("users")]
 public class UserController(IUserService userService) : ControllerBase

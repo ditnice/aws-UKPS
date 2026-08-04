@@ -95,6 +95,10 @@ builder.Services.AddOpenApi(options =>
 
 builder.Services.AddHealthChecks();
 
+builder.AddAwsBearerAuthentication();
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -109,6 +113,7 @@ app.UseHttpsRedirection();
 // Use CORS middleware
 app.UseCors();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

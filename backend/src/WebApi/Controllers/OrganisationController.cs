@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -12,6 +13,7 @@ namespace UKPS.Api.WebApi.Controllers;
 /// <param name="organisationService">
 /// Service used to retrieve and update organisation data and manage organisation memberships.
 /// </param>
+[Authorize]
 [ApiController]
 [Route("organisations")]
 public class OrganisationController(IOrganisationService organisationService) : ControllerBase
