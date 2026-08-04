@@ -9,7 +9,9 @@ internal static class ResultAssertionExtensions
         where TValue : notnull
         where TError : notnull
     {
-        result.IsOk.ShouldBeTrue();
+        result.IsOk.ShouldBeTrue(
+            $"The result was not a success as expected. Instead it was an error [{result.Error?.GetType()}]"
+        );
         return result.Value;
     }
 

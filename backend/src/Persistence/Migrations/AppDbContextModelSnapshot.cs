@@ -405,6 +405,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("setup_token");
 
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");

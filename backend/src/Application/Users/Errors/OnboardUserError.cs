@@ -5,7 +5,15 @@ namespace UKPS.Api.Application.Users.Errors;
 /// </summary>
 public abstract record OnboardUserError
 {
-    // TODO URP 410 - Update Onboard User Error to return when duplicate email addresses exist
+    /// <summary>
+    /// Prevents direct instantiation of onboarding errors.
+    /// </summary>
+    protected OnboardUserError() { }
+
+    /// <summary>
+    /// Indicates that a user with the specified username already exists.
+    /// </summary>
+    public sealed record UsernameAlreadyExists : OnboardUserError;
 
     /// <summary>
     /// Indicates that the specified organisation does not exist.
@@ -15,5 +23,20 @@ public abstract record OnboardUserError
     /// <summary>
     /// Indicates that the current user is not permitted to onboard a new user.
     /// </summary>
-    internal sealed record NotAllowed : OnboardUserError;
+    public sealed record NotAllowed : OnboardUserError;
+
+    internal TResult Match<TResult>(
+        Func<UsernameAlreadyExists, TResult> usernameAlreadyExists,
+        Func<InvalidOrganisation, TResult> invalidOrganisation,
+        Func<NotAllowed, TResult> notAllowed
+    )
+    {
+        return this switch
+        {
+            UsernameAlreadyExists x => usernameAlreadyExists(x),
+            InvalidOrganisation x => invalidOrganisation(x),
+            NotAllowed x => notAllowed(x),
+            _ => throw new InvalidOperationException("Unknown onboarding user error."),
+        };
+    }
 }

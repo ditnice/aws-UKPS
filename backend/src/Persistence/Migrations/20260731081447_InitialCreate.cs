@@ -504,6 +504,7 @@ namespace UKPS.Api.Persistence.Migrations
                     user_email = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     created_by = table.Column<string>(type: "text", nullable: false),
+                    consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     new_user_organisation_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>

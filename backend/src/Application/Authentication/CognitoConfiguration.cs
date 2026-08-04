@@ -17,22 +17,23 @@ public sealed record CognitoConfiguration
     public Uri? ServiceUrl { get; init; }
 
     /// <summary>
-    /// Gets the AWS access key used to authenticate requests to Cognito.
-    /// </summary>
-    public required string AccessKey { get; init; }
-
-    /// <summary>
-    /// Gets the AWS secret key used to authenticate requests to Cognito.
-    /// </summary>
-    public required string SecretKey { get; init; }
-
-    /// <summary>
     /// Gets the Cognito application client identifier.
     /// </summary>
     public required string ClientId { get; init; }
 
     /// <summary>
+    /// Gets the Cognito application client secret.
+    /// This is used to authenticate confidential clients when communicating with Amazon Cognito.
+    /// </summary>
+    public required string ClientSecret { get; init; }
+
+    /// <summary>
     /// Gets the AWS region containing the Cognito user pool.
     /// </summary>
     public required string Region { get; init; }
+
+    /// <summary>
+    /// Gets the identifier of the Cognito user pool.
+    /// </summary>
+    public required string UserPoolId { get; init; }
 }
