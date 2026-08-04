@@ -11,14 +11,10 @@ public sealed record CognitoConfiguration
     public const string SectionName = "cognito";
 
     /// <summary>
-    /// Gets an optional override for the Amazon Cognito service endpoint.
+    /// Gets the optional service URL used when connecting to Cognito.
+    /// This can be used to override the default Cognito endpoint, for example when testing locally.
     /// </summary>
-    /// <remarks>
-    /// When specified, this URI is used instead of the default Amazon Cognito
-    /// endpoint derived from <see cref="Region"/>. This can be useful when
-    /// connecting to a local or otherwise custom Cognito-compatible endpoint.
-    /// </remarks>
-    public Uri? ServiceUrlOverride { get; init; }
+    public Uri? ServiceUrl { get; init; }
 
     /// <summary>
     /// Gets the Cognito application client identifier.
@@ -40,15 +36,4 @@ public sealed record CognitoConfiguration
     /// Gets the identifier of the Cognito user pool.
     /// </summary>
     public required string UserPoolId { get; init; }
-
-    /// <summary>
-    /// Gets the Amazon Cognito service endpoint.
-    /// </summary>
-    /// <remarks>
-    /// Returns <see cref="ServiceUrlOverride"/> when an override has been configured;
-    /// otherwise, constructs the default Amazon Cognito endpoint for the configured
-    /// <see cref="Region"/>.
-    /// </remarks>
-    public Uri ServiceUrl =>
-        ServiceUrlOverride ?? new Uri($"https://cognito-idp.{Region}.amazonaws.com/");
 }

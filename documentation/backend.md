@@ -65,23 +65,7 @@ The directory structure should match the following
     └── Utilities
 ```
 
-## Configuration
-
-### DevAuthentication
-
-The `DevAuthentication` section controls the development authentication bypass.
-
-When `IsEnabled` is set to `true`, authentication challenges are bypassed and requests are automatically authenticated as a **super user**. This is intended for local development and testing only.
-
-```json
-  "DevAuthentication":{
-    "IsEnabled": true
-  }
-```
-
-**Do not enable this setting in production environments**, as it effectively grants unrestricted access without requiring authentication.
-
-### Seeding the Database on Startup
+## Seeding the Database on Startup
 
 The API can automatically seed the database with development data when it starts.
 
@@ -111,9 +95,7 @@ After the database has been reseeded, it is recommended to set `ReseedOnStartup`
 }
 ```
 
-## Development
-
-### Certificates
+## Certificates
 
 For local development, to use HTTPS you need to install certificates locally on you machine. To do this do the following:
 

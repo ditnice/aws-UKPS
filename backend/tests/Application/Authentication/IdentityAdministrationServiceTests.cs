@@ -376,7 +376,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
                         {
                             ClientId = "client-id",
                             Region = "eu-west-2",
-                            ServiceUrlOverride = new Uri("https://cognito.example.com"),
+                            ServiceUrl = new Uri("https://cognito.example.com"),
                             ClientSecret = "client-secret",
                             UserPoolId = "user-pool-id",
                         }

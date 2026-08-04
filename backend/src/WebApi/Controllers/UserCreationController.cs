@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
@@ -11,7 +10,6 @@ namespace UKPS.Api.WebApi.Controllers;
 /// Provides endpoints for creating new user accounts and managing the user
 /// onboarding process.
 /// </summary>
-[Authorize]
 [ApiController]
 [Route("users")]
 public class UserCreationController(IUserAdministrationService userAdministrationService)

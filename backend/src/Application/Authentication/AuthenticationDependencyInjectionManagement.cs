@@ -16,7 +16,9 @@ internal static class AuthenticationDependencyInjectionManagement
             CognitoConfiguration options = sp.GetRequiredService<
                 IOptions<CognitoConfiguration>
             >().Value;
-            string serviceUrl = options.ServiceUrl.AbsoluteUri;
+            string serviceUrl =
+                options.ServiceUrl?.AbsoluteUri
+                ?? $"https://cognito-idp.{options.Region}.amazonaws.com/";
             var config = new AmazonCognitoIdentityProviderConfig
             {
                 RegionEndpoint = RegionEndpoint.GetBySystemName(options.Region),

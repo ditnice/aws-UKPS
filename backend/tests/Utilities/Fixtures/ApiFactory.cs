@@ -21,11 +21,7 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
             services.AddSingleton(AuthOptions);
 
             services
-                .AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = TestAuthHandler.AuthenticationScheme;
-                    options.DefaultChallengeScheme = TestAuthHandler.AuthenticationScheme;
-                })
+                .AddAuthentication(TestAuthHandler.AuthenticationScheme)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
                     TestAuthHandler.AuthenticationScheme,
                     _ => { }

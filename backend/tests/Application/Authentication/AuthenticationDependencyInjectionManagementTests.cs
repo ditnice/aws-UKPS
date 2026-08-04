@@ -69,7 +69,7 @@ public sealed class AuthenticationDependencyInjectionManagementTests
     [Fact]
     public void AddAuthenticationServices_ShouldDeriveServiceUrlFromRegionIfServiceRulIsNotSet()
     {
-        var services = CreateServices(x => x with { ServiceUrlOverride = null });
+        var services = CreateServices(x => x with { ServiceUrl = null });
         using var provider = services.BuildServiceProvider();
 
         CognitoConfiguration options = provider
@@ -107,7 +107,7 @@ public sealed class AuthenticationDependencyInjectionManagementTests
         {
             ClientId = "client-id",
             Region = "region",
-            ServiceUrlOverride = new Uri("https://cognito.example.com"),
+            ServiceUrl = new Uri("https://cognito.example.com"),
             ClientSecret = "client-secret",
             UserPoolId = "user-pool-id",
         };
