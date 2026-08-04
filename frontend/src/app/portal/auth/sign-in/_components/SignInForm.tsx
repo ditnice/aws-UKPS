@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Button } from '@nice-digital/nds-button'
 
 import { Details } from '@/components/Details/Details'
+import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 
@@ -21,24 +22,6 @@ const signInSchema = z.object({
 })
 
 type SignInFormValues = z.input<typeof signInSchema>
-
-function getFirstError(errors: unknown[]) {
-  const firstError = errors[0]
-
-  if (!firstError) {
-    return undefined
-  }
-
-  if (typeof firstError === 'string') {
-    return firstError
-  }
-
-  if (typeof firstError === 'object' && 'message' in firstError) {
-    return String(firstError.message)
-  }
-
-  return String(firstError)
-}
 
 export function SignInForm() {
   const form = useForm({
@@ -70,7 +53,7 @@ export function SignInForm() {
     >
       <form.Field name="email">
         {(field) => {
-          const errorMessage = getFirstError(field.state.meta.errors)
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 
           return (
             <Input
@@ -93,7 +76,7 @@ export function SignInForm() {
 
       <form.Field name="password">
         {(field) => {
-          const errorMessage = getFirstError(field.state.meta.errors)
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 
           return (
             <PasswordInput
