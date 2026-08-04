@@ -9,6 +9,8 @@ import { Button } from '@nice-digital/nds-button'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 
+import styles from './SignInMfaForm.module.scss'
+
 import type { ChangeEvent } from 'react'
 
 function normaliseSecurityCode(value: string) {
@@ -86,9 +88,9 @@ export function SignInMfaForm() {
       </Button>
 
       {/* TODO - link this up when the page is created */}
-      <br />
-      <br />
-      <Link href="/">Having trouble?</Link>
+      <p className={styles.helpLink}>
+        <Link href="/">Having trouble?</Link>
+      </p>
     </form>
   )
 }
