@@ -21,6 +21,11 @@ export const componentDefinitions = [
     slug: 'alphabet',
   },
   {
+    description: 'Help users go back to the previous page in a multi-page transaction.',
+    label: 'Back link',
+    slug: 'back-link',
+  },
+  {
     description: 'Show a page location within a hierarchy.',
     label: 'Breadcrumbs',
     slug: 'breadcrumbs',

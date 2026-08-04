@@ -1,0 +1,23 @@
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.back-link {
+  @include typography.font-size(p);
+  display: inline-block;
+  margin-bottom: utils.rem(spacing.$medium);
+  padding-left: utils.rem(14);
+  position: relative;
+
+  &:before {
+    border-bottom: utils.rem(1) solid currentColor;
+    border-left: utils.rem(1) solid currentColor;
+    content: '';
+    height: utils.rem(7);
+    left: utils.rem(2);
+    position: absolute;
+    top: utils.rem(8);
+    transform: rotate(45deg);
+    width: utils.rem(7);
+  }
+}
