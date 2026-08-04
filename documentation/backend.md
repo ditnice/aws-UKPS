@@ -2,6 +2,7 @@
 
 The directory structure should match the following
 
+```
 ├── src
 │ ├── Application (Organised by domain)
 │ │ ├── Common
@@ -46,22 +47,23 @@ The directory structure should match the following
 │ │ └── Identity
 │ └── Properties
 └── tests
-├── Application
-│ ├── Common
-│ ├── Organisations
-│ └── Users
-├── Integration
-├── Persistence
-├── TestResults
-│ └── Coverage
-├── Utilities
-│ ├── AssertionHelpers
-│ ├── Data
-│ ├── Fixtures
-│ └── Harnesses
-└── WebApi
-├── Controllers
-└── Utilities
+  ├── Application
+  │ ├── Common
+  │ ├── Organisations
+  │ └── Users
+  ├── Integration
+  ├── Persistence
+  ├── TestResults
+  │ └── Coverage
+  ├── Utilities
+  │ ├── AssertionHelpers
+  │ ├── Data
+  │ ├── Fixtures
+  │ └── Harnesses
+  └── WebApi
+    ├── Controllers
+    └── Utilities
+```
 
 ## Configuration
 
