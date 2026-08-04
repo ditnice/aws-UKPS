@@ -62,6 +62,11 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             Code = "234523",
             AuthenticationSession = "8743qfu34_gcfp3984fcn)3o4h34c98f349c_8h34",
         };
+    private readonly AuthenticationCredentialsDto _validAuthenticationCredentials = new()
+    {
+        AccessToken = "access-token",
+        RefreshToken = "refresh-token",
+    };
 
     public AuthenticationControllerTests(WebApplicationFactory<Program> factory)
     {
@@ -86,14 +91,9 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task Login_ShouldSetAccessTokenCookieOnSuccess()
     {
-        var accessToken = "48b5becd-f98c-4897-98aa-be37eecb6a68";
         _mockedLoginService
             .Login(Arg.Any<LoginRequest>(), Arg.Any<CancellationToken>())
-            .Returns(
-                InitiatedAuthenticationResult.Ok(
-                    new AuthenticationCredentialsDto() { AccessToken = accessToken }
-                )
-            );
+            .Returns(InitiatedAuthenticationResult.Ok(_validAuthenticationCredentials));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(LoginUrl, UriKind.Relative),
@@ -103,7 +103,10 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        AssertCookieExistsAndValidateCookie(response.Headers, accessToken);
+        AssertCookieExistsAndValidateCookie(
+            response.Headers,
+            _validAuthenticationCredentials.AccessToken
+        );
     }
 
     [Fact]
@@ -180,17 +183,12 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task RespondToMultiFactorAuthenticationChallenge_ShouldSetAccessTokenCookieOnSuccess()
     {
-        var accessToken = "48b5becd-f98c-4897-98aa-be37eecb6a68";
         _mockedLoginService
             .RespondToMultiFactorAuthenticationChallenge(
                 Arg.Any<RespondToMultiFactorAuthenticationChallengeCommand>(),
                 Arg.Any<CancellationToken>()
             )
-            .Returns(
-                InitiatedAuthenticationResult.Ok(
-                    new AuthenticationCredentialsDto() { AccessToken = accessToken }
-                )
-            );
+            .Returns(InitiatedAuthenticationResult.Ok(_validAuthenticationCredentials));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(RespondToMultiFactorAuthenticationChallengeUrl, UriKind.Relative),
@@ -200,7 +198,10 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        AssertCookieExistsAndValidateCookie(response.Headers, accessToken);
+        AssertCookieExistsAndValidateCookie(
+            response.Headers,
+            _validAuthenticationCredentials.AccessToken
+        );
     }
 
     [Fact]

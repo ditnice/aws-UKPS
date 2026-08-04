@@ -261,7 +261,11 @@ internal class CognitoIdentityService : IIdentityService
                 );
             }
 
-            var response = new AuthenticationCredentialsDto { AccessToken = auth.AccessToken };
+            var response = new AuthenticationCredentialsDto
+            {
+                AccessToken = auth.AccessToken,
+                RefreshToken = auth.RefreshToken,
+            };
             return InitiatedAuthenticationResult.Ok(response);
         }
         catch (NotAuthorizedException)
