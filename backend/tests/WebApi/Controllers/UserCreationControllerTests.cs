@@ -11,6 +11,7 @@ using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -40,6 +41,10 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
                 });
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
+                builder.UseSetting(
+                    $"{DevAuthenticationConfiguration.SectionName}:{nameof(DevAuthenticationConfiguration.IsEnabled)}",
+                    $"{true}"
+                );
             })
             .CreateClient();
     }

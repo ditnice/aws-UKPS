@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using UKPS.Api.Application.Authentication;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.WebApi;
 
@@ -10,6 +12,23 @@ internal static class AwsAuthenticationExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
+        DevAuthenticationConfiguration devAuthenticationConfiguration =
+            builder
+                .Configuration.GetSection(DevAuthenticationConfiguration.SectionName)
+                .Get<DevAuthenticationConfiguration>()
+            ?? new DevAuthenticationConfiguration();
+
+        if (devAuthenticationConfiguration.IsEnabled)
+        {
+            ConfigureDevAuthentication(builder.Services);
+            return;
+        }
+
+        ConfigureStandardAuthentication(builder);
+    }
+
+    private static void ConfigureStandardAuthentication(WebApplicationBuilder builder)
+    {
         builder
             .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -41,6 +60,23 @@ internal static class AwsAuthenticationExtensions
                     OnTokenValidated = ctx => HandleOnTokenValidated(ctx, configuration),
                 };
             });
+    }
+
+    private static void ConfigureDevAuthentication(IServiceCollection services)
+    {
+        var authOptions = new DevAuthenticationOptions();
+        services.AddSingleton(authOptions);
+
+        services
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = DevAuthHandler.AuthenticationScheme;
+                options.DefaultChallengeScheme = DevAuthHandler.AuthenticationScheme;
+            })
+            .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>(
+                DevAuthHandler.AuthenticationScheme,
+                _ => { }
+            );
     }
 
     private static CognitoConfiguration RetrieveConfiguration(WebApplicationBuilder builder)
