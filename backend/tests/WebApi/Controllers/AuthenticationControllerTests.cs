@@ -41,7 +41,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     private const string VerifyMultiFactorAuthenticationUrl = "/auth/verify-mfa";
 
     private readonly DateTime _currentDateTime = new(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc);
-    private DateTimeOffset _currentDateTimOffset => new(_currentDateTime, TimeSpan.Zero);
+    private DateTimeOffset CurrentDateTimOffset => new(_currentDateTime, TimeSpan.Zero);
     private readonly IIdentityAdministrationService _mockedAuthorisationService =
         Substitute.For<IIdentityAdministrationService>();
     private readonly ILoginService _mockedLoginService = Substitute.For<ILoginService>();
@@ -684,9 +684,10 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         Cookie[] allCookies = [accessCookie, refreshCookie, csrfCookie];
 
         accessCookie.Value.ShouldBe(validAuthenticationCredentials.AccessToken);
-        accessCookie.Expires.ShouldBe(_currentDateTimOffset.AddMinutes(15));
+        accessCookie.Expires.ShouldBe(CurrentDateTimOffset.AddMinutes(20));
 
         refreshCookie.Value.ShouldBe(validAuthenticationCredentials.RefreshToken);
+        refreshCookie.Path.ShouldBe("/auth/refresh");
 
         csrfCookie.Value.ShouldNotBeNullOrEmpty();
         csrfCookie.HttpOnly.ShouldBeFalse();
@@ -696,10 +697,13 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             cookie.Secure.ShouldBeTrue();
             cookie.SameSite.ShouldBe(SameSiteMode.Strict);
         }
+        foreach (var cookie in (Cookie[])[accessCookie, csrfCookie])
+        {
+            cookie.Path.ShouldBe("/");
+        }
         foreach (var cookie in (Cookie[])[refreshCookie, csrfCookie])
         {
-            cookie.Path.ShouldBe("/auth/refresh");
-            cookie.Expires.ShouldBe(_currentDateTimOffset.AddDays(14));
+            cookie.Expires.ShouldBe(CurrentDateTimOffset.AddHours(8));
         }
         foreach (var cookie in (Cookie[])[accessCookie, refreshCookie])
         {

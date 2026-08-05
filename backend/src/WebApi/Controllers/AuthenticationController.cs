@@ -31,6 +31,10 @@ public class AuthenticationController : ControllerBase
     private const string CsrfHeaderName = "X-CSRF-Token";
     private const string RefreshCookieName = "refresh_token";
 
+    private readonly TimeSpan _accessTokenValidity = TimeSpan.FromMinutes(15);
+    private readonly TimeSpan _accessTokenRefreshThreshold = TimeSpan.FromMinutes(5);
+    private readonly TimeSpan _refreshTokenValidity = TimeSpan.FromHours(8);
+
     private readonly ILoginService _loginService;
     private readonly IIdentityAdministrationService _authorisationAdministrationService;
     private readonly IDateTimeProvider _dateTimeProvider;
@@ -379,8 +383,7 @@ public class AuthenticationController : ControllerBase
 
     private ActionResult HandleLoginSuccess(AuthenticationCredentialsDto dto)
     {
-        TimeSpan accessTokenLifetime = TimeSpan.FromMinutes(15);
-        TimeSpan refreshTokenLifetime = TimeSpan.FromDays(14);
+        TimeSpan accessTokenLifetime = _accessTokenValidity + _accessTokenRefreshThreshold;
         Response.Cookies.Append(
             "access_token",
             dto.AccessToken,
@@ -407,7 +410,7 @@ public class AuthenticationController : ControllerBase
                 HttpOnly = true,
                 Secure = true, // HTTPS only
                 SameSite = SameSiteMode.Strict,
-                Expires = _dateTimeProvider.GetOffsetUtcNow() + refreshTokenLifetime,
+                Expires = _dateTimeProvider.GetOffsetUtcNow() + _refreshTokenValidity,
             }
         );
 
@@ -417,11 +420,11 @@ public class AuthenticationController : ControllerBase
             csrfToken,
             new CookieOptions
             {
-                Path = authRefreshPath,
+                Path = "/",
                 HttpOnly = false,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = _dateTimeProvider.GetOffsetUtcNow() + refreshTokenLifetime,
+                Expires = _dateTimeProvider.GetOffsetUtcNow() + _refreshTokenValidity,
             }
         );
 

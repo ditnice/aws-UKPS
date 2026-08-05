@@ -122,32 +122,41 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         });
     }
 
-    public Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
+    public async Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
         string refreshToken,
         CancellationToken cancellationToken
     )
     {
         LogRefreshingCognitoToken(_options.Value.ClientId, refreshToken?.Length ?? 0);
-        return SendCognitoAuthRequest(async () =>
+        try
         {
-            var cognitoResponse = await _cognito.GetTokensFromRefreshTokenAsync(
-                new GetTokensFromRefreshTokenRequest
-                {
-                    ClientId = _options.Value.ClientId,
-                    ClientSecret = _options.Value.ClientSecret,
-                    RefreshToken = refreshToken,
-                },
-                cancellationToken
+            return await SendCognitoAuthRequest(async () =>
+            {
+                var cognitoResponse = await _cognito.GetTokensFromRefreshTokenAsync(
+                    new GetTokensFromRefreshTokenRequest
+                    {
+                        ClientId = _options.Value.ClientId,
+                        ClientSecret = _options.Value.ClientSecret,
+                        RefreshToken = refreshToken,
+                    },
+                    cancellationToken
+                );
+                return cognitoResponse is null
+                    ? null
+                    : new()
+                    {
+                        ChallengeName = null,
+                        Session = null,
+                        AuthenticationResult = cognitoResponse.AuthenticationResult,
+                    };
+            });
+        }
+        catch (RefreshTokenReuseException)
+        {
+            return InitiatedAuthenticationResult.Err(
+                new InitiateAuthenticationError.Unauthorised()
             );
-            return cognitoResponse is null
-                ? null
-                : new()
-                {
-                    ChallengeName = null,
-                    Session = null,
-                    AuthenticationResult = cognitoResponse.AuthenticationResult,
-                };
-        });
+        }
     }
 
     public async Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
