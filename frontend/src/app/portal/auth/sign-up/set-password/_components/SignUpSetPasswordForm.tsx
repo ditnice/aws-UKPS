@@ -48,7 +48,8 @@ export function SignUpSetPasswordForm() {
     >
       <p>Your password must:</p>
       <ul>
-        <li>be at least 14 characters long</li>
+        {/* TODO - update TF to move from 14 to 8 */}
+        <li>be at least 8 characters long</li>
       </ul>
 
       <form.Field name="password">

@@ -1,7 +1,6 @@
 import Link from 'next/link'
 
-import { PageHeader } from '@nice-digital/nds-page-header'
-
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { Tag } from '@/components/Tag/Tag'
 
 import styles from '../page.module.scss'

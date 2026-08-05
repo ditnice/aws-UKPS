@@ -3,7 +3,6 @@ import { Suspense } from 'react'
 
 import { Button } from '@nice-digital/nds-button'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
-import { PageHeader } from '@nice-digital/nds-page-header'
 
 import {
   buildUserListHref,
@@ -11,6 +10,7 @@ import {
   type UserListSearchParams,
 } from '@/app/portal/_utils/userListQuery'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
 import { OrganisationFilters } from './_components/OrganisationFilters'

@@ -5,10 +5,10 @@ import { QRCodeSVG } from 'qrcode.react'
 import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
-import { PageHeader } from '@nice-digital/nds-page-header'
 
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import type { ChangeEvent } from 'react'
 
@@ -55,7 +55,10 @@ export default function SignUpSetMfa() {
 
   return (
     <>
-      <PageHeader heading="Set up two-factor authentication"></PageHeader>
+      <PageHeader
+        heading="Set up two-factor authentication"
+        verticalPadding="top-only"
+      ></PageHeader>
       <p>
         To help protect your account, we use two-factor authentication. To enable two-factor
         authentication scan the QR code below using your chosen authenticator app.

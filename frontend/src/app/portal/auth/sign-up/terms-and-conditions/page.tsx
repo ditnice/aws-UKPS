@@ -1,6 +1,7 @@
 import { Button } from '@nice-digital/nds-button'
-import { PageHeader } from '@nice-digital/nds-page-header'
 import { Panel } from '@nice-digital/nds-panel'
+
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import styles from './page.module.scss'
 import { PrintPageLink } from './PrintPageLink'
@@ -8,7 +9,7 @@ import { PrintPageLink } from './PrintPageLink'
 export default function SignUpTermsAndConditions() {
   return (
     <>
-      <PageHeader heading="Terms and conditions"></PageHeader>
+      <PageHeader heading="Terms and conditions" verticalPadding="top-only"></PageHeader>
 
       <p>Read and accept the terms and conditions before continuing.</p>
 

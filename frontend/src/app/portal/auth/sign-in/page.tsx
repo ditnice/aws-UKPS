@@ -1,11 +1,11 @@
-import { PageHeader } from '@nice-digital/nds-page-header'
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import { SignInForm } from './_components/SignInForm'
 
 export default function SignIn() {
   return (
     <>
-      <PageHeader heading="Sign-in"></PageHeader>
+      <PageHeader heading="Sign-in" verticalPadding="top-only"></PageHeader>
 
       <SignInForm />
     </>
