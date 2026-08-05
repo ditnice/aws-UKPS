@@ -15,21 +15,19 @@ describe('PageHeader', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('applies the top-only vertical padding class', () => {
-    const { asFragment, container } = render(
-      <PageHeader heading="Sign-in" verticalPadding="top-only" />,
-    )
+  it('applies the page header wrapper class', () => {
+    const { asFragment, container } = render(<PageHeader heading="Sign-in" />)
 
-    expect(container.querySelector('.page-header--vertical-padding-top-only')).toBeDefined()
+    expect(container.querySelector('.page-header-wrapper')).toBeDefined()
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('preserves a supplied className with top-only vertical padding', () => {
+  it('preserves a supplied className on the wrapper', () => {
     const { asFragment, container } = render(
-      <PageHeader className="custom-page-header" heading="Sign-in" verticalPadding="top-only" />,
+      <PageHeader className="custom-page-header" heading="Sign-in" />,
     )
 
-    const pageHeader = container.querySelector('.page-header--vertical-padding-top-only')
+    const pageHeader = container.querySelector('.page-header-wrapper')
 
     expect(pageHeader?.classList.contains('custom-page-header')).toBe(true)
     expect(asFragment()).toMatchSnapshot()

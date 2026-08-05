@@ -55,10 +55,7 @@ export default function SignUpSetMfa() {
 
   return (
     <>
-      <PageHeader
-        heading="Set up two-factor authentication"
-        verticalPadding="top-only"
-      ></PageHeader>
+      <PageHeader heading="Set up two-factor authentication"></PageHeader>
       <p>
         To help protect your account, we use two-factor authentication. To enable two-factor
         authentication scan the QR code below using your chosen authenticator app.

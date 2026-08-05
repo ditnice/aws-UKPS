@@ -9,29 +9,20 @@ import './PageHeader.scss'
 
 import type { ReactNode } from 'react'
 
-type PageHeaderVerticalPadding = NdsPageHeaderProps['verticalPadding'] | 'top-only'
-
-export interface PageHeaderProps extends Omit<
-  NdsPageHeaderProps,
-  'breadcrumbs' | 'className' | 'verticalPadding'
-> {
+export interface PageHeaderProps extends NdsPageHeaderProps {
   backLink?: ReactNode
-  breadcrumbs?: ReactNode
   className?: string
-  verticalPadding?: PageHeaderVerticalPadding
 }
 
-export function PageHeader({ backLink, className, verticalPadding, ...props }: PageHeaderProps) {
-  const isTopOnly = verticalPadding === 'top-only'
-  const wrapperClassName = clsx(className, isTopOnly && 'page-header--vertical-padding-top-only')
+export function PageHeader({ backLink, breadcrumbs, className, ...props }: PageHeaderProps) {
+  const pageHeaderProps: NdsPageHeaderProps = {
+    ...props,
+    breadcrumbs: backLink ?? breadcrumbs,
+  }
 
   return (
-    <div className={wrapperClassName || undefined}>
-      <NdsPageHeader
-        {...(props as NdsPageHeaderProps)}
-        breadcrumbs={backLink ?? props.breadcrumbs}
-        verticalPadding={isTopOnly ? undefined : verticalPadding}
-      />
+    <div className={clsx('page-header-wrapper', className)}>
+      <NdsPageHeader {...pageHeaderProps} />
     </div>
   )
 }

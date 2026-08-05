@@ -10,7 +10,7 @@ describe('SignUpSetPasswordForm', () => {
     render(<SignUpSetPasswordForm />)
 
     expect(screen.getByText('Your password must:')).toBeDefined()
-    expect(screen.getByText('be at least 14 characters long')).toBeDefined()
+    expect(screen.getByText('be at least 8 characters long')).toBeDefined()
     expect(screen.getByLabelText('Password')).toBeDefined()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDefined()
   })

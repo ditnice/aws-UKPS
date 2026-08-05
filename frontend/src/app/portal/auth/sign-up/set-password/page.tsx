@@ -10,8 +10,8 @@ export default function SignUpSetPassword() {
       <PageHeader
         heading="Create a password"
         backLink={<BackLink href="#">Back</BackLink>}
-        verticalPadding="top-only"
       ></PageHeader>
+
       <SignUpSetPasswordForm />
     </>
   )

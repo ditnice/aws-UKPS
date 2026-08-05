@@ -9,7 +9,7 @@ import { PrintPageLink } from './PrintPageLink'
 export default function SignUpTermsAndConditions() {
   return (
     <>
-      <PageHeader heading="Terms and conditions" verticalPadding="top-only"></PageHeader>
+      <PageHeader heading="Terms and conditions"></PageHeader>
 
       <p>Read and accept the terms and conditions before continuing.</p>
 

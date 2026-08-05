@@ -47,8 +47,8 @@ export function Examples() {
       <Example title="verticalPadding - loose">
         <PageHeader heading="I have vertical padding!" verticalPadding="loose" />
       </Example>
-      <Example title="verticalPadding - top-only">
-        <PageHeader heading="I have vertical padding!" verticalPadding="top-only" />
+      <Example title="verticalPadding - default">
+        <PageHeader heading="I have vertical padding!" />
       </Example>
       <Example fullWidth title="Full width light variant">
         <PageHeader

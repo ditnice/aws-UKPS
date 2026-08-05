@@ -1,9 +1,9 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PageHeader > applies the top-only vertical padding class 1`] = `
+exports[`PageHeader > applies the page header wrapper class 1`] = `
 <DocumentFragment>
   <div
-    class="page-header--vertical-padding-top-only"
+    class="page-header-wrapper"
   >
     <div
       class="page-header "
@@ -21,7 +21,9 @@ exports[`PageHeader > applies the top-only vertical padding class 1`] = `
 
 exports[`PageHeader > prefers backLink over breadcrumbs 1`] = `
 <DocumentFragment>
-  <div>
+  <div
+    class="page-header-wrapper"
+  >
     <div
       class="page-header "
       data-component="page-header"
@@ -47,10 +49,10 @@ exports[`PageHeader > prefers backLink over breadcrumbs 1`] = `
 </DocumentFragment>
 `;
 
-exports[`PageHeader > preserves a supplied className with top-only vertical padding 1`] = `
+exports[`PageHeader > preserves a supplied className on the wrapper 1`] = `
 <DocumentFragment>
   <div
-    class="custom-page-header page-header--vertical-padding-top-only"
+    class="page-header-wrapper custom-page-header"
   >
     <div
       class="page-header "
@@ -68,7 +70,9 @@ exports[`PageHeader > preserves a supplied className with top-only vertical padd
 
 exports[`PageHeader > renders a back link in the page header navigation slot 1`] = `
 <DocumentFragment>
-  <div>
+  <div
+    class="page-header-wrapper"
+  >
     <div
       class="page-header "
       data-component="page-header"
@@ -96,7 +100,9 @@ exports[`PageHeader > renders a back link in the page header navigation slot 1`]
 
 exports[`PageHeader > renders the heading 1`] = `
 <DocumentFragment>
-  <div>
+  <div
+    class="page-header-wrapper"
+  >
     <div
       class="page-header "
       data-component="page-header"

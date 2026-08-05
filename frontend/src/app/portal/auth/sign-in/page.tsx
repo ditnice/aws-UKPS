@@ -5,7 +5,7 @@ import { SignInForm } from './_components/SignInForm'
 export default function SignIn() {
   return (
     <>
-      <PageHeader heading="Sign-in" verticalPadding="top-only"></PageHeader>
+      <PageHeader heading="Sign-in"></PageHeader>
 
       <SignInForm />
     </>
