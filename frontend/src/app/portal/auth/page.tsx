@@ -1,15 +1,22 @@
 'use client'
 
 import { QRCodeSVG } from 'qrcode.react'
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 
-import { postAuthSetupUser, postAuthVerifyMfa } from '@/client/generated/sdk.gen'
+import {
+  postAuthSetupUser,
+  postAuthVerifyMfa,
+  postAuthLogin,
+  postAuthMfa,
+} from '@/client/generated/sdk.gen'
+import { UkpsChallengeType } from '@/client/generated/types.gen'
 
-export default function ExampleAuthenticationPage() {
-  const [otpLink, setOtpLink] = useState<string | undefined>()
-  const [authSession, setAuthSession] = useState<string | undefined>()
-  const [setupToken, setSetupToken] = useState<string | undefined>()
-
+type SetupUserProps = {
+  setOtpLink: Dispatch<SetStateAction<string | undefined>>
+  setAuthSession: Dispatch<SetStateAction<string | undefined>>
+  setSetupToken: Dispatch<SetStateAction<string | undefined>>
+}
+const SetupUser = ({ setSetupToken, setOtpLink, setAuthSession }: SetupUserProps) => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     const formData = new FormData(event.target as HTMLFormElement)
@@ -24,14 +31,37 @@ export default function ExampleAuthenticationPage() {
           setupToken,
           newPassword,
         },
+        credentials: 'include',
       })
       setOtpLink(response.data?.otpAuthUri)
-      setAuthSession(response.data?.authenticationSessionId)
+      setAuthSession(response.data?.authenticationSession)
     } catch (error) {
       console.error('Error:', error)
     }
   }
+  return (
+    <form onSubmit={handleSubmit}>
+      <label>
+        Setup Token:
+        <input type="text" name="setupToken" required />
+      </label>
+      <br />
+      <label>
+        New Password:
+        <input type="password" name="newPassword" required />
+      </label>
+      <br />
+      <button type="submit">Submit</button>
+    </form>
+  )
+}
 
+type SetupMfaProps = {
+  authSession: string
+  setupToken: string
+  otpLink: string
+}
+const SetupMfa = ({ authSession, setupToken, otpLink }: SetupMfaProps) => {
   const handleVerifyMfaSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     const formData = new FormData(event.target as HTMLFormElement)
@@ -44,7 +74,7 @@ export default function ExampleAuthenticationPage() {
       const response = await postAuthVerifyMfa({
         body: {
           code,
-          authenticationSessionId: authSession,
+          authenticationSession: authSession,
           setupToken,
         },
       })
@@ -55,25 +85,8 @@ export default function ExampleAuthenticationPage() {
   }
 
   return (
-    <>
-      <h1>Auth</h1>
-      {JSON.stringify({ otpLink, authSession })}
-      <form onSubmit={handleSubmit}>
-        <label>
-          Setup Token:
-          <input type="text" name="setupToken" required />
-        </label>
-        <br />
-        <label>
-          New Password:
-          <input type="password" name="newPassword" required />
-        </label>
-        <br />
-        <button type="submit">Submit</button>
-      </form>
-
-      <div>{otpLink && <QRCodeSVG value={otpLink} size={256} level="M" />}</div>
-
+    <div>
+      <QRCodeSVG value={otpLink} size={256} level="M" />
       <form onSubmit={handleVerifyMfaSubmit}>
         <label>
           Code:
@@ -82,6 +95,97 @@ export default function ExampleAuthenticationPage() {
         <br />
         <button type="submit">Submit</button>
       </form>
+    </div>
+  )
+}
+
+const UserLogin = () => {
+  const [challengeAuthSession, setChallengeAuthSession] = useState<string | undefined>(undefined)
+  const handleLoginSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const formData = new FormData(event.target as HTMLFormElement)
+    const username = formData.get('username') as string
+    const password = formData.get('password') as string
+
+    try {
+      debugger
+      const response = await postAuthLogin({ body: { username, password }, credentials: 'include' })
+      if (response.error?.challengeType === 'MultiFactorAuthenticationRequired') {
+        console.log('MFA required, challenge type:', response.error.challengeType)
+        setChallengeAuthSession(response.error.authenticationSession ?? undefined)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
+
+  const handleMfaSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const formData = new FormData(event.target as HTMLFormElement)
+    const username = formData.get('username') as string
+    const code = formData.get('mfaCode') as string
+
+    if (!challengeAuthSession) throw Error()
+
+    const response = await postAuthMfa({
+      body: { username, code, authenticationSession: challengeAuthSession },
+      credentials: 'include',
+    })
+  }
+
+  return (
+    <div>
+      <form onSubmit={handleLoginSubmit}>
+        <label>
+          Username:
+          <input type="text" name="username" required />
+        </label>
+        <br />
+        <label>
+          Password:
+          <input type="password" name="password" required />
+        </label>
+        <br />
+        <button type="submit">Login</button>
+      </form>
+      {challengeAuthSession && (
+        <form onSubmit={handleMfaSubmit}>
+          <label>
+            Username:
+            <input type="text" name="username" required />
+          </label>
+          <br />
+          <label>
+            MFA Code:
+            <input type="text" name="mfaCode" required />
+          </label>
+          <br />
+          <button type="submit">Verify MFA</button>
+        </form>
+      )}
+    </div>
+  )
+}
+
+export default function ExampleAuthenticationPage() {
+  const [otpLink, setOtpLink] = useState<string | undefined>(undefined)
+  const [authSession, setAuthSession] = useState<string | undefined>(undefined)
+  const [setupToken, setSetupToken] = useState<string | undefined>(undefined)
+
+  return (
+    <>
+      <h1>Auth</h1>
+      <SetupUser
+        setOtpLink={setOtpLink}
+        setAuthSession={setAuthSession}
+        setSetupToken={setSetupToken}
+      />
+      {otpLink && authSession && setupToken && (
+        <SetupMfa otpLink={otpLink} authSession={authSession} setupToken={setupToken} />
+      )}
+      <UserLogin />
+
+      {JSON.stringify({ otpLink, authSession })}
     </>
   )
 }

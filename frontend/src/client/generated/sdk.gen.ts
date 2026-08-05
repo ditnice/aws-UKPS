@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersData, PostUsersErrors, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersData, PostUsersErrors, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -31,6 +31,18 @@ export const postAuthLogin = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 /**
+ * Completes a multi-factor authentication challenge for an existing authentication session.
+ */
+export const postAuthMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthMfaData, ThrowOnError>): RequestResult<PostAuthMfaResponses, PostAuthMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthMfaResponses, PostAuthMfaErrors, ThrowOnError>({
+    url: '/auth/mfa',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Validates whether a user setup token is valid and can be used to complete the user setup process.
  */
 export const getAuthValidateSetupToken = <ThrowOnError extends boolean = false>(options: Options<GetAuthValidateSetupTokenData, ThrowOnError>): RequestResult<GetAuthValidateSetupTokenResponses, GetAuthValidateSetupTokenErrors, ThrowOnError> => (options.client ?? client).get<GetAuthValidateSetupTokenResponses, GetAuthValidateSetupTokenErrors, ThrowOnError>({ url: '/auth/validate-setup-token', ...options });
@@ -47,7 +59,11 @@ export const postAuthSetupUser = <ThrowOnError extends boolean = false>(options:
     }
 });
 
-export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthVerifyMfaData, ThrowOnError>): RequestResult<PostAuthVerifyMfaResponses, unknown, ThrowOnError> => (options.client ?? client).post<PostAuthVerifyMfaResponses, unknown, ThrowOnError>({
+/**
+ * Verifies the user's multi-factor authentication setup by validating the
+ * provided authentication code.
+ */
+export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthVerifyMfaData, ThrowOnError>): RequestResult<PostAuthVerifyMfaResponses, PostAuthVerifyMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthVerifyMfaResponses, PostAuthVerifyMfaErrors, ThrowOnError>({
     url: '/auth/verify-mfa',
     ...options,
     headers: {
