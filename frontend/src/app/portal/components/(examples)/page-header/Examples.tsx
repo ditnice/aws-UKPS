@@ -2,7 +2,9 @@
 
 import { Breadcrumb, Breadcrumbs } from '@nice-digital/nds-breadcrumbs'
 import { Button } from '@nice-digital/nds-button'
-import { PageHeader } from '@nice-digital/nds-page-header'
+
+import { BackLink } from '@/components/BackLink/BackLink'
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import { Example } from '../../_components/Example'
 
@@ -39,8 +41,14 @@ export function Examples() {
           }
         />
       </Example>
-      <Example title="verticalPadding">
+      <Example title="Header with back link">
+        <PageHeader backLink={<BackLink href="#">Back</BackLink>} heading="Header with back link" />
+      </Example>
+      <Example title="verticalPadding - loose">
         <PageHeader heading="I have vertical padding!" verticalPadding="loose" />
+      </Example>
+      <Example title="verticalPadding - top-only">
+        <PageHeader heading="I have vertical padding!" verticalPadding="top-only" />
       </Example>
       <Example fullWidth title="Full width light variant">
         <PageHeader
