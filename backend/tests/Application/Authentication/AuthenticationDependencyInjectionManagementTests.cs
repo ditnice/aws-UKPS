@@ -55,26 +55,40 @@ public sealed class AuthenticationDependencyInjectionManagementTests
     {
         var services = CreateServices();
 
-        var authenticationService = Substitute.For<IIdentityService>();
         var cognito = Substitute.For<IAmazonCognitoIdentityProvider>();
 
-        services.AddScoped(_ => authenticationService);
         services.AddScoped(_ => cognito);
 
         services.AddAuthenticationServices();
 
         using var provider = services.BuildServiceProvider();
 
-        provider.GetRequiredService<IIdentityService>().ShouldBe(authenticationService);
-
         provider.GetRequiredService<IAmazonCognitoIdentityProvider>().ShouldBe(cognito);
     }
 
-    private static ServiceCollection CreateServices()
+    [Fact]
+    public void AddAuthenticationServices_ShouldDeriveServiceUrlFromRegionIfServiceRulIsNotSet()
+    {
+        var services = CreateServices(x => x with { ServiceUrl = null });
+        using var provider = services.BuildServiceProvider();
+
+        CognitoConfiguration options = provider
+            .GetRequiredService<IOptions<CognitoConfiguration>>()
+            .Value;
+        var client = provider.GetRequiredService<IAmazonCognitoIdentityProvider>();
+        client.Config.ServiceURL.ShouldBe($"https://cognito-idp.{options.Region}.amazonaws.com/");
+    }
+
+    private static ServiceCollection CreateServices(
+        Func<CognitoConfiguration, CognitoConfiguration>? modifier = null
+    )
     {
         var services = new ServiceCollection();
 
-        services.AddSingleton(Options.Create(CreateCognitoConfiguration()));
+        var configuration = modifier is null
+            ? CreateCognitoConfiguration()
+            : modifier(CreateCognitoConfiguration());
+        services.AddSingleton(Options.Create(configuration));
 
         services.AddAuthenticationServices();
 
@@ -92,7 +106,7 @@ public sealed class AuthenticationDependencyInjectionManagementTests
         new()
         {
             ClientId = "client-id",
-            Region = "eu-west-2",
+            Region = "region",
             ServiceUrl = new Uri("https://cognito.example.com"),
             ClientSecret = "client-secret",
             UserPoolId = "user-pool-id",

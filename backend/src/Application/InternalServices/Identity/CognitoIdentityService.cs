@@ -80,13 +80,13 @@ internal class CognitoIdentityService : IIdentityService
         return UpdatePasswordResult.Ok();
     }
 
-    public async Task<InitiatedAuthenticationResult> InitiateAuthentication(
+    public Task<InitiatedAuthenticationResult> InitiateAuthentication(
         string userEmail,
         string newPassword,
         CancellationToken cancellationToken
     )
     {
-        try
+        return SendCognitoAuthRequest(async () =>
         {
             AdminInitiateAuthResponse cognitoResponse = await _cognito.AdminInitiateAuthAsync(
                 new AdminInitiateAuthRequest
@@ -107,30 +107,15 @@ internal class CognitoIdentityService : IIdentityService
                 },
                 cancellationToken
             );
-
-            if (cognitoResponse?.ChallengeName is not null)
-            {
-                return InitiatedAuthenticationResult.Err(ConvertChallengeToError(cognitoResponse));
-            }
-
-            var auth = cognitoResponse?.AuthenticationResult;
-
-            if (auth is null)
-            {
-                return InitiatedAuthenticationResult.Err(
-                    new InitiateAuthenticationError.Unauthorised()
-                );
-            }
-
-            var response = new AuthenticationCredentialsDto { AccessToken = auth.AccessToken };
-            return InitiatedAuthenticationResult.Ok(response);
-        }
-        catch (NotAuthorizedException)
-        {
-            return InitiatedAuthenticationResult.Err(
-                new InitiateAuthenticationError.Unauthorised()
-            );
-        }
+            return cognitoResponse is null
+                ? null
+                : new()
+                {
+                    ChallengeName = cognitoResponse.ChallengeName,
+                    Session = cognitoResponse.Session,
+                    AuthenticationResult = cognitoResponse.AuthenticationResult,
+                };
+        });
     }
 
     public async Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
@@ -196,23 +181,113 @@ internal class CognitoIdentityService : IIdentityService
         );
     }
 
+    public async Task<InitiatedAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
+        string username,
+        string authenticationSession,
+        string code,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            return await SendCognitoAuthRequest(async () =>
+            {
+                var cognitoResponse = await _cognito.AdminRespondToAuthChallengeAsync(
+                    new AdminRespondToAuthChallengeRequest
+                    {
+                        UserPoolId = _options.Value.UserPoolId,
+                        ClientId = _options.Value.ClientId,
+                        ChallengeName = ChallengeNameType.SOFTWARE_TOKEN_MFA,
+                        Session = authenticationSession,
+                        ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
+                        {
+                            ["USERNAME"] = username,
+                            ["SOFTWARE_TOKEN_MFA_CODE"] = code,
+                            ["SECRET_HASH"] = GenerateSecretHash(
+                                username,
+                                _options.Value.ClientId,
+                                _options.Value.ClientSecret
+                            ),
+                        },
+                    },
+                    cancellationToken
+                );
+                return cognitoResponse is null
+                    ? null
+                    : new()
+                    {
+                        ChallengeName = cognitoResponse.ChallengeName,
+                        Session = cognitoResponse.Session,
+                        AuthenticationResult = cognitoResponse.AuthenticationResult,
+                    };
+            });
+        }
+        catch (CodeMismatchException)
+        {
+            return InitiatedAuthenticationResult.Err(
+                new InitiateAuthenticationError.Unauthorised()
+            );
+        }
+    }
+
+    private record AuthResponse
+    {
+        public required ChallengeNameType ChallengeName { get; init; }
+        public required string Session { get; init; }
+        public required AuthenticationResultType? AuthenticationResult { get; init; }
+    }
+
+    private static async Task<InitiatedAuthenticationResult> SendCognitoAuthRequest(
+        Func<Task<AuthResponse?>> func
+    )
+    {
+        try
+        {
+            var cognitoResponse = await func();
+
+            if (cognitoResponse?.ChallengeName is not null)
+            {
+                return InitiatedAuthenticationResult.Err(
+                    ConvertChallengeToError(cognitoResponse.ChallengeName, cognitoResponse.Session)
+                );
+            }
+
+            var auth = cognitoResponse?.AuthenticationResult;
+
+            if (auth is null)
+            {
+                return InitiatedAuthenticationResult.Err(
+                    new InitiateAuthenticationError.Unauthorised()
+                );
+            }
+
+            var response = new AuthenticationCredentialsDto { AccessToken = auth.AccessToken };
+            return InitiatedAuthenticationResult.Ok(response);
+        }
+        catch (NotAuthorizedException)
+        {
+            return InitiatedAuthenticationResult.Err(
+                new InitiateAuthenticationError.Unauthorised()
+            );
+        }
+    }
+
     private static InitiateAuthenticationError ConvertChallengeToError(
-        AdminInitiateAuthResponse cognitoResponse
+        ChallengeNameType challengeName,
+        string session
     )
     {
         var lookup = new Dictionary<ChallengeNameType, InitiateAuthenticationError>()
         {
             [ChallengeNameType.MFA_SETUP] = new InitiateAuthenticationError.Challenge(
                 UkpsChallengeType.MultiFactorAuthenticationSetupRequired,
-                cognitoResponse.Session
+                session
             ),
             [ChallengeNameType.SOFTWARE_TOKEN_MFA] = new InitiateAuthenticationError.Challenge(
                 UkpsChallengeType.MultiFactorAuthenticationRequired,
-                cognitoResponse.Session
+                session
             ),
         };
-
-        ChallengeNameType challengeName = cognitoResponse.ChallengeName;
         return lookup.TryGetValue(challengeName, out InitiateAuthenticationError? err)
             ? err
             : throw new NotSupportedException($"Unhandled challenge type [{challengeName}].");

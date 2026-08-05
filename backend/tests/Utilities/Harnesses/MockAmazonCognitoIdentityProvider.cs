@@ -9,17 +9,22 @@ internal sealed class MockAmazonCognitoIdentityProvider
     public string ValidMfaCode { get; } = "123456";
     public string ValidAuthenticationSession { get; } = "valid-auth-session";
     public string InvalidPassword { get; } = "invalid-password";
+    public MockUser TestUser { get; } =
+        new MockUser() { Username = "test-user", Password = "test-user-password-123" };
+
     public IReadOnlyCollection<MockUser> Users => _users;
 
     public IAmazonCognitoIdentityProvider Mock { get; init; } =
         Substitute.For<IAmazonCognitoIdentityProvider>();
 
-    private List<MockUser> _users = new();
+    private List<MockUser> _users;
 
     private readonly HashSet<string> _mfaSessions = new(StringComparer.Ordinal);
 
     public MockAmazonCognitoIdentityProvider()
     {
+        _users = [TestUser];
+
         Mock.WhenForAnyArgs(x => x.AdminCreateUserAsync(default!, default!))
             .Do(callInfo =>
             {
@@ -99,7 +104,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
 
                 if (!IsSessionIdValid(request.Session))
                 {
-                    throw new InvalidParameterException("Invalid authentication session.");
+                    throw new NotAuthorizedException("Invalid authentication session.");
                 }
 
                 var newSession = Guid.NewGuid().ToString();
@@ -124,10 +129,10 @@ internal sealed class MockAmazonCognitoIdentityProvider
 
                 if (!IsSessionIdValid(request.Session))
                 {
-                    throw new InvalidParameterException("Invalid authentication session.");
+                    throw new NotAuthorizedException("Invalid authentication session.");
                 }
 
-                if (!string.Equals(request.UserCode, ValidMfaCode, StringComparison.Ordinal))
+                if (!IsValidMfaToken(request.UserCode))
                 {
                     throw new CodeMismatchException("Invalid MFA code.");
                 }
@@ -152,14 +157,9 @@ internal sealed class MockAmazonCognitoIdentityProvider
             {
                 var request = callInfo.Arg<AdminRespondToAuthChallengeRequest>();
 
-                if (request.ChallengeName != ChallengeNameType.MFA_SETUP)
-                {
-                    throw new InvalidParameterException("Invalid challenge name.");
-                }
-
                 if (!IsSessionIdValid(request.Session))
                 {
-                    throw new InvalidParameterException("Invalid session.");
+                    throw new NotAuthorizedException("Invalid session.");
                 }
 
                 var username = request.ChallengeResponses["USERNAME"];
@@ -170,6 +170,12 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 if (user is null)
                 {
                     throw new UserNotFoundException($"User '{username}' not found.");
+                }
+
+                var mfaCode = request.ChallengeResponses["SOFTWARE_TOKEN_MFA_CODE"];
+                if (!IsValidMfaToken(mfaCode))
+                {
+                    throw new CodeMismatchException("Invalid MFA code.");
                 }
 
                 _users = _users.Select(x => x == user ? x with { MfaSetup = true } : x).ToList();
@@ -188,9 +194,14 @@ internal sealed class MockAmazonCognitoIdentityProvider
             });
     }
 
+    private bool IsValidMfaToken(string userCode)
+    {
+        return string.Equals(userCode, ValidMfaCode, StringComparison.Ordinal);
+    }
+
     private bool IsSessionIdValid(string session)
     {
-        return !string.Equals(ValidAuthenticationSession, session, StringComparison.Ordinal)
+        return string.Equals(ValidAuthenticationSession, session, StringComparison.Ordinal)
             || _mfaSessions.Contains(session);
     }
 

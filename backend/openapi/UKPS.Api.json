@@ -41,17 +41,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
                 }
               }
             }
@@ -61,17 +61,91 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Completes a multi-factor authentication challenge for an existing authentication session.",
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The multi-factor authentication challenge was successfully completed and an\nauthentication cookie was created."
+          },
+          "400": {
+            "description": "The supplied request was invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The authentication session or verification code was invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
                 }
               }
             }
@@ -280,7 +354,9 @@
         "tags": [
           "Authentication"
         ],
+        "summary": "Verifies the user's multi-factor authentication setup by validating the\nprovided authentication code.",
         "requestBody": {
+          "description": "The token used to cancel the operation.",
           "content": {
             "application/json": {
               "schema": {
@@ -302,7 +378,27 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "The multi-factor authentication setup was successfully verified."
+          },
+          "400": {
+            "description": "The request contained invalid data or the multi-factor authentication\nverification could not be completed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1129,6 +1225,60 @@
   },
   "components": {
     "schemas": {
+      "AuthenticationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "challengeType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UkpsChallengeType"
+              }
+            ]
+          },
+          "authenticationSession": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CreateOrganisationDto": {
         "required": [
           "organisationName",
@@ -1240,7 +1390,7 @@
       "MultiFactorAuthenticationSetupDto": {
         "required": [
           "otpAuthUri",
-          "authenticationSessionId"
+          "authenticationSession"
         ],
         "type": "object",
         "properties": {
@@ -1249,8 +1399,9 @@
             "description": "Gets the OTP authentication URI used to configure an authenticator application.",
             "format": "uri"
           },
-          "authenticationSessionId": {
-            "type": "string"
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication setup flow."
           }
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
@@ -1511,6 +1662,29 @@
           }
         }
       },
+      "RespondToMultiFactorAuthenticationChallengeCommand": {
+        "required": [
+          "username",
+          "code",
+          "authenticationSession"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The associated username for the user."
+          },
+          "code": {
+            "type": "string",
+            "description": "Gets the one-time authentication code generated by the user's\nauthenticator application."
+          },
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier associated with the\noutstanding multi-factor authentication challenge."
+          }
+        },
+        "description": "Represents the information required to respond to a multi-factor\nauthentication challenge."
+      },
       "SetupUserCommand": {
         "required": [
           "setupToken",
@@ -1529,6 +1703,14 @@
           }
         },
         "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a new password to the user."
+      },
+      "UkpsChallengeType": {
+        "enum": [
+          "MultiFactorAuthenticationRequired",
+          "MultiFactorAuthenticationSetupRequired",
+          null
+        ],
+        "type": "string"
       },
       "UpdateOrganisationDetailsDto": {
         "required": [
@@ -1702,20 +1884,25 @@
         "required": [
           "setupToken",
           "code",
-          "authenticationSessionId"
+          "authenticationSession"
         ],
         "type": "object",
         "properties": {
           "setupToken": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets the unique token associated with the user onboarding record.",
+            "format": "uuid"
           },
           "code": {
-            "type": "string"
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
           },
-          "authenticationSessionId": {
-            "type": "string"
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
           }
-        }
+        },
+        "description": "Represents the details required to verify a user's multi-factor authentication setup."
       }
     }
   },

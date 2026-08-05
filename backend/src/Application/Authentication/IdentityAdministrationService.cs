@@ -167,7 +167,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         }
 
         var result = await _identityService.AssociateSoftwareToken(
-            challenge.AuthenticationSessionId,
+            challenge.AuthenticationSession,
             cancellationToken
         );
 
