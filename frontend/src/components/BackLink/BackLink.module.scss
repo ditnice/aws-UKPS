@@ -1,9 +1,11 @@
+@use '@/styles/colours';
 @use '@/styles/spacing';
 @use '@/styles/typography';
 @use '@/styles/utils';
 
 .back-link {
   @include typography.font-size(p);
+  color: colours.$text;
   display: inline-block;
   margin-bottom: utils.rem(spacing.$medium);
   padding-left: utils.rem(14);
@@ -20,4 +22,8 @@
     transform: rotate(45deg);
     width: utils.rem(7);
   }
+}
+
+.back-link--inverse {
+  color: colours.$text-inverse;
 }

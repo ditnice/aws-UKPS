@@ -50,6 +50,18 @@ exports[`BackLink > renders the default link text 1`] = `
 </DocumentFragment>
 `;
 
+exports[`BackLink > renders the inverse variant 1`] = `
+<DocumentFragment>
+  <a
+    class="_back-link_71902c _back-link--inverse_71902c"
+    data-component="back-link"
+    href="/previous"
+  >
+    Back
+  </a>
+</DocumentFragment>
+`;
+
 exports[`BackLink > supports custom content 1`] = `
 <DocumentFragment>
   <a

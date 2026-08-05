@@ -47,4 +47,15 @@ describe('BackLink', () => {
     expect(screen.getByRole('link').classList.contains('additional-class')).toBe(true)
     expect(asFragment()).toMatchSnapshot()
   })
+
+  it('renders the inverse variant', () => {
+    const { asFragment } = render(
+      <BackLink href="/previous" variant="inverse">
+        Back
+      </BackLink>,
+    )
+
+    expect(screen.getByRole('link').className).toMatch(/back-link--inverse/)
+    expect(asFragment()).toMatchSnapshot()
+  })
 })
