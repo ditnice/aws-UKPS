@@ -186,6 +186,8 @@ module "ecs_backend" {
   })
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
+    Database__Username    = "${module.aurora_backend.master_user_secret_arn}:username::"
+    Database__Password    = "${module.aurora_backend.master_user_secret_arn}:password::"
   }
   attach_execution_role_policy = true
   execution_role_policy_json   = data.aws_iam_policy_document.backend_cognito_secret.json
