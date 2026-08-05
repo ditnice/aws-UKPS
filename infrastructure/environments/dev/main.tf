@@ -178,6 +178,9 @@ module "ecs_backend" {
     Cognito__UserPoolId   = module.cognito.user_pool_id
     Cognito__ClientId     = module.cognito.app_client_id
     Cognito__Authority    = module.cognito.user_pool_issuer
+    Database__Host        = module.aurora_backend.cluster_endpoint
+    Database__Name        = module.aurora_backend.database_name
+    Database__Port        = tostring(module.aurora_backend.port)
     Email__Region         = var.region
     Email__FromAddress    = var.cognito_email_from_address
     Email__ReplyToAddress = var.cognito_email_reply_to_address

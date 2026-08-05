@@ -17,7 +17,7 @@ builder.Configuration.ConfigureAwsSecrets();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options
         .UseNpgsql(
-            builder.Configuration.GetConnectionString("DefaultConnection"),
+            DatabaseConnectionStringFactory.GetConnectionString(builder.Configuration),
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "ukps")
         )
         .UseSnakeCaseNamingConvention()
