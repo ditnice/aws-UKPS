@@ -13,7 +13,9 @@ using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Tests.Utilities.Fixtures;
+using UKPS.Api.Tests.Utilities.MockInternalServices;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
@@ -38,6 +40,8 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     private const string SetupUserUrl = "/auth/setup-user";
     private const string VerifyMultiFactorAuthenticationUrl = "/auth/verify-mfa";
 
+    private readonly DateTime _currentDateTime = new(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+    private DateTimeOffset _currentDateTimOffset => new(_currentDateTime, TimeSpan.Zero);
     private readonly IIdentityAdministrationService _mockedAuthorisationService =
         Substitute.For<IIdentityAdministrationService>();
     private readonly ILoginService _mockedLoginService = Substitute.For<ILoginService>();
@@ -86,6 +90,9 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                     services.RemoveAll<IIdentityAdministrationService>();
                     services.AddSingleton(_mockedLoginService);
                     services.AddSingleton(_mockedAuthorisationService);
+                    services.AddSingleton<IDateTimeProvider>(
+                        new FakeDateTimeProvider(_currentDateTime)
+                    );
                 });
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
@@ -115,18 +122,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        AssertCookieExistsAndValidateCookie(
-            AccessTokenCookieName,
-            response.Headers,
-            _validAuthenticationCredentials.AccessToken
-        );
-        AssertCookieExistsAndValidateCookie(
-            RefreshTokenCookieName,
-            response.Headers,
-            _validAuthenticationCredentials.RefreshToken
-        );
-        CookieExists(CsrfCookieName, response.Headers)
-            .ShouldBeTrue($"The cookie [{CsrfCookieName}] should exist in the response headers.");
+        AssertCookiesAreSetCorrectly(response.Headers, _validAuthenticationCredentials);
     }
 
     [Fact]
@@ -218,16 +214,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        AssertCookieExistsAndValidateCookie(
-            AccessTokenCookieName,
-            response.Headers,
-            _validAuthenticationCredentials.AccessToken
-        );
-        AssertCookieExistsAndValidateCookie(
-            RefreshTokenCookieName,
-            response.Headers,
-            _validAuthenticationCredentials.RefreshToken
-        );
+        AssertCookiesAreSetCorrectly(response.Headers, _validAuthenticationCredentials);
     }
 
     [Fact]
@@ -598,18 +585,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        AssertCookieExistsAndValidateCookie(
-            AccessTokenCookieName,
-            response.Headers,
-            _validAuthenticationCredentials.AccessToken
-        );
-        AssertCookieExistsAndValidateCookie(
-            RefreshTokenCookieName,
-            response.Headers,
-            _validAuthenticationCredentials.RefreshToken
-        );
-        CookieExists(CsrfCookieName, response.Headers)
-            .ShouldBeTrue($"The cookie [{CsrfCookieName}] should exist in the response headers.");
+        AssertCookiesAreSetCorrectly(response.Headers, _validAuthenticationCredentials);
     }
 
     [Fact]
@@ -697,41 +673,60 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
-    private static void AssertCookieExistsAndValidateCookie(
-        string cookieName,
+    private void AssertCookiesAreSetCorrectly(
         HttpResponseHeaders headers,
-        string expectedAccessToken
+        AuthenticationCredentialsDto validAuthenticationCredentials
     )
     {
-        headers.TryGetValues("Set-Cookie", out var cookies).ShouldBeTrue();
+        Cookie accessCookie = GetCookie(headers, AccessTokenCookieName).ShouldNotBeNull();
+        Cookie refreshCookie = GetCookie(headers, RefreshTokenCookieName).ShouldNotBeNull();
+        Cookie csrfCookie = GetCookie(headers, CsrfCookieName).ShouldNotBeNull();
+        Cookie[] allCookies = [accessCookie, refreshCookie, csrfCookie];
 
-        var cookie = cookies.SingleOrDefault(x =>
-            x.StartsWith($"{cookieName}={expectedAccessToken}", StringComparison.InvariantCulture)
-        );
+        accessCookie.Value.ShouldBe(validAuthenticationCredentials.AccessToken);
+        accessCookie.Expires.ShouldBe(_currentDateTimOffset.AddMinutes(15));
 
-        cookie.ShouldNotBeNull();
-        cookie.ShouldContain($" expires=");
-        cookie.ShouldContain(" secure");
-        cookie.ShouldContain(" samesite=strict");
-        cookie.ShouldContain(" httponly");
+        refreshCookie.Value.ShouldBe(validAuthenticationCredentials.RefreshToken);
+
+        csrfCookie.Value.ShouldNotBeNullOrEmpty();
+        csrfCookie.HttpOnly.ShouldBeFalse();
+
+        foreach (var cookie in allCookies)
+        {
+            cookie.Secure.ShouldBeTrue();
+            cookie.SameSite.ShouldBe(SameSiteMode.Strict);
+        }
+        foreach (var cookie in (Cookie[])[refreshCookie, csrfCookie])
+        {
+            cookie.Path.ShouldBe("/auth/refresh");
+            cookie.Expires.ShouldBe(_currentDateTimOffset.AddDays(14));
+        }
+        foreach (var cookie in (Cookie[])[accessCookie, refreshCookie])
+        {
+            cookie.HttpOnly.ShouldBeTrue();
+        }
+    }
+
+    private static Cookie? GetCookie(HttpResponseHeaders headers, string cookieName)
+    {
+        var cookieString = headers.TryGetValues("Set-Cookie", out var cookies)
+            ? cookies.SingleOrDefault(x =>
+                x.StartsWith($"{cookieName}=", StringComparison.InvariantCulture)
+            )
+            : null;
+        return cookieString is not null ? Cookie.Parse(cookieString) : null;
     }
 
     private static void AssertCookiesDoNotExist(HttpResponseHeaders headers)
     {
-        string[] cookiesNames = [AccessTokenCookieName, RefreshTokenCookieName];
+        string[] cookiesNames = [AccessTokenCookieName, RefreshTokenCookieName, CsrfCookieName];
         foreach (var cookie in cookiesNames)
         {
-            bool cookieExists = CookieExists(cookie, headers);
+            bool cookieExists = GetCookie(headers, cookie) is not null;
             cookieExists.ShouldBeFalse(
                 $"The cookie [{cookie}] should not exist in the response headers."
             );
         }
-    }
-
-    private static bool CookieExists(string cookie, HttpResponseHeaders headers)
-    {
-        return headers.TryGetValues("Set-Cookie", out var cookies)
-            && cookies.Any(x => x.StartsWith($"{cookie}=", StringComparison.InvariantCulture));
     }
 
     private sealed class MultiFactorAuthenticationSetupDtoFaker

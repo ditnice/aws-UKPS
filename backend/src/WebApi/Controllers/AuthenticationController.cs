@@ -7,6 +7,7 @@ using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.WebApi.CustomResponses;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
@@ -32,6 +33,8 @@ public class AuthenticationController : ControllerBase
 
     private readonly ILoginService _loginService;
     private readonly IIdentityAdministrationService _authorisationAdministrationService;
+    private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly LinkGenerator _linkGenerator;
     private readonly ProblemDetails _setupTokenExpiredDetails = new ProblemDetails
     {
         Title = "Setup token has expired.",
@@ -62,13 +65,19 @@ public class AuthenticationController : ControllerBase
     /// The service responsible for managing authorisation administration operations,
     /// such as user onboarding, setup token validation, and password management.
     /// </param>
+    /// <param name="dateTimeProvider"></param>
+    /// <param name="linkGenerator"></param>
     public AuthenticationController(
         ILoginService loginService,
-        IIdentityAdministrationService authorisationAdministrationService
+        IIdentityAdministrationService authorisationAdministrationService,
+        IDateTimeProvider dateTimeProvider,
+        LinkGenerator linkGenerator
     )
     {
         _loginService = loginService;
         _authorisationAdministrationService = authorisationAdministrationService;
+        _dateTimeProvider = dateTimeProvider;
+        _linkGenerator = linkGenerator;
     }
 
     /// <summary>
@@ -377,22 +386,28 @@ public class AuthenticationController : ControllerBase
             dto.AccessToken,
             new CookieOptions
             {
+                Path = "/",
                 HttpOnly = true,
                 Secure = true, // HTTPS only
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow + accessTokenLifetime,
+                Expires = _dateTimeProvider.GetOffsetUtcNow() + accessTokenLifetime,
             }
         );
 
+        var authRefreshPath = _linkGenerator.GetPathByAction(
+            action: nameof(RefreshToken),
+            controller: "Authentication"
+        );
         Response.Cookies.Append(
             RefreshCookieName,
             dto.RefreshToken,
             new CookieOptions
             {
+                Path = authRefreshPath,
                 HttpOnly = true,
                 Secure = true, // HTTPS only
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow + refreshTokenLifetime,
+                Expires = _dateTimeProvider.GetOffsetUtcNow() + refreshTokenLifetime,
             }
         );
 
@@ -402,10 +417,11 @@ public class AuthenticationController : ControllerBase
             csrfToken,
             new CookieOptions
             {
+                Path = authRefreshPath,
                 HttpOnly = false,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow + refreshTokenLifetime,
+                Expires = _dateTimeProvider.GetOffsetUtcNow() + refreshTokenLifetime,
             }
         );
 

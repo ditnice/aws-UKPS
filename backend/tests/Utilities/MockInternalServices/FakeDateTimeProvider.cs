@@ -11,6 +11,11 @@ public class FakeDateTimeProvider : IDateTimeProvider
         _dateTime = dateTime;
     }
 
+    public DateTimeOffset GetOffsetUtcNow()
+    {
+        return new DateTimeOffset(_dateTime, TimeSpan.Zero);
+    }
+
     public DateTime GetUtcNow()
     {
         return _dateTime;
