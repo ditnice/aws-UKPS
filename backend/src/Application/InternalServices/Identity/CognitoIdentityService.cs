@@ -11,22 +11,26 @@ using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
 >;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using UpdatePasswordResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.UpdatePasswordError>;
 
 namespace UKPS.Api.Application.InternalServices.Identity;
 
-internal class CognitoIdentityService : IIdentityService
+internal sealed partial class CognitoIdentityService : IIdentityService
 {
     private readonly IAmazonCognitoIdentityProvider _cognito;
     private readonly IOptions<CognitoConfiguration> _options;
+    private readonly ILogger<CognitoIdentityService> _logger;
 
     public CognitoIdentityService(
         IAmazonCognitoIdentityProvider cognito,
-        IOptions<CognitoConfiguration> options
+        IOptions<CognitoConfiguration> options,
+        ILogger<CognitoIdentityService> logger
     )
     {
         _cognito = cognito;
         _options = options;
+        _logger = logger;
     }
 
     public async Task<CreateNewUserResult> CreateNewUser(
@@ -113,6 +117,34 @@ internal class CognitoIdentityService : IIdentityService
                 {
                     ChallengeName = cognitoResponse.ChallengeName,
                     Session = cognitoResponse.Session,
+                    AuthenticationResult = cognitoResponse.AuthenticationResult,
+                };
+        });
+    }
+
+    public Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
+        string refreshToken,
+        CancellationToken cancellationToken
+    )
+    {
+        LogRefreshingCognitoToken(_options.Value.ClientId, refreshToken?.Length ?? 0);
+        return SendCognitoAuthRequest(async () =>
+        {
+            var cognitoResponse = await _cognito.GetTokensFromRefreshTokenAsync(
+                new GetTokensFromRefreshTokenRequest
+                {
+                    ClientId = _options.Value.ClientId,
+                    ClientSecret = _options.Value.ClientSecret,
+                    RefreshToken = refreshToken,
+                },
+                cancellationToken
+            );
+            return cognitoResponse is null
+                ? null
+                : new()
+                {
+                    ChallengeName = null,
+                    Session = null,
                     AuthenticationResult = cognitoResponse.AuthenticationResult,
                 };
         });
@@ -230,14 +262,7 @@ internal class CognitoIdentityService : IIdentityService
         }
     }
 
-    private record AuthResponse
-    {
-        public required ChallengeNameType ChallengeName { get; init; }
-        public required string Session { get; init; }
-        public required AuthenticationResultType? AuthenticationResult { get; init; }
-    }
-
-    private static async Task<InitiatedAuthenticationResult> SendCognitoAuthRequest(
+    private async Task<InitiatedAuthenticationResult> SendCognitoAuthRequest(
         Func<Task<AuthResponse?>> func
     )
     {
@@ -247,8 +272,13 @@ internal class CognitoIdentityService : IIdentityService
 
             if (cognitoResponse?.ChallengeName is not null)
             {
+                var session =
+                    cognitoResponse.Session
+                    ?? throw new InvalidOperationException(
+                        "Cognito response challenge has no session."
+                    );
                 return InitiatedAuthenticationResult.Err(
-                    ConvertChallengeToError(cognitoResponse.ChallengeName, cognitoResponse.Session)
+                    ConvertChallengeToError(cognitoResponse.ChallengeName, session)
                 );
             }
 
@@ -268,8 +298,9 @@ internal class CognitoIdentityService : IIdentityService
             };
             return InitiatedAuthenticationResult.Ok(response);
         }
-        catch (NotAuthorizedException)
+        catch (NotAuthorizedException ex)
         {
+            LogCognitoAuthenticationFailed(ex.Message, ex);
             return InitiatedAuthenticationResult.Err(
                 new InitiateAuthenticationError.Unauthorised()
             );
@@ -306,5 +337,21 @@ internal class CognitoIdentityService : IIdentityService
         var hash = hmac.ComputeHash(message);
 
         return Convert.ToBase64String(hash);
+    }
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Refreshing Cognito token. ClientId={ClientId}, RefreshTokenLength={RefreshTokenLength}"
+    )]
+    private partial void LogRefreshingCognitoToken(string clientId, int refreshTokenLength);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Cognito authentication failed: {Message}")]
+    private partial void LogCognitoAuthenticationFailed(string message, Exception exception);
+
+    private record AuthResponse
+    {
+        public required ChallengeNameType? ChallengeName { get; init; }
+        public required string? Session { get; init; }
+        public required AuthenticationResultType? AuthenticationResult { get; init; }
     }
 }

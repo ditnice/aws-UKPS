@@ -23,7 +23,10 @@ internal interface IIdentityService
     );
 
     Task MarkEmailAsVerified(string username, CancellationToken cancellationToken);
-
+    Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
+        string refreshToken,
+        CancellationToken cancellationToken
+    );
     Task<InitiatedAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
         string username,
         string authenticationSession,

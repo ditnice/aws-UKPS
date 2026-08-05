@@ -1,5 +1,6 @@
 using Amazon.CognitoIdentityProvider;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Shouldly;
@@ -90,7 +91,7 @@ public sealed class AuthenticationDependencyInjectionManagementTests
             : modifier(CreateCognitoConfiguration());
         services.AddSingleton(Options.Create(configuration));
 
-        services.AddAuthenticationServices();
+        services.AddAuthenticationServices().AddLogging(x => x.AddConsole());
 
         return services;
     }

@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersData, PostUsersErrors, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersData, PostUsersErrors, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -29,6 +29,15 @@ export const postAuthLogin = <ThrowOnError extends boolean = false>(options: Opt
         ...options.headers
     }
 });
+
+/**
+ * Refreshes the authentication tokens using the supplied refresh token.
+ *
+ * The CSRF token must be supplied in the `X-CSRF-Token` request header.
+ * The value of this header must match the `csrf_token` cookie sent with the request.
+ * Requests with a missing or invalid CSRF token are rejected with an unauthorized response.
+ */
+export const postAuthRefresh = <ThrowOnError extends boolean = false>(options?: Options<PostAuthRefreshData, ThrowOnError>): RequestResult<PostAuthRefreshResponses, PostAuthRefreshErrors, ThrowOnError> => (options?.client ?? client).post<PostAuthRefreshResponses, PostAuthRefreshErrors, ThrowOnError>({ url: '/auth/refresh', ...options });
 
 /**
  * Completes a multi-factor authentication challenge for an existing authentication session.

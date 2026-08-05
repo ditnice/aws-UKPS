@@ -4,6 +4,10 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+/**
+ * Represents problem details returned when authentication fails or
+ * additional authentication is required.
+ */
 export type AuthenticationProblemDetails = {
     type?: null | string;
     title?: null | string;
@@ -11,6 +15,9 @@ export type AuthenticationProblemDetails = {
     detail?: null | string;
     instance?: null | string;
     challengeType?: null | UkpsChallengeType;
+    /**
+     * Gets the session identifier associated with the authentication challenge.
+     */
     authenticationSession?: null | string;
 };
 
@@ -439,6 +446,33 @@ export type PostAuthLoginError = PostAuthLoginErrors[keyof PostAuthLoginErrors];
 export type PostAuthLoginResponses = {
     /**
      * The user was successfully authenticated and an authentication cookie was created.
+     */
+    200: unknown;
+};
+
+export type PostAuthRefreshData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/refresh';
+};
+
+export type PostAuthRefreshErrors = {
+    /**
+     * The refresh token request was invalid or could not be processed.
+     */
+    400: AuthenticationProblemDetails;
+    /**
+     * The CSRF token was missing or invalid, or the supplied authentication credentials were unauthorized.
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type PostAuthRefreshError = PostAuthRefreshErrors[keyof PostAuthRefreshErrors];
+
+export type PostAuthRefreshResponses = {
+    /**
+     * The refresh token was successfully exchanged for new authentication credentials.
      */
     200: unknown;
 };

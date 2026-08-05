@@ -27,8 +27,13 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
+    private const string AccessTokenCookieName = "access_token";
+    private const string RefreshTokenCookieName = "refresh_token";
+    private const string CsrfCookieName = "csrf_token";
+
     private const string LoginUrl = "/auth/login";
     private const string RespondToMultiFactorAuthenticationChallengeUrl = "/auth/mfa";
+    private const string RefreshUrl = "/auth/refresh";
     private const string ValidateSetupTokenUrl = "/auth/validate-setup-token";
     private const string SetupUserUrl = "/auth/setup-user";
     private const string VerifyMultiFactorAuthenticationUrl = "/auth/verify-mfa";
@@ -86,6 +91,13 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
             })
             .CreateClient();
+
+        _mockedLoginService
+            .RefreshAuthenticationToken(
+                Arg.Any<RefreshAuthenticationTokenCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(InitiatedAuthenticationResult.Ok(_validAuthenticationCredentials));
     }
 
     [Fact]
@@ -104,9 +116,17 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         AssertCookieExistsAndValidateCookie(
+            AccessTokenCookieName,
             response.Headers,
             _validAuthenticationCredentials.AccessToken
         );
+        AssertCookieExistsAndValidateCookie(
+            RefreshTokenCookieName,
+            response.Headers,
+            _validAuthenticationCredentials.RefreshToken
+        );
+        CookieExists(CsrfCookieName, response.Headers)
+            .ShouldBeTrue($"The cookie [{CsrfCookieName}] should exist in the response headers.");
     }
 
     [Fact]
@@ -126,7 +146,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
-        AssertCookieDoesNotExist(response.Headers);
+        AssertCookiesDoNotExist(response.Headers);
     }
 
     [Fact]
@@ -176,7 +196,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             );
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-            AssertCookieDoesNotExist(response.Headers);
+            AssertCookiesDoNotExist(response.Headers);
         }
     }
 
@@ -199,8 +219,14 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         AssertCookieExistsAndValidateCookie(
+            AccessTokenCookieName,
             response.Headers,
             _validAuthenticationCredentials.AccessToken
+        );
+        AssertCookieExistsAndValidateCookie(
+            RefreshTokenCookieName,
+            response.Headers,
+            _validAuthenticationCredentials.RefreshToken
         );
     }
 
@@ -224,7 +250,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
-        AssertCookieDoesNotExist(response.Headers);
+        AssertCookiesDoNotExist(response.Headers);
     }
 
     [Fact]
@@ -282,7 +308,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             );
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-            AssertCookieDoesNotExist(response.Headers);
+            AssertCookiesDoNotExist(response.Headers);
         }
     }
 
@@ -565,7 +591,114 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         }
     }
 
+    [Fact]
+    public async Task Refresh_ShouldUpdateCookiesAndReturnOkResponse()
+    {
+        var response = await SendRefreshRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        AssertCookieExistsAndValidateCookie(
+            AccessTokenCookieName,
+            response.Headers,
+            _validAuthenticationCredentials.AccessToken
+        );
+        AssertCookieExistsAndValidateCookie(
+            RefreshTokenCookieName,
+            response.Headers,
+            _validAuthenticationCredentials.RefreshToken
+        );
+        CookieExists(CsrfCookieName, response.Headers)
+            .ShouldBeTrue($"The cookie [{CsrfCookieName}] should exist in the response headers.");
+    }
+
+    [Fact]
+    public async Task Refresh_WhenTheRequestIsUnauthorised_ShouldReturnUnauthorisedResponse()
+    {
+        _mockedLoginService
+            .RefreshAuthenticationToken(
+                Arg.Any<RefreshAuthenticationTokenCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                InitiatedAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised())
+            );
+        var response = await SendRefreshRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenTheRequestIsChallenged_ShouldReturnUnauthorisedResponse()
+    {
+        _mockedLoginService
+            .RefreshAuthenticationToken(
+                Arg.Any<RefreshAuthenticationTokenCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                InitiatedAuthenticationResult.Err(
+                    new InitiateAuthenticationError.Challenge(
+                        UkpsChallengeType.MultiFactorAuthenticationRequired,
+                        "session-id"
+                    )
+                )
+            );
+        var response = await SendRefreshRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenCsrfCookieNotSet_ShouldReturnUnauthorised()
+    {
+        var response = await SendRefreshRequest(csrfCookie: null);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenCsrfHeaderNotSet_ShouldReturnUnauthorised()
+    {
+        var response = await SendRefreshRequest(csrfHeader: null);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenCsrfCookieAndHeaderDoNotMatchNot_ShouldReturnUnauthorised()
+    {
+        var response = await SendRefreshRequest(csrfHeader: "versionA", csrfCookie: "versionB");
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
+    private async Task<HttpResponseMessage> SendRefreshRequest(
+        string? csrfCookie = "test-csrf-token",
+        string? csrfHeader = "test-csrf-token"
+    )
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            new Uri(RefreshUrl, UriKind.Relative)
+        );
+
+        if (csrfHeader is not null)
+        {
+            request.Headers.Add("X-CSRF-Token", csrfHeader);
+        }
+        if (csrfCookie is not null)
+        {
+            request.Headers.Add("Cookie", $"{CsrfCookieName}={csrfCookie}");
+        }
+
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
     private static void AssertCookieExistsAndValidateCookie(
+        string cookieName,
         HttpResponseHeaders headers,
         string expectedAccessToken
     )
@@ -573,7 +706,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         headers.TryGetValues("Set-Cookie", out var cookies).ShouldBeTrue();
 
         var cookie = cookies.SingleOrDefault(x =>
-            x.StartsWith($"access_token={expectedAccessToken}", StringComparison.InvariantCulture)
+            x.StartsWith($"{cookieName}={expectedAccessToken}", StringComparison.InvariantCulture)
         );
 
         cookie.ShouldNotBeNull();
@@ -583,13 +716,22 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         cookie.ShouldContain(" httponly");
     }
 
-    private static void AssertCookieDoesNotExist(HttpResponseHeaders headers)
+    private static void AssertCookiesDoNotExist(HttpResponseHeaders headers)
     {
-        var cookieExists =
-            headers.TryGetValues("Set-Cookie", out var cookies)
-            && cookies.Any(x => x.StartsWith($"access_token=", StringComparison.InvariantCulture));
+        string[] cookiesNames = [AccessTokenCookieName, RefreshTokenCookieName];
+        foreach (var cookie in cookiesNames)
+        {
+            bool cookieExists = CookieExists(cookie, headers);
+            cookieExists.ShouldBeFalse(
+                $"The cookie [{cookie}] should not exist in the response headers."
+            );
+        }
+    }
 
-        cookieExists.ShouldBeFalse();
+    private static bool CookieExists(string cookie, HttpResponseHeaders headers)
+    {
+        return headers.TryGetValues("Set-Cookie", out var cookies)
+            && cookies.Any(x => x.StartsWith($"{cookie}=", StringComparison.InvariantCulture));
     }
 
     private sealed class MultiFactorAuthenticationSetupDtoFaker
