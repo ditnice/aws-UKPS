@@ -52,4 +52,24 @@ public interface ILoginService
         RespondToMultiFactorAuthenticationChallengeCommand command,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Refreshes the authentication tokens for an authenticated user using
+    /// the supplied refresh token.
+    /// </summary>
+    /// <param name="command">
+    /// The command containing the user's username and refresh token.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A result containing the refreshed authentication credentials if the
+    /// refresh succeeds; otherwise, an error describing why the refresh
+    /// operation failed.
+    /// </returns>
+    Task<InitiateAuthenticationResult> RefreshAuthenticationToken(
+        RefreshAuthenticationTokenCommand command,
+        CancellationToken cancellationToken
+    );
 }

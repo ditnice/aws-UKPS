@@ -6,6 +6,14 @@ namespace UKPS.Api.Application.InternalServices.Temporal;
 public interface IDateTimeProvider
 {
     /// <summary>
+    /// Gets the current UTC date and time with an explicit offset.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="DateTimeOffset"/> value representing the current date and time in UTC.
+    /// </returns>
+    DateTimeOffset GetOffsetUtcNow();
+
+    /// <summary>
     /// Gets the current UTC date and time.
     /// </summary>
     /// <returns>

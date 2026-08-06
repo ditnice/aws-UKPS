@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.WebApi.CustomResponses;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
@@ -25,8 +27,18 @@ namespace UKPS.Api.WebApi.Controllers;
 [Route("auth")]
 public class AuthenticationController : ControllerBase
 {
+    private const string CsrfCookieName = "csrf_token";
+    private const string CsrfHeaderName = "X-CSRF-Token";
+    private const string RefreshCookieName = "refresh_token";
+
+    private readonly TimeSpan _accessTokenValidity = TimeSpan.FromMinutes(15);
+    private readonly TimeSpan _accessTokenRefreshThreshold = TimeSpan.FromMinutes(5);
+    private readonly TimeSpan _refreshTokenValidity = TimeSpan.FromHours(8);
+
     private readonly ILoginService _loginService;
     private readonly IIdentityAdministrationService _authorisationAdministrationService;
+    private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly LinkGenerator _linkGenerator;
     private readonly ProblemDetails _setupTokenExpiredDetails = new ProblemDetails
     {
         Title = "Setup token has expired.",
@@ -57,13 +69,19 @@ public class AuthenticationController : ControllerBase
     /// The service responsible for managing authorisation administration operations,
     /// such as user onboarding, setup token validation, and password management.
     /// </param>
+    /// <param name="dateTimeProvider"></param>
+    /// <param name="linkGenerator"></param>
     public AuthenticationController(
         ILoginService loginService,
-        IIdentityAdministrationService authorisationAdministrationService
+        IIdentityAdministrationService authorisationAdministrationService,
+        IDateTimeProvider dateTimeProvider,
+        LinkGenerator linkGenerator
     )
     {
         _loginService = loginService;
         _authorisationAdministrationService = authorisationAdministrationService;
+        _dateTimeProvider = dateTimeProvider;
+        _linkGenerator = linkGenerator;
     }
 
     /// <summary>
@@ -98,6 +116,68 @@ public class AuthenticationController : ControllerBase
     )
     {
         return (await _loginService.Login(request, cancellationToken)).Match(
+            HandleLoginSuccess,
+            HandleLoginError
+        );
+    }
+
+    /// <summary>
+    /// Refreshes the authentication tokens using the supplied refresh token.
+    /// </summary>
+    /// <remarks>
+    /// The CSRF token must be supplied in the <c> X-CSRF-Token </c> request header.
+    /// The value of this header must match the <c> csrf_token </c> cookie sent with the request.
+    /// Requests with a missing or invalid CSRF token are rejected with an unauthorized response.
+    /// </remarks>
+    /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// An <see cref="ActionResult"/> containing one of the following responses:
+    /// <list type="bullet">
+    /// <item>
+    /// <description>
+    /// <see cref="StatusCodes.Status200OK"/> when the refresh token is valid and new authentication
+    /// credentials have been successfully issued.
+    /// </description>
+    /// </item>
+    /// <item>
+    /// <description>
+    /// <see cref="StatusCodes.Status400BadRequest"/> when the refresh token request is invalid or
+    /// cannot be processed.
+    /// </description>
+    /// </item>
+    /// <item>
+    /// <description>
+    /// <see cref="StatusCodes.Status401Unauthorized"/> when the CSRF token is missing or invalid,
+    /// or when the supplied authentication credentials cannot be authenticated.
+    /// </description>
+    /// </item>
+    /// </list>
+    /// </returns>
+    /// <response code="200">The refresh token was successfully exchanged for new authentication credentials.</response>
+    /// <response code="400">The refresh token request was invalid or could not be processed.</response>
+    /// <response code="401">The CSRF token was missing or invalid, or the supplied authentication credentials were unauthorized.</response>
+    [HttpPost("refresh")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> RefreshToken(CancellationToken cancellationToken)
+    {
+        if (!PassesCsrfValidation())
+        {
+            return Unauthorized(
+                new ProblemDetails
+                {
+                    Title = "CSRF validation failed",
+                    Detail =
+                        "The request could not be authenticated because the CSRF token was missing or invalid.",
+                }
+            );
+        }
+        var command = new RefreshAuthenticationTokenCommand
+        {
+            RefreshToken = Request.Cookies[RefreshCookieName] ?? string.Empty,
+        };
+        return (await _loginService.RefreshAuthenticationToken(command, cancellationToken)).Match(
             HandleLoginSuccess,
             HandleLoginError
         );
@@ -292,25 +372,60 @@ public class AuthenticationController : ControllerBase
         );
     }
 
+    private bool PassesCsrfValidation()
+    {
+        string? csrfCookie = Request.Cookies[CsrfCookieName];
+        StringValues csrfHeader = Request.Headers[CsrfHeaderName];
+
+        return !string.IsNullOrWhiteSpace(csrfCookie)
+            && csrfHeader.Any(v => string.Equals(v, csrfCookie, StringComparison.Ordinal));
+    }
+
     private ActionResult HandleLoginSuccess(AuthenticationCredentialsDto dto)
     {
-        var expires = DateTimeOffset.UtcNow.AddMinutes(15);
+        TimeSpan accessTokenLifetime = _accessTokenValidity + _accessTokenRefreshThreshold;
         Response.Cookies.Append(
             "access_token",
             dto.AccessToken,
             new CookieOptions
             {
+                Path = "/",
                 HttpOnly = true,
                 Secure = true, // HTTPS only
                 SameSite = SameSiteMode.Strict,
-                Expires = expires,
+                Expires = _dateTimeProvider.GetOffsetUtcNow() + accessTokenLifetime,
             }
         );
 
+        var authRefreshPath = _linkGenerator.GetPathByAction(
+            action: nameof(RefreshToken),
+            controller: "Authentication"
+        );
         Response.Cookies.Append(
-            "example_cookie",
-            "example_value",
-            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(1) }
+            RefreshCookieName,
+            dto.RefreshToken,
+            new CookieOptions
+            {
+                Path = authRefreshPath,
+                HttpOnly = true,
+                Secure = true, // HTTPS only
+                SameSite = SameSiteMode.Strict,
+                Expires = _dateTimeProvider.GetOffsetUtcNow() + _refreshTokenValidity,
+            }
+        );
+
+        var csrfToken = Guid.NewGuid().ToString("N");
+        Response.Cookies.Append(
+            CsrfCookieName,
+            csrfToken,
+            new CookieOptions
+            {
+                Path = "/",
+                HttpOnly = false,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = _dateTimeProvider.GetOffsetUtcNow() + _refreshTokenValidity,
+            }
         );
 
         return Ok();

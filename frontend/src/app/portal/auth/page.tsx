@@ -9,8 +9,8 @@ import {
   postAuthLogin,
   postAuthMfa,
   getUsers,
+  postAuthRefresh,
 } from '@/client/generated/sdk.gen'
-import { UkpsChallengeType } from '@/client/generated/types.gen'
 
 type SetupUserProps = {
   setOtpLink: Dispatch<SetStateAction<string | undefined>>
@@ -109,7 +109,6 @@ const UserLogin = () => {
     const password = formData.get('password') as string
 
     try {
-      debugger
       const response = await postAuthLogin({ body: { username, password }, credentials: 'include' })
       if (response.error?.challengeType === 'MultiFactorAuthenticationRequired') {
         console.log('MFA required, challenge type:', response.error.challengeType)
@@ -128,10 +127,14 @@ const UserLogin = () => {
 
     if (!challengeAuthSession) throw Error()
 
-    const response = await postAuthMfa({
-      body: { username, code, authenticationSession: challengeAuthSession },
-      credentials: 'include',
-    })
+    try {
+      await postAuthMfa({
+        body: { username, code, authenticationSession: challengeAuthSession },
+        credentials: 'include',
+      })
+    } catch (error) {
+      console.error('Error:', error)
+    }
   }
 
   return (
@@ -181,6 +184,30 @@ const TestFetch = () => {
   )
 }
 
+const TestRefresh = () => {
+  const handleRefreshSubmit = () => {
+    postAuthRefresh({
+      credentials: 'include',
+      headers: { 'X-CSRF-Token': getCookie('csrf_token') },
+    })
+  }
+  return <button onClick={handleRefreshSubmit}>Refresh Token</button>
+}
+
+function getCookie(name: string): string | null {
+  const cookies = document.cookie.split(';')
+
+  for (const cookie of cookies) {
+    const [key, value] = cookie.trim().split('=')
+
+    if (key === name) {
+      return decodeURIComponent(value)
+    }
+  }
+
+  return null
+}
+
 export default function ExampleAuthenticationPage() {
   const [otpLink, setOtpLink] = useState<string | undefined>(undefined)
   const [authSession, setAuthSession] = useState<string | undefined>(undefined)
@@ -199,6 +226,7 @@ export default function ExampleAuthenticationPage() {
       )}
       <UserLogin />
       <TestFetch />
+      <TestRefresh />
 
       {JSON.stringify({ otpLink, authSession })}
     </>

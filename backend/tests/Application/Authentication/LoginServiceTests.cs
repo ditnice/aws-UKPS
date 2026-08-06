@@ -114,6 +114,30 @@ public class LoginServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.Unauthorised>();
     }
 
+    [Fact]
+    public async Task RefreshAuthenticationToken_ShouldReturnRefreshedAuthenticationCredentials()
+    {
+        AuthenticationCredentialsDto credentials = await CompleteFullLogin();
+        LoginResult result = await _harness.Service.RefreshAuthenticationToken(
+            new RefreshAuthenticationTokenCommand() { RefreshToken = credentials.RefreshToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task RefreshAuthenticationToken_WhenRefreshTokenIsInvalid_ShouldReturnUnauthorisedResult()
+    {
+        AuthenticationCredentialsDto _ = await CompleteFullLogin();
+        var result = await _harness.Service.RefreshAuthenticationToken(
+            new RefreshAuthenticationTokenCommand() { RefreshToken = "invalid-token" },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.Unauthorised>();
+    }
+
     private async Task<InitiateAuthenticationError.Challenge> AttemptLoginAndGetChallenge()
     {
         LoginResult loginResult = await _harness.Service.Login(
@@ -124,5 +148,20 @@ public class LoginServiceTests : DatabaseTestBase
             .ShouldBeError()
             .ShouldBeOfType<InitiateAuthenticationError.Challenge>();
         return challenge;
+    }
+
+    private async Task<AuthenticationCredentialsDto> CompleteFullLogin()
+    {
+        InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge();
+
+        LoginResult result = await _harness.Service.RespondToMultiFactorAuthenticationChallenge(
+            _defaultResponseToMfaCommand with
+            {
+                AuthenticationSession = challenge.AuthenticationSession,
+            },
+            TestContext.Current.CancellationToken
+        );
+        AuthenticationCredentialsDto loginResult = result.ShouldBeSuccess();
+        return loginResult;
     }
 }

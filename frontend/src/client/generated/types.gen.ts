@@ -450,6 +450,33 @@ export type PostAuthLoginResponses = {
     200: unknown;
 };
 
+export type PostAuthRefreshData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/refresh';
+};
+
+export type PostAuthRefreshErrors = {
+    /**
+     * The refresh token request was invalid or could not be processed.
+     */
+    400: AuthenticationProblemDetails;
+    /**
+     * The CSRF token was missing or invalid, or the supplied authentication credentials were unauthorized.
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type PostAuthRefreshError = PostAuthRefreshErrors[keyof PostAuthRefreshErrors];
+
+export type PostAuthRefreshResponses = {
+    /**
+     * The refresh token was successfully exchanged for new authentication credentials.
+     */
+    200: unknown;
+};
+
 export type PostAuthMfaData = {
     /**
      * A token to monitor for cancellation requests.
