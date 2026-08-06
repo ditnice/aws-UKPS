@@ -1267,6 +1267,7 @@
                 "type": "null"
               },
               {
+                "description": "Gets the type of authentication challenge required to complete authentication.",
                 "$ref": "#/components/schemas/UkpsChallengeType"
               }
             ]
@@ -1275,9 +1276,11 @@
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Gets the session identifier associated with the authentication challenge."
           }
-        }
+        },
+        "description": "Represents problem details returned when authentication fails or\nadditional authentication is required."
       },
       "CreateOrganisationDto": {
         "required": [
