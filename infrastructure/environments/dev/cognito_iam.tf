@@ -18,6 +18,13 @@ data "aws_iam_policy_document" "backend_cognito_secret" {
       values   = ["secretsmanager.${var.region}.amazonaws.com"]
     }
   }
+
+  statement {
+    sid       = "ReadAuroraMasterSecret"
+    effect    = "Allow"
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [module.aurora_backend.master_user_secret_arn]
+  }
 }
 
 data "aws_iam_policy_document" "backend_cognito" {
