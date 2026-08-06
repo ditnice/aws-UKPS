@@ -1,6 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import Link from 'next/link'
 import { QRCodeSVG } from 'qrcode.react'
 import { z } from 'zod'
 
@@ -9,6 +10,8 @@ import { Button } from '@nice-digital/nds-button'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+
+import styles from './page.module.scss'
 
 import type { ChangeEvent } from 'react'
 
@@ -73,7 +76,6 @@ export default function SignUpSetMfa() {
         <strong>{manualSetupKey}</strong>
       </p>
       <hr></hr>
-      <h2>Authentication code</h2>
       <form
         noValidate
         onSubmit={(event) => {
@@ -91,9 +93,9 @@ export default function SignUpSetMfa() {
                 autoComplete="one-time-code"
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
-                hint="Enter the 6-digit authentication code shown in the app."
+                hint="Enter the 6-digit authentication code shown in your authenticator app."
                 inputMode="numeric"
-                label="Security code"
+                label="Authentication code"
                 name={field.name}
                 onBlur={field.handleBlur}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -101,15 +103,19 @@ export default function SignUpSetMfa() {
                 }
                 type="text"
                 value={field.state.value}
-                width="one-third"
+                width="one-quarter"
               />
             )
           }}
         </form.Field>
 
-        <Button type="submit" variant="cta">
-          Continue
-        </Button>
+        <Link href="/">I want to use a different method</Link>
+
+        <div className={styles.actions}>
+          <Button type="submit" variant="cta">
+            Continue
+          </Button>
+        </div>
       </form>
     </>
   )

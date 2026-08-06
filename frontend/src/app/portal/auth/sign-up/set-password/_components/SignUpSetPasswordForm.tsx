@@ -14,7 +14,7 @@ const signUpSetPasswordSchema = z.object({
   password: z
     .string()
     .min(1, 'Enter your password')
-    .min(14, 'Password must be at least 14 characters long'),
+    .min(8, 'Password must be at least 8 characters long'),
 })
 
 type SignUpSetPasswordFormValues = z.input<typeof signUpSetPasswordSchema>
@@ -68,6 +68,7 @@ export function SignUpSetPasswordForm() {
                 field.handleChange(event.target.value)
               }
               value={field.state.value}
+              width="one-third"
             />
           )
         }}

@@ -77,7 +77,7 @@ export function SignInMfaForm() {
               }
               type="text"
               value={field.state.value}
-              width="one-third"
+              width="one-quarter"
             />
           )
         }}
@@ -89,7 +89,7 @@ export function SignInMfaForm() {
 
       {/* TODO - link this up when the page is created */}
       <p className={styles.helpLink}>
-        <Link href="/">Having trouble?</Link>
+        <Link href="/">Contact UKPS support</Link>
       </p>
     </form>
   )
