@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.WebApi.InternalServices.Authentication;
@@ -29,6 +31,7 @@ internal static class AwsAuthenticationExtensions
 
     private static void ConfigureStandardAuthentication(WebApplicationBuilder builder)
     {
+        builder.Services.TryAddTransient<ITokenValidationHandler, TokenValidationHandler>();
         builder
             .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -57,7 +60,7 @@ internal static class AwsAuthenticationExtensions
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = HandleOnMessageReceived,
-                    OnTokenValidated = ctx => HandleOnTokenValidated(ctx, configuration),
+                    OnTokenValidated = ctx => HandleOnTokenValidated(ctx),
                 };
             });
     }
@@ -95,35 +98,10 @@ internal static class AwsAuthenticationExtensions
         return Task.CompletedTask;
     }
 
-    private static Task HandleOnTokenValidated(
-        TokenValidatedContext context,
-        CognitoConfiguration configuration
-    )
+    private static Task HandleOnTokenValidated(TokenValidatedContext context)
     {
-        ValidateTokenUse(context);
-        ValidateClientId(context, configuration);
-        return Task.CompletedTask;
-    }
-
-    private static void ValidateTokenUse(TokenValidatedContext context)
-    {
-        var tokenUse = context.Principal?.FindFirst("token_use")?.Value;
-        if (!string.Equals(tokenUse, "access", StringComparison.Ordinal))
-        {
-            context.Fail("Token is not an access token.");
-        }
-    }
-
-    private static void ValidateClientId(
-        TokenValidatedContext context,
-        CognitoConfiguration configuration
-    )
-    {
-        var clientId = context.Principal?.FindFirst("client_id")?.Value;
-
-        if (!string.Equals(configuration.ClientId, clientId, StringComparison.Ordinal))
-        {
-            context.Fail("Token was not issued to the expected client.");
-        }
+        var handler =
+            context.HttpContext.RequestServices.GetRequiredService<ITokenValidationHandler>();
+        return handler.Handle(context, context.HttpContext.RequestAborted);
     }
 }

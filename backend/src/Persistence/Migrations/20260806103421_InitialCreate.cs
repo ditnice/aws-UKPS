@@ -22,16 +22,20 @@ namespace UKPS.Api.Persistence.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    identity_id = table.Column<string>(type: "varchar(36)", maxLength: 36, nullable: true),
                     user_type = table.Column<int>(type: "integer", nullable: false),
                     title = table.Column<string>(type: "text", nullable: true),
-                    first_name = table.Column<string>(type: "text", nullable: false),
-                    last_name = table.Column<string>(type: "text", nullable: false),
+                    full_name = table.Column<string>(type: "text", nullable: false),
                     job_title = table.Column<string>(type: "text", nullable: true),
                     work_telephone = table.Column<string>(type: "text", nullable: true),
                     work_email = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
-                    last_active = table.Column<DateTime>(type: "timestamptz", nullable: true)
+                    last_active = table.Column<DateTime>(type: "timestamptz", nullable: true),
+                    setup_token = table.Column<Guid>(type: "uuid", nullable: true),
+                    user_onboarding_record_created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    created_by = table.Column<string>(type: "text", nullable: true),
+                    consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -496,42 +500,18 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_onboarding_records",
-                schema: "ukps",
-                columns: table => new
-                {
-                    setup_token = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_email = table.Column<string>(type: "text", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    created_by = table.Column<string>(type: "text", nullable: false),
-                    consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    new_user_organisation_id = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_user_onboarding_records", x => x.setup_token);
-                    table.ForeignKey(
-                        name: "fk_user_onboarding_records_organisations_new_user_organisation",
-                        column: x => x.new_user_organisation_id,
-                        principalSchema: "ukps",
-                        principalTable: "organisations",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "user_org_memberships",
                 schema: "ukps",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    user_id = table.Column<int>(type: "integer", nullable: false),
-                    organisation_id = table.Column<int>(type: "integer", nullable: false),
                     user_role = table.Column<int>(type: "integer", nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
                     allowed_pharmaceutical_entity = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    organisation_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -2115,12 +2095,6 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "updated_by");
 
             migrationBuilder.CreateIndex(
-                name: "ix_user_onboarding_records_new_user_organisation_id",
-                schema: "ukps",
-                table: "user_onboarding_records",
-                column: "new_user_organisation_id");
-
-            migrationBuilder.CreateIndex(
                 name: "ix_user_org_membership_organisation_id",
                 schema: "ukps",
                 table: "user_org_memberships",
@@ -2685,10 +2659,6 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "user_audits",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
-                name: "user_onboarding_records",
                 schema: "ukps");
 
             migrationBuilder.DropTable(

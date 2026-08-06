@@ -1,5 +1,6 @@
 using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
@@ -33,6 +34,8 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     private readonly string _targetUserEmail = "target.user@email.com";
     private readonly string _currentUserEmail = "current.user@email.com";
     private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
+    private readonly Faker<MockUser> _mockUserFaker =
+        new MockAmazonCognitoIdentityProvider.MockUserFaker();
 
     public UserAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -50,16 +53,57 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         );
         result.ShouldBeSuccess();
 
-        var foundUserRecord = _harness.Context.UserOnboardingRecords.SingleOrDefault(x =>
-            x.UserEmail == command.NewUserEmail
+        var foundUserRecord = await _harness.Context.UserOnboardingRecords.SingleOrDefaultAsync(
+            x => x.User.WorkEmail == command.NewUserEmail,
+            TestContext.Current.CancellationToken
         );
 
         foundUserRecord.ShouldNotBeNull();
-        foundUserRecord.UserEmail.ShouldBe(command.NewUserEmail);
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
 
         _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+    }
+
+    [Fact]
+    public async Task OnboardUser_ShouldCreateANewCognitoUser()
+    {
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
+        OnBoardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+    }
+
+    [Fact]
+    public async Task OnboardUser_ShouldCreateANewUserInTheDatabase()
+    {
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
+        OnBoardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        User? foundUser = await _harness
+            .Context.Users.Include(x => x.UserOrgMemberships)
+            .SingleOrDefaultAsync(
+                x => x.WorkEmail == command.NewUserEmail,
+                TestContext.Current.CancellationToken
+            );
+
+        foundUser.ShouldNotBeNull();
+        foundUser.IdentityId.ShouldNotBeNull();
+        foundUser.CreatedAt.ShouldBe(_currentTime);
+        foundUser.FullName.ShouldBe(command.FullName);
+        foundUser.WorkTelephone.ShouldBe(command.ContactNumber);
+        var membership = foundUser.UserOrgMemberships.ShouldHaveSingleItem();
+        membership.CreatedAt.ShouldBe(_currentTime);
+        membership.OrganisationId.ShouldBe(command.OrganisationId);
+        membership.UserRole.ShouldBe(UserRole.Standard);
     }
 
     [Fact]
@@ -172,7 +216,12 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             .UpdateCurrentTime(_currentTime)
             .ConfigureServices(services => services.AddTransient(_ => _setupLinkCreator));
 
-        harness.Cognito.AddCurrentUser(new MockUser() { Username = _targetUserEmail });
+        harness.Cognito.AddCurrentUser(
+            _mockUserFaker.Generate() with
+            {
+                Username = _targetUserEmail,
+            }
+        );
 
         return harness;
     }
@@ -193,6 +242,8 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         public OnboardUserCommandDtoFaker()
         {
             UseSeed(12);
+            RuleFor(x => x.FullName, f => f.Name.FullName());
+            RuleFor(x => x.ContactNumber, f => f.Phone.PhoneNumber());
             RuleFor(x => x.NewUserEmail, f => f.Internet.Email());
         }
     }
