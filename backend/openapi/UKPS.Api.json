@@ -1,839 +1,1275 @@
 {
-  "openapi": "3.1.1",
-  "info": {
-    "title": "UKPS.Api | v1",
-    "version": "1.0.0"
-  },
-  "paths": {
-    "/auth/login": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Authenticates a user and creates an authentication session.",
-        "requestBody": {
-          "description": "A token to monitor for cancellation requests.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "The user was successfully authenticated and an authentication cookie was created."
-          },
-          "400": {
-            "description": "The supplied request was invalid.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The supplied credentials were invalid.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
+    "openapi": "3.1.1",
+    "info": {
+      "title": "UKPS.Api | v1",
+      "version": "1.0.0"
     },
-    "/auth/refresh": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Refreshes the authentication tokens using the supplied refresh token.",
-        "description": "The CSRF token must be supplied in the `X-CSRF-Token` request header.\nThe value of this header must match the `csrf_token` cookie sent with the request.\nRequests with a missing or invalid CSRF token are rejected with an unauthorized response.",
-        "responses": {
-          "200": {
-            "description": "The refresh token was successfully exchanged for new authentication credentials."
-          },
-          "400": {
-            "description": "The refresh token request was invalid or could not be processed.",
+    "paths": {
+      "/auth/login": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Authenticates a user and creates an authentication session.",
+          "requestBody": {
+            "description": "A token to monitor for cancellation requests.",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/LoginRequest"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The CSRF token was missing or invalid, or the supplied authentication credentials were unauthorized.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/LoginRequest"
                 }
               },
-              "application/json": {
+              "application/*+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/LoginRequest"
                 }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/mfa": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Completes a multi-factor authentication challenge for an existing authentication session.",
-        "requestBody": {
-          "description": "A token to monitor for cancellation requests.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
               }
             },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "The user was successfully authenticated and an authentication cookie was created."
+            },
+            "400": {
+              "description": "The supplied request was invalid.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                }
               }
             },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "The multi-factor authentication challenge was successfully completed and an\nauthentication cookie was created."
-          },
-          "400": {
-            "description": "The supplied request was invalid.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The authentication session or verification code was invalid.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/validate-setup-token": {
-      "get": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Validates whether a user setup token is valid and can be used to complete the user setup process.",
-        "parameters": [
-          {
-            "name": "setupToken",
-            "in": "query",
-            "description": "The unique identifier of the setup token to validate.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The setup token is valid and can be used."
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The setup token has expired or has already been consumed.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The specified setup token does not exist.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/setup-user": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Completes the setup process for a user account using a valid setup token.",
-        "requestBody": {
-          "description": "A token that can be used to cancel the asynchronous operation.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetupUserCommand"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetupUserCommand"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetupUserCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/verify-mfa": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Verifies the user's multi-factor authentication setup by validating the\nprovided authentication code.",
-        "requestBody": {
-          "description": "The token used to cancel the operation.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "The multi-factor authentication setup was successfully verified."
-          },
-          "400": {
-            "description": "The request contained invalid data or the multi-factor authentication\nverification could not be completed.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/organisations/{id}": {
-      "get": {
-        "tags": [
-          "Organisation"
-        ],
-        "summary": "Retrieves an organisation by its unique identifier.",
-        "operationId": "GetOrganisationById",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The identifier of the organisation to retrieve.",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The organisation was found and its details were returned.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationDetailsDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationDetailsDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationDetailsDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No organisation exists with the specified identifier.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+            "401": {
+              "description": "The supplied credentials were invalid.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
                 }
               }
             }
           }
         }
       },
-      "put": {
-        "tags": [
-          "Organisation"
-        ],
-        "summary": "Updates the details of an existing organisation.",
-        "operationId": "UpdateOrganisationDetails",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The identifier of the organisation to update.",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
+      "/auth/refresh": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Refreshes the authentication tokens using the supplied refresh token.",
+          "description": "The CSRF token must be supplied in the `X-CSRF-Token` request header.\nThe value of this header must match the `csrf_token` cookie sent with the request.\nRequests with a missing or invalid CSRF token are rejected with an unauthorized response.",
+          "responses": {
+            "200": {
+              "description": "The refresh token was successfully exchanged for new authentication credentials."
+            },
+            "400": {
+              "description": "The refresh token request was invalid or could not be processed.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "The CSRF token was missing or invalid, or the supplied authentication credentials were unauthorized.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                }
+              }
             }
           }
-        ],
-        "requestBody": {
-          "description": "A token that can be used to cancel the operation.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrganisationDetailsDto"
+        }
+      },
+      "/auth/mfa": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Completes a multi-factor authentication challenge for an existing authentication session.",
+          "requestBody": {
+            "description": "A token to monitor for cancellation requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespondToMultiFactorAuthenticationChallengeCommand"
+                }
               }
             },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrganisationDetailsDto"
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "The multi-factor authentication challenge was successfully completed and an\nauthentication cookie was created."
+            },
+            "400": {
+              "description": "The supplied request was invalid.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                }
               }
             },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrganisationDetailsDto"
+            "401": {
+              "description": "The authentication session or verification code was invalid.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  }
+                }
               }
             }
+          }
+        }
+      },
+      "/auth/validate-setup-token": {
+        "get": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Validates whether a user setup token is valid and can be used to complete the user setup process.",
+          "parameters": [
+            {
+              "name": "setupToken",
+              "in": "query",
+              "description": "The unique identifier of the setup token to validate.",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The setup token is valid and can be used."
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "The setup token has expired or has already been consumed.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "The specified setup token does not exist.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/setup-user": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Completes the setup process for a user account using a valid setup token.",
+          "requestBody": {
+            "description": "A token that can be used to cancel the asynchronous operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupUserCommand"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupUserCommand"
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupUserCommand"
+                }
+              }
+            },
+            "required": true
           },
-          "required": true
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/verify-mfa": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Verifies the user's multi-factor authentication setup by validating the\nprovided authentication code.",
+          "requestBody": {
+            "description": "The token used to cancel the operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationCommand"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "The multi-factor authentication setup was successfully verified."
+            },
+            "400": {
+              "description": "The request contained invalid data or the multi-factor authentication\nverification could not be completed.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/organisations/{id}": {
+        "get": {
+          "tags": [
+            "Organisation"
+          ],
+          "summary": "Retrieves an organisation by its unique identifier.",
+          "operationId": "GetOrganisationById",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "The identifier of the organisation to retrieve.",
+              "required": true,
+              "schema": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The organisation was found and its details were returned.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationDetailsDto"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationDetailsDto"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationDetailsDto"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "No organisation exists with the specified identifier.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": {
-          "200": {
-            "description": "The organisation was successfully updated.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationDetailsDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationDetailsDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationDetailsDto"
-                }
+        "put": {
+          "tags": [
+            "Organisation"
+          ],
+          "summary": "Updates the details of an existing organisation.",
+          "operationId": "UpdateOrganisationDetails",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "The identifier of the organisation to update.",
+              "required": true,
+              "schema": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": "integer",
+                "format": "int32"
               }
             }
-          },
-          "400": {
-            "description": "The supplied organisation details failed validation.",
+          ],
+          "requestBody": {
+            "description": "A token that can be used to cancel the operation.",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/UpdateOrganisationDetailsDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/UpdateOrganisationDetailsDto"
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateOrganisationDetailsDto"
                 }
               }
-            }
+            },
+            "required": true
           },
-          "404": {
-            "description": "No organisation exists with the specified identifier.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+          "responses": {
+            "200": {
+              "description": "The organisation was successfully updated.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationDetailsDto"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationDetailsDto"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationDetailsDto"
+                  }
                 }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+              }
+            },
+            "400": {
+              "description": "The supplied organisation details failed validation.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
                 }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+              }
+            },
+            "404": {
+              "description": "No organisation exists with the specified identifier.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
                 }
               }
             }
           }
         }
-      }
-    },
-    "/organisations/{organisationId}/memberships/{membershipId}/deactivate": {
-      "patch": {
-        "tags": [
-          "Organisation"
-        ],
-        "summary": "Deactivates an organisation membership.",
-        "operationId": "DeactivateMembership",
-        "parameters": [
-          {
-            "name": "organisationId",
-            "in": "path",
-            "description": "The identifier of the organisation that owns the membership.",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "membershipId",
-            "in": "path",
-            "description": "The identifier of the membership to deactivate.",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The membership was successfully deactivated.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
-                }
+      },
+      "/organisations/{organisationId}/memberships/{membershipId}/deactivate": {
+        "patch": {
+          "tags": [
+            "Organisation"
+          ],
+          "summary": "Deactivates an organisation membership.",
+          "operationId": "DeactivateMembership",
+          "parameters": [
+            {
+              "name": "organisationId",
+              "in": "path",
+              "description": "The identifier of the organisation that owns the membership.",
+              "required": true,
+              "schema": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "membershipId",
+              "in": "path",
+              "description": "The identifier of the membership to deactivate.",
+              "required": true,
+              "schema": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": [
+                  "integer",
+                  "string"
+                ],
+                "format": "int32"
               }
             }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+          ],
+          "responses": {
+            "200": {
+              "description": "The membership was successfully deactivated.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
                 }
               }
-            }
-          },
-          "404": {
-            "description": "The specified organisation membership could not be found.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+            },
+            "403": {
+              "description": "Forbidden",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
                 }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+              }
+            },
+            "404": {
+              "description": "The specified organisation membership could not be found.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
                 }
               }
             }
           }
         }
-      }
-    },
-    "/organisations/{organisationId}/memberships/{membershipId}/update-role": {
-      "patch": {
-        "tags": [
-          "Organisation"
-        ],
-        "summary": "Updates the role assigned to a user within an organisation membership.",
-        "operationId": "UpdateUserRole",
-        "parameters": [
-          {
-            "name": "organisationId",
-            "in": "path",
-            "description": "The identifier of the organisation that owns the membership.",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
+      },
+      "/organisations/{organisationId}/memberships/{membershipId}/update-role": {
+        "patch": {
+          "tags": [
+            "Organisation"
+          ],
+          "summary": "Updates the role assigned to a user within an organisation membership.",
+          "operationId": "UpdateUserRole",
+          "parameters": [
+            {
+              "name": "organisationId",
+              "in": "path",
+              "description": "The identifier of the organisation that owns the membership.",
+              "required": true,
+              "schema": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "membershipId",
+              "in": "path",
+              "description": "The identifier of the membership to update.",
+              "required": true,
+              "schema": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": [
+                  "integer",
+                  "string"
+                ],
+                "format": "int32"
+              }
             }
+          ],
+          "requestBody": {
+            "description": "A token that can be used to cancel the operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateOrgMembershipUserRoleCommandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateOrgMembershipUserRoleCommandDto"
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateOrgMembershipUserRoleCommandDto"
+                }
+              }
+            },
+            "required": true
           },
-          {
-            "name": "membershipId",
-            "in": "path",
-            "description": "The identifier of the membership to update.",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
+          "responses": {
+            "200": {
+              "description": "The membership role was successfully updated.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "The specified organisation membership could not be found.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
             }
           }
-        ],
-        "requestBody": {
-          "description": "A token that can be used to cancel the operation.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgMembershipUserRoleCommandDto"
+        }
+      },
+      "/organisations": {
+        "post": {
+          "tags": [
+            "Organisation"
+          ],
+          "summary": "Creates a new organisation.",
+          "requestBody": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOrganisationDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOrganisationDto"
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOrganisationDto"
+                }
               }
             },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgMembershipUserRoleCommandDto"
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  }
+                }
               }
             },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgMembershipUserRoleCommandDto"
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
               }
             }
-          },
-          "required": true
+          }
+        }
+      },
+      "/users": {
+        "get": {
+          "tags": [
+            "User"
+          ],
+          "summary": "Retrieves a paginated list of users based on the specified query parameters.",
+          "operationId": "GetUsers",
+          "parameters": [
+            {
+              "name": "OrganisationId",
+              "in": "query",
+              "description": "Gets or initialises the optional ID of the organisation to filter users by.",
+              "schema": {
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": [
+                  "integer",
+                  "string"
+                ],
+                "format": "int32"
+              }
+            },
+            {
+              "name": "Page",
+              "in": "query",
+              "description": "Gets or initialises the page number for pagination.\nMust be greater than or equal to 1.",
+              "schema": {
+                "maximum": 2147483647,
+                "minimum": 1,
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": [
+                  "integer",
+                  "string"
+                ],
+                "format": "int32"
+              }
+            },
+            {
+              "name": "PageSize",
+              "in": "query",
+              "description": "Gets or initialises the number of items per page for pagination.\nMust be between 1 and 100.",
+              "schema": {
+                "maximum": 100,
+                "minimum": 1,
+                "pattern": "^-?(?:0|[1-9]\\d*)$",
+                "type": [
+                  "integer",
+                  "string"
+                ],
+                "format": "int32"
+              }
+            },
+            {
+              "name": "Status",
+              "in": "query",
+              "description": "Gets or initialises the collection of user organisation statuses to filter users by.\nUsers with a UserOrgStatus.Rejected status are always excluded from\nresults, regardless of the values supplied here.",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UserOrgStatus"
+                }
+              }
+            },
+            {
+              "name": "Role",
+              "in": "query",
+              "description": "Gets or initialises the collection of user roles to filter users by.",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UserRole"
+                }
+              }
+            },
+            {
+              "name": "Email",
+              "in": "query",
+              "description": "Gets or initialises an optional partial, case-insensitive match against the user's email address.",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "LastActiveFrom",
+              "in": "query",
+              "description": "Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.",
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            {
+              "name": "LastActiveTo",
+              "in": "query",
+              "description": "Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.",
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Returns the paginated list of users.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedResponseDtoOfUserListItemDto"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedResponseDtoOfUserListItemDto"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedResponseDtoOfUserListItemDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Returned if the query parameters are invalid or the organisation is not found.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Returned if no users are found matching the query parameters.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": {
-          "200": {
-            "description": "The membership role was successfully updated.",
+        "post": {
+          "tags": [
+            "User"
+          ],
+          "summary": "Creates a new user.",
+          "requestBody": {
+            "description": "A token used to cancel the operation&gt;",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
-                }
-              },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  "$ref": "#/components/schemas/CreateUserRequestDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
+                  "$ref": "#/components/schemas/CreateUserRequestDto"
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUserRequestDto"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserDetailsDto"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserDetailsDto"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserDetailsDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
                 }
               }
             }
-          },
-          "403": {
-            "description": "Forbidden",
+          }
+        }
+      },
+      "/users/onboard": {
+        "post": {
+          "tags": [
+            "UserCreation"
+          ],
+          "summary": "Creates a new user account and initiates the onboarding process.",
+          "requestBody": {
+            "description": "A token that can be used to cancel the operation.",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/OnboardUserCommandDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/OnboardUserCommandDto"
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardUserCommandDto"
                 }
               }
-            }
+            },
+            "required": true
           },
-          "404": {
-            "description": "The specified organisation membership could not be found.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+          "responses": {
+            "400": {
+              "description": "The request was invalid.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
                 }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+              }
+            },
+            "403": {
+              "description": "The current user does not have permission to onboard users.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
+                },
+                "text/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetails"
+                  }
                 }
               }
             }
@@ -841,1140 +1277,704 @@
         }
       }
     },
-    "/organisations": {
-      "post": {
-        "tags": [
-          "Organisation"
-        ],
-        "summary": "Creates a new organisation.",
-        "requestBody": {
-          "description": "",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateOrganisationDto"
-              }
+    "components": {
+      "schemas": {
+        "AuthenticationProblemDetails": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": [
+                "null",
+                "string"
+              ]
             },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateOrganisationDto"
-              }
+            "title": {
+              "type": [
+                "null",
+                "string"
+              ]
             },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateOrganisationDto"
-              }
+            "status": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "null",
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "detail": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "instance": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "challengeType": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "description": "Gets the type of authentication challenge required to complete authentication.",
+                  "$ref": "#/components/schemas/UkpsChallengeType"
+                }
+              ]
+            },
+            "authenticationSession": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the session identifier associated with the authentication challenge."
             }
           },
-          "required": true
+          "description": "Represents problem details returned when authentication fails or\nadditional authentication is required."
         },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationMembershipDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/users": {
-      "get": {
-        "tags": [
-          "User"
-        ],
-        "summary": "Retrieves a paginated list of users based on the specified query parameters.",
-        "operationId": "GetUsers",
-        "parameters": [
-          {
-            "name": "OrganisationId",
-            "in": "query",
-            "description": "Gets or initialises the optional ID of the organisation to filter users by.",
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
-            }
-          },
-          {
-            "name": "Page",
-            "in": "query",
-            "description": "Gets or initialises the page number for pagination.\nMust be greater than or equal to 1.",
-            "schema": {
-              "maximum": 2147483647,
-              "minimum": 1,
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
-            }
-          },
-          {
-            "name": "PageSize",
-            "in": "query",
-            "description": "Gets or initialises the number of items per page for pagination.\nMust be between 1 and 100.",
-            "schema": {
-              "maximum": 100,
-              "minimum": 1,
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
-            }
-          },
-          {
-            "name": "Status",
-            "in": "query",
-            "description": "Gets or initialises the collection of user organisation statuses to filter users by.\nUsers with a UserOrgStatus.Rejected status are always excluded from\nresults, regardless of the values supplied here.",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/UserOrgStatus"
-              }
-            }
-          },
-          {
-            "name": "Role",
-            "in": "query",
-            "description": "Gets or initialises the collection of user roles to filter users by.",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/UserRole"
-              }
-            }
-          },
-          {
-            "name": "Email",
-            "in": "query",
-            "description": "Gets or initialises an optional partial, case-insensitive match against the user's email address.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "LastActiveFrom",
-            "in": "query",
-            "description": "Gets or initialises the inclusive lower bound of the user's last active timestamp to filter by.",
-            "schema": {
+        "CreateOrganisationDto": {
+          "required": [
+            "organisationName",
+            "headOfficeAddress",
+            "headOfficeEmail",
+            "headOfficeTelephone"
+          ],
+          "type": "object",
+          "properties": {
+            "organisationName": {
               "type": "string",
+              "description": "Gets or sets the name of the organisation."
+            },
+            "countryOrRegion": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets or sets the country or region where the organisation is based, if applicable."
+            },
+            "headOfficeAddress": {
+              "type": "string",
+              "description": "Gets or sets the head office address of the organisation."
+            },
+            "headOfficeEmail": {
+              "type": "string",
+              "description": "Gets or sets the head office email address of the organisation."
+            },
+            "headOfficeTelephone": {
+              "type": "string",
+              "description": "Gets or sets the head office telephone number of the organisation."
+            }
+          },
+          "description": "Represents the information required to create a new organisation."
+        },
+        "CreateUserRequestDto": {
+          "required": [
+            "userType",
+            "title",
+            "firstName",
+            "lastName",
+            "jobTitle",
+            "workTelephone",
+            "workEmail",
+            "organisationId"
+          ],
+          "type": "object",
+          "properties": {
+            "userType": {
+              "description": "Gets the type of user to create.",
+              "$ref": "#/components/schemas/UserType"
+            },
+            "title": {
+              "type": "string",
+              "description": "Gets the user's title (for example, Mr, Mrs, Ms, or Dr)."
+            },
+            "firstName": {
+              "type": "string",
+              "description": "Gets the user's first name."
+            },
+            "lastName": {
+              "type": "string",
+              "description": "Gets the user's last name."
+            },
+            "jobTitle": {
+              "type": "string",
+              "description": "Gets the user's job title."
+            },
+            "workTelephone": {
+              "type": "string",
+              "description": "Gets the user's work telephone number."
+            },
+            "workEmail": {
+              "type": "string",
+              "description": "Gets the user's work email address."
+            },
+            "organisationId": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the identifier of the organisation the user belongs to.",
+              "format": "int32"
+            }
+          },
+          "description": "Represents the information required to create a new user."
+        },
+        "LoginRequest": {
+          "required": [
+            "username",
+            "password"
+          ],
+          "type": "object",
+          "properties": {
+            "username": {
+              "pattern": ".*\\S.*",
+              "type": "string",
+              "description": "Gets the username used to authenticate with the identity provider."
+            },
+            "password": {
+              "pattern": ".*\\S.*",
+              "type": "string",
+              "description": "Gets the password used to authenticate with the identity provider."
+            }
+          },
+          "description": "Represents the credentials provided by a user when attempting to authenticate."
+        },
+        "MultiFactorAuthenticationSetupDto": {
+          "required": [
+            "otpAuthUri",
+            "authenticationSession"
+          ],
+          "type": "object",
+          "properties": {
+            "otpAuthUri": {
+              "type": "string",
+              "description": "Gets the OTP authentication URI used to configure an authenticator application.",
+              "format": "uri"
+            },
+            "authenticationSession": {
+              "type": "string",
+              "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication setup flow."
+            }
+          },
+          "description": "Represents the details required for a user to complete multi-factor authentication setup."
+        },
+        "OnboardUserCommandDto": {
+          "required": [
+            "newUserEmail",
+            "organisationId"
+          ],
+          "type": "object",
+          "properties": {
+            "newUserEmail": {
+              "type": "string",
+              "description": "Gets the email address of the user to onboard."
+            },
+            "organisationId": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Specifies the organisation that the new user will be created for.",
+              "format": "int32"
+            }
+          },
+          "description": "Represents the data required to onboard a new user."
+        },
+        "OrganisationDetailsDto": {
+          "required": [
+            "organisationName",
+            "headOfficeAddress",
+            "headOfficeEmail",
+            "headOfficeTelephone",
+            "id",
+            "organisationType",
+            "allowedPharmaceuticalEntity",
+            "status"
+          ],
+          "type": "object",
+          "properties": {
+            "id": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the unique identifier of the organisation.",
+              "format": "int32"
+            },
+            "organisationName": {
+              "type": "string",
+              "description": "Gets the name of the organisation."
+            },
+            "organisationType": {
+              "description": "Gets the type of the organisation.",
+              "$ref": "#/components/schemas/OrganisationType"
+            },
+            "allowedPharmaceuticalEntity": {
+              "description": "Gets the allowed pharmaceutical entity for the organisation.",
+              "$ref": "#/components/schemas/PharmaceuticalEntity"
+            },
+            "countryOrRegion": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the country or region where the organisation is located."
+            },
+            "headOfficeAddress": {
+              "type": "string",
+              "description": "Gets the address of the organisation's head office."
+            },
+            "headOfficeEmail": {
+              "type": "string",
+              "description": "Gets the email address of the organisation's head office."
+            },
+            "headOfficeTelephone": {
+              "type": "string",
+              "description": "Gets the telephone number of the organisation's head office."
+            },
+            "status": {
+              "description": "Gets the current status of the organisation.",
+              "$ref": "#/components/schemas/UserOrgStatus"
+            },
+            "lastActive": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the date and time when the organisation was last active.",
+              "format": "date-time"
+            },
+            "createdAt": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the date and time when the organisation was created.",
               "format": "date-time"
             }
           },
-          {
-            "name": "LastActiveTo",
-            "in": "query",
-            "description": "Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.",
-            "schema": {
+          "description": "Represents the details of an organisation."
+        },
+        "OrganisationMembershipDto": {
+          "required": [
+            "id",
+            "userId",
+            "organisationId",
+            "userRole",
+            "status",
+            "allowedPharmaceuticalEntity",
+            "createdAt"
+          ],
+          "type": "object",
+          "properties": {
+            "id": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the unique identifier of the organisation membership.",
+              "format": "int32"
+            },
+            "userId": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the unique identifier of the user associated with the membership.",
+              "format": "int32"
+            },
+            "organisationId": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the unique identifier of the organisation associated with the membership.",
+              "format": "int32"
+            },
+            "userRole": {
+              "description": "Gets the role of the user within the organisation.",
+              "$ref": "#/components/schemas/UserRole"
+            },
+            "status": {
+              "description": "Gets the status of the user within the organisation.",
+              "$ref": "#/components/schemas/UserOrgStatus"
+            },
+            "allowedPharmaceuticalEntity": {
+              "description": "Gets the pharmaceutical entity that the user is allowed to access.",
+              "$ref": "#/components/schemas/PharmaceuticalEntity"
+            },
+            "createdAt": {
               "type": "string",
+              "description": "Gets the date and time when the organisation membership was created.",
               "format": "date-time"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Returns the paginated list of users.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponseDtoOfUserListItemDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponseDtoOfUserListItemDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponseDtoOfUserListItemDto"
-                }
-              }
-            }
           },
-          "400": {
-            "description": "Returned if the query parameters are invalid or the organisation is not found.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Returned if no users are found matching the query parameters.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "User"
-        ],
-        "summary": "Creates a new user.",
-        "requestBody": {
-          "description": "A token used to cancel the operation&gt;",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateUserRequestDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateUserRequestDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateUserRequestDto"
-              }
-            }
-          },
-          "required": true
+          "description": "Represents the data transfer object for an organisation membership."
         },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserDetailsDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserDetailsDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserDetailsDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/users/onboard": {
-      "post": {
-        "tags": [
-          "UserCreation"
-        ],
-        "summary": "Creates a new user account and initiates the onboarding process.",
-        "requestBody": {
-          "description": "A token that can be used to cancel the operation.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OnboardUserCommandDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OnboardUserCommandDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/OnboardUserCommandDto"
-              }
-            }
-          },
-          "required": true
+        "OrganisationType": {
+          "enum": [
+            "PharmaCompany",
+            "HorizonScanning",
+            "Strategic",
+            "Internal"
+          ],
+          "type": "string",
+          "description": "Represents the different types of organisations within the system."
         },
-        "responses": {
-          "400": {
-            "description": "The request was invalid.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The current user does not have permission to onboard users.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "AuthenticationProblemDetails": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "detail": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "instance": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "challengeType": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the type of authentication challenge required to complete authentication.",
-                "$ref": "#/components/schemas/UkpsChallengeType"
-              }
-            ]
-          },
-          "authenticationSession": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the session identifier associated with the authentication challenge."
-          }
-        },
-        "description": "Represents problem details returned when authentication fails or\nadditional authentication is required."
-      },
-      "CreateOrganisationDto": {
-        "required": [
-          "organisationName",
-          "headOfficeAddress",
-          "headOfficeEmail",
-          "headOfficeTelephone"
-        ],
-        "type": "object",
-        "properties": {
-          "organisationName": {
-            "type": "string",
-            "description": "Gets or sets the name of the organisation."
-          },
-          "countryOrRegion": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets or sets the country or region where the organisation is based, if applicable."
-          },
-          "headOfficeAddress": {
-            "type": "string",
-            "description": "Gets or sets the head office address of the organisation."
-          },
-          "headOfficeEmail": {
-            "type": "string",
-            "description": "Gets or sets the head office email address of the organisation."
-          },
-          "headOfficeTelephone": {
-            "type": "string",
-            "description": "Gets or sets the head office telephone number of the organisation."
-          }
-        },
-        "description": "Represents the information required to create a new organisation."
-      },
-      "CreateUserRequestDto": {
-        "required": [
-          "userType",
-          "title",
-          "firstName",
-          "lastName",
-          "jobTitle",
-          "workTelephone",
-          "workEmail",
-          "organisationId"
-        ],
-        "type": "object",
-        "properties": {
-          "userType": {
-            "description": "Gets the type of user to create.",
-            "$ref": "#/components/schemas/UserType"
-          },
-          "title": {
-            "type": "string",
-            "description": "Gets the user's title (for example, Mr, Mrs, Ms, or Dr)."
-          },
-          "firstName": {
-            "type": "string",
-            "description": "Gets the user's first name."
-          },
-          "lastName": {
-            "type": "string",
-            "description": "Gets the user's last name."
-          },
-          "jobTitle": {
-            "type": "string",
-            "description": "Gets the user's job title."
-          },
-          "workTelephone": {
-            "type": "string",
-            "description": "Gets the user's work telephone number."
-          },
-          "workEmail": {
-            "type": "string",
-            "description": "Gets the user's work email address."
-          },
-          "organisationId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the identifier of the organisation the user belongs to.",
-            "format": "int32"
-          }
-        },
-        "description": "Represents the information required to create a new user."
-      },
-      "LoginRequest": {
-        "required": [
-          "username",
-          "password"
-        ],
-        "type": "object",
-        "properties": {
-          "username": {
-            "pattern": ".*\\S.*",
-            "type": "string",
-            "description": "Gets the username used to authenticate with the identity provider."
-          },
-          "password": {
-            "pattern": ".*\\S.*",
-            "type": "string",
-            "description": "Gets the password used to authenticate with the identity provider."
-          }
-        },
-        "description": "Represents the credentials provided by a user when attempting to authenticate."
-      },
-      "MultiFactorAuthenticationSetupDto": {
-        "required": [
-          "otpAuthUri",
-          "authenticationSession"
-        ],
-        "type": "object",
-        "properties": {
-          "otpAuthUri": {
-            "type": "string",
-            "description": "Gets the OTP authentication URI used to configure an authenticator application.",
-            "format": "uri"
-          },
-          "authenticationSession": {
-            "type": "string",
-            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication setup flow."
-          }
-        },
-        "description": "Represents the details required for a user to complete multi-factor authentication setup."
-      },
-      "OnboardUserCommandDto": {
-        "required": [
-          "newUserEmail",
-          "organisationId"
-        ],
-        "type": "object",
-        "properties": {
-          "newUserEmail": {
-            "type": "string",
-            "description": "Gets the email address of the user to onboard."
-          },
-          "organisationId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Specifies the organisation that the new user will be created for.",
-            "format": "int32"
-          }
-        },
-        "description": "Represents the data required to onboard a new user."
-      },
-      "OrganisationDetailsDto": {
-        "required": [
-          "organisationName",
-          "headOfficeAddress",
-          "headOfficeEmail",
-          "headOfficeTelephone",
-          "id",
-          "organisationType",
-          "allowedPharmaceuticalEntity",
-          "status"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the unique identifier of the organisation.",
-            "format": "int32"
-          },
-          "organisationName": {
-            "type": "string",
-            "description": "Gets the name of the organisation."
-          },
-          "organisationType": {
-            "description": "Gets the type of the organisation.",
-            "$ref": "#/components/schemas/OrganisationType"
-          },
-          "allowedPharmaceuticalEntity": {
-            "description": "Gets the allowed pharmaceutical entity for the organisation.",
-            "$ref": "#/components/schemas/PharmaceuticalEntity"
-          },
-          "countryOrRegion": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the country or region where the organisation is located."
-          },
-          "headOfficeAddress": {
-            "type": "string",
-            "description": "Gets the address of the organisation's head office."
-          },
-          "headOfficeEmail": {
-            "type": "string",
-            "description": "Gets the email address of the organisation's head office."
-          },
-          "headOfficeTelephone": {
-            "type": "string",
-            "description": "Gets the telephone number of the organisation's head office."
-          },
-          "status": {
-            "description": "Gets the current status of the organisation.",
-            "$ref": "#/components/schemas/UserOrgStatus"
-          },
-          "lastActive": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the date and time when the organisation was last active.",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the date and time when the organisation was created.",
-            "format": "date-time"
-          }
-        },
-        "description": "Represents the details of an organisation."
-      },
-      "OrganisationMembershipDto": {
-        "required": [
-          "id",
-          "userId",
-          "organisationId",
-          "userRole",
-          "status",
-          "allowedPharmaceuticalEntity",
-          "createdAt"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the unique identifier of the organisation membership.",
-            "format": "int32"
-          },
-          "userId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the unique identifier of the user associated with the membership.",
-            "format": "int32"
-          },
-          "organisationId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the unique identifier of the organisation associated with the membership.",
-            "format": "int32"
-          },
-          "userRole": {
-            "description": "Gets the role of the user within the organisation.",
-            "$ref": "#/components/schemas/UserRole"
-          },
-          "status": {
-            "description": "Gets the status of the user within the organisation.",
-            "$ref": "#/components/schemas/UserOrgStatus"
-          },
-          "allowedPharmaceuticalEntity": {
-            "description": "Gets the pharmaceutical entity that the user is allowed to access.",
-            "$ref": "#/components/schemas/PharmaceuticalEntity"
-          },
-          "createdAt": {
-            "type": "string",
-            "description": "Gets the date and time when the organisation membership was created.",
-            "format": "date-time"
-          }
-        },
-        "description": "Represents the data transfer object for an organisation membership."
-      },
-      "OrganisationType": {
-        "enum": [
-          "PharmaCompany",
-          "HorizonScanning",
-          "Strategic",
-          "Internal"
-        ],
-        "type": "string",
-        "description": "Represents the different types of organisations within the system."
-      },
-      "PaginatedResponseDtoOfUserListItemDto": {
-        "required": [
-          "items",
-          "totalCount",
-          "page",
-          "pageSize"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
+        "PaginatedResponseDtoOfUserListItemDto": {
+          "required": [
+            "items",
+            "totalCount",
+            "page",
+            "pageSize"
+          ],
+          "type": "object",
+          "properties": {
             "items": {
-              "$ref": "#/components/schemas/UserListItemDto"
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UserListItemDto"
+              },
+              "description": "Gets the collection of items in the current page."
             },
-            "description": "Gets the collection of items in the current page."
+            "totalCount": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the total number of items across all pages.",
+              "format": "int32"
+            },
+            "page": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the current page number (1-based index).",
+              "format": "int32"
+            },
+            "pageSize": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the number of items per page.",
+              "format": "int32"
+            }
           },
-          "totalCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the total number of items across all pages.",
-            "format": "int32"
-          },
-          "page": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the current page number (1-based index).",
-            "format": "int32"
-          },
-          "pageSize": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the number of items per page.",
-            "format": "int32"
+          "description": "Represents a paginated response containing a collection of items and pagination metadata."
+        },
+        "PharmaceuticalEntity": {
+          "type": "string",
+          "description": "Flags enum stored as integer. Only Organisation uses Both;\nUserOrgMembership and TermsAcceptance use Medicines or Vaccines only.\nRepresents the types of pharmaceutical entities."
+        },
+        "ProblemDetails": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "title": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "status": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "null",
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "detail": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "instance": {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
           }
         },
-        "description": "Represents a paginated response containing a collection of items and pagination metadata."
-      },
-      "PharmaceuticalEntity": {
-        "type": "string",
-        "description": "Flags enum stored as integer. Only Organisation uses Both;\nUserOrgMembership and TermsAcceptance use Medicines or Vaccines only.\nRepresents the types of pharmaceutical entities."
-      },
-      "ProblemDetails": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": [
-              "null",
-              "string"
-            ]
+        "RespondToMultiFactorAuthenticationChallengeCommand": {
+          "required": [
+            "username",
+            "code",
+            "authenticationSession"
+          ],
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "The associated username for the user."
+            },
+            "code": {
+              "type": "string",
+              "description": "Gets the one-time authentication code generated by the user's\nauthenticator application."
+            },
+            "authenticationSession": {
+              "type": "string",
+              "description": "Gets the authentication session identifier associated with the\noutstanding multi-factor authentication challenge."
+            }
           },
-          "title": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "description": "Represents the information required to respond to a multi-factor\nauthentication challenge."
+        },
+        "SetupUserCommand": {
+          "required": [
+            "setupToken",
+            "newPassword"
+          ],
+          "type": "object",
+          "properties": {
+            "setupToken": {
+              "type": "string",
+              "description": "Gets the unique token used to identify and validate the pending user setup request.",
+              "format": "uuid"
+            },
+            "newPassword": {
+              "type": "string",
+              "description": "Gets the new password to assign to the user account."
+            }
           },
-          "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ],
-            "format": "int32"
+          "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a new password to the user."
+        },
+        "UkpsChallengeType": {
+          "enum": [
+            "MultiFactorAuthenticationRequired",
+            "MultiFactorAuthenticationSetupRequired",
+            null
+          ],
+          "type": "string"
+        },
+        "UpdateOrganisationDetailsDto": {
+          "required": [
+            "organisationName",
+            "headOfficeAddress",
+            "headOfficeEmail",
+            "headOfficeTelephone"
+          ],
+          "type": "object",
+          "properties": {
+            "organisationName": {
+              "type": "string",
+              "description": "Gets or sets the name of the organisation."
+            },
+            "headOfficeAddress": {
+              "type": "string",
+              "description": "Gets or sets the head office address of the organisation."
+            },
+            "headOfficeEmail": {
+              "type": "string",
+              "description": "Gets or sets the email address of the head office."
+            },
+            "headOfficeTelephone": {
+              "type": "string",
+              "description": "Gets or sets the telephone number of the head office."
+            }
           },
-          "detail": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "description": "Represents the data transfer object for updating organisation details."
+        },
+        "UpdateOrgMembershipUserRoleCommandDto": {
+          "required": [
+            "userRole"
+          ],
+          "type": "object",
+          "properties": {
+            "userRole": {
+              "description": "Gets or initialises the user role to be updated in the organisation membership.\nThe new UserRole UpdateOrgMembershipUserRoleCommandDto.UserRole to assign to the user.",
+              "$ref": "#/components/schemas/UserRole"
+            }
           },
-          "instance": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
+          "description": "Represents a Data Transfer Object (DTO) for updating the user role\nin an organisation membership."
+        },
+        "UserDetailsDto": {
+          "required": [
+            "userType",
+            "title",
+            "firstName",
+            "lastName",
+            "jobTitle",
+            "workPhone",
+            "workEmail"
+          ],
+          "type": "object",
+          "properties": {
+            "userType": {
+              "description": "Gets the user's type.",
+              "$ref": "#/components/schemas/UserType"
+            },
+            "title": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the user's title (for example, Mr, Mrs, Ms, or Dr), if available."
+            },
+            "firstName": {
+              "type": "string",
+              "description": "Gets the user's first name."
+            },
+            "lastName": {
+              "type": "string",
+              "description": "Gets the user's last name."
+            },
+            "jobTitle": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the user's job title, if available."
+            },
+            "workPhone": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the user's work telephone number, if available."
+            },
+            "workEmail": {
+              "type": "string",
+              "description": "Gets the user's work email address."
+            }
+          },
+          "description": "Represents the details of a user."
+        },
+        "UserListItemDto": {
+          "required": [
+            "userId",
+            "role",
+            "status"
+          ],
+          "type": "object",
+          "properties": {
+            "userId": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "description": "Gets the unique identifier of the user.",
+              "format": "int32"
+            },
+            "emailAddress": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the email address of the user, if available."
+            },
+            "role": {
+              "description": "Gets the role of the user within the system.",
+              "$ref": "#/components/schemas/UserRole"
+            },
+            "status": {
+              "description": "Gets the organisational status of the user.",
+              "$ref": "#/components/schemas/UserOrgStatus"
+            },
+            "lastActive": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Gets the date and time when the user was last active, if available.",
+              "format": "date-time"
+            }
+          },
+          "description": "Represents a limited summary of a user."
+        },
+        "UserOrgStatus": {
+          "enum": [
+            "RequestedAccess",
+            "AwaitingSetup",
+            "Active",
+            "Rejected",
+            "Inactive",
+            "Deactivated"
+          ],
+          "type": "string",
+          "description": "Represents the status of a user's association with an organisation."
+        },
+        "UserRole": {
+          "enum": [
+            "Standard",
+            "Champion",
+            "Super"
+          ],
+          "type": "string",
+          "description": "Represents the different roles a user can have within the system."
+        },
+        "UserType": {
+          "enum": [
+            "PharmaUser",
+            "HorizonScanner",
+            "StrategicUser",
+            "QaUser",
+            "ItAdmin"
+          ],
+          "type": "string",
+          "description": "Represents the different types of users in the system."
+        },
+        "VerifyMultiFactorAuthenticationCommand": {
+          "required": [
+            "setupToken",
+            "code",
+            "authenticationSession"
+          ],
+          "type": "object",
+          "properties": {
+            "setupToken": {
+              "type": "string",
+              "description": "Gets the unique token associated with the user onboarding record.",
+              "format": "uuid"
+            },
+            "code": {
+              "type": "string",
+              "description": "Gets the verification code generated by the user's authenticator application."
+            },
+            "authenticationSession": {
+              "type": "string",
+              "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
+            }
+          },
+          "description": "Represents the details required to verify a user's multi-factor authentication setup."
         }
-      },
-      "RespondToMultiFactorAuthenticationChallengeCommand": {
-        "required": [
-          "username",
-          "code",
-          "authenticationSession"
-        ],
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "description": "The associated username for the user."
-          },
-          "code": {
-            "type": "string",
-            "description": "Gets the one-time authentication code generated by the user's\nauthenticator application."
-          },
-          "authenticationSession": {
-            "type": "string",
-            "description": "Gets the authentication session identifier associated with the\noutstanding multi-factor authentication challenge."
-          }
-        },
-        "description": "Represents the information required to respond to a multi-factor\nauthentication challenge."
-      },
-      "SetupUserCommand": {
-        "required": [
-          "setupToken",
-          "newPassword"
-        ],
-        "type": "object",
-        "properties": {
-          "setupToken": {
-            "type": "string",
-            "description": "Gets the unique token used to identify and validate the pending user setup request.",
-            "format": "uuid"
-          },
-          "newPassword": {
-            "type": "string",
-            "description": "Gets the new password to assign to the user account."
-          }
-        },
-        "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a new password to the user."
-      },
-      "UkpsChallengeType": {
-        "enum": [
-          "MultiFactorAuthenticationRequired",
-          "MultiFactorAuthenticationSetupRequired",
-          null
-        ],
-        "type": "string"
-      },
-      "UpdateOrganisationDetailsDto": {
-        "required": [
-          "organisationName",
-          "headOfficeAddress",
-          "headOfficeEmail",
-          "headOfficeTelephone"
-        ],
-        "type": "object",
-        "properties": {
-          "organisationName": {
-            "type": "string",
-            "description": "Gets or sets the name of the organisation."
-          },
-          "headOfficeAddress": {
-            "type": "string",
-            "description": "Gets or sets the head office address of the organisation."
-          },
-          "headOfficeEmail": {
-            "type": "string",
-            "description": "Gets or sets the email address of the head office."
-          },
-          "headOfficeTelephone": {
-            "type": "string",
-            "description": "Gets or sets the telephone number of the head office."
-          }
-        },
-        "description": "Represents the data transfer object for updating organisation details."
-      },
-      "UpdateOrgMembershipUserRoleCommandDto": {
-        "required": [
-          "userRole"
-        ],
-        "type": "object",
-        "properties": {
-          "userRole": {
-            "description": "Gets or initialises the user role to be updated in the organisation membership.\nThe new UserRole UpdateOrgMembershipUserRoleCommandDto.UserRole to assign to the user.",
-            "$ref": "#/components/schemas/UserRole"
-          }
-        },
-        "description": "Represents a Data Transfer Object (DTO) for updating the user role\nin an organisation membership."
-      },
-      "UserDetailsDto": {
-        "required": [
-          "userType",
-          "title",
-          "firstName",
-          "lastName",
-          "jobTitle",
-          "workPhone",
-          "workEmail"
-        ],
-        "type": "object",
-        "properties": {
-          "userType": {
-            "description": "Gets the user's type.",
-            "$ref": "#/components/schemas/UserType"
-          },
-          "title": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the user's title (for example, Mr, Mrs, Ms, or Dr), if available."
-          },
-          "firstName": {
-            "type": "string",
-            "description": "Gets the user's first name."
-          },
-          "lastName": {
-            "type": "string",
-            "description": "Gets the user's last name."
-          },
-          "jobTitle": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the user's job title, if available."
-          },
-          "workPhone": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the user's work telephone number, if available."
-          },
-          "workEmail": {
-            "type": "string",
-            "description": "Gets the user's work email address."
-          }
-        },
-        "description": "Represents the details of a user."
-      },
-      "UserListItemDto": {
-        "required": [
-          "userId",
-          "role",
-          "status"
-        ],
-        "type": "object",
-        "properties": {
-          "userId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the unique identifier of the user.",
-            "format": "int32"
-          },
-          "emailAddress": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the email address of the user, if available."
-          },
-          "role": {
-            "description": "Gets the role of the user within the system.",
-            "$ref": "#/components/schemas/UserRole"
-          },
-          "status": {
-            "description": "Gets the organisational status of the user.",
-            "$ref": "#/components/schemas/UserOrgStatus"
-          },
-          "lastActive": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the date and time when the user was last active, if available.",
-            "format": "date-time"
-          }
-        },
-        "description": "Represents a limited summary of a user."
-      },
-      "UserOrgStatus": {
-        "enum": [
-          "RequestedAccess",
-          "AwaitingSetup",
-          "Active",
-          "Rejected",
-          "Inactive",
-          "Deactivated"
-        ],
-        "type": "string",
-        "description": "Represents the status of a user's association with an organisation."
-      },
-      "UserRole": {
-        "enum": [
-          "Standard",
-          "Champion",
-          "Super"
-        ],
-        "type": "string",
-        "description": "Represents the different roles a user can have within the system."
-      },
-      "UserType": {
-        "enum": [
-          "PharmaUser",
-          "HorizonScanner",
-          "StrategicUser",
-          "QaUser",
-          "ItAdmin"
-        ],
-        "type": "string",
-        "description": "Represents the different types of users in the system."
-      },
-      "VerifyMultiFactorAuthenticationCommand": {
-        "required": [
-          "setupToken",
-          "code",
-          "authenticationSession"
-        ],
-        "type": "object",
-        "properties": {
-          "setupToken": {
-            "type": "string",
-            "description": "Gets the unique token associated with the user onboarding record.",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string",
-            "description": "Gets the verification code generated by the user's authenticator application."
-          },
-          "authenticationSession": {
-            "type": "string",
-            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
-          }
-        },
-        "description": "Represents the details required to verify a user's multi-factor authentication setup."
       }
-    }
-  },
-  "tags": [
-    {
-      "name": "Authentication"
     },
-    {
-      "name": "Organisation"
-    },
-    {
-      "name": "User"
-    },
-    {
-      "name": "UserCreation"
-    }
-  ]
-}
+    "tags": [
+      {
+        "name": "Authentication"
+      },
+      {
+        "name": "Organisation"
+      },
+      {
+        "name": "User"
+      },
+      {
+        "name": "UserCreation"
+      }
+    ]
+  }

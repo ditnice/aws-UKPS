@@ -13,6 +13,10 @@ updates:
         patterns:
           - "*"
     ignore:
+      # Keep Sass below 1.80 for NICE Design System SCSS deprecation noise.
+      - dependency-name: sass
+        versions:
+          - ">=1.80.0"
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
