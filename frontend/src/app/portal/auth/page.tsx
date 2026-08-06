@@ -8,6 +8,7 @@ import {
   postAuthVerifyMfa,
   postAuthLogin,
   postAuthMfa,
+  getUsers,
 } from '@/client/generated/sdk.gen'
 import { UkpsChallengeType } from '@/client/generated/types.gen'
 
@@ -167,6 +168,19 @@ const UserLogin = () => {
   )
 }
 
+const TestFetch = () => {
+  const fetchData = async () => {
+    const response = await getUsers({ credentials: 'include' })
+    console.log(response)
+  }
+
+  return (
+    <div>
+      <button onClick={fetchData}>Test Fetch</button>
+    </div>
+  )
+}
+
 export default function ExampleAuthenticationPage() {
   const [otpLink, setOtpLink] = useState<string | undefined>(undefined)
   const [authSession, setAuthSession] = useState<string | undefined>(undefined)
@@ -184,6 +198,7 @@ export default function ExampleAuthenticationPage() {
         <SetupMfa otpLink={otpLink} authSession={authSession} setupToken={setupToken} />
       )}
       <UserLogin />
+      <TestFetch />
 
       {JSON.stringify({ otpLink, authSession })}
     </>

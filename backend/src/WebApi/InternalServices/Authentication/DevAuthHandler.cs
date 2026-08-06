@@ -1,21 +1,20 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace UKPS.Api.Tests.Utilities.Fixtures;
+namespace UKPS.Api.WebApi.InternalServices.Authentication;
 
-public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+internal class DevAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
-    public const string AuthenticationScheme = "TestScheme";
-    private readonly TestAuthenticationOptions _authOptions;
+    public const string AuthenticationScheme = "DevScheme";
+    private readonly DevAuthenticationOptions _authOptions;
 
-    public TestAuthHandler(
+    public DevAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        TestAuthenticationOptions authOptions
+        DevAuthenticationOptions authOptions
     )
         : base(options, logger, encoder)
     {
