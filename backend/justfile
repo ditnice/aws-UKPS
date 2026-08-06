@@ -16,9 +16,6 @@ run:
 generate-migration name:
     dotnet ef migrations add {{name}} --project src --startup-project src --output-dir Persistence/Migrations
 
-openapi:
-    dotnet build src/UKPS.Api.csproj /p:OpenApiDocumentsDirectory=../openapi
-
 test:
     dotnet test
 
