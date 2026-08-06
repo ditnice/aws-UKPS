@@ -36,7 +36,7 @@ public class LoginServiceTests : DatabaseTestBase
                         {
                             ClientId = "client-id",
                             Region = "eu-west-2",
-                            ServiceUrl = new Uri("https://cognito.example.com"),
+                            ServiceUrlOverride = new Uri("https://cognito.example.com"),
                             ClientSecret = "client-secret",
                             UserPoolId = "user-pool-id",
                         }
