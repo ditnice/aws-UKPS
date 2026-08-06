@@ -93,7 +93,7 @@ builder.Services.AddOpenApi(options =>
     );
 });
 
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
 builder.AddAwsBearerAuthentication();
 
