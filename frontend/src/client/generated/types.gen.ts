@@ -4,6 +4,10 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+/**
+ * Represents problem details returned when authentication fails or
+ * additional authentication is required.
+ */
 export type AuthenticationProblemDetails = {
     type?: null | string;
     title?: null | string;
@@ -11,6 +15,9 @@ export type AuthenticationProblemDetails = {
     detail?: null | string;
     instance?: null | string;
     challengeType?: null | UkpsChallengeType;
+    /**
+     * Gets the session identifier associated with the authentication challenge.
+     */
     authenticationSession?: null | string;
 };
 
