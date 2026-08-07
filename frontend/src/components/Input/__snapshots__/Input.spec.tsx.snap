@@ -1,0 +1,418 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Input > applies a max-width for a fixed width 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="max-width: 11.5em;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > applies a width for a fluid width 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="width: 50%;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > forwards other input props 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <p
+      class="input__hint"
+    >
+      Please enter in years
+    </p>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > merges width styles with an explicit style prop 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="color: red; width: 100%;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders an unmodified design system input by default 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="firstname"
+    >
+      First name
+    </label>
+    <input
+      class="input__input"
+      id="firstname"
+      name="firstname"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the 2 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="max-width: 2.75em;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the 3 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="max-width: 3.75em;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the 4 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="max-width: 4.5em;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the 5 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="max-width: 5.5em;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the 10 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="max-width: 11.5em;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the 20 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="max-width: 20.5em;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the 30 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="max-width: 29.5em;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the full width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="width: 100%;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the one-half width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="width: 50%;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the one-quarter width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="width: 25%;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the one-third width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="width: 33.3333%;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the three-quarters width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="width: 75%;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > renders the two-thirds width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <input
+      class="input__input"
+      id="age"
+      name="age"
+      style="width: 66.6667%;"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
