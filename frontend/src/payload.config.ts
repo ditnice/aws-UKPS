@@ -12,6 +12,25 @@ import { Users } from './collections/Users'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+function getDatabaseConnectionString(): string {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL
+  }
+
+  const { DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_PORT, DATABASE_USERNAME } =
+    process.env
+
+  if (DATABASE_HOST && DATABASE_NAME && DATABASE_PASSWORD && DATABASE_PORT && DATABASE_USERNAME) {
+    const username = encodeURIComponent(DATABASE_USERNAME)
+    const password = encodeURIComponent(DATABASE_PASSWORD)
+    const databaseName = encodeURIComponent(DATABASE_NAME)
+
+    return `postgres://${username}:${password}@${DATABASE_HOST}:${DATABASE_PORT}/${databaseName}?sslmode=require`
+  }
+
+  return ''
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -27,7 +46,7 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URL || '',
+      connectionString: getDatabaseConnectionString(),
     },
   }),
   sharp,

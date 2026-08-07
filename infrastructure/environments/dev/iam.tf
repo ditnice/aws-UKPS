@@ -61,3 +61,30 @@ data "aws_iam_policy_document" "backend_cognito" {
     }
   }
 }
+
+data "aws_iam_policy_document" "frontend_secrets" {
+  statement {
+    sid    = "ReadFrontendSecrets"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+    ]
+    resources = [
+      aws_secretsmanager_secret.frontend_payload_secret.arn,
+      module.aurora_frontend.master_user_secret_arn,
+    ]
+  }
+
+  statement {
+    sid       = "DecryptFrontendPayloadSecret"
+    effect    = "Allow"
+    actions   = ["kms:Decrypt"]
+    resources = [module.kms_frontend.app_key_arn]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["secretsmanager.${var.region}.amazonaws.com"]
+    }
+  }
+}
