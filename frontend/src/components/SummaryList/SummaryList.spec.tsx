@@ -8,7 +8,7 @@ afterEach(cleanup)
 describe('SummaryList', () => {
   it('renders row children as a description list and ignores empty children', () => {
     const showOptionalRow = false
-    const { container } = render(
+    const { asFragment, container } = render(
       <SummaryList className="additional-class">
         <SummaryListRow label="Name" value="Sarah Philips" />
         {showOptionalRow && <SummaryListRow label="Status" value="Active" />}
@@ -27,10 +27,11 @@ describe('SummaryList', () => {
     expect(
       Array.from(list?.querySelectorAll('dd') ?? []).map((value) => value.textContent),
     ).toEqual(['Sarah Philips', '5 January 1978'])
+    expect(asFragment()).toMatchSnapshot()
   })
 
   it('adds hidden context to a row action child', () => {
-    render(
+    const { asFragment } = render(
       <SummaryList>
         <SummaryListRow label="Name" value="Sarah Philips">
           <SummaryListAction href="/change-name" visuallyHiddenText="name">
@@ -43,10 +44,11 @@ describe('SummaryList', () => {
     const action = screen.getByRole('link', { name: 'Change name' })
     expect(action.getAttribute('href')).toBe('/change-name')
     expect(action.querySelector('.visually-hidden')?.textContent).toBe('name')
+    expect(asFragment()).toMatchSnapshot()
   })
 
   it('supports mixed rows, multiple action children and rich values', () => {
-    const { container } = render(
+    const { asFragment, container } = render(
       <SummaryList>
         <SummaryListRow label="Name" value="Sarah Philips" />
         <SummaryListRow
@@ -76,10 +78,11 @@ describe('SummaryList', () => {
     expect(actionsList).not.toBeNull()
     expect(within(actionsList as HTMLElement).getAllByRole('listitem').length).toBe(2)
     expect(screen.getByText('sarah.philips@example.com').tagName).toBe('P')
+    expect(asFragment()).toMatchSnapshot()
   })
 
   it('supports a two-column variant for lists without actions', () => {
-    const { container } = render(
+    const { asFragment, container } = render(
       <SummaryList variant="two-column">
         <SummaryListRow label="Name" value="Sarah Philips" />
         <SummaryListRow label="Status" value="Active" />
@@ -89,5 +92,6 @@ describe('SummaryList', () => {
     const list = container.querySelector('dl')
     expect(list?.className).toContain('summary-list--two-column')
     expect(container.querySelector('[class*="summary-list__row--no-actions"]')).toBeNull()
+    expect(asFragment()).toMatchSnapshot()
   })
 })

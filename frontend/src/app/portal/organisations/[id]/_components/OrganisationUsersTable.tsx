@@ -59,11 +59,14 @@ function renderActions(status: UserListItemDto['status']) {
       return <a>Reactivate</a>
     case 'RequestedAccess':
       return (
-        <>
-          <a>Approve</a>
-          <br />
-          <a>Reject</a>
-        </>
+        <ul className={styles.actionList}>
+          <li>
+            <a>Approve</a>
+          </li>
+          <li>
+            <a>Reject</a>
+          </li>
+        </ul>
       )
     default:
       return 'Not applicable'

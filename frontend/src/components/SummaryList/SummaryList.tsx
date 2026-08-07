@@ -84,7 +84,7 @@ export function SummaryList({ children, className, variant = 'default' }: Summar
   const rootClassName = `${styles['summary-list']}${variant === 'two-column' ? ` ${styles['summary-list--two-column']}` : ''}${className ? ` ${className}` : ''}`
 
   return (
-    <dl className={rootClassName}>
+    <dl className={rootClassName} data-component="summary-list">
       {rows.map((row) => cloneElement(row, { listHasActions: hasActions, variant }))}
     </dl>
   )

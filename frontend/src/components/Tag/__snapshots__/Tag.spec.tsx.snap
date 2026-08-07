@@ -1,0 +1,172 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Tag > merges consumer styles with the colour styles 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="border: 1px solid red; background-color: rgb(210, 226, 241); color: rgb(15, 56, 92);"
+  >
+    Draft
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > passes through design-system modifier props and HTML attributes 1`] = `
+<DocumentFragment>
+  <span
+    class="tag tag--impact tag--flush tag--outline"
+    data-component="tag"
+    data-testid="priority-tag"
+    style="background-color: rgb(206, 206, 206); color: rgb(11, 12, 12);"
+  >
+    High priority
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders a remove action 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(206, 206, 206); color: rgb(11, 12, 12);"
+  >
+    Active
+    <button
+      class="tag__remove"
+      type="button"
+    >
+      <span
+        class="visually-hidden"
+      >
+        Remove status
+      </span>
+    </button>
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the blue colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(210, 226, 241); color: rgb(15, 56, 92);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the green colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(207, 228, 220); color: rgb(8, 61, 41);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the grey colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(206, 206, 206); color: rgb(11, 12, 12);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the magenta colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(244, 215, 229); color: rgb(101, 27, 62);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the orange colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(253, 228, 215); color: rgb(122, 60, 28);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the purple colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(221, 214, 236); color: rgb(42, 25, 80);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the red colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(244, 215, 215); color: rgb(101, 27, 27);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the teal colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(208, 230, 231); color: rgb(11, 65, 68);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > renders the yellow colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="tag"
+    data-component="tag"
+    style="background-color: rgb(255, 238, 128); color: rgb(122, 60, 28);"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Tag > wraps the design-system tag when a className is supplied 1`] = `
+<DocumentFragment>
+  <span
+    class="additional-class"
+  >
+    <span
+      class="tag"
+      data-component="tag"
+      style="background-color: rgb(207, 228, 220); color: rgb(8, 61, 41);"
+    >
+      Active
+    </span>
+  </span>
+</DocumentFragment>
+`;
