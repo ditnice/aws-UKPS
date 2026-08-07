@@ -2,7 +2,7 @@
 
 The directory structure should match the following
 
-````
+```
 ├── src
 │ ├── Application (Organised by domain)
 │ │ ├── Common
@@ -61,9 +61,11 @@ The directory structure should match the following
   │ ├── Fixtures
   │ └── Harnesses
   └── WebApi
-    ├── Controllers
-    └── Utilities
+  ├── Controllers
+  └── Utilities
 ```
+
+## Configuration
 
 ### DevAuthentication
 
@@ -91,7 +93,7 @@ To enable this, set the `Seeding:ReseedOnStartup` configuration value to `true` 
     "ReseedOnStartup": true
   }
 }
-````
+```
 
 When `ReseedOnStartup` is set to `true`, the application will reseed the database each time the API starts. This is intended for local development and testing, allowing developers to begin with a known dataset.
 

@@ -79,6 +79,60 @@
         }
       }
     },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Refreshes the authentication tokens using the supplied refresh token.",
+        "description": "The CSRF token must be supplied in the `X-CSRF-Token` request header.\nThe value of this header must match the `csrf_token` cookie sent with the request.\nRequests with a missing or invalid CSRF token are rejected with an unauthorized response.",
+        "responses": {
+          "200": {
+            "description": "The refresh token was successfully exchanged for new authentication credentials."
+          },
+          "400": {
+            "description": "The refresh token request was invalid or could not be processed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The CSRF token was missing or invalid, or the supplied authentication credentials were unauthorized.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/mfa": {
       "post": {
         "tags": [
@@ -1267,6 +1321,7 @@
                 "type": "null"
               },
               {
+                "description": "Gets the type of authentication challenge required to complete authentication.",
                 "$ref": "#/components/schemas/UkpsChallengeType"
               }
             ]
@@ -1275,9 +1330,11 @@
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Gets the session identifier associated with the authentication challenge."
           }
-        }
+        },
+        "description": "Represents problem details returned when authentication fails or\nadditional authentication is required."
       },
       "CreateOrganisationDto": {
         "required": [

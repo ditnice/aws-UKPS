@@ -178,6 +178,9 @@ module "ecs_backend" {
     Cognito__UserPoolId   = module.cognito.user_pool_id
     Cognito__ClientId     = module.cognito.app_client_id
     Cognito__Authority    = module.cognito.user_pool_issuer
+    Database__Host        = module.aurora_backend.cluster_endpoint
+    Database__Name        = module.aurora_backend.database_name
+    Database__Port        = tostring(module.aurora_backend.port)
     Email__Region         = var.region
     Email__FromAddress    = var.cognito_email_from_address
     Email__ReplyToAddress = var.cognito_email_reply_to_address
@@ -186,6 +189,8 @@ module "ecs_backend" {
   })
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
+    Database__Username    = "${module.aurora_backend.master_user_secret_arn}:username::"
+    Database__Password    = "${module.aurora_backend.master_user_secret_arn}:password::"
   }
   attach_execution_role_policy = true
   execution_role_policy_json   = data.aws_iam_policy_document.backend_cognito_secret.json

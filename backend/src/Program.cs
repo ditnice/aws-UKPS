@@ -17,7 +17,7 @@ builder.Configuration.ConfigureAwsSecrets();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options
         .UseNpgsql(
-            builder.Configuration.GetConnectionString("DefaultConnection"),
+            DatabaseConnectionStringFactory.GetConnectionString(builder.Configuration),
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "ukps")
         )
         .UseSnakeCaseNamingConvention()
@@ -57,6 +57,7 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials()
+            .WithExposedHeaders("WWW-Authenticate")
     )
 );
 
@@ -93,7 +94,7 @@ builder.Services.AddOpenApi(options =>
     );
 });
 
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
 builder.AddAwsBearerAuthentication();
 

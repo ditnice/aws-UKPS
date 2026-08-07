@@ -40,4 +40,12 @@ internal class LoginService : ILoginService
             cancellationToken
         );
     }
+
+    public Task<InitiateAuthenticationResult> RefreshAuthenticationToken(
+        RefreshAuthenticationTokenCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        return _identityService.RefreshAuthenticationToken(command.RefreshToken, cancellationToken);
+    }
 }

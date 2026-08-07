@@ -6,6 +6,7 @@ namespace UKPS.Api.Tests.Utilities.Harnesses;
 
 internal sealed class MockAmazonCognitoIdentityProvider
 {
+    public string RefreshToken = "refresh-token";
     public string ValidMfaCode { get; } = "123456";
     public string ValidAuthenticationSession { get; } = "valid-auth-session";
     public string InvalidPassword { get; } = "invalid-password";
@@ -49,6 +50,34 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 return Task.FromResult(new AdminSetUserPasswordResponse());
             });
 
+        Mock.GetTokensFromRefreshTokenAsync(
+                Arg.Any<GetTokensFromRefreshTokenRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<GetTokensFromRefreshTokenRequest>();
+
+                if (IsValidRefreshToken(request.RefreshToken))
+                {
+                    return Task.FromResult(
+                        new GetTokensFromRefreshTokenResponse
+                        {
+                            AuthenticationResult = new AuthenticationResultType
+                            {
+                                AccessToken = "access-token",
+                                IdToken = "id-token",
+                                RefreshToken = RefreshToken,
+                            },
+                        }
+                    );
+                }
+                else
+                {
+                    throw new NotAuthorizedException("Invalid refresh token.");
+                }
+            });
+
         Mock.AdminInitiateAuthAsync(
                 Arg.Any<AdminInitiateAuthRequest>(),
                 Arg.Any<CancellationToken>()
@@ -56,6 +85,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
             .Returns(callInfo =>
             {
                 var request = callInfo.Arg<AdminInitiateAuthRequest>();
+
                 var username = request.AuthParameters["USERNAME"];
 
                 var user = _users.SingleOrDefault(x =>
@@ -88,7 +118,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
                         {
                             AccessToken = "access-token",
                             IdToken = "id-token",
-                            RefreshToken = "refresh-token",
+                            RefreshToken = RefreshToken,
                         },
                     }
                 );
@@ -187,11 +217,16 @@ internal sealed class MockAmazonCognitoIdentityProvider
                         {
                             AccessToken = "access-token",
                             IdToken = "id-token",
-                            RefreshToken = "refresh-token",
+                            RefreshToken = RefreshToken,
                         },
                     }
                 );
             });
+    }
+
+    private bool IsValidRefreshToken(string refreshToken)
+    {
+        return string.Equals(refreshToken, RefreshToken, StringComparison.Ordinal);
     }
 
     private bool IsValidMfaToken(string userCode)
