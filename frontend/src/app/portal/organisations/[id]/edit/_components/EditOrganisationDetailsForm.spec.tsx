@@ -14,13 +14,14 @@ import { EditOrganisationDetailsForm } from './EditOrganisationDetailsForm'
 
 import type { EditOrganisationDetailsFormProps } from './EditOrganisationDetailsForm'
 
-const { pushMock, updateOrganisationDetailsActionMock } = vi.hoisted(() => ({
+const { pushMock, backMock, updateOrganisationDetailsActionMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
+  backMock: vi.fn(),
   updateOrganisationDetailsActionMock: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, back: backMock }),
 }))
 
 vi.mock('../_actions/updateOrganisationDetails', () => ({
@@ -64,55 +65,55 @@ describe('EditOrganisationDetailsForm', () => {
     )
   })
 
-  it('shows a required error when the company name is left empty on submit', () => {
+  it('shows a required error when the company name is left empty on submit', async () => {
     renderForm()
 
     fireEvent.change(screen.getByLabelText('Company name'), { target: { value: '' } })
     submit()
 
     expect(
-      screen.getByText(COMPANY_NAME_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(COMPANY_NAME_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
-  it('shows a required error when the company address is left empty on submit', () => {
+  it('shows a required error when the company address is left empty on submit', async () => {
     renderForm()
 
     fireEvent.change(screen.getByLabelText('Company address'), { target: { value: '' } })
     submit()
 
     expect(
-      screen.getByText(ADDRESS_REQUIRED_ERROR_MESSAGE, { selector: '.textarea__error' }),
+      await screen.findByText(ADDRESS_REQUIRED_ERROR_MESSAGE, { selector: '.textarea__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
-  it('shows a required error when the email address is left empty on submit', () => {
+  it('shows a required error when the email address is left empty on submit', async () => {
     renderForm()
 
     fireEvent.change(screen.getByLabelText('Company email address'), { target: { value: '' } })
     submit()
 
     expect(
-      screen.getByText(EMAIL_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(EMAIL_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
-  it('shows a required error when the phone number is left empty on submit', () => {
+  it('shows a required error when the phone number is left empty on submit', async () => {
     renderForm()
 
     fireEvent.change(screen.getByLabelText('Company phone number'), { target: { value: '' } })
     submit()
 
     expect(
-      screen.getByText(PHONE_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(PHONE_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
-  it('shows a format error when the email address is invalid on submit', () => {
+  it('shows a format error when the email address is invalid on submit', async () => {
     renderForm()
 
     fireEvent.change(screen.getByLabelText('Company email address'), {
@@ -121,19 +122,19 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     expect(
-      screen.getByText(EMAIL_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(EMAIL_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
-  it('shows a format error when the phone number is invalid on submit', () => {
+  it('shows a format error when the phone number is invalid on submit', async () => {
     renderForm()
 
     fireEvent.change(screen.getByLabelText('Company phone number'), { target: { value: '123' } })
     submit()
 
     expect(
-      screen.getByText(PHONE_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(PHONE_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
@@ -170,5 +171,14 @@ describe('EditOrganisationDetailsForm', () => {
       'There was a problem updating the organisation. Please try again later.',
     )
     expect(pushMock).not.toHaveBeenCalled()
+  })
+
+  it('navigates back to the previous page when cancel is clicked', () => {
+    renderForm()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(backMock).toHaveBeenCalledOnce()
+    expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 })
