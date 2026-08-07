@@ -112,6 +112,22 @@ module "ecs_frontend" {
   alb_security_group_id        = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks       = [module.networking.vpc_cidr]
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
+  container_environment = {
+    BACKEND_API_BASE_URL = "https://${module.alb.backend_host_name}"
+    DATABASE_HOST        = module.aurora_frontend.cluster_endpoint
+    DATABASE_NAME        = module.aurora_frontend.database_name
+    DATABASE_PORT        = tostring(module.aurora_frontend.port)
+  }
+  container_secrets = {
+    DATABASE_PASSWORD = "${module.aurora_frontend.master_user_secret_arn}:password::"
+    DATABASE_USERNAME = "${module.aurora_frontend.master_user_secret_arn}:username::"
+    PAYLOAD_SECRET    = aws_secretsmanager_secret.frontend_payload_secret.arn
+  }
+
+  attach_execution_role_policy = true
+  execution_role_policy_json   = data.aws_iam_policy_document.frontend_secrets.json
+
+  depends_on = [aws_secretsmanager_secret_version.frontend_payload_secret]
 }
 
 # ECS - Frontend Alerts

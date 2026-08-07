@@ -11,6 +11,7 @@ import {
   type UserListSearchParams,
 } from '@/app/portal/_utils/userListQuery'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
+import { createServerApiClient } from '@/client/server-api'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
 import { OrganisationFilters } from './_components/OrganisationFilters'
@@ -30,7 +31,9 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
     notFound()
   }
 
+  const apiClient = await createServerApiClient()
   const { data: organisation, error } = await getOrganisationById({
+    client: apiClient,
     path: { id: organisationId },
   })
 
@@ -65,7 +68,11 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         </GridItem>
         <GridItem cols={12} md={8} lg={9} elementType="section" aria-labelledby="filter-summary">
           <Suspense fallback={<p>Loading users...</p>} key={buildUserListHref(query)}>
-            <OrganisationUsersTable organisationId={organisationId} query={query} />
+            <OrganisationUsersTable
+              apiClient={apiClient}
+              organisationId={organisationId}
+              query={query}
+            />
           </Suspense>
         </GridItem>
       </Grid>
