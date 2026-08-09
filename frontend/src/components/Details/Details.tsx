@@ -1,3 +1,5 @@
+import clsx from 'clsx'
+
 import styles from './Details.module.scss'
 
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
@@ -9,11 +11,7 @@ export type DetailsProps = Omit<ComponentPropsWithoutRef<'details'>, 'children' 
 
 export function Details({ children, className, summary, ...rest }: DetailsProps) {
   return (
-    <details
-      className={`${styles.details}${className ? ` ${className}` : ''}`}
-      data-component="details"
-      {...rest}
-    >
+    <details className={clsx(styles.details, className)} data-component="details" {...rest}>
       <summary className={styles.summary}>
         <span className={styles['summary-text']}>{summary}</span>
       </summary>

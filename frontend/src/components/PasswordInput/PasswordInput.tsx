@@ -1,5 +1,6 @@
 'use client'
 
+import clsx from 'clsx'
 import { useState } from 'react'
 
 import { Button } from '@nice-digital/nds-button'
@@ -49,8 +50,8 @@ export function PasswordInput({
     setVisible((currentlyVisible) => !currentlyVisible)
   }
 
-  const rootClassName = [styles.input, className].filter(Boolean).join(' ')
-  const fieldClassName = [styles.field, error && styles.fieldError].filter(Boolean).join(' ')
+  const rootClassName = clsx(styles.input, className)
+  const fieldClassName = clsx(styles.field, error && styles.fieldError)
   const fieldStyle = width ? { ...style, ...inputWidthStyles[width] } : style
 
   return (

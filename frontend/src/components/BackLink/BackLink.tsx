@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import Link, { type LinkProps } from 'next/link'
 
 import styles from './BackLink.module.scss'
@@ -18,13 +19,11 @@ export function BackLink({
   variant = 'default',
   ...rest
 }: BackLinkProps) {
-  const rootClassName = [
+  const rootClassName = clsx(
     styles['back-link'],
     variant === 'inverse' && styles['back-link--inverse'],
     className,
-  ]
-    .filter(Boolean)
-    .join(' ')
+  )
 
   return (
     <Link className={rootClassName} data-component="back-link" {...rest}>
