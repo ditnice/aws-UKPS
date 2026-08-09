@@ -1,14 +1,16 @@
+import Link, { type LinkProps } from 'next/link'
+
 import styles from './BackLink.module.scss'
 
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { AnchorHTMLAttributes, ReactNode } from 'react'
 
 export type BackLinkVariant = 'default' | 'inverse'
 
-export type BackLinkProps = Omit<ComponentPropsWithoutRef<'a'>, 'children'> & {
-  children?: ReactNode
-  href: string
-  variant?: BackLinkVariant
-}
+export type BackLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'children' | 'href'> &
+  LinkProps & {
+    children?: ReactNode
+    variant?: BackLinkVariant
+  }
 
 export function BackLink({
   children = 'Back',
@@ -25,8 +27,8 @@ export function BackLink({
     .join(' ')
 
   return (
-    <a className={rootClassName} data-component="back-link" {...rest}>
+    <Link className={rootClassName} data-component="back-link" {...rest}>
       {children}
-    </a>
+    </Link>
   )
 }
