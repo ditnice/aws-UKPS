@@ -33,6 +33,7 @@
 | <a name="module_kms_frontend"></a> [kms\_frontend](#module\_kms\_frontend) | ../../modules/kms | n/a |
 | <a name="module_networking"></a> [networking](#module\_networking) | ../../modules/networking | n/a |
 | <a name="module_route53"></a> [route53](#module\_route53) | ../../modules/route53 | n/a |
+| <a name="module_ses"></a> [ses](#module\_ses) | ../../modules/ses | n/a |
 | <a name="module_sns"></a> [sns](#module\_sns) | ../../modules/sns | n/a |
 
 ## Resources
