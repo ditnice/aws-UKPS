@@ -33,11 +33,11 @@ describe('SignUpSetPasswordForm', () => {
     render(<SignUpSetPasswordForm />)
 
     fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'too-short' },
+      target: { value: 'short' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(await screen.findByText('Password must be at least 14 characters long')).toBeDefined()
+    expect(await screen.findByText('Password must be at least 8 characters long')).toBeDefined()
   })
 
   it('does not show validation errors for a valid password', async () => {
@@ -50,7 +50,7 @@ describe('SignUpSetPasswordForm', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your password')).toBeNull()
-      expect(screen.queryByText('Password must be at least 14 characters long')).toBeNull()
+      expect(screen.queryByText('Password must be at least 8 characters long')).toBeNull()
     })
   })
 
@@ -62,7 +62,7 @@ describe('SignUpSetPasswordForm', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(await screen.findByText('Password must be at least 14 characters long')).toBeDefined()
+    expect(await screen.findByText('Password must be at least 8 characters long')).toBeDefined()
 
     fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'fourteen-chars' },
@@ -70,7 +70,7 @@ describe('SignUpSetPasswordForm', () => {
     fireEvent.blur(screen.getByLabelText('Password'))
 
     await waitFor(() => {
-      expect(screen.queryByText('Password must be at least 14 characters long')).toBeNull()
+      expect(screen.queryByText('Password must be at least 8 characters long')).toBeNull()
     })
   })
 })

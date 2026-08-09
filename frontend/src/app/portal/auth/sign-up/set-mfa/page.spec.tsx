@@ -15,9 +15,9 @@ describe('SignUpSetMfa', () => {
     expect(screen.getByRole('heading', { name: 'Set up two-factor authentication' })).toBeDefined()
     expect(screen.getByLabelText('QR code for authenticator app setup')).toBeDefined()
     expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeDefined()
-    expect(screen.getByLabelText('Security code')).toBeDefined()
+    expect(screen.getByLabelText('Authentication code')).toBeDefined()
     expect(
-      screen.getByText('Enter the 6-digit authentication code shown in the app.'),
+      screen.getByText('Enter the 6-digit authentication code shown in your authenticator app.'),
     ).toBeDefined()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDefined()
   })
@@ -25,7 +25,7 @@ describe('SignUpSetMfa', () => {
   it('sets autocomplete for a one-time code', () => {
     render(<SignUpSetMfa />)
 
-    expect(screen.getByLabelText('Security code').getAttribute('autocomplete')).toBe(
+    expect(screen.getByLabelText('Authentication code').getAttribute('autocomplete')).toBe(
       'one-time-code',
     )
   })
@@ -41,7 +41,7 @@ describe('SignUpSetMfa', () => {
   it('shows a format validation error for an invalid code', async () => {
     render(<SignUpSetMfa />)
 
-    fireEvent.change(screen.getByLabelText('Security code'), {
+    fireEvent.change(screen.getByLabelText('Authentication code'), {
       target: { value: '12345' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
@@ -53,7 +53,7 @@ describe('SignUpSetMfa', () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     render(<SignUpSetMfa />)
 
-    fireEvent.change(screen.getByLabelText('Security code'), {
+    fireEvent.change(screen.getByLabelText('Authentication code'), {
       target: { value: '123456' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
@@ -68,7 +68,7 @@ describe('SignUpSetMfa', () => {
     const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
     render(<SignUpSetMfa />)
 
-    fireEvent.change(screen.getByLabelText('Security code'), {
+    fireEvent.change(screen.getByLabelText('Authentication code'), {
       target: { value: '12 324-6' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
@@ -85,10 +85,10 @@ describe('SignUpSetMfa', () => {
 
     expect(await screen.findByText('Enter your security code')).toBeDefined()
 
-    fireEvent.change(screen.getByLabelText('Security code'), {
+    fireEvent.change(screen.getByLabelText('Authentication code'), {
       target: { value: '123 456' },
     })
-    fireEvent.blur(screen.getByLabelText('Security code'))
+    fireEvent.blur(screen.getByLabelText('Authentication code'))
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your security code')).toBeNull()

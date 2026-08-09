@@ -17,7 +17,7 @@ describe('SignInMfaForm', () => {
       screen.getByText('Enter the 6-digit authentication code shown in the app.'),
     ).toBeDefined()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDefined()
-    expect(screen.getByRole('link', { name: 'Having trouble?' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Contact UKPS support' })).toBeDefined()
   })
 
   it('shows a required validation error when submitted empty', async () => {
