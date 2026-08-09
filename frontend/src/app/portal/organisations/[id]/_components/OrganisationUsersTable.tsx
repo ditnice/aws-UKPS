@@ -14,6 +14,7 @@ import {
   type LastActivePreset,
 } from '@/app/portal/_constants/userLabels'
 import { buildUserListHref, type UserListQuery } from '@/app/portal/_utils/userListQuery'
+import type { Client } from '@/client/generated/client'
 import { getUsers } from '@/client/generated/sdk.gen'
 import type { UserListItemDto } from '@/client/generated/types.gen'
 import { Table } from '@/components/Table/Table'
@@ -24,6 +25,7 @@ import styles from '../page.module.scss'
 import type { ComponentProps } from 'react'
 
 interface OrganisationUsersTableProps {
+  apiClient: Client
   organisationId: number
   query: UserListQuery
 }
@@ -92,12 +94,14 @@ function getLastActiveFromDate(preset: LastActivePreset): string {
 }
 
 export async function OrganisationUsersTable({
+  apiClient,
   organisationId,
   query,
 }: OrganisationUsersTableProps) {
   const { page, pageSize, status, role, email, lastActive } = query
 
   const { data: users, error: usersError } = await getUsers({
+    client: apiClient,
     query: {
       OrganisationId: organisationId,
       Page: page,
