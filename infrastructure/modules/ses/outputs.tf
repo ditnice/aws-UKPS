@@ -18,6 +18,11 @@ output "domain" {
   value       = aws_ses_domain_identity.this.domain
 }
 
+output "from_email_address" {
+  description = "Default sender email address for application email sent through this SES identity"
+  value       = local.from_email_address
+}
+
 output "mail_from_domain" {
   description = "Custom MAIL FROM domain configured for the SES identity"
   value       = aws_ses_domain_mail_from.this.mail_from_domain

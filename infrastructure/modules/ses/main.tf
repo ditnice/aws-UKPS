@@ -1,9 +1,10 @@
 data "aws_region" "current" {}
 
 locals {
-  domain           = "${var.environment}.${var.base_domain_name}"
-  mail_from_domain = "mail.${local.domain}"
-  name_prefix      = "${var.project}-${var.environment}-${var.service_name}"
+  domain             = "${var.environment}.${var.base_domain_name}"
+  from_email_address = "no-reply@${local.domain}"
+  mail_from_domain   = "mail.${local.domain}"
+  name_prefix        = "${var.project}-${var.environment}-${var.service_name}"
 }
 
 resource "aws_ses_domain_identity" "this" {

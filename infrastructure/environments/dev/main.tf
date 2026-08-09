@@ -198,21 +198,20 @@ module "ecs_backend" {
   # Cognito has no PrivateLink endpoint. Confirm that app subnet routes provide
   # NAT or controlled egress before deploying this service.
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
-  container_environment = merge({
-    AWS_REGION            = var.region
-    Cognito__Region       = var.region
-    Cognito__UserPoolId   = module.cognito.user_pool_id
-    Cognito__ClientId     = module.cognito.app_client_id
-    Cognito__Authority    = module.cognito.user_pool_issuer
-    Database__Host        = module.aurora_backend.cluster_endpoint
-    Database__Name        = module.aurora_backend.database_name
-    Database__Port        = tostring(module.aurora_backend.port)
-    Email__Region         = var.region
-    Email__FromAddress    = var.cognito_email_from_address
-    Email__ReplyToAddress = var.cognito_email_reply_to_address
-    }, module.cognito.ses_configuration_set_name == null ? {} : {
-    Email__ConfigurationSetName = module.cognito.ses_configuration_set_name
-  })
+  container_environment = {
+    AWS_REGION                  = var.region
+    Cognito__Region             = var.region
+    Cognito__UserPoolId         = module.cognito.user_pool_id
+    Cognito__ClientId           = module.cognito.app_client_id
+    Cognito__Authority          = module.cognito.user_pool_issuer
+    Database__Host              = module.aurora_backend.cluster_endpoint
+    Database__Name              = module.aurora_backend.database_name
+    Database__Port              = tostring(module.aurora_backend.port)
+    Email__Region               = var.region
+    Email__FromAddress          = module.ses.from_email_address
+    Email__ReplyToAddress       = var.cognito_email_reply_to_address
+    Email__ConfigurationSetName = module.ses.configuration_set_name
+  }
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
     Database__Username    = "${module.aurora_backend.master_user_secret_arn}:username::"

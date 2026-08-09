@@ -52,6 +52,7 @@ No modules.
 | <a name="output_configuration_set_name"></a> [configuration\_set\_name](#output\_configuration\_set\_name) | Name of the SES configuration set for Cognito and application email |
 | <a name="output_dkim_record_names"></a> [dkim\_record\_names](#output\_dkim\_record\_names) | Route53 DKIM record names created for SES domain authentication |
 | <a name="output_domain"></a> [domain](#output\_domain) | SES domain identity |
+| <a name="output_from_email_address"></a> [from\_email\_address](#output\_from\_email\_address) | Default sender email address for application email sent through this SES identity |
 | <a name="output_identity_arn"></a> [identity\_arn](#output\_identity\_arn) | ARN of the SES domain identity |
 | <a name="output_identity_verification_record_name"></a> [identity\_verification\_record\_name](#output\_identity\_verification\_record\_name) | Route53 TXT record name created for SES identity verification |
 | <a name="output_mail_from_domain"></a> [mail\_from\_domain](#output\_mail\_from\_domain) | Custom MAIL FROM domain configured for the SES identity |
