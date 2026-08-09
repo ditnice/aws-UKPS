@@ -5,7 +5,7 @@ import {
   type PageHeaderProps as NdsPageHeaderProps,
 } from '@nice-digital/nds-page-header'
 
-import './PageHeader.scss'
+import styles from './PageHeader.module.scss'
 
 import type { ReactNode } from 'react'
 
@@ -21,7 +21,7 @@ export function PageHeader({ backLink, breadcrumbs, className, ...props }: PageH
   }
 
   return (
-    <div className={clsx('page-header-wrapper', className)}>
+    <div className={clsx(styles['page-header-wrapper'], className)}>
       <NdsPageHeader {...pageHeaderProps} />
     </div>
   )

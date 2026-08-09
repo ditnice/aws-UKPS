@@ -18,7 +18,9 @@ describe('PageHeader', () => {
   it('applies the page header wrapper class', () => {
     const { asFragment, container } = render(<PageHeader heading="Sign-in" />)
 
-    expect(container.querySelector('.page-header-wrapper')).toBeDefined()
+    const pageHeader = container.querySelector('[data-component="page-header"]')
+
+    expect(pageHeader?.parentElement?.className).toContain('page-header-wrapper')
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -27,9 +29,9 @@ describe('PageHeader', () => {
       <PageHeader className="custom-page-header" heading="Sign-in" />,
     )
 
-    const pageHeader = container.querySelector('.page-header-wrapper')
+    const pageHeader = container.querySelector('[data-component="page-header"]')
 
-    expect(pageHeader?.classList.contains('custom-page-header')).toBe(true)
+    expect(pageHeader?.parentElement?.classList.contains('custom-page-header')).toBe(true)
     expect(asFragment()).toMatchSnapshot()
   })
 
