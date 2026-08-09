@@ -57,25 +57,6 @@ data "aws_iam_policy_document" "backend_cognito" {
     }
   }
 
-  dynamic "statement" {
-    for_each = var.cognito_ses_identity_arn == null ? [] : [1]
-
-    content {
-      sid     = "SendUserSetupEmail"
-      effect  = "Allow"
-      actions = ["ses:SendEmail"]
-      resources = [
-        var.cognito_ses_identity_arn,
-        module.cognito.ses_configuration_set_arn,
-      ]
-
-      condition {
-        test     = "StringEquals"
-        variable = "ses:FromAddress"
-        values   = [var.cognito_email_from_address]
-      }
-    }
-  }
 }
 
 data "aws_iam_policy_document" "frontend_secrets" {

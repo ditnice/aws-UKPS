@@ -44,20 +44,6 @@ module "sns" {
   sns_alarm_emails     = var.sns_alarm_emails
 }
 
-module "cognito" {
-  source = "../../modules/cognito"
-
-  project                  = local.project
-  environment              = local.environment
-  service_name             = local.service_name
-  kms_key_arn              = module.kms_backend.app_key_arn
-  ses_identity_arn         = var.cognito_ses_identity_arn
-  email_from_address       = var.cognito_email_from_address
-  email_reply_to_address   = var.cognito_email_reply_to_address
-  security_alarm_topic_arn = module.sns.cognito_alarms_topic_arn
-  cloudwatch_log_retention = var.ecs_log_retention
-}
-
 module "alb" {
   source = "../../modules/alb"
 
@@ -97,6 +83,21 @@ module "ses" {
   service_name     = local.service_name
   base_domain_name = var.base_domain_name
   hosted_zone_id   = module.route53.base_domain_zone_id
+}
+
+module "cognito" {
+  source = "../../modules/cognito"
+
+  project                    = local.project
+  environment                = local.environment
+  service_name               = local.service_name
+  kms_key_arn                = module.kms_backend.app_key_arn
+  ses_identity_arn           = module.ses.identity_arn
+  ses_configuration_set_name = module.ses.configuration_set_name
+  email_from_address         = module.ses.from_email_address
+  email_reply_to_address     = module.ses.from_email_address
+  security_alarm_topic_arn   = module.sns.cognito_alarms_topic_arn
+  cloudwatch_log_retention   = var.ecs_log_retention
 }
 
 
@@ -209,7 +210,7 @@ module "ecs_backend" {
     Database__Port              = tostring(module.aurora_backend.port)
     Email__Region               = var.region
     Email__FromAddress          = module.ses.from_email_address
-    Email__ReplyToAddress       = var.cognito_email_reply_to_address
+    Email__ReplyToAddress       = module.ses.from_email_address
     Email__ConfigurationSetName = module.ses.configuration_set_name
   }
   container_secrets = {
