@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import { Children, cloneElement, isValidElement } from 'react'
 
 import styles from './SummaryList.module.scss'
@@ -51,7 +52,13 @@ export function SummaryListRow({
   const actions = Children.toArray(children).filter(
     (child): child is ReactElement<SummaryListActionProps> => isValidElement(child),
   )
-  const rowClassName = `${styles['summary-list__row']}${listHasActions && actions.length === 0 && variant !== 'two-column' ? ` ${styles['summary-list__row--no-actions']}` : ''}`
+  const rowClassName = clsx(
+    styles['summary-list__row'],
+    listHasActions &&
+      actions.length === 0 &&
+      variant !== 'two-column' &&
+      styles['summary-list__row--no-actions'],
+  )
 
   return (
     <div className={rowClassName}>
@@ -81,10 +88,14 @@ export function SummaryList({ children, className, variant = 'default' }: Summar
     (child): child is ReactElement<InternalSummaryListRowProps> => isValidElement(child),
   )
   const hasActions = rows.some((row) => Children.toArray(row.props.children).length > 0)
-  const rootClassName = `${styles['summary-list']}${variant === 'two-column' ? ` ${styles['summary-list--two-column']}` : ''}${className ? ` ${className}` : ''}`
+  const rootClassName = clsx(
+    styles['summary-list'],
+    variant === 'two-column' && styles['summary-list--two-column'],
+    className,
+  )
 
   return (
-    <dl className={rootClassName}>
+    <dl className={rootClassName} data-component="summary-list">
       {rows.map((row) => cloneElement(row, { listHasActions: hasActions, variant }))}
     </dl>
   )

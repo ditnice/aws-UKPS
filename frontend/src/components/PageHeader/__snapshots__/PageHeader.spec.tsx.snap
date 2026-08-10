@@ -1,0 +1,118 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PageHeader > applies the page header wrapper class 1`] = `
+<DocumentFragment>
+  <div
+    class="_page-header-wrapper_554d0b"
+  >
+    <div
+      class="page-header "
+      data-component="page-header"
+    >
+      <h1
+        class="page-header__heading "
+      >
+        Sign-in
+      </h1>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`PageHeader > prefers backLink over breadcrumbs 1`] = `
+<DocumentFragment>
+  <div
+    class="_page-header-wrapper_554d0b"
+  >
+    <div
+      class="page-header "
+      data-component="page-header"
+    >
+      <div
+        class="page-header__breadcrumbs"
+      >
+        <a
+          class="_back-link_71902c"
+          data-component="back-link"
+          href="/previous"
+        >
+          Back
+        </a>
+      </div>
+      <h1
+        class="page-header__heading "
+      >
+        Sign-in
+      </h1>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`PageHeader > preserves a supplied className on the wrapper 1`] = `
+<DocumentFragment>
+  <div
+    class="_page-header-wrapper_554d0b custom-page-header"
+  >
+    <div
+      class="page-header "
+      data-component="page-header"
+    >
+      <h1
+        class="page-header__heading "
+      >
+        Sign-in
+      </h1>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`PageHeader > renders a back link in the page header navigation slot 1`] = `
+<DocumentFragment>
+  <div
+    class="_page-header-wrapper_554d0b"
+  >
+    <div
+      class="page-header "
+      data-component="page-header"
+    >
+      <div
+        class="page-header__breadcrumbs"
+      >
+        <a
+          class="_back-link_71902c"
+          data-component="back-link"
+          href="/previous"
+        >
+          Back
+        </a>
+      </div>
+      <h1
+        class="page-header__heading "
+      >
+        Sign-in
+      </h1>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`PageHeader > renders the heading 1`] = `
+<DocumentFragment>
+  <div
+    class="_page-header-wrapper_554d0b"
+  >
+    <div
+      class="page-header "
+      data-component="page-header"
+    >
+      <h1
+        class="page-header__heading "
+      >
+        Sign-in
+      </h1>
+    </div>
+  </div>
+</DocumentFragment>
+`;

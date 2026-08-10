@@ -1,3 +1,5 @@
+import clsx from 'clsx'
+
 import { Table as NdsTable } from '@nice-digital/nds-table'
 
 import styles from './Table.module.scss'
@@ -24,13 +26,11 @@ export function Table({ children, className, columnWidth = 'default', ...rest }:
     )
   }
 
-  const tableClassName = [
+  const tableClassName = clsx(
     styles['table--full-width'],
     columnWidth === 'equal' && styles['table--equal'],
     className,
-  ]
-    .filter(Boolean)
-    .join(' ')
+  )
 
   return (
     <div className={styles['table-wrapper']}>
