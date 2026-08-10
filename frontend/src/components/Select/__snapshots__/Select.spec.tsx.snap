@@ -1,0 +1,742 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Select > applies a max-width for a fixed width 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="max-width: 11.5em;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > applies a width for a fluid width 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="width: 50%;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > defaults the id to the name 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > forwards native select props 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      disabled=""
+      id="sort"
+      name="sort"
+      required=""
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+      <option
+        disabled=""
+        value="updated"
+      >
+        Recently updated
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > merges a consumer className onto the root wrapper 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee extra-class"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > merges existing describedby with hint and error ids 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="location"
+    >
+      Choose location
+    </label>
+    <div
+      class="_hint_09c1ee"
+      id="location-hint"
+    >
+      This can be different to where you went before
+    </div>
+    <p
+      class="_error_09c1ee"
+      id="location-error"
+    >
+      <span
+        class="visually-hidden"
+      >
+        Error:
+      </span>
+       Select a location
+    </p>
+    <select
+      aria-describedby="existing-description location-hint location-error"
+      class="_field_09c1ee _fieldError_09c1ee"
+      id="location"
+      name="location"
+    >
+      <option
+        value="choose"
+      >
+        Choose location
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > merges width styles with an explicit style prop 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="color: red; width: 100%;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders a hint and describes the select with it 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <div
+      class="_hint_09c1ee"
+      id="sort-hint"
+    >
+      Choose the most relevant option
+    </div>
+    <select
+      aria-describedby="sort-hint"
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders a label and option children 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+      <option
+        selected=""
+        value="updated"
+      >
+        Recently updated
+      </option>
+      <option
+        value="views"
+      >
+        Most views
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders an error and describes the select with it 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="location"
+    >
+      Choose location
+    </label>
+    <p
+      class="_error_09c1ee"
+      id="location-error"
+    >
+      <span
+        class="visually-hidden"
+      >
+        Error:
+      </span>
+       Select a location
+    </p>
+    <select
+      aria-describedby="location-error"
+      class="_field_09c1ee _fieldError_09c1ee"
+      id="location"
+      name="location"
+    >
+      <option
+        value="choose"
+      >
+        Choose location
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders no label element when label is null 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the 2 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="max-width: 2.75em;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the 3 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="max-width: 3.75em;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the 4 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="max-width: 4.5em;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the 5 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="max-width: 5.5em;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the 10 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="max-width: 11.5em;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the 20 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="max-width: 20.5em;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the 30 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="max-width: 29.5em;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the full width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="width: 100%;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the one-half width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="width: 50%;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the one-quarter width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="width: 25%;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the one-third width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="width: 33.3333%;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the three-quarters width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="width: 75%;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders the two-thirds width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+      style="width: 66.6667%;"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > supports an explicit id 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort-select"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort-select"
+      name="sort"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;

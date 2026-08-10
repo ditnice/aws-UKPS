@@ -97,6 +97,11 @@ export const componentDefinitions = [
   },
   { description: 'Let users select one option from a set.', label: 'Radio', slug: 'radio' },
   {
+    description: 'Let users choose one option from a long list.',
+    label: 'Select',
+    slug: 'select',
+  },
+  {
     description: 'Navigate between subpages in a section.',
     label: 'Stacked Nav',
     slug: 'stacked-nav',
