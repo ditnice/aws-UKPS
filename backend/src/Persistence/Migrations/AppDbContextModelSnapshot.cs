@@ -406,16 +406,16 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.Property<DateTime?>("ConsumedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("user_onboarding_record_consumed_at");
+                        .HasColumnName("setup_token_record_consumed_at");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("user_onboarding_record_created_at");
+                        .HasColumnName("setup_token_created_at");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("user_onboarding_record_created_by");
+                        .HasColumnName("setup_token_record_created_by");
 
                     b.Property<Guid>("SetupToken")
                         .HasColumnType("uuid")

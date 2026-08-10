@@ -33,9 +33,9 @@ namespace UKPS.Api.Persistence.Migrations
                     updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
                     last_active = table.Column<DateTime>(type: "timestamptz", nullable: true),
                     setup_token = table.Column<Guid>(type: "uuid", nullable: true),
-                    user_onboarding_record_created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    user_onboarding_record_created_by = table.Column<string>(type: "text", nullable: true),
-                    user_onboarding_record_consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    setup_token_created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    setup_token_record_created_by = table.Column<string>(type: "text", nullable: true),
+                    setup_token_record_consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
