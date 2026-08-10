@@ -30,7 +30,11 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
     private async Task AppendIdentityClaims(TokenValidatedContext context)
     {
-        var subject = context.Principal?.FindFirst("sub")?.Value;
+        var subject =
+            context.Principal?.FindFirst("sub")?.Value
+            ?? throw new InvalidOperationException(
+                "Subject could not be found as expected on the JWT."
+            );
         var user = await _appDbContext
             .Users.Include(x => x.UserOrgMemberships)
             .FirstOrDefaultAsync(x => x.IdentityId == subject);

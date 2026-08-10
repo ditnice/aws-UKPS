@@ -297,6 +297,20 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task Handle_ShouldThrowInvalidOperationException_WhenIdentitySubCannotBeFound()
+    {
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            subject: null
+        );
+        await Should.ThrowAsync<InvalidOperationException>(() =>
+        {
+            return _handler.Handle(context, CancellationToken.None);
+        });
+    }
+
+    [Fact]
     public async Task Handle_ShouldNotAddClaims_WhenUserHasNoMemberships()
     {
         var userWithNoMembership = _userFaker
