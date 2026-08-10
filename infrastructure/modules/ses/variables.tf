@@ -31,14 +31,14 @@ variable "service_name" {
   }
 }
 
-variable "base_domain_name" {
-  description = "Base DNS domain used to build the SES identity and MAIL FROM domains"
+variable "domain_name" {
+  description = "DNS domain used for the SES identity and MAIL FROM domains"
   type        = string
   nullable    = false
 
   validation {
-    condition     = can(regex("^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$", var.base_domain_name))
-    error_message = "Base domain name must be a valid DNS name."
+    condition     = can(regex("^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$", var.domain_name))
+    error_message = "Domain name must be a valid DNS name."
   }
 }
 

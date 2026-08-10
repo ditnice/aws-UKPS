@@ -78,11 +78,11 @@ module "route53" {
 module "ses" {
   source = "../../modules/ses"
 
-  project          = local.project
-  environment      = local.environment
-  service_name     = local.service_name
-  base_domain_name = var.base_domain_name
-  hosted_zone_id   = module.route53.base_domain_zone_id
+  project        = local.project
+  environment    = local.environment
+  service_name   = local.service_name
+  domain_name    = module.alb.frontend_host_name
+  hosted_zone_id = module.route53.base_domain_zone_id
 }
 
 module "cognito" {

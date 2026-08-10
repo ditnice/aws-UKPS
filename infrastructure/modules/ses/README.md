@@ -37,7 +37,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain used to build the SES identity and MAIL FROM domains | `string` | n/a | yes |
+| <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | DNS domain used for the SES identity and MAIL FROM domains | `string` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment used in SES resource names and tags | `string` | n/a | yes |
 | <a name="input_hosted_zone_id"></a> [hosted\_zone\_id](#input\_hosted\_zone\_id) | Route53 hosted zone ID where SES verification, DKIM, and MAIL FROM records are created | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project used in SES resource names and tags | `string` | n/a | yes |

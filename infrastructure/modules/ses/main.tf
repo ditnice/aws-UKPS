@@ -1,14 +1,13 @@
 data "aws_region" "current" {}
 
 locals {
-  domain             = "${var.environment}.${var.base_domain_name}"
-  from_email_address = "no-reply@${local.domain}"
-  mail_from_domain   = "mail.${local.domain}"
+  from_email_address = "no-reply@${var.domain_name}"
+  mail_from_domain   = "mail.${var.domain_name}"
   name_prefix        = "${var.project}-${var.environment}-${var.service_name}"
 }
 
 resource "aws_ses_domain_identity" "this" {
-  domain = local.domain
+  domain = var.domain_name
 }
 
 resource "aws_route53_record" "identity_verification" {
