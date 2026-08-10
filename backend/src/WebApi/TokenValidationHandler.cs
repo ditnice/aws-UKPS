@@ -67,9 +67,17 @@ internal class TokenValidationHandler : ITokenValidationHandler
         TokenValidatedContext context
     )
     {
-        if (user.UserOrgMemberships.Count == 1)
+        var validMemberships = user.UserOrgMemberships.Where(x => x.IsAuthorised()).ToArray();
+
+        if (validMemberships.Length == 0)
         {
-            return user.UserOrgMemberships.Single();
+            context.Fail("No authorised membership for the user could be found.");
+            return null;
+        }
+
+        if (validMemberships.Length == 1)
+        {
+            return validMemberships.Single();
         }
 
         var selectedOrganisationId = context.HttpContext.Request.Cookies["selected_organisation"];
@@ -86,9 +94,7 @@ internal class TokenValidationHandler : ITokenValidationHandler
             return null;
         }
 
-        var membership = user.UserOrgMemberships.SingleOrDefault(x =>
-            x.OrganisationId == organisationId
-        );
+        var membership = validMemberships.SingleOrDefault(x => x.OrganisationId == organisationId);
 
         if (membership is null)
         {

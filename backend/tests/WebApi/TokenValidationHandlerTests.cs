@@ -9,6 +9,7 @@ using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.InternalServices.Identity;
@@ -33,10 +34,9 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         : base(fixture)
     {
         _orgFaker = new OrganisationFaker();
-        _membershipFaker = new UserOrgMembershipFaker().RuleFor(
-            x => x.Organisation,
-            _ => _orgFaker.Generate()
-        );
+        _membershipFaker = new UserOrgMembershipFaker()
+            .RuleFor(x => x.Status, _ => Api.Persistence.Enums.UserOrgStatus.Active)
+            .RuleFor(x => x.Organisation, _ => _orgFaker.Generate());
         _userFaker = new UserFaker().RuleFor(
             x => x.UserOrgMemberships,
             _ => _membershipFaker.Generate(1)
@@ -83,19 +83,6 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         AssertIdentityMatchesUserAndMembership(identity, _user, UserMembership);
     }
 
-    private static void AssertIdentityMatchesUserAndMembership(
-        ClaimsIdentity identity,
-        User user,
-        UserOrgMembership userMembership
-    )
-    {
-        identity.FindFirst(UkpsClaimTypes.Email)?.Value.ShouldBe(user.WorkEmail);
-        identity
-            .FindFirst(UkpsClaimTypes.OrganisationId)
-            ?.Value.ShouldBe($"{userMembership.OrganisationId}");
-        identity.FindFirst(UkpsClaimTypes.UserRole)?.Value.ShouldBe($"{userMembership.UserRole}");
-    }
-
     [Fact]
     public async Task Handle_ShouldAppendClaimsForSelectedOrganisation_WhenUserHasMultipleMemberships()
     {
@@ -121,6 +108,41 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
             _userWithMultipleMemberships,
             selectedMembership
         );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFail_WhenUserDoesNotHaveAuthorisedMembership()
+    {
+        var invalidStatuses = Enum.GetValues<UserOrgStatus>()
+            .Except([UserOrgStatus.Active, UserOrgStatus.Inactive]);
+        Faker<UserOrgMembership> invalidMembershipFaker = _membershipFaker.RuleFor(
+            x => x.Status,
+            f => f.PickRandom(invalidStatuses)
+        );
+
+        foreach (var _ in Enumerable.Range(0, 10))
+        {
+            User testUser = _userFaker
+                .RuleFor(x => x.UserOrgMemberships, _ => invalidMembershipFaker.Generate(1))
+                .Generate();
+            await AddEntity(testUser, TestContext.Current.CancellationToken);
+
+            var context = CreateTokenValidatedContext(
+                tokenUse: "access",
+                clientId: ClientId,
+                subject: testUser.IdentityId
+            );
+
+            // Act
+            await _handler.Handle(context, CancellationToken.None);
+
+            // Assert
+            context.Result.ShouldNotBeNull();
+            context.Result.Failure.ShouldNotBeNull();
+            context.Result.Failure.Message.ShouldBe(
+                "No authorised membership for the user could be found."
+            );
+        }
     }
 
     [Fact]
@@ -345,6 +367,19 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         );
 
         return context.Request.Cookies;
+    }
+
+    private static void AssertIdentityMatchesUserAndMembership(
+        ClaimsIdentity identity,
+        User user,
+        UserOrgMembership userMembership
+    )
+    {
+        identity.FindFirst(UkpsClaimTypes.Email)?.Value.ShouldBe(user.WorkEmail);
+        identity
+            .FindFirst(UkpsClaimTypes.OrganisationId)
+            ?.Value.ShouldBe($"{userMembership.OrganisationId}");
+        identity.FindFirst(UkpsClaimTypes.UserRole)?.Value.ShouldBe($"{userMembership.UserRole}");
     }
 
     private static TokenValidatedContext CreateTokenValidatedContext(

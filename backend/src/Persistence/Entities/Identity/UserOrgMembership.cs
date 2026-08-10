@@ -14,4 +14,10 @@ internal sealed class UserOrgMembership
     public User? User { get; set; }
     public int OrganisationId { get; set; }
     public Organisation? Organisation { get; set; }
+
+    internal bool IsAuthorised()
+    {
+        UserOrgStatus[] authorisedStatuses = [UserOrgStatus.Active, UserOrgStatus.Inactive];
+        return authorisedStatuses.Contains(Status);
+    }
 }
