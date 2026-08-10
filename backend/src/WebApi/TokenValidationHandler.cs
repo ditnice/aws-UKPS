@@ -23,9 +23,11 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
     public async Task Handle(TokenValidatedContext context, CancellationToken cancellationToken)
     {
-        ValidateTokenUse(context);
-        ValidateClientId(context);
-        await AppendIdentityClaims(context);
+        var validationPasses = ValidateTokenUse(context) && ValidateClientId(context);
+        if (validationPasses)
+        {
+            await AppendIdentityClaims(context);
+        }
     }
 
     private async Task AppendIdentityClaims(TokenValidatedContext context)
@@ -97,22 +99,26 @@ internal class TokenValidationHandler : ITokenValidationHandler
         return membership;
     }
 
-    private static void ValidateTokenUse(TokenValidatedContext context)
+    private static bool ValidateTokenUse(TokenValidatedContext context)
     {
         var tokenUse = context.Principal?.FindFirst("token_use")?.Value;
         if (!string.Equals(tokenUse, "access", StringComparison.Ordinal))
         {
             context.Fail("Token is not an access token.");
+            return false;
         }
+        return true;
     }
 
-    private void ValidateClientId(TokenValidatedContext context)
+    private bool ValidateClientId(TokenValidatedContext context)
     {
         var clientId = context.Principal?.FindFirst("client_id")?.Value;
 
         if (!string.Equals(_options.Value.ClientId, clientId, StringComparison.Ordinal))
         {
             context.Fail("Token was not issued to the expected client.");
+            return false;
         }
+        return true;
     }
 }
