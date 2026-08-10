@@ -38,7 +38,7 @@ internal sealed partial class SesEmailService : IEmailService
                     {
                         Html = new Content
                         {
-                            Data = EmailRenderer.RenderAsHtml(email),
+                            Data = WrapHtml(email.GetHtmlContent()),
                             Charset = "UTF-8",
                         },
                     },
@@ -56,6 +56,11 @@ internal sealed partial class SesEmailService : IEmailService
             LogEmailSendError(recipient, email.Subject, ex);
             throw;
         }
+    }
+
+    private static string WrapHtml(string v)
+    {
+        return $"""<!DOCTYPE html><html lang="en"><body>{v}</body></html>""";
     }
 
     [LoggerMessage(
