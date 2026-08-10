@@ -209,6 +209,7 @@ module "ecs_backend" {
     Database__Name              = module.aurora_backend.database_name
     Database__Port              = tostring(module.aurora_backend.port)
     Email__Region               = var.region
+    Email__BaseDomain           = module.alb.frontend_host_name
     Email__FromAddress          = module.ses.from_email_address
     Email__ReplyToAddress       = module.ses.from_email_address
     Email__ConfigurationSetName = module.ses.configuration_set_name
