@@ -9,13 +9,13 @@ internal sealed class UserFaker : Faker<User>
     public UserFaker()
     {
         RuleFor(x => x.Id, f => f.IndexFaker + 1);
-        RuleFor(x => x.FirstName, f => f.Name.FirstName());
-        RuleFor(x => x.LastName, f => f.Name.LastName());
+        RuleFor(x => x.IdentityId, f => f.Random.Guid().ToString());
+        RuleFor(x => x.FullName, f => f.Name.FullName());
         RuleFor(x => x.UserType, f => f.PickRandom<UserType>());
         RuleFor(x => x.Title, f => f.PickRandom("Mr", "Mrs", "Ms", "Miss", "Dr", "Prof"));
         RuleFor(x => x.JobTitle, f => f.Name.JobTitle());
         RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
-        RuleFor(x => x.WorkEmail, (f, u) => f.Internet.Email(u.FirstName, u.LastName));
+        RuleFor(x => x.WorkEmail, (f, u) => f.Internet.Email(u.FullName));
         RuleFor(x => x.CreatedAt, f => f.Date.Past(5).ToUniversalTime());
         RuleFor(
             x => x.UpdatedAt,

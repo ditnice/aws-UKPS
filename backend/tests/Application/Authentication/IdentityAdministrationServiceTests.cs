@@ -26,6 +26,8 @@ namespace UKPS.Api.Tests.Application.Authentication;
 public class IdentityAdministrationServiceTests : DatabaseTestBase
 {
     private readonly Faker<UserOnboardingRecord> _userOnboardingRecordFaker;
+    private readonly Faker<MockUser> _mockUserFaker =
+        new MockAmazonCognitoIdentityProvider.MockUserFaker();
     private readonly IServiceTestHarness<IIdentityAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
@@ -40,9 +42,11 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     public IdentityAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _userOnboardingRecordFaker = new UserOnboardingRecordFaker()
-            .RuleFor(x => x.NewUserOrganisation, _ => new OrganisationFaker().Generate())
-            .RuleFor(x => x.UserEmail, _ => _targetUser);
+        var userFaker = new UserFaker().RuleFor(x => x.WorkEmail, _targetUser);
+        _userOnboardingRecordFaker = new UserOnboardingRecordFaker().RuleFor(
+            x => x.User,
+            _ => userFaker.Generate()
+        );
         _harness = CreateTestHarness();
     }
 
@@ -130,7 +134,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             createdMinutesInThePast: minutesInThePast
         );
 
-        _harness.Cognito.AddCurrentUser(new() { Username = _targetUser });
+        _harness.Cognito.AddCurrentUser(_mockUserFaker.Generate() with { Username = _targetUser });
 
         UserSetupResult result = await _harness.Service.SetupUser(
             _validSetupUserCommand with
@@ -327,7 +331,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     private async Task<(Guid SetupToken, string Session)> CreateAndDoInitialUserSetup()
     {
         UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 15);
-        _harness.Cognito.AddCurrentUser(new() { Username = _targetUser });
+        _harness.Cognito.AddCurrentUser(_mockUserFaker.Generate() with { Username = _targetUser });
 
         UserSetupResult validationResult = await _harness.Service.SetupUser(
             _validSetupUserCommand with
