@@ -1,17 +1,59 @@
 'use client'
 
+import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
+import { ChangeEvent } from 'react'
+import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
+import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { Select, SelectOption } from '@/components/Select/Select'
 
 import styles from './RegistrationRequestForm.module.scss'
 
+const RegistrationRequest = z.object({
+  fullName: z.string().trim().min(1, 'Enter your full name'),
+  workEmail: z
+    .string()
+    .trim()
+    .min(1, 'Enter your work email address')
+    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
+  phoneNumber: z.string().trim().min(1, 'Enter your phone number'),
+})
+
+type RegistrationRequestValues = z.input<typeof RegistrationRequest>
+
 export function RegistrationRequestForm() {
+  const form = useForm({
+    defaultValues: {
+      fullName: '',
+      workEmail: '',
+      phoneNumber: '',
+    } satisfies RegistrationRequestValues,
+    validationLogic: revalidateLogic({
+      mode: 'submit',
+      modeAfterSubmission: 'blur',
+    }),
+    validators: {
+      onDynamic: RegistrationRequest,
+    },
+    onSubmit: ({ value }) => {
+      RegistrationRequest.parse(value)
+      // Authentication will be wired once the submit target is confirmed.
+    },
+  })
+
   return (
-    <>
+    <form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        void form.handleSubmit()
+      }}
+    >
       <Select
         defaultValue="choose"
         label="Select the organisation you are requesting access for"
@@ -27,28 +69,76 @@ export function RegistrationRequestForm() {
         <a href="URL">register your organisation (opens in a new tab)</a> before you can set up your
         account.
       </p>
+      <form.Field name="fullName">
+        {(field) => {
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+          return (
+            <Input
+              autoComplete="name"
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Full name"
+              name={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              type="text"
+              value={field.state.value}
+              width="one-third"
+              className={styles.marginBottom}
+            />
+          )
+        }}
+      </form.Field>
+      <form.Field name="workEmail">
+        {(field) => {
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+          return (
+            <Input
+              autoComplete="email"
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Work email address"
+              name={field.name}
+              hint="We'll use this email address to contact you about your request. You must use an email address from your organisation."
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              type="email"
+              value={field.state.value}
+              width="one-third"
+              className={styles.marginBottom}
+            />
+          )
+        }}
+      </form.Field>
+      <form.Field name="phoneNumber">
+        {(field) => {
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 
-      <Input label="Full name" name="Full name" width="one-third" className={styles.marginBottom} />
-
-      <Input
-        label="Work email address"
-        name="Work email address"
-        hint="We'll use this email address to contact you about your request. You must use an email address from your organisation."
-        width="one-third"
-        className={styles.marginBottom}
-      />
-
-      <Input
-        label="Phone number"
-        name="Phone number"
-        hint="For international numbers include the country code."
-        width="one-third"
-        className={styles.marginBottom}
-      />
-
-      <Link href="/portal/request/request-submitted">
+          return (
+            <Input
+              autoComplete="phone number"
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Phone number"
+              name={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              hint="For international numbers include the country code."
+              width="one-third"
+              value={field.state.value}
+              className={styles.marginBottom}
+            />
+          )
+        }}
+      </form.Field>
+      <Link href="/portal/register/request-submitted">
         <Button variant="cta">Submit request</Button>
       </Link>
-    </>
+    </form>
   )
 }
