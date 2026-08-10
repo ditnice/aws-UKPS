@@ -78,11 +78,11 @@ module "route53" {
 module "ses" {
   source = "../../modules/ses"
 
-  project          = local.project
-  environment      = local.environment
-  service_name     = local.service_name
-  base_domain_name = var.base_domain_name
-  hosted_zone_id   = module.route53.base_domain_zone_id
+  project        = local.project
+  environment    = local.environment
+  service_name   = local.service_name
+  domain_name    = module.alb.frontend_host_name
+  hosted_zone_id = module.route53.base_domain_zone_id
 }
 
 module "cognito" {
@@ -209,6 +209,7 @@ module "ecs_backend" {
     Database__Name              = module.aurora_backend.database_name
     Database__Port              = tostring(module.aurora_backend.port)
     Email__Region               = var.region
+    Email__BaseDomain           = module.alb.frontend_host_name
     Email__FromAddress          = module.ses.from_email_address
     Email__ReplyToAddress       = module.ses.from_email_address
     Email__ConfigurationSetName = module.ses.configuration_set_name

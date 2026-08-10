@@ -60,13 +60,9 @@ export type CreateUserRequestDto = {
      */
     title: string;
     /**
-     * Gets the user's first name.
+     * Gets the user's full name.
      */
-    firstName: string;
-    /**
-     * Gets the user's last name.
-     */
-    lastName: string;
+    fullName: string;
     /**
      * Gets the user's job title.
      */
@@ -118,6 +114,14 @@ export type MultiFactorAuthenticationSetupDto = {
  * Represents the data required to onboard a new user.
  */
 export type OnboardUserCommandDto = {
+    /**
+     * Gets the full name of the user to onboard.
+     */
+    fullName: string;
+    /**
+     * Gets the contact number of the user to onboard.
+     */
+    contactNumber: string;
     /**
      * Gets the email address of the user to onboard.
      */
@@ -341,11 +345,7 @@ export type UserDetailsDto = {
     /**
      * Gets the user's first name.
      */
-    firstName: string;
-    /**
-     * Gets the user's last name.
-     */
-    lastName: string;
+    fullName: string;
     /**
      * Gets the user's job title, if available.
      */

@@ -1,0 +1,75 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BackLink > applies the href 1`] = `
+<DocumentFragment>
+  <a
+    class="_back-link_71902c"
+    data-component="back-link"
+    href="/previous"
+  >
+    Back
+  </a>
+</DocumentFragment>
+`;
+
+exports[`BackLink > forwards native anchor attributes 1`] = `
+<DocumentFragment>
+  <a
+    aria-label="Go back to the previous step"
+    class="_back-link_71902c"
+    data-component="back-link"
+    href="/previous"
+    id="previous-step"
+  >
+    Back
+  </a>
+</DocumentFragment>
+`;
+
+exports[`BackLink > preserves custom class names 1`] = `
+<DocumentFragment>
+  <a
+    class="_back-link_71902c additional-class"
+    data-component="back-link"
+    href="/previous"
+  >
+    Back
+  </a>
+</DocumentFragment>
+`;
+
+exports[`BackLink > renders the default link text 1`] = `
+<DocumentFragment>
+  <a
+    class="_back-link_71902c"
+    data-component="back-link"
+    href="/previous"
+  >
+    Back
+  </a>
+</DocumentFragment>
+`;
+
+exports[`BackLink > renders the inverse variant 1`] = `
+<DocumentFragment>
+  <a
+    class="_back-link_71902c _back-link--inverse_71902c"
+    data-component="back-link"
+    href="/previous"
+  >
+    Back
+  </a>
+</DocumentFragment>
+`;
+
+exports[`BackLink > supports custom content 1`] = `
+<DocumentFragment>
+  <a
+    class="_back-link_71902c"
+    data-component="back-link"
+    href="/components"
+  >
+    Back to components
+  </a>
+</DocumentFragment>
+`;

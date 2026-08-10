@@ -21,7 +21,7 @@ export function Header({ skipLinkId }: HeaderProps) {
 
   return (
     <>
-      <div className={styles.header} data-tracking="Global nav" id="top">
+      <div className={styles.header} data-component="header" id="top">
         <header aria-label="Site header">
           <ul className={styles.a11yLinks} aria-label="Accessibility links">
             <li>
@@ -36,7 +36,6 @@ export function Header({ skipLinkId }: HeaderProps) {
               href="/"
               aria-label="NICE: National Institute for Health and Care Excellence homepage"
               className={styles.home}
-              data-tracking="Logo"
             >
               <Image
                 src="/assets/ukps-logo.png"

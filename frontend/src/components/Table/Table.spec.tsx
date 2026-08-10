@@ -24,7 +24,7 @@ const rows = (
 
 describe('Table', () => {
   it('renders an unwrapped design system table by default', () => {
-    const { container } = render(<Table>{rows}</Table>)
+    const { asFragment, container } = render(<Table>{rows}</Table>)
 
     const table = container.querySelector('table')
     expect(table).not.toBeNull()
@@ -32,31 +32,36 @@ describe('Table', () => {
     expect(table?.parentElement).toBe(container)
     expect(screen.getByRole('columnheader', { name: 'Ref' })).toBeDefined()
     expect(screen.getByRole('cell', { name: 'ABC1' })).toBeDefined()
+    expect(asFragment()).toMatchSnapshot()
   })
 
   it('wraps the table in a scroll container for the content variant', () => {
-    const { container } = render(<Table columnWidth="content">{rows}</Table>)
+    const { asFragment, container } = render(<Table columnWidth="content">{rows}</Table>)
 
     const table = container.querySelector('table')
     expect(table).not.toBeNull()
     expect(table?.parentElement?.tagName).toBe('DIV')
     expect(table?.classList.contains('table')).toBe(true)
     expect(table?.classList.length).toBeGreaterThan(1)
+    expect(asFragment()).toMatchSnapshot()
   })
 
   it('adds an extra class for the equal variant', () => {
     const { container: contentContainer } = render(<Table columnWidth="content">{rows}</Table>)
-    const { container: equalContainer } = render(<Table columnWidth="equal">{rows}</Table>)
+    const { asFragment, container: equalContainer } = render(
+      <Table columnWidth="equal">{rows}</Table>,
+    )
 
     const contentClasses = Array.from(contentContainer.querySelector('table')?.classList ?? [])
     const equalClasses = Array.from(equalContainer.querySelector('table')?.classList ?? [])
 
     expect(equalClasses.length).toBe(contentClasses.length + 1)
     expect(contentClasses.every((name) => equalClasses.includes(name))).toBe(true)
+    expect(asFragment()).toMatchSnapshot()
   })
 
   it('forwards className and table attributes in both modes', () => {
-    const { container } = render(
+    const { asFragment, container } = render(
       <Table aria-label="Users" className="additional-class">
         {rows}
       </Table>,
@@ -64,10 +69,11 @@ describe('Table', () => {
     const table = container.querySelector('table')
     expect(table?.classList.contains('additional-class')).toBe(true)
     expect(table?.getAttribute('aria-label')).toBe('Users')
+    expect(asFragment()).toMatchSnapshot()
 
     cleanup()
 
-    const { container: wrappedContainer } = render(
+    const { asFragment: wrappedAsFragment, container: wrappedContainer } = render(
       <Table aria-label="Users" className="additional-class" columnWidth="equal">
         {rows}
       </Table>,
@@ -75,10 +81,11 @@ describe('Table', () => {
     const wrappedTable = wrappedContainer.querySelector('table')
     expect(wrappedTable?.classList.contains('additional-class')).toBe(true)
     expect(wrappedTable?.getAttribute('aria-label')).toBe('Users')
+    expect(wrappedAsFragment()).toMatchSnapshot()
   })
 
   it('renders a caption child', () => {
-    const { container } = render(
+    const { asFragment, container } = render(
       <Table columnWidth="content">
         <caption>Organisation users</caption>
         {rows}
@@ -86,5 +93,6 @@ describe('Table', () => {
     )
 
     expect(container.querySelector('caption')?.textContent).toBe('Organisation users')
+    expect(asFragment()).toMatchSnapshot()
   })
 })
