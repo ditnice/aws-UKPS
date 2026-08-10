@@ -100,10 +100,6 @@ builder.AddAwsBearerAuthentication();
 
 builder.Services.AddAuthorization();
 
-builder.AddAwsBearerAuthentication();
-
-builder.Services.AddAuthorization();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

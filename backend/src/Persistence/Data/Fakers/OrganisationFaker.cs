@@ -8,6 +8,7 @@ internal sealed class OrganisationFaker : Faker<Organisation>
 {
     public OrganisationFaker()
     {
+        RuleFor(x => x.Id, f => f.IndexFaker + 1);
         RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
         RuleFor(x => x.OrganisationType, f => f.PickRandom<OrganisationType>());
         RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());
