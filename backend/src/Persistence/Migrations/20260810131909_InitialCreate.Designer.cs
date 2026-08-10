@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260810131202_InitialCreate")]
+    [Migration("20260810131909_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -403,9 +403,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", b =>
                 {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                    b.Property<Guid>("SetupToken")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("setup_token");
 
                     b.Property<DateTime?>("ConsumedAt")
                         .HasColumnType("timestamp with time zone")
@@ -420,12 +421,16 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("created_by");
 
-                    b.Property<Guid>("SetupToken")
-                        .HasColumnType("uuid")
-                        .HasColumnName("setup_token");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
 
-                    b.HasKey("Id")
+                    b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_onboarding_records_user_id");
 
                     b.ToTable("user_onboarding_records", "ukps");
                 });
@@ -2808,10 +2813,10 @@ namespace UKPS.Api.Persistence.Migrations
                 {
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "User")
                         .WithOne("OnboardingRecord")
-                        .HasForeignKey("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", "Id")
+                        .HasForeignKey("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_onboarding_records_app_user_id");
+                        .HasConstraintName("fk_user_onboarding_records_users_user_id");
 
                     b.Navigation("User");
                 });

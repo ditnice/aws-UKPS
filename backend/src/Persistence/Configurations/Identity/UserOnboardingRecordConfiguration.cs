@@ -7,5 +7,8 @@ namespace UKPS.Api.Persistence.Configurations.Identity;
 internal sealed class UserOnboardingRecordConfiguration
     : IEntityTypeConfiguration<UserOnboardingRecord>
 {
-    public void Configure(EntityTypeBuilder<UserOnboardingRecord> builder) { }
+    public void Configure(EntityTypeBuilder<UserOnboardingRecord> builder)
+    {
+        builder.HasKey(x => x.SetupToken);
+    }
 }

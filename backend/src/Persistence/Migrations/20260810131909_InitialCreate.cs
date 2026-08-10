@@ -409,18 +409,18 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false),
                     setup_token = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     created_by = table.Column<string>(type: "text", nullable: false),
-                    consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    user_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user_onboarding_records", x => x.id);
+                    table.PrimaryKey("pk_user_onboarding_records", x => x.setup_token);
                     table.ForeignKey(
-                        name: "fk_user_onboarding_records_app_user_id",
-                        column: x => x.id,
+                        name: "fk_user_onboarding_records_users_user_id",
+                        column: x => x.user_id,
                         principalSchema: "ukps",
                         principalTable: "app_user",
                         principalColumn: "id",
@@ -2112,6 +2112,13 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "user_audits",
                 column: "updated_by");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_onboarding_records_user_id",
+                schema: "ukps",
+                table: "user_onboarding_records",
+                column: "user_id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_org_membership_organisation_id",

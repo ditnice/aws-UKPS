@@ -23,6 +23,6 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder
             .HasOne(x => x.OnboardingRecord)
             .WithOne(x => x.User)
-            .HasForeignKey<UserOnboardingRecord>(x => x.Id);
+            .HasForeignKey<UserOnboardingRecord>(x => x.UserId);
     }
 }
