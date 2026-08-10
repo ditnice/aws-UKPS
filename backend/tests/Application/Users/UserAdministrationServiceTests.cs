@@ -65,7 +65,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task OnboardUser_ShouldSendAUserSignUpRequestEmailIncludingALinkGeneratedFromTheSetupLinkCreator()
     {
-        var testLink = "test link";
+        var testLink = new Uri("https://example.com");
         _setupLinkCreator.GetSetupLink(Arg.Any<Guid>()).Returns(testLink);
 
         OnboardUserCommandDto command = await GenerateValidOnboardingCommand();

@@ -16,6 +16,6 @@ To activate your account please click on the following link:
 
 Should you experience any problems activating your account then please contact the UK PharmaScan helpdesk by emailing {HelpdeskEmail}
 """;
-    public required string Link { get; init; }
+    public required Uri Link { get; init; }
     public string HelpdeskEmail { get; init; } = "**Placeholder**";
 }

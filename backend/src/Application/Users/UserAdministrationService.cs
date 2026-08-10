@@ -116,7 +116,7 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
-        string link = setupLinkCreator.GetSetupLink(userOnboardingRecord.SetupToken);
+        Uri link = setupLinkCreator.GetSetupLink(userOnboardingRecord.SetupToken);
         await emailService.SendEmail(
             userOnboardingRecord.UserEmail,
             new UserSignUpRequestEmail() { Link = link },

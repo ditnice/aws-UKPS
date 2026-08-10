@@ -49,6 +49,12 @@ builder
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder
+    .Services.AddOptions<UserOnboardingConfiguration>()
+    .Bind(builder.Configuration.GetSection(UserOnboardingConfiguration.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     ConfigureJsonEnums(options.SerializerOptions);
