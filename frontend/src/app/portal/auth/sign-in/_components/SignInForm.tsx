@@ -98,7 +98,10 @@ export function SignInForm() {
       <Details summary="Forgotten your password?">
         If you have forgotten your password visit the{' '}
         {/* TODO - Update this to point to the correct page once built */}
-        <a href="#">account recovery (opens in a new tab)</a> page.
+        <a href="#" target="_blank">
+          account recovery (opens in a new tab)
+        </a>{' '}
+        page.
       </Details>
 
       <Button type="submit" variant="cta">
