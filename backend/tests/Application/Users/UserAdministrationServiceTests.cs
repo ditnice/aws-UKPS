@@ -54,7 +54,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         result.ShouldBeSuccess();
 
         var foundUserRecord = await _harness.Context.UserOnboardingRecords.SingleOrDefaultAsync(
-            x => x.User.WorkEmail == command.NewUserEmail,
+            x => x.User!.WorkEmail == command.NewUserEmail,
             TestContext.Current.CancellationToken
         );
 

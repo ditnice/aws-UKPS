@@ -47,8 +47,9 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord =
-            await _appDbContext.UserOnboardingRecords.FirstOrDefaultAsync(
+        UserOnboardingRecord? userRecord = await _appDbContext
+            .UserOnboardingRecords.Include(x => x.User)
+            .FirstOrDefaultAsync(
                 x => x.SetupToken == command.SetupToken,
                 cancellationToken: cancellationToken
             );
@@ -81,7 +82,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         await _appDbContext.SaveChangesAsync(cancellationToken);
 
         Result<UpdatePasswordError> updatePasswordResult = await _identityService.UpdatePassword(
-            userRecord.User.WorkEmail,
+            userRecord.User!.WorkEmail,
             command.NewPassword,
             cancellationToken
         );
@@ -115,7 +116,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         try
         {
             await _identityService.VerifySoftwareToken(
-                userRecord.User.WorkEmail,
+                userRecord.User!.WorkEmail,
                 command.AuthenticationSession,
                 command.Code,
                 cancellationToken

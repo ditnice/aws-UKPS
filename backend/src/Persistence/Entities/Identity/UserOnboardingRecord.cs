@@ -8,7 +8,7 @@ internal class UserOnboardingRecord
     public required string CreatedBy { get; init; }
     public DateTime? ConsumedAt { get; private set; }
 
-    public User User { get; init; } = null!;
+    public User? User { get; init; }
 
     internal void MarkAsConsumed(DateTime dateTime)
     {
