@@ -5,10 +5,13 @@ using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using UKPS.Api.Application;
 using UKPS.Api.Application.Authentication;
+using UKPS.Api.Application.InternalServices.Communication;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.WebApi;
+using UKPS.Api.WebApi.InternalServices.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,9 +29,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Add services to the container.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserInfoService, MockCurrentUserInfoService>();
+builder.Services.AddScoped<ISetupLinkCreator, SetupLinkCreator>();
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();
 builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();
+
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 
 builder.Services.Configure<CognitoConfiguration>(
     builder.Configuration.GetSection(CognitoConfiguration.SectionName)
@@ -36,6 +42,12 @@ builder.Services.Configure<CognitoConfiguration>(
 builder.Services.Configure<DatabaseConfiguration>(
     builder.Configuration.GetSection(DatabaseConfiguration.SectionName)
 );
+
+builder
+    .Services.AddOptions<EmailConfiguration>()
+    .Bind(builder.Configuration.GetSection(EmailConfiguration.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
