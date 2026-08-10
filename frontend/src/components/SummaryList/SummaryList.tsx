@@ -35,9 +35,12 @@ type SummaryListProps = {
 type SummaryListVariant = 'default' | 'two-column'
 
 export function SummaryListAction({ children, href, visuallyHiddenText }: SummaryListActionProps) {
+  const accessibleName = `${children} ${visuallyHiddenText}`
+
   return (
-    <a href={href}>
-      {children} <span className="visually-hidden">{visuallyHiddenText}</span>
+    <a aria-label={accessibleName} href={href}>
+      {children}
+      <span className="visually-hidden">{visuallyHiddenText}</span>
     </a>
   )
 }
