@@ -95,6 +95,7 @@ export function PasswordInput({
         <Button
           aria-controls={name}
           aria-label={visible ? 'Hide password' : 'Show password'}
+          buttonType="button"
           className={styles.toggle}
           onClick={handleToggleClick}
           variant="inverse"

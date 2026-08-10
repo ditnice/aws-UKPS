@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@nice-digital/nds-button'
+import { Button } from '@/components/Button/Button'
 
 import { Example } from '../../_components/Example'
 
@@ -12,19 +12,23 @@ export function Examples() {
       </Example>
 
       <Example title="CTA button">
-        <Button variant={Button.variants.cta}>CTA button</Button>
+        <Button variant="cta">CTA button</Button>
       </Example>
 
       <Example title="Primary button">
-        <Button variant={Button.variants.primary}>Primary button</Button>
+        <Button variant="primary">Primary button</Button>
       </Example>
 
       <Example title="Secondary button">
-        <Button variant={Button.variants.secondary}>Secondary button</Button>
+        <Button variant="secondary">Secondary button</Button>
       </Example>
 
       <Example dark title="Inverse button">
-        <Button variant={Button.variants.inverse}>Inverse button</Button>
+        <Button variant="inverse">Inverse button</Button>
+      </Example>
+
+      <Example title="Link button">
+        <Button variant="link">Link button</Button>
       </Example>
     </>
   )
