@@ -3,8 +3,7 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
+import { Button } from '@/components/Button/Button'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 
-import { Button } from '@nice-digital/nds-button'
 import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
 import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
@@ -17,6 +16,7 @@ import { buildUserListHref, type UserListQuery } from '@/app/portal/_utils/userL
 import type { Client } from '@/client/generated/client'
 import { getUsers } from '@/client/generated/sdk.gen'
 import type { UserListItemDto } from '@/client/generated/types.gen'
+import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
 

@@ -3,8 +3,7 @@
 import clsx from 'clsx'
 import { useState } from 'react'
 
-import { Button } from '@nice-digital/nds-button'
-
+import { Button } from '@/components/Button/Button'
 import { inputWidthStyles } from '@/components/Input/Input'
 import type { InputWidth } from '@/components/Input/Input'
 

@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { QRCodeSVG } from 'qrcode.react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
+import { Button } from '@/components/Button/Button'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
