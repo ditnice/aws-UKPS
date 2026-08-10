@@ -6,11 +6,6 @@ internal record EmailConfiguration
 {
     public const string SectionName = "Email";
 
-    public string FromAddress => $"{FromAddressPrefix}@{BaseDomain}";
-
     [Required]
-    public required string BaseDomain { get; init; }
-
-    [Required]
-    public required string FromAddressPrefix { get; init; }
+    public required string FromAddress { get; init; }
 }
