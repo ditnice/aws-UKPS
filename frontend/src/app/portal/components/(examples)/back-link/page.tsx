@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function BackLinkPage() {
   return (
-    <ComponentPage custom title={component.label}>
+    <ComponentPage marker="custom" title={component.label}>
       <Examples />
     </ComponentPage>
   )
