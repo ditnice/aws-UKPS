@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260806103421_InitialCreate")]
+    [Migration("20260810130427_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -409,16 +409,16 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.Property<DateTime?>("ConsumedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("consumed_at");
+                        .HasColumnName("user_onboarding_record_consumed_at");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                        .HasColumnName("user_onboarding_record_created_at");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("created_by");
+                        .HasColumnName("user_onboarding_record_created_by");
 
                     b.Property<Guid>("SetupToken")
                         .HasColumnType("uuid")
@@ -426,11 +426,7 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("app_user", "ukps", t =>
-                        {
-                            t.Property("CreatedAt")
-                                .HasColumnName("user_onboarding_record_created_at");
-                        });
+                    b.ToTable("app_user", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOrgMembership", b =>
