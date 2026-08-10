@@ -31,11 +31,7 @@ namespace UKPS.Api.Persistence.Migrations
                     work_email = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
-                    last_active = table.Column<DateTime>(type: "timestamptz", nullable: true),
-                    setup_token = table.Column<Guid>(type: "uuid", nullable: true),
-                    setup_token_created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    setup_token_record_created_by = table.Column<string>(type: "text", nullable: true),
-                    setup_token_record_consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    last_active = table.Column<DateTime>(type: "timestamptz", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -406,6 +402,29 @@ namespace UKPS.Api.Persistence.Migrations
                         principalTable: "app_user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_onboarding_records",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false),
+                    setup_token = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    created_by = table.Column<string>(type: "text", nullable: false),
+                    consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_user_onboarding_records", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_user_onboarding_records_app_user_id",
+                        column: x => x.id,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -2659,6 +2678,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "user_audits",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "user_onboarding_records",
                 schema: "ukps");
 
             migrationBuilder.DropTable(

@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260810130757_InitialCreate")]
+    [Migration("20260810131202_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -409,24 +409,25 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.Property<DateTime?>("ConsumedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("setup_token_record_consumed_at");
+                        .HasColumnName("consumed_at");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("setup_token_created_at");
+                        .HasColumnName("created_at");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("setup_token_record_created_by");
+                        .HasColumnName("created_by");
 
                     b.Property<Guid>("SetupToken")
                         .HasColumnType("uuid")
                         .HasColumnName("setup_token");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_user_onboarding_records");
 
-                    b.ToTable("app_user", "ukps");
+                    b.ToTable("user_onboarding_records", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOrgMembership", b =>
@@ -2810,7 +2811,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasForeignKey("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_app_user_app_user_id");
+                        .HasConstraintName("fk_user_onboarding_records_app_user_id");
 
                     b.Navigation("User");
                 });
