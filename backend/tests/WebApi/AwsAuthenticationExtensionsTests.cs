@@ -277,7 +277,7 @@ public sealed class AwsAuthenticationExtensionsTests
 
         var principal = new ClaimsPrincipal(
             new ClaimsIdentity(
-                new[] { new Claim("sub", "test-user") },
+                new[] { new Claim("username", "test-user") },
                 JwtBearerDefaults.AuthenticationScheme
             )
         );

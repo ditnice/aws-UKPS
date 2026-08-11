@@ -43,7 +43,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
                     {
                         User = new UserType()
                         {
-                            Attributes = [new() { Name = "sub", Value = identityId }],
+                            Attributes = [new() { Name = "username", Value = identityId }],
                         },
                     };
                 }
