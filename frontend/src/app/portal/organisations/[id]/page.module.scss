@@ -36,3 +36,13 @@
   justify-content: flex-end;
   margin: 0;
 }
+
+.actionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.actionList li + li {
+  margin-top: utils.rem(spacing.$small);
+}

@@ -29,7 +29,8 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                 return o
                     .Organisations.SelectMany(
                         (org, orgIndex) =>
-                            o
+                        {
+                            return o
                                 .Users.Skip(orgIndex * usersPerOrganisation)
                                 .Take(usersPerOrganisation)
                                 .Select(
@@ -43,7 +44,8 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                                         generatedMembership.Status = statuses[i % statuses.Length];
                                         return generatedMembership;
                                     }
-                                )
+                                );
+                        }
                     )
                     .ToArray();
             }

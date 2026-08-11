@@ -1,0 +1,55 @@
+@use '@/styles/colours';
+@use '@/styles/focus';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.details {
+  @include typography.font-size(p);
+  margin-bottom: utils.rem(spacing.$medium);
+
+  &[open] > .summary:before {
+    transform: rotate(90deg);
+  }
+}
+
+.summary {
+  color: colours.$link;
+  cursor: pointer;
+  list-style: none;
+  padding-left: utils.rem(spacing.$medium);
+  position: relative;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &:before {
+    border-color: transparent transparent transparent colours.$link;
+    border-style: solid;
+    border-width: utils.rem(5) 0 utils.rem(5) utils.rem(7);
+    content: '';
+    left: 0;
+    position: absolute;
+    top: utils.rem(6);
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    color: colours.$link-hover;
+  }
+
+  &:focus {
+    @include focus.default-focus-style;
+  }
+}
+
+.summary-text {
+  text-decoration: underline;
+}
+
+.text {
+  border-left: utils.rem(spacing.$x-small) solid colours.$border;
+  margin-top: utils.rem(spacing.$small);
+  padding: utils.rem(spacing.$small) 0 utils.rem(spacing.$small) utils.rem(spacing.$medium);
+}

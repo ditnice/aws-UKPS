@@ -1,3 +1,5 @@
+import clsx from 'clsx'
+
 import styles from '../page.module.scss'
 
 import type { ReactNode } from 'react'
@@ -12,7 +14,11 @@ type ExampleProps = {
 export function Example({ children, dark = false, fullWidth = false, title }: ExampleProps) {
   return (
     <div
-      className={`${styles.example}${dark ? ` ${styles['example-dark']}` : ''}${fullWidth ? ` ${styles['example-full-width']}` : ''}`}
+      className={clsx(
+        styles.example,
+        dark && styles['example-dark'],
+        fullWidth && styles['example-full-width'],
+      )}
     >
       <h2 className={styles['example-title']}>{title}</h2>
       <div className={styles['example-body']}>{children}</div>

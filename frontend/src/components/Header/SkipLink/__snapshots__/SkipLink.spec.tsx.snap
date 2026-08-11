@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SkipLink > renders a hash link and focuses the target when clicked 1`] = `
+<DocumentFragment>
+  <a
+    class="_link_545938"
+    href="#content-start"
+  >
+    Skip to content
+  </a>
+</DocumentFragment>
+`;
+
+exports[`SkipLink > renders a hash link without changing focus when the target is missing 1`] = `
+<DocumentFragment>
+  <a
+    class="_link_545938"
+    href="#missing"
+  >
+    Missing target
+  </a>
+</DocumentFragment>
+`;
+
+exports[`SkipLink > renders a normal link for non-hash destinations 1`] = `
+<DocumentFragment>
+  <a
+    class="_link_545938"
+    href="/accessibility"
+  >
+    Accessibility help
+  </a>
+</DocumentFragment>
+`;
+
+exports[`SkipLink > renders an empty hash link without changing focus when clicked 1`] = `
+<DocumentFragment>
+  <a
+    class="_link_545938"
+    href="#"
+  >
+    Empty target
+  </a>
+</DocumentFragment>
+`;

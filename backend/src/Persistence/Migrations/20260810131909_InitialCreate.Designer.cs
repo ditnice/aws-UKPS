@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260731081447_InitialCreate")]
+    [Migration("20260810131909_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -295,10 +295,15 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("FirstName")
+                    b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("first_name");
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("IdentityId")
+                        .HasMaxLength(36)
+                        .HasColumnType("varchar(36)")
+                        .HasColumnName("identity_id");
 
                     b.Property<string>("JobTitle")
                         .HasColumnType("text")
@@ -307,11 +312,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<DateTime?>("LastActive")
                         .HasColumnType("timestamptz")
                         .HasColumnName("last_active");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("last_name");
 
                     b.Property<string>("Title")
                         .HasColumnType("text")
@@ -421,20 +421,16 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("created_by");
 
-                    b.Property<int>("NewUserOrganisationId")
+                    b.Property<int>("UserId")
                         .HasColumnType("integer")
-                        .HasColumnName("new_user_organisation_id");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_email");
+                        .HasColumnName("user_id");
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
 
-                    b.HasIndex("NewUserOrganisationId")
-                        .HasDatabaseName("ix_user_onboarding_records_new_user_organisation_id");
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_onboarding_records_user_id");
 
                     b.ToTable("user_onboarding_records", "ukps");
                 });
@@ -2815,14 +2811,14 @@ namespace UKPS.Api.Persistence.Migrations
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", b =>
                 {
-                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "NewUserOrganisation")
-                        .WithMany()
-                        .HasForeignKey("NewUserOrganisationId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "User")
+                        .WithOne("OnboardingRecord")
+                        .HasForeignKey("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_onboarding_records_organisations_new_user_organisation");
+                        .HasConstraintName("fk_user_onboarding_records_users_user_id");
 
-                    b.Navigation("NewUserOrganisation");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOrgMembership", b =>
@@ -3732,6 +3728,8 @@ namespace UKPS.Api.Persistence.Migrations
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.User", b =>
                 {
+                    b.Navigation("OnboardingRecord");
+
                     b.Navigation("UserAudits");
 
                     b.Navigation("UserOrgMemberships");

@@ -1,0 +1,7 @@
+@use '@/styles/spacing';
+@use '@/styles/utils';
+
+.page-header-wrapper {
+  margin-bottom: utils.rem(spacing.$large);
+  margin-top: utils.rem(spacing.$large);
+}

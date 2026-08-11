@@ -6,7 +6,10 @@ using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
-using CreateNewUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.CreateNewUserError>;
+using CreateNewUserResult = UKPS.Api.Application.Common.Result<
+    string,
+    UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
+>;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
@@ -48,14 +51,22 @@ internal sealed partial class CognitoIdentityService : IIdentityService
 
         try
         {
-            await _cognito.AdminCreateUserAsync(request, cancellationToken);
+            var response = await _cognito.AdminCreateUserAsync(request, cancellationToken);
+            var sub =
+                response
+                    .User.Attributes.FirstOrDefault(x =>
+                        string.Equals(x.Name, "sub", StringComparison.Ordinal)
+                    )
+                    ?.Value
+                ?? throw new InvalidOperationException(
+                    "Cognito created the user but did not return the expected 'sub' attribute."
+                );
+            return CreateNewUserResult.Ok(sub);
         }
         catch (UsernameExistsException)
         {
             return CreateNewUserResult.Err(new CreateNewUserError.UsernameAlreadyExists());
         }
-
-        return CreateNewUserResult.Ok();
     }
 
     public async Task<UpdatePasswordResult> UpdatePassword(

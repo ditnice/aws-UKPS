@@ -1,4 +1,7 @@
-using CreateNewUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.CreateNewUserError>;
+using CreateNewUserResult = UKPS.Api.Application.Common.Result<
+    string,
+    UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
+>;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError

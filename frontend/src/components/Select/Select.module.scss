@@ -1,0 +1,42 @@
+@use '@/styles/colours';
+@use '@/styles/focus';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.select {
+  margin-bottom: utils.rem(spacing.$medium);
+}
+
+.label {
+  @include typography.font-size(p);
+  display: block;
+  font-weight: bold;
+  margin-bottom: utils.rem(spacing.$small);
+}
+
+.hint {
+  margin-bottom: utils.rem(spacing.$small);
+  margin-top: 0;
+}
+
+.error {
+  color: colours.$error;
+  font-weight: bold;
+  margin-bottom: utils.rem(spacing.$small);
+  margin-top: 0;
+}
+
+.field {
+  border: utils.rem(spacing.$xx-small) solid colours.$border-dark;
+  padding: utils.rem(spacing.$small);
+  width: 100%;
+
+  &:focus {
+    @include focus.default-focus-style;
+  }
+}
+
+.fieldError {
+  @include typography.default-error-style;
+}

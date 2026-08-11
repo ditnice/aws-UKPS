@@ -1,0 +1,197 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SummaryList > adds hidden context to a row action child 1`] = `
+<DocumentFragment>
+  <dl
+    class="_summary-list_1509a2"
+    data-component="summary-list"
+  >
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Name
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        Sarah Philips
+      </dd>
+      <dd
+        class="_summary-list__actions_1509a2"
+      >
+        <a
+          aria-label="Change name"
+          href="/change-name"
+        >
+          Change
+          <span
+            class="visually-hidden"
+          >
+            name
+          </span>
+        </a>
+      </dd>
+    </div>
+  </dl>
+</DocumentFragment>
+`;
+
+exports[`SummaryList > renders row children as a description list and ignores empty children 1`] = `
+<DocumentFragment>
+  <dl
+    class="_summary-list_1509a2 additional-class"
+    data-component="summary-list"
+  >
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Name
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        Sarah Philips
+      </dd>
+    </div>
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Date of birth
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        5 January 1978
+      </dd>
+    </div>
+  </dl>
+</DocumentFragment>
+`;
+
+exports[`SummaryList > supports a two-column variant for lists without actions 1`] = `
+<DocumentFragment>
+  <dl
+    class="_summary-list_1509a2 _summary-list--two-column_1509a2"
+    data-component="summary-list"
+  >
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Name
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        Sarah Philips
+      </dd>
+    </div>
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Status
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        Active
+      </dd>
+    </div>
+  </dl>
+</DocumentFragment>
+`;
+
+exports[`SummaryList > supports mixed rows, multiple action children and rich values 1`] = `
+<DocumentFragment>
+  <dl
+    class="_summary-list_1509a2"
+    data-component="summary-list"
+  >
+    <div
+      class="_summary-list__row_1509a2 _summary-list__row--no-actions_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Name
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        Sarah Philips
+      </dd>
+    </div>
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Contact details
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        <p>
+          07700 900457
+        </p>
+        <p>
+          sarah.philips@example.com
+        </p>
+      </dd>
+      <dd
+        class="_summary-list__actions_1509a2"
+      >
+        <ul
+          class="_summary-list__actions-list_1509a2"
+        >
+          <li
+            class="_summary-list__actions-list-item_1509a2"
+          >
+            <a
+              aria-label="Add contact details"
+              href="/add-contact"
+            >
+              Add
+              <span
+                class="visually-hidden"
+              >
+                contact details
+              </span>
+            </a>
+          </li>
+          <li
+            class="_summary-list__actions-list-item_1509a2"
+          >
+            <a
+              aria-label="Change contact details"
+              href="/change-contact"
+            >
+              Change
+              <span
+                class="visually-hidden"
+              >
+                contact details
+              </span>
+            </a>
+          </li>
+        </ul>
+      </dd>
+    </div>
+  </dl>
+</DocumentFragment>
+`;

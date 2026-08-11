@@ -19,24 +19,19 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
 
     public CurrentUser GetCurrentUserInfo()
     {
-        return new CurrentUser
-        {
-            OrganisationId = FindOrganisationId(),
-            UserRole = FindUserRole(),
-            Email = FindUserEmail(),
-        };
+        return ParseFromUserPrincipal(Principal);
     }
 
-    private string FindUserEmail()
+    private static string FindUserEmail(ClaimsPrincipal claimsPrincipal)
     {
-        string? userEmailClaim = Principal.FindFirstValue(UkpsClaimTypes.Email);
+        string? userEmailClaim = claimsPrincipal.FindFirstValue(UkpsClaimTypes.Email);
         return userEmailClaim
             ?? throw new InvalidOperationException($"Invalid {UkpsClaimTypes.Email} claim value.");
     }
 
-    private int FindOrganisationId()
+    private static int FindOrganisationId(ClaimsPrincipal claimsPrincipal)
     {
-        string? organisationIdClaim = Principal.FindFirstValue(UkpsClaimTypes.OrganisationId);
+        string? organisationIdClaim = claimsPrincipal.FindFirstValue(UkpsClaimTypes.OrganisationId);
         return int.TryParse(organisationIdClaim, CultureInfo.InvariantCulture, out var orgId)
             ? orgId
             : throw new InvalidOperationException(
@@ -44,13 +39,23 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             );
     }
 
-    private UserRole FindUserRole()
+    private static UserRole FindUserRole(ClaimsPrincipal claimsPrincipal)
     {
-        string? userRoleClaim = Principal.FindFirstValue(UkpsClaimTypes.UserRole);
+        string? userRoleClaim = claimsPrincipal.FindFirstValue(UkpsClaimTypes.UserRole);
         return Enum.TryParse<UserRole>(userRoleClaim, out var role) && Enum.IsDefined(role)
             ? role
             : throw new InvalidOperationException(
                 $"Invalid {UkpsClaimTypes.UserRole} claim value."
             );
+    }
+
+    public static CurrentUser ParseFromUserPrincipal(ClaimsPrincipal claimsPrincipal)
+    {
+        return new CurrentUser
+        {
+            OrganisationId = FindOrganisationId(claimsPrincipal),
+            UserRole = FindUserRole(claimsPrincipal),
+            Email = FindUserEmail(claimsPrincipal),
+        };
     }
 }

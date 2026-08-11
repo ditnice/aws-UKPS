@@ -1,0 +1,226 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Table > adds an extra class for the equal variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_table-wrapper_096a76"
+  >
+    <table
+      class="table _table--full-width_096a76 _table--equal_096a76"
+      data-component="table"
+    >
+      <thead>
+        <tr>
+          <th
+            scope="col"
+          >
+            Ref
+          </th>
+          <th
+            scope="col"
+          >
+            Title
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            ABC1
+          </td>
+          <td>
+            Lorem ipsum dolor sit amet
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Table > forwards className and table attributes in both modes 1`] = `
+<DocumentFragment>
+  <table
+    aria-label="Users"
+    class="table additional-class"
+    data-component="table"
+  >
+    <thead>
+      <tr>
+        <th
+          scope="col"
+        >
+          Ref
+        </th>
+        <th
+          scope="col"
+        >
+          Title
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          ABC1
+        </td>
+        <td>
+          Lorem ipsum dolor sit amet
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`Table > forwards className and table attributes in both modes 2`] = `
+<DocumentFragment>
+  <div
+    class="_table-wrapper_096a76"
+  >
+    <table
+      aria-label="Users"
+      class="table _table--full-width_096a76 _table--equal_096a76 additional-class"
+      data-component="table"
+    >
+      <thead>
+        <tr>
+          <th
+            scope="col"
+          >
+            Ref
+          </th>
+          <th
+            scope="col"
+          >
+            Title
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            ABC1
+          </td>
+          <td>
+            Lorem ipsum dolor sit amet
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Table > renders a caption child 1`] = `
+<DocumentFragment>
+  <div
+    class="_table-wrapper_096a76"
+  >
+    <table
+      class="table _table--full-width_096a76"
+      data-component="table"
+    >
+      <caption>
+        Organisation users
+      </caption>
+      <thead>
+        <tr>
+          <th
+            scope="col"
+          >
+            Ref
+          </th>
+          <th
+            scope="col"
+          >
+            Title
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            ABC1
+          </td>
+          <td>
+            Lorem ipsum dolor sit amet
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Table > renders an unwrapped design system table by default 1`] = `
+<DocumentFragment>
+  <table
+    class="table"
+    data-component="table"
+  >
+    <thead>
+      <tr>
+        <th
+          scope="col"
+        >
+          Ref
+        </th>
+        <th
+          scope="col"
+        >
+          Title
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          ABC1
+        </td>
+        <td>
+          Lorem ipsum dolor sit amet
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`Table > wraps the table in a scroll container for the content variant 1`] = `
+<DocumentFragment>
+  <div
+    class="_table-wrapper_096a76"
+  >
+    <table
+      class="table _table--full-width_096a76"
+      data-component="table"
+    >
+      <thead>
+        <tr>
+          <th
+            scope="col"
+          >
+            Ref
+          </th>
+          <th
+            scope="col"
+          >
+            Title
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            ABC1
+          </td>
+          <td>
+            Lorem ipsum dolor sit amet
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocumentFragment>
+`;

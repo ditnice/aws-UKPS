@@ -21,6 +21,11 @@ export const componentDefinitions = [
     slug: 'alphabet',
   },
   {
+    description: 'Help users go back to the previous page in a multi-page transaction.',
+    label: 'Back link',
+    slug: 'back-link',
+  },
+  {
     description: 'Show a page location within a hierarchy.',
     label: 'Breadcrumbs',
     slug: 'breadcrumbs',
@@ -38,6 +43,11 @@ export const componentDefinitions = [
     slug: 'column-list',
   },
   { description: 'Keep page content aligned and readable.', label: 'Container', slug: 'container' },
+  {
+    description: 'Let users reveal additional detail only when needed.',
+    label: 'Details',
+    slug: 'details',
+  },
   { description: 'Narrow a long list of results.', label: 'Filters', slug: 'filters' },
   {
     description: 'Show a relationship between form controls.',
@@ -76,11 +86,21 @@ export const componentDefinitions = [
     slug: 'panel',
   },
   {
+    description: 'Let users optionally reveal a masked password value.',
+    label: 'Password input',
+    slug: 'password-input',
+  },
+  {
     description: 'Identify an alpha or beta service.',
     label: 'Phase Banner',
     slug: 'phase-banner',
   },
   { description: 'Let users select one option from a set.', label: 'Radio', slug: 'radio' },
+  {
+    description: 'Let users choose one option from a long list.',
+    label: 'Select',
+    slug: 'select',
+  },
   {
     description: 'Navigate between subpages in a section.',
     label: 'Stacked Nav',
