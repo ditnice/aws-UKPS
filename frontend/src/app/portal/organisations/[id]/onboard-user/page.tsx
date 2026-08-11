@@ -7,14 +7,16 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import styles from './page.module.scss'
 
 interface Props {
-  _params: Promise<{ id: string }>
+  params: Promise<{ id: string }>
 }
 
-export default async function OrganisationOnboardUserPage({ _params }: Props) {
+export default async function OrganisationOnboardUserPage({ params }: Props) {
+  const { id } = await params
+
   return (
     <>
       <PageHeader
-        backLink={<BackLink href="#">Back</BackLink>}
+        backLink={<BackLink href={`/portal/organisations/${id}`}>Back</BackLink>}
         heading="Add a new user"
       ></PageHeader>
 
