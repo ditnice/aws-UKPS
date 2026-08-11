@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
+import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 
 import type { ChangeEvent } from 'react'

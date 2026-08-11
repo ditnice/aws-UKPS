@@ -1,6 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import { isValidPhoneNumber } from 'libphonenumber-js/min'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { z } from 'zod'
@@ -16,10 +17,9 @@ import {
   ADDRESS_REQUIRED_ERROR_MESSAGE,
   EMAIL_REQUIRED_ERROR_MESSAGE,
   PHONE_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/ErrorMessages'
-import { isValidPhoneNumber } from '@/app/common/RegEx'
+} from '@/app/common/form/ErrorMessages'
+import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
@@ -38,7 +38,7 @@ const editOrganisationDetailsSchema = z.object({
     .string()
     .trim()
     .min(1, PHONE_REQUIRED_ERROR_MESSAGE)
-    .refine(isValidPhoneNumber, PHONE_FORMAT_ERROR_MESSAGE),
+    .refine((value) => isValidPhoneNumber(value, 'GB'), PHONE_FORMAT_ERROR_MESSAGE),
 })
 
 type EditOrganisationDetailsFormValues = z.input<typeof editOrganisationDetailsSchema>
@@ -175,6 +175,7 @@ export function EditOrganisationDetailsForm({
               <Input
                 label="Company phone number"
                 name={field.name}
+                hint="For international numbers include the country code. For example +1 555-123-4567."
                 type="tel"
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -191,15 +192,11 @@ export function EditOrganisationDetailsForm({
         </form.Field>
       </FormGroup>
 
-      <Button buttonType={Button.types.submit} disabled={isPending} variant={Button.variants.cta}>
+      <Button buttonType="submit" disabled={isPending} variant="cta">
         {isPending ? 'Saving...' : 'Save changes'}
       </Button>
 
-      <Button
-        buttonType={Button.types.button}
-        variant={Button.variants.secondary}
-        onClick={() => router.back()}
-      >
+      <Button buttonType="button" variant="secondary" onClick={() => router.back()}>
         Cancel
       </Button>
     </form>

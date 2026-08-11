@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
+import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 

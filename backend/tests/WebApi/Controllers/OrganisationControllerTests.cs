@@ -318,6 +318,58 @@ public class OrganisationControllerTests
         );
     }
 
+    [Theory]
+    [InlineData("not-a-phone-number")]
+    [InlineData("123")]
+    [InlineData("01632 960001")] // Reserved Ofcom number , rejected by libphonenumber.
+    public void UpdateOrganisationDetailsDto_TelephoneIsInvalid_IsInvalid(string telephone)
+    {
+        UpdateOrganisationDetailsDto dto = new()
+        {
+            OrganisationName = "Gov Pharma Ltd",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            HeadOfficeEmail = "info@pharma.gov.uk",
+            HeadOfficeTelephone = telephone,
+        };
+
+        List<ValidationResult> validationResults = Validate(dto);
+
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone),
+                StringComparer.Ordinal
+            )
+        );
+    }
+
+    [Theory]
+    [InlineData("020 1234 5678")]
+    [InlineData("07911 123456")]
+    [InlineData("+44 121 234 5678")]
+    [InlineData("(020) 1234 5678")]
+    [InlineData("020-1234-5678")]
+    [InlineData("020 1234 5678 ext 123")]
+    [InlineData("+1 (212) 555-0123")]
+    public void UpdateOrganisationDetailsDto_TelephoneIsValid_IsValid(string telephone)
+    {
+        UpdateOrganisationDetailsDto dto = new()
+        {
+            OrganisationName = "Gov Pharma Ltd",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            HeadOfficeEmail = "info@pharma.gov.uk",
+            HeadOfficeTelephone = telephone,
+        };
+
+        List<ValidationResult> validationResults = Validate(dto);
+
+        validationResults.ShouldNotContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone),
+                StringComparer.Ordinal
+            )
+        );
+    }
+
     [Fact]
     public async Task DeactivateMembership_UserIsNotAuthorised_ReturnsForbidResult()
     {

@@ -5,8 +5,8 @@ import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
+import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { Details } from '@/components/Details/Details'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 

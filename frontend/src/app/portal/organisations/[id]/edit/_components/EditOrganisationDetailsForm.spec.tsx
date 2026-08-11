@@ -8,7 +8,7 @@ import {
   EMAIL_REQUIRED_ERROR_MESSAGE,
   PHONE_FORMAT_ERROR_MESSAGE,
   PHONE_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/ErrorMessages'
+} from '@/app/common/form/ErrorMessages'
 
 import { EditOrganisationDetailsForm } from './EditOrganisationDetailsForm'
 
@@ -38,7 +38,7 @@ const defaultProps: EditOrganisationDetailsFormProps = {
   organisationName: 'Acme Ltd',
   headOfficeAddress: '1 Example Street',
   headOfficeEmail: 'contact@example.com',
-  headOfficeTelephone: '01632 960001',
+  headOfficeTelephone: '0121 234 5678',
 }
 
 function renderForm(overrides: Partial<EditOrganisationDetailsFormProps> = {}) {
@@ -61,7 +61,7 @@ describe('EditOrganisationDetailsForm', () => {
       'contact@example.com',
     )
     expect((screen.getByLabelText('Company phone number') as HTMLInputElement).value).toBe(
-      '01632 960001',
+      '0121 234 5678',
     )
   })
 
@@ -137,6 +137,25 @@ describe('EditOrganisationDetailsForm', () => {
       await screen.findByText(PHONE_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    '0121 234 5678',
+    '(020) 1234 5678',
+    '020-1234-5678',
+    '020 1234 5678 ext 123',
+    '+1 (212) 555-0123',
+  ])('accepts a phone number in the format %s', async (phoneNumber) => {
+    updateOrganisationDetailsActionMock.mockResolvedValue({ status: 'success' })
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Company phone number'), {
+      target: { value: phoneNumber },
+    })
+    submit()
+
+    await waitFor(() => expect(updateOrganisationDetailsActionMock).toHaveBeenCalled())
+    expect(screen.queryByText(PHONE_FORMAT_ERROR_MESSAGE, { selector: '.input__error' })).toBeNull()
   })
 
   it('submits the updated values and redirects to the organisation page on success', async () => {

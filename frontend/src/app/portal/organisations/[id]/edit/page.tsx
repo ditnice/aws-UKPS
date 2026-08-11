@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation'
 
 import { Breadcrumb, Breadcrumbs } from '@nice-digital/nds-breadcrumbs'
-import { PageHeader } from '@nice-digital/nds-page-header'
 
 import { getOrganisationById } from '@/client/generated/sdk.gen'
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import { EditOrganisationDetailsForm } from './_components/EditOrganisationDetailsForm'
 
