@@ -74,6 +74,30 @@ function mapBlock(block: Record<string, unknown>): SitePageBlock | null {
     }
   }
 
+  if (
+    blockType === 'columnList' &&
+    Array.isArray(block.items) &&
+    typeof block.heading === 'string' &&
+    (block.columns === '2' || block.columns === '3') &&
+    block.items.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        'text' in item &&
+        typeof item.text === 'string',
+    )
+  ) {
+    return {
+      blockType,
+      id: typeof block.id === 'string' ? block.id : undefined,
+      heading: block.heading,
+      columns: block.columns === '2' ? 2 : 3,
+      items: block.items.map((item) => ({
+        text: item.text,
+      })),
+    }
+  }
+
   return null
 }
 

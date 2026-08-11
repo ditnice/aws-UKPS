@@ -87,6 +87,24 @@ export const Pages: CollectionConfig = {
             },
           ],
         },
+        {
+          slug: 'columnList',
+          fields: [
+            { name: 'heading', type: 'text', required: true },
+            {
+              name: 'columns',
+              type: 'select',
+              required: true,
+              options: ['2', '3'],
+            },
+            {
+              name: 'items',
+              type: 'array',
+              required: true,
+              fields: [{ name: 'text', type: 'text', required: true }],
+            },
+          ],
+        },
       ],
     },
   ],

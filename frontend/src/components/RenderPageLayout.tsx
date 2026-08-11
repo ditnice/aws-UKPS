@@ -1,5 +1,6 @@
 'use client'
 
+import { ColumnList } from '@nice-digital/nds-column-list'
 import { Tab, Tabs } from '@nice-digital/nds-tabs'
 
 import PlainTextContent from '@/components/PlainText/PlainTextContent'
@@ -53,6 +54,18 @@ export default function RenderPageLayout({ blocks }: RenderPageLayoutProps) {
               </details>
             ))}
           </div>
+        )
+
+      case 'columnList':
+        return (
+          <section aria-labelledby={`${key}-heading`} key={key}>
+            <h2 id={`${key}-heading`}>{block.heading}</h2>
+            <ColumnList columns={block.columns}>
+              {block.items.map((item, i) => (
+                <li key={i}>{item.text}</li>
+              ))}
+            </ColumnList>
+          </section>
         )
 
       default:

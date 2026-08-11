@@ -24,6 +24,16 @@ export type AccordionLayoutBlock = {
   }[]
 }
 
+export type ListLayoutBlock = {
+  blockType: 'columnList'
+  id?: string
+  heading: string
+  columns: 2 | 3
+  items: {
+    text: string
+  }[]
+}
+
 export type MediaAsset = {
   alt: string
   filename?: string
@@ -33,7 +43,8 @@ export type MediaAsset = {
   width: number
 }
 
-export type SitePageBlock = TextSectionLayoutBlock | TabsLayoutBlock | AccordionLayoutBlock
+export type SitePageBlock =
+  TextSectionLayoutBlock | TabsLayoutBlock | AccordionLayoutBlock | ListLayoutBlock
 
 export type SitePage = {
   id?: string

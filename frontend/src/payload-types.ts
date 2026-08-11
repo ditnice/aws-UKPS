@@ -210,6 +210,17 @@ export interface Page {
         blockName?: string | null;
         blockType: 'accordion';
       }
+    | {
+        heading: string;
+        columns: '2' | '3';
+        items: {
+          text: string;
+          id?: string | null;
+        }[];
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'columnList';
+      }
   )[];
   updatedAt: string;
   createdAt: string;
@@ -376,6 +387,20 @@ export interface PagesSelect<T extends boolean = true> {
                 | {
                     title?: T;
                     body?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        columnList?:
+          | T
+          | {
+              heading?: T;
+              columns?: T;
+              items?:
+                | T
+                | {
+                    text?: T;
                     id?: T;
                   };
               id?: T;
