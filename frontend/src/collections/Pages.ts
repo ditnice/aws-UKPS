@@ -73,6 +73,20 @@ export const Pages: CollectionConfig = {
             },
           ],
         },
+        {
+          slug: 'accordion',
+          fields: [
+            {
+              name: 'items',
+              type: 'array',
+              required: true,
+              fields: [
+                { name: 'title', type: 'text', required: true },
+                { name: 'body', type: 'textarea', required: true },
+              ],
+            },
+          ],
+        },
       ],
     },
   ],

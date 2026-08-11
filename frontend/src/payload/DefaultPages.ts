@@ -15,6 +15,15 @@ export type TabsLayoutBlock = {
   }[]
 }
 
+export type AccordionLayoutBlock = {
+  blockType: 'accordion'
+  id?: string
+  items: {
+    title: string
+    body: string
+  }[]
+}
+
 export type MediaAsset = {
   alt: string
   filename?: string
@@ -24,7 +33,7 @@ export type MediaAsset = {
   width: number
 }
 
-export type SitePageBlock = TextSectionLayoutBlock | TabsLayoutBlock
+export type SitePageBlock = TextSectionLayoutBlock | TabsLayoutBlock | AccordionLayoutBlock
 
 export type SitePage = {
   id?: string

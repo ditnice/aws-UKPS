@@ -200,6 +200,16 @@ export interface Page {
         blockName?: string | null;
         blockType: 'tabs';
       }
+    | {
+        items: {
+          title: string;
+          body: string;
+          id?: string | null;
+        }[];
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'accordion';
+      }
   )[];
   updatedAt: string;
   createdAt: string;
@@ -349,6 +359,19 @@ export interface PagesSelect<T extends boolean = true> {
           | T
           | {
               tabs?:
+                | T
+                | {
+                    title?: T;
+                    body?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        accordion?:
+          | T
+          | {
+              items?:
                 | T
                 | {
                     title?: T;

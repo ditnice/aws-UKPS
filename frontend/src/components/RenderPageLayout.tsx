@@ -41,6 +41,20 @@ export default function RenderPageLayout({ blocks }: RenderPageLayoutProps) {
           </Tabs>
         )
 
+      case 'accordion':
+        return (
+          <div key={key} className="accordion">
+            {block.items.map((item, index) => (
+              <details key={`${key}-item-${index}`} className="accordion__item">
+                <summary className="accordion__summary">{item.title}</summary>
+                <div className="accordion__content">
+                  <p>{item.body}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        )
+
       default:
         return null
     }

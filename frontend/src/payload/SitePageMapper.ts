@@ -51,6 +51,29 @@ function mapBlock(block: Record<string, unknown>): SitePageBlock | null {
     }
   }
 
+  if (
+    blockType === 'accordion' &&
+    Array.isArray(block.items) &&
+    block.items.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        'title' in item &&
+        'body' in item &&
+        typeof item.title === 'string' &&
+        typeof item.body === 'string',
+    )
+  ) {
+    return {
+      blockType,
+      id: typeof block.id === 'string' ? block.id : undefined,
+      items: block.items.map((item) => ({
+        title: item.title,
+        body: item.body,
+      })),
+    }
+  }
+
   return null
 }
 
