@@ -15,9 +15,6 @@ internal sealed class UserOrgMembershipFaker : Faker<UserOrgMembership>
 
     public UserOrgMembershipFaker()
     {
-        RuleFor(x => x.Id, f => f.IndexFaker + 1);
-        RuleFor(x => x.UserId, f => f.Random.Int(1, 1000));
-        RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
         RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
         RuleFor(x => x.Status, f => f.PickRandom(_statuses));
         RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());

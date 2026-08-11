@@ -8,7 +8,6 @@ internal sealed class UserFaker : Faker<User>
 {
     public UserFaker()
     {
-        RuleFor(x => x.Id, f => f.IndexFaker + 1);
         RuleFor(x => x.IdentityId, f => f.Random.Guid().ToString());
         RuleFor(x => x.FullName, f => f.Name.FullName());
         RuleFor(x => x.UserType, f => f.PickRandom<UserType>());
