@@ -1,9 +1,35 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { vi } from 'vitest'
+
+import { postAuthLogin } from '@/client/generated'
+
+import { routeOnSuccessfulAuth } from '../../constants'
 
 import { SignInForm } from './SignInForm'
 
+const mockPush = vi.fn()
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}))
+
+vi.mock('@/client/generated', () => ({
+  postAuthLogin: vi.fn(),
+}))
+
+vi.mocked(postAuthLogin).mockResolvedValue({
+  error: undefined,
+  data: undefined,
+})
+
 afterEach(cleanup)
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
 
 describe('SignInForm', () => {
   it('renders the sign-in controls', () => {
@@ -83,6 +109,101 @@ describe('SignInForm', () => {
     await waitFor(() => {
       expect(screen.queryByText('Enter your email address')).toBeNull()
       expect(screen.queryByText('Enter your password')).toBeNull()
+    })
+  })
+
+  it('submits valid credentials and redirects to the portal', async () => {
+    render(<SignInForm />)
+
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'name@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secure-password' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(postAuthLogin).toHaveBeenCalledWith({
+        body: {
+          username: 'name@example.com',
+          password: 'secure-password',
+        },
+        credentials: 'include',
+      })
+
+      expect(mockPush).toHaveBeenCalledWith(routeOnSuccessfulAuth)
+    })
+  })
+
+  it('sets and shows an error message if the response is a 401', async () => {
+    vi.mocked(postAuthLogin).mockResolvedValue({
+      error: {
+        status: 401,
+        challengeType: undefined,
+      },
+      data: undefined,
+    })
+
+    render(<SignInForm />)
+
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'name@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'incorrect-password' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    const errors = await screen.findAllByText('Invalid email or password')
+
+    expect(errors).toHaveLength(2)
+
+    expect(postAuthLogin).toHaveBeenCalledWith({
+      body: {
+        username: 'name@example.com',
+        password: 'incorrect-password',
+      },
+      credentials: 'include',
+    })
+
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('redirects to the MFA page if there is an MFA challenge', async () => {
+    vi.mocked(postAuthLogin).mockResolvedValue({
+      error: {
+        challengeType: 'MultiFactorAuthenticationRequired',
+        authenticationSession: 'test-authentication-session',
+      },
+      data: undefined,
+    })
+
+    render(<SignInForm />)
+
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'name@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secure-password' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(postAuthLogin).toHaveBeenCalledWith({
+        body: {
+          username: 'name@example.com',
+          password: 'secure-password',
+        },
+        credentials: 'include',
+      })
+
+      expect(mockPush).toHaveBeenCalledWith(
+        '/portal/auth/sign-in/mfa?username=name%40example.com&session=test-authentication-session',
+      )
     })
   })
 })
