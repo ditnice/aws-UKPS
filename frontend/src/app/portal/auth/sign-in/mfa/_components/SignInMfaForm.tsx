@@ -2,12 +2,16 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
+import { postAuthMfa } from '@/client/generated'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
+
+import { routeOnSuccessfulAuth } from '../../../constants'
 
 import styles from './SignInMfaForm.module.scss'
 
@@ -30,7 +34,12 @@ const signInMfaSchema = z.object({
 
 type SignInMfaFormValues = z.input<typeof signInMfaSchema>
 
-export function SignInMfaForm() {
+type SignInFormProps = {
+  username: string
+  session: string
+}
+export function SignInMfaForm({ username, session }: SignInFormProps) {
+  const router = useRouter()
   const form = useForm({
     defaultValues: {
       securityCode: '',
@@ -42,10 +51,25 @@ export function SignInMfaForm() {
     validators: {
       onDynamic: signInMfaSchema,
     },
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       const { securityCode } = signInMfaSchema.parse(value)
       console.log(normaliseSecurityCode(securityCode))
-      // MFA verification will be wired once the submit target is confirmed.
+      const response = await postAuthMfa({
+        body: { username, code: value.securityCode, authenticationSession: session },
+        credentials: 'include',
+      })
+      if (!response.error) {
+        router.push(routeOnSuccessfulAuth)
+      }
+      if (response.error?.status === 401) {
+        formApi.setErrorMap({
+          onSubmit: {
+            fields: {
+              securityCode: 'Invalid security code.',
+            },
+          },
+        })
+      }
     },
   })
 
@@ -67,7 +91,7 @@ export function SignInMfaForm() {
               autoComplete="one-time-code"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              hint="Enter the 6-digit authentication code shown in the app."
+              hint={`Enter the 6-digit authentication code shown in the app for ${username}.`}
               inputMode="numeric"
               label="Security code"
               name={field.name}
