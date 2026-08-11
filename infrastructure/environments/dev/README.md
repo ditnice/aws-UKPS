@@ -53,7 +53,7 @@
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_aurora_allow_major_version_upgrade"></a> [aurora\_allow\_major\_version\_upgrade](#input\_aurora\_allow\_major\_version\_upgrade) | Whether major engine version upgrades are allowed | `bool` | `false` | no |
 | <a name="input_aurora_apply_immediately"></a> [aurora\_apply\_immediately](#input\_aurora\_apply\_immediately) | Whether Aurora changes are applied immediately instead of during the maintenance window | `bool` | `true` | no |
-| <a name="input_aurora_enable_http_endpoint"></a> [aurora\_enable\_http\_endpoint](#input\_aurora\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `false` | no |
+| <a name="input_aurora_enable_http_endpoint"></a> [aurora\_enable\_http\_endpoint](#input\_aurora\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `true` | no |
 | <a name="input_aurora_engine_version"></a> [aurora\_engine\_version](#input\_aurora\_engine\_version) | SQL Engine version | `string` | `"17.9"` | no |
 | <a name="input_aurora_final_snapshot_identifier"></a> [aurora\_final\_snapshot\_identifier](#input\_aurora\_final\_snapshot\_identifier) | Identifier for the final snapshot when skip\_final\_snapshot is false | `string` | `"ukps-dev-aurora-final-snapshot"` | no |
 | <a name="input_aurora_preferred_backup_window"></a> [aurora\_preferred\_backup\_window](#input\_aurora\_preferred\_backup\_window) | Daily time range during which automated backups are created | `string` | `"02:00-03:00"` | no |
