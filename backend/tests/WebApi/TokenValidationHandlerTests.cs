@@ -71,7 +71,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: _user.IdentityId
+            username: _user.IdentityId
         );
 
         await _handler.Handle(context, CancellationToken.None);
@@ -89,7 +89,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: _userWithMultipleMemberships.IdentityId
+            username: _userWithMultipleMemberships.IdentityId
         );
 
         var selectedMembership = _userWithMultipleMemberships.UserOrgMemberships!.ElementAt(1);
@@ -130,7 +130,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
             var context = CreateTokenValidatedContext(
                 tokenUse: "access",
                 clientId: ClientId,
-                subject: testUser.IdentityId
+                username: testUser.IdentityId
             );
 
             // Act
@@ -151,7 +151,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "id",
             clientId: ClientId,
-            subject: _user.IdentityId
+            username: _user.IdentityId
         );
 
         await _handler.Handle(context, CancellationToken.None);
@@ -167,7 +167,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: null,
             clientId: ClientId,
-            subject: _user.IdentityId
+            username: _user.IdentityId
         );
 
         // Act
@@ -185,7 +185,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: "wrong-client-id",
-            subject: _user.IdentityId
+            username: _user.IdentityId
         );
 
         // Act
@@ -203,7 +203,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: null,
-            subject: _user.IdentityId
+            username: _user.IdentityId
         );
 
         // Act
@@ -221,7 +221,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: "none-existent-user-id"
+            username: "none-existent-user-id"
         );
 
         await _handler.Handle(context, CancellationToken.None);
@@ -240,7 +240,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: _userWithMultipleMemberships.IdentityId
+            username: _userWithMultipleMemberships.IdentityId
         );
 
         await _handler.Handle(context, CancellationToken.None);
@@ -258,7 +258,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: _userWithMultipleMemberships.IdentityId
+            username: _userWithMultipleMemberships.IdentityId
         );
 
         context.HttpContext.Request.Cookies = CreateCookieCollection(
@@ -280,7 +280,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: _userWithMultipleMemberships.IdentityId
+            username: _userWithMultipleMemberships.IdentityId
         );
 
         context.HttpContext.Request.Cookies = CreateCookieCollection(
@@ -302,7 +302,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: _userWithMultipleMemberships.IdentityId
+            username: _userWithMultipleMemberships.IdentityId
         );
 
         context.HttpContext.Request.Cookies = CreateCookieCollection(
@@ -324,7 +324,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: null
+            username: null
         );
         await Should.ThrowAsync<InvalidOperationException>(() =>
         {
@@ -343,7 +343,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
-            subject: userWithNoMembership.IdentityId
+            username: userWithNoMembership.IdentityId
         );
 
         await _handler.Handle(context, CancellationToken.None);
@@ -385,7 +385,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     private static TokenValidatedContext CreateTokenValidatedContext(
         string? tokenUse,
         string? clientId,
-        string? subject
+        string? username
     )
     {
         var claims = new List<Claim>();
@@ -400,9 +400,9 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
             claims.Add(new Claim("client_id", clientId));
         }
 
-        if (subject is not null)
+        if (username is not null)
         {
-            claims.Add(new Claim("sub", subject));
+            claims.Add(new Claim("username", username));
         }
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "Bearer"));

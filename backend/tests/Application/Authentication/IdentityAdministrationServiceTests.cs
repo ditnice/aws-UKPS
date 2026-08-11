@@ -329,7 +329,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         var user = await _harness
             .Context.Users.Include(x => x.UserOrgMemberships)
             .SingleOrDefaultAsync(
-                x => string.Equals(x.WorkEmail, _targetUser, StringComparison.Ordinal),
+                x => x.WorkEmail == _targetUser,
                 TestContext.Current.CancellationToken
             );
 
