@@ -1,7 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ChangeEvent } from 'react'
 import { z } from 'zod'
 
@@ -26,6 +26,7 @@ const RegistrationRequest = z.object({
 type RegistrationRequestValues = z.input<typeof RegistrationRequest>
 
 export function RegistrationRequestForm() {
+  const router = useRouter()
   const form = useForm({
     defaultValues: {
       fullName: '',
@@ -41,7 +42,7 @@ export function RegistrationRequestForm() {
     },
     onSubmit: ({ value }) => {
       RegistrationRequest.parse(value)
-      // Authentication will be wired once the submit target is confirmed.
+      router.push('/portal/register/request-submitted')
     },
   })
 
@@ -105,6 +106,7 @@ export function RegistrationRequestForm() {
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 field.handleChange(event.target.value)
               }
+              onBlur={field.handleBlur}
               type="email"
               value={field.state.value}
               width="one-third"
@@ -136,9 +138,10 @@ export function RegistrationRequestForm() {
           )
         }}
       </form.Field>
-      <Link href="/portal/register/request-submitted">
-        <Button variant="cta">Submit request</Button>
-      </Link>
+
+      <Button type="submit" variant="cta">
+        Submit request
+      </Button>
     </form>
   )
 }
