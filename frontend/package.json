@@ -7,8 +7,8 @@
   "type": "module",
   "scripts": {
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build --webpack",
-    "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --webpack",
-    "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev --webpack",
+    "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --webpack --experimental-https --experimental-https-key ./certificates/localhost-key.pem --experimental-https-cert ./certificates/localhost.pem --experimental-https-ca ./certificates/aspnetcore-dev-cert.pem",
+    "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev --webpack --experimental-https --experimental-https-key ./certificates/localhost-key.pem --experimental-https-cert ./certificates/localhost.pem --experimental-https-ca ./certificates/aspnetcore-dev-cert.pem",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:api": "openapi-ts",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
