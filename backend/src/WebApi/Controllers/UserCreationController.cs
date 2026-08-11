@@ -41,9 +41,13 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// <response code="403">
     /// The current user does not have permission to onboard users.
     /// </response>
+    /// <response code="409">
+    /// A user with the supplied username already exists.
+    /// </response>
     [HttpPost("onboard")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> OnboardUser(
         [FromBody] OnboardUserCommandDto command,
         CancellationToken cancellationToken
@@ -58,7 +62,7 @@ public class UserCreationController(IUserAdministrationService userAdministratio
             err =>
                 err.Match<ActionResult>(
                     usernameAlreadyExists: _ =>
-                        BadRequest("A user with the specified username already exists."),
+                        Conflict("A user with the specified username already exists."),
                     invalidOrganisation: _ =>
                         BadRequest("The specified organisation does not exist."),
                     notAllowed: _ =>

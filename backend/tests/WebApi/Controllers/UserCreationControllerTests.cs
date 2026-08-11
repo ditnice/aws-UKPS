@@ -91,7 +91,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task Post_WhenUserNameAlreadyExist_ShouldReturnBadRequest()
+    public async Task Post_WhenUserNameAlreadyExist_ShouldReturnConflict()
     {
         _mockService
             .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
@@ -102,7 +102,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             command,
             TestContext.Current.CancellationToken
         );
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [Fact]
