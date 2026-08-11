@@ -157,6 +157,12 @@ terraform.rc
 # Uncomment the line below if you want to ignore planout files.
 planout
 
+# ── Auth Bootstrap ─────────────────────────────────────────────────────────────
+
+documentation/auth/*.env
+documentation/auth/*local*.sh
+documentation/auth/bootstrap-cognito-user.local.sh
+
 # ── Fallow ─────────────────────────────────────────────────────────────────────
 
 .fallow/
