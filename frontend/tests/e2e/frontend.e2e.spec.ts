@@ -9,7 +9,7 @@ test.describe('Frontend', () => {
   })
 
   test('can go on homepage', async ({ page }) => {
-    await page.goto('http://localhost:3000')
+    await page.goto('https://localhost:3000')
 
     await expect(page).toHaveTitle(/Payload Blank Template/)
 

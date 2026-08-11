@@ -11,7 +11,7 @@ build:
 
 run:
     dotnet ef database update --project src --startup-project src
-    dotnet run --project src --launch-profile http
+    dotnet run --project src --launch-profile https
 
 generate-migration name:
     dotnet ef migrations add {{name}} --project src --startup-project src --output-dir Persistence/Migrations

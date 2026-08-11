@@ -79,6 +79,9 @@ build/
 .DS_Store
 *.pem
 
+# local HTTPS dev certificates (see documentation/frontend.md#certificates)
+frontend/certificates/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
