@@ -38,6 +38,16 @@ variable "cluster_name" {
   }
 }
 
+variable "ecs_service_name" {
+  description = "Actual ECS service name used for CloudWatch metric dimensions"
+  type        = string
+
+  validation {
+    condition     = length(trim(var.ecs_service_name, " ")) > 0
+    error_message = "ECS service name cannot be empty."
+  }
+}
+
 variable "evaluation_periods" {
   description = "Number of consecutive periods required before entering alarm state"
   type        = number
