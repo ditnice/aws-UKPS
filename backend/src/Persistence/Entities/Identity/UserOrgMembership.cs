@@ -20,4 +20,17 @@ internal sealed class UserOrgMembership
         UserOrgStatus[] authorisedStatuses = [UserOrgStatus.Active, UserOrgStatus.Inactive];
         return authorisedStatuses.Contains(Status);
     }
+
+    internal void MarkAsActive()
+    {
+        UserOrgStatus[] invalidInitialStates = [UserOrgStatus.Deactivated, UserOrgStatus.Rejected];
+
+        if (invalidInitialStates.Contains(Status))
+        {
+            throw new InvalidOperationException(
+                $"User organisation membership cannot be marked as active when its current status is '{Status}'."
+            );
+        }
+        Status = UserOrgStatus.Active;
+    }
 }

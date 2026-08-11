@@ -19,6 +19,21 @@ internal sealed class User
     public UserOnboardingRecord? OnboardingRecord { get; init; }
 
     // Navigation
-    public ICollection<UserOrgMembership> UserOrgMemberships { get; set; } = [];
+    public ICollection<UserOrgMembership>? UserOrgMemberships { get; set; }
     public ICollection<UserAudit> UserAudits { get; set; } = [];
+
+    internal void FinaliseSetup()
+    {
+        if (UserOrgMemberships is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot finalise user setup because the user's organisation memberships have not been loaded."
+            );
+        }
+
+        foreach (var membership in UserOrgMemberships)
+        {
+            membership.MarkAsActive();
+        }
+    }
 }
