@@ -1,3 +1,10 @@
-export default function HomePage() {
-  return <h1>app/(public) route</h1>
+import { notFound } from 'next/navigation'
+
+import RenderPageLayout from '@/components/RenderPageLayout'
+import { getPageByPath } from '@/payload/PayloadContent'
+
+export default async function HomePage() {
+  const page = await getPageByPath('/')
+  if (!page) notFound()
+  return <RenderPageLayout blocks={page.layout} />
 }
