@@ -53,10 +53,12 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         );
         result.ShouldBeSuccess();
 
-        var foundUserRecord = await _harness.Context.UserOnboardingRecords.SingleOrDefaultAsync(
-            x => x.User!.WorkEmail == command.NewUserEmail,
-            TestContext.Current.CancellationToken
-        );
+        var foundUserRecord = await _harness
+            .GetClearedContext()
+            .UserOnboardingRecords.SingleOrDefaultAsync(
+                x => x.User!.WorkEmail == command.NewUserEmail,
+                TestContext.Current.CancellationToken
+            );
 
         foundUserRecord.ShouldNotBeNull();
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
@@ -89,7 +91,8 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         result.ShouldBeSuccess();
 
         User? foundUser = await _harness
-            .Context.Users.Include(x => x.UserOrgMemberships)
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
             .SingleOrDefaultAsync(
                 x => x.WorkEmail == command.NewUserEmail,
                 TestContext.Current.CancellationToken
