@@ -55,11 +55,11 @@ internal sealed partial class CognitoIdentityService : IIdentityService
             var sub =
                 response
                     .User.Attributes.FirstOrDefault(x =>
-                        string.Equals(x.Name, "username", StringComparison.Ordinal)
+                        string.Equals(x.Name, "sub", StringComparison.Ordinal)
                     )
                     ?.Value
                 ?? throw new InvalidOperationException(
-                    "Cognito created the user but did not return the expected 'username' attribute."
+                    "Cognito created the user but did not return the expected 'sub' attribute."
                 );
             return CreateNewUserResult.Ok(sub);
         }
