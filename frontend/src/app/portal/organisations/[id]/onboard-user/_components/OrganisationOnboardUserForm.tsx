@@ -69,13 +69,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
           organisationId,
         },
         credentials: 'include',
-      }).catch(() => null)
-
-      if (!response) {
-        setIsSubmitting(false)
-        setFormError(genericInviteError)
-        return
-      }
+      })
 
       if (response.error) {
         setIsSubmitting(false)

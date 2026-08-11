@@ -159,8 +159,8 @@ describe('OrganisationOnboardUserForm', () => {
     })
   })
 
-  it('shows a generic background error when the invite request fails', async () => {
-    vi.mocked(postUsersOnboard).mockRejectedValueOnce(new Error('Network unavailable'))
+  it('shows a generic background error for an unhandled response status', async () => {
+    mockOnboardResponse(500)
     renderForm()
 
     fillValidForm()
