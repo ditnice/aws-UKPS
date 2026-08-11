@@ -108,10 +108,13 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     )
     {
         UserOnboardingRecord? userRecord =
-            await _appDbContext.UserOnboardingRecords.FirstOrDefaultAsync(
-                x => x.SetupToken == command.SetupToken,
-                cancellationToken: cancellationToken
-            ) ?? throw new InvalidOperationException();
+            await _appDbContext
+                .UserOnboardingRecords.Include(x => x.User)
+                .FirstOrDefaultAsync(
+                    x => x.SetupToken == command.SetupToken,
+                    cancellationToken: cancellationToken
+                )
+            ?? throw new InvalidOperationException();
 
         try
         {
