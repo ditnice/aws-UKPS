@@ -155,7 +155,7 @@ variable "aurora_allow_major_version_upgrade" {
 variable "aurora_enable_http_endpoint" {
   description = "Whether the RDS Data API HTTP endpoint is enabled"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "aurora_preferred_backup_window" {

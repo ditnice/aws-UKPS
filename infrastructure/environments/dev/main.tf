@@ -154,6 +154,7 @@ module "frontend_ecs_alerts" {
   log_group_name     = module.ecs_frontend.cloudwatch_log_group_name
   desired_task_count = module.ecs_frontend.ecs_desired_count
   cluster_name       = module.ecs_frontend.cluster_name
+  ecs_service_name   = module.ecs_frontend.service_name
   log_pattern_alarms = {
     error-logs = {
       pattern           = "\"ERROR\""
@@ -238,6 +239,7 @@ module "backend_ecs_alerts" {
   log_group_name     = module.ecs_backend.cloudwatch_log_group_name
   desired_task_count = module.ecs_backend.ecs_desired_count
   cluster_name       = module.ecs_backend.cluster_name
+  ecs_service_name   = module.ecs_backend.service_name
   log_pattern_alarms = {
     error-logs = {
       pattern           = "\"ERROR\""
