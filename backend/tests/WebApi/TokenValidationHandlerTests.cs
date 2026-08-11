@@ -23,7 +23,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
 
     private readonly User _user;
     private readonly User _userWithMultipleMemberships;
-    private UserOrgMembership UserMembership => _user.UserOrgMemberships.Single();
+    private UserOrgMembership UserMembership => _user.UserOrgMemberships!.Single();
     private readonly Faker<Organisation> _orgFaker;
     private readonly Faker<UserOrgMembership> _membershipFaker;
     private readonly Faker<User> _userFaker;
@@ -92,7 +92,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
             subject: _userWithMultipleMemberships.IdentityId
         );
 
-        var selectedMembership = _userWithMultipleMemberships.UserOrgMemberships.ElementAt(1);
+        var selectedMembership = _userWithMultipleMemberships.UserOrgMemberships!.ElementAt(1);
         context.HttpContext.Request.Cookies = CreateCookieCollection(
             ("selected_organisation", $"{selectedMembership.OrganisationId}")
         );

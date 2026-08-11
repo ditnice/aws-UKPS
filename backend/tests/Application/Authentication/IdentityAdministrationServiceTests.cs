@@ -1,5 +1,6 @@
 using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -11,6 +12,7 @@ using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
@@ -306,6 +308,33 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         result.ShouldBeSuccess();
 
         _harness.Cognito.GetUser(_targetUser).ShouldNotBeNull().MfaSetup.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task VerifyMultiFactorAuthentication_ShouldMarkMembershipAsActive()
+    {
+        var (setupToken, session) = await CreateAndDoInitialUserSetup();
+
+        var result = await _harness.Service.VerifyMultiFactorAuthentication(
+            new VerifyMultiFactorAuthenticationCommand()
+            {
+                SetupToken = setupToken,
+                Code = _harness.Cognito.ValidMfaCode,
+                AuthenticationSession = session,
+            },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        var user = await _harness
+            .Context.Users.Include(x => x.UserOrgMemberships)
+            .SingleOrDefaultAsync(
+                x => string.Equals(x.WorkEmail, _targetUser, StringComparison.Ordinal),
+                TestContext.Current.CancellationToken
+            );
+
+        user.ShouldNotBeNull();
+        user.UserOrgMemberships!.ShouldAllBe(x => x.Status == UserOrgStatus.Active);
     }
 
     [Fact]
