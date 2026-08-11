@@ -33,7 +33,7 @@ internal class TokenValidationHandler : ITokenValidationHandler
     private async Task AppendIdentityClaims(TokenValidatedContext context)
     {
         var subject =
-            context.Principal?.FindFirst("sub")?.Value
+            context.Principal?.FindFirst("username")?.Value
             ?? throw new InvalidOperationException(
                 "Subject could not be found as expected on the JWT."
             );
@@ -67,6 +67,12 @@ internal class TokenValidationHandler : ITokenValidationHandler
         TokenValidatedContext context
     )
     {
+        if (user.UserOrgMemberships is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot get users selected because the user's organisation memberships have not been loaded."
+            );
+        }
         var validMemberships = user.UserOrgMemberships.Where(x => x.IsAuthorised()).ToArray();
 
         if (validMemberships.Length == 0)

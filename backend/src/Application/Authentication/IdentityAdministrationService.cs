@@ -49,6 +49,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     {
         UserOnboardingRecord? userRecord = await _appDbContext
             .UserOnboardingRecords.Include(x => x.User)
+                .ThenInclude(x => x!.UserOrgMemberships)
             .FirstOrDefaultAsync(
                 x => x.SetupToken == command.SetupToken,
                 cancellationToken: cancellationToken
@@ -108,10 +109,13 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     )
     {
         UserOnboardingRecord? userRecord =
-            await _appDbContext.UserOnboardingRecords.FirstOrDefaultAsync(
-                x => x.SetupToken == command.SetupToken,
-                cancellationToken: cancellationToken
-            ) ?? throw new InvalidOperationException();
+            await _appDbContext
+                .UserOnboardingRecords.Include(x => x.User)
+                .FirstOrDefaultAsync(
+                    x => x.SetupToken == command.SetupToken,
+                    cancellationToken: cancellationToken
+                )
+            ?? throw new InvalidOperationException();
 
         try
         {
@@ -125,6 +129,8 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
                 userRecord.User.WorkEmail,
                 cancellationToken
             );
+            userRecord.User.FinaliseSetup();
+            await _appDbContext.SaveChangesAsync(cancellationToken);
             return VerifyMultiFactorAuthenticationResult.Ok();
         }
         catch (CodeMismatchException)
