@@ -214,6 +214,7 @@ module "ecs_backend" {
     Email__FromAddress          = module.ses.from_email_address
     Email__ReplyToAddress       = module.ses.from_email_address
     Email__ConfigurationSetName = module.ses.configuration_set_name
+    Seeding__SuperUsersJson     = jsonencode(var.seeded_super_users)
   }
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"

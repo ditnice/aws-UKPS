@@ -193,3 +193,39 @@ variable "sns_alarm_emails" {
   type        = map(string)
   sensitive   = true
 }
+
+variable "seeded_super_users" {
+  description = "Super users added to seeded backend data for organisation ID 1"
+  type = list(object({
+    fullName   = string
+    email      = string
+    identityId = string
+  }))
+  default  = []
+  nullable = false
+
+  validation {
+    condition     = alltrue([for user in var.seeded_super_users : length(trimspace(user.fullName)) > 0])
+    error_message = "Seeded super users must include a non-empty fullName."
+  }
+
+  validation {
+    condition     = alltrue([for user in var.seeded_super_users : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", user.email))])
+    error_message = "Seeded super users must include valid email addresses."
+  }
+
+  validation {
+    condition     = alltrue([for user in var.seeded_super_users : length(trimspace(user.identityId)) > 0 && length(user.identityId) <= 36])
+    error_message = "Seeded super users must include identityId values of 36 characters or fewer."
+  }
+
+  validation {
+    condition     = length(distinct([for user in var.seeded_super_users : lower(user.email)])) == length(var.seeded_super_users)
+    error_message = "Seeded super user emails must be unique."
+  }
+
+  validation {
+    condition     = length(distinct([for user in var.seeded_super_users : user.identityId])) == length(var.seeded_super_users)
+    error_message = "Seeded super user identity IDs must be unique."
+  }
+}
