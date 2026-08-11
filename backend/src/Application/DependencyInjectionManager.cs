@@ -30,6 +30,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped<IOrganisationMembershipService, OrganisationMembershipService>();
         services.TryAddScoped<IUserService, UserService>();
         services.AddAuthenticationServices();
+        services.AddEmailServices();
         services.TryAddScoped<IUserAdministrationService, UserAdministrationService>();
         services.TryAddScoped<IIdentityAdministrationService, IdentityAdministrationService>();
 
