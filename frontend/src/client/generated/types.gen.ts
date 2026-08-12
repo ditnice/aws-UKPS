@@ -903,6 +903,10 @@ export type PostUsersOnboardErrors = {
      * The current user does not have permission to onboard users.
      */
     403: ProblemDetails;
+    /**
+     * A user with the supplied username already exists.
+     */
+    409: ProblemDetails;
 };
 
 export type PostUsersOnboardError = PostUsersOnboardErrors[keyof PostUsersOnboardErrors];

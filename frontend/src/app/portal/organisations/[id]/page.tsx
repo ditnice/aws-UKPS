@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
+import { Alert } from '@nice-digital/nds-alert'
 import { Breadcrumb, Breadcrumbs } from '@nice-digital/nds-breadcrumbs'
 import { Button } from '@nice-digital/nds-button'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
@@ -17,15 +18,18 @@ import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryLis
 
 import { OrganisationFilters } from './_components/OrganisationFilters'
 import { OrganisationUsersTable } from './_components/OrganisationUsersTable'
+import styles from './page.module.scss'
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<UserListSearchParams>
+  searchParams: Promise<UserListSearchParams & { invited?: string }>
 }
 
 export default async function OrganisationPage({ params, searchParams }: Props) {
   const { id } = await params
-  const query = parseUserListQuery(await searchParams)
+  const resolvedSearchParams = await searchParams
+  const query = parseUserListQuery(resolvedSearchParams)
+  const invitedEmail = resolvedSearchParams.invited?.trim()
   const organisationId = Number(id)
 
   if (!Number.isInteger(organisationId)) {
@@ -52,6 +56,16 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
       <Breadcrumbs>
         <Breadcrumb to="/portal">Dashboard</Breadcrumb>
       </Breadcrumbs>
+      {invitedEmail && (
+        <div className={styles.invitedAlert}>
+          <Alert type="success">
+            <h3>Invitation sent</h3>
+            <p>
+              We&rsquo;ve sent an email to {invitedEmail} with instructions to set up an account.
+            </p>
+          </Alert>
+        </div>
+      )}
 
       <PageHeader heading={organisation.organisationName} />
 

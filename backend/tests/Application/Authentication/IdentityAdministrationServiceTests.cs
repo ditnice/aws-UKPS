@@ -327,7 +327,8 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         result.ShouldBeSuccess();
 
         var user = await _harness
-            .Context.Users.Include(x => x.UserOrgMemberships)
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
             .SingleOrDefaultAsync(
                 x => x.WorkEmail == _targetUser,
                 TestContext.Current.CancellationToken

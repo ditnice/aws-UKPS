@@ -1,16 +1,19 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import { useRouter } from 'next/navigation'
+import { type ChangeEvent } from 'react'
 import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
+import { postAuthLogin } from '@/client/generated'
 import { Details } from '@/components/Details/Details'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 
-import type { ChangeEvent } from 'react'
+import { routeOnSuccessfulAuth } from '../../constants'
 
 const signInSchema = z.object({
   email: z
@@ -24,6 +27,7 @@ const signInSchema = z.object({
 type SignInFormValues = z.input<typeof signInSchema>
 
 export function SignInForm() {
+  const router = useRouter()
   const form = useForm({
     defaultValues: {
       email: '',
@@ -36,9 +40,48 @@ export function SignInForm() {
     validators: {
       onDynamic: signInSchema,
     },
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       signInSchema.parse(value)
-      // Authentication will be wired once the submit target is confirmed.
+
+      const result = await postAuthLogin({
+        body: {
+          username: value.email,
+          password: value.password,
+        },
+        credentials: 'include',
+      })
+
+      if (!result.error) {
+        router.push(routeOnSuccessfulAuth)
+        return
+      }
+
+      if (result.error.challengeType === 'MultiFactorAuthenticationRequired') {
+        const { authenticationSession } = result.error
+
+        if (!authenticationSession) {
+          throw new Error('Expected authentication session to be set.')
+        }
+
+        const params = new URLSearchParams({
+          username: value.email,
+          session: authenticationSession,
+        })
+
+        router.push(`/portal/auth/sign-in/mfa?${params.toString()}`)
+        return
+      }
+
+      if (result.error.status === 401) {
+        formApi.setErrorMap({
+          onSubmit: {
+            fields: {
+              email: 'Invalid email or password',
+              password: 'Invalid email or password',
+            },
+          },
+        })
+      }
     },
   })
 
@@ -48,7 +91,7 @@ export function SignInForm() {
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        void form.handleSubmit()
+        form.handleSubmit()
       }}
     >
       <form.Field name="email">
