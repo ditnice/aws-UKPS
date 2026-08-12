@@ -72,6 +72,8 @@ describe('backend API route', () => {
   })
 
   it('allows safe methods without Origin and requires same-origin Origin for unsafe methods', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
     expect((await GET(request() as never, context('users'))).status).toBe(200)
     expect((await POST(request('POST') as never, context('users'))).status).toBe(403)
     expect(
@@ -90,6 +92,15 @@ describe('backend API route', () => {
         )
       ).status,
     ).toBe(200)
+    expect(consoleWarn).toHaveBeenCalledWith(
+      'Backend API proxy rejected unsafe request origin.',
+      expect.objectContaining({
+        method: 'POST',
+        origin: null,
+        requestOrigin: 'https://frontend.example',
+        requestUrl: 'https://frontend.example/backend-api/users?active=true',
+      }),
+    )
   })
 
   it('forwards only allowlisted request headers and cookies', async () => {
