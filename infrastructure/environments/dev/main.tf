@@ -124,10 +124,11 @@ module "ecs_frontend" {
   ecs_egress_cidr_blocks       = [module.networking.vpc_cidr]
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
   container_environment = {
-    BACKEND_API_BASE_URL = "https://${module.alb.backend_host_name}"
-    DATABASE_HOST        = module.aurora_frontend.cluster_endpoint
-    DATABASE_NAME        = module.aurora_frontend.database_name
-    DATABASE_PORT        = tostring(module.aurora_frontend.port)
+    BACKEND_API_BASE_URL   = "https://${module.alb.backend_host_name}"
+    DATABASE_HOST          = module.aurora_frontend.cluster_endpoint
+    DATABASE_NAME          = module.aurora_frontend.database_name
+    DATABASE_PORT          = tostring(module.aurora_frontend.port)
+    FRONTEND_PUBLIC_ORIGIN = "https://${module.alb.frontend_host_name}"
   }
   container_secrets = {
     DATABASE_PASSWORD = "${module.aurora_frontend.master_user_secret_arn}:password::"
