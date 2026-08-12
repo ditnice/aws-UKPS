@@ -1,5 +1,6 @@
 'use client'
 
+import { Accordion, AccordionGroup } from '@nice-digital/nds-accordion'
 import { ColumnList } from '@nice-digital/nds-column-list'
 import { Tab, Tabs } from '@nice-digital/nds-tabs'
 
@@ -44,16 +45,13 @@ export default function RenderPageLayout({ blocks }: RenderPageLayoutProps) {
 
       case 'accordion':
         return (
-          <div key={key} className="accordion">
-            {block.items.map((item, index) => (
-              <details key={`${key}-item-${index}`} className="accordion__item">
-                <summary className="accordion__summary">{item.title}</summary>
-                <div className="accordion__content">
-                  <p>{item.body}</p>
-                </div>
-              </details>
+          <AccordionGroup key={key}>
+            {block.items.map((item, i) => (
+              <Accordion key={`${key}-item-${i}`} title={item.title}>
+                <p>{item.body}</p>
+              </Accordion>
             ))}
-          </div>
+          </AccordionGroup>
         )
 
       case 'columnList':
