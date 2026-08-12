@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import styles from './page.module.scss'
 
-export default function RequestSumbitted() {
+export default function ApproveUser() {
   return (
     <>
       <PageHeader backLink={<BackLink href="#">Back</BackLink>} heading="Approve user" />
