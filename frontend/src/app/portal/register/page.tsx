@@ -32,7 +32,7 @@ export default function RegistrationInfo() {
       </p>
       <p className={styles.marginBottom}>It takes around 5 minutes to request access.</p>
       <Link href="/portal/register/provide-details">
-        <Button variant={Button.variants.cta}>Start now</Button>
+        <Button variant="cta">Start now</Button>
       </Link>
     </>
   )
