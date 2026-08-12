@@ -152,7 +152,8 @@ function hasSameOrigin(request: NextRequest): boolean {
   if (!origin) return false
 
   try {
-    return new URL(origin).origin === new URL(request.url).origin
+    const expectedOrigin = process.env.FRONTEND_PUBLIC_ORIGIN ?? new URL(request.url).origin
+    return new URL(origin).origin === expectedOrigin
   } catch {
     return false
   }
