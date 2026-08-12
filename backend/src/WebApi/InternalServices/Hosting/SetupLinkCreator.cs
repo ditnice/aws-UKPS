@@ -15,6 +15,6 @@ internal class SetupLinkCreator : ISetupLinkCreator
 
     public Uri GetSetupLink(Guid setupToken)
     {
-        return new Uri(_configuration.SetupLink, $"?setupToken={setupToken}");
+        return new Uri(_configuration.SetupLink, $"/portal/auth/initiate?setupToken={setupToken}");
     }
 }
