@@ -4,7 +4,7 @@ import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
@@ -41,8 +41,7 @@ const signUpSetMfaSchema = z.object({
 
 type SignUpSetMfaFormValues = z.input<typeof signUpSetMfaSchema>
 type SignUpMfaSetup = z.infer<typeof signUpMfaSetupSchema>
-type SetupState =
-  { status: 'loading' } | { setup: SignUpMfaSetup; status: 'ready' } | { status: 'error' }
+type SetupState = { setup: SignUpMfaSetup; status: 'ready' } | { status: 'error' }
 
 function loadSignUpMfaSetup(): SetupState {
   let storedSetup: string | null
@@ -69,16 +68,8 @@ function loadSignUpMfaSetup(): SetupState {
 
 export default function SignUpSetMfa() {
   const router = useRouter()
-  const [setupState, setSetupState] = useState<SetupState>({ status: 'loading' })
+  const [setupState, setSetupState] = useState<SetupState>(loadSignUpMfaSetup)
   const [submitError, setSubmitError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const nextSetupState = loadSignUpMfaSetup()
-
-    queueMicrotask(() => {
-      setSetupState(nextSetupState)
-    })
-  }, [])
 
   const form = useForm({
     defaultValues: {
@@ -147,15 +138,6 @@ export default function SignUpSetMfa() {
           We could not find your multi-factor authentication setup details. Return to your sign-up
           link and try again.
         </p>
-      </>
-    )
-  }
-
-  if (setupState.status === 'loading') {
-    return (
-      <>
-        <PageHeader heading="Set up two-factor authentication"></PageHeader>
-        <p>Loading your two-factor authentication setup...</p>
       </>
     )
   }
