@@ -106,7 +106,7 @@ export default function SignUpSetMfa() {
             sessionStorage.removeItem(signUpMfaSetupStorageKey)
           } catch {}
 
-          router.push('/portal/auth/sign-in')
+          router.push('/auth/sign-in')
           return
         }
 

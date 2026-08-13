@@ -33,9 +33,7 @@ export default async function SignUpInitiate({ searchParams }: SignUpInitiatePro
   }
 
   if (!result.error) {
-    redirect(
-      `/portal/auth/sign-up/terms-and-conditions?${new URLSearchParams({ setupToken }).toString()}`,
-    )
+    redirect(`/auth/sign-up/terms-and-conditions?${new URLSearchParams({ setupToken }).toString()}`)
   }
 
   return <SignUpInitiateError {...getErrorContent(result.error, result.response?.status)} />

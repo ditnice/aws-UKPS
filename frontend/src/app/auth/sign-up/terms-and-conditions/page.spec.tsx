@@ -27,7 +27,7 @@ describe('SignUpTermsAndConditions', () => {
       screen.getByText('Read and accept the terms and conditions before continuing.'),
     ).toBeDefined()
     expect(screen.getByRole('link', { name: 'Accept and continue' }).getAttribute('href')).toBe(
-      '/portal/auth/sign-up/set-password?setupToken=test-setup-token',
+      '/auth/sign-up/set-password?setupToken=test-setup-token',
     )
   })
 })

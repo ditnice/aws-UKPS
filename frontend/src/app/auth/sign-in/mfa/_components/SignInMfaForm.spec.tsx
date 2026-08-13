@@ -74,6 +74,20 @@ describe('SignInMfaForm', () => {
       expect(mockPush).toHaveBeenCalledWith(routeOnSuccessfulAuth)
     })
   })
+  it('redirects to the returnTo path on successful authentication', async () => {
+    render(
+      <SignInMfaForm
+        username={exampleUserEmail}
+        session={exampleSession}
+        returnTo="/portal/organisations/1?tab=users"
+      />,
+    )
+    updateForm(validFormValues)
+    submitForm()
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/portal/organisations/1?tab=users')
+    })
+  })
   it('shows security code error on 401 response', async () => {
     vi.mocked(postAuthMfa).mockResolvedValue({
       error: { status: 401 },

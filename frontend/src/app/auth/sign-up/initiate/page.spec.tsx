@@ -49,7 +49,7 @@ describe('SignUpInitiate', () => {
       query: { setupToken: 'test-token' },
     })
     expect(redirect).toHaveBeenCalledWith(
-      '/portal/auth/sign-up/terms-and-conditions?setupToken=test-token',
+      '/auth/sign-up/terms-and-conditions?setupToken=test-token',
     )
   })
 
@@ -62,7 +62,7 @@ describe('SignUpInitiate', () => {
       query: { setupToken: 'test-token' },
     })
     expect(redirect).toHaveBeenCalledWith(
-      '/portal/auth/sign-up/terms-and-conditions?setupToken=test-token',
+      '/auth/sign-up/terms-and-conditions?setupToken=test-token',
     )
   })
 

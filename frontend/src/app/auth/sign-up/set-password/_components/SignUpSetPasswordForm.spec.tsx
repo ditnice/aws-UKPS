@@ -132,7 +132,7 @@ describe('SignUpSetPasswordForm', () => {
           setupToken,
         }),
       )
-      expect(mockPush).toHaveBeenCalledWith('/portal/auth/sign-up/set-mfa')
+      expect(mockPush).toHaveBeenCalledWith('/auth/sign-up/set-mfa')
     })
   })
 

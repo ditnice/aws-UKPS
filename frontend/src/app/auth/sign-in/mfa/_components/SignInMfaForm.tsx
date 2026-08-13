@@ -35,10 +35,11 @@ const signInMfaSchema = z.object({
 type SignInMfaFormValues = z.input<typeof signInMfaSchema>
 
 type SignInFormProps = {
+  returnTo?: string
   username: string
   session: string
 }
-export function SignInMfaForm({ username, session }: SignInFormProps) {
+export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) {
   const router = useRouter()
   const form = useForm({
     defaultValues: {
@@ -62,7 +63,7 @@ export function SignInMfaForm({ username, session }: SignInFormProps) {
         credentials: 'include',
       })
       if (!response.error) {
-        router.push(routeOnSuccessfulAuth)
+        router.push(returnTo ?? routeOnSuccessfulAuth)
       }
       if (response.error?.status === 401) {
         formApi.setErrorMap({

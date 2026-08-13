@@ -28,7 +28,7 @@ export default async function SignUpTermsAndConditions({
     )
   }
 
-  const setPasswordHref = `/portal/auth/sign-up/set-password?${new URLSearchParams({
+  const setPasswordHref = `/auth/sign-up/set-password?${new URLSearchParams({
     setupToken,
   }).toString()}`
 

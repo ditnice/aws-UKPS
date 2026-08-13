@@ -137,6 +137,23 @@ describe('SignInForm', () => {
     })
   })
 
+  it('redirects to the returnTo path after successful authentication', async () => {
+    render(<SignInForm returnTo="/portal/organisations/1?tab=users" />)
+
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'name@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secure-password' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/portal/organisations/1?tab=users')
+    })
+  })
+
   it('sets and shows an error message if the response is a 401', async () => {
     vi.mocked(postAuthLogin).mockResolvedValue({
       error: {
@@ -202,7 +219,34 @@ describe('SignInForm', () => {
       })
 
       expect(mockPush).toHaveBeenCalledWith(
-        '/portal/auth/sign-in/mfa?username=name%40example.com&session=test-authentication-session',
+        '/auth/sign-in/mfa?username=name%40example.com&session=test-authentication-session',
+      )
+    })
+  })
+
+  it('passes returnTo to the MFA page if there is an MFA challenge', async () => {
+    vi.mocked(postAuthLogin).mockResolvedValue({
+      error: {
+        challengeType: 'MultiFactorAuthenticationRequired',
+        authenticationSession: 'test-authentication-session',
+      },
+      data: undefined,
+    })
+
+    render(<SignInForm returnTo="/portal/organisations/1?tab=users" />)
+
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'name@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secure-password' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith(
+        '/auth/sign-in/mfa?username=name%40example.com&session=test-authentication-session&returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })
   })

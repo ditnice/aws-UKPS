@@ -30,7 +30,7 @@ describe('SignUpSetPassword', () => {
 
     expect(screen.getByText('Create a password')).toBeDefined()
     expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
-      '/portal/auth/sign-up/terms-and-conditions?setupToken=test-setup-token',
+      '/auth/sign-up/terms-and-conditions?setupToken=test-setup-token',
     )
     expect(screen.getByText('Set password form for test-setup-token')).toBeDefined()
   })

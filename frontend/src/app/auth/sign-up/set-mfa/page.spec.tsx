@@ -195,7 +195,7 @@ describe('SignUpSetMfa', () => {
 
     await waitFor(() => {
       expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
-      expect(mockPush).toHaveBeenCalledWith('/portal/auth/sign-in')
+      expect(mockPush).toHaveBeenCalledWith('/auth/sign-in')
     })
   })
 

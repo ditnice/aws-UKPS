@@ -25,8 +25,11 @@ const signInSchema = z.object({
 })
 
 type SignInFormValues = z.input<typeof signInSchema>
+type SignInFormProps = {
+  returnTo?: string
+}
 
-export function SignInForm() {
+export function SignInForm({ returnTo }: SignInFormProps) {
   const router = useRouter()
   const form = useForm({
     defaultValues: {
@@ -52,7 +55,7 @@ export function SignInForm() {
       })
 
       if (!result.error) {
-        router.push(routeOnSuccessfulAuth)
+        router.push(returnTo ?? routeOnSuccessfulAuth)
         return
       }
 
@@ -67,8 +70,9 @@ export function SignInForm() {
           username: value.email,
           session: authenticationSession,
         })
+        if (returnTo) params.set('returnTo', returnTo)
 
-        router.push(`/portal/auth/sign-in/mfa?${params.toString()}`)
+        router.push(`/auth/sign-in/mfa?${params.toString()}`)
         return
       }
 

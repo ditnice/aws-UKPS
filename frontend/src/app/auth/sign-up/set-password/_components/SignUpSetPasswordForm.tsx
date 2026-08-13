@@ -74,7 +74,7 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
             return
           }
 
-          router.push('/portal/auth/sign-up/set-mfa')
+          router.push('/auth/sign-up/set-mfa')
           return
         }
 

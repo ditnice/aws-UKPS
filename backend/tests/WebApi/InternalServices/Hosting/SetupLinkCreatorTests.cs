@@ -21,7 +21,7 @@ public class SetupLinkCreatorTests
 
         setupLink.ShouldBe(
             new Uri(
-                "https://frontend.example/portal/auth/sign-up/initiate?setupToken=48b5becd-f98c-4897-98aa-be37eecb6a68"
+                "https://frontend.example/auth/sign-up/initiate?setupToken=48b5becd-f98c-4897-98aa-be37eecb6a68"
             )
         );
     }
