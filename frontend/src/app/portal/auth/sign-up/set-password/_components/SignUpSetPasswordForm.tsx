@@ -107,7 +107,6 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
     >
       <p>Your password must:</p>
       <ul>
-        {/* TODO - update TF to move from 14 to 8 */}
         <li>be at least 8 characters long</li>
       </ul>
 
