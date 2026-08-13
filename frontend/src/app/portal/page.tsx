@@ -6,6 +6,8 @@ export default function PortalDashboard() {
   return (
     <>
       <PageHeader heading="Your dashboard" />
+
+      <p>Development quick reference links:</p>
       <ul>
         <li>
           <Link href="/portal/notfound">Not found example</Link>
