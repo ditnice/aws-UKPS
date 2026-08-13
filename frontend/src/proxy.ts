@@ -6,7 +6,7 @@ export const config = {
   matcher: ['/portal/:path*'],
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   if (req.cookies.get('access_token')?.value) {
     return NextResponse.next()
   }

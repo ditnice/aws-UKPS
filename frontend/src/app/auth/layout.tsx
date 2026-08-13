@@ -9,6 +9,7 @@ export const metadata = {
   title: 'UK PharmaScan Portal',
 }
 
+// TODO - we need to review this across the solution and most notably look at page titles
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
