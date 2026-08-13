@@ -2,27 +2,31 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
+import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
+import { signUpMfaSetupStorageKey } from '../constants'
+
 import styles from './page.module.scss'
-
-import type { ChangeEvent } from 'react'
-
-const otpAuthUri =
-  'otpauth://totp/NICE%20UKPS:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=NICE%20UKPS&algorithm=SHA1&digits=6&period=30'
-
-const manualSetupKey = new URL(otpAuthUri).searchParams.get('secret') ?? ''
 
 function normaliseSecurityCode(value: string) {
   return value.replace(/[\s-]/g, '')
 }
+
+const signUpMfaSetupSchema = z.object({
+  authenticationSession: z.string().min(1),
+  otpAuthUri: z.string().min(1),
+  setupToken: z.string().min(1),
+})
 
 const signUpSetMfaSchema = z.object({
   securityCode: z
@@ -36,8 +40,46 @@ const signUpSetMfaSchema = z.object({
 })
 
 type SignUpSetMfaFormValues = z.input<typeof signUpSetMfaSchema>
+type SignUpMfaSetup = z.infer<typeof signUpMfaSetupSchema>
+type SetupState =
+  { status: 'loading' } | { setup: SignUpMfaSetup; status: 'ready' } | { status: 'error' }
+
+function loadSignUpMfaSetup(): SetupState {
+  let storedSetup: string | null
+
+  try {
+    storedSetup = sessionStorage.getItem(signUpMfaSetupStorageKey)
+  } catch {
+    return { status: 'error' }
+  }
+
+  if (!storedSetup) {
+    return { status: 'error' }
+  }
+
+  try {
+    const parsedSetup = signUpMfaSetupSchema.parse(JSON.parse(storedSetup))
+    new URL(parsedSetup.otpAuthUri)
+
+    return { setup: parsedSetup, status: 'ready' }
+  } catch {
+    return { status: 'error' }
+  }
+}
 
 export default function SignUpSetMfa() {
+  const router = useRouter()
+  const [setupState, setSetupState] = useState<SetupState>({ status: 'loading' })
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const nextSetupState = loadSignUpMfaSetup()
+
+    queueMicrotask(() => {
+      setSetupState(nextSetupState)
+    })
+  }, [])
+
   const form = useForm({
     defaultValues: {
       securityCode: '',
@@ -49,12 +91,77 @@ export default function SignUpSetMfa() {
     validators: {
       onDynamic: signUpSetMfaSchema,
     },
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
+      if (setupState.status !== 'ready') {
+        setSetupState({ status: 'error' })
+        return
+      }
+
       const { securityCode } = signUpSetMfaSchema.parse(value)
-      console.log(normaliseSecurityCode(securityCode))
-      // MFA setup verification will be wired once the submit target is confirmed.
+      const { setup } = setupState
+      setSubmitError(null)
+
+      try {
+        const result = await postAuthVerifyMfa({
+          body: {
+            authenticationSession: setup.authenticationSession,
+            code: normaliseSecurityCode(securityCode),
+            setupToken: setup.setupToken,
+          },
+        })
+
+        if (!result.error) {
+          try {
+            sessionStorage.removeItem(signUpMfaSetupStorageKey)
+          } catch {}
+
+          router.push('/portal/auth/sign-in')
+          return
+        }
+
+        if (result.response?.status === 400) {
+          formApi.setErrorMap({
+            onSubmit: {
+              fields: {
+                securityCode: 'Invalid authentication code.',
+              },
+            },
+          })
+          return
+        }
+
+        setSubmitError(
+          result.error.detail ?? 'We could not verify your authentication code. Try again later.',
+        )
+      } catch {
+        setSubmitError('We could not verify your authentication code. Try again later.')
+      }
     },
   })
+
+  if (setupState.status === 'error') {
+    return (
+      <>
+        <PageHeader heading="There is a problem setting up two-factor authentication"></PageHeader>
+        <p>
+          We could not find your multi-factor authentication setup details. Return to your sign-up
+          link and try again.
+        </p>
+      </>
+    )
+  }
+
+  if (setupState.status === 'loading') {
+    return (
+      <>
+        <PageHeader heading="Set up two-factor authentication"></PageHeader>
+        <p>Loading your two-factor authentication setup...</p>
+      </>
+    )
+  }
+
+  const { setup } = setupState
+  const manualSetupKey = new URL(setup.otpAuthUri).searchParams.get('secret') ?? ''
 
   return (
     <>
@@ -65,7 +172,7 @@ export default function SignUpSetMfa() {
       </p>
       <QRCodeSVG
         aria-label="QR code for authenticator app setup"
-        value={otpAuthUri}
+        value={setup.otpAuthUri}
         size={192}
         level="M"
       />
@@ -110,6 +217,8 @@ export default function SignUpSetMfa() {
         </form.Field>
 
         <Link href="/">I want to use a different method</Link>
+
+        {submitError ? <p>{submitError}</p> : null}
 
         <div className={styles.actions}>
           <Button type="submit" variant="cta">

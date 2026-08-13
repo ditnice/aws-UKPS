@@ -1,14 +1,17 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import { useRouter } from 'next/navigation'
+import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
+import { postAuthSetupUser } from '@/client/generated/sdk.gen'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 
-import type { ChangeEvent } from 'react'
+import { signUpMfaSetupStorageKey } from '../../constants'
 
 const signUpSetPasswordSchema = z.object({
   password: z
@@ -19,7 +22,13 @@ const signUpSetPasswordSchema = z.object({
 
 type SignUpSetPasswordFormValues = z.input<typeof signUpSetPasswordSchema>
 
-export function SignUpSetPasswordForm() {
+type SignUpSetPasswordFormProps = {
+  setupToken: string
+}
+
+export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps) {
+  const router = useRouter()
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const form = useForm({
     defaultValues: {
       password: '',
@@ -31,9 +40,59 @@ export function SignUpSetPasswordForm() {
     validators: {
       onDynamic: signUpSetPasswordSchema,
     },
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       signUpSetPasswordSchema.parse(value)
-      // Password setup will be wired once the submit target is confirmed.
+      setSubmitError(null)
+
+      try {
+        const result = await postAuthSetupUser({
+          body: {
+            setupToken,
+            newPassword: value.password,
+          },
+          credentials: 'include',
+        })
+
+        if (!result.error) {
+          if (!result.data?.otpAuthUri || !result.data.authenticationSession) {
+            throw new Error('Expected multi-factor authentication setup data.')
+          }
+
+          try {
+            sessionStorage.setItem(
+              signUpMfaSetupStorageKey,
+              JSON.stringify({
+                authenticationSession: result.data.authenticationSession,
+                otpAuthUri: result.data.otpAuthUri,
+                setupToken,
+              }),
+            )
+          } catch {
+            setSubmitError(
+              'Your password was created, but we could not continue to two-factor authentication setup. Return to your sign-up link and try again.',
+            )
+            return
+          }
+
+          router.push('/portal/auth/sign-up/set-mfa')
+          return
+        }
+
+        if (result.response?.status === 400) {
+          formApi.setErrorMap({
+            onSubmit: {
+              fields: {
+                password: 'The password does not meet the expected standards.',
+              },
+            },
+          })
+          return
+        }
+
+        setSubmitError(getSubmitError(result.error, result.response?.status))
+      } catch {
+        setSubmitError('We could not create your password. Try again later.')
+      }
     },
   })
 
@@ -74,9 +133,23 @@ export function SignUpSetPasswordForm() {
         }}
       </form.Field>
 
+      {submitError ? <p>{submitError}</p> : null}
+
       <Button type="submit" variant="cta">
         Continue
       </Button>
     </form>
   )
+}
+
+function getSubmitError(error: { detail?: null | string }, status?: number) {
+  if (status === 401) {
+    return error.detail ?? 'This sign-up link has expired or has already been used.'
+  }
+
+  if (status === 404) {
+    return error.detail ?? 'This sign-up link could not be found.'
+  }
+
+  return error.detail ?? 'We could not create your password. Try again later.'
 }
