@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { Button } from '@nice-digital/nds-button'
 import { Panel } from '@nice-digital/nds-panel'
 
@@ -6,7 +8,30 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import styles from './page.module.scss'
 import { PrintPageLink } from './PrintPageLink'
 
-export default function SignUpTermsAndConditions() {
+type SignUpTermsAndConditionsProps = {
+  searchParams: Promise<{
+    setupToken?: string
+  }>
+}
+
+export default async function SignUpTermsAndConditions({
+  searchParams,
+}: SignUpTermsAndConditionsProps) {
+  const setupToken = (await searchParams).setupToken?.trim()
+
+  if (!setupToken) {
+    return (
+      <>
+        <PageHeader heading="There is a problem with your sign-up link"></PageHeader>
+        <p>This sign-up link is missing a setup token.</p>
+      </>
+    )
+  }
+
+  const setPasswordHref = `/portal/auth/sign-up/set-password?${new URLSearchParams({
+    setupToken,
+  }).toString()}`
+
   return (
     <>
       <PageHeader heading="Terms and conditions"></PageHeader>
@@ -27,7 +52,9 @@ export default function SignUpTermsAndConditions() {
       </p>
 
       <div className={styles.actions}>
-        <Button variant="cta">Accept and continue</Button>
+        <Button elementType={Link} href={setPasswordHref} variant="cta">
+          Accept and continue
+        </Button>
       </div>
 
       <div className={styles.actions}>

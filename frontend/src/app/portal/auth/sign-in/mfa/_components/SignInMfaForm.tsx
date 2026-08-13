@@ -53,9 +53,12 @@ export function SignInMfaForm({ username, session }: SignInFormProps) {
     },
     onSubmit: async ({ value, formApi }) => {
       const { securityCode } = signInMfaSchema.parse(value)
-      console.log(normaliseSecurityCode(securityCode))
       const response = await postAuthMfa({
-        body: { username, code: value.securityCode, authenticationSession: session },
+        body: {
+          username,
+          code: normaliseSecurityCode(securityCode),
+          authenticationSession: session,
+        },
         credentials: 'include',
       })
       if (!response.error) {

@@ -63,6 +63,14 @@ describe('SignInMfaForm', () => {
     updateForm(validFormValues)
     submitForm()
     await waitFor(() => {
+      expect(postAuthMfa).toHaveBeenCalledWith({
+        body: {
+          authenticationSession: exampleSession,
+          code: '123456',
+          username: exampleUserEmail,
+        },
+        credentials: 'include',
+      })
       expect(mockPush).toHaveBeenCalledWith(routeOnSuccessfulAuth)
     })
   })
@@ -91,7 +99,6 @@ describe('SignInMfaForm', () => {
   })
 
   it('does not show validation errors for a valid code', async () => {
-    vi.spyOn(console, 'log').mockImplementation(() => undefined)
     renderValidForm()
     updateForm(validFormValues)
     submitForm()
@@ -101,15 +108,21 @@ describe('SignInMfaForm', () => {
     })
   })
 
-  it('accepts grouped security codes and logs the normalised code', async () => {
-    const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+  it('accepts grouped security codes and submits the normalised code', async () => {
     renderValidForm()
 
     updateForm({ ...validFormValues, securityCode: '12 324-6' })
     submitForm()
 
     await waitFor(() => {
-      expect(consoleLog).toHaveBeenCalledWith('123246')
+      expect(postAuthMfa).toHaveBeenCalledWith({
+        body: {
+          authenticationSession: exampleSession,
+          code: '123246',
+          username: exampleUserEmail,
+        },
+        credentials: 'include',
+      })
     })
   })
 
