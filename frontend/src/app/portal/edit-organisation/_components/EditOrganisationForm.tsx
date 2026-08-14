@@ -69,7 +69,6 @@ export function EditOrganisationForm() {
                 type="text"
                 value={field.state.value}
                 width="one-third"
-                className={styles.marginBottom}
               />
             )
           }}
@@ -86,14 +85,12 @@ export function EditOrganisationForm() {
                 label="Enter your company address"
                 name={field.name}
                 onBlur={field.handleBlur}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
                   field.handleChange(event.target.value)
                 }
-                type="text"
                 value={field.state.value}
                 width="one-third"
-                className={styles.marginBottom}
-              />
+              ></Textarea>
             )
           }}
         </form.Field>
@@ -116,7 +113,6 @@ export function EditOrganisationForm() {
                 type="email"
                 value={field.state.value}
                 width="one-third"
-                className={styles.marginBottom}
               />
             )
           }}
