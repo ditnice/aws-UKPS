@@ -22,12 +22,12 @@ const EditOrganisation = z.object({
   headOfficePhoneNumber: z.string().trim().min(1, 'Enter your head office phone number'),
 })
 
-type EditOrganisationValues = z.input<typeof EditOrganisationForm>
+type EditOrganisationValues = z.input<typeof EditOrganisation>
 
 export function EditOrganisationForm() {
   const form = useForm({
     defaultValues: {
-      companyName: 'Julie Brooks', // These default values will be from their existing account
+      companyName: 'Global care Pharmaceuticals', // These default values will be from their existing account
       companyAddress: '1 Manchester Road, Manchester, M36 5RF',
       headOfficeEmail: 'admin@bigpharma1.com',
       headOfficePhoneNumber: '01234567890',
@@ -37,11 +37,11 @@ export function EditOrganisationForm() {
       modeAfterSubmission: 'blur',
     }),
     validators: {
-      onDynamic: EditOrganisationForm,
+      onDynamic: EditOrganisation,
     },
-    // onSubmit: ({ value }) => {
-    //     EditOrganisationForm.parse(value)
-    // },
+    onSubmit: ({ value }) => {
+      EditOrganisation.parse(value)
+    },
   })
   return (
     <form
@@ -60,7 +60,7 @@ export function EditOrganisationForm() {
               <Input
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
-                label="Company name"
+                label="Enter your company name"
                 name={field.name}
                 onBlur={field.handleBlur}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
