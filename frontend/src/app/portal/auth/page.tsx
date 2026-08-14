@@ -11,6 +11,7 @@ import {
   getUsers,
   postAuthRefresh,
 } from '@/client/generated/sdk.gen'
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 type SetupUserProps = {
   setOtpLink: Dispatch<SetStateAction<string | undefined>>
@@ -215,7 +216,7 @@ export default function ExampleAuthenticationPage() {
 
   return (
     <>
-      <h1>Auth</h1>
+      <PageHeader heading="Auth" />
       <SetupUser
         setOtpLink={setOtpLink}
         setAuthSession={setAuthSession}

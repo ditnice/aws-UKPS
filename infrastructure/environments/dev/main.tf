@@ -124,10 +124,11 @@ module "ecs_frontend" {
   ecs_egress_cidr_blocks       = [module.networking.vpc_cidr]
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
   container_environment = {
-    BACKEND_API_BASE_URL = "https://${module.alb.backend_host_name}"
-    DATABASE_HOST        = module.aurora_frontend.cluster_endpoint
-    DATABASE_NAME        = module.aurora_frontend.database_name
-    DATABASE_PORT        = tostring(module.aurora_frontend.port)
+    BACKEND_API_BASE_URL   = "https://${module.alb.backend_host_name}"
+    DATABASE_HOST          = module.aurora_frontend.cluster_endpoint
+    DATABASE_NAME          = module.aurora_frontend.database_name
+    DATABASE_PORT          = tostring(module.aurora_frontend.port)
+    FRONTEND_PUBLIC_ORIGIN = "https://${module.alb.frontend_host_name}"
   }
   container_secrets = {
     DATABASE_PASSWORD = "${module.aurora_frontend.master_user_secret_arn}:password::"
@@ -201,12 +202,13 @@ module "ecs_backend" {
   # NAT or controlled egress before deploying this service.
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
   container_environment = {
-    AWS_REGION                  = var.region
+    AWS__Region                 = var.region
     Cognito__Region             = var.region
     Cognito__UserPoolId         = module.cognito.user_pool_id
     Cognito__ClientId           = module.cognito.app_client_id
     Cognito__Authority          = module.cognito.user_pool_issuer
     Database__Host              = module.aurora_backend.cluster_endpoint
+    Database__MigrateOnStartup  = "true"
     Database__Name              = module.aurora_backend.database_name
     Database__Port              = tostring(module.aurora_backend.port)
     Email__Region               = var.region
@@ -214,6 +216,9 @@ module "ecs_backend" {
     Email__FromAddress          = module.ses.from_email_address
     Email__ReplyToAddress       = module.ses.from_email_address
     Email__ConfigurationSetName = module.ses.configuration_set_name
+    Seeding__ReseedOnStartup    = "true"
+    Seeding__SuperUsersJson     = jsonencode(var.seeded_super_users)
+    UserOnboarding__SetupLink   = "https://${module.alb.frontend_host_name}"
   }
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"

@@ -14,7 +14,7 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using OnBoardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
+using OnboardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
 
 namespace UKPS.Api.Tests.Application.Users;
 
@@ -47,16 +47,18 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     public async Task OnboardUser_ShouldCreateANewOnboardingRecordInTheDatabase()
     {
         OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
-        OnBoardUserResult result = await _harness.Service.OnboardUser(
+        OnboardUserResult result = await _harness.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
         );
         result.ShouldBeSuccess();
 
-        var foundUserRecord = await _harness.Context.UserOnboardingRecords.SingleOrDefaultAsync(
-            x => x.User!.WorkEmail == command.NewUserEmail,
-            TestContext.Current.CancellationToken
-        );
+        var foundUserRecord = await _harness
+            .GetClearedContext()
+            .UserOnboardingRecords.SingleOrDefaultAsync(
+                x => x.User!.WorkEmail == command.NewUserEmail,
+                TestContext.Current.CancellationToken
+            );
 
         foundUserRecord.ShouldNotBeNull();
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
@@ -69,7 +71,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     public async Task OnboardUser_ShouldCreateANewCognitoUser()
     {
         OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
-        OnBoardUserResult result = await _harness.Service.OnboardUser(
+        OnboardUserResult result = await _harness.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
         );
@@ -82,14 +84,15 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     public async Task OnboardUser_ShouldCreateANewUserInTheDatabase()
     {
         OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
-        OnBoardUserResult result = await _harness.Service.OnboardUser(
+        OnboardUserResult result = await _harness.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
         );
         result.ShouldBeSuccess();
 
         User? foundUser = await _harness
-            .Context.Users.Include(x => x.UserOrgMemberships)
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
             .SingleOrDefaultAsync(
                 x => x.WorkEmail == command.NewUserEmail,
                 TestContext.Current.CancellationToken
@@ -109,11 +112,11 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task OnboardUser_ShouldSendAUserSignUpRequestEmailIncludingALinkGeneratedFromTheSetupLinkCreator()
     {
-        var testLink = "test link";
+        var testLink = new Uri("https://example.com");
         _setupLinkCreator.GetSetupLink(Arg.Any<Guid>()).Returns(testLink);
 
         OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
-        OnBoardUserResult result = await _harness.Service.OnboardUser(
+        OnboardUserResult result = await _harness.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
         );
@@ -127,7 +130,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task OnBoardUser_ForOtherOtherOrganisations_ShouldReturnNotAllowedResultUnlessASuperUser()
+    public async Task OnboardUser_ForOtherOtherOrganisations_ShouldReturnNotAllowedResultUnlessASuperUser()
     {
         IEnumerable<UserRole> noneSuperAdminRoles = Enum.GetValues<UserRole>()
             .Except([UserRole.Super]);
@@ -137,7 +140,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             IServiceTestHarness<IUserAdministrationService> harnessWithNoneSuperUserAuth =
                 GetTestHarness().UpdateCurrentUser(x => x with { UserRole = userRole });
             OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
-            OnBoardUserResult result = await harnessWithNoneSuperUserAuth.Service.OnboardUser(
+            OnboardUserResult result = await harnessWithNoneSuperUserAuth.Service.OnboardUser(
                 command,
                 TestContext.Current.CancellationToken
             );
@@ -149,7 +152,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     [InlineData(UserRole.Super, true)]
     [InlineData(UserRole.Champion, true)]
     [InlineData(UserRole.Standard, false)]
-    public async Task OnBoardUser_ForSameOrganisation_ShouldReturnNotAllowedResultUnlessASuperUserOrChampion(
+    public async Task OnboardUser_ForSameOrganisation_ShouldReturnNotAllowedResultUnlessASuperUserOrChampion(
         UserRole userRole,
         bool allowed
     )
@@ -164,7 +167,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
                         OrganisationId = command.OrganisationId,
                     }
                 );
-        OnBoardUserResult result = await harnessWithNoneSuperUserAuth.Service.OnboardUser(
+        OnboardUserResult result = await harnessWithNoneSuperUserAuth.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
         );
@@ -180,13 +183,13 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task OnBoardUser_ShouldReturnInvalidOrganisationErrorIfReferencingOrganisationThatDoesNotExist()
+    public async Task OnboardUser_ShouldReturnInvalidOrganisationErrorIfReferencingOrganisationThatDoesNotExist()
     {
         OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
         {
             OrganisationId = 999,
         };
-        OnBoardUserResult result = await _harness.Service.OnboardUser(
+        OnboardUserResult result = await _harness.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
         );
@@ -194,7 +197,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task OnBoardUser_WhenUsernameAlreadyInUse_ShouldReturnUsernameAlreadyInUseResult()
+    public async Task OnboardUser_WhenUsernameAlreadyInUse_ShouldReturnUsernameAlreadyInUseResult()
     {
         var harness = GetTestHarness();
         harness
@@ -202,7 +205,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             .Throws(new UsernameExistsException());
 
         OnboardUserCommandDto command = await GenerateValidOnboardingCommand();
-        OnBoardUserResult result = await harness.Service.OnboardUser(
+        OnboardUserResult result = await harness.Service.OnboardUser(
             command,
             TestContext.Current.CancellationToken
         );

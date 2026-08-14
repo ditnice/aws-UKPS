@@ -140,11 +140,11 @@ internal sealed partial class UserAdministrationService(
 
     private async Task SendUserSignUpRequestedEmail(User user, CancellationToken cancellationToken)
     {
+        Uri link = setupLinkCreator.GetSetupLink(user.OnboardingRecord!.SetupToken);
         if (user.OnboardingRecord is null)
         {
             throw new InvalidOperationException("Onboarding record was not set as expected.");
         }
-        string link = setupLinkCreator.GetSetupLink(user.OnboardingRecord.SetupToken);
         await emailService.SendEmail(
             user.WorkEmail,
             new UserSignUpRequestEmail() { Link = link },

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace UKPS.Api.Application.Authentication;
 
 internal sealed record UserOnboardingConfiguration
@@ -7,5 +9,9 @@ internal sealed record UserOnboardingConfiguration
     /// <summary>
     /// The amount of time it takes before the setup token expires. Defaults to 15 minutes.
     /// </summary>
+    [Range(60, int.MaxValue)]
     public int SetupTokenExpiryTimeSeconds { get; set; } = 15 * 60;
+
+    [Required]
+    public required Uri SetupLink { get; init; }
 }

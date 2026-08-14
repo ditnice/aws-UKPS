@@ -13,7 +13,7 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
 {
     public TService Service =>
         _serviceCollection.BuildServiceProvider().GetRequiredService<TService>();
-    public AppDbContext Context { get; }
+
     public MockEmailService Emails { get; } = new();
     public MockAmazonCognitoIdentityProvider Cognito { get; } = new();
 
@@ -22,19 +22,27 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
     private IDateTimeProvider _timeProvider = new SystemDateTimeProvider();
     private IServiceCollection _serviceCollection;
 
+    private readonly AppDbContext _appContext;
+
     public ServiceTestHarness(AppDbContext context)
     {
-        Context = context;
+        _appContext = context;
         _mockCurrentUserInfoService = Substitute.For<ICurrentUserInfoService>();
         _mockCurrentUserInfoService.GetCurrentUserInfo().Returns(_currentUser);
         _serviceCollection = new ServiceCollection()
-            .AddScoped(_ => context)
+            .AddScoped(_ => GetClearedContext())
             .AddUkpsServices()
             .AddTransient(_ => _mockCurrentUserInfoService)
             .AddTransient(_ => Cognito.Mock)
             .AddTransient(_ => Emails.Mock)
             .AddSingleton(_ => _timeProvider)
             .AddLogging();
+    }
+
+    public AppDbContext GetClearedContext()
+    {
+        _appContext.ChangeTracker.Clear();
+        return _appContext;
     }
 
     public IServiceTestHarness<TService> UpdateCurrentUser(Func<CurrentUser, CurrentUser> update)
