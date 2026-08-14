@@ -4,10 +4,10 @@ import { ChangeEvent } from 'react'
 import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
-import { Textarea } from '@nice-digital/nds-textarea'
 
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
+import { Textarea } from '@/components/TextArea/Textarea'
 
 import styles from './EditOrganisationForm.module.scss'
 
