@@ -1,14 +1,32 @@
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 
 const signInPath = '/auth/sign-in'
+const cognitoIssuer = process.env.COGNITO_ISSUER
+const cognitoClientId = process.env.COGNITO_CLIENT_ID
+const cognitoJwks = cognitoIssuer
+  ? createRemoteJWKSet(new URL(`${cognitoIssuer}/.well-known/jwks.json`))
+  : undefined
 
 export const config = {
   matcher: ['/portal/:path*'],
 }
 
-export function proxy(req: NextRequest) {
-  if (req.cookies.get('access_token')?.value) {
-    return NextResponse.next()
+export async function proxy(req: NextRequest) {
+  const accessToken = req.cookies.get('access_token')?.value
+
+  if (accessToken && cognitoIssuer && cognitoClientId && cognitoJwks) {
+    try {
+      const { payload } = await jwtVerify(accessToken, cognitoJwks, {
+        issuer: cognitoIssuer,
+      })
+
+      if (payload.token_use === 'access' && payload.client_id === cognitoClientId) {
+        return NextResponse.next()
+      }
+    } catch {
+      // Invalid, expired, or untrusted tokens should use the standard sign-in redirect.
+    }
   }
 
   const signInUrl = req.nextUrl.clone()
