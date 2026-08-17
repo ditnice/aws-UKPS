@@ -1,5 +1,12 @@
 minimumReleaseAge: 10080 # 7 days
 
+# Force patched versions of transitive deps flagged by `trivy fs` for known
+# vulns, until the packages pulling them in (next, @nice-digital/global-nav)
+# release versions that bump them on their own.
+overrides:
+  nanoid: ^3.3.18 # CVE-2026-67213, via next -> postcss
+  serialize-javascript: ^7.0.3 # GHSA-5c6j-r48x-rmvq, via @nice-digital/global-nav -> @rollup/plugin-terser
+
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
