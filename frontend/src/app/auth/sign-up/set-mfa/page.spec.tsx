@@ -12,7 +12,7 @@ const mockPush = vi.fn()
 const setup = {
   authenticationSession: 'test-authentication-session',
   otpAuthUri:
-    'otpauth://totp/NICE%20UKPS:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=NICE%20UKPS&algorithm=SHA1&digits=6&period=30',
+    'otpauth://totp/UK%20PharmaScan:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=UK%20PharmaScan&algorithm=SHA1&digits=6&period=30',
   setupToken: 'test-setup-token',
 }
 
