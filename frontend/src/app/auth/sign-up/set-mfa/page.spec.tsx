@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
 
+import { routeOnSuccessfulAuth } from '../../constants'
 import { signUpMfaSetupStorageKey } from '../constants'
 
 import SignUpSetMfa from './page'
@@ -167,6 +168,7 @@ describe('SignUpSetMfa', () => {
           code: '123246',
           setupToken: setup.setupToken,
         },
+        credentials: 'include',
       })
     })
   })
@@ -187,7 +189,7 @@ describe('SignUpSetMfa', () => {
     })
   })
 
-  it('clears setup details and redirects to sign in after successful verification', async () => {
+  it('clears setup details and redirects to the portal after successful verification', async () => {
     renderPage()
 
     enterSecurityCode('123456')
@@ -195,7 +197,7 @@ describe('SignUpSetMfa', () => {
 
     await waitFor(() => {
       expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
-      expect(mockPush).toHaveBeenCalledWith('/auth/sign-in')
+      expect(mockPush).toHaveBeenCalledWith(routeOnSuccessfulAuth)
     })
   })
 

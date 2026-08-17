@@ -9,7 +9,6 @@ using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
-using UKPS.Api.Application.Common;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
@@ -20,6 +19,10 @@ using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.A
 using UserSetupResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
+>;
+using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
 
 namespace UKPS.Api.Tests.Application.Authentication;
@@ -305,7 +308,9 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             },
             TestContext.Current.CancellationToken
         );
-        result.ShouldBeSuccess();
+        AuthenticationCredentialsDto credentials = result.ShouldBeSuccess();
+        credentials.AccessToken.ShouldBe("access-token");
+        credentials.RefreshToken.ShouldBe(_harness.Cognito.RefreshToken);
 
         _harness.Cognito.GetUser(_targetUser).ShouldNotBeNull().MfaSetup.ShouldBeTrue();
     }
@@ -343,7 +348,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     {
         var (setupToken, session) = await CreateAndDoInitialUserSetup();
 
-        Result<VerifyMultiFactorAuthenticationError> result =
+        VerifyMultiFactorAuthenticationResult result =
             await _harness.Service.VerifyMultiFactorAuthentication(
                 new VerifyMultiFactorAuthenticationCommand()
                 {
