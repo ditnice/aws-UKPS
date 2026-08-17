@@ -42,7 +42,23 @@ describe('proxy', () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get('location')).toBeNull()
+    expect(response.headers.get('x-middleware-request-x-ukps-return-to')).toBe('/portal')
     expect(jwtVerify).toHaveBeenCalledWith('valid-token', 'jwks', { issuer })
+  })
+
+  it('forwards the portal path and query string for server-side returnTo redirects', async () => {
+    jwtVerify.mockResolvedValue({ payload: { client_id: clientId, token_use: 'access' } })
+    const { proxy } = await loadProxy()
+    const response = await proxy(
+      createRequest(
+        'https://frontend.example/portal/organisations/1?page=2',
+        'access_token=valid-token',
+      ),
+    )
+
+    expect(response.headers.get('x-middleware-request-x-ukps-return-to')).toBe(
+      '/portal/organisations/1?page=2',
+    )
   })
 
   it('redirects portal requests without an access token to sign in', async () => {

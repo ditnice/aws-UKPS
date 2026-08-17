@@ -22,7 +22,14 @@ export async function proxy(req: NextRequest) {
       })
 
       if (payload.token_use === 'access' && payload.client_id === cognitoClientId) {
-        return NextResponse.next()
+        const requestHeaders = new Headers(req.headers)
+        requestHeaders.set('x-ukps-return-to', `${req.nextUrl.pathname}${req.nextUrl.search}`)
+
+        return NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        })
       }
     } catch {
       // Invalid, expired, or untrusted tokens should use the standard sign-in redirect.
