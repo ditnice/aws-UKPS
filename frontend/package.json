@@ -63,7 +63,7 @@
     "@payloadcms/next": "3.87.1",
     "@payloadcms/richtext-lexical": "3.87.1",
     "@payloadcms/ui": "3.87.1",
-    "@tanstack/react-form": "^1.33.3",
+    "@tanstack/react-form": "^1.33.4",
     "clsx": "^2.1.1",
     "cross-env": "^7.0.3",
     "dotenv": "16.6.1",
@@ -99,7 +99,7 @@
     "stylelint-order": "^8.1.1",
     "stylelint-scss": "^7.2.0",
     "stylelint-selector-bem-pattern": "^5.0.0",
-    "tsx": "4.23.10",
+    "tsx": "4.23.12",
     "typescript": "5.9.3",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.10"
