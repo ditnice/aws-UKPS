@@ -14,6 +14,12 @@ vi.mock('next/navigation', () => ({ redirect: mocks.redirect }))
 vi.mock('server-only', () => ({}))
 vi.mock('./generated/client', () => ({ createClient: mocks.createClient }))
 
+type ClientWithFetch = { fetch: typeof fetch }
+
+async function createTestClient(): Promise<ClientWithFetch> {
+  return (await createServerApiClient()) as unknown as ClientWithFetch
+}
+
 afterEach(() => {
   vi.clearAllMocks()
   vi.unstubAllEnvs()
@@ -49,7 +55,7 @@ describe('createServerApiClient', () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    const client = await createServerApiClient()
+    const client = await createTestClient()
     await client.fetch('https://api.example.test/organisations/1')
 
     expect(mocks.redirect).toHaveBeenCalledWith(
@@ -67,7 +73,7 @@ describe('createServerApiClient', () => {
       vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 })),
     )
 
-    const client = await createServerApiClient()
+    const client = await createTestClient()
     await client.fetch('https://api.example.test/users')
 
     expect(mocks.redirect).toHaveBeenCalledWith('/auth/sign-in?returnTo=%2Fportal')
@@ -83,7 +89,7 @@ describe('createServerApiClient', () => {
       vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 })),
     )
 
-    const client = await createServerApiClient()
+    const client = await createTestClient()
     const response = await client.fetch('https://api.example.test/auth/refresh')
 
     expect(response.status).toBe(401)
@@ -98,7 +104,7 @@ describe('createServerApiClient', () => {
     const successResponse = new Response('{}', { status: 200 })
     vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(successResponse))
 
-    const client = await createServerApiClient()
+    const client = await createTestClient()
 
     await expect(client.fetch('https://api.example.test/users')).resolves.toBe(successResponse)
     expect(mocks.redirect).not.toHaveBeenCalled()
