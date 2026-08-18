@@ -282,6 +282,23 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "user_register",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    organisation = table.Column<string>(type: "text", nullable: false),
+                    full_name = table.Column<string>(type: "text", nullable: false),
+                    work_email = table.Column<string>(type: "text", nullable: false),
+                    phone_number = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_user_register", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "vaccine_administration_route",
                 schema: "ukps",
                 columns: table => new
@@ -2693,6 +2710,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "user_org_memberships",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "user_register",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
