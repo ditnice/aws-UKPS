@@ -1,0 +1,79 @@
+@use '@/styles/spacing';
+@use '@/styles/utils';
+@use '@/styles/variables';
+@use '@/styles/colours';
+
+$back-to-top-height: utils.rem(spacing.$medium * 3); // Line height + bottom and top padding
+
+.wrapper {
+  margin-bottom: utils.rem(spacing.$large) * -1;
+  margin-top: utils.rem(spacing.$x-large);
+
+  @media print {
+    display: none;
+  }
+}
+
+.nav {
+  background: variables.$back-to-top-background;
+  border-top: 1px solid variables.$back-to-top-border;
+  width: 100%;
+  z-index: 1;
+}
+
+// IE11 needs margin bottom applied or back to top link is hidden under footer
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+  .nav {
+    margin-bottom: utils.rem(spacing.$large);
+  }
+}
+
+.anchor {
+  display: block;
+  line-height: utils.rem(spacing.$medium);
+  padding: utils.rem(spacing.$medium) 0;
+  text-decoration-line: underline;
+
+  &:visited {
+    color: colours.$link;
+  }
+
+  svg {
+    margin-right: utils.rem(spacing.$small);
+    transition: all 0.25s ease;
+  }
+
+  &:hover {
+    background: variables.$back-to-top-hover-background;
+
+    svg {
+      transform: translateY(-#{utils.rem(spacing.$xx-small)});
+    }
+  }
+
+  .container {
+    align-items: center;
+    display: flex;
+  }
+}
+
+@supports (position: sticky) {
+  .wrapper {
+    inset: min(100vh, calc(100% - #{$back-to-top-height})) 0 0 0;
+    margin: 0;
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+    z-index: 99;
+  }
+
+  .nav {
+    background: variables.$back-to-top-background;
+    border-top: 1px solid variables.$back-to-top-border;
+    pointer-events: all;
+    position: sticky;
+    top: calc(100vh - #{$back-to-top-height});
+    width: 100%;
+    z-index: 1;
+  }
+}

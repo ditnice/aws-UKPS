@@ -1,10 +1,10 @@
 'use client'
 
-import { Main } from '@nice-digital/global-nav'
 import { Container } from '@nice-digital/nds-container'
 
 import { Footer } from './Footer/Footer'
 import { Header } from './Header/Header'
+import { Main } from './Main/Main'
 
 import type { ReactNode } from 'react'
 

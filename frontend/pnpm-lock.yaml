@@ -21,6 +21,9 @@ importers:
       '@nice-digital/global-nav':
         specifier: 7.1.1177
         version: 7.1.1177(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rollup@4.62.4)
+      '@nice-digital/icons':
+        specifier: 6.1.7
+        version: 6.1.7(react@19.2.8)
       '@nice-digital/nds-a-z-list':
         specifier: 4.1.0
         version: 4.1.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
