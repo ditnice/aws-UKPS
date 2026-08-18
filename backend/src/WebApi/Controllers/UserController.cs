@@ -158,7 +158,12 @@ public class UserController(IUserService userService) : ControllerBase
                             title: "Forbidden",
                             detail: "You are not authorised to update this user's details."
                         ),
-                    userDoesNotExist: () => NotFound()
+                    userDoesNotExist: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Not Found",
+                            detail: "The specified user does not exist."
+                        )
                 );
             }
         );
