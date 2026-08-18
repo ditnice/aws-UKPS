@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Persistence.Entities.Identity;
 using CreateNewUserResult = UKPS.Api.Application.Common.Result<
     string,
     UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
@@ -37,6 +38,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<CreateNewUserResult> CreateNewUser(
+        UserIdentityId userIdentityId,
         string email,
         CancellationToken cancellationToken
     )
@@ -44,7 +46,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         var request = new AdminCreateUserRequest
         {
             UserPoolId = _options.Value.UserPoolId,
-            Username = email,
+            Username = userIdentityId.Value,
             UserAttributes = [new() { Name = "email", Value = email }],
             MessageAction = "SUPPRESS",
         };
@@ -70,7 +72,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<UpdatePasswordResult> UpdatePassword(
-        string userEmail,
+        UserIdentityId userIdentityId,
         string newPassword,
         CancellationToken cancellationToken
     )
@@ -78,7 +80,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         var request = new AdminSetUserPasswordRequest
         {
             UserPoolId = _options.Value.UserPoolId,
-            Username = userEmail,
+            Username = userIdentityId.Value,
             Password = newPassword,
             Permanent = true,
         };
@@ -96,7 +98,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public Task<InitiatedAuthenticationResult> InitiateAuthentication(
-        string userEmail,
+        UserIdentityId userIdentityId,
         string newPassword,
         CancellationToken cancellationToken
     )
@@ -111,10 +113,10 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                     AuthFlow = AuthFlowType.ADMIN_USER_PASSWORD_AUTH,
                     AuthParameters = new Dictionary<string, string>(StringComparer.InvariantCulture)
                     {
-                        ["USERNAME"] = userEmail,
+                        ["USERNAME"] = userIdentityId.Value,
                         ["PASSWORD"] = newPassword,
                         ["SECRET_HASH"] = GenerateSecretHash(
-                            userEmail,
+                            userIdentityId,
                             _options.Value.ClientId,
                             _options.Value.ClientSecret
                         ),
@@ -134,7 +136,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task UpdateUserEmail(
-        string currentEmail,
+        UserIdentityId userIdentityId,
         string updatedEmail,
         CancellationToken cancellationToken
     )
@@ -143,7 +145,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
             new AdminUpdateUserAttributesRequest
             {
                 UserPoolId = _options.Value.UserPoolId,
-                Username = currentEmail,
+                Username = userIdentityId.Value,
                 UserAttributes = [new AttributeType { Name = "email", Value = updatedEmail }],
             },
             cancellationToken
@@ -205,7 +207,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<AuthenticationCredentialsDto> VerifySoftwareToken(
-        string username,
+        UserIdentityId userIdentityId,
         string authenticationSessionId,
         string code,
         CancellationToken cancellationToken
@@ -225,9 +227,9 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                     Session = verifyResponse.Session,
                     ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
                     {
-                        ["USERNAME"] = username,
+                        ["USERNAME"] = userIdentityId.Value,
                         ["SECRET_HASH"] = GenerateSecretHash(
-                            username,
+                            userIdentityId,
                             _options.Value.ClientId,
                             _options.Value.ClientSecret
                         ),
@@ -250,13 +252,16 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         };
     }
 
-    public async Task MarkEmailAsVerified(string username, CancellationToken cancellationToken)
+    public async Task MarkEmailAsVerified(
+        UserIdentityId userIdentityId,
+        CancellationToken cancellationToken
+    )
     {
         await _cognito.AdminUpdateUserAttributesAsync(
             new AdminUpdateUserAttributesRequest
             {
                 UserPoolId = _options.Value.UserPoolId,
-                Username = username,
+                Username = userIdentityId.Value,
                 UserAttributes = [new AttributeType { Name = "email_verified", Value = "true" }],
             },
             cancellationToken
@@ -264,7 +269,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<InitiatedAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
-        string username,
+        UserIdentityId userIdentityId,
         string authenticationSession,
         string code,
         CancellationToken cancellationToken
@@ -283,10 +288,10 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                         Session = authenticationSession,
                         ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
                         {
-                            ["USERNAME"] = username,
+                            ["USERNAME"] = userIdentityId.Value,
                             ["SOFTWARE_TOKEN_MFA_CODE"] = code,
                             ["SECRET_HASH"] = GenerateSecretHash(
-                                username,
+                                userIdentityId,
                                 _options.Value.ClientId,
                                 _options.Value.ClientSecret
                             ),
@@ -378,10 +383,14 @@ internal sealed partial class CognitoIdentityService : IIdentityService
             : throw new NotSupportedException($"Unhandled challenge type [{challengeName}].");
     }
 
-    private static string GenerateSecretHash(string username, string clientId, string clientSecret)
+    private static string GenerateSecretHash(
+        UserIdentityId userIdentityId,
+        string clientId,
+        string clientSecret
+    )
     {
         var key = Encoding.UTF8.GetBytes(clientSecret);
-        var message = Encoding.UTF8.GetBytes(username + clientId);
+        var message = Encoding.UTF8.GetBytes(userIdentityId.Value + clientId);
 
         using var hmac = new HMACSHA256(key);
         var hash = hmac.ComputeHash(message);

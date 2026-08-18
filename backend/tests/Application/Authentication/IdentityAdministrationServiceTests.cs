@@ -1,5 +1,4 @@
 using Amazon.CognitoIdentityProvider.Model;
-using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -9,9 +8,13 @@ using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Users;
+using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
@@ -30,13 +33,10 @@ namespace UKPS.Api.Tests.Application.Authentication;
 [Collection(DatabaseCollection.Name)]
 public class IdentityAdministrationServiceTests : DatabaseTestBase
 {
-    private readonly Faker<UserOnboardingRecord> _userOnboardingRecordFaker;
-    private readonly Faker<MockUser> _mockUserFaker =
-        new MockAmazonCognitoIdentityProvider.MockUserFaker();
     private readonly IServiceTestHarness<IIdentityAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
-    private readonly string _targetUser = "target.user@email.com";
+
     private TimeSpan _testExpiryTokenTime = TimeSpan.FromMinutes(15);
     private readonly SetupUserCommand _validSetupUserCommand = new()
     {
@@ -47,11 +47,6 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     public IdentityAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        var userFaker = new UserFaker().RuleFor(x => x.WorkEmail, _targetUser);
-        _userOnboardingRecordFaker = new UserOnboardingRecordFaker().RuleFor(
-            x => x.User,
-            _ => userFaker.Generate()
-        );
         _harness = CreateTestHarness();
     }
 
@@ -138,8 +133,6 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         UserOnboardingRecord entity = await CreateUserOnboardingRecord(
             createdMinutesInThePast: minutesInThePast
         );
-
-        _harness.Cognito.AddCurrentUser(_mockUserFaker.Generate() with { Username = _targetUser });
 
         UserSetupResult result = await _harness.Service.SetupUser(
             _validSetupUserCommand with
@@ -297,7 +290,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task VerifyMultiFactorAuthentication_ShouldSetupMfa()
     {
-        var (setupToken, session) = await CreateAndDoInitialUserSetup();
+        var (setupToken, session, targetUser) = await CreateAndDoInitialUserSetup();
 
         var result = await _harness.Service.VerifyMultiFactorAuthentication(
             new VerifyMultiFactorAuthenticationCommand()
@@ -312,13 +305,13 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         credentials.AccessToken.ShouldBe("access-token");
         credentials.RefreshToken.ShouldBe(_harness.Cognito.RefreshToken);
 
-        _harness.Cognito.GetUser(_targetUser).ShouldNotBeNull().MfaSetup.ShouldBeTrue();
+        _harness.Cognito.GetUser(targetUser).ShouldNotBeNull().MfaSetup.ShouldBeTrue();
     }
 
     [Fact]
     public async Task VerifyMultiFactorAuthentication_ShouldMarkMembershipAsActive()
     {
-        var (setupToken, session) = await CreateAndDoInitialUserSetup();
+        var (setupToken, session, userIdentityId) = await CreateAndDoInitialUserSetup();
 
         var result = await _harness.Service.VerifyMultiFactorAuthentication(
             new VerifyMultiFactorAuthenticationCommand()
@@ -335,7 +328,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.Include(x => x.UserOrgMemberships)
             .SingleOrDefaultAsync(
-                x => x.WorkEmail == _targetUser,
+                x => x.CognitoUsername == userIdentityId,
                 TestContext.Current.CancellationToken
             );
 
@@ -346,7 +339,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task VerifyMultiFactorAuthentication_WhenSuppliedIncorrectCode_ShouldNotSetupMfaAndReturnInvalidCodeError()
     {
-        var (setupToken, session) = await CreateAndDoInitialUserSetup();
+        var (setupToken, session, userIdentityId) = await CreateAndDoInitialUserSetup();
 
         VerifyMultiFactorAuthenticationResult result =
             await _harness.Service.VerifyMultiFactorAuthentication(
@@ -360,23 +353,77 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             );
         result.ShouldBeError().ShouldBeOfType<VerifyMultiFactorAuthenticationError.InvalidCode>();
 
-        _harness.Cognito.GetUser(_targetUser).ShouldNotBeNull().MfaSetup.ShouldBeFalse();
+        _harness.Cognito.GetUser(userIdentityId).ShouldNotBeNull().MfaSetup.ShouldBeFalse();
     }
 
-    private async Task<(Guid SetupToken, string Session)> CreateAndDoInitialUserSetup()
+    private async Task<(
+        Guid SetupToken,
+        string Session,
+        UserIdentityId userIdentityId
+    )> CreateAndDoInitialUserSetup()
     {
-        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 15);
-        _harness.Cognito.AddCurrentUser(_mockUserFaker.Generate() with { Username = _targetUser });
+        UserOnboardingRecord onboardingRecord = await OnboardUserWithTimeOffset(minutesInPast: 15);
+        MultiFactorAuthenticationSetupDto setupResult = await SetupUserWithTimeOffset(
+            onboardingRecord.SetupToken,
+            0
+        );
+        return (
+            onboardingRecord.SetupToken,
+            setupResult.AuthenticationSession,
+            onboardingRecord.User!.CognitoUsername
+        );
+    }
 
-        UserSetupResult validationResult = await _harness.Service.SetupUser(
-            _validSetupUserCommand with
+    private async Task<UserOnboardingRecord> OnboardUserWithTimeOffset(int minutesInPast)
+    {
+        var organisationFaker = new OrganisationFaker();
+        Organisation organisation = await AddEntity(
+            organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(minutesInPast);
+        var userAdminHarness = new ServiceTestHarness<IUserAdministrationService>(
+            _harness
+        ).UpdateCurrentTime(createdAtTime);
+        OnboardUserCommandDtoFaker onboardUserCommandDtoFaker = new OnboardUserCommandDtoFaker();
+        Result<int, OnboardUserError> result = await userAdminHarness.Service.OnboardUser(
+            onboardUserCommandDtoFaker.Generate() with
             {
-                SetupToken = entity.SetupToken,
+                OrganisationId = organisation.Id,
             },
             TestContext.Current.CancellationToken
         );
-        var setupData = validationResult.ShouldBeSuccess();
-        return (entity.SetupToken, setupData.AuthenticationSession);
+        var userId = result.ShouldBeSuccess();
+
+        var user =
+            await userAdminHarness
+                .GetClearedContext()
+                .Users.Include(x => x.OnboardingRecord)
+                .FirstOrDefaultAsync(x => x.Id == userId, TestContext.Current.CancellationToken)
+            ?? throw new InvalidOperationException("Could not find expected user.");
+
+        return user.OnboardingRecord!;
+    }
+
+    private async Task<MultiFactorAuthenticationSetupDto> SetupUserWithTimeOffset(
+        Guid setupToken,
+        int minutesInPast
+    )
+    {
+        DateTime consumedAtTime = _testTime - TimeSpan.FromMinutes(minutesInPast);
+        var setupUserHarness = ConfigureTestHarness(
+                new ServiceTestHarness<IIdentityAdministrationService>(_harness)
+            )
+            .UpdateCurrentTime(consumedAtTime);
+        var result = await setupUserHarness.Service.SetupUser(
+            _validSetupUserCommand with
+            {
+                SetupToken = setupToken,
+            },
+            TestContext.Current.CancellationToken
+        );
+        return result.ShouldBeSuccess();
     }
 
     private async Task<UserOnboardingRecord> CreateUserOnboardingRecord(
@@ -384,22 +431,27 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         int? consumedMinutesInThePast = null
     )
     {
-        DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(createdMinutesInThePast);
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.CreatedAt, _ => createdAtTime)
-            .Generate();
-
+        var onboardingRecord = await OnboardUserWithTimeOffset(createdMinutesInThePast);
         if (consumedMinutesInThePast is { } value)
         {
-            DateTime consumedAtTime = _testTime - TimeSpan.FromMinutes(value);
-            entity.MarkAsConsumed(consumedAtTime);
+            await SetupUserWithTimeOffset(onboardingRecord.SetupToken, value);
         }
-        return await AddEntity(entity, TestContext.Current.CancellationToken);
+
+        return onboardingRecord;
     }
 
     private IServiceTestHarness<IIdentityAdministrationService> CreateTestHarness()
     {
-        return new ServiceTestHarness<IIdentityAdministrationService>(Context)
+        return ConfigureTestHarness(
+            new ServiceTestHarness<IIdentityAdministrationService>(Context)
+        );
+    }
+
+    private IServiceTestHarness<IIdentityAdministrationService> ConfigureTestHarness(
+        ServiceTestHarness<IIdentityAdministrationService> harness
+    )
+    {
+        return harness
             .UpdateCurrentTime(_testTime)
             .UpdateCurrentUser(x => x with { Email = _currentUser })
             .ConfigureServices(services =>

@@ -3,7 +3,6 @@ using NSubstitute;
 using UKPS.Api.Application;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
-using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
 using UKPS.Api.Tests.Utilities.MockInternalServices;
 
@@ -39,7 +38,7 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
             .AddLogging();
     }
 
-    public ServiceTestHarness(IServiceTestHarness<IUserService> harness)
+    public ServiceTestHarness(IServiceTestHarness harness)
         : this(harness.GetClearedContext())
     {
         Emails = harness.Emails;

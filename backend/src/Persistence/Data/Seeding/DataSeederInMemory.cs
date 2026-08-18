@@ -109,6 +109,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
     private static User CreateConfiguredSuperUser(SeedSuperUser configuredUser) =>
         new()
         {
+            CognitoUsername = UserIdentityId.GenerateNew(), // fix in a bit
             IdentityId = configuredUser.IdentityId,
             FullName = configuredUser.FullName,
             WorkEmail = configuredUser.Email,

@@ -190,6 +190,7 @@ internal sealed class UserService(
         }
         var user = new User()
         {
+            CognitoUsername = UserIdentityId.GenerateNew(),
             UserType = UserType.PharmaUser,
             Title = createUserRequestDto.Title,
             FullName = createUserRequestDto.FullName,
@@ -240,7 +241,6 @@ internal sealed class UserService(
             return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
         }
 
-        string previousWorkEmail = user.WorkEmail;
         user.UpdateDetails(
             command.FullName,
             command.WorkTelephone,
@@ -251,7 +251,7 @@ internal sealed class UserService(
         if (user.Events.OfType<User.EmailUpdatedEvent>().Any())
         {
             await identityService.UpdateUserEmail(
-                previousWorkEmail,
+                user.CognitoUsername,
                 command.WorkEmail,
                 cancellationToken
             );

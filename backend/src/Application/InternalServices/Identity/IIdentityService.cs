@@ -1,4 +1,5 @@
 using UKPS.Api.Application.Authentication.Dtos;
+using UKPS.Api.Persistence.Entities.Identity;
 using CreateNewUserResult = UKPS.Api.Application.Common.Result<
     string,
     UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
@@ -18,39 +19,43 @@ internal interface IIdentityService
         CancellationToken cancellationToken
     );
 
-    Task<CreateNewUserResult> CreateNewUser(string email, CancellationToken cancellationToken);
+    Task<CreateNewUserResult> CreateNewUser(
+        UserIdentityId userIdentityId,
+        string email,
+        CancellationToken cancellationToken
+    );
 
     Task<InitiatedAuthenticationResult> InitiateAuthentication(
-        string userEmail,
+        UserIdentityId userIdentityId,
         string newPassword,
         CancellationToken cancellationToken
     );
 
-    Task MarkEmailAsVerified(string username, CancellationToken cancellationToken);
+    Task MarkEmailAsVerified(UserIdentityId userIdentityId, CancellationToken cancellationToken);
     Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
         string refreshToken,
         CancellationToken cancellationToken
     );
     Task<InitiatedAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
-        string username,
+        UserIdentityId userIdentityId,
         string authenticationSession,
         string code,
         CancellationToken cancellationToken
     );
 
     Task<UpdatePasswordResult> UpdatePassword(
-        string userEmail,
+        UserIdentityId userIdentityId,
         string newPassword,
         CancellationToken cancellationToken
     );
     Task UpdateUserEmail(
-        string currentEmail,
+        UserIdentityId userIdentityId,
         string updatedEmail,
         CancellationToken cancellationToken
     );
 
     Task<AuthenticationCredentialsDto> VerifySoftwareToken(
-        string username,
+        UserIdentityId userIdentityId,
         string authenticationSessionId,
         string code,
         CancellationToken cancellationToken

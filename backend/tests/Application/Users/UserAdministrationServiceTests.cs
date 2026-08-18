@@ -67,7 +67,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
 
-        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         );
         result.ShouldBeSuccess();
 
-        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]

@@ -78,17 +78,20 @@ internal sealed partial class UserAdministrationService(
             };
         }
 
+        UserIdentityId userIdentityId = UserIdentityId.GenerateNew();
         var result = await administerIdentityService.CreateNewUser(
+            userIdentityId,
             command.NewUserEmail,
             cancellationToken
         );
         return await result.Match(
-            x => CreateANewUserInDatabase(x, command, cancellationToken),
+            x => CreateANewUserInDatabase(userIdentityId, x, command, cancellationToken),
             HandleIdentityUserCreationFailed
         );
     }
 
     private async Task<Result<User, OnboardUserError>> CreateANewUserInDatabase(
+        UserIdentityId userIdentityId,
         string identityId,
         OnboardUserCommandDto command,
         CancellationToken cancellationToken
@@ -110,6 +113,7 @@ internal sealed partial class UserAdministrationService(
         };
         var user = new User()
         {
+            CognitoUsername = userIdentityId,
             IdentityId = identityId,
             FullName = command.FullName,
             WorkEmail = command.NewUserEmail,
