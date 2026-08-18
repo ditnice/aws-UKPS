@@ -345,7 +345,7 @@ export type UpdateUserDetailsCommand = {
     /**
      * Gets the user's work telephone number.
      */
-    workTelephone?: null | string;
+    workTelephone: string;
 };
 
 /**

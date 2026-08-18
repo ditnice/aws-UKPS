@@ -340,6 +340,8 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             x => x with { WorkEmail = string.Empty },
             x => x with { WorkEmail = null! },
             x => x with { WorkEmail = "not a valid email" },
+            x => x with { WorkTelephone = string.Empty },
+            x => x with { WorkTelephone = null! },
         ];
 
         foreach (var mod in modifers)

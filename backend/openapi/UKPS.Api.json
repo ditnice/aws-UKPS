@@ -1965,7 +1965,8 @@
       "UpdateUserDetailsCommand": {
         "required": [
           "fullName",
-          "workEmail"
+          "workEmail",
+          "workTelephone"
         ],
         "type": "object",
         "properties": {
@@ -1978,10 +1979,7 @@
             "description": "Gets the user's work email address."
           },
           "workTelephone": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": "string",
             "description": "Gets the user's work telephone number."
           }
         },
