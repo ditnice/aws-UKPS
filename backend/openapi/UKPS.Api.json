@@ -1123,7 +1123,7 @@
         },
         "responses": {
           "200": {
-            "description": "    An ActionResult&lt;TValue&gt; containing the registered user's details when the\n    operation succeeds. Returns:\n    * 400 Bad Request if some of the required data is missing.\n* 404 Not Found if the specified organisation does not exist.\n* 409 Conflict if a user with the supplied email address is already registered.",
+            "description": "An ActionResult&lt;TValue&gt; containing the registered user's details when the\noperation succeeds. Returns:\n* 400 Bad Request if some of the required data is missing.",
             "content": {
               "text/plain": {
                 "schema": {

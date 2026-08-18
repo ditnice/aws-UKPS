@@ -900,11 +900,9 @@ export type PostUsersData = {
 
 export type PostUsersResponses = {
     /**
-     *     An ActionResult&lt;TValue&gt; containing the registered user's details when the
+     * An ActionResult&lt;TValue&gt; containing the registered user's details when the
      * operation succeeds. Returns:
      * * 400 Bad Request if some of the required data is missing.
-     * * 404 Not Found if the specified organisation does not exist.
-     * * 409 Conflict if a user with the supplied email address is already registered.
      */
     200: RegisterUserDetailsDto;
 };

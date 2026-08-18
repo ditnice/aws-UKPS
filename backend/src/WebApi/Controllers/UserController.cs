@@ -128,12 +128,6 @@ public class UserController(IUserService userService) : ControllerBase
     /// <item>
     /// <description><c>400 Bad Request</c> if some of the required data is missing.</description>
     /// </item>
-    /// <item>
-    /// <description><c>404 Not Found</c> if the specified organisation does not exist.</description>
-    /// </item>
-    /// <item>
-    /// <description><c>409 Conflict</c> if a user with the supplied email address is already registered.</description>
-    /// </item>
     /// </list>
     /// </returns>
     [HttpPost]
