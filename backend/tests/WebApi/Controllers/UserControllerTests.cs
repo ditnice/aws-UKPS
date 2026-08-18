@@ -251,6 +251,27 @@ public class UserControllerTests
         ok.Value.ShouldBe(expected);
     }
 
+    [Fact]
+    public async Task RegisterUser_FieldsMissing_ReturnsBadRequest()
+    {
+        RegisterUserDto request = RegisterUserDto();
+
+        _mockUserService
+            .RegisterUser(Arg.Any<RegisterUserDto>(), TestContext.Current.CancellationToken)
+            .Returns(
+                Result<RegisterUserDetailsDto, RegisterUserError>.Err(
+                    new RegisterUserError.MissingFields()
+                )
+            );
+        ActionResult<RegisterUserDetailsDto> result = await _controller.RegisterUser(
+            request,
+            TestContext.Current.CancellationToken
+        );
+        result
+            .Result.ShouldBeOfType<BadRequestObjectResult>()
+            .Value.ShouldBe("Some of the data required is missing.");
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
