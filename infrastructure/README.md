@@ -17,9 +17,8 @@ The reusable modules live in `modules/`. Environment compositions live in `envir
 | --- | --- | --- |
 | `dev` | `environments/dev` | Full composition |
 | `test` | `environments/test` | Placeholder |
-| `alpha` | `environments/alpha` | Placeholder |
-| `beta` | `environments/beta` | Placeholder |
-| `live` | `environments/live` | Placeholder |
+| `staging` | `environments/staging` | Placeholder |
+| `prod` | `environments/prod` | Placeholder |
 
 ## Required Manual Input
 
