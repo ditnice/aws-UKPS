@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -19,12 +20,13 @@ using UpdateUserDetailsResult = UKPS.Api.Application.Common.Result<
 
 namespace UKPS.Api.Application.Users;
 
-internal sealed class UserService(
+internal partial class UserService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
     IDateTimeProvider timeProvider,
     IIdentityService identityService,
-    ICurrentUserInfoService currentUserInfoService
+    ICurrentUserInfoService currentUserInfoService,
+    ILogger<UserService> logger
 ) : IUserService
 {
     public async Task<GetUsersResult> GetUsers(
@@ -221,46 +223,60 @@ internal sealed class UserService(
         CancellationToken cancellationToken
     )
     {
-        User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+        await using IDbContextTransaction transaction =
+            await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        if (user is null)
+        try
         {
-            return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.UserDoesNotExist());
-        }
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
 
-        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
-        bool isTheCurrentUserModifyingTheirOwnDetails = string.Equals(
-            currentUser.Email,
-            user.WorkEmail,
-            StringComparison.Ordinal
-        );
+            if (user is null)
+            {
+                return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.UserDoesNotExist());
+            }
 
-        if (!isTheCurrentUserModifyingTheirOwnDetails)
-        {
-            return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
-        }
-
-        string previousWorkEmail = user.WorkEmail;
-        user.UpdateDetails(
-            command.FullName,
-            command.WorkTelephone,
-            command.WorkEmail,
-            timeProvider.GetUtcNow()
-        );
-
-        if (user.Events.OfType<User.EmailUpdatedEvent>().Any())
-        {
-            await identityService.UpdateUserEmail(
-                previousWorkEmail,
-                command.WorkEmail,
-                cancellationToken
+            CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+            bool isTheCurrentUserModifyingTheirOwnDetails = string.Equals(
+                currentUser.Email,
+                user.WorkEmail,
+                StringComparison.Ordinal
             );
+
+            if (!isTheCurrentUserModifyingTheirOwnDetails)
+            {
+                return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
+            }
+
+            string previousWorkEmail = user.WorkEmail;
+            user.UpdateDetails(
+                command.FullName,
+                command.WorkTelephone,
+                command.WorkEmail,
+                timeProvider.GetUtcNow()
+            );
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            if (user.Events.OfType<User.EmailUpdatedEvent>().Any())
+            {
+                await identityService.UpdateUserEmail(
+                    previousWorkEmail,
+                    command.WorkEmail,
+                    cancellationToken
+                );
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+
+            UserDetailsDto output = MapToDto(user);
+            return UpdateUserDetailsResult.Ok(output);
         }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        UserDetailsDto output = MapToDto(user);
-        return UpdateUserDetailsResult.Ok(output);
+        catch (Exception ex)
+        {
+            LogUpdatingUserDetailsFailed(ex);
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
     private static UserDetailsDto MapToDto(User user)
@@ -281,4 +297,10 @@ internal sealed class UserService(
             .Replace("\\", "\\\\", StringComparison.Ordinal)
             .Replace("%", "\\%", StringComparison.Ordinal)
             .Replace("_", "\\_", StringComparison.Ordinal);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "An error occur whilst updating user details."
+    )]
+    private partial void LogUpdatingUserDetailsFailed(Exception ex);
 }
