@@ -37,7 +37,7 @@ variable "sns_alarm_emails" {
   sensitive = true
 
   validation {
-    condition     = length(var.sns_alarm_emails) > 0 && alltrue([for email in values(var.sns_alarm_emails) : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", email))])
+    condition     = length(var.sns_alarm_emails) > 0 && alltrue([for item in var.sns_alarm_emails : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", item.email))])
     error_message = "SNS alarm emails must contain at least one valid email address."
   }
 }
