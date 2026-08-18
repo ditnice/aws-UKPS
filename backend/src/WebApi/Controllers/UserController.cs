@@ -151,14 +151,8 @@ public class UserController(IUserService userService) : ControllerBase
             x =>
                 x switch
                 {
-                    RegisterUserError.NotFound => NotFound(
-                        "There is no organisation with that Organisation ID."
-                    ),
                     RegisterUserError.MissingFields => BadRequest(
                         "Some of the data required is missing."
-                    ),
-                    RegisterUserError.EmailConflict => Conflict(
-                        "A user with that email is already registered."
                     ),
                     _ => throw new UnreachableException(),
                 }

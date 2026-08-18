@@ -11,19 +11,6 @@ public abstract record RegisterUserError
     private protected RegisterUserError() { }
 
     /// <summary>
-    /// Represents an error indicating that the organisation could not be found.
-    /// </summary>
-    /// <param name="OrganisationName">
-    /// The name of the organisation that could not be found.
-    /// </param>
-    internal sealed record NotFound(string OrganisationName) : RegisterUserError;
-
-    /// <summary>
-    /// Represents an error indicating that the email address is already in use.
-    /// </summary>
-    public sealed record EmailConflict() : RegisterUserError;
-
-    /// <summary>
     /// Represents an error indicating that one or more required fields are missing.
     /// </summary>
     public sealed record MissingFields() : RegisterUserError;
