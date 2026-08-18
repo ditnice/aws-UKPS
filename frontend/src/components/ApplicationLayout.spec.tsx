@@ -17,11 +17,6 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }))
 
-vi.mock('@nice-digital/global-nav', () => ({
-  Footer: () => <footer data-testid="footer" />,
-  Main: ({ children, id }: MockComponentProps & { id: string }) => <main id={id}>{children}</main>,
-}))
-
 vi.mock('@nice-digital/nds-container', () => ({
   Container: ({ children }: MockComponentProps) => <div data-testid="container">{children}</div>,
 }))
