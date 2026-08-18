@@ -1,2 +1,11 @@
+@use '@/styles/colours';
+
 $white: #fff;
+$black: #000;
+$black-tint-1: #404040;
 $nice-teal: #228096; // nice-teal is not public, this is a duplication of it
+
+// Footer
+$footer-background: $black;
+$footer-text: colours.$text-inverse;
+$footer-legal-background: $black-tint-1;

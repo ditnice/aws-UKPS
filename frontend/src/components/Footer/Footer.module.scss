@@ -1,0 +1,79 @@
+@use 'sass:math';
+@use '@/styles/typography';
+@use '@/styles/variables';
+@use '@/styles/utils';
+@use '@/styles/media-queries';
+@use '@/styles/spacing';
+@use '@/styles/layout';
+@use '@/styles/visibility';
+
+.footer {
+  @include typography.links-inverse;
+  background: variables.$footer-background;
+  box-sizing: border-box;
+  color: variables.$footer-text;
+  contain-intrinsic-size: 100vw utils.rem(1090); /* stylelint-disable-line */
+  content-visibility: auto; /* stylelint-disable-line */
+  font-family: typography.get-font-family(sans);
+  margin: utils.rem(spacing.$large 0 0 0);
+  position: relative;
+  z-index: 0;
+
+  *,
+  *:before,
+  *:after {
+    box-sizing: inherit;
+  }
+
+  a {
+    font-weight: normal; // To override Pathways global anchor style
+  }
+
+  // Estimates of intrinsic height across breakpoints
+  @include media-queries.mq($from: xs) {
+    contain-intrinsic-height: utils.rem(930);
+  }
+  @include media-queries.mq($from: sm) {
+    contain-intrinsic-height: utils.rem(540);
+  }
+  @include media-queries.mq($from: md) {
+    contain-intrinsic-height: utils.rem(450);
+  }
+  @include media-queries.mq($from: lg) {
+    contain-intrinsic-height: utils.rem(495);
+  }
+}
+
+.container {
+  @include layout.container;
+  @include layout.clearfix;
+  @include visibility.hide-print;
+  padding: utils.rem(spacing.$medium 0);
+}
+
+.logo {
+  $logo-width: 80px;
+  $logo-aspect-ratio: math.div(512, 1410);
+  display: block;
+  height: 0;
+  margin: utils.rem(0 0 spacing.$large 0);
+  padding: 0;
+  padding-bottom: $logo-width * $logo-aspect-ratio; // Aspect ratio of NICE logo SVG
+  position: relative;
+  width: $logo-width;
+
+  svg {
+    display: block;
+    height: 100% !important;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100% !important;
+  }
+}
+
+@include media-queries.mq($from: md) {
+  .logo {
+    margin-bottom: utils.rem(spacing.$medium);
+  }
+}
