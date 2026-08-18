@@ -25,19 +25,33 @@ public class UserServiceTests : DatabaseTestBase
     private readonly UserFaker _userFaker = new();
     private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
     private readonly CreateUserRequestDtoFaker _createUserRequestDtoFaker = new();
-    private readonly IUserService _service;
+    private readonly UpdateUserDetailsCommandFaker _updateUserDetailsCommandFaker = new();
+    private IServiceTestHarness<IUserService> _harness;
+    private IUserService Service => _harness.Service;
+
+    private readonly DateTime _currentDateTime = new DateTime(
+        2003,
+        4,
+        12,
+        12,
+        12,
+        44,
+        DateTimeKind.Utc
+    );
 
     public UserServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _service = new ServiceTestHarness<IUserService>(Context).Service;
+        _harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentTime(
+            _currentDateTime
+        );
     }
 
     [Fact]
     public async Task GetUsers_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
     {
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(organisationId: 99),
                 TestContext.Current.CancellationToken
             );
@@ -55,7 +69,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
+            await Service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
 
@@ -89,7 +103,7 @@ public class UserServiceTests : DatabaseTestBase
         Context.UserOrgMemberships.Add(membership);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
+            await Service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
 
@@ -125,7 +139,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(status: [UserOrgStatus.Active, UserOrgStatus.Inactive]),
                 TestContext.Current.CancellationToken
             );
@@ -158,7 +172,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
+            await Service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.TotalCount.ShouldBe(2);
@@ -178,7 +192,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(status: [UserOrgStatus.Rejected]),
                 TestContext.Current.CancellationToken
             );
@@ -206,7 +220,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(role: [UserRole.Champion, UserRole.Super]),
                 TestContext.Current.CancellationToken
             );
@@ -239,7 +253,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(email: "SMITH"),
                 TestContext.Current.CancellationToken
             );
@@ -268,7 +282,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(email: "100%off"),
                 TestContext.Current.CancellationToken
             );
@@ -305,7 +319,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(
                     lastActiveFrom: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero),
                     lastActiveTo: new DateTimeOffset(2026, 4, 1, 0, 0, 0, TimeSpan.Zero)
@@ -344,7 +358,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(
                     lastActiveFrom: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero)
                 ),
@@ -382,7 +396,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(
                     lastActiveTo: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero)
                 ),
@@ -429,7 +443,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(
                     lastActiveFrom: new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
                 ),
@@ -479,7 +493,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(page: 2, pageSize: 1),
                 TestContext.Current.CancellationToken
             );
@@ -536,7 +550,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(organisationId: null),
                 TestContext.Current.CancellationToken
             );
@@ -592,7 +606,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(organisationId: null, status: [UserOrgStatus.Inactive]),
                 TestContext.Current.CancellationToken
             );
@@ -631,7 +645,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(page: 5),
                 TestContext.Current.CancellationToken
             );
@@ -681,7 +695,7 @@ public class UserServiceTests : DatabaseTestBase
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
+            await Service.GetUsers(
                 CreateGetUsersQuery(organisationId: null),
                 TestContext.Current.CancellationToken
             );
@@ -711,7 +725,7 @@ public class UserServiceTests : DatabaseTestBase
         {
             OrganisationId = 1,
         };
-        CreateUserResult result = await _service.CreateUser(
+        CreateUserResult result = await Service.CreateUser(
             createDto,
             TestContext.Current.CancellationToken
         );
@@ -753,7 +767,7 @@ public class UserServiceTests : DatabaseTestBase
             OrganisationId = 1,
             WorkEmail = existingUser.WorkEmail,
         };
-        CreateUserResult result = await _service.CreateUser(
+        CreateUserResult result = await Service.CreateUser(
             createDto,
             TestContext.Current.CancellationToken
         );
@@ -767,7 +781,7 @@ public class UserServiceTests : DatabaseTestBase
         {
             OrganisationId = 999,
         };
-        CreateUserResult result = await _service.CreateUser(
+        CreateUserResult result = await Service.CreateUser(
             createDto,
             TestContext.Current.CancellationToken
         );
@@ -873,6 +887,146 @@ public class UserServiceTests : DatabaseTestBase
         {
             result.Error.ShouldBeOfType<GetUsersError.NotAllowed>();
         }
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_ShouldUpdateUserDetails()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var command = _updateUserDetailsCommandFaker.Generate();
+        _ = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        var databaseUser = await Context.Users.FindAsync(
+            [currentUser.Id],
+            TestContext.Current.CancellationToken
+        );
+        databaseUser.ShouldNotBeNull();
+        var databaseValues = new UpdateUserDetailsCommand()
+        {
+            FullName = databaseUser.FullName,
+            WorkEmail = databaseUser.WorkEmail,
+            WorkTelephone = databaseUser.WorkTelephone,
+        };
+        databaseValues.ShouldBe(command);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_ShouldUpdateUpdatedAtTime()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var command = _updateUserDetailsCommandFaker.Generate();
+        _ = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        var databaseUser = await Context.Users.FindAsync(
+            [currentUser.Id],
+            TestContext.Current.CancellationToken
+        );
+        databaseUser.ShouldNotBeNull();
+        databaseUser.UpdatedAt.ShouldBe(_currentDateTime);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_ShouldReturnUpdatedUserDetails()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate();
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        UserDetailsDto value = result.ShouldBeSuccess();
+        var responseValues = new UpdateUserDetailsCommand()
+        {
+            FullName = value.FullName,
+            WorkEmail = value.WorkEmail,
+            WorkTelephone = value.WorkPhone,
+        };
+        responseValues.ShouldBe(command);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenEmailChanges_ShouldUpdateEmailAttributeInCognito()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        string testEmail = "testupdateuserdetails@email.com";
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate() with
+        {
+            WorkEmail = testEmail,
+        };
+        _ = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        MockUser? user = _harness.Cognito.GetUser(testEmail);
+        user.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenUserDoesNotExist_ShouldReturnUserDoesNotExistError()
+    {
+        var result = await Service.UpdateUserDetails(
+            999,
+            _updateUserDetailsCommandFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.UserDoesNotExist>();
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenUserIsNotTheTargetUser_ShouldReturnUserIsNoPermittedToUserDetailsError()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var otherUserTestHarness = new ServiceTestHarness<IUserService>(_harness).UpdateCurrentUser(
+            x => x with { Email = "otheruser@email.com" }
+        );
+        var command = _updateUserDetailsCommandFaker.Generate();
+        var result = await otherUserTestHarness.Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
+    }
+
+    private async Task<User> CreateExistingCurrentUser()
+    {
+        Organisation org = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        IUserAdministrationService userAdministrationService =
+            new ServiceTestHarness<IUserAdministrationService>(_harness).Service;
+        Faker<OnboardUserCommandDto> onboardingUserFaker = new OnboardUserCommandDtoFaker().RuleFor(
+            x => x.OrganisationId,
+            _ => org.Id
+        );
+        Result<int, OnboardUserError> result = await userAdministrationService.OnboardUser(
+            onboardingUserFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        return result.Match(
+            x =>
+            {
+                var user =
+                    Context.Users.Find(x)
+                    ?? throw new InvalidOperationException("Could not find created user.");
+                _harness = _harness.UpdateCurrentUser(x => x with { Email = user.WorkEmail });
+
+                return user;
+            },
+            (e) => throw new InvalidOperationException("Failed to create an initial user")
+        );
     }
 
     private static GetUsersQueryDto CreateGetUsersQuery(

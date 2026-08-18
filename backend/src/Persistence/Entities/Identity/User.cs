@@ -4,6 +4,7 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal sealed class User
 {
+    public IReadOnlyCollection<IUserDomainEvent> Events => _events;
     public int Id { get; set; }
     public string? IdentityId { get; init; }
     public UserType UserType { get; set; }
@@ -21,6 +22,7 @@ internal sealed class User
     // Navigation
     public ICollection<UserOrgMembership>? UserOrgMemberships { get; set; }
     public ICollection<UserAudit> UserAudits { get; set; } = [];
+    private readonly List<IUserDomainEvent> _events = new List<IUserDomainEvent>();
 
     internal void FinaliseSetup()
     {
@@ -36,4 +38,23 @@ internal sealed class User
             membership.MarkAsActive();
         }
     }
+
+    internal void UpdateDetails(
+        string fullName,
+        string? workTelephone,
+        string workEmail,
+        DateTime dateTime
+    )
+    {
+        FullName = fullName;
+        WorkTelephone = workTelephone;
+        if (!string.Equals(WorkEmail, workEmail, StringComparison.Ordinal))
+        {
+            _events.Add(new EmailUpdatedEvent());
+            WorkEmail = workEmail;
+        }
+        UpdatedAt = dateTime;
+    }
+
+    internal record EmailUpdatedEvent : IUserDomainEvent;
 }

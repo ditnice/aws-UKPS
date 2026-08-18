@@ -331,6 +331,24 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
 };
 
 /**
+ * Represents the details to update for an existing user.
+ */
+export type UpdateUserDetailsCommand = {
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone?: null | string;
+};
+
+/**
  * Represents the details of a user.
  */
 export type UserDetailsDto = {
@@ -883,6 +901,47 @@ export type PostUsersResponses = {
 };
 
 export type PostUsersResponse = PostUsersResponses[keyof PostUsersResponses];
+
+export type PatchUsersByUserIdData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: UpdateUserDetailsCommand;
+    path: {
+        /**
+         * The unique identifier of the user whose details are being updated.
+         */
+        userId: number | string;
+    };
+    query?: never;
+    url: '/users/{userId}';
+};
+
+export type PatchUsersByUserIdErrors = {
+    /**
+     * The supplied user details are invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * The caller is not authorised to update the specified user's details.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified user does not exist.
+     */
+    404: ProblemDetails;
+};
+
+export type PatchUsersByUserIdError = PatchUsersByUserIdErrors[keyof PatchUsersByUserIdErrors];
+
+export type PatchUsersByUserIdResponses = {
+    /**
+     * The user's details were successfully updated.
+     */
+    200: UserDetailsDto;
+};
+
+export type PatchUsersByUserIdResponse = PatchUsersByUserIdResponses[keyof PatchUsersByUserIdResponses];
 
 export type PostUsersOnboardData = {
     /**

@@ -10,6 +10,7 @@ import {
   postAuthMfa,
   getUsers,
   postAuthRefresh,
+  patchUsersByUserId,
 } from '@/client/generated/sdk.gen'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
@@ -209,6 +210,31 @@ function getCookie(name: string): string | null {
   return null
 }
 
+const UpdateUserDetail = () => {
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const formData = new FormData(event.target as HTMLFormElement)
+    const userId = formData.get('userId') as string
+    const workEmail = formData.get('email') as string
+    await patchUsersByUserId({ path: { userId }, body: { workEmail, fullName: 'Jacob Bentley' } })
+  }
+  return (
+    <form onSubmit={handleSubmit}>
+      <label>
+        User ID:
+        <input type="text" name="userId" required />
+      </label>
+      <br />
+      <label>
+        Email:
+        <input type="text" name="email" required />
+      </label>
+      <br />
+      <button type="submit">Submit</button>
+    </form>
+  )
+}
+
 export default function ExampleAuthenticationPage() {
   const [otpLink, setOtpLink] = useState<string | undefined>(undefined)
   const [authSession, setAuthSession] = useState<string | undefined>(undefined)
@@ -228,6 +254,7 @@ export default function ExampleAuthenticationPage() {
       <UserLogin />
       <TestFetch />
       <TestRefresh />
+      <UpdateUserDetail />
 
       {JSON.stringify({ otpLink, authSession })}
     </>

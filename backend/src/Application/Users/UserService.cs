@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -11,13 +12,19 @@ using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
 >;
+using UpdateUserDetailsResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserDetailsDto,
+    UKPS.Api.Application.Users.Errors.UpdateUserDetailsError
+>;
 
 namespace UKPS.Api.Application.Users;
 
 internal sealed class UserService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
-    IDateTimeProvider timeProvider
+    IDateTimeProvider timeProvider,
+    IIdentityService identityService,
+    ICurrentUserInfoService currentUserInfoService
 ) : IUserService
 {
     public async Task<GetUsersResult> GetUsers(
@@ -206,6 +213,54 @@ internal sealed class UserService(
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
+    }
+
+    public async Task<UpdateUserDetailsResult> UpdateUserDetails(
+        int userId,
+        UpdateUserDetailsCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+        if (user is null)
+        {
+            return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.UserDoesNotExist());
+        }
+
+        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+        bool isTheCurrentUserModifyingTheirOwnDetails = string.Equals(
+            currentUser.Email,
+            user.WorkEmail,
+            StringComparison.Ordinal
+        );
+
+        if (!isTheCurrentUserModifyingTheirOwnDetails)
+        {
+            return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
+        }
+
+        string previousWorkEmail = user.WorkEmail;
+        user.UpdateDetails(
+            command.FullName,
+            command.WorkTelephone,
+            command.WorkEmail,
+            timeProvider.GetUtcNow()
+        );
+
+        if (user.Events.OfType<User.EmailUpdatedEvent>().Any())
+        {
+            await identityService.UpdateUserEmail(
+                previousWorkEmail,
+                command.WorkEmail,
+                cancellationToken
+            );
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        UserDetailsDto output = MapToDto(user);
+        return UpdateUserDetailsResult.Ok(output);
     }
 
     private static UserDetailsDto MapToDto(User user)
