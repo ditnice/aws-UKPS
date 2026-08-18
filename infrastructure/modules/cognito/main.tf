@@ -11,8 +11,20 @@ resource "aws_cognito_user_pool" "users" {
   deletion_protection = "ACTIVE"
   user_pool_tier      = "PLUS"
 
-  username_attributes      = ["email"]
+  alias_attributes         = ["email"]
   auto_verified_attributes = ["email"]
+
+  schema {
+    name                = "email"
+    attribute_data_type = "String"
+    required            = true
+    mutable             = true
+
+    string_attribute_constraints {
+      min_length = 5
+      max_length = 2048
+    }
+  }
 
   username_configuration {
     case_sensitive = false
