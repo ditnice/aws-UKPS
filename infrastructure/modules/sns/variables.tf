@@ -30,8 +30,11 @@ variable "service_name" {
 
 variable "sns_alarm_emails" {
   description = "Map of recipient labels to email addresses subscribed to alarm notifications"
-  type        = map(string)
-  sensitive   = true
+  type = list(object({
+    name  = string
+    email = string
+  }))
+  sensitive = true
 
   validation {
     condition     = length(var.sns_alarm_emails) > 0 && alltrue([for email in values(var.sns_alarm_emails) : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", email))])
