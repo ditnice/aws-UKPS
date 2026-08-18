@@ -141,12 +141,13 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         GetUsersQueryDtoFaker faker = new GetUsersQueryDtoFaker();
         foreach (var _ in Enumerable.Range(0, 50))
         {
+            _mockUserService.ClearReceivedCalls();
             var query = faker.Generate();
             var url = AppendQueryParams(UsersUrl, faker.Generate());
             await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
             await _mockUserService
-                .Received()
+                .Received(1)
                 .GetUsers(
                     Arg.Do<GetUsersQueryDto>(x => x.ShouldBeEquivalentTo(query)),
                     Arg.Any<CancellationToken>()
