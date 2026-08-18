@@ -141,7 +141,7 @@ public class UserController(IUserService userService) : ControllerBase
     [HttpPatch("{userId}")]
     public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
         int userId,
-        UpdateUserDetailsCommand command,
+        [FromBody] UpdateUserDetailsCommand command,
         CancellationToken cancellationToken
     )
     {
