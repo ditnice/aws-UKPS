@@ -1,3 +1,5 @@
+import { buildSignInHref, signInPath } from '@/app/auth/constants'
+
 import type { CreateClientConfig } from './generated/client.gen'
 
 const browserBaseUrl = '/backend-api'
@@ -29,10 +31,14 @@ const browserFetch: typeof fetch = async (input, init) => {
 
   const refreshAlreadyCompleted = refreshGeneration !== browserRefreshGeneration
   if (!refreshAlreadyCompleted && !(await refreshBrowserToken())) {
+    redirectToSignIn()
     return response
   }
 
-  return globalThis.fetch(retryInput, init)
+  const retryResponse = await globalThis.fetch(retryInput, init)
+  if (retryResponse.status === 401) redirectToSignIn()
+
+  return retryResponse
 }
 
 function refreshBrowserToken(): Promise<boolean> {
@@ -88,6 +94,19 @@ function isAuthRequest(input: RequestInfo | URL): boolean {
   } catch {
     return false
   }
+}
+
+function redirectToSignIn(): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const returnTo = `${globalThis.location.pathname}${globalThis.location.search}`
+  if (globalThis.location.pathname === signInPath) {
+    return
+  }
+
+  globalThis.location.replace(buildSignInHref(returnTo))
 }
 
 function getCookie(name: string): string | null {
