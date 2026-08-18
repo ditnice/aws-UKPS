@@ -1701,10 +1701,7 @@
             "description": "Gets the user's work email address."
           },
           "phoneNumber": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": "string",
             "description": "Gets the user phone number."
           }
         },
@@ -1728,10 +1725,7 @@
             "description": "Gets the user's work email address."
           },
           "phoneNumber": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": "string",
             "description": "Gets the user phone number."
           },
           "organisation": {

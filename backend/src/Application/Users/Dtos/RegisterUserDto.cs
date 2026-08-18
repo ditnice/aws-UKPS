@@ -24,7 +24,7 @@ public sealed record RegisterUserDto
     /// Gets the user phone number.
     /// </summary>
     [Required]
-    public required string? PhoneNumber { get; init; }
+    public required string PhoneNumber { get; init; }
 
     /// <summary>
     /// Gets the name of the organisation the user is requesting access to.

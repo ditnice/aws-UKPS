@@ -212,17 +212,17 @@ internal sealed class UserService(
         RegisterUserDto registerUserDto,
         CancellationToken cancellationToken
     )
-    { // need to check if the user already exists?
-        var user = new User()
+    {
+        var userRegister = new UserRegister()
         {
+            Organisation = registerUserDto.Organisation,
             FullName = registerUserDto.FullName,
-            WorkTelephone = registerUserDto.PhoneNumber,
+            PhoneNumber = registerUserDto.PhoneNumber,
             WorkEmail = registerUserDto.WorkEmail,
-            CreatedAt = timeProvider.GetUtcNow(),
         };
-        dbContext.Users.Add(user);
+        dbContext.UserRegister.Add(userRegister);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Result<RegisterUserDetailsDto, RegisterUserError>.Ok(MapToRegisterDto(user));
+        return Result<RegisterUserDetailsDto, RegisterUserError>.Ok(MapToRegisterDto(userRegister));
     }
 
     private static UserDetailsDto MapToDto(User user)
@@ -238,13 +238,13 @@ internal sealed class UserService(
         };
     }
 
-    private static RegisterUserDetailsDto MapToRegisterDto(User user)
+    private static RegisterUserDetailsDto MapToRegisterDto(UserRegister userRegister)
     {
         return new()
         {
-            FullName = user.FullName,
-            PhoneNumber = user.WorkTelephone,
-            WorkEmail = user.WorkEmail,
+            FullName = userRegister.FullName,
+            PhoneNumber = userRegister.PhoneNumber,
+            WorkEmail = userRegister.WorkEmail,
         };
     }
 

@@ -273,7 +273,7 @@ export type RegisterUserDetailsDto = {
     /**
      * Gets the user phone number.
      */
-    phoneNumber: null | string;
+    phoneNumber: string;
 };
 
 /**
@@ -291,7 +291,7 @@ export type RegisterUserDto = {
     /**
      * Gets the user phone number.
      */
-    phoneNumber: null | string;
+    phoneNumber: string;
     /**
      * Gets the name of the organisation the user is requesting access to.
      */

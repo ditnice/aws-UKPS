@@ -24,5 +24,5 @@ public sealed record RegisterUserDetailsDto
     /// Gets the user phone number.
     /// </summary>
     [Required]
-    public required string? PhoneNumber { get; init; }
+    public required string PhoneNumber { get; init; }
 }
