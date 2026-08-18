@@ -1,6 +1,10 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Note: this file runs on the Edge runtime (Next's default for middleware/proxy.ts;
+// no `experimental.nodeMiddleware` is configured). Pino is Node-only and cannot be
+// imported here — see frontend/src/lib/logger.ts for the Node-runtime logging convention.
+
 const signInPath = '/auth/sign-in'
 const cognitoIssuer = process.env.COGNITO_ISSUER
 const cognitoClientId = process.env.COGNITO_CLIENT_ID

@@ -1,3 +1,7 @@
+import { after } from 'next/server'
+
+import { logger } from '@/lib/logger'
+
 import type { NextRequest } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -168,14 +172,20 @@ function logOriginRejection(request: NextRequest): void {
     // Keep diagnostics robust if Next supplies an unexpected URL.
   }
 
-  console.warn('Backend API proxy rejected unsafe request origin.', {
+  const context = {
     forwardedHost: request.headers.get('x-forwarded-host'),
     forwardedProto: request.headers.get('x-forwarded-proto'),
     host: request.headers.get('host'),
     method: request.method,
     origin: request.headers.get('origin'),
+    requestId: request.headers.get('x-request-id'),
     requestOrigin,
     requestUrl: request.url,
+    traceparent: request.headers.get('traceparent'),
+  }
+
+  after(() => {
+    logger.warn(context, 'Backend API proxy rejected unsafe request origin.')
   })
 }
 

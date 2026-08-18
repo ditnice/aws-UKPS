@@ -2,6 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DELETE, dynamic, GET, POST, runtime } from './route'
 
+const mocks = vi.hoisted(() => ({ warn: vi.fn() }))
+
+vi.mock('@/lib/logger', () => ({ logger: { warn: mocks.warn } }))
+
+vi.mock('next/server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/server')>()),
+  // `after()` throws outside a real Next.js request scope; this suite calls the
+  // exported route handlers directly, so run the deferred callback synchronously instead.
+  after: (task: () => void | Promise<void>) => task(),
+}))
+
 const originalBaseUrl = process.env.BACKEND_API_BASE_URL
 const originalFrontendPublicOrigin = process.env.FRONTEND_PUBLIC_ORIGIN
 
@@ -40,6 +51,7 @@ afterEach(() => {
   vi.unstubAllEnvs()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  mocks.warn.mockClear()
   if (originalBaseUrl === undefined) delete process.env.BACKEND_API_BASE_URL
   else process.env.BACKEND_API_BASE_URL = originalBaseUrl
   if (originalFrontendPublicOrigin === undefined) delete process.env.FRONTEND_PUBLIC_ORIGIN
@@ -75,8 +87,6 @@ describe('backend API route', () => {
   })
 
   it('allows safe methods without Origin and requires same-origin Origin for unsafe methods', async () => {
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-
     expect((await GET(request() as never, context('users'))).status).toBe(200)
     expect((await POST(request('POST') as never, context('users'))).status).toBe(403)
     expect(
@@ -95,14 +105,14 @@ describe('backend API route', () => {
         )
       ).status,
     ).toBe(200)
-    expect(consoleWarn).toHaveBeenCalledWith(
-      'Backend API proxy rejected unsafe request origin.',
+    expect(mocks.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'POST',
         origin: null,
         requestOrigin: 'https://frontend.example',
         requestUrl: 'https://frontend.example/backend-api/users?active=true',
       }),
+      'Backend API proxy rejected unsafe request origin.',
     )
   })
 

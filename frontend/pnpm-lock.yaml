@@ -147,6 +147,9 @@ importers:
       payload:
         specifier: 3.87.1
         version: 3.87.1(graphql@16.14.2)(supports-color@10.2.2)(typescript@5.9.3)
+      pino:
+        specifier: 9.14.0
+        version: 9.14.0
       qrcode.react:
         specifier: ^4.2.0
         version: 4.2.0(react@19.2.8)
@@ -205,6 +208,9 @@ importers:
       jsdom:
         specifier: 28.1.0
         version: 28.1.0(supports-color@10.2.2)
+      pino-pretty:
+        specifier: 13.1.2
+        version: 13.1.2
       prettier:
         specifier: ^3.9.6
         version: 3.9.6
