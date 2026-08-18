@@ -2,6 +2,7 @@
 @use '@/styles/utils';
 @use '@/styles/variables';
 @use '@/styles/colours';
+@use '@/styles/visibility';
 
 $back-to-top-height: utils.rem(spacing.$medium * 3); // Line height + bottom and top padding
 
@@ -12,6 +13,12 @@ $back-to-top-height: utils.rem(spacing.$medium * 3); // Line height + bottom and
   @media print {
     display: none;
   }
+}
+
+// Applied when the page content doesn't fill the viewport, so there's nothing
+// to scroll back up from. Hidden visually, but still reachable by keyboard.
+.hidden:not(:focus-within) {
+  @include visibility.invisible;
 }
 
 .nav {
