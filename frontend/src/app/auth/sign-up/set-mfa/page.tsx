@@ -14,6 +14,7 @@ import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
+import { routeOnSuccessfulAuth } from '../../constants'
 import { signUpMfaSetupStorageKey } from '../constants'
 
 import styles from './page.module.scss'
@@ -99,6 +100,7 @@ export default function SignUpSetMfa() {
             code: normaliseSecurityCode(securityCode),
             setupToken: setup.setupToken,
           },
+          credentials: 'include',
         })
 
         if (!result.error) {
@@ -106,7 +108,7 @@ export default function SignUpSetMfa() {
             sessionStorage.removeItem(signUpMfaSetupStorageKey)
           } catch {}
 
-          router.push('/auth/sign-in')
+          router.push(routeOnSuccessfulAuth)
           return
         }
 

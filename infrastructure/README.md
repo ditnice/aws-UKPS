@@ -17,9 +17,8 @@ The reusable modules live in `modules/`. Environment compositions live in `envir
 | --- | --- | --- |
 | `dev` | `environments/dev` | Full composition |
 | `test` | `environments/test` | Placeholder |
-| `alpha` | `environments/alpha` | Placeholder |
-| `beta` | `environments/beta` | Placeholder |
-| `live` | `environments/live` | Placeholder |
+| `staging` | `environments/staging` | Placeholder |
+| `prod` | `environments/prod` | Placeholder |
 
 ## Required Manual Input
 
@@ -45,6 +44,6 @@ Example using SemVer image tags:
 export TF_VAR_frontend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend"
 export TF_VAR_backend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend"
 export TF_VAR_image_tag="1.2.3"
-export TF_VAR_sns_alarm_emails='{ platform = "platform@example.org", service = "service@example.org" }'
+export TF_VAR_sns_alarm_emails='[{"name":"platform","email":"platform@example.org"},{"name":"service","email":"service@example.org"}]'
 export TF_VAR_cloudfront_distribution_id="E123ABC456DEF"
 ```

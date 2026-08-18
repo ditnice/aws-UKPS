@@ -40,7 +40,7 @@ No modules.
 | <a name="input_bucket_key_enabled"></a> [bucket\_key\_enabled](#input\_bucket\_key\_enabled) | Whether S3 Bucket Keys are enabled for SSE-KMS | `bool` | `true` | no |
 | <a name="input_bucket_name"></a> [bucket\_name](#input\_bucket\_name) | Value to be used as bucket name | `string` | n/a | yes |
 | <a name="input_encryption_type"></a> [encryption\_type](#input\_encryption\_type) | Server-side encryption algorithm used by the bucket | `string` | `"aws:kms"` | no |
-| <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment (e.g. dev, test, alpha, etc.) | `string` | n/a | yes |
+| <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment (e.g. dev, test, staging, etc.) | `string` | n/a | yes |
 | <a name="input_force_destroy"></a> [force\_destroy](#input\_force\_destroy) | Whether to force delete all objects when destroying the bucket | `bool` | `false` | no |
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | KMS key ARN or ID used when encryption\_type is aws:kms | `string` | `null` | no |
 | <a name="input_logging"></a> [logging](#input\_logging) | S3 server access logging configuration | <pre>object({<br/>    target_bucket = string<br/>    target_prefix = optional(string)<br/>  })</pre> | n/a | yes |

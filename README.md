@@ -46,6 +46,6 @@ For more information, see the [frontend README](frontend/README.md).
 
 ## Infrastructure
 
-Infrastructure is defined in Terraform and targets AWS across five environments: `dev`, `test`, `alpha`, `beta`, and `live`. Each environment directory contains its own backend, variable, and configuration files, keeping per-environment state isolated from shared module logic. Reusable modules live under `modules/` and are composed together within each environment.
+Infrastructure is defined in Terraform and targets AWS across four environments: `dev`, `test`, `staging`, and `prod`. Each environment directory contains its own backend, variable, and configuration files, keeping per-environment state isolated from shared module logic. Reusable modules live under `modules/` and are composed together within each environment.
 
 For more information, see the [infrastructure README](infrastructure/README.md).

@@ -204,7 +204,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         };
     }
 
-    public async Task VerifySoftwareToken(
+    public async Task<AuthenticationCredentialsDto> VerifySoftwareToken(
         string username,
         string authenticationSessionId,
         string code,
@@ -215,26 +215,39 @@ internal sealed partial class CognitoIdentityService : IIdentityService
             new VerifySoftwareTokenRequest { Session = authenticationSessionId, UserCode = code },
             cancellationToken
         );
-        await _cognito.AdminRespondToAuthChallengeAsync(
-            new AdminRespondToAuthChallengeRequest
-            {
-                UserPoolId = _options.Value.UserPoolId,
-                ClientId = _options.Value.ClientId,
-                ChallengeName = ChallengeNameType.MFA_SETUP,
-                Session = verifyResponse.Session,
-                ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
+        AdminRespondToAuthChallengeResponse challengeResponse =
+            await _cognito.AdminRespondToAuthChallengeAsync(
+                new AdminRespondToAuthChallengeRequest
                 {
-                    ["USERNAME"] = username,
-                    ["SECRET_HASH"] = GenerateSecretHash(
-                        username,
-                        _options.Value.ClientId,
-                        _options.Value.ClientSecret
-                    ),
-                    ["SOFTWARE_TOKEN_MFA_CODE"] = code,
+                    UserPoolId = _options.Value.UserPoolId,
+                    ClientId = _options.Value.ClientId,
+                    ChallengeName = ChallengeNameType.MFA_SETUP,
+                    Session = verifyResponse.Session,
+                    ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        ["USERNAME"] = username,
+                        ["SECRET_HASH"] = GenerateSecretHash(
+                            username,
+                            _options.Value.ClientId,
+                            _options.Value.ClientSecret
+                        ),
+                        ["SOFTWARE_TOKEN_MFA_CODE"] = code,
+                    },
                 },
-            },
-            cancellationToken
-        );
+                cancellationToken
+            );
+
+        AuthenticationResultType auth =
+            challengeResponse.AuthenticationResult
+            ?? throw new NotAuthorizedException(
+                "Cognito MFA setup did not return authentication credentials."
+            );
+
+        return new AuthenticationCredentialsDto
+        {
+            AccessToken = auth.AccessToken,
+            RefreshToken = auth.RefreshToken,
+        };
     }
 
     public async Task MarkEmailAsVerified(string username, CancellationToken cancellationToken)

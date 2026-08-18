@@ -1,3 +1,4 @@
+using UKPS.Api.Application.Authentication.Dtos;
 using CreateNewUserResult = UKPS.Api.Application.Common.Result<
     string,
     UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
@@ -47,7 +48,8 @@ internal interface IIdentityService
         string updatedEmail,
         CancellationToken cancellationToken
     );
-    Task VerifySoftwareToken(
+
+    Task<AuthenticationCredentialsDto> VerifySoftwareToken(
         string username,
         string authenticationSessionId,
         string code,
