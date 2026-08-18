@@ -138,7 +138,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// </returns>
     [HttpPost]
     public async Task<ActionResult<RegisterUserDetailsDto>> RegisterUser(
-        RegisterUserDto registerUserDto,
+        [FromBody] RegisterUserDto registerUserDto,
         CancellationToken cancellationToken
     )
     {
