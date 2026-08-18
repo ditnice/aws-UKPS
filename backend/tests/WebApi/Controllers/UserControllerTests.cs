@@ -255,7 +255,6 @@ public class UserControllerTests
     public async Task RegisterUser_FieldsMissing_ReturnsBadRequest()
     {
         RegisterUserDto request = RegisterUserDto();
-
         _mockUserService
             .RegisterUser(Arg.Any<RegisterUserDto>(), TestContext.Current.CancellationToken)
             .Returns(
