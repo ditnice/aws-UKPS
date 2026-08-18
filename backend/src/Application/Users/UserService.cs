@@ -208,6 +208,23 @@ internal sealed class UserService(
         return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
     }
 
+    public async Task<Result<UserDetailsDto, RegisterUserError>> RegisterUser(
+        RegisterUserDto registerUserDto,
+        CancellationToken cancellationToken
+    )
+    { // need to check if the user already exists?
+        var user = new User()
+        {
+            FullName = registerUserDto.FullName,
+            WorkTelephone = registerUserDto.PhoneNumber,
+            WorkEmail = registerUserDto.WorkEmail,
+            CreatedAt = timeProvider.GetUtcNow(),
+        };
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Result<UserDetailsDto, RegisterUserError>.Ok(MapToDto(user));
+    }
+
     private static UserDetailsDto MapToDto(User user)
     {
         return new()

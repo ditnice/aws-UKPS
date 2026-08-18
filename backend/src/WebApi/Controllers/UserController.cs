@@ -111,4 +111,57 @@ public class UserController(IUserService userService) : ControllerBase
                 }
         );
     }
+
+    /// <summary>
+    /// Registers a new user.
+    /// </summary>
+    /// <param name="registerUserDto">
+    /// The details required to register the user.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult{TValue}"/> containing the registered user's details when the
+    /// operation succeeds. Returns:
+    /// <list type="bullet">
+    /// <item>
+    /// <description><c>400 Bad Request</c> if some of the required data is missing.</description>
+    /// </item>
+    /// <item>
+    /// <description><c>404 Not Found</c> if the specified organisation does not exist.</description>
+    /// </item>
+    /// <item>
+    /// <description><c>409 Conflict</c> if a user with the supplied email address is already registered.</description>
+    /// </item>
+    /// </list>
+    /// </returns>
+    [HttpPost]
+    public async Task<ActionResult<UserDetailsDto>> RegisterUser(
+        RegisterUserDto registerUserDto,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<UserDetailsDto, RegisterUserError> result = await userService.RegisterUser(
+            registerUserDto,
+            cancellationToken
+        );
+        return result.Match<ActionResult<UserDetailsDto>>(
+            x => Ok(x),
+            x =>
+                x switch
+                {
+                    RegisterUserError.NotFound => NotFound(
+                        "There is no organisation with that Organisation ID."
+                    ),
+                    RegisterUserError.MissingFields => BadRequest(
+                        "Some of the data required is missing."
+                    ),
+                    RegisterUserError.EmailConflict => Conflict(
+                        "A user with that email is already registered."
+                    ),
+                    _ => throw new UnreachableException(),
+                }
+        );
+    }
 }

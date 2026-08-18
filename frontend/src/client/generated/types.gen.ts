@@ -259,6 +259,28 @@ export type ProblemDetails = {
 };
 
 /**
+ * Represents the information required to register a new user.
+ */
+export type RegisterUserDto = {
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
+    /**
+     * Gets the name of the organisation the user is requesting access to.
+     */
+    organisation: string;
+};
+
+/**
  * Represents the information required to respond to a multi-factor
  * authentication challenge.
  */
@@ -850,34 +872,21 @@ export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
 
 export type PostUsersData = {
     /**
-     * A token used to cancel the operation&gt;
+     * A token used to cancel the operation.
      */
-    body: CreateUserRequestDto;
+    body: RegisterUserDto;
     path?: never;
     query?: never;
     url: '/users';
 };
 
-export type PostUsersErrors = {
-    /**
-     * Bad Request
-     */
-    400: ProblemDetails;
-    /**
-     * Not Found
-     */
-    404: ProblemDetails;
-    /**
-     * Conflict
-     */
-    409: ProblemDetails;
-};
-
-export type PostUsersError = PostUsersErrors[keyof PostUsersErrors];
-
 export type PostUsersResponses = {
     /**
-     * OK
+     *     An ActionResult&lt;TValue&gt; containing the registered user's details when the
+     * operation succeeds. Returns:
+     * * 400 Bad Request if some of the required data is missing.
+     * * 404 Not Found if the specified organisation does not exist.
+     * * 409 Conflict if a user with the supplied email address is already registered.
      */
     200: UserDetailsDto;
 };
