@@ -16,7 +16,6 @@ public class DatabaseConstraintTests : DatabaseTestBase
     private readonly UserFaker _userFaker = new();
     private readonly OrganisationFaker _organisationFaker = new();
     private readonly UserOrgMembershipFaker _membershipFaker = new();
-    private readonly UserOnboardingRecordFaker _userOnboardingRecordFaker = new();
 
     public DatabaseConstraintTests(PostgresFixture fixture)
         : base(fixture) { }
@@ -69,8 +68,9 @@ public class DatabaseConstraintTests : DatabaseTestBase
     [Fact]
     public async Task SaveChangesAsync_InvalidOrganisationReference_ThrowDbUpdateException()
     {
-        UserOnboardingRecord entity = _userOnboardingRecordFaker
-            .RuleFor(x => x.NewUserOrganisationId, _ => 999)
+        UserOrgMembership entity = _membershipFaker
+            .RuleFor(x => x.User, _ => _userFaker.Generate())
+            .RuleFor(x => x.OrganisationId, _ => 999)
             .Generate();
         Context.Add(entity);
         DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
@@ -79,7 +79,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
         PostgresException postgresException =
             exception.InnerException.ShouldBeOfType<PostgresException>();
         postgresException.ConstraintName.ShouldBe(
-            ConstraintNames.UserOnboardingRequiresOrganisation
+            ConstraintNames.UserMembershipRequiresOrganisation
         );
     }
 

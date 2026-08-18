@@ -3,8 +3,7 @@ data "aws_partition" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  name_prefix                 = "${var.project}-${var.environment}-${var.service_name}"
-  use_developer_email_sending = var.ses_identity_arn != null
+  name_prefix = "${var.project}-${var.environment}-${var.service_name}"
 }
 
 resource "aws_cognito_user_pool" "users" {
@@ -35,7 +34,7 @@ resource "aws_cognito_user_pool" "users" {
   }
 
   password_policy {
-    minimum_length                   = 14
+    minimum_length                   = 8
     password_history_size            = 5
     require_lowercase                = false
     require_numbers                  = false
@@ -59,11 +58,11 @@ resource "aws_cognito_user_pool" "users" {
   }
 
   email_configuration {
-    configuration_set      = local.use_developer_email_sending ? aws_sesv2_configuration_set.cognito[0].configuration_set_name : null
-    email_sending_account  = local.use_developer_email_sending ? "DEVELOPER" : "COGNITO_DEFAULT"
-    from_email_address     = local.use_developer_email_sending ? var.email_from_address : null
-    reply_to_email_address = local.use_developer_email_sending ? var.email_reply_to_address : null
-    source_arn             = local.use_developer_email_sending ? var.ses_identity_arn : null
+    configuration_set      = var.ses_configuration_set_name
+    email_sending_account  = "DEVELOPER"
+    from_email_address     = var.email_from_address
+    reply_to_email_address = var.email_reply_to_address
+    source_arn             = var.ses_identity_arn
   }
 
   tags = merge(var.tags, {
@@ -77,8 +76,8 @@ resource "aws_cognito_user_pool" "users" {
     prevent_destroy = true
 
     precondition {
-      condition     = var.ses_identity_arn == null || startswith(var.ses_identity_arn, "arn:${data.aws_partition.current.partition}:ses:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:identity/")
-      error_message = "SES identity ARN must be null or belong to the current AWS account, partition, and provider region."
+      condition     = startswith(var.ses_identity_arn, "arn:${data.aws_partition.current.partition}:ses:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:identity/")
+      error_message = "SES identity ARN must belong to the current AWS account, partition, and provider region."
     }
   }
 }

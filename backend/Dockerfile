@@ -14,6 +14,9 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish src/
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 
+# Npgsql may use GSSAPI during PostgreSQL connection negotiation in AWS.
+RUN apk add --no-cache krb5-libs
+
 WORKDIR /app
 
 ENV ASPNETCORE_HTTP_PORTS=8080

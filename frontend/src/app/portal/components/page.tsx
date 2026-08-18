@@ -1,5 +1,8 @@
 import Link from 'next/link'
 
+import { BackLink } from '@/components/BackLink/BackLink'
+import { PageHeader } from '@/components/PageHeader/PageHeader'
+
 import { componentDefinitions } from './_data/components'
 
 export const metadata = {
@@ -10,7 +13,10 @@ export const metadata = {
 export default function ComponentsPage() {
   return (
     <>
-      <h1>NICE Design System components</h1>
+      <PageHeader
+        backLink={<BackLink href={`/portal`}>Back</BackLink>}
+        heading="NICE Design System components"
+      />
       <p>Select a component to view its variants.</p>
       <ul>
         {componentDefinitions.map(({ label, slug }) => (

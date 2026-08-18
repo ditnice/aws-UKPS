@@ -44,20 +44,6 @@ module "sns" {
   sns_alarm_emails     = var.sns_alarm_emails
 }
 
-module "cognito" {
-  source = "../../modules/cognito"
-
-  project                  = local.project
-  environment              = local.environment
-  service_name             = local.service_name
-  kms_key_arn              = module.kms_backend.app_key_arn
-  ses_identity_arn         = var.cognito_ses_identity_arn
-  email_from_address       = var.cognito_email_from_address
-  email_reply_to_address   = var.cognito_email_reply_to_address
-  security_alarm_topic_arn = module.sns.cognito_alarms_topic_arn
-  cloudwatch_log_retention = var.ecs_log_retention
-}
-
 module "alb" {
   source = "../../modules/alb"
 
@@ -89,6 +75,31 @@ module "route53" {
   cloudfront_distribution_status         = module.networking.cloudfront_distribution_status
 }
 
+module "ses" {
+  source = "../../modules/ses"
+
+  project        = local.project
+  environment    = local.environment
+  service_name   = local.service_name
+  domain_name    = module.alb.frontend_host_name
+  hosted_zone_id = module.route53.base_domain_zone_id
+}
+
+module "cognito" {
+  source = "../../modules/cognito"
+
+  project                    = local.project
+  environment                = local.environment
+  service_name               = local.service_name
+  kms_key_arn                = module.kms_backend.app_key_arn
+  ses_identity_arn           = module.ses.identity_arn
+  ses_configuration_set_name = module.ses.configuration_set_name
+  email_from_address         = module.ses.from_email_address
+  email_reply_to_address     = module.ses.from_email_address
+  security_alarm_topic_arn   = module.sns.cognito_alarms_topic_arn
+  cloudwatch_log_retention   = var.ecs_log_retention
+}
+
 
 # ECS - Frontend
 module "ecs_frontend" {
@@ -113,10 +124,13 @@ module "ecs_frontend" {
   ecs_egress_cidr_blocks       = [module.networking.vpc_cidr]
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
   container_environment = {
-    BACKEND_API_BASE_URL = "https://${module.alb.backend_host_name}"
-    DATABASE_HOST        = module.aurora_frontend.cluster_endpoint
-    DATABASE_NAME        = module.aurora_frontend.database_name
-    DATABASE_PORT        = tostring(module.aurora_frontend.port)
+    BACKEND_API_BASE_URL   = "https://${module.alb.backend_host_name}"
+    COGNITO_CLIENT_ID      = module.cognito.app_client_id
+    COGNITO_ISSUER         = module.cognito.user_pool_issuer
+    DATABASE_HOST          = module.aurora_frontend.cluster_endpoint
+    DATABASE_NAME          = module.aurora_frontend.database_name
+    DATABASE_PORT          = tostring(module.aurora_frontend.port)
+    FRONTEND_PUBLIC_ORIGIN = "https://${module.alb.frontend_host_name}"
   }
   container_secrets = {
     DATABASE_PASSWORD = "${module.aurora_frontend.master_user_secret_arn}:password::"
@@ -143,6 +157,7 @@ module "frontend_ecs_alerts" {
   log_group_name     = module.ecs_frontend.cloudwatch_log_group_name
   desired_task_count = module.ecs_frontend.ecs_desired_count
   cluster_name       = module.ecs_frontend.cluster_name
+  ecs_service_name   = module.ecs_frontend.service_name
   log_pattern_alarms = {
     error-logs = {
       pattern           = "\"ERROR\""
@@ -188,21 +203,25 @@ module "ecs_backend" {
   # Cognito has no PrivateLink endpoint. Confirm that app subnet routes provide
   # NAT or controlled egress before deploying this service.
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
-  container_environment = merge({
-    AWS_REGION            = var.region
-    Cognito__Region       = var.region
-    Cognito__UserPoolId   = module.cognito.user_pool_id
-    Cognito__ClientId     = module.cognito.app_client_id
-    Cognito__Authority    = module.cognito.user_pool_issuer
-    Database__Host        = module.aurora_backend.cluster_endpoint
-    Database__Name        = module.aurora_backend.database_name
-    Database__Port        = tostring(module.aurora_backend.port)
-    Email__Region         = var.region
-    Email__FromAddress    = var.cognito_email_from_address
-    Email__ReplyToAddress = var.cognito_email_reply_to_address
-    }, module.cognito.ses_configuration_set_name == null ? {} : {
-    Email__ConfigurationSetName = module.cognito.ses_configuration_set_name
-  })
+  container_environment = {
+    AWS__Region                 = var.region
+    Cognito__Region             = var.region
+    Cognito__UserPoolId         = module.cognito.user_pool_id
+    Cognito__ClientId           = module.cognito.app_client_id
+    Cognito__Authority          = module.cognito.user_pool_issuer
+    Database__Host              = module.aurora_backend.cluster_endpoint
+    Database__MigrateOnStartup  = "true"
+    Database__Name              = module.aurora_backend.database_name
+    Database__Port              = tostring(module.aurora_backend.port)
+    Email__Region               = var.region
+    Email__BaseDomain           = module.alb.frontend_host_name
+    Email__FromAddress          = module.ses.from_email_address
+    Email__ReplyToAddress       = module.ses.from_email_address
+    Email__ConfigurationSetName = module.ses.configuration_set_name
+    Seeding__ReseedOnStartup    = "true"
+    Seeding__SuperUsersJson     = jsonencode(var.seeded_super_users)
+    UserOnboarding__SetupLink   = "https://${module.alb.frontend_host_name}"
+  }
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
     Database__Username    = "${module.aurora_backend.master_user_secret_arn}:username::"
@@ -227,6 +246,7 @@ module "backend_ecs_alerts" {
   log_group_name     = module.ecs_backend.cloudwatch_log_group_name
   desired_task_count = module.ecs_backend.ecs_desired_count
   cluster_name       = module.ecs_backend.cluster_name
+  ecs_service_name   = module.ecs_backend.service_name
   log_pattern_alarms = {
     error-logs = {
       pattern           = "\"ERROR\""

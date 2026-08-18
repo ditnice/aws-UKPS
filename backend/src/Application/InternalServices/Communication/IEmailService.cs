@@ -8,7 +8,7 @@ public interface IEmailService
     /// <summary>
     /// Sends an email message to the specified email address.
     /// </summary>
-    /// <param name="emailAddress">
+    /// <param name="recipient">
     /// The email address of the recipient.
     /// </param>
     /// <param name="email">
@@ -20,5 +20,5 @@ public interface IEmailService
     /// <returns>
     /// A task representing the asynchronous send operation.
     /// </returns>
-    Task SendEmail(string emailAddress, IEmail email, CancellationToken cancellationToken);
+    Task SendEmail(string recipient, IEmail email, CancellationToken cancellationToken);
 }
