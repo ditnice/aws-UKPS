@@ -137,16 +137,16 @@ public class UserController(IUserService userService) : ControllerBase
     /// </list>
     /// </returns>
     [HttpPost]
-    public async Task<ActionResult<UserDetailsDto>> RegisterUser(
+    public async Task<ActionResult<RegisterUserDetailsDto>> RegisterUser(
         RegisterUserDto registerUserDto,
         CancellationToken cancellationToken
     )
     {
-        Result<UserDetailsDto, RegisterUserError> result = await userService.RegisterUser(
+        Result<RegisterUserDetailsDto, RegisterUserError> result = await userService.RegisterUser(
             registerUserDto,
             cancellationToken
         );
-        return result.Match<ActionResult<UserDetailsDto>>(
+        return result.Match<ActionResult<RegisterUserDetailsDto>>(
             x => Ok(x),
             x =>
                 x switch

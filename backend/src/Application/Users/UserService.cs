@@ -208,7 +208,7 @@ internal sealed class UserService(
         return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
     }
 
-    public async Task<Result<UserDetailsDto, RegisterUserError>> RegisterUser(
+    public async Task<Result<RegisterUserDetailsDto, RegisterUserError>> RegisterUser(
         RegisterUserDto registerUserDto,
         CancellationToken cancellationToken
     )
@@ -222,7 +222,7 @@ internal sealed class UserService(
         };
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Result<UserDetailsDto, RegisterUserError>.Ok(MapToDto(user));
+        return Result<RegisterUserDetailsDto, RegisterUserError>.Ok(MapToRegisterDto(user));
     }
 
     private static UserDetailsDto MapToDto(User user)
@@ -234,6 +234,16 @@ internal sealed class UserService(
             FullName = user.FullName,
             JobTitle = user.JobTitle,
             WorkPhone = user.WorkTelephone,
+            WorkEmail = user.WorkEmail,
+        };
+    }
+
+    private static RegisterUserDetailsDto MapToRegisterDto(User user)
+    {
+        return new()
+        {
+            FullName = user.FullName,
+            PhoneNumber = user.WorkTelephone,
             WorkEmail = user.WorkEmail,
         };
     }

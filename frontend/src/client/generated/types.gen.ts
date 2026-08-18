@@ -259,6 +259,24 @@ export type ProblemDetails = {
 };
 
 /**
+ * Represents the details of a user who has been registered.
+ */
+export type RegisterUserDetailsDto = {
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: null | string;
+};
+
+/**
  * Represents the information required to register a new user.
  */
 export type RegisterUserDto = {
@@ -273,7 +291,7 @@ export type RegisterUserDto = {
     /**
      * Gets the user phone number.
      */
-    phoneNumber: string;
+    phoneNumber: null | string;
     /**
      * Gets the name of the organisation the user is requesting access to.
      */
@@ -888,7 +906,7 @@ export type PostUsersResponses = {
      * * 404 Not Found if the specified organisation does not exist.
      * * 409 Conflict if a user with the supplied email address is already registered.
      */
-    200: UserDetailsDto;
+    200: RegisterUserDetailsDto;
 };
 
 export type PostUsersResponse = PostUsersResponses[keyof PostUsersResponses];

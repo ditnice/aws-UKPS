@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 namespace UKPS.Api.Application.Users.Dtos;
 
 /// <summary>
-/// Represents the information required to register a new user.
+/// Represents the details of a user who has been registered.
 /// </summary>
-public sealed record RegisterUserDto
+public sealed record RegisterUserDetailsDto
 {
     /// <summary>
     /// Gets the user's full name.
@@ -25,10 +25,4 @@ public sealed record RegisterUserDto
     /// </summary>
     [Required]
     public required string? PhoneNumber { get; init; }
-
-    /// <summary>
-    /// Gets the name of the organisation the user is requesting access to.
-    /// </summary>
-    [Required]
-    public required string Organisation { get; init; }
 }

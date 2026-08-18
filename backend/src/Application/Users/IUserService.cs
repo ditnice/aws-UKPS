@@ -57,7 +57,7 @@ public interface IUserService
     /// <see cref="Result{TSuccess, TError}"/> with the registered user's details, or an
     /// error of type <see cref="RegisterUserError"/> if the user could not be registered.
     /// </returns>
-    Task<Result<UserDetailsDto, RegisterUserError>> RegisterUser(
+    Task<Result<RegisterUserDetailsDto, RegisterUserError>> RegisterUser(
         RegisterUserDto registerUserDto,
         CancellationToken cancellationToken
     );
