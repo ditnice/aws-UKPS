@@ -214,13 +214,13 @@ exports[`ApplicationLayout > renders the application chrome around children 1`] 
             <p
               class="_copyright_9fb952"
             >
-              ©
+              © 
               <abbr
                 title="National Institute for Health and Care Excellence"
               >
                 NICE
               </abbr>
-               2026. All rights reserved. Subject to
+               2026. All rights reserved. Subject to 
               <a
                 href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
               >
