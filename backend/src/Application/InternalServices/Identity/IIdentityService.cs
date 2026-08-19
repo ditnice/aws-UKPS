@@ -1,4 +1,8 @@
-using CreateNewUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.CreateNewUserError>;
+using UKPS.Api.Application.Authentication.Dtos;
+using CreateNewUserResult = UKPS.Api.Application.Common.Result<
+    string,
+    UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
+>;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
@@ -40,7 +44,7 @@ internal interface IIdentityService
         CancellationToken cancellationToken
     );
 
-    Task VerifySoftwareToken(
+    Task<AuthenticationCredentialsDto> VerifySoftwareToken(
         string username,
         string authenticationSessionId,
         string code,

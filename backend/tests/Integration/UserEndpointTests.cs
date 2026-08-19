@@ -40,24 +40,24 @@ public class UserEndpointTests : DatabaseTestBase
                 .Generate()
                 .Update(x =>
                 {
-                    x.UserId = users[0].Id;
-                    x.OrganisationId = organisations[0].Id;
+                    x.User = users[0];
+                    x.Organisation = organisations[0];
                     x.Status = UserOrgStatus.RequestedAccess;
                 }),
             _membershipFaker
                 .Generate()
                 .Update(x =>
                 {
-                    x.UserId = users[1].Id;
-                    x.OrganisationId = organisations[0].Id;
+                    x.User = users[1];
+                    x.Organisation = organisations[0];
                     x.Status = UserOrgStatus.Active;
                 }),
             _membershipFaker
                 .Generate()
                 .Update(x =>
                 {
-                    x.UserId = users[2].Id;
-                    x.OrganisationId = organisations[1].Id;
+                    x.User = users[2];
+                    x.Organisation = organisations[1];
                 })
         );
 
@@ -95,24 +95,24 @@ public class UserEndpointTests : DatabaseTestBase
                 .Generate()
                 .Update(x =>
                 {
-                    x.UserId = requestedUser.Id;
-                    x.OrganisationId = organisation.Id;
+                    x.User = requestedUser;
+                    x.Organisation = organisation;
                     x.Status = UserOrgStatus.RequestedAccess;
                 }),
             _membershipFaker
                 .Generate()
                 .Update(x =>
                 {
-                    x.UserId = activeUser.Id;
-                    x.OrganisationId = organisation.Id;
+                    x.User = activeUser;
+                    x.Organisation = organisation;
                     x.Status = UserOrgStatus.Active;
                 }),
             _membershipFaker
                 .Generate()
                 .Update(x =>
                 {
-                    x.UserId = inactiveUser.Id;
-                    x.OrganisationId = organisation.Id;
+                    x.User = inactiveUser;
+                    x.Organisation = organisation;
                     x.Status = UserOrgStatus.Inactive;
                 })
         );

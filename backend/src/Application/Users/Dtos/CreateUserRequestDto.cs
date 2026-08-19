@@ -21,16 +21,10 @@ public sealed record CreateUserRequestDto
     public required string Title { get; init; }
 
     /// <summary>
-    /// Gets the user's first name.
+    /// Gets the user's full name.
     /// </summary>
     [Required]
-    public required string FirstName { get; init; }
-
-    /// <summary>
-    /// Gets the user's last name.
-    /// </summary>
-    [Required]
-    public required string LastName { get; init; }
+    public required string FullName { get; init; }
 
     /// <summary>
     /// Gets the user's job title.

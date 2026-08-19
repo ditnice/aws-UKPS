@@ -74,10 +74,9 @@ updates:
 
   - package-ecosystem: terraform
     directories:
-      - /infrastructure/environments/alpha
-      - /infrastructure/environments/beta
       - /infrastructure/environments/dev
-      - /infrastructure/environments/live
+      - /infrastructure/environments/prod
+      - /infrastructure/environments/staging
       - /infrastructure/environments/test
       - /infrastructure/modules/alb
       - /infrastructure/modules/aurora

@@ -32,6 +32,7 @@ export type PasswordInputProps = Omit<
 }
 
 export function PasswordInput({
+  'aria-describedby': ariaDescribedBy,
   autoComplete = 'current-password',
   className,
   error,
@@ -53,6 +54,9 @@ export function PasswordInput({
   const rootClassName = clsx(styles.input, className)
   const fieldClassName = clsx(styles.field, error && styles.fieldError)
   const fieldStyle = width ? { ...style, ...inputWidthStyles[width] } : style
+  const hintId = hint ? `${name}-hint` : undefined
+  const errorId = error ? `${name}-error` : undefined
+  const describedBy = [ariaDescribedBy, hintId, errorId].filter(Boolean).join(' ') || undefined
 
   return (
     <div className={rootClassName} data-component="input">
@@ -61,11 +65,20 @@ export function PasswordInput({
           {label}
         </label>
       )}
-      {hint && <p className={styles.hint}>{hint}</p>}
-      {error && <p className={styles.error}>{errorMessage}</p>}
+      {hint && (
+        <p className={styles.hint} id={hintId}>
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p className={styles.error} id={errorId}>
+          {errorMessage}
+        </p>
+      )}
       <div className={styles.wrapper}>
         <input
           {...rest}
+          aria-describedby={describedBy}
           autoCapitalize="none"
           autoComplete={autoComplete}
           className={fieldClassName}

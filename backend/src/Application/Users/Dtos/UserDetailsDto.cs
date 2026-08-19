@@ -20,12 +20,7 @@ public sealed record UserDetailsDto
     /// <summary>
     /// Gets the user's first name.
     /// </summary>
-    public required string FirstName { get; init; }
-
-    /// <summary>
-    /// Gets the user's last name.
-    /// </summary>
-    public required string LastName { get; init; }
+    public required string FullName { get; init; }
 
     /// <summary>
     /// Gets the user's job title, if available.

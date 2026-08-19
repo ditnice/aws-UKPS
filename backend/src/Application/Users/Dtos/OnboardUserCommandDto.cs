@@ -8,6 +8,18 @@ namespace UKPS.Api.Application.Users.Dtos;
 public record OnboardUserCommandDto
 {
     /// <summary>
+    /// Gets the full name of the user to onboard.
+    /// </summary>
+    [Required]
+    public required string FullName { get; init; }
+
+    /// <summary>
+    /// Gets the contact number of the user to onboard.
+    /// </summary>
+    [Required]
+    public required string ContactNumber { get; init; }
+
+    /// <summary>
     /// Gets the email address of the user to onboard.
     /// </summary>
     [Required]

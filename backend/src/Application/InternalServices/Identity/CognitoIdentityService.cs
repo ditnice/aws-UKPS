@@ -6,7 +6,10 @@ using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
-using CreateNewUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.CreateNewUserError>;
+using CreateNewUserResult = UKPS.Api.Application.Common.Result<
+    string,
+    UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
+>;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
@@ -48,14 +51,22 @@ internal sealed partial class CognitoIdentityService : IIdentityService
 
         try
         {
-            await _cognito.AdminCreateUserAsync(request, cancellationToken);
+            var response = await _cognito.AdminCreateUserAsync(request, cancellationToken);
+            var sub =
+                response
+                    .User.Attributes.FirstOrDefault(x =>
+                        string.Equals(x.Name, "sub", StringComparison.Ordinal)
+                    )
+                    ?.Value
+                ?? throw new InvalidOperationException(
+                    "Cognito created the user but did not return the expected 'sub' attribute."
+                );
+            return CreateNewUserResult.Ok(sub);
         }
         catch (UsernameExistsException)
         {
             return CreateNewUserResult.Err(new CreateNewUserError.UsernameAlreadyExists());
         }
-
-        return CreateNewUserResult.Ok();
     }
 
     public async Task<UpdatePasswordResult> UpdatePassword(
@@ -176,7 +187,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         };
     }
 
-    public async Task VerifySoftwareToken(
+    public async Task<AuthenticationCredentialsDto> VerifySoftwareToken(
         string username,
         string authenticationSessionId,
         string code,
@@ -187,26 +198,39 @@ internal sealed partial class CognitoIdentityService : IIdentityService
             new VerifySoftwareTokenRequest { Session = authenticationSessionId, UserCode = code },
             cancellationToken
         );
-        await _cognito.AdminRespondToAuthChallengeAsync(
-            new AdminRespondToAuthChallengeRequest
-            {
-                UserPoolId = _options.Value.UserPoolId,
-                ClientId = _options.Value.ClientId,
-                ChallengeName = ChallengeNameType.MFA_SETUP,
-                Session = verifyResponse.Session,
-                ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
+        AdminRespondToAuthChallengeResponse challengeResponse =
+            await _cognito.AdminRespondToAuthChallengeAsync(
+                new AdminRespondToAuthChallengeRequest
                 {
-                    ["USERNAME"] = username,
-                    ["SECRET_HASH"] = GenerateSecretHash(
-                        username,
-                        _options.Value.ClientId,
-                        _options.Value.ClientSecret
-                    ),
-                    ["SOFTWARE_TOKEN_MFA_CODE"] = code,
+                    UserPoolId = _options.Value.UserPoolId,
+                    ClientId = _options.Value.ClientId,
+                    ChallengeName = ChallengeNameType.MFA_SETUP,
+                    Session = verifyResponse.Session,
+                    ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        ["USERNAME"] = username,
+                        ["SECRET_HASH"] = GenerateSecretHash(
+                            username,
+                            _options.Value.ClientId,
+                            _options.Value.ClientSecret
+                        ),
+                        ["SOFTWARE_TOKEN_MFA_CODE"] = code,
+                    },
                 },
-            },
-            cancellationToken
-        );
+                cancellationToken
+            );
+
+        AuthenticationResultType auth =
+            challengeResponse.AuthenticationResult
+            ?? throw new NotAuthorizedException(
+                "Cognito MFA setup did not return authentication credentials."
+            );
+
+        return new AuthenticationCredentialsDto
+        {
+            AccessToken = auth.AccessToken,
+            RefreshToken = auth.RefreshToken,
+        };
     }
 
     public async Task MarkEmailAsVerified(string username, CancellationToken cancellationToken)
