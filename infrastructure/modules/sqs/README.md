@@ -46,6 +46,8 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_dlq_name"></a> [dlq\_name](#output\_dlq\_name) | Name of the dead letter queue |
 | <a name="output_queue_arn"></a> [queue\_arn](#output\_queue\_arn) | ARN of the SQS queue |
+| <a name="output_queue_name"></a> [queue\_name](#output\_queue\_name) | Name of the queue |
 | <a name="output_queue_url"></a> [queue\_url](#output\_queue\_url) | url of the SQS queue |
 <!-- END_TF_DOCS -->
