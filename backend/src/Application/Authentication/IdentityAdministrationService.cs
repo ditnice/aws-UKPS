@@ -147,7 +147,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     }
 
     private async Task<SetupUserResult> InitiateAuthenticationAndGetOtp(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string userEmail,
         string newPassword,
         CancellationToken cancellationToken

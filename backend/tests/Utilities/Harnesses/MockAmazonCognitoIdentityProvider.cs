@@ -305,7 +305,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
         _users.Add(mockUser);
     }
 
-    internal MockUser? GetUser(UserIdentityId targetUser)
+    internal MockUser? GetUser(CognitoUsername targetUser)
     {
         return _users.FirstOrDefault(x =>
             string.Equals(x.Username, targetUser.Value, StringComparison.Ordinal)

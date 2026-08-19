@@ -7,10 +7,7 @@ using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Persistence.Entities.Identity;
-using CreateNewUserResult = UKPS.Api.Application.Common.Result<
-    string,
-    UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
->;
+using CreateNewUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.CreateNewUserError>;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
@@ -38,7 +35,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<CreateNewUserResult> CreateNewUser(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string email,
         CancellationToken cancellationToken
     )
@@ -53,17 +50,8 @@ internal sealed partial class CognitoIdentityService : IIdentityService
 
         try
         {
-            var response = await _cognito.AdminCreateUserAsync(request, cancellationToken);
-            var sub =
-                response
-                    .User.Attributes.FirstOrDefault(x =>
-                        string.Equals(x.Name, "sub", StringComparison.Ordinal)
-                    )
-                    ?.Value
-                ?? throw new InvalidOperationException(
-                    "Cognito created the user but did not return the expected 'sub' attribute."
-                );
-            return CreateNewUserResult.Ok(sub);
+            await _cognito.AdminCreateUserAsync(request, cancellationToken);
+            return CreateNewUserResult.Ok();
         }
         catch (UsernameExistsException)
         {
@@ -72,7 +60,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<UpdatePasswordResult> UpdatePassword(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string newPassword,
         CancellationToken cancellationToken
     )
@@ -98,7 +86,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public Task<InitiatedAuthenticationResult> InitiateAuthentication(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string newPassword,
         CancellationToken cancellationToken
     )
@@ -136,7 +124,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task UpdateUserEmail(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string updatedEmail,
         CancellationToken cancellationToken
     )
@@ -207,7 +195,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<AuthenticationCredentialsDto> VerifySoftwareToken(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string authenticationSessionId,
         string code,
         CancellationToken cancellationToken
@@ -253,7 +241,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task MarkEmailAsVerified(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         CancellationToken cancellationToken
     )
     {
@@ -269,7 +257,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<InitiatedAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string authenticationSession,
         string code,
         CancellationToken cancellationToken
@@ -384,7 +372,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     private static string GenerateSecretHash(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string clientId,
         string clientSecret
     )

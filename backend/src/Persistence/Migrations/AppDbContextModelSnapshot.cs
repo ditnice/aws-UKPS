@@ -290,7 +290,8 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.Property<string>("CognitoUsername")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(36)
+                        .HasColumnType("varchar(39)")
                         .HasColumnName("cognito_username");
 
                     b.Property<DateTime>("CreatedAt")
@@ -301,11 +302,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("full_name");
-
-                    b.Property<string>("IdentityId")
-                        .HasMaxLength(36)
-                        .HasColumnType("varchar(36)")
-                        .HasColumnName("identity_id");
 
                     b.Property<string>("JobTitle")
                         .HasColumnType("text")

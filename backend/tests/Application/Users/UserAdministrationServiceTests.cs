@@ -102,7 +102,6 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             );
 
         foundUser.ShouldNotBeNull();
-        foundUser.IdentityId.ShouldNotBeNull();
         foundUser.CreatedAt.ShouldBe(_currentTime);
         foundUser.FullName.ShouldBe(command.FullName);
         foundUser.WorkTelephone.ShouldBe(command.ContactNumber);

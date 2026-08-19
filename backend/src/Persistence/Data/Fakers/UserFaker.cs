@@ -8,10 +8,9 @@ internal sealed class UserFaker : Faker<User>
 {
     public UserFaker()
     {
-        RuleFor(x => x.IdentityId, f => f.Random.Guid().ToString());
         RuleFor(
             x => x.CognitoUsername,
-            f => new UserIdentityId() { Value = f.Random.AlphaNumeric(10) }
+            f => new CognitoUsername() { Value = f.Random.AlphaNumeric(10) }
         );
         RuleFor(x => x.FullName, f => f.Name.FullName());
         RuleFor(x => x.UserType, f => f.PickRandom<UserType>());

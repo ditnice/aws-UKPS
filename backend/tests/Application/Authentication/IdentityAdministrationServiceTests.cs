@@ -359,7 +359,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     private async Task<(
         Guid SetupToken,
         string Session,
-        UserIdentityId userIdentityId
+        CognitoUsername userIdentityId
     )> CreateAndDoInitialUserSetup()
     {
         UserOnboardingRecord onboardingRecord = await OnboardUserWithTimeOffset(minutesInPast: 15);

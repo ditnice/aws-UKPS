@@ -55,7 +55,7 @@ public class LoginServiceTests : DatabaseTestBase
         var testUser = _harness.Cognito.TestUser;
         var userFaker = new UserFaker().RuleFor(
             x => x.CognitoUsername,
-            _ => new UserIdentityId() { Value = testUser.Username }
+            _ => new CognitoUsername() { Value = testUser.Username }
         );
         _user = await AddEntity(userFaker.Generate(), TestContext.Current.CancellationToken);
         _defaultLoginRequest = new LoginRequest()

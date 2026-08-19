@@ -190,7 +190,7 @@ internal sealed class UserService(
         }
         var user = new User()
         {
-            CognitoUsername = UserIdentityId.GenerateNew(),
+            CognitoUsername = CognitoUsername.GenerateNew(),
             UserType = UserType.PharmaUser,
             Title = createUserRequestDto.Title,
             FullName = createUserRequestDto.FullName,

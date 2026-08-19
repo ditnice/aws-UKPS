@@ -1,9 +1,6 @@
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Persistence.Entities.Identity;
-using CreateNewUserResult = UKPS.Api.Application.Common.Result<
-    string,
-    UKPS.Api.Application.InternalServices.Identity.CreateNewUserError
->;
+using CreateNewUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.CreateNewUserError>;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
@@ -20,42 +17,42 @@ internal interface IIdentityService
     );
 
     Task<CreateNewUserResult> CreateNewUser(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string email,
         CancellationToken cancellationToken
     );
 
     Task<InitiatedAuthenticationResult> InitiateAuthentication(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string newPassword,
         CancellationToken cancellationToken
     );
 
-    Task MarkEmailAsVerified(UserIdentityId userIdentityId, CancellationToken cancellationToken);
+    Task MarkEmailAsVerified(CognitoUsername userIdentityId, CancellationToken cancellationToken);
     Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
         string refreshToken,
         CancellationToken cancellationToken
     );
     Task<InitiatedAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string authenticationSession,
         string code,
         CancellationToken cancellationToken
     );
 
     Task<UpdatePasswordResult> UpdatePassword(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string newPassword,
         CancellationToken cancellationToken
     );
     Task UpdateUserEmail(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string updatedEmail,
         CancellationToken cancellationToken
     );
 
     Task<AuthenticationCredentialsDto> VerifySoftwareToken(
-        UserIdentityId userIdentityId,
+        CognitoUsername userIdentityId,
         string authenticationSessionId,
         string code,
         CancellationToken cancellationToken

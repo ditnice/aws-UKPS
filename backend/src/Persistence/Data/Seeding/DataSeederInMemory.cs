@@ -109,8 +109,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
     private static User CreateConfiguredSuperUser(SeedSuperUser configuredUser) =>
         new()
         {
-            CognitoUsername = UserIdentityId.GenerateNew(), // fix in a bit
-            IdentityId = configuredUser.IdentityId,
+            CognitoUsername = CognitoUsername.Parse(configuredUser.CognitoUsername),
             FullName = configuredUser.FullName,
             WorkEmail = configuredUser.Email,
             UserType = UserType.ItAdmin,
@@ -162,7 +161,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
         }
 
         string[] duplicateIdentityIds = configuredUsers
-            .GroupBy(u => u.IdentityId, StringComparer.Ordinal)
+            .GroupBy(u => u.CognitoUsername, StringComparer.Ordinal)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
             .ToArray();
@@ -194,8 +193,8 @@ internal sealed class DataSeederInMemory : IDataSeeder
             }
 
             if (
-                string.IsNullOrWhiteSpace(configuredUser.IdentityId)
-                || configuredUser.IdentityId.Length > 36
+                string.IsNullOrWhiteSpace(configuredUser.CognitoUsername)
+                || configuredUser.CognitoUsername.Length > 36
             )
             {
                 throw new InvalidOperationException(
@@ -207,12 +206,16 @@ internal sealed class DataSeederInMemory : IDataSeeder
 
     private static bool MatchesConfiguredUser(User user, SeedSuperUser configuredUser) =>
         string.Equals(user.WorkEmail, configuredUser.Email, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(user.IdentityId, configuredUser.IdentityId, StringComparison.Ordinal);
+        || string.Equals(
+            user.CognitoUsername.Value,
+            configuredUser.CognitoUsername,
+            StringComparison.Ordinal
+        );
 
     internal sealed record SeedSuperUser
     {
         public required string FullName { get; init; }
         public required string Email { get; init; }
-        public required string IdentityId { get; init; }
+        public required string CognitoUsername { get; init; }
     }
 }
