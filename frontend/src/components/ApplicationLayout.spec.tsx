@@ -28,8 +28,8 @@ describe('ApplicationLayout', () => {
     const { asFragment } = render(<ApplicationLayout>Page content</ApplicationLayout>)
 
     expect(screen.getByText('Page content')).toBeDefined()
-    expect(screen.getByTestId('container')).toBeDefined()
-    expect(screen.getByTestId('footer')).toBeDefined()
+    expect(screen.getByRole('main')).toBeDefined()
+    expect(screen.getByRole('contentinfo')).toBeDefined()
     expect(document.getElementById('content-start')).not.toBeNull()
     expect(asFragment()).toMatchSnapshot()
   })
