@@ -40,24 +40,17 @@ data "aws_iam_policy_document" "backend_cognito" {
     ]
     resources = [module.cognito.user_pool_arn]
   }
-
   statement {
-    sid     = "SendApplicationEmail"
-    effect  = "Allow"
-    actions = ["ses:SendEmail"]
-    resources = [
-      module.ses.identity_arn,
-      module.ses.configuration_set_arn,
+    sid    = "SendEmailToQueue"
+    effect = "Allow"
+    actions = [
+      "sqs:SendMessage",
+      "sqs:GetQueueAttributes",
     ]
-
-    condition {
-      test     = "StringEquals"
-      variable = "ses:FromAddress"
-      values   = [module.ses.from_email_address]
-    }
+    resources = [module.sqs_email_backend.queue_arn]
   }
-
 }
+
 
 data "aws_iam_policy_document" "frontend_secrets" {
   statement {
