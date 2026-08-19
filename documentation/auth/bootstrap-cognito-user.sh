@@ -17,19 +17,31 @@ for name in "${required_environment[@]}"; do
   fi
 done
 
+if [ -z "${COGNITO_USERNAME:-}" ]; then
+  if ! command -v uuidgen >/dev/null 2>&1; then
+    echo "Required command not found: uuidgen" >&2
+    exit 1
+  fi
+
+  COGNITO_USERNAME="$(uuidgen | tr '[:upper:]' '[:lower:]')"
+fi
+
 secret_hash() {
-  printf "%s%s" "$EMAIL" "$CLIENT_ID" \
+  local username="$1"
+
+  printf "%s%s" "$username" "$CLIENT_ID" \
     | openssl dgst -sha256 -hmac "$CLIENT_SECRET" -binary \
     | openssl base64
 }
 
-SECRET_HASH="$(secret_hash)"
+AUTH_USERNAME="$EMAIL"
+AUTH_SECRET_HASH="$(secret_hash "$AUTH_USERNAME")"
 
-echo "Creating Cognito user for $EMAIL in user pool $USER_POOL_ID..."
+echo "Creating Cognito user $COGNITO_USERNAME for $EMAIL in user pool $USER_POOL_ID..."
 aws cognito-idp admin-create-user \
   --region "$REGION" \
   --user-pool-id "$USER_POOL_ID" \
-  --username "$EMAIL" \
+  --username "$COGNITO_USERNAME" \
   --message-action SUPPRESS \
   --user-attributes \
     Name=email,Value="$EMAIL" \
@@ -40,7 +52,7 @@ echo "Setting permanent password..."
 aws cognito-idp admin-set-user-password \
   --region "$REGION" \
   --user-pool-id "$USER_POOL_ID" \
-  --username "$EMAIL" \
+  --username "$COGNITO_USERNAME" \
   --password "$PASSWORD" \
   --permanent \
   >/dev/null
@@ -53,7 +65,7 @@ AUTH_RESPONSE="$(
     --client-id "$CLIENT_ID" \
     --auth-flow ADMIN_USER_PASSWORD_AUTH \
     --auth-parameters \
-      USERNAME="$EMAIL",PASSWORD="$PASSWORD",SECRET_HASH="$SECRET_HASH"
+      USERNAME="$AUTH_USERNAME",PASSWORD="$PASSWORD",SECRET_HASH="$AUTH_SECRET_HASH"
 )"
 
 CHALLENGE_NAME="$(jq -r '.ChallengeName // empty' <<< "$AUTH_RESPONSE")"
@@ -107,14 +119,14 @@ aws cognito-idp admin-respond-to-auth-challenge \
   --challenge-name MFA_SETUP \
   --session "$VERIFY_SESSION" \
   --challenge-responses \
-    USERNAME="$EMAIL",SECRET_HASH="$SECRET_HASH" \
+    USERNAME="$AUTH_USERNAME",SECRET_HASH="$AUTH_SECRET_HASH" \
   >/dev/null
 
 echo "Setting software token MFA as preferred..."
 aws cognito-idp admin-set-user-mfa-preference \
   --region "$REGION" \
   --user-pool-id "$USER_POOL_ID" \
-  --username "$EMAIL" \
+  --username "$COGNITO_USERNAME" \
   --software-token-mfa-settings Enabled=true,PreferredMfa=true \
   >/dev/null
 
@@ -122,13 +134,14 @@ USER_JSON="$(
   aws cognito-idp admin-get-user \
     --region "$REGION" \
     --user-pool-id "$USER_POOL_ID" \
-    --username "$EMAIL"
+    --username "$COGNITO_USERNAME"
 )"
 
 SUB="$(jq -r '.UserAttributes[] | select(.Name == "sub") | .Value' <<< "$USER_JSON")"
 
 echo
 echo "Cognito user created and TOTP MFA configured."
+echo "Cognito username: $COGNITO_USERNAME"
 echo "Email: $EMAIL"
 echo "Cognito sub: $SUB"
 echo
