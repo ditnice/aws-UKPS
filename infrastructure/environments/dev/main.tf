@@ -179,6 +179,23 @@ module "frontend_ecs_alerts" {
   }
 }
 
+
+# SQS - Email Backend
+module "sqs_email_backend" {
+  source = "../../modules/sqs"
+
+  project      = local.project
+  environment  = local.environment
+  service_name = "email-backend"
+  fifo         = false
+
+  tags = {
+    Name        = "${local.project}-${local.environment}-${local.service_name}-email-backend"
+    Environment = local.environment
+    Project     = local.project
+  }
+}
+
 # ECS - Backend
 module "ecs_backend" {
   source = "../../modules/ecs"
@@ -219,6 +236,7 @@ module "ecs_backend" {
     Email__FromAddress          = module.ses.from_email_address
     Email__ReplyToAddress       = module.ses.from_email_address
     Email__ConfigurationSetName = module.ses.configuration_set_name
+    Email__QueueUrl             = module.sqs_email_backend.queue_url
     Seeding__ReseedOnStartup    = "true"
     Seeding__SuperUsersJson     = jsonencode(var.seeded_super_users)
     UserOnboarding__SetupLink   = "https://${module.alb.frontend_host_name}"
