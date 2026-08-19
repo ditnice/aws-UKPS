@@ -160,6 +160,51 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SetupUser_WhenInvalidPassword_UserIsNotMarkedAsConsumed()
+    {
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 15);
+
+        _ = await _harness.Service.SetupUser(
+            _validSetupUserCommand with
+            {
+                SetupToken = entity.SetupToken,
+                NewPassword = _harness.Cognito.InvalidPassword,
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        UserOnboardingRecord entityAfter = await GetUserOnboardingRecord(entity.SetupToken);
+        entityAfter.ConsumedAt.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SetupUser_WhenPasswordUpdateFails_UserIsNotMarkedAsConsumed()
+    {
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 15);
+
+        _harness
+            .Cognito.Mock.AdminSetUserPasswordAsync(
+                Arg.Any<AdminSetUserPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<Exception>();
+
+        await Should.ThrowAsync<Exception>(async () =>
+        {
+            _ = await _harness.Service.SetupUser(
+                _validSetupUserCommand with
+                {
+                    SetupToken = entity.SetupToken,
+                },
+                TestContext.Current.CancellationToken
+            );
+        });
+
+        UserOnboardingRecord entityAfter = await GetUserOnboardingRecord(entity.SetupToken);
+        entityAfter.ConsumedAt.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task SetupUser_WhenCognitoThrowsAnNotAuthorizedException_ShouldReturnNotAuthorisedResult()
     {
         _harness
@@ -361,6 +406,19 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<VerifyMultiFactorAuthenticationError.InvalidCode>();
 
         _harness.Cognito.GetUser(_targetUser).ShouldNotBeNull().MfaSetup.ShouldBeFalse();
+    }
+
+    private async Task<UserOnboardingRecord> GetUserOnboardingRecord(Guid setupToken)
+    {
+        return await _harness
+                .GetClearedContext()
+                .UserOnboardingRecords.FindAsync(
+                    [setupToken],
+                    TestContext.Current.CancellationToken
+                )
+            ?? throw new InvalidOperationException(
+                "Expected UserOnboardingRecord could not be found."
+            );
     }
 
     private async Task<(Guid SetupToken, string Session)> CreateAndDoInitialUserSetup()

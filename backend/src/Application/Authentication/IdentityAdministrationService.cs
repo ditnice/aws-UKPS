@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
@@ -50,13 +51,12 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord = await _appDbContext
-            .UserOnboardingRecords.Include(x => x.User)
-                .ThenInclude(x => x!.UserOrgMemberships)
-            .FirstOrDefaultAsync(
-                x => x.SetupToken == command.SetupToken,
-                cancellationToken: cancellationToken
-            );
+        await using IDbContextTransaction transaction =
+            await _appDbContext.Database.BeginTransactionAsync(cancellationToken);
+        UserOnboardingRecord? userRecord = await GetUserRecord(
+            command.SetupToken,
+            cancellationToken
+        );
 
         if (userRecord is null)
         {
@@ -71,32 +71,38 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
 
         if (state != SetupTokenState.Valid)
         {
-            return state switch
-            {
-                SetupTokenState.Consumed => SetupUserResult.Err(new UserSetupError.Consumed()),
-                SetupTokenState.Expired => SetupUserResult.Err(new UserSetupError.Expired()),
-                _ => throw new UnreachableException(
-                    $"Unexpected setup token state '{state}' encountered when validating setup token."
-                ),
-            };
+            return ConvertStateToError(state);
         }
 
-        userRecord.MarkAsConsumed(_dateTimeProvider.GetUtcNow());
-
-        await _appDbContext.SaveChangesAsync(cancellationToken);
-
-        Result<UpdatePasswordError> updatePasswordResult = await _identityService.UpdatePassword(
-            userRecord.User!.WorkEmail,
-            command.NewPassword,
-            cancellationToken
-        );
-
-        if (updatePasswordResult.IsErr)
+        try
         {
-            UserSetupError error = updatePasswordResult.Error.Match(
-                invalidPassword: _ => new UserSetupError.InvalidPassword()
+            userRecord.MarkAsConsumed(_dateTimeProvider.GetUtcNow());
+
+            await _appDbContext.SaveChangesAsync(cancellationToken);
+
+            Result<UpdatePasswordError> updatePasswordResult =
+                await _identityService.UpdatePassword(
+                    userRecord.User!.WorkEmail,
+                    command.NewPassword,
+                    cancellationToken
+                );
+
+            var updatePasswordError = updatePasswordResult.Match<UserSetupError?>(
+                () => null,
+                err => err.Match(invalidPassword: _ => new UserSetupError.InvalidPassword())
             );
-            return SetupUserResult.Err(error);
+            if (updatePasswordError is not null)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return SetupUserResult.Err(updatePasswordError);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
         }
 
         return await InitiateAuthenticationAndGetOtp(
@@ -112,13 +118,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     )
     {
         UserOnboardingRecord? userRecord =
-            await _appDbContext
-                .UserOnboardingRecords.Include(x => x.User)
-                    .ThenInclude(x => x!.UserOrgMemberships)
-                .FirstOrDefaultAsync(
-                    x => x.SetupToken == command.SetupToken,
-                    cancellationToken: cancellationToken
-                )
+            await GetUserRecord(command.SetupToken, cancellationToken)
             ?? throw new InvalidOperationException();
 
         try
@@ -219,5 +219,31 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             ),
             _ => SetupTokenValidationResult.Ok(),
         };
+    }
+
+    private static SetupUserResult ConvertStateToError(SetupTokenState? state)
+    {
+        return state switch
+        {
+            SetupTokenState.Consumed => SetupUserResult.Err(new UserSetupError.Consumed()),
+            SetupTokenState.Expired => SetupUserResult.Err(new UserSetupError.Expired()),
+            _ => throw new UnreachableException(
+                $"Unexpected setup token state '{state}' encountered when validating setup token."
+            ),
+        };
+    }
+
+    private Task<UserOnboardingRecord?> GetUserRecord(
+        Guid setupToken,
+        CancellationToken cancellationToken
+    )
+    {
+        return _appDbContext
+            .UserOnboardingRecords.Include(x => x.User)
+                .ThenInclude(x => x!.UserOrgMemberships)
+            .FirstOrDefaultAsync(
+                x => x.SetupToken == setupToken,
+                cancellationToken: cancellationToken
+            );
     }
 }
