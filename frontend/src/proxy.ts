@@ -15,8 +15,19 @@ export const config = {
 export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get('access_token')?.value
 
-  if (accessToken && cognitoIssuer && cognitoClientId && cognitoJwks) {
+  if (accessToken) {
     try {
+      if (!cognitoIssuer) {
+        throw Error('Cognito issuer is not configured')
+      }
+
+      if (!cognitoClientId) {
+        throw Error('Cognito client ID is not configured')
+      }
+
+      if (!cognitoJwks) {
+        throw Error('Cognito JWKS is not configured')
+      }
       const { payload } = await jwtVerify(accessToken, cognitoJwks, {
         issuer: cognitoIssuer,
       })
