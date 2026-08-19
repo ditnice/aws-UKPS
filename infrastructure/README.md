@@ -31,6 +31,7 @@ The `dev` environment requires these values to be supplied manually because they
 | `image_tag` | Container image tag used by the frontend and backend ECS services. | `1.2.3` |
 | `sns_alarm_emails` | Map of labels to email addresses subscribed to alarm SNS topics. Subscribers must confirm the AWS SNS email confirmation before receiving alerts. | `{ platform = "platform@example.org", service = "service@example.org" }` |
 | `cloudfront_distribution_id` | ID of the existing CloudFront distribution used by the Route53 alias records. | `E123ABC456DEF` |
+| `seeded_supers_users` (optional) | Map of super users to be created. | `[{"fullName":"Joe Blogss","email":"Joe.Bloggs@example.org","identityId":"e6e25274-f081-708d-62de-c90ad6217578"}]` |
 
 Optional inputs can be left as defaults for a standard `dev` deployment. Override them only when the environment needs different sizing, ports, domains, database settings, or alarm thresholds.
 
@@ -46,4 +47,5 @@ export TF_VAR_backend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazo
 export TF_VAR_image_tag="1.2.3"
 export TF_VAR_sns_alarm_emails='[{"name":"platform","email":"platform@example.org"},{"name":"service","email":"service@example.org"}]'
 export TF_VAR_cloudfront_distribution_id="E123ABC456DEF"
+export TF_VAT_seeded_supers_users='[{"fullName":"Ryan Smith","email":"ryan.smith@informed.com","identityId":"e6e25274-f081-708d-62de-c90ad6217578"}]'
 ```
