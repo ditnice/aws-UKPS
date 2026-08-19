@@ -10,6 +10,25 @@ namespace UKPS.Api.Application.Users;
 public interface IUserAdministrationService
 {
     /// <summary>
+    /// Registers a new user.
+    /// </summary>
+    /// <param name="registerUserDto">
+    /// The details required to register the user.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a
+    /// <see cref="Result{TSuccess, TError}"/> with the registered user's details, or an
+    /// error of type <see cref="RegisterUserError"/> if the user could not be registered.
+    /// </returns>
+    Task<Result<RegisterUserDetailsDto, RegisterUserError>> RegisterUser(
+        RegisterUserDto registerUserDto,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Onboards a new user into the system.
     /// </summary>
     /// <param name="command">

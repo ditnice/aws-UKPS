@@ -111,45 +111,4 @@ public class UserController(IUserService userService) : ControllerBase
                 }
         );
     }
-
-    /// <summary>
-    /// Registers a new user.
-    /// </summary>
-    /// <param name="registerUserDto">
-    /// The details required to register the user.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// An <see cref="ActionResult{TValue}"/> containing the registered user's details when the
-    /// operation succeeds. Returns:
-    /// <list type="bullet">
-    /// <item>
-    /// <description><c>400 Bad Request</c> if some of the required data is missing.</description>
-    /// </item>
-    /// </list>
-    /// </returns>
-    [HttpPost]
-    public async Task<ActionResult<RegisterUserDetailsDto>> RegisterUser(
-        [FromBody] RegisterUserDto registerUserDto,
-        CancellationToken cancellationToken
-    )
-    {
-        Result<RegisterUserDetailsDto, RegisterUserError> result = await userService.RegisterUser(
-            registerUserDto,
-            cancellationToken
-        );
-        return result.Match<ActionResult<RegisterUserDetailsDto>>(
-            x => Ok(x),
-            x =>
-                x switch
-                {
-                    RegisterUserError.MissingFields => BadRequest(
-                        "Some of the data required is missing."
-                    ),
-                    _ => throw new UnreachableException(),
-                }
-        );
-    }
 }

@@ -154,6 +154,23 @@ internal sealed partial class UserAdministrationService(
         LogSendingUserSignUpRequestEmail(sanitisedGuid);
     }
 
+    public async Task<Result<RegisterUserDetailsDto, RegisterUserError>> RegisterUser(
+        RegisterUserDto registerUserDto,
+        CancellationToken cancellationToken
+    )
+    {
+        var userRegister = new UserRegister()
+        {
+            Organisation = registerUserDto.Organisation,
+            FullName = registerUserDto.FullName,
+            PhoneNumber = registerUserDto.PhoneNumber,
+            WorkEmail = registerUserDto.WorkEmail,
+        };
+        dbContext.UserRegister.Add(userRegister);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Result<RegisterUserDetailsDto, RegisterUserError>.Ok(MapToRegisterDto(userRegister));
+    }
+
     [LoggerMessage(
         Level = LogLevel.Information,
         Message = "User Onboarding Record Created [Token = {token}...]."
@@ -167,4 +184,14 @@ internal sealed partial class UserAdministrationService(
     private partial void LogSendingUserSignUpRequestEmail(string token);
 
     private static string Sanitise(Guid guid) => guid.ToString().Substring(0, 8);
+
+    private static RegisterUserDetailsDto MapToRegisterDto(UserRegister userRegister)
+    {
+        return new()
+        {
+            FullName = userRegister.FullName,
+            PhoneNumber = userRegister.PhoneNumber,
+            WorkEmail = userRegister.WorkEmail,
+        };
+    }
 }

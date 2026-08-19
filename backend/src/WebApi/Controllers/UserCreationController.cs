@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
@@ -11,12 +12,50 @@ namespace UKPS.Api.WebApi.Controllers;
 /// Provides endpoints for creating new user accounts and managing the user
 /// onboarding process.
 /// </summary>
-[Authorize]
 [ApiController]
 [Route("users")]
 public class UserCreationController(IUserAdministrationService userAdministrationService)
     : ControllerBase
 {
+    /// <summary>
+    /// Registers a new user.
+    /// </summary>
+    /// <param name="registerUserDto">
+    /// The details required to register the user.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult{TValue}"/> containing the registered user's details when the
+    /// operation succeeds. Returns:
+    /// <list type="bullet">
+    /// <item>
+    /// <description><c>400 Bad Request</c> if some of the required data is missing.</description>
+    /// </item>
+    /// </list>
+    /// </returns>
+    [HttpPost("register")]
+    public async Task<ActionResult<RegisterUserDetailsDto>> RegisterUser(
+        [FromBody] RegisterUserDto registerUserDto,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<RegisterUserDetailsDto, RegisterUserError> result =
+            await userAdministrationService.RegisterUser(registerUserDto, cancellationToken);
+        return result.Match<ActionResult<RegisterUserDetailsDto>>(
+            x => Ok(x),
+            x =>
+                x switch
+                {
+                    RegisterUserError.MissingFields => BadRequest(
+                        "Some of the data required is missing."
+                    ),
+                    _ => throw new UnreachableException(),
+                }
+        );
+    }
+
     /// <summary>
     /// Creates a new user account and initiates the onboarding process.
     /// </summary>
@@ -44,6 +83,7 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// <response code="409">
     /// A user with the supplied username already exists.
     /// </response>
+    [Authorize]
     [HttpPost("onboard")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

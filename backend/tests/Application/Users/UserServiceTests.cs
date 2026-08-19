@@ -15,10 +15,6 @@ using CreateUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.UserDetailsDto,
     UKPS.Api.Application.Users.Errors.CreateUserError
 >;
-using RegisterUserResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Users.Dtos.RegisterUserDetailsDto,
-    UKPS.Api.Application.Users.Errors.RegisterUserError
->;
 
 namespace UKPS.Api.Tests.Application.Users;
 
@@ -29,7 +25,6 @@ public class UserServiceTests : DatabaseTestBase
     private readonly UserFaker _userFaker = new();
     private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
     private readonly CreateUserRequestDtoFaker _createUserRequestDtoFaker = new();
-    private readonly RegisterUserDtoFaker _registerUserDtoFaker = new();
     private readonly IUserService _service;
 
     public UserServiceTests(PostgresFixture fixture)
@@ -781,25 +776,6 @@ public class UserServiceTests : DatabaseTestBase
         ((CreateUserError.NotFound)error).OrganisationId.ShouldBe(999);
     }
 
-    [Fact]
-    public async Task RegisterUser_AllFieldsProvided_ReturnsDto()
-    {
-        RegisterUserDto registerUserDto = _registerUserDtoFaker.Generate();
-        RegisterUserResult result = await _service.RegisterUser(
-            registerUserDto,
-            TestContext.Current.CancellationToken
-        );
-        RegisterUserDetailsDto user = result.ShouldBeSuccess();
-        user.ShouldBe(
-            new RegisterUserDetailsDto
-            {
-                FullName = registerUserDto.FullName,
-                WorkEmail = registerUserDto.WorkEmail,
-                PhoneNumber = registerUserDto.PhoneNumber,
-            }
-        );
-    }
-
     [Theory]
     [InlineData(UserRole.Super, false)]
     [InlineData(UserRole.Champion, true)]
@@ -932,17 +908,6 @@ public class UserServiceTests : DatabaseTestBase
             RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
-        }
-    }
-
-    private sealed class RegisterUserDtoFaker : Faker<RegisterUserDto>
-    {
-        public RegisterUserDtoFaker()
-        {
-            RuleFor(x => x.FullName, f => f.Name.FullName());
-            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
-            RuleFor(x => x.PhoneNumber, f => f.Phone.PhoneNumber());
-            RuleFor(x => x.Organisation, f => f.Company.CompanyName());
         }
     }
 }

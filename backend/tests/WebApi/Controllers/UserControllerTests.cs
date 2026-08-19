@@ -232,45 +232,6 @@ public class UserControllerTests
             .Value.ShouldBe("Some of the data required is missing.");
     }
 
-    [Fact]
-    public async Task RegisterUser_IsValid_ReturnsDto()
-    {
-        RegisterUserDto request = RegisterUserDto();
-        RegisterUserDetailsDto expected = RegisterUserDetailsDto();
-
-        _mockUserService
-            .RegisterUser(request, TestContext.Current.CancellationToken)
-            .Returns(Result<RegisterUserDetailsDto, RegisterUserError>.Ok(expected));
-
-        ActionResult<RegisterUserDetailsDto> result = await _controller.RegisterUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-
-        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
-        ok.Value.ShouldBe(expected);
-    }
-
-    [Fact]
-    public async Task RegisterUser_FieldsMissing_ReturnsBadRequest()
-    {
-        RegisterUserDto request = RegisterUserDto();
-        _mockUserService
-            .RegisterUser(Arg.Any<RegisterUserDto>(), TestContext.Current.CancellationToken)
-            .Returns(
-                Result<RegisterUserDetailsDto, RegisterUserError>.Err(
-                    new RegisterUserError.MissingFields()
-                )
-            );
-        ActionResult<RegisterUserDetailsDto> result = await _controller.RegisterUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-        result
-            .Result.ShouldBeOfType<BadRequestObjectResult>()
-            .Value.ShouldBe("Some of the data required is missing.");
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -369,22 +330,5 @@ public class UserControllerTests
             WorkTelephone = "0123456789",
             WorkEmail = "user@example.com",
             OrganisationId = 1,
-        };
-
-    private static RegisterUserDto RegisterUserDto() =>
-        new()
-        {
-            FullName = "Test1",
-            PhoneNumber = "0123456789",
-            WorkEmail = "user@example.com",
-            Organisation = "Test2",
-        };
-
-    private static RegisterUserDetailsDto RegisterUserDetailsDto() =>
-        new()
-        {
-            FullName = "Test1",
-            PhoneNumber = "0123456789",
-            WorkEmail = "user@example.com",
         };
 }

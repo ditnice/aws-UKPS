@@ -890,15 +890,51 @@ export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
 
 export type PostUsersData = {
     /**
-     * A token used to cancel the operation.
+     * A token used to cancel the operation&gt;
      */
-    body: RegisterUserDto;
+    body: CreateUserRequestDto;
     path?: never;
     query?: never;
     url: '/users';
 };
 
+export type PostUsersErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
+};
+
+export type PostUsersError = PostUsersErrors[keyof PostUsersErrors];
+
 export type PostUsersResponses = {
+    /**
+     * OK
+     */
+    200: UserDetailsDto;
+};
+
+export type PostUsersResponse = PostUsersResponses[keyof PostUsersResponses];
+
+export type PostUsersRegisterData = {
+    /**
+     * A token used to cancel the operation.
+     */
+    body: RegisterUserDto;
+    path?: never;
+    query?: never;
+    url: '/users/register';
+};
+
+export type PostUsersRegisterResponses = {
     /**
      * An ActionResult&lt;TValue&gt; containing the registered user's details when the
      * operation succeeds. Returns:
@@ -907,7 +943,7 @@ export type PostUsersResponses = {
     200: RegisterUserDetailsDto;
 };
 
-export type PostUsersResponse = PostUsersResponses[keyof PostUsersResponses];
+export type PostUsersRegisterResponse = PostUsersRegisterResponses[keyof PostUsersRegisterResponses];
 
 export type PostUsersOnboardData = {
     /**
