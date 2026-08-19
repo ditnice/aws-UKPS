@@ -171,14 +171,10 @@ export interface Page {
   id: number;
   title: string;
   /**
-   * URL-safe identifier, e.g. "home" or "about-us"
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
+  generateSlug?: boolean | null;
   slug: string;
-  /**
-   * Full path, e.g. "/" or "/about-us/what-is-uk-pharmascan"
-   */
-  path: string;
-  navigationGroup?: string | null;
   navigationLabel?: string | null;
   navigationOrder?: number | null;
   layout: (
@@ -350,9 +346,8 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
-  path?: T;
-  navigationGroup?: T;
   navigationLabel?: T;
   navigationOrder?: T;
   layout?:

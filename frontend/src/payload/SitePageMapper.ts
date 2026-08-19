@@ -92,7 +92,7 @@ function mapBlock(block: Record<string, unknown>): SitePageBlock | null {
 }
 
 export function mapPage(doc: Page): SitePage | null {
-  if (!(doc.title && doc.slug && doc.path)) {
+  if (!(doc.title && doc.slug)) {
     return null
   }
 
@@ -111,10 +111,9 @@ export function mapPage(doc: Page): SitePage | null {
   return {
     id: doc.id,
     layout,
-    navigationGroup: doc.navigationGroup ?? undefined,
     navigationLabel: doc.navigationLabel ?? undefined,
     navigationOrder: doc.navigationOrder ?? undefined,
-    path: doc.path,
+    path: `/${doc.slug}`,
     slug: doc.slug,
     title: doc.title,
   }

@@ -1,3 +1,5 @@
+import { slugField } from 'payload'
+
 import { authenticated } from '@/access/authenticated'
 import { authenticatedOrPublished } from '@/access/authenticatedOrPublished'
 
@@ -13,7 +15,7 @@ export const Pages: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'path', 'navigationGroup'],
+    defaultColumns: ['title', 'slug', '_status'],
   },
   fields: [
     {
@@ -21,27 +23,7 @@ export const Pages: CollectionConfig = {
       type: 'text',
       required: true,
     },
-    {
-      name: 'slug',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'URL-safe identifier, e.g. "home" or "about-us"',
-      },
-    },
-    {
-      name: 'path',
-      type: 'text',
-      required: true,
-      unique: true,
-      admin: {
-        description: 'Full path, e.g. "/" or "/about-us/what-is-uk-pharmascan"',
-      },
-    },
-    {
-      name: 'navigationGroup',
-      type: 'text',
-    },
+    slugField({ useAsSlug: 'title' }),
     {
       name: 'navigationLabel',
       type: 'text',

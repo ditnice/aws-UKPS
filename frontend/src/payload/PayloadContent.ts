@@ -13,10 +13,9 @@ function getDefaultPageByPath(path: string) {
   return defaultPages.find((page) => page.path === path) ?? null
 }
 
-function getDefaultPagesByNavigationGroup(group: string) {
-  return defaultPages
-    .filter((page) => page.navigationGroup === group)
-    .sort((left, right) => (left.navigationOrder ?? 0) - (right.navigationOrder ?? 0))
+// Current design is that a path is always `/${slug}`, i.e. no nested routes like /about-us/what-is-ukps
+function pathToSlug(path: string): string {
+  return path.replace(/^\//, '')
 }
 
 export const getAllPages = cache(async (): Promise<SitePage[]> => {
@@ -26,7 +25,7 @@ export const getAllPages = cache(async (): Promise<SitePage[]> => {
       collection: 'pages',
       limit: 0,
       pagination: false,
-      sort: 'path',
+      sort: 'slug',
     })
 
     const pages = result.docs
@@ -48,8 +47,8 @@ export const getPageByPath = cache(async (path: string): Promise<SitePage | null
       limit: 1,
       pagination: false,
       where: {
-        path: {
-          equals: path,
+        slug: {
+          equals: pathToSlug(path),
         },
       },
     })
@@ -63,34 +62,5 @@ export const getPageByPath = cache(async (path: string): Promise<SitePage | null
       error,
     )
     return getDefaultPageByPath(path)
-  }
-})
-
-export const getPagesByNavigationGroup = cache(async (group: string): Promise<SitePage[]> => {
-  try {
-    const payload = await getPayloadClient()
-    const result = await payload.find({
-      collection: 'pages',
-      limit: 0,
-      pagination: false,
-      sort: 'navigationOrder',
-      where: {
-        navigationGroup: {
-          equals: group,
-        },
-      },
-    })
-
-    const pages = result.docs
-      .map((doc) => mapPage(doc))
-      .filter((doc): doc is SitePage => Boolean(doc))
-
-    return pages.length ? pages : getDefaultPagesByNavigationGroup(group)
-  } catch (error) {
-    console.error(
-      `Failed to load pages for navigation group "${group}" from Payload, falling back to default pages:`,
-      error,
-    )
-    return getDefaultPagesByNavigationGroup(group)
   }
 })
