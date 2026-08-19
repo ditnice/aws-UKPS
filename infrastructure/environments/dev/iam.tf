@@ -41,25 +41,22 @@ data "aws_iam_policy_document" "backend_cognito" {
     resources = [module.cognito.user_pool_arn]
   }
 
-  dynamic "statement" {
-    for_each = var.cognito_ses_identity_arn == null ? [] : [1]
+  statement {
+    sid     = "SendApplicationEmail"
+    effect  = "Allow"
+    actions = ["ses:SendEmail"]
+    resources = [
+      module.ses.identity_arn,
+      module.ses.configuration_set_arn,
+    ]
 
-    content {
-      sid     = "SendUserSetupEmail"
-      effect  = "Allow"
-      actions = ["ses:SendEmail"]
-      resources = [
-        var.cognito_ses_identity_arn,
-        module.cognito.ses_configuration_set_arn,
-      ]
-
-      condition {
-        test     = "StringEquals"
-        variable = "ses:FromAddress"
-        values   = [var.cognito_email_from_address]
-      }
+    condition {
+      test     = "StringEquals"
+      variable = "ses:FromAddress"
+      values   = [module.ses.from_email_address]
     }
   }
+
 }
 
 data "aws_iam_policy_document" "frontend_secrets" {

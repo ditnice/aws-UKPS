@@ -33,6 +33,7 @@
 | <a name="module_kms_frontend"></a> [kms\_frontend](#module\_kms\_frontend) | ../../modules/kms | n/a |
 | <a name="module_networking"></a> [networking](#module\_networking) | ../../modules/networking | n/a |
 | <a name="module_route53"></a> [route53](#module\_route53) | ../../modules/route53 | n/a |
+| <a name="module_ses"></a> [ses](#module\_ses) | ../../modules/ses | n/a |
 | <a name="module_sns"></a> [sns](#module\_sns) | ../../modules/sns | n/a |
 
 ## Resources
@@ -52,7 +53,7 @@
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_aurora_allow_major_version_upgrade"></a> [aurora\_allow\_major\_version\_upgrade](#input\_aurora\_allow\_major\_version\_upgrade) | Whether major engine version upgrades are allowed | `bool` | `false` | no |
 | <a name="input_aurora_apply_immediately"></a> [aurora\_apply\_immediately](#input\_aurora\_apply\_immediately) | Whether Aurora changes are applied immediately instead of during the maintenance window | `bool` | `true` | no |
-| <a name="input_aurora_enable_http_endpoint"></a> [aurora\_enable\_http\_endpoint](#input\_aurora\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `false` | no |
+| <a name="input_aurora_enable_http_endpoint"></a> [aurora\_enable\_http\_endpoint](#input\_aurora\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `true` | no |
 | <a name="input_aurora_engine_version"></a> [aurora\_engine\_version](#input\_aurora\_engine\_version) | SQL Engine version | `string` | `"17.9"` | no |
 | <a name="input_aurora_final_snapshot_identifier"></a> [aurora\_final\_snapshot\_identifier](#input\_aurora\_final\_snapshot\_identifier) | Identifier for the final snapshot when skip\_final\_snapshot is false | `string` | `"ukps-dev-aurora-final-snapshot"` | no |
 | <a name="input_aurora_preferred_backup_window"></a> [aurora\_preferred\_backup\_window](#input\_aurora\_preferred\_backup\_window) | Daily time range during which automated backups are created | `string` | `"02:00-03:00"` | no |
@@ -64,9 +65,6 @@
 | <a name="input_backend_image_repository_url"></a> [backend\_image\_repository\_url](#input\_backend\_image\_repository\_url) | Container image repository URL for the backend service, without an image tag or digest | `string` | n/a | yes |
 | <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain used to build workload hostnames | `string` | `"ukps.nice.org.uk"` | no |
 | <a name="input_cloudfront_distribution_id"></a> [cloudfront\_distribution\_id](#input\_cloudfront\_distribution\_id) | ID of the existing CloudFront distribution used by the Route53 alias records | `string` | n/a | yes |
-| <a name="input_cognito_email_from_address"></a> [cognito\_email\_from\_address](#input\_cognito\_email\_from\_address) | Verified sender address for authentication email | `string` | n/a | yes |
-| <a name="input_cognito_email_reply_to_address"></a> [cognito\_email\_reply\_to\_address](#input\_cognito\_email\_reply\_to\_address) | Reply-to address for authentication email | `string` | n/a | yes |
-| <a name="input_cognito_ses_identity_arn"></a> [cognito\_ses\_identity\_arn](#input\_cognito\_ses\_identity\_arn) | ARN of the verified SES identity in the deployment account and region used for authentication email. Leave null to use Cognito default email sending. | `string` | `null` | no |
 | <a name="input_connection_threshold"></a> [connection\_threshold](#input\_connection\_threshold) | Threshold for the number of database connections to trigger an alarm | `number` | `100` | no |
 | <a name="input_ecs_backend_cpu_allocation"></a> [ecs\_backend\_cpu\_allocation](#input\_ecs\_backend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
 | <a name="input_ecs_backend_memory_allocation"></a> [ecs\_backend\_memory\_allocation](#input\_ecs\_backend\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |
@@ -81,7 +79,8 @@
 | <a name="input_frontend_image_repository_url"></a> [frontend\_image\_repository\_url](#input\_frontend\_image\_repository\_url) | Container image repository URL for the frontend service, without an image tag or digest | `string` | n/a | yes |
 | <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Container image tag for the backend service | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
-| <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | `map(string)` | n/a | yes |
+| <a name="input_seeded_super_users"></a> [seeded\_super\_users](#input\_seeded\_super\_users) | Super users added to seeded backend data for organisation ID 1 | <pre>list(object({<br/>    fullName   = string<br/>    email      = string<br/>    identityId = string<br/>  }))</pre> | `[]` | no |
+| <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | <pre>list(object({<br/>    name  = string<br/>    email = string<br/>  }))</pre> | n/a | yes |
 
 ## Outputs
 

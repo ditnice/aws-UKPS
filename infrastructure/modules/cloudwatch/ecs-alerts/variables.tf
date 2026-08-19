@@ -9,12 +9,12 @@ variable "project" {
 }
 
 variable "environment" {
-  description = "The environment to deploy to (e.g. dev, test, alpha, etc.)"
+  description = "The environment to deploy to (e.g. dev, test, staging, etc.)"
   type        = string
 
   validation {
-    condition     = contains(["dev", "test", "alpha", "beta", "live"], var.environment)
-    error_message = "Environment must be one of: dev, test, alpha, beta, live."
+    condition     = contains(["dev", "test", "staging", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, test, staging, prod."
   }
 }
 
@@ -35,6 +35,16 @@ variable "cluster_name" {
   validation {
     condition     = length(trim(var.cluster_name, " ")) > 0
     error_message = "Cluster name cannot be empty."
+  }
+}
+
+variable "ecs_service_name" {
+  description = "Actual ECS service name used for CloudWatch metric dimensions"
+  type        = string
+
+  validation {
+    condition     = length(trim(var.ecs_service_name, " ")) > 0
+    error_message = "ECS service name cannot be empty."
   }
 }
 

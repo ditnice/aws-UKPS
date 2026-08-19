@@ -1,5 +1,6 @@
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
+using Bogus;
 using NSubstitute;
 
 namespace UKPS.Api.Tests.Utilities.Harnesses;
@@ -11,7 +12,12 @@ internal sealed class MockAmazonCognitoIdentityProvider
     public string ValidAuthenticationSession { get; } = "valid-auth-session";
     public string InvalidPassword { get; } = "invalid-password";
     public MockUser TestUser { get; } =
-        new MockUser() { Username = "test-user", Password = "test-user-password-123" };
+        new MockUser()
+        {
+            Username = "test-user",
+            Password = "test-user-password-123",
+            IdentityId = "b7f3c5f9-8b2d-4a71-9e6c-3d4f0a8c1e52",
+        };
 
     public IReadOnlyCollection<MockUser> Users => _users;
 
@@ -26,12 +32,22 @@ internal sealed class MockAmazonCognitoIdentityProvider
     {
         _users = [TestUser];
 
-        Mock.WhenForAnyArgs(x => x.AdminCreateUserAsync(default!, default!))
-            .Do(callInfo =>
-            {
-                var request = callInfo.Arg<AdminCreateUserRequest>();
-                _users.Add(new() { Username = request.Username });
-            });
+        Mock.AdminCreateUserAsync(Arg.Any<AdminCreateUserRequest>(), Arg.Any<CancellationToken>())
+            .Returns(
+                (callInfo) =>
+                {
+                    var request = callInfo.Arg<AdminCreateUserRequest>();
+                    var identityId = Guid.NewGuid().ToString();
+                    _users.Add(new() { Username = request.Username, IdentityId = identityId });
+                    return new AdminCreateUserResponse()
+                    {
+                        User = new UserType()
+                        {
+                            Attributes = [new() { Name = "sub", Value = identityId }],
+                        },
+                    };
+                }
+            );
 
         Mock.AdminSetUserPasswordAsync(
                 Arg.Any<AdminSetUserPasswordRequest>(),
@@ -250,5 +266,14 @@ internal sealed class MockAmazonCognitoIdentityProvider
         return _users.FirstOrDefault(x =>
             string.Equals(x.Username, targetUser, StringComparison.Ordinal)
         );
+    }
+
+    public sealed class MockUserFaker : Faker<MockUser>
+    {
+        public MockUserFaker()
+        {
+            RuleFor(x => x.Username, f => f.Internet.UserName());
+            RuleFor(x => x.IdentityId, f => f.Random.Guid().ToString());
+        }
     }
 }

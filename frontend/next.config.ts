@@ -38,6 +38,7 @@ const niceDesignSystemPackages = [
 ]
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   images: {
     localPatterns: [
       {

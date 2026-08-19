@@ -123,7 +123,10 @@ export async function OrganisationUsersTable({
             ? `Showing results ${getFirstResult(totalCount, page, pageSize)} to ${getLastResult(totalCount, page, pageSize)} of ${totalCount}`
             : 'Showing results'}
         </FilterSummary>
-        <Button>Add a new user</Button>
+        {/* TODO - remove the elementType when the Button wrapper is merged */}
+        <Button elementType={Link} href={`/portal/organisations/${organisationId}/onboard-user`}>
+          Add a new user
+        </Button>
       </div>
       {usersError || !users ? (
         <p role="alert">There was a problem retrieving the users. Please try again later.</p>

@@ -92,6 +92,7 @@ describe('PasswordInput', () => {
     )
 
     expect(screen.getByText('At least 8 characters')).toBeDefined()
+    expect(screen.getByLabelText('Password').getAttribute('aria-describedby')).toBe('password-hint')
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -101,6 +102,42 @@ describe('PasswordInput', () => {
     )
 
     expect(screen.getByText('Enter your password')).toBeDefined()
+    expect(screen.getByLabelText('Password').getAttribute('aria-describedby')).toBe(
+      'password-error',
+    )
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('stacks hint and error message ids in aria-describedby', () => {
+    const { asFragment } = render(
+      <PasswordInput
+        error
+        errorMessage="Enter your password"
+        hint="At least 8 characters"
+        label="Password"
+        name="password"
+      />,
+    )
+
+    expect(screen.getByLabelText('Password').getAttribute('aria-describedby')).toBe(
+      'password-hint password-error',
+    )
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('preserves consumer-provided aria-describedby', () => {
+    const { asFragment } = render(
+      <PasswordInput
+        aria-describedby="custom-description"
+        hint="At least 8 characters"
+        label="Password"
+        name="password"
+      />,
+    )
+
+    expect(screen.getByLabelText('Password').getAttribute('aria-describedby')).toBe(
+      'custom-description password-hint',
+    )
     expect(asFragment()).toMatchSnapshot()
   })
 

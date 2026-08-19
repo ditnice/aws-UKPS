@@ -1,9 +1,13 @@
 import Link from 'next/link'
 
+import { PageHeader } from '@/components/PageHeader/PageHeader'
+
 export default function PortalDashboard() {
   return (
     <>
-      <h1>Your dashboard</h1>
+      <PageHeader heading="Your dashboard" />
+
+      <p>Development quick reference links:</p>
       <ul>
         <li>
           <Link href="/portal/notfound">Not found example</Link>

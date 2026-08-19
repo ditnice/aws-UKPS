@@ -1272,6 +1272,26 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "A user with the supplied username already exists.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1375,8 +1395,7 @@
         "required": [
           "userType",
           "title",
-          "firstName",
-          "lastName",
+          "fullName",
           "jobTitle",
           "workTelephone",
           "workEmail",
@@ -1392,13 +1411,9 @@
             "type": "string",
             "description": "Gets the user's title (for example, Mr, Mrs, Ms, or Dr)."
           },
-          "firstName": {
+          "fullName": {
             "type": "string",
-            "description": "Gets the user's first name."
-          },
-          "lastName": {
-            "type": "string",
-            "description": "Gets the user's last name."
+            "description": "Gets the user's full name."
           },
           "jobTitle": {
             "type": "string",
@@ -1465,11 +1480,21 @@
       },
       "OnboardUserCommandDto": {
         "required": [
+          "fullName",
+          "contactNumber",
           "newUserEmail",
           "organisationId"
         ],
         "type": "object",
         "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Gets the full name of the user to onboard."
+          },
+          "contactNumber": {
+            "type": "string",
+            "description": "Gets the contact number of the user to onboard."
+          },
           "newUserEmail": {
             "type": "string",
             "description": "Gets the email address of the user to onboard."
@@ -1814,8 +1839,7 @@
         "required": [
           "userType",
           "title",
-          "firstName",
-          "lastName",
+          "fullName",
           "jobTitle",
           "workPhone",
           "workEmail"
@@ -1833,13 +1857,9 @@
             ],
             "description": "Gets the user's title (for example, Mr, Mrs, Ms, or Dr), if available."
           },
-          "firstName": {
+          "fullName": {
             "type": "string",
             "description": "Gets the user's first name."
-          },
-          "lastName": {
-            "type": "string",
-            "description": "Gets the user's last name."
           },
           "jobTitle": {
             "type": [

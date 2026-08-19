@@ -11,6 +11,7 @@ using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using OnboardingUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
 
@@ -40,53 +41,81 @@ internal sealed partial class UserAdministrationService(
         {
             return OnboardingUserResult.Err(new OnboardUserError.NotAllowed());
         }
-        Result<UserOnboardingRecord, OnboardUserError> userOnboardingRecord =
-            await CreateNewUserOnboardingRecord(command, cancellationToken);
-
-        if (userOnboardingRecord.IsErr)
-        {
-            return OnboardingUserResult.Err(userOnboardingRecord.Error);
-        }
-        await SendUserSignUpRequestedEmail(userOnboardingRecord.Value!, cancellationToken);
-
-        return OnboardingUserResult.Ok();
+        Result<User, OnboardUserError> createUserResult = await CreateNewUserOnboardingRecord(
+            command,
+            cancellationToken
+        );
+        return await createUserResult.Match(
+            async result =>
+            {
+                await SendUserSignUpRequestedEmail(result, cancellationToken);
+                return OnboardingUserResult.Ok();
+            },
+            err => Task.FromResult(OnboardingUserResult.Err(err))
+        );
     }
 
-    private async Task<
-        Result<UserOnboardingRecord, OnboardUserError>
-    > CreateNewUserOnboardingRecord(
+    private async Task<Result<User, OnboardUserError>> CreateNewUserOnboardingRecord(
         OnboardUserCommandDto command,
         CancellationToken cancellationToken
     )
     {
-        var result = await administerIdentityService.CreateNewUser(
-            command.NewUserEmail,
-            cancellationToken
-        );
-
-        if (result.IsErr)
+        Task<Result<User, OnboardUserError>> HandleIdentityUserCreationFailed(
+            CreateNewUserError error
+        )
         {
-            return result.Error switch
+            return error switch
             {
-                CreateNewUserError.UsernameAlreadyExists => Result<
-                    UserOnboardingRecord,
-                    OnboardUserError
-                >.Err(new OnboardUserError.UsernameAlreadyExists()),
+                CreateNewUserError.UsernameAlreadyExists => Task.FromResult(
+                    Result<User, OnboardUserError>.Err(new OnboardUserError.UsernameAlreadyExists())
+                ),
                 _ => throw new InvalidOperationException(
-                    $"An unexpected error occurred when creating a new user [{result.Error}]"
+                    $"An unexpected error occurred when creating a new user [{error}]"
                 ),
             };
         }
 
+        var result = await administerIdentityService.CreateNewUser(
+            command.NewUserEmail,
+            cancellationToken
+        );
+        return await result.Match(
+            x => CreateANewUserInDatabase(x, command, cancellationToken),
+            HandleIdentityUserCreationFailed
+        );
+    }
+
+    private async Task<Result<User, OnboardUserError>> CreateANewUserInDatabase(
+        string identityId,
+        OnboardUserCommandDto command,
+        CancellationToken cancellationToken
+    )
+    {
         var userOnboardingRecord = new UserOnboardingRecord()
         {
-            UserEmail = command.NewUserEmail,
-            NewUserOrganisationId = command.OrganisationId,
             SetupToken = Guid.CreateVersion7(),
             CreatedBy = currentUserInfoService.GetCurrentUserInfo().Email,
             CreatedAt = timeProvider.GetUtcNow(),
         };
-        dbContext.UserOnboardingRecords.Add(userOnboardingRecord);
+        var membership = new UserOrgMembership()
+        {
+            Status = UserOrgStatus.AwaitingSetup,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both, // URP 435 - Decide what initial value should be set.
+            UserRole = UserRole.Standard,
+            CreatedAt = timeProvider.GetUtcNow(),
+            OrganisationId = command.OrganisationId,
+        };
+        var user = new User()
+        {
+            IdentityId = identityId,
+            FullName = command.FullName,
+            WorkEmail = command.NewUserEmail,
+            WorkTelephone = command.ContactNumber,
+            OnboardingRecord = userOnboardingRecord,
+            CreatedAt = timeProvider.GetUtcNow(),
+            UserOrgMemberships = [membership],
+        };
+        dbContext.Add(user);
 
         try
         {
@@ -96,33 +125,32 @@ internal sealed partial class UserAdministrationService(
             when (updateException.InnerException is PostgresException postgresException
                 && string.Equals(
                     postgresException.ConstraintName,
-                    ConstraintNames.UserOnboardingRequiresOrganisation,
+                    ConstraintNames.UserMembershipRequiresOrganisation,
                     StringComparison.Ordinal
                 )
             )
         {
-            return Result<UserOnboardingRecord, OnboardUserError>.Err(
-                new OnboardUserError.InvalidOrganisation()
-            );
+            return Result<User, OnboardUserError>.Err(new OnboardUserError.InvalidOrganisation());
         }
 
         string sanitisedGuid = Sanitise(userOnboardingRecord.SetupToken);
         LogNewUserOnboardingRecordCreated(sanitisedGuid);
-        return Result<UserOnboardingRecord, OnboardUserError>.Ok(userOnboardingRecord);
+        return Result<User, OnboardUserError>.Ok(user);
     }
 
-    private async Task SendUserSignUpRequestedEmail(
-        UserOnboardingRecord userOnboardingRecord,
-        CancellationToken cancellationToken
-    )
+    private async Task SendUserSignUpRequestedEmail(User user, CancellationToken cancellationToken)
     {
-        string link = setupLinkCreator.GetSetupLink(userOnboardingRecord.SetupToken);
+        Uri link = setupLinkCreator.GetSetupLink(user.OnboardingRecord!.SetupToken);
+        if (user.OnboardingRecord is null)
+        {
+            throw new InvalidOperationException("Onboarding record was not set as expected.");
+        }
         await emailService.SendEmail(
-            userOnboardingRecord.UserEmail,
+            user.WorkEmail,
             new UserSignUpRequestEmail() { Link = link },
             cancellationToken
         );
-        string sanitisedGuid = Sanitise(userOnboardingRecord.SetupToken);
+        string sanitisedGuid = Sanitise(user.OnboardingRecord.SetupToken);
         LogSendingUserSignUpRequestEmail(sanitisedGuid);
     }
 

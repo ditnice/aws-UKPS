@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:24-alpine AS base
+FROM node:24-bookworm AS base
 
 WORKDIR /app
 
@@ -15,12 +15,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --store-dir /pnpm/store
 
-FROM base AS prod-deps
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY patches ./patches
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod --store-dir /pnpm/store
-
 FROM base AS build
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -28,28 +22,26 @@ COPY --from=deps /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml 
 
 COPY . .
 RUN mkdir -p public
+RUN mkdir -p media
 RUN pnpm build
 
-FROM base AS runtime
+# checkov:skip=CKV_DOCKER_2: Distroless base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP.
+FROM gcr.io/distroless/nodejs24-debian13:nonroot AS runtime
+
+WORKDIR /app
 
 ENV HOSTNAME=0.0.0.0 \
     NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000
 
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
-RUN mkdir -p media && chown nextjs:nodejs media
+COPY --from=build --chown=nonroot:nonroot /app/.next/standalone ./
+COPY --from=build --chown=nonroot:nonroot /app/.next/static ./.next/static
+COPY --from=build --chown=nonroot:nonroot /app/public ./public
+COPY --from=build --chown=nonroot:nonroot /app/media ./media
 
-COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=prod-deps --chown=nextjs:nodejs /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
-COPY --from=build --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=build --chown=nextjs:nodejs /app/public ./public
-
-USER nextjs
+USER nonroot
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget -qO- http://localhost:3000/ || exit 1
-
-CMD ["pnpm", "start"]
+CMD ["server.js"]

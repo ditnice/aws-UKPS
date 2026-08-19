@@ -314,8 +314,7 @@ public class UserControllerTests
         {
             UserType = UserType.PharmaUser,
             Title = "Mr",
-            FirstName = "Test1",
-            LastName = "Test2",
+            FullName = "Test1",
             JobTitle = "Test3",
             WorkPhone = "0123456789",
             WorkEmail = "user@example.com",
@@ -326,8 +325,7 @@ public class UserControllerTests
         {
             UserType = UserType.PharmaUser,
             Title = "Mr",
-            FirstName = "Test1",
-            LastName = "Test2",
+            FullName = "Test1",
             JobTitle = "Test3",
             WorkTelephone = "0123456789",
             WorkEmail = "user@example.com",

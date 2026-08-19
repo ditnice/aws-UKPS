@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Amazon.CognitoIdentityProvider.Model;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
@@ -17,7 +18,10 @@ using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
-using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError>;
+using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
 
 namespace UKPS.Api.Application.Authentication;
 
@@ -46,10 +50,13 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord = await _appDbContext.UserOnboardingRecords.FindAsync(
-            [command.SetupToken],
-            cancellationToken: cancellationToken
-        );
+        UserOnboardingRecord? userRecord = await _appDbContext
+            .UserOnboardingRecords.Include(x => x.User)
+                .ThenInclude(x => x!.UserOrgMemberships)
+            .FirstOrDefaultAsync(
+                x => x.SetupToken == command.SetupToken,
+                cancellationToken: cancellationToken
+            );
 
         if (userRecord is null)
         {
@@ -79,7 +86,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         await _appDbContext.SaveChangesAsync(cancellationToken);
 
         Result<UpdatePasswordError> updatePasswordResult = await _identityService.UpdatePassword(
-            userRecord.UserEmail,
+            userRecord.User!.WorkEmail,
             command.NewPassword,
             cancellationToken
         );
@@ -93,7 +100,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         }
 
         return await InitiateAuthenticationAndGetOtp(
-            userRecord.UserEmail,
+            userRecord.User.WorkEmail,
             command.NewPassword,
             cancellationToken
         );
@@ -105,21 +112,30 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     )
     {
         UserOnboardingRecord? userRecord =
-            await _appDbContext.UserOnboardingRecords.FindAsync(
-                [command.SetupToken],
-                cancellationToken: cancellationToken
-            ) ?? throw new InvalidOperationException();
+            await _appDbContext
+                .UserOnboardingRecords.Include(x => x.User)
+                    .ThenInclude(x => x!.UserOrgMemberships)
+                .FirstOrDefaultAsync(
+                    x => x.SetupToken == command.SetupToken,
+                    cancellationToken: cancellationToken
+                )
+            ?? throw new InvalidOperationException();
 
         try
         {
-            await _identityService.VerifySoftwareToken(
-                userRecord.UserEmail,
+            AuthenticationCredentialsDto credentials = await _identityService.VerifySoftwareToken(
+                userRecord.User!.WorkEmail,
                 command.AuthenticationSession,
                 command.Code,
                 cancellationToken
             );
-            await _identityService.MarkEmailAsVerified(userRecord.UserEmail, cancellationToken);
-            return VerifyMultiFactorAuthenticationResult.Ok();
+            await _identityService.MarkEmailAsVerified(
+                userRecord.User.WorkEmail,
+                cancellationToken
+            );
+            userRecord.User.FinaliseSetup();
+            await _appDbContext.SaveChangesAsync(cancellationToken);
+            return VerifyMultiFactorAuthenticationResult.Ok(credentials);
         }
         catch (CodeMismatchException)
         {
@@ -185,10 +201,11 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord = await _appDbContext.UserOnboardingRecords.FindAsync(
-            [setupToken],
-            cancellationToken: cancellationToken
-        );
+        UserOnboardingRecord? userRecord =
+            await _appDbContext.UserOnboardingRecords.FirstOrDefaultAsync(
+                x => x.SetupToken == setupToken,
+                cancellationToken: cancellationToken
+            );
 
         TimeSpan timeSpan = TimeSpan.FromSeconds(_options.Value.SetupTokenExpiryTimeSeconds);
         return (userRecord?.GetCurrentState(_dateTimeProvider.GetUtcNow(), timeSpan)) switch
