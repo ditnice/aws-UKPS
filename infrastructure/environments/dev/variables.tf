@@ -190,8 +190,11 @@ variable "connection_threshold" {
 
 variable "sns_alarm_emails" {
   description = "Map of recipient labels to email addresses subscribed to alarm notifications"
-  type        = map(string)
-  sensitive   = true
+  type = list(object({
+    name  = string
+    email = string
+  }))
+  sensitive = true
 }
 
 variable "seeded_super_users" {

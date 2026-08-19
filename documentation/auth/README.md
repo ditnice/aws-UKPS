@@ -1,8 +1,8 @@
 # Authentication Bootstrap
 
-This directory contains Cognito authentication notes and a helper script for creating the first Cognito user in an environment.
+This directory contains Cognito authentication notes and helper scripts for creating and deleting Cognito users in an environment.
 
-The bootstrap script only configures Cognito. It does not create the matching application database records. After the script completes, use the printed Cognito `sub` as the application DB `Users.IdentityId` value.
+The bootstrap script only configures Cognito. It does not create the matching application database records. After the script completes, use the printed Cognito `sub` as the application DB `Users.IdentityId` value. Similarly, the delete script only deletes from Cognito, and does not delete from the application DB.
 
 ## First Cognito User
 
@@ -51,6 +51,33 @@ Users.IdentityId = <printed Cognito sub>
 ```
 
 The user also needs an appropriate organisation membership and role before app authorization will work.
+
+## Deleting All Cognito Users
+
+Use `delete-all-cognito-users.sh` to bulk-delete every user from a Cognito user pool, e.g. to reset a dev/test environment without doing it one-by-one in the AWS console.
+
+Prerequisites:
+
+- AWS CLI authenticated to the target AWS account
+- `jq`
+- Cognito User Pool ID
+
+Run the script by passing values as environment variables:
+
+```bash
+USER_POOL_ID="eu-west-2_example" \
+REGION="eu-west-2" \
+./documentation/auth/delete-all-cognito-users.sh
+```
+
+The script will:
+
+- prompt you to type the user pool ID back as a confirmation before deleting anything
+- page through every user in the pool via `list-users`
+- delete each one with `admin-delete-user`
+- print a count of deleted users when done
+
+This only deletes Cognito users. It does not remove the corresponding application database records (`Users.IdentityId`, org memberships, audit rows, etc). If you're resetting an environment, clear or reseed those separately.
 
 ## Secret Handling
 

@@ -45,7 +45,7 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
   if (error || !organisation) {
     return (
       <section>
-        <h1>Unable to load organisation</h1>
+        <PageHeader heading="Unable to load organisation" />
         <p role="alert">There was a problem retrieving the organisation. Please try again later.</p>
       </section>
     )

@@ -54,6 +54,19 @@ repos:
           - --args=--framework terraform
           - --args=--quiet
 
+  # Docker
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 3.3.9
+    hooks:
+      - id: checkov
+        name: Checkov (Dockerfile)
+        files: ^(backend|frontend)/Dockerfile$
+        args:
+          - --framework
+          - dockerfile
+          - --compact
+          - --quiet
+
   # Frontend
   - repo: local
     hooks:
