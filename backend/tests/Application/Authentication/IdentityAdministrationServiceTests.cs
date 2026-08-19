@@ -1,5 +1,6 @@
 using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -8,9 +9,9 @@ using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
-using UKPS.Api.Application.Common;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
@@ -19,6 +20,10 @@ using UserSetupResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
+using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
 
 namespace UKPS.Api.Tests.Application.Authentication;
 
@@ -26,6 +31,8 @@ namespace UKPS.Api.Tests.Application.Authentication;
 public class IdentityAdministrationServiceTests : DatabaseTestBase
 {
     private readonly Faker<UserOnboardingRecord> _userOnboardingRecordFaker;
+    private readonly Faker<MockUser> _mockUserFaker =
+        new MockAmazonCognitoIdentityProvider.MockUserFaker();
     private readonly IServiceTestHarness<IIdentityAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
@@ -40,9 +47,11 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     public IdentityAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _userOnboardingRecordFaker = new UserOnboardingRecordFaker()
-            .RuleFor(x => x.NewUserOrganisation, _ => new OrganisationFaker().Generate())
-            .RuleFor(x => x.UserEmail, _ => _targetUser);
+        var userFaker = new UserFaker().RuleFor(x => x.WorkEmail, _targetUser);
+        _userOnboardingRecordFaker = new UserOnboardingRecordFaker().RuleFor(
+            x => x.User,
+            _ => userFaker.Generate()
+        );
         _harness = CreateTestHarness();
     }
 
@@ -130,7 +139,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             createdMinutesInThePast: minutesInThePast
         );
 
-        _harness.Cognito.AddCurrentUser(new() { Username = _targetUser });
+        _harness.Cognito.AddCurrentUser(_mockUserFaker.Generate() with { Username = _targetUser });
 
         UserSetupResult result = await _harness.Service.SetupUser(
             _validSetupUserCommand with
@@ -299,9 +308,39 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             },
             TestContext.Current.CancellationToken
         );
-        result.ShouldBeSuccess();
+        AuthenticationCredentialsDto credentials = result.ShouldBeSuccess();
+        credentials.AccessToken.ShouldBe("access-token");
+        credentials.RefreshToken.ShouldBe(_harness.Cognito.RefreshToken);
 
         _harness.Cognito.GetUser(_targetUser).ShouldNotBeNull().MfaSetup.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task VerifyMultiFactorAuthentication_ShouldMarkMembershipAsActive()
+    {
+        var (setupToken, session) = await CreateAndDoInitialUserSetup();
+
+        var result = await _harness.Service.VerifyMultiFactorAuthentication(
+            new VerifyMultiFactorAuthenticationCommand()
+            {
+                SetupToken = setupToken,
+                Code = _harness.Cognito.ValidMfaCode,
+                AuthenticationSession = session,
+            },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        var user = await _harness
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
+            .SingleOrDefaultAsync(
+                x => x.WorkEmail == _targetUser,
+                TestContext.Current.CancellationToken
+            );
+
+        user.ShouldNotBeNull();
+        user.UserOrgMemberships!.ShouldAllBe(x => x.Status == UserOrgStatus.Active);
     }
 
     [Fact]
@@ -309,7 +348,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     {
         var (setupToken, session) = await CreateAndDoInitialUserSetup();
 
-        Result<VerifyMultiFactorAuthenticationError> result =
+        VerifyMultiFactorAuthenticationResult result =
             await _harness.Service.VerifyMultiFactorAuthentication(
                 new VerifyMultiFactorAuthenticationCommand()
                 {
@@ -327,7 +366,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     private async Task<(Guid SetupToken, string Session)> CreateAndDoInitialUserSetup()
     {
         UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 15);
-        _harness.Cognito.AddCurrentUser(new() { Username = _targetUser });
+        _harness.Cognito.AddCurrentUser(_mockUserFaker.Generate() with { Username = _targetUser });
 
         UserSetupResult validationResult = await _harness.Service.SetupUser(
             _validSetupUserCommand with

@@ -1,3 +1,4 @@
+using Bogus;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
@@ -23,6 +24,7 @@ public class UserServiceTests : DatabaseTestBase
     private readonly OrganisationFaker _organisationFaker = new();
     private readonly UserFaker _userFaker = new();
     private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
+    private readonly CreateUserRequestDtoFaker _createUserRequestDtoFaker = new();
     private readonly IUserService _service;
 
     public UserServiceTests(PostgresFixture fixture)
@@ -77,8 +79,8 @@ public class UserServiceTests : DatabaseTestBase
         var membership = _userOrgMembershipFaker.Generate();
         membership.Update(x =>
         {
-            x.UserId = user.Id;
-            x.OrganisationId = organisation.Id;
+            x.User = user;
+            x.Organisation = organisation;
             x.UserRole = UserRole.Champion;
             x.Status = UserOrgStatus.Active;
         });
@@ -705,28 +707,26 @@ public class UserServiceTests : DatabaseTestBase
 
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        CreateUserRequestDto CreateDto = new()
+        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
         {
-            UserType = UserType.PharmaUser,
-            Title = "Mr",
-            FirstName = "Test1",
-            LastName = "Test2",
-            JobTitle = "Test3",
-            WorkTelephone = "123456789",
-            WorkEmail = "tests@test.com",
             OrganisationId = 1,
         };
         CreateUserResult result = await _service.CreateUser(
-            CreateDto,
+            createDto,
             TestContext.Current.CancellationToken
         );
         UserDetailsDto user = result.ShouldBeSuccess();
-        user.Title.ShouldBe("Mr");
-        user.FirstName.ShouldBe("Test1");
-        user.LastName.ShouldBe("Test2");
-        user.JobTitle.ShouldBe("Test3");
-        user.WorkEmail.ShouldBe("tests@test.com");
-        user.WorkPhone.ShouldBe("123456789");
+        user.ShouldBe(
+            new UserDetailsDto
+            {
+                Title = createDto.Title,
+                FullName = createDto.FullName,
+                JobTitle = createDto.JobTitle,
+                WorkEmail = createDto.WorkEmail,
+                WorkPhone = createDto.WorkTelephone,
+                UserType = UserType.PharmaUser,
+            }
+        );
     }
 
     [Fact]
@@ -748,16 +748,10 @@ public class UserServiceTests : DatabaseTestBase
         existingUser.WorkEmail = "tests@test.com";
         Context.Users.Add(existingUser);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        CreateUserRequestDto createDto = new()
+        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
         {
-            UserType = UserType.PharmaUser,
-            Title = "Mr",
-            FirstName = "Test1",
-            LastName = "Test2",
-            JobTitle = "Test3",
-            WorkTelephone = "123456789",
-            WorkEmail = "tests@test.com",
             OrganisationId = 1,
+            WorkEmail = existingUser.WorkEmail,
         };
         CreateUserResult result = await _service.CreateUser(
             createDto,
@@ -769,15 +763,8 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task CreateUser_OrgIDNotFound_ReturnsNotFound()
     {
-        CreateUserRequestDto createDto = new()
+        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
         {
-            UserType = UserType.PharmaUser,
-            Title = "Mr",
-            FirstName = "Test1",
-            LastName = "Test2",
-            JobTitle = "Test3",
-            WorkTelephone = "123456789",
-            WorkEmail = "tests@test.com",
             OrganisationId = 999,
         };
         CreateUserResult result = await _service.CreateUser(
@@ -909,4 +896,18 @@ public class UserServiceTests : DatabaseTestBase
             LastActiveFrom = lastActiveFrom,
             LastActiveTo = lastActiveTo,
         };
+
+    private sealed class CreateUserRequestDtoFaker : Faker<CreateUserRequestDto>
+    {
+        public CreateUserRequestDtoFaker()
+        {
+            RuleFor(x => x.UserType, f => f.PickRandom<UserType>());
+            RuleFor(x => x.Title, f => f.PickRandom("Mr", "Mrs", "Ms", "Dr"));
+            RuleFor(x => x.FullName, f => f.Name.FullName());
+            RuleFor(x => x.JobTitle, f => f.Name.JobTitle());
+            RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
+            RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
+        }
+    }
 }

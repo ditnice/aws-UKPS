@@ -17,7 +17,7 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private const string OnBoardEndpoint = "users/onboard";
+    private const string OnboardEndpoint = "users/onboard";
 
     private readonly OnboardUserCommandDtoFaker _onboardUserCommandDtoFaker = new();
     private readonly HttpClient _client;
@@ -50,11 +50,11 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task Post_WhenValidRequest_ShouldCallOnBoardUserMethod()
+    public async Task Post_WhenValidRequest_ShouldCallOnboardUserMethod()
     {
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         _ = await _client.PostAsJsonAsync(
-            OnBoardEndpoint,
+            OnboardEndpoint,
             command,
             TestContext.Current.CancellationToken
         );
@@ -67,7 +67,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     {
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
-            OnBoardEndpoint,
+            OnboardEndpoint,
             command,
             TestContext.Current.CancellationToken
         );
@@ -83,7 +83,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             .Returns(Result<OnboardUserError>.Err(new OnboardUserError.NotAllowed()));
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
-            OnBoardEndpoint,
+            OnboardEndpoint,
             command,
             TestContext.Current.CancellationToken
         );
@@ -91,18 +91,18 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task Post_WhenUserNameAlreadyExist_ShouldReturnBadRequest()
+    public async Task Post_WhenUserNameAlreadyExist_ShouldReturnConflict()
     {
         _mockService
             .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
             .Returns(Result<OnboardUserError>.Err(new OnboardUserError.UsernameAlreadyExists()));
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
-            OnBoardEndpoint,
+            OnboardEndpoint,
             command,
             TestContext.Current.CancellationToken
         );
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             .Returns(Result<OnboardUserError>.Err(new OnboardUserError.InvalidOrganisation()));
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
-            OnBoardEndpoint,
+            OnboardEndpoint,
             command,
             TestContext.Current.CancellationToken
         );
@@ -128,7 +128,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             NewUserEmail = string.Empty,
         };
         var response = await _client.PostAsJsonAsync(
-            OnBoardEndpoint,
+            OnboardEndpoint,
             command,
             TestContext.Current.CancellationToken
         );
@@ -143,7 +143,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             NewUserEmail = "invalid-email",
         };
         HttpResponseMessage response = await _client.PostAsJsonAsync(
-            OnBoardEndpoint,
+            OnboardEndpoint,
             command,
             TestContext.Current.CancellationToken
         );

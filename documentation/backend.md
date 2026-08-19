@@ -136,3 +136,6 @@ dotnet dev-certs https --trust
 ```
 dotnet dev-certs https --check --trust
 ```
+
+The frontend also needs to run over HTTPS to work with these cookies locally — see
+[`frontend.md#certificates`](./frontend.md#certificates) for the remaining setup.

@@ -11,7 +11,7 @@ public interface IEmail
     string Subject { get; }
 
     /// <summary>
-    /// Gets the body content of the email message.
+    /// Gets the body content of the email message in HTML.
     /// </summary>
-    string Content { get; }
+    string GetHtmlContent();
 }

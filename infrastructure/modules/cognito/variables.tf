@@ -15,8 +15,8 @@ variable "environment" {
   nullable    = false
 
   validation {
-    condition     = contains(["dev", "test", "alpha", "beta", "live"], var.environment)
-    error_message = "Environment must be one of: dev, test, alpha, beta, live."
+    condition     = contains(["dev", "test", "staging", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, test, staging, prod."
   }
 }
 
@@ -43,14 +43,24 @@ variable "kms_key_arn" {
 }
 
 variable "ses_identity_arn" {
-  description = "ARN of the verified SES identity in the deployment account and provider region used for authentication email. Leave null to use Cognito default email sending."
+  description = "ARN of the verified SES identity in the deployment account and provider region used for authentication email"
   type        = string
-  default     = null
-  nullable    = true
+  nullable    = false
 
   validation {
-    condition     = var.ses_identity_arn == null || can(regex("^arn:aws[a-zA-Z-]*:ses:[a-z0-9-]+:[0-9]{12}:identity/.+$", var.ses_identity_arn))
-    error_message = "SES identity ARN must be null or a valid SES identity ARN."
+    condition     = can(regex("^arn:aws[a-zA-Z-]*:ses:[a-z0-9-]+:[0-9]{12}:identity/.+$", var.ses_identity_arn))
+    error_message = "SES identity ARN must be a valid SES identity ARN."
+  }
+}
+
+variable "ses_configuration_set_name" {
+  description = "Name of the SES configuration set used for authentication email"
+  type        = string
+  nullable    = false
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_-]{1,64}$", var.ses_configuration_set_name))
+    error_message = "SES configuration set name must be 1-64 characters and contain only letters, numbers, underscores, or hyphens."
   }
 }
 

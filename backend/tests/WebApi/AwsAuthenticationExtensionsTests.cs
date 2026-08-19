@@ -6,15 +6,19 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.Authentication;
+using UKPS.Api.Persistence;
 using UKPS.Api.WebApi;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.Tests.WebApi;
 
 public sealed class AwsAuthenticationExtensionsTests
 {
     [Fact]
-    public void AddAwsBearerAuthentication_WhenBuilderIsNull_ThrowsArgumentNullException()
+    public void AddAwsBearerAuthentication_ShouldThrow_WhenBuilderIsNull()
     {
         WebApplicationBuilder? builder = null;
 
@@ -22,30 +26,137 @@ public sealed class AwsAuthenticationExtensionsTests
     }
 
     [Fact]
-    public void AddAwsBearerAuthentication_ConfiguresBearerAuthentication()
+    public async Task AddAwsBearerAuthentication_ShouldRegisterDevAuthentication_WhenDevAuthenticationIsEnabled()
     {
-        var expectedAuthorityAndIssuer =
-            "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_example";
-        var builder = CreateBuilder();
+        var builder = CreateBuilder(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "true",
+            }
+        );
 
         builder.AddAwsBearerAuthentication();
 
-        using var serviceProvider = builder.Services.BuildServiceProvider();
+        using var provider = builder.Services.BuildServiceProvider();
 
-        var optionsMonitor = serviceProvider.GetRequiredService<
-            IOptionsMonitor<JwtBearerOptions>
-        >();
+        var schemeProvider = provider.GetRequiredService<IAuthenticationSchemeProvider>();
+
+        var scheme = await schemeProvider.GetSchemeAsync(DevAuthHandler.AuthenticationScheme);
+
+        scheme.ShouldNotBeNull();
+        scheme.HandlerType.ShouldBe(typeof(DevAuthHandler));
+
+        var options = provider.GetService<DevAuthenticationOptions>();
+
+        options.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task AddAwsBearerAuthentication_ShouldNotRegisterJwtAuthentication_WhenDevAuthenticationIsEnabled()
+    {
+        var builder = CreateBuilder(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "true",
+            }
+        );
+
+        builder.AddAwsBearerAuthentication();
+
+        using var provider = builder.Services.BuildServiceProvider();
+
+        var schemeProvider = provider.GetRequiredService<IAuthenticationSchemeProvider>();
+
+        var bearerScheme = await schemeProvider.GetSchemeAsync(
+            JwtBearerDefaults.AuthenticationScheme
+        );
+
+        bearerScheme.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task AddAwsBearerAuthentication_ShouldRegisterStandardAuthentication_WhenDevAuthenticationIsDisabled()
+    {
+        var builder = CreateBuilder(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "false",
+                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                    "https://cognito-idp.eu-west-2.amazonaws.com/",
+                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
+            }
+        );
+
+        builder.AddAwsBearerAuthentication();
+
+        using var provider = builder.Services.AddDbContext<AppDbContext>().BuildServiceProvider();
+
+        var schemeProvider = provider.GetRequiredService<IAuthenticationSchemeProvider>();
+
+        var scheme = await schemeProvider.GetSchemeAsync(JwtBearerDefaults.AuthenticationScheme);
+
+        scheme.ShouldNotBeNull();
+        scheme.HandlerType.ShouldBe(typeof(JwtBearerHandler));
+
+        provider.GetService<ITokenValidationHandler>().ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task AddAwsBearerAuthentication_ShouldRegisterStandardAuthentication_WhenDevAuthenticationConfigurationIsMissing()
+    {
+        var builder = CreateBuilder(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                    "https://cognito-idp.eu-west-2.amazonaws.com/",
+                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
+            }
+        );
+
+        builder.AddAwsBearerAuthentication();
+
+        using var provider = builder.Services.BuildServiceProvider();
+
+        var schemeProvider = provider.GetRequiredService<IAuthenticationSchemeProvider>();
+
+        var scheme = await schemeProvider.GetSchemeAsync(JwtBearerDefaults.AuthenticationScheme);
+
+        scheme.ShouldNotBeNull();
+        scheme.HandlerType.ShouldBe(typeof(JwtBearerHandler));
+    }
+
+    [Fact]
+    public void AddAwsBearerAuthentication_ShouldConfigureJwtBearerOptions()
+    {
+        var serviceUrl = new Uri("https://cognito-idp.eu-west-2.amazonaws.com/");
+
+        var userPoolId = "eu-west-2_example";
+        var expectedAuthority = new Uri(serviceUrl, userPoolId).AbsoluteUri;
+
+        var builder = CreateBuilder(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] = serviceUrl.AbsoluteUri,
+                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = userPoolId,
+                [$"{CognitoConfiguration.SectionName}:Region"] = "eu-west-2",
+            }
+        );
+
+        builder.AddAwsBearerAuthentication();
+
+        using var provider = builder.Services.BuildServiceProvider();
+
+        var optionsMonitor = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
 
         var options = optionsMonitor.Get(JwtBearerDefaults.AuthenticationScheme);
 
-        options.Authority.ShouldBe(expectedAuthorityAndIssuer);
+        options.Authority.ShouldBe(expectedAuthority);
 
         options.TokenValidationParameters.ValidateLifetime.ShouldBeTrue();
         options.TokenValidationParameters.ValidateIssuer.ShouldBeTrue();
+        options.TokenValidationParameters.ValidIssuer.ShouldBe(expectedAuthority);
         options.TokenValidationParameters.ValidateIssuerSigningKey.ShouldBeTrue();
         options.TokenValidationParameters.ValidateAudience.ShouldBeFalse();
-
-        options.TokenValidationParameters.ValidIssuer.ShouldBe(expectedAuthorityAndIssuer);
 
         options.Events.ShouldNotBeNull();
         options.Events.OnMessageReceived.ShouldNotBeNull();
@@ -53,211 +164,29 @@ public sealed class AwsAuthenticationExtensionsTests
     }
 
     [Fact]
-    public async Task OnMessageReceived_WhenAccessTokenCookieExists_UsesCookieAsToken()
+    public async Task OnMessageReceived_ShouldReadAccessTokenFromCookie()
     {
-        var builder = CreateBuilder();
-        builder.AddAwsBearerAuthentication();
-
-        using var serviceProvider = builder.Services.BuildServiceProvider();
-
-        var options = serviceProvider
-            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
-            .Get(JwtBearerDefaults.AuthenticationScheme);
-
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers.Cookie = "access_token=the-access-token";
-
-        var context = new MessageReceivedContext(
-            httpContext,
-            new AuthenticationScheme(
-                JwtBearerDefaults.AuthenticationScheme,
-                JwtBearerDefaults.AuthenticationScheme,
-                typeof(JwtBearerHandler)
-            ),
-            options
-        );
-
-        await options.Events.OnMessageReceived(context);
-
-        context.Token.ShouldBe("the-access-token");
-    }
-
-    [Fact]
-    public async Task OnMessageReceived_WhenAccessTokenCookieDoesNotExist_SetsTokenToNull()
-    {
-        var builder = CreateBuilder();
-        builder.AddAwsBearerAuthentication();
-
-        using var serviceProvider = builder.Services.BuildServiceProvider();
-
-        var options = serviceProvider
-            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
-            .Get(JwtBearerDefaults.AuthenticationScheme);
-
-        var httpContext = new DefaultHttpContext();
-
-        var context = new MessageReceivedContext(
-            httpContext,
-            new AuthenticationScheme(
-                JwtBearerDefaults.AuthenticationScheme,
-                JwtBearerDefaults.AuthenticationScheme,
-                typeof(JwtBearerHandler)
-            ),
-            options
-        );
-
-        await options.Events.OnMessageReceived(context);
-
-        context.Token.ShouldBeNull();
-    }
-
-    [Fact]
-    public async Task OnTokenValidated_WhenTokenUseIsAccessAndClientIdMatches_DoesNotFail()
-    {
-        var builder = CreateBuilder();
-        builder.AddAwsBearerAuthentication();
-
-        using var serviceProvider = builder.Services.BuildServiceProvider();
-
-        var options = serviceProvider
-            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
-            .Get(JwtBearerDefaults.AuthenticationScheme);
-
-        var principal = CreatePrincipal(("token_use", "access"), ("client_id", "test-client-id"));
-
-        var context = CreateTokenValidatedContext(options, principal);
-
-        await options.Events.OnTokenValidated(context);
-
-        context.Result.ShouldBeNull();
-    }
-
-    [Fact]
-    public async Task OnTokenValidated_WhenTokenUseIsNotAccess_FailsAuthentication()
-    {
-        var builder = CreateBuilder();
-        builder.AddAwsBearerAuthentication();
-
-        using var serviceProvider = builder.Services.BuildServiceProvider();
-
-        var options = serviceProvider
-            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
-            .Get(JwtBearerDefaults.AuthenticationScheme);
-
-        var principal = CreatePrincipal(("token_use", "id"), ("client_id", "test-client-id"));
-
-        var context = CreateTokenValidatedContext(options, principal);
-
-        await options.Events.OnTokenValidated(context);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe("Token is not an access token.");
-    }
-
-    [Fact]
-    public async Task OnTokenValidated_WhenTokenUseClaimIsMissing_FailsAuthentication()
-    {
-        var builder = CreateBuilder();
-        builder.AddAwsBearerAuthentication();
-
-        using var serviceProvider = builder.Services.BuildServiceProvider();
-
-        var options = serviceProvider
-            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
-            .Get(JwtBearerDefaults.AuthenticationScheme);
-
-        var principal = CreatePrincipal(("client_id", "test-client-id"));
-
-        var context = CreateTokenValidatedContext(options, principal);
-
-        await options.Events.OnTokenValidated(context);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe("Token is not an access token.");
-    }
-
-    [Fact]
-    public async Task OnTokenValidated_WhenClientIdDoesNotMatch_FailsAuthentication()
-    {
-        var builder = CreateBuilder();
-        builder.AddAwsBearerAuthentication();
-
-        using var serviceProvider = builder.Services.BuildServiceProvider();
-
-        var options = serviceProvider
-            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
-            .Get(JwtBearerDefaults.AuthenticationScheme);
-
-        var principal = CreatePrincipal(("token_use", "access"), ("client_id", "wrong-client-id"));
-
-        var context = CreateTokenValidatedContext(options, principal);
-
-        await options.Events.OnTokenValidated(context);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe("Token was not issued to the expected client.");
-    }
-
-    [Fact]
-    public async Task OnTokenValidated_WhenClientIdClaimIsMissing_FailsAuthentication()
-    {
-        var builder = CreateBuilder();
-        builder.AddAwsBearerAuthentication();
-
-        using var serviceProvider = builder.Services.BuildServiceProvider();
-
-        var options = serviceProvider
-            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
-            .Get(JwtBearerDefaults.AuthenticationScheme);
-
-        var principal = CreatePrincipal(("token_use", "access"));
-
-        var context = CreateTokenValidatedContext(options, principal);
-
-        await options.Events.OnTokenValidated(context);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe("Token was not issued to the expected client.");
-    }
-
-    private static WebApplicationBuilder CreateBuilder()
-    {
-        var builder = WebApplication.CreateBuilder();
-
-        builder.Configuration.AddInMemoryCollection(
+        var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                ["cognito:ServiceUrl"] = "https://cognito.eu-west-2.amazonaws.com/",
-                ["cognito:UserPoolId"] = "eu-west-2_example",
-                ["cognito:ClientId"] = "test-client-id",
-                ["cognito:ClientSecret"] = "test-client-secret",
-                ["cognito:Region"] = "eu-west-2",
+                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                    "https://cognito-idp.eu-west-2.amazonaws.com/",
+                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
+                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
             }
         );
 
-        return builder;
-    }
+        builder.AddAwsBearerAuthentication();
 
-    private static ClaimsPrincipal CreatePrincipal(params (string Type, string Value)[] claims)
-    {
-        return new ClaimsPrincipal(
-            new ClaimsIdentity(
-                claims.Select(x => new Claim(x.Type, x.Value)),
-                authenticationType: "Test"
-            )
-        );
-    }
+        using var provider = builder.Services.BuildServiceProvider();
 
-    private static TokenValidatedContext CreateTokenValidatedContext(
-        JwtBearerOptions options,
-        ClaimsPrincipal principal
-    )
-    {
-        var httpContext = new DefaultHttpContext();
+        var options = provider
+            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+
+        var httpContext = new DefaultHttpContext { RequestServices = provider };
+
+        httpContext.Request.Headers.Cookie = "access_token=the-jwt-token";
 
         var scheme = new AuthenticationScheme(
             JwtBearerDefaults.AuthenticationScheme,
@@ -265,6 +194,135 @@ public sealed class AwsAuthenticationExtensionsTests
             typeof(JwtBearerHandler)
         );
 
-        return new TokenValidatedContext(httpContext, scheme, options) { Principal = principal };
+        var context = new MessageReceivedContext(httpContext, scheme, options);
+
+        await options.Events.OnMessageReceived(context);
+
+        context.Token.ShouldBe("the-jwt-token");
+    }
+
+    [Fact]
+    public async Task OnMessageReceived_ShouldSetTokenToNull_WhenAccessTokenCookieIsMissing()
+    {
+        var builder = CreateBuilder(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                    "https://cognito-idp.eu-west-2.amazonaws.com/",
+                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
+                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
+            }
+        );
+
+        builder.AddAwsBearerAuthentication();
+
+        using var provider = builder.Services.BuildServiceProvider();
+
+        var options = provider
+            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+
+        var httpContext = new DefaultHttpContext { RequestServices = provider };
+
+        var scheme = new AuthenticationScheme(
+            JwtBearerDefaults.AuthenticationScheme,
+            JwtBearerDefaults.AuthenticationScheme,
+            typeof(JwtBearerHandler)
+        );
+
+        var context = new MessageReceivedContext(httpContext, scheme, options);
+
+        await options.Events.OnMessageReceived(context);
+
+        context.Token.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task OnTokenValidated_ShouldDelegateToTokenValidationHandler()
+    {
+        var tokenValidationHandler = Substitute.For<ITokenValidationHandler>();
+
+        var builder = CreateBuilder(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                    "https://cognito-idp.eu-west-2.amazonaws.com/",
+                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
+                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
+            }
+        );
+
+        builder.Services.AddSingleton(tokenValidationHandler);
+
+        builder.AddAwsBearerAuthentication();
+
+        using var provider = builder.Services.BuildServiceProvider();
+
+        var cancellationToken = CancellationToken.None;
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = provider,
+            RequestAborted = cancellationToken,
+        };
+
+        var options = provider
+            .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get(JwtBearerDefaults.AuthenticationScheme);
+
+        var scheme = new AuthenticationScheme(
+            JwtBearerDefaults.AuthenticationScheme,
+            JwtBearerDefaults.AuthenticationScheme,
+            typeof(JwtBearerHandler)
+        );
+
+        var principal = new ClaimsPrincipal(
+            new ClaimsIdentity(
+                new[] { new Claim("username", "test-user") },
+                JwtBearerDefaults.AuthenticationScheme
+            )
+        );
+
+        var context = new TokenValidatedContext(httpContext, scheme, options)
+        {
+            Principal = principal,
+        };
+
+        await options.Events.OnTokenValidated(context);
+
+        await tokenValidationHandler.Received(1).Handle(context, cancellationToken);
+    }
+
+    [Fact]
+    public void AddAwsBearerAuthentication_ShouldThrow_WhenCognitoConfigurationIsMissing()
+    {
+        var builder = CreateBuilder();
+
+        builder.AddAwsBearerAuthentication();
+
+        using var provider = builder.Services.BuildServiceProvider();
+
+        var exception = Should.Throw<InvalidOperationException>(() =>
+            provider
+                .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+                .Get(JwtBearerDefaults.AuthenticationScheme)
+        );
+
+        exception.Message.ShouldBe(
+            $"Jwt configuration section [{CognitoConfiguration.SectionName}] is missing or invalid."
+        );
+    }
+
+    private static WebApplicationBuilder CreateBuilder(
+        IDictionary<string, string?>? configuration = null
+    )
+    {
+        var builder = WebApplication.CreateBuilder();
+
+        if (configuration is not null)
+        {
+            builder.Configuration.AddInMemoryCollection(configuration);
+        }
+
+        return builder;
     }
 }

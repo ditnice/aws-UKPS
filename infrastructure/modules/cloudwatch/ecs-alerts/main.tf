@@ -17,7 +17,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
 
   dimensions = {
     ClusterName = var.cluster_name
-    ServiceName = var.service_name
+    ServiceName = var.ecs_service_name
   }
 
   tags = merge(var.tags, {
@@ -47,7 +47,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
 
   dimensions = {
     ClusterName = var.cluster_name
-    ServiceName = var.service_name
+    ServiceName = var.ecs_service_name
   }
 
   tags = merge(var.tags, {
@@ -77,7 +77,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_running_tasks_low" {
 
   dimensions = {
     ClusterName = var.cluster_name
-    ServiceName = var.service_name
+    ServiceName = var.ecs_service_name
   }
 
   tags = merge(var.tags, {

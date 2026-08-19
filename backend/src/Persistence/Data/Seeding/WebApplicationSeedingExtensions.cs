@@ -21,6 +21,6 @@ internal static class WebApplicationSeedingExtensions
         IDataSeeder? dataSeeder = scope.ServiceProvider.GetService<IDataSeeder>();
         if (dataSeeder is null)
             return;
-        await dataSeeder.SeedData(lifetime.ApplicationStopping);
+        await dataSeeder.SeedData(settings, lifetime.ApplicationStopping);
     }
 }
