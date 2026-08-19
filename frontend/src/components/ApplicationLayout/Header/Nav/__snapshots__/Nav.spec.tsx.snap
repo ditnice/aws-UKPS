@@ -3,24 +3,24 @@
 exports[`Nav > renders collapsed 1`] = `
 <DocumentFragment>
   <div
-    class="_wrapper_c935af"
+    class="_wrapper_efef43"
     id="header-menu"
   >
     <nav
       aria-label="primary navigation"
-      class="_nav_c935af"
+      class="_nav_efef43"
     >
       <div
-        class="_menuWrapper_c935af"
+        class="_menuWrapper_efef43"
       >
         <ul
           aria-labelledby="header-menu-button"
-          class="_menuList_f62762"
+          class="_menuList_60c4df"
         >
           <li>
             <a
               aria-current="page"
-              class="_link_f62762"
+              class="_link_60c4df"
               href="/"
             >
               Home
@@ -36,24 +36,24 @@ exports[`Nav > renders collapsed 1`] = `
 exports[`Nav > renders expanded 1`] = `
 <DocumentFragment>
   <div
-    class="_wrapper_c935af _wrapperExpanded_c935af"
+    class="_wrapper_efef43 _wrapperExpanded_efef43"
     id="header-menu"
   >
     <nav
       aria-label="primary navigation"
-      class="_nav_c935af"
+      class="_nav_efef43"
     >
       <div
-        class="_menuWrapper_c935af"
+        class="_menuWrapper_efef43"
       >
         <ul
           aria-labelledby="header-menu-button"
-          class="_menuList_f62762"
+          class="_menuList_60c4df"
         >
           <li>
             <a
               aria-current="page"
-              class="_link_f62762"
+              class="_link_60c4df"
               href="/"
             >
               Home

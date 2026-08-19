@@ -3,7 +3,7 @@
 exports[`Main > applies padding by default 1`] = `
 <DocumentFragment>
   <main
-    class="_main_132534 _withPadding_132534"
+    class="_main_1f2578 _withPadding_1f2578"
     data-component="main"
   >
     <div
@@ -16,7 +16,7 @@ exports[`Main > applies padding by default 1`] = `
 exports[`Main > forwards native main attributes 1`] = `
 <DocumentFragment>
   <main
-    class="_main_132534 _withPadding_132534"
+    class="_main_1f2578 _withPadding_1f2578"
     data-component="main"
     id="page-main"
   >
@@ -30,7 +30,7 @@ exports[`Main > forwards native main attributes 1`] = `
 exports[`Main > omits padding when withPadding is false 1`] = `
 <DocumentFragment>
   <main
-    class="_main_132534"
+    class="_main_1f2578"
     data-component="main"
   >
     <div
@@ -43,7 +43,7 @@ exports[`Main > omits padding when withPadding is false 1`] = `
 exports[`Main > preserves custom class names 1`] = `
 <DocumentFragment>
   <main
-    class="_main_132534 additional-class _withPadding_132534"
+    class="_main_1f2578 additional-class _withPadding_1f2578"
     data-component="main"
   >
     <div
@@ -56,7 +56,7 @@ exports[`Main > preserves custom class names 1`] = `
 exports[`Main > renders BackToTop as a child 1`] = `
 <DocumentFragment>
   <main
-    class="_main_132534 _withPadding_132534"
+    class="_main_1f2578 _withPadding_1f2578"
     data-component="main"
   >
     <div
@@ -69,7 +69,7 @@ exports[`Main > renders BackToTop as a child 1`] = `
 exports[`Main > renders a main landmark with the main data-component attribute 1`] = `
 <DocumentFragment>
   <main
-    class="_main_132534 _withPadding_132534"
+    class="_main_1f2578 _withPadding_1f2578"
     data-component="main"
   >
     <div
@@ -82,7 +82,7 @@ exports[`Main > renders a main landmark with the main data-component attribute 1
 exports[`Main > renders children 1`] = `
 <DocumentFragment>
   <main
-    class="_main_132534 _withPadding_132534"
+    class="_main_1f2578 _withPadding_1f2578"
     data-component="main"
   >
     <p>

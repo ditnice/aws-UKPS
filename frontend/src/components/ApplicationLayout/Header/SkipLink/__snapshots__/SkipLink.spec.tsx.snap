@@ -3,7 +3,7 @@
 exports[`SkipLink > renders a hash link and focuses the target when clicked 1`] = `
 <DocumentFragment>
   <a
-    class="_link_545938"
+    class="_link_f0d56e"
     href="#content-start"
   >
     Skip to content
@@ -14,7 +14,7 @@ exports[`SkipLink > renders a hash link and focuses the target when clicked 1`] 
 exports[`SkipLink > renders a hash link without changing focus when the target is missing 1`] = `
 <DocumentFragment>
   <a
-    class="_link_545938"
+    class="_link_f0d56e"
     href="#missing"
   >
     Missing target
@@ -25,7 +25,7 @@ exports[`SkipLink > renders a hash link without changing focus when the target i
 exports[`SkipLink > renders a normal link for non-hash destinations 1`] = `
 <DocumentFragment>
   <a
-    class="_link_545938"
+    class="_link_f0d56e"
     href="/accessibility"
   >
     Accessibility help
@@ -36,7 +36,7 @@ exports[`SkipLink > renders a normal link for non-hash destinations 1`] = `
 exports[`SkipLink > renders an empty hash link without changing focus when clicked 1`] = `
 <DocumentFragment>
   <a
-    class="_link_545938"
+    class="_link_f0d56e"
     href="#"
   >
     Empty target
