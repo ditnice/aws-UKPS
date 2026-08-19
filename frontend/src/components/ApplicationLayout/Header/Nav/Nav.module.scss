@@ -1,12 +1,6 @@
-@use '@/styles/colours';
 @use '@/styles/visibility';
 @use '@/styles/media-queries';
 @use '@/styles/variables';
-@use '@/styles/utils';
-@use '@/styles/spacing';
-@use '@/styles/layout';
-@use '../header-settings';
-@use 'nav-shared';
 
 .wrapper {
   @include visibility.hide-print;
@@ -33,12 +27,4 @@
 .menuWrapper {
   background: variables.$nice-teal;
   color: variables.$white;
-}
-
-.menuList {
-  @extend %menu-list;
-}
-
-a.link {
-  @extend %link-styling;
 }
