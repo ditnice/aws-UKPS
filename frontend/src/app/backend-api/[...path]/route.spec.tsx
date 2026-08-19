@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DELETE, dynamic, GET, POST, runtime } from './route'
 
 const originalBaseUrl = process.env.BACKEND_API_BASE_URL
+const originalFrontendPublicOrigin = process.env.FRONTEND_PUBLIC_ORIGIN
 
 function request(method = 'GET', headers: HeadersInit = {}, body?: string) {
   return new Request('https://frontend.example/backend-api/users?active=true', {
@@ -41,6 +42,8 @@ afterEach(() => {
   vi.restoreAllMocks()
   if (originalBaseUrl === undefined) delete process.env.BACKEND_API_BASE_URL
   else process.env.BACKEND_API_BASE_URL = originalBaseUrl
+  if (originalFrontendPublicOrigin === undefined) delete process.env.FRONTEND_PUBLIC_ORIGIN
+  else process.env.FRONTEND_PUBLIC_ORIGIN = originalFrontendPublicOrigin
 })
 
 describe('backend API route', () => {
@@ -72,6 +75,8 @@ describe('backend API route', () => {
   })
 
   it('allows safe methods without Origin and requires same-origin Origin for unsafe methods', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
     expect((await GET(request() as never, context('users'))).status).toBe(200)
     expect((await POST(request('POST') as never, context('users'))).status).toBe(403)
     expect(
@@ -90,6 +95,39 @@ describe('backend API route', () => {
         )
       ).status,
     ).toBe(200)
+    expect(consoleWarn).toHaveBeenCalledWith(
+      'Backend API proxy rejected unsafe request origin.',
+      expect.objectContaining({
+        method: 'POST',
+        origin: null,
+        requestOrigin: 'https://frontend.example',
+        requestUrl: 'https://frontend.example/backend-api/users?active=true',
+      }),
+    )
+  })
+
+  it('uses the configured public frontend origin for unsafe method validation', async () => {
+    process.env.FRONTEND_PUBLIC_ORIGIN = 'https://dev.ukps.nice.org.uk'
+
+    const allowed = await POST(
+      request(
+        'POST',
+        {
+          origin: 'https://dev.ukps.nice.org.uk',
+          'x-forwarded-host': 'dev.ukps.nice.org.uk',
+          'x-forwarded-proto': 'https',
+        },
+        '{}',
+      ) as never,
+      context('auth', 'login'),
+    )
+    const rejected = await POST(
+      request('POST', { origin: 'https://attacker.example' }, '{}') as never,
+      context('auth', 'login'),
+    )
+
+    expect(allowed.status).toBe(200)
+    expect(rejected.status).toBe(403)
   })
 
   it('forwards only allowlisted request headers and cookies', async () => {

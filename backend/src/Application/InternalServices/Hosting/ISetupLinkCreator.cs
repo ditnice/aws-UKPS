@@ -14,5 +14,5 @@ public interface ISetupLinkCreator
     /// <returns>
     /// A URL that allows the user to complete the setup process.
     /// </returns>
-    string GetSetupLink(Guid setupToken);
+    Uri GetSetupLink(Guid setupToken);
 }

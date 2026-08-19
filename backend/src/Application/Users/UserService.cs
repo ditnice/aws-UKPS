@@ -185,8 +185,7 @@ internal sealed class UserService(
         {
             UserType = UserType.PharmaUser,
             Title = createUserRequestDto.Title,
-            FirstName = createUserRequestDto.FirstName,
-            LastName = createUserRequestDto.LastName,
+            FullName = createUserRequestDto.FullName,
             JobTitle = createUserRequestDto.JobTitle,
             WorkTelephone = createUserRequestDto.WorkTelephone,
             WorkEmail = createUserRequestDto.WorkEmail,
@@ -215,8 +214,7 @@ internal sealed class UserService(
         {
             UserType = user.UserType,
             Title = user.Title,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
+            FullName = user.FullName,
             JobTitle = user.JobTitle,
             WorkPhone = user.WorkTelephone,
             WorkEmail = user.WorkEmail,

@@ -35,11 +35,11 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, alpha, etc.) | `string` | n/a | yes |
+| <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, staging, etc.) | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
 | <a name="input_security_sns_kms_arn"></a> [security\_sns\_kms\_arn](#input\_security\_sns\_kms\_arn) | ARN of the KMS key used to encrypt the security alarm SNS topic | `string` | `null` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Short workload name used in SNS topic names | `string` | n/a | yes |
-| <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | `map(string)` | n/a | yes |
+| <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | <pre>list(object({<br/>    name  = string<br/>    email = string<br/>  }))</pre> | n/a | yes |
 | <a name="input_sns_kms_arn"></a> [sns\_kms\_arn](#input\_sns\_kms\_arn) | The arn of the kms key used for encrypting the SNS topics created by this module. | `string` | n/a | yes |
 
 ## Outputs

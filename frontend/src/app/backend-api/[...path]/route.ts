@@ -57,6 +57,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
   }
 
   if (unsafeMethods.has(request.method) && !hasSameOrigin(request)) {
+    logOriginRejection(request)
     return errorResponse(403, 'Request origin is not allowed.')
   }
 
@@ -151,10 +152,31 @@ function hasSameOrigin(request: NextRequest): boolean {
   if (!origin) return false
 
   try {
-    return new URL(origin).origin === new URL(request.url).origin
+    const expectedOrigin = process.env.FRONTEND_PUBLIC_ORIGIN ?? new URL(request.url).origin
+    return new URL(origin).origin === expectedOrigin
   } catch {
     return false
   }
+}
+
+function logOriginRejection(request: NextRequest): void {
+  let requestOrigin = 'invalid'
+
+  try {
+    requestOrigin = new URL(request.url).origin
+  } catch {
+    // Keep diagnostics robust if Next supplies an unexpected URL.
+  }
+
+  console.warn('Backend API proxy rejected unsafe request origin.', {
+    forwardedHost: request.headers.get('x-forwarded-host'),
+    forwardedProto: request.headers.get('x-forwarded-proto'),
+    host: request.headers.get('host'),
+    method: request.method,
+    origin: request.headers.get('origin'),
+    requestOrigin,
+    requestUrl: request.url,
+  })
 }
 
 function getUpstreamTimeoutMs(): number {

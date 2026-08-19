@@ -9,10 +9,10 @@ internal interface IServiceTestHarness<TService>
     where TService : notnull
 {
     TService Service { get; }
-    AppDbContext Context { get; }
     MockEmailService Emails { get; }
     MockAmazonCognitoIdentityProvider Cognito { get; }
 
+    AppDbContext GetClearedContext();
     IServiceTestHarness<TService> UpdateCurrentUser(Func<CurrentUser, CurrentUser> update);
     IServiceTestHarness<TService> UpdateCurrentTime(DateTime dateTime);
     IServiceTestHarness<TService> ConfigureServices(

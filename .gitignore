@@ -79,6 +79,9 @@ build/
 .DS_Store
 *.pem
 
+# local HTTPS dev certificates (see documentation/frontend.md#certificates)
+frontend/certificates/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
@@ -153,6 +156,12 @@ terraform.rc
 # Optional: ignore plan files saved before destroying Terraform configuration
 # Uncomment the line below if you want to ignore planout files.
 planout
+
+# ── Auth Bootstrap ─────────────────────────────────────────────────────────────
+
+documentation/auth/*.env
+documentation/auth/*local*.sh
+documentation/auth/bootstrap-cognito-user.local.sh
 
 # ── Fallow ─────────────────────────────────────────────────────────────────────
 

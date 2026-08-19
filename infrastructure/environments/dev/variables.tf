@@ -37,40 +37,6 @@ variable "cloudfront_distribution_id" {
   }
 }
 
-variable "cognito_ses_identity_arn" {
-  # TODO: Replace this temporary manual input with a Terraform-managed SES
-  # identity once Route 53/SES domain verification is managed by this stack.
-  description = "ARN of the verified SES identity in the deployment account and region used for authentication email. Leave null to use Cognito default email sending."
-  type        = string
-  default     = null
-  nullable    = true
-
-  validation {
-    condition     = var.cognito_ses_identity_arn == null || can(regex("^arn:aws[a-zA-Z-]*:ses:[a-z0-9-]+:[0-9]{12}:identity/.+$", var.cognito_ses_identity_arn))
-    error_message = "Cognito SES identity ARN must be null or a valid SES identity ARN."
-  }
-}
-
-variable "cognito_email_from_address" {
-  description = "Verified sender address for authentication email"
-  type        = string
-
-  validation {
-    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.cognito_email_from_address))
-    error_message = "Cognito email from address must be a valid email address."
-  }
-}
-
-variable "cognito_email_reply_to_address" {
-  description = "Reply-to address for authentication email"
-  type        = string
-
-  validation {
-    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.cognito_email_reply_to_address))
-    error_message = "Cognito email reply-to address must be a valid email address."
-  }
-}
-
 variable "frontend_db_master_username" {
   description = "Master username for the Aurora cluster"
   type        = string
@@ -189,7 +155,7 @@ variable "aurora_allow_major_version_upgrade" {
 variable "aurora_enable_http_endpoint" {
   description = "Whether the RDS Data API HTTP endpoint is enabled"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "aurora_preferred_backup_window" {
@@ -224,6 +190,45 @@ variable "connection_threshold" {
 
 variable "sns_alarm_emails" {
   description = "Map of recipient labels to email addresses subscribed to alarm notifications"
-  type        = map(string)
-  sensitive   = true
+  type = list(object({
+    name  = string
+    email = string
+  }))
+  sensitive = true
+}
+
+variable "seeded_super_users" {
+  description = "Super users added to seeded backend data for organisation ID 1"
+  type = list(object({
+    fullName   = string
+    email      = string
+    identityId = string
+  }))
+  default  = []
+  nullable = false
+
+  validation {
+    condition     = alltrue([for user in var.seeded_super_users : length(trimspace(user.fullName)) > 0])
+    error_message = "Seeded super users must include a non-empty fullName."
+  }
+
+  validation {
+    condition     = alltrue([for user in var.seeded_super_users : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", user.email))])
+    error_message = "Seeded super users must include valid email addresses."
+  }
+
+  validation {
+    condition     = alltrue([for user in var.seeded_super_users : length(trimspace(user.identityId)) > 0 && length(user.identityId) <= 36])
+    error_message = "Seeded super users must include identityId values of 36 characters or fewer."
+  }
+
+  validation {
+    condition     = length(distinct([for user in var.seeded_super_users : lower(user.email)])) == length(var.seeded_super_users)
+    error_message = "Seeded super user emails must be unique."
+  }
+
+  validation {
+    condition     = length(distinct([for user in var.seeded_super_users : user.identityId])) == length(var.seeded_super_users)
+    error_message = "Seeded super user identity IDs must be unique."
+  }
 }

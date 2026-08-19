@@ -23,6 +23,7 @@ exports[`SummaryList > adds hidden context to a row action child 1`] = `
         class="_summary-list__actions_1509a2"
       >
         <a
+          aria-label="Change name"
           href="/change-name"
         >
           Change
@@ -162,6 +163,7 @@ exports[`SummaryList > supports mixed rows, multiple action children and rich va
             class="_summary-list__actions-list-item_1509a2"
           >
             <a
+              aria-label="Add contact details"
               href="/add-contact"
             >
               Add
@@ -176,6 +178,7 @@ exports[`SummaryList > supports mixed rows, multiple action children and rich va
             class="_summary-list__actions-list-item_1509a2"
           >
             <a
+              aria-label="Change contact details"
               href="/change-contact"
             >
               Change

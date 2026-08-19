@@ -17,9 +17,8 @@ The reusable modules live in `modules/`. Environment compositions live in `envir
 | --- | --- | --- |
 | `dev` | `environments/dev` | Full composition |
 | `test` | `environments/test` | Placeholder |
-| `alpha` | `environments/alpha` | Placeholder |
-| `beta` | `environments/beta` | Placeholder |
-| `live` | `environments/live` | Placeholder |
+| `staging` | `environments/staging` | Placeholder |
+| `prod` | `environments/prod` | Placeholder |
 
 ## Required Manual Input
 
@@ -30,12 +29,9 @@ The `dev` environment requires these values to be supplied manually because they
 | `frontend_image_repository_url` | Container image repository URL used by the frontend ECS service. Do not include a tag or digest. | `628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend` |
 | `backend_image_repository_url` | Container image repository URL used by the backend ECS service. Do not include a tag or digest. | `628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend` |
 | `image_tag` | Container image tag used by the frontend and backend ECS services. | `1.2.3` |
-| `cognito_email_from_address` | Verified sender address for authentication email. | `no-reply@ukps.nice.org.uk` |
-| `cognito_email_reply_to_address` | Reply-to address for authentication email. | `support@ukps.nice.org.uk` |
 | `sns_alarm_emails` | Map of labels to email addresses subscribed to alarm SNS topics. Subscribers must confirm the AWS SNS email confirmation before receiving alerts. | `{ platform = "platform@example.org", service = "service@example.org" }` |
 | `cloudfront_distribution_id` | ID of the existing CloudFront distribution used by the Route53 alias records. | `E123ABC456DEF` |
-
-> Note: `cognito_ses_identity_arn` is optional while SES/domain verification is not managed by this stack. Leave it unset to use Cognito default email sending. Once Route 53/SES verification is added to Terraform, set or replace this input with the managed SES identity output to enable Cognito developer email sending.
+| `seeded_supers_users` (optional) | Map of super users to be created. | `[{"fullName":"Joe Blogss","email":"Joe.Bloggs@example.org","identityId":"e6e25274-f081-708d-62de-c90ad6217578"}]` |
 
 Optional inputs can be left as defaults for a standard `dev` deployment. Override them only when the environment needs different sizing, ports, domains, database settings, or alarm thresholds.
 
@@ -49,14 +45,7 @@ Example using SemVer image tags:
 export TF_VAR_frontend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend"
 export TF_VAR_backend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend"
 export TF_VAR_image_tag="1.2.3"
-export TF_VAR_cognito_email_from_address="no-reply@ukps.nice.org.uk"
-export TF_VAR_cognito_email_reply_to_address="support@ukps.nice.org.uk"
-export TF_VAR_sns_alarm_emails='{ platform = "platform@example.org", service = "service@example.org" }'
+export TF_VAR_sns_alarm_emails='[{"name":"platform","email":"platform@example.org"},{"name":"service","email":"service@example.org"}]'
 export TF_VAR_cloudfront_distribution_id="E123ABC456DEF"
-```
-
-To enable Cognito developer email sending after SES is ready, also set:
-
-```bash
-export TF_VAR_cognito_ses_identity_arn="arn:aws:ses:eu-west-2:628270103586:identity/ukps.nice.org.uk"
+export TF_VAT_seeded_supers_users='[{"fullName":"Joe Blogss","email":"Joe.Bloggs@example.org","identityId":"e6e25274-f081-708d-62de-c90ad6217578"}]'
 ```

@@ -24,6 +24,10 @@ using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
+using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -490,7 +494,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                 _defaultVerifyMultiFactorAuthenticationCommand,
                 Arg.Any<CancellationToken>()
             )
-            .Returns(Result<VerifyMultiFactorAuthenticationError>.Ok());
+            .Returns(VerifyMultiFactorAuthenticationResult.Ok(_validAuthenticationCredentials));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(VerifyMultiFactorAuthenticationUrl, UriKind.Relative),
@@ -499,6 +503,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        AssertCookiesAreSetCorrectly(response.Headers, _validAuthenticationCredentials);
     }
 
     [Fact]
@@ -510,7 +515,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                 Arg.Any<CancellationToken>()
             )
             .Returns(
-                Result<VerifyMultiFactorAuthenticationError>.Err(
+                VerifyMultiFactorAuthenticationResult.Err(
                     new VerifyMultiFactorAuthenticationError.InvalidCode()
                 )
             );
@@ -522,6 +527,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        AssertCookiesDoNotExist(response.Headers);
     }
 
     [Fact]
@@ -532,7 +538,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                 _defaultVerifyMultiFactorAuthenticationCommand,
                 Arg.Any<CancellationToken>()
             )
-            .Returns(Result<VerifyMultiFactorAuthenticationError>.Ok());
+            .Returns(VerifyMultiFactorAuthenticationResult.Ok(_validAuthenticationCredentials));
 
         var _ = await _client.PostAsJsonAsync(
             new Uri(VerifyMultiFactorAuthenticationUrl, UriKind.Relative),
@@ -556,7 +562,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                 _defaultVerifyMultiFactorAuthenticationCommand,
                 Arg.Any<CancellationToken>()
             )
-            .Returns(Result<VerifyMultiFactorAuthenticationError>.Ok());
+            .Returns(VerifyMultiFactorAuthenticationResult.Ok(_validAuthenticationCredentials));
 
         Func<
             VerifyMultiFactorAuthenticationCommand,
