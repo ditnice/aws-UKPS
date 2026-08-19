@@ -1,7 +1,16 @@
+import { authenticated } from '@/access/authenticated'
+import { authenticatedOrPublished } from '@/access/authenticatedOrPublished'
+
 import type { CollectionConfig } from 'payload'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
+  access: {
+    create: authenticated,
+    delete: authenticated,
+    read: authenticatedOrPublished,
+    update: authenticated,
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'path', 'navigationGroup'],
@@ -108,4 +117,5 @@ export const Pages: CollectionConfig = {
       ],
     },
   ],
+  versions: { drafts: { autosave: true } },
 }

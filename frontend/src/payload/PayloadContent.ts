@@ -24,17 +24,18 @@ export const getAllPages = cache(async (): Promise<SitePage[]> => {
     const payload = await getPayloadClient()
     const result = await payload.find({
       collection: 'pages',
-      limit: 100,
+      limit: 0,
       pagination: false,
       sort: 'path',
     })
 
     const pages = result.docs
-      .map((doc) => mapPage(doc as unknown as Record<string, unknown>))
+      .map((doc) => mapPage(doc))
       .filter((doc): doc is SitePage => Boolean(doc))
 
     return pages.length ? pages : defaultPages
-  } catch {
+  } catch (error) {
+    console.error('Failed to load pages from Payload, falling back to default pages:', error)
     return defaultPages
   }
 })
@@ -53,12 +54,14 @@ export const getPageByPath = cache(async (path: string): Promise<SitePage | null
       },
     })
 
-    const page = result.docs
-      .map((doc) => mapPage(doc as unknown as Record<string, unknown>))
-      .find((doc): doc is SitePage => Boolean(doc))
+    const page = result.docs.map((doc) => mapPage(doc)).find((doc): doc is SitePage => Boolean(doc))
 
     return page ?? getDefaultPageByPath(path)
-  } catch {
+  } catch (error) {
+    console.error(
+      `Failed to load page "${path}" from Payload, falling back to default page:`,
+      error,
+    )
     return getDefaultPageByPath(path)
   }
 })
@@ -68,7 +71,7 @@ export const getPagesByNavigationGroup = cache(async (group: string): Promise<Si
     const payload = await getPayloadClient()
     const result = await payload.find({
       collection: 'pages',
-      limit: 100,
+      limit: 0,
       pagination: false,
       sort: 'navigationOrder',
       where: {
@@ -79,11 +82,15 @@ export const getPagesByNavigationGroup = cache(async (group: string): Promise<Si
     })
 
     const pages = result.docs
-      .map((doc) => mapPage(doc as unknown as Record<string, unknown>))
+      .map((doc) => mapPage(doc))
       .filter((doc): doc is SitePage => Boolean(doc))
 
     return pages.length ? pages : getDefaultPagesByNavigationGroup(group)
-  } catch {
+  } catch (error) {
+    console.error(
+      `Failed to load pages for navigation group "${group}" from Payload, falling back to default pages:`,
+      error,
+    )
     return getDefaultPagesByNavigationGroup(group)
   }
 })

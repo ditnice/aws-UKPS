@@ -47,7 +47,7 @@ export type SitePageBlock =
   TextSectionLayoutBlock | TabsLayoutBlock | AccordionLayoutBlock | ListLayoutBlock
 
 export type SitePage = {
-  id?: string
+  id?: number
   layout: SitePageBlock[]
   navigationGroup?: string
   navigationLabel?: string
