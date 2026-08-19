@@ -17,42 +17,42 @@ internal interface IIdentityService
     );
 
     Task<CreateNewUserResult> CreateNewUser(
-        CognitoUsername userIdentityId,
+        CognitoUsername cognitoUsername,
         string email,
         CancellationToken cancellationToken
     );
 
     Task<InitiatedAuthenticationResult> InitiateAuthentication(
-        CognitoUsername userIdentityId,
+        CognitoUsername cognitoUsername,
         string newPassword,
         CancellationToken cancellationToken
     );
 
-    Task MarkEmailAsVerified(CognitoUsername userIdentityId, CancellationToken cancellationToken);
+    Task MarkEmailAsVerified(CognitoUsername cognitoUsername, CancellationToken cancellationToken);
     Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
         string refreshToken,
         CancellationToken cancellationToken
     );
     Task<InitiatedAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
-        CognitoUsername userIdentityId,
+        CognitoUsername cognitoUsername,
         string authenticationSession,
         string code,
         CancellationToken cancellationToken
     );
 
     Task<UpdatePasswordResult> UpdatePassword(
-        CognitoUsername userIdentityId,
+        CognitoUsername cognitoUsername,
         string newPassword,
         CancellationToken cancellationToken
     );
     Task UpdateUserEmail(
-        CognitoUsername userIdentityId,
+        CognitoUsername cognitoUsername,
         string updatedEmail,
         CancellationToken cancellationToken
     );
 
     Task<AuthenticationCredentialsDto> VerifySoftwareToken(
-        CognitoUsername userIdentityId,
+        CognitoUsername cognitoUsername,
         string authenticationSessionId,
         string code,
         CancellationToken cancellationToken

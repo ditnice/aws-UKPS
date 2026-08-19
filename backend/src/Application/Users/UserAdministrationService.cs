@@ -91,7 +91,7 @@ internal sealed partial class UserAdministrationService(
     }
 
     private async Task<Result<User, OnboardUserError>> CreateANewUserInDatabase(
-        CognitoUsername userIdentityId,
+        CognitoUsername cognitoUsername,
         OnboardUserCommandDto command,
         CancellationToken cancellationToken
     )
@@ -112,7 +112,7 @@ internal sealed partial class UserAdministrationService(
         };
         var user = new User()
         {
-            CognitoUsername = userIdentityId,
+            CognitoUsername = cognitoUsername,
             FullName = command.FullName,
             WorkEmail = command.NewUserEmail,
             WorkTelephone = command.ContactNumber,
