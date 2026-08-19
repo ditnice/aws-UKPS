@@ -47,5 +47,5 @@ export TF_VAR_backend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazo
 export TF_VAR_image_tag="1.2.3"
 export TF_VAR_sns_alarm_emails='[{"name":"platform","email":"platform@example.org"},{"name":"service","email":"service@example.org"}]'
 export TF_VAR_cloudfront_distribution_id="E123ABC456DEF"
-export TF_VAT_seeded_supers_users='[{"fullName":"Ryan Smith","email":"ryan.smith@informed.com","identityId":"e6e25274-f081-708d-62de-c90ad6217578"}]'
+export TF_VAT_seeded_supers_users='[{"fullName":"Joe Blogss","email":"Joe.Bloggs@example.org","identityId":"e6e25274-f081-708d-62de-c90ad6217578"}]'
 ```
