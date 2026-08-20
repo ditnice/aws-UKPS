@@ -44,6 +44,7 @@ BACKEND_API_TIMEOUT_MS=60000
 COGNITO_ISSUER=https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h
 COGNITO_CLIENT_ID=ioihsfd49fj09wj3f
 AUTHENTICATION_MODE=DEV
+```
 
 #### Docker (Optional)
 
@@ -86,4 +87,7 @@ That's it! The Docker instance will help you get up and running quickly while al
 ## Questions
 
 If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+
+```
+
 ```
