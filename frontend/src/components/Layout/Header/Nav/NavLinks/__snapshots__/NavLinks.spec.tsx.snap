@@ -4,12 +4,12 @@ exports[`NavLinks > marks nested portal links as active 1`] = `
 <DocumentFragment>
   <ul
     aria-labelledby="header-menu-button"
-    class="_menuList_f62762"
+    class="_menuList_12dd76"
   >
     <li>
       <a
         aria-current="page"
-        class="_link_f62762"
+        class="_link_12dd76"
         href="/portal"
       >
         Dashboard
@@ -18,7 +18,7 @@ exports[`NavLinks > marks nested portal links as active 1`] = `
     <li>
       <a
         aria-current="page"
-        class="_link_f62762"
+        class="_link_12dd76"
         href="/portal/components"
       >
         Components
@@ -32,12 +32,12 @@ exports[`NavLinks > renders custom portal links 1`] = `
 <DocumentFragment>
   <ul
     aria-labelledby="header-menu-button"
-    class="_menuList_f62762"
+    class="_menuList_12dd76"
   >
     <li>
       <a
         aria-current="page"
-        class="_link_f62762"
+        class="_link_12dd76"
         href="/portal/settings"
       >
         Settings
@@ -51,11 +51,11 @@ exports[`NavLinks > renders custom root links 1`] = `
 <DocumentFragment>
   <ul
     aria-labelledby="header-menu-button"
-    class="_menuList_f62762"
+    class="_menuList_12dd76"
   >
     <li>
       <a
-        class="_link_f62762"
+        class="_link_12dd76"
         href="/guidance"
       >
         Guidance
@@ -69,12 +69,12 @@ exports[`NavLinks > renders portal links for the portal path 1`] = `
 <DocumentFragment>
   <ul
     aria-labelledby="header-menu-button"
-    class="_menuList_f62762"
+    class="_menuList_12dd76"
   >
     <li>
       <a
         aria-current="page"
-        class="_link_f62762"
+        class="_link_12dd76"
         href="/portal"
       >
         Dashboard
@@ -82,7 +82,7 @@ exports[`NavLinks > renders portal links for the portal path 1`] = `
     </li>
     <li>
       <a
-        class="_link_f62762"
+        class="_link_12dd76"
         href="/portal/components"
       >
         Components
@@ -96,15 +96,23 @@ exports[`NavLinks > renders root links for the root path 1`] = `
 <DocumentFragment>
   <ul
     aria-labelledby="header-menu-button"
-    class="_menuList_f62762"
+    class="_menuList_12dd76"
   >
     <li>
       <a
         aria-current="page"
-        class="_link_f62762"
+        class="_link_12dd76"
         href="/"
       >
         Home
+      </a>
+    </li>
+    <li>
+      <a
+        class="_link_12dd76"
+        href="/about-us"
+      >
+        About
       </a>
     </li>
   </ul>

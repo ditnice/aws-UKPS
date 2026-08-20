@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ApplicationLayout } from './Layout/ApplicationLayout'
+import { ApplicationLayout } from './ApplicationLayout'
 
 type MockComponentProps = { children: import('react').ReactNode }
 
@@ -17,11 +17,6 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }))
 
-vi.mock('@nice-digital/global-nav', () => ({
-  Footer: () => <footer data-testid="footer" />,
-  Main: ({ children, id }: MockComponentProps & { id: string }) => <main id={id}>{children}</main>,
-}))
-
 vi.mock('@nice-digital/nds-container', () => ({
   Container: ({ children }: MockComponentProps) => <div data-testid="container">{children}</div>,
 }))
@@ -33,8 +28,8 @@ describe('ApplicationLayout', () => {
     const { asFragment } = render(<ApplicationLayout>Page content</ApplicationLayout>)
 
     expect(screen.getByText('Page content')).toBeDefined()
-    expect(screen.getByTestId('container')).toBeDefined()
-    expect(screen.getByTestId('footer')).toBeDefined()
+    expect(screen.getByRole('main')).toBeDefined()
+    expect(screen.getByRole('contentinfo')).toBeDefined()
     expect(document.getElementById('content-start')).not.toBeNull()
     expect(asFragment()).toMatchSnapshot()
   })

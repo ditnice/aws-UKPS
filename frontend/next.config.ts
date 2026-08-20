@@ -4,7 +4,6 @@ import type { NextConfig } from 'next'
 
 const niceDesignSystemPackages = [
   '@nice-digital/design-system',
-  '@nice-digital/global-nav',
   '@nice-digital/nds-a-z-list',
   '@nice-digital/nds-accordion',
   '@nice-digital/nds-action-banner',

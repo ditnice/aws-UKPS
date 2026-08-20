@@ -48,40 +48,6 @@ export type CreateOrganisationDto = {
 };
 
 /**
- * Represents the information required to create a new user.
- */
-export type CreateUserRequestDto = {
-    /**
-     * Gets the type of user to create.
-     */
-    userType: UserType;
-    /**
-     * Gets the user's title (for example, Mr, Mrs, Ms, or Dr).
-     */
-    title: string;
-    /**
-     * Gets the user's full name.
-     */
-    fullName: string;
-    /**
-     * Gets the user's job title.
-     */
-    jobTitle: string;
-    /**
-     * Gets the user's work telephone number.
-     */
-    workTelephone: string;
-    /**
-     * Gets the user's work email address.
-     */
-    workEmail: string;
-    /**
-     * Gets the identifier of the organisation the user belongs to.
-     */
-    organisationId: number | string;
-};
-
-/**
  * Represents the credentials provided by a user when attempting to authenticate.
  */
 export type LoginRequest = {
@@ -331,36 +297,6 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
 };
 
 /**
- * Represents the details of a user.
- */
-export type UserDetailsDto = {
-    /**
-     * Gets the user's type.
-     */
-    userType: UserType;
-    /**
-     * Gets the user's title (for example, Mr, Mrs, Ms, or Dr), if available.
-     */
-    title: null | string;
-    /**
-     * Gets the user's first name.
-     */
-    fullName: string;
-    /**
-     * Gets the user's job title, if available.
-     */
-    jobTitle: null | string;
-    /**
-     * Gets the user's work telephone number, if available.
-     */
-    workPhone: null | string;
-    /**
-     * Gets the user's work email address.
-     */
-    workEmail: string;
-};
-
-/**
  * Represents a limited summary of a user.
  */
 export type UserListItemDto = {
@@ -395,11 +331,6 @@ export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Re
  * Represents the different roles a user can have within the system.
  */
 export type UserRole = 'Standard' | 'Champion' | 'Super';
-
-/**
- * Represents the different types of users in the system.
- */
-export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUser' | 'ItAdmin';
 
 /**
  * Represents the details required to verify a user's multi-factor authentication setup.
@@ -847,42 +778,6 @@ export type GetUsersResponses = {
 };
 
 export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
-
-export type PostUsersData = {
-    /**
-     * A token used to cancel the operation&gt;
-     */
-    body: CreateUserRequestDto;
-    path?: never;
-    query?: never;
-    url: '/users';
-};
-
-export type PostUsersErrors = {
-    /**
-     * Bad Request
-     */
-    400: ProblemDetails;
-    /**
-     * Not Found
-     */
-    404: ProblemDetails;
-    /**
-     * Conflict
-     */
-    409: ProblemDetails;
-};
-
-export type PostUsersError = PostUsersErrors[keyof PostUsersErrors];
-
-export type PostUsersResponses = {
-    /**
-     * OK
-     */
-    200: UserDetailsDto;
-};
-
-export type PostUsersResponse = PostUsersResponses[keyof PostUsersResponses];
 
 export type PostUsersOnboardData = {
     /**
