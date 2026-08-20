@@ -22,7 +22,7 @@ After you click the `Deploy` button above, you'll want to have standalone copy o
 3. `pnpm install && pnpm dev` to install dependencies and start the dev server
 4. open `https://localhost:3000` to open the app in your browser
 
-#### Configuration
+### Configuration
 
 The following environment variables can be set:
 
