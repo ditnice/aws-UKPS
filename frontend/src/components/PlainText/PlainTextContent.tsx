@@ -32,8 +32,8 @@ export default function PlainTextContent({ text }: PlainTextContentProps) {
     if (isList) {
       return (
         <ul key={`${block}-${index}`}>
-          {lines.map((line) => (
-            <li key={line}>{line.replace(/^- /, '')}</li>
+          {lines.map((line, lineIndex) => (
+            <li key={`${line}-${lineIndex}`}>{line.replace(/^- /, '')}</li>
           ))}
         </ul>
       )

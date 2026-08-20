@@ -13,77 +13,75 @@ function getDefaultPageByPath(path: string) {
   return defaultPages.find((page) => page.path === path) ?? null
 }
 
-function getDefaultPagesByNavigationGroup(group: string) {
-  return defaultPages
-    .filter((page) => page.navigationGroup === group)
-    .sort((left, right) => (left.navigationOrder ?? 0) - (right.navigationOrder ?? 0))
+function splitPathIntoSlugs(path: string): string[] {
+  return path.split('/').filter(Boolean)
 }
 
-export const getAllPages = cache(async (): Promise<SitePage[]> => {
+export type HeaderNavItem = {
+  label: string
+  path: string
+}
+
+export const getHeaderNav = cache(async (): Promise<HeaderNavItem[]> => {
   try {
     const payload = await getPayloadClient()
-    const result = await payload.find({
-      collection: 'pages',
-      limit: 100,
-      pagination: false,
-      sort: 'path',
-    })
+    // depth: 1 is enough — the `destination` relationship is restricted to top-level pages,
+    // so never has a parent.
+    const header = await payload.findGlobal({ slug: 'header', depth: 1 })
 
-    const pages = result.docs
-      .map((doc) => mapPage(doc as unknown as Record<string, unknown>))
-      .filter((doc): doc is SitePage => Boolean(doc))
-
-    return pages.length ? pages : defaultPages
-  } catch {
-    return defaultPages
+    return (header.headerLinks ?? [])
+      .map((item) => {
+        const page = item.destination
+        if (!page || typeof page !== 'object' || !page.slug) {
+          return null
+        }
+        return { label: item.label, path: `/${page.slug}` }
+      })
+      .filter((item): item is HeaderNavItem => Boolean(item))
+  } catch (error) {
+    console.error('Failed to load header navigation from Payload:', error)
+    return []
   }
 })
 
 export const getPageByPath = cache(async (path: string): Promise<SitePage | null> => {
   try {
     const payload = await getPayloadClient()
-    const result = await payload.find({
-      collection: 'pages',
-      limit: 1,
-      pagination: false,
-      where: {
-        path: {
-          equals: path,
-        },
-      },
-    })
+    const slugs = splitPathIntoSlugs(path)
 
-    const page = result.docs
-      .map((doc) => mapPage(doc as unknown as Record<string, unknown>))
-      .find((doc): doc is SitePage => Boolean(doc))
+    if (!slugs.length) {
+      return getDefaultPageByPath(path)
+    }
+
+    let parentId: number | undefined
+    let doc = null
+
+    // Slugs are not necessarily unique - you may have vaccines/resources and medicines/resources
+    // so we need to start at the top and find the right resources page with the correct parent
+    for (const slug of slugs) {
+      const result = await payload.find({
+        collection: 'pages',
+        limit: 1,
+        pagination: false,
+        where: {
+          parent: parentId ? { equals: parentId } : { exists: false },
+          slug: { equals: slug },
+        },
+      })
+
+      doc = result.docs[0] ?? null
+      if (!doc) break
+      parentId = doc.id
+    }
+
+    const page = doc ? mapPage(doc, `/${slugs.join('/')}`) : null
 
     return page ?? getDefaultPageByPath(path)
-  } catch {
+  } catch (error) {
+    console.error(
+      `Failed to load page "${path}" from Payload, falling back to default page:`,
+      error,
+    )
     return getDefaultPageByPath(path)
-  }
-})
-
-export const getPagesByNavigationGroup = cache(async (group: string): Promise<SitePage[]> => {
-  try {
-    const payload = await getPayloadClient()
-    const result = await payload.find({
-      collection: 'pages',
-      limit: 100,
-      pagination: false,
-      sort: 'navigationOrder',
-      where: {
-        navigationGroup: {
-          equals: group,
-        },
-      },
-    })
-
-    const pages = result.docs
-      .map((doc) => mapPage(doc as unknown as Record<string, unknown>))
-      .filter((doc): doc is SitePage => Boolean(doc))
-
-    return pages.length ? pages : getDefaultPagesByNavigationGroup(group)
-  } catch {
-    return getDefaultPagesByNavigationGroup(group)
   }
 })
