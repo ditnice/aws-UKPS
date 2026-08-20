@@ -140,7 +140,7 @@ public class UserController(IUserService userService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [HttpPatch("{userId}")]
     public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
-        int userId,
+        [FromRoute] int userId,
         [FromBody] UpdateUserDetailsCommand command,
         CancellationToken cancellationToken
     )
