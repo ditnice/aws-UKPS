@@ -15,7 +15,10 @@ export type NavLinksProps = {
   portalLinks?: NavLinkItem[]
 }
 
-const defaultRootLinks: NavLinkItem[] = [{ href: '/', label: 'Home' }]
+const defaultRootLinks: NavLinkItem[] = [
+  { href: '/', label: 'Home' },
+  { href: '/about-us', label: 'About' },
+]
 
 const defaultPortalLinks: NavLinkItem[] = [
   { href: '/portal', label: 'Dashboard' },
