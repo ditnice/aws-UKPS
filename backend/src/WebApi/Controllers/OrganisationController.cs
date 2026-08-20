@@ -277,7 +277,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// A task that represents the asynchronous operation. The task result contains
     /// the names of all organisations.
     /// </returns>
-    [HttpGet("organisations")]
+    [HttpGet("organisationNames")]
     public async Task<ActionResult<IEnumerable<string>>> GetAllOrganisations(
         CancellationToken cancellationToken
     )

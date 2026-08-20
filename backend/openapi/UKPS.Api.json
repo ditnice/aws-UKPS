@@ -932,7 +932,7 @@
         }
       }
     },
-    "/organisations/organisations": {
+    "/organisations/organisationNames": {
       "get": {
         "tags": [
           "Organisation"
