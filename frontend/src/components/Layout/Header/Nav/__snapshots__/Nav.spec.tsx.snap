@@ -3,24 +3,24 @@
 exports[`Nav > renders collapsed 1`] = `
 <DocumentFragment>
   <div
-    class="_wrapper_c935af"
+    class="_wrapper_9cdc15"
     id="header-menu"
   >
     <nav
       aria-label="primary navigation"
-      class="_nav_c935af"
+      class="_nav_9cdc15"
     >
       <div
-        class="_menuWrapper_c935af"
+        class="_menuWrapper_9cdc15"
       >
         <ul
           aria-labelledby="header-menu-button"
-          class="_menuList_f62762"
+          class="_menuList_12dd76"
         >
           <li>
             <a
               aria-current="page"
-              class="_link_f62762"
+              class="_link_12dd76"
               href="/"
             >
               Home
@@ -28,7 +28,7 @@ exports[`Nav > renders collapsed 1`] = `
           </li>
           <li>
             <a
-              class="_link_f62762"
+              class="_link_12dd76"
               href="/about-us"
             >
               About
@@ -44,24 +44,24 @@ exports[`Nav > renders collapsed 1`] = `
 exports[`Nav > renders expanded 1`] = `
 <DocumentFragment>
   <div
-    class="_wrapper_c935af _wrapperExpanded_c935af"
+    class="_wrapper_9cdc15 _wrapperExpanded_9cdc15"
     id="header-menu"
   >
     <nav
       aria-label="primary navigation"
-      class="_nav_c935af"
+      class="_nav_9cdc15"
     >
       <div
-        class="_menuWrapper_c935af"
+        class="_menuWrapper_9cdc15"
       >
         <ul
           aria-labelledby="header-menu-button"
-          class="_menuList_f62762"
+          class="_menuList_12dd76"
         >
           <li>
             <a
               aria-current="page"
-              class="_link_f62762"
+              class="_link_12dd76"
               href="/"
             >
               Home
@@ -69,7 +69,7 @@ exports[`Nav > renders expanded 1`] = `
           </li>
           <li>
             <a
-              class="_link_f62762"
+              class="_link_12dd76"
               href="/about-us"
             >
               About

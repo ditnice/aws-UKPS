@@ -1,7 +1,6 @@
 @use '@/styles/colours';
 @use '@/styles/spacing';
 @use '@/styles/utils';
-@use '@/styles/variables';
 
 @use '../header-settings';
 
@@ -26,7 +25,7 @@
     top: utils.rem(spacing.$x-small);
     white-space: nowrap;
     width: auto;
-    z-index: header-settings.$base-z-index + 5;
+    z-index: header-settings.$z-index-skip-link;
   }
 }
 
