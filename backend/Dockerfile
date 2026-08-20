@@ -12,22 +12,30 @@ FROM restore AS build
 COPY . .
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish src/UKPS.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
+# TODO: Remove this temporary GSSAPI dependency when database authentication migrates to IAM auth with GSS encryption disabled.
+FROM ubuntu:noble AS native-deps
 
-# Npgsql may use GSSAPI during PostgreSQL connection negotiation in AWS.
-RUN apk add --no-cache krb5-libs
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# checkov:skip=CKV_DOCKER_2: Distroless/chiseled base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP (see infrastructure/modules/alb/main.tf).
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra AS runtime
 
 WORKDIR /app
 
 ENV ASPNETCORE_HTTP_PORTS=8080
 
 COPY --from=build /app/publish .
+COPY --from=native-deps /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2* /usr/lib/x86_64-linux-gnu/
+COPY --from=native-deps /usr/lib/x86_64-linux-gnu/libkrb5.so.3* /usr/lib/x86_64-linux-gnu/
+COPY --from=native-deps /usr/lib/x86_64-linux-gnu/libk5crypto.so.3* /usr/lib/x86_64-linux-gnu/
+COPY --from=native-deps /usr/lib/x86_64-linux-gnu/libkrb5support.so.0* /usr/lib/x86_64-linux-gnu/
+COPY --from=native-deps /usr/lib/x86_64-linux-gnu/libcom_err.so.2* /usr/lib/x86_64-linux-gnu/
+COPY --from=native-deps /lib/x86_64-linux-gnu/libkeyutils.so.1* /lib/x86_64-linux-gnu/
 
 USER $APP_UID
 
 EXPOSE 8080
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget -qO- http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "UKPS.Api.dll"]

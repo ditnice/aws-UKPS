@@ -180,7 +180,7 @@ export interface Page {
   generateSlug?: boolean | null;
   slug: string;
   /**
-   * Optional — create heirarchical pages, e.g. about-us/history-of-nice. Leave blank for a top-level page.
+   * Optional — create hierarchical pages, e.g. about-us/history-of-nice. Leave blank for a top-level page.
    */
   parent?: (number | null) | Page;
   layout: (

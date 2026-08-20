@@ -66,7 +66,7 @@ sequenceDiagram
     C-->>B: ID, access, refresh tokens (email_verified=true)
     B-->>F: Set access cookie (Path=/) + refresh cookie (Path=/auth/refresh)
     Note over B,F: Cookies follow the security contract below.<br/>ID token is not sent to the browser.
-    F->>F: Redirect to /dashboard
+    F->>F: Redirect to /portal
     F->>B: GET /api/dashboard (access cookie sent automatically)
     B->>B: Validate access token using the contract below
     B->>P: Query dashboard data for user (sub claim)
@@ -102,7 +102,7 @@ sequenceDiagram
     Note over B,F: After the selected authentication flow completes successfully
     B-->>F: Set access cookie (Path=/) + refresh cookie (Path=/auth/refresh)
     Note over B,F: Cookies follow the security contract below.<br/>ID token is not sent to the browser.
-    F->>F: Redirect to /dashboard
+    F->>F: Redirect to /portal
     F->>B: GET /api/dashboard (access cookie sent automatically)
     B->>B: Validate access token using the contract below
     B->>P: Query dashboard data for user (sub claim)

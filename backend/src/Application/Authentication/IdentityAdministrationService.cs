@@ -18,7 +18,10 @@ using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
-using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError>;
+using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
 
 namespace UKPS.Api.Application.Authentication;
 
@@ -120,7 +123,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
 
         try
         {
-            await _identityService.VerifySoftwareToken(
+            AuthenticationCredentialsDto credentials = await _identityService.VerifySoftwareToken(
                 userRecord.User!.WorkEmail,
                 command.AuthenticationSession,
                 command.Code,
@@ -132,7 +135,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             );
             userRecord.User.FinaliseSetup();
             await _appDbContext.SaveChangesAsync(cancellationToken);
-            return VerifyMultiFactorAuthenticationResult.Ok();
+            return VerifyMultiFactorAuthenticationResult.Ok(credentials);
         }
         catch (CodeMismatchException)
         {

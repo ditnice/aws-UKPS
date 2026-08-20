@@ -13,6 +13,10 @@ using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
+using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -350,14 +354,14 @@ public class AuthenticationController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        Result<VerifyMultiFactorAuthenticationError> result =
+        VerifyMultiFactorAuthenticationResult result =
             await _authorisationAdministrationService.VerifyMultiFactorAuthentication(
                 command,
                 cancellationToken
             );
 
         return result.Match(
-            Ok,
+            HandleLoginSuccess,
             err =>
                 err.Match<ActionResult>(invalidCode: _ =>
                     BadRequest(

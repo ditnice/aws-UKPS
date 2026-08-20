@@ -50,7 +50,7 @@ No modules.
 | <a name="input_db_subnet_group_name"></a> [db\_subnet\_group\_name](#input\_db\_subnet\_group\_name) | Name of the DB subnet group used by the Aurora cluster | `string` | n/a | yes |
 | <a name="input_enable_http_endpoint"></a> [enable\_http\_endpoint](#input\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `false` | no |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | SQL Engine version | `string` | `"17.9"` | no |
-| <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment (e.g., dev, test, alpha, etc.) | `string` | n/a | yes |
+| <a name="input_environment"></a> [environment](#input\_environment) | Deployment environment (e.g., dev, test, staging, etc.) | `string` | n/a | yes |
 | <a name="input_final_snapshot_identifier"></a> [final\_snapshot\_identifier](#input\_final\_snapshot\_identifier) | Identifier for the final snapshot when skip\_final\_snapshot is false | `string` | `null` | no |
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | KMS key ARN or ID used for Aurora encryption | `string` | n/a | yes |
 | <a name="input_master_username"></a> [master\_username](#input\_master\_username) | Master username for the Aurora cluster | `string` | n/a | yes |

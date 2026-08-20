@@ -8,6 +8,13 @@ function configuredFetch() {
   return createClientConfig({}).fetch as typeof fetch
 }
 
+function stubLocation(pathname = '/portal/widgets', search = '?tab=details') {
+  const replace = vi.fn()
+  vi.stubGlobal('location', { origin: 'https://frontend.example', pathname, replace, search })
+
+  return replace
+}
+
 beforeEach(() => {
   document.cookie = 'csrf_token=test%20token; path=/'
 })
@@ -88,11 +95,15 @@ describe('createClientConfig', () => {
       .mockResolvedValueOnce(original401)
       .mockRejectedValueOnce(new Error('refresh unavailable'))
     vi.stubGlobal('fetch', fetchMock)
+    const replace = stubLocation()
 
     const response = await configuredFetch()(protectedUrl)
 
     expect(response).toBe(original401)
     expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(replace).toHaveBeenCalledWith(
+      '/auth/sign-in?returnTo=%2Fportal%2Fwidgets%3Ftab%3Ddetails',
+    )
   })
 
   it('retries at most once when the protected request remains unauthorized', async () => {
@@ -102,11 +113,39 @@ describe('createClientConfig', () => {
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(new Response(null, { status: 401 }))
     vi.stubGlobal('fetch', fetchMock)
+    const replace = stubLocation('/portal/organisations/1', '?page=2')
 
     const response = await configuredFetch()(protectedUrl)
 
     expect(response.status).toBe(401)
     expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(replace).toHaveBeenCalledWith(
+      '/auth/sign-in?returnTo=%2Fportal%2Forganisations%2F1%3Fpage%3D2',
+    )
+  })
+
+  it('does not redirect unauthorised auth requests', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const replace = stubLocation()
+
+    await configuredFetch()('/backend-api/auth/login')
+
+    expect(replace).not.toHaveBeenCalled()
+  })
+
+  it('does not redirect when already on the sign-in page', async () => {
+    const original401 = new Response(null, { status: 401 })
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(original401)
+      .mockRejectedValueOnce(new Error('refresh unavailable'))
+    vi.stubGlobal('fetch', fetchMock)
+    const replace = stubLocation('/auth/sign-in', '?returnTo=%2Fportal')
+
+    await configuredFetch()(protectedUrl)
+
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('clones Request input for replay', async () => {
