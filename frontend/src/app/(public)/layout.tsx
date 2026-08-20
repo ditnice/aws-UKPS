@@ -9,7 +9,7 @@ export const metadata = {
   title: 'UK PharmaScan',
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
       <body>

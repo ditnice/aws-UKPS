@@ -1,0 +1,117 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ApplicationLayout > renders the application chrome around children 1`] = `
+<DocumentFragment>
+  <div
+    class="_header_d975ee"
+    data-component="header"
+    id="top"
+  >
+    <header
+      aria-label="Site header"
+    >
+      <ul
+        aria-label="Accessibility links"
+        class="_a11yLinks_d975ee"
+      >
+        <li>
+          <a
+            class="_link_545938"
+            href="#content-start"
+          >
+            Skip to content
+          </a>
+        </li>
+        <li>
+          <a
+            class="_link_545938"
+            href="/accessibility"
+          >
+            Accessibility help
+          </a>
+        </li>
+      </ul>
+      <div
+        class="_container_d975ee"
+      >
+        <a
+          aria-label="NICE: National Institute for Health and Care Excellence homepage"
+          class="_home_d975ee"
+          href="/"
+        >
+          <img
+            alt=""
+            class="_icon_d975ee"
+            height="82"
+            src="/assets/ukps-logo.png"
+            width="750"
+          />
+        </a>
+        <div
+          class="_wrapper_d975ee"
+        >
+          <button
+            aria-controls="header-menu"
+            aria-expanded="false"
+            aria-haspopup="menu"
+            aria-label="Expand site menu"
+            class="_mobileMenuBtn_d975ee"
+            id="header-menu-button"
+            type="button"
+          >
+            Menu
+          </button>
+        </div>
+      </div>
+      <div
+        class="_wrapper_c935af"
+        id="header-menu"
+      >
+        <nav
+          aria-label="primary navigation"
+          class="_nav_c935af"
+        >
+          <div
+            class="_menuWrapper_c935af"
+          >
+            <ul
+              aria-labelledby="header-menu-button"
+              class="_menuList_f62762"
+            >
+              <li>
+                <a
+                  aria-current="page"
+                  class="_link_f62762"
+                  href="/"
+                >
+                  Home
+                </a>
+              </li>
+              <li>
+                <a
+                  class="_link_f62762"
+                  href="/about-us"
+                >
+                  About
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+    </header>
+  </div>
+  <main
+    id="content-start"
+  >
+    <div
+      data-testid="container"
+    >
+      Page content
+    </div>
+  </main>
+  <footer
+    data-testid="footer"
+  />
+</DocumentFragment>
+`;

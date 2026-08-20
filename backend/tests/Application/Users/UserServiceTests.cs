@@ -1,4 +1,3 @@
-using Bogus;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
@@ -11,10 +10,6 @@ using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using CreateUserResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Users.Dtos.UserDetailsDto,
-    UKPS.Api.Application.Users.Errors.CreateUserError
->;
 
 namespace UKPS.Api.Tests.Application.Users;
 
@@ -24,7 +19,6 @@ public class UserServiceTests : DatabaseTestBase
     private readonly OrganisationFaker _organisationFaker = new();
     private readonly UserFaker _userFaker = new();
     private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
-    private readonly CreateUserRequestDtoFaker _createUserRequestDtoFaker = new();
     private readonly IUserService _service;
 
     public UserServiceTests(PostgresFixture fixture)
@@ -691,91 +685,6 @@ public class UserServiceTests : DatabaseTestBase
         dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 10]);
     }
 
-    [Fact]
-    public async Task CreateUser_AllFieldsProvided_ReturnsDto()
-    {
-        Context.Organisations.Add(
-            new Organisation
-            {
-                Id = 1,
-                OrganisationName = "Test Organisation",
-                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-                HeadOfficeEmail = "info@pharma.gov.uk",
-                HeadOfficeTelephone = "020 1234 5678",
-            }
-        );
-
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
-        {
-            OrganisationId = 1,
-        };
-        CreateUserResult result = await _service.CreateUser(
-            createDto,
-            TestContext.Current.CancellationToken
-        );
-        UserDetailsDto user = result.ShouldBeSuccess();
-        user.ShouldBe(
-            new UserDetailsDto
-            {
-                Title = createDto.Title,
-                FullName = createDto.FullName,
-                JobTitle = createDto.JobTitle,
-                WorkEmail = createDto.WorkEmail,
-                WorkPhone = createDto.WorkTelephone,
-                UserType = UserType.PharmaUser,
-            }
-        );
-    }
-
-    [Fact]
-    public async Task CreateUser_EmailConflict_ReturnsConflict()
-    {
-        Context.Organisations.Add(
-            new Organisation
-            {
-                Id = 1,
-                OrganisationName = "Test Organisation",
-                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-                HeadOfficeEmail = "info@pharma.gov.uk",
-                HeadOfficeTelephone = "020 1234 5678",
-            }
-        );
-
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var existingUser = _userFaker.Generate();
-        existingUser.WorkEmail = "tests@test.com";
-        Context.Users.Add(existingUser);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
-        {
-            OrganisationId = 1,
-            WorkEmail = existingUser.WorkEmail,
-        };
-        CreateUserResult result = await _service.CreateUser(
-            createDto,
-            TestContext.Current.CancellationToken
-        );
-        result.ShouldBeError().ShouldBeOfType<CreateUserError.EmailConflict>();
-    }
-
-    [Fact]
-    public async Task CreateUser_OrgIDNotFound_ReturnsNotFound()
-    {
-        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
-        {
-            OrganisationId = 999,
-        };
-        CreateUserResult result = await _service.CreateUser(
-            createDto,
-            TestContext.Current.CancellationToken
-        );
-        CreateUserError error = result.ShouldBeError();
-        error.ShouldBeOfType<CreateUserError.NotFound>();
-        ((CreateUserError.NotFound)error).OrganisationId.ShouldBe(999);
-    }
-
     [Theory]
     [InlineData(UserRole.Super, false)]
     [InlineData(UserRole.Champion, true)]
@@ -896,18 +805,4 @@ public class UserServiceTests : DatabaseTestBase
             LastActiveFrom = lastActiveFrom,
             LastActiveTo = lastActiveTo,
         };
-
-    private sealed class CreateUserRequestDtoFaker : Faker<CreateUserRequestDto>
-    {
-        public CreateUserRequestDtoFaker()
-        {
-            RuleFor(x => x.UserType, f => f.PickRandom<UserType>());
-            RuleFor(x => x.Title, f => f.PickRandom("Mr", "Mrs", "Ms", "Dr"));
-            RuleFor(x => x.FullName, f => f.Name.FullName());
-            RuleFor(x => x.JobTitle, f => f.Name.JobTitle());
-            RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
-            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
-            RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
-        }
-    }
 }

@@ -26,6 +26,14 @@ exports[`Nav > renders collapsed 1`] = `
               Home
             </a>
           </li>
+          <li>
+            <a
+              class="_link_12dd76"
+              href="/about-us"
+            >
+              About
+            </a>
+          </li>
         </ul>
       </div>
     </nav>
@@ -57,6 +65,14 @@ exports[`Nav > renders expanded 1`] = `
               href="/"
             >
               Home
+            </a>
+          </li>
+          <li>
+            <a
+              class="_link_12dd76"
+              href="/about-us"
+            >
+              About
             </a>
           </li>
         </ul>

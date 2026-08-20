@@ -11,10 +11,12 @@ import type { ReactNode } from 'react'
 export function ApplicationLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <Header skipLinkId="content-start"></Header>
+      <Header skipLinkId="content-start" />
+
       <Main id="content-start">
         <Container>{children}</Container>
       </Main>
+
       <Footer />
     </>
   )

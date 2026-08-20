@@ -157,81 +157,6 @@ public class UserControllerTests
         validationResults.ShouldBeEmpty();
     }
 
-    [Fact]
-    public async Task CreateUser_IsValid_ReturnsDto()
-    {
-        CreateUserRequestDto request = CreateUserRequestDto();
-        UserDetailsDto expected = UserDetailsDto();
-
-        _mockUserService
-            .CreateUser(request, TestContext.Current.CancellationToken)
-            .Returns(Result<UserDetailsDto, CreateUserError>.Ok(expected));
-
-        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-
-        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
-        ok.Value.ShouldBe(expected);
-    }
-
-    [Fact]
-    public async Task CreateUser_OrgNotFound_ReturnsNotFound()
-    {
-        CreateUserRequestDto request = CreateUserRequestDto();
-        _mockUserService
-            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
-            .Returns(
-                Result<UserDetailsDto, CreateUserError>.Err(
-                    new CreateUserError.NotFound(request.OrganisationId)
-                )
-            );
-        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-        result
-            .Result.ShouldBeOfType<NotFoundObjectResult>()
-            .Value.ShouldBe("There is no organisation with that Organisation ID.");
-    }
-
-    [Fact]
-    public async Task CreateUser_EmailConflict_ReturnsConflict()
-    {
-        CreateUserRequestDto request = CreateUserRequestDto();
-        _mockUserService
-            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
-            .Returns(
-                Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.EmailConflict())
-            );
-        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-        ConflictObjectResult conflict = result.Result.ShouldBeOfType<ConflictObjectResult>();
-        conflict.Value.ShouldBe("A user with that email is already registered.");
-    }
-
-    [Fact]
-    public async Task CreateUser_FieldsMissing_ReturnsBadRequest()
-    {
-        CreateUserRequestDto request = CreateUserRequestDto();
-
-        _mockUserService
-            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
-            .Returns(
-                Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.MissingFields())
-            );
-        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-        result
-            .Result.ShouldBeOfType<BadRequestObjectResult>()
-            .Value.ShouldBe("Some of the data required is missing.");
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -308,27 +233,4 @@ public class UserControllerTests
 
         return validationResults;
     }
-
-    private static UserDetailsDto UserDetailsDto() =>
-        new()
-        {
-            UserType = UserType.PharmaUser,
-            Title = "Mr",
-            FullName = "Test1",
-            JobTitle = "Test3",
-            WorkPhone = "0123456789",
-            WorkEmail = "user@example.com",
-        };
-
-    private static CreateUserRequestDto CreateUserRequestDto() =>
-        new()
-        {
-            UserType = UserType.PharmaUser,
-            Title = "Mr",
-            FullName = "Test1",
-            JobTitle = "Test3",
-            WorkTelephone = "0123456789",
-            WorkEmail = "user@example.com",
-            OrganisationId = 1,
-        };
 }

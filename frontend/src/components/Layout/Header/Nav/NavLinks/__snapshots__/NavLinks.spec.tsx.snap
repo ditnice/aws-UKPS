@@ -107,6 +107,14 @@ exports[`NavLinks > renders root links for the root path 1`] = `
         Home
       </a>
     </li>
+    <li>
+      <a
+        class="_link_12dd76"
+        href="/about-us"
+      >
+        About
+      </a>
+    </li>
   </ul>
 </DocumentFragment>
 `;
