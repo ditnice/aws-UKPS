@@ -1,7 +1,6 @@
 using Bogus;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
-using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Persistence.Data.Seeding;
 
@@ -14,7 +13,6 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         var organisationFaker = new OrganisationFaker();
         var userFaker = new UserFaker();
         var membershipFaker = new UserOrgMembershipFaker();
-        var statuses = Enum.GetValues<UserOrgStatus>();
 
         RuleFor(x => x.Organisations, (f, o) => organisationFaker.Generate(5));
         RuleFor(
@@ -40,8 +38,6 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                                             membershipFaker.Generate();
                                         generatedMembership.User = u;
                                         generatedMembership.Organisation = org;
-                                        // Cycle through every status at least once per organisation for variety.
-                                        generatedMembership.Status = statuses[i % statuses.Length];
                                         return generatedMembership;
                                     }
                                 );
