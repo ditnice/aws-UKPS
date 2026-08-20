@@ -3,11 +3,11 @@
 exports[`Footer > has the footer data-component attribute 1`] = `
 <DocumentFragment>
   <footer
-    class="_footer_d5709b"
+    class="_footer_9890c6"
     data-component="footer"
   >
     <div
-      class="_container_d5709b"
+      class="_container_9890c6"
     >
       <p>
         Footer placeholder content
@@ -23,11 +23,11 @@ exports[`Footer > has the footer data-component attribute 1`] = `
 exports[`Footer > renders Legal as a child 1`] = `
 <DocumentFragment>
   <footer
-    class="_footer_d5709b"
+    class="_footer_9890c6"
     data-component="footer"
   >
     <div
-      class="_container_d5709b"
+      class="_container_9890c6"
     >
       <p>
         Footer placeholder content
@@ -43,11 +43,11 @@ exports[`Footer > renders Legal as a child 1`] = `
 exports[`Footer > renders a contentinfo landmark 1`] = `
 <DocumentFragment>
   <footer
-    class="_footer_d5709b"
+    class="_footer_9890c6"
     data-component="footer"
   >
     <div
-      class="_container_d5709b"
+      class="_container_9890c6"
     >
       <p>
         Footer placeholder content
@@ -63,11 +63,11 @@ exports[`Footer > renders a contentinfo landmark 1`] = `
 exports[`Footer > renders the placeholder content 1`] = `
 <DocumentFragment>
   <footer
-    class="_footer_d5709b"
+    class="_footer_9890c6"
     data-component="footer"
   >
     <div
-      class="_container_d5709b"
+      class="_container_9890c6"
     >
       <p>
         Footer placeholder content

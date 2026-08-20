@@ -3,7 +3,7 @@
 exports[`Header > renders collapsed by default 1`] = `
 <DocumentFragment>
   <div
-    class="_header_a8a96d"
+    class="_header_2e1c09"
     data-component="header"
     id="top"
   >
@@ -12,11 +12,11 @@ exports[`Header > renders collapsed by default 1`] = `
     >
       <ul
         aria-label="Accessibility links"
-        class="_a11yLinks_a8a96d"
+        class="_a11yLinks_2e1c09"
       >
         <li>
           <a
-            class="_link_f0d56e"
+            class="_link_7c5f24"
             href="#content-start"
           >
             Skip to content
@@ -24,7 +24,7 @@ exports[`Header > renders collapsed by default 1`] = `
         </li>
         <li>
           <a
-            class="_link_f0d56e"
+            class="_link_7c5f24"
             href="/accessibility"
           >
             Accessibility help
@@ -32,30 +32,30 @@ exports[`Header > renders collapsed by default 1`] = `
         </li>
       </ul>
       <div
-        class="_container_a8a96d"
+        class="_container_2e1c09"
       >
         <a
           aria-label="NICE: National Institute for Health and Care Excellence homepage"
-          class="_home_a8a96d"
+          class="_home_2e1c09"
           href="/"
         >
           <img
             alt=""
-            class="_icon_a8a96d"
+            class="_icon_2e1c09"
             height="82"
             src="/assets/ukps-logo.png"
             width="750"
           />
         </a>
         <div
-          class="_wrapper_a8a96d"
+          class="_wrapper_2e1c09"
         >
           <button
             aria-controls="header-menu"
             aria-expanded="false"
             aria-haspopup="menu"
             aria-label="Expand site menu"
-            class="_mobileMenuBtn_a8a96d"
+            class="_mobileMenuBtn_2e1c09"
             id="header-menu-button"
             type="button"
           >
@@ -64,24 +64,24 @@ exports[`Header > renders collapsed by default 1`] = `
         </div>
       </div>
       <div
-        class="_wrapper_efef43"
+        class="_wrapper_9cdc15"
         id="header-menu"
       >
         <nav
           aria-label="primary navigation"
-          class="_nav_efef43"
+          class="_nav_9cdc15"
         >
           <div
-            class="_menuWrapper_efef43"
+            class="_menuWrapper_9cdc15"
           >
             <ul
               aria-labelledby="header-menu-button"
-              class="_menuList_60c4df"
+              class="_menuList_12dd76"
             >
               <li>
                 <a
                   aria-current="page"
-                  class="_link_60c4df"
+                  class="_link_12dd76"
                   href="/"
                 >
                   Home
@@ -99,7 +99,7 @@ exports[`Header > renders collapsed by default 1`] = `
 exports[`Header > renders expanded after the mobile menu button is clicked 1`] = `
 <DocumentFragment>
   <div
-    class="_header_a8a96d"
+    class="_header_2e1c09"
     data-component="header"
     id="top"
   >
@@ -108,11 +108,11 @@ exports[`Header > renders expanded after the mobile menu button is clicked 1`] =
     >
       <ul
         aria-label="Accessibility links"
-        class="_a11yLinks_a8a96d"
+        class="_a11yLinks_2e1c09"
       >
         <li>
           <a
-            class="_link_f0d56e"
+            class="_link_7c5f24"
             href="#content-start"
           >
             Skip to content
@@ -120,7 +120,7 @@ exports[`Header > renders expanded after the mobile menu button is clicked 1`] =
         </li>
         <li>
           <a
-            class="_link_f0d56e"
+            class="_link_7c5f24"
             href="/accessibility"
           >
             Accessibility help
@@ -128,30 +128,30 @@ exports[`Header > renders expanded after the mobile menu button is clicked 1`] =
         </li>
       </ul>
       <div
-        class="_container_a8a96d"
+        class="_container_2e1c09"
       >
         <a
           aria-label="NICE: National Institute for Health and Care Excellence homepage"
-          class="_home_a8a96d"
+          class="_home_2e1c09"
           href="/"
         >
           <img
             alt=""
-            class="_icon_a8a96d"
+            class="_icon_2e1c09"
             height="82"
             src="/assets/ukps-logo.png"
             width="750"
           />
         </a>
         <div
-          class="_wrapper_a8a96d"
+          class="_wrapper_2e1c09"
         >
           <button
             aria-controls="header-menu"
             aria-expanded="true"
             aria-haspopup="menu"
             aria-label="Close site menu"
-            class="_mobileMenuBtn_a8a96d"
+            class="_mobileMenuBtn_2e1c09"
             id="header-menu-button"
             type="button"
           >
@@ -160,24 +160,24 @@ exports[`Header > renders expanded after the mobile menu button is clicked 1`] =
         </div>
       </div>
       <div
-        class="_wrapper_efef43 _wrapperExpanded_efef43"
+        class="_wrapper_9cdc15 _wrapperExpanded_9cdc15"
         id="header-menu"
       >
         <nav
           aria-label="primary navigation"
-          class="_nav_efef43"
+          class="_nav_9cdc15"
         >
           <div
-            class="_menuWrapper_efef43"
+            class="_menuWrapper_9cdc15"
           >
             <ul
               aria-labelledby="header-menu-button"
-              class="_menuList_60c4df"
+              class="_menuList_12dd76"
             >
               <li>
                 <a
                   aria-current="page"
-                  class="_link_60c4df"
+                  class="_link_12dd76"
                   href="/"
                 >
                   Home
