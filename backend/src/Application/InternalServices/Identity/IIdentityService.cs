@@ -43,7 +43,11 @@ internal interface IIdentityService
         string newPassword,
         CancellationToken cancellationToken
     );
-
+    Task UpdateUserEmail(
+        string currentEmail,
+        string updatedEmail,
+        CancellationToken cancellationToken
+    );
     Task<AuthenticationCredentialsDto> VerifySoftwareToken(
         string username,
         string authenticationSessionId,

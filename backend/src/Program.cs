@@ -12,6 +12,7 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.InternalServices.Hosting;
+using UKPS.Api.WebApi.InternalServices.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +29,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserInfoService, MockCurrentUserInfoService>();
+builder.Services.AddScoped<ICurrentUserInfoService, WebApiCurrentUserInfoService>();
 builder.Services.AddScoped<ISetupLinkCreator, SetupLinkCreator>();
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();

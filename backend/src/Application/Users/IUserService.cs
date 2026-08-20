@@ -23,4 +23,24 @@ public interface IUserService
         GetUsersQueryDto getUsersQuery,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Updates the details of an existing user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to update.</param>
+    /// <param name="command">The details to update for the user.</param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a
+    /// <see cref="Result{TSuccess, TError}"/> with the updated user's details, or an
+    /// error of type <see cref="UpdateUserDetailsError"/> if the user's details could
+    /// not be updated.
+    /// </returns>
+    Task<Result<UserDetailsDto, UpdateUserDetailsError>> UpdateUserDetails(
+        int userId,
+        UpdateUserDetailsCommand command,
+        CancellationToken cancellationToken
+    );
 }

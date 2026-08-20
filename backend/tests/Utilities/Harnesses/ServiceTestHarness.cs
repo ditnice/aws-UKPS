@@ -3,6 +3,7 @@ using NSubstitute;
 using UKPS.Api.Application;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
 using UKPS.Api.Tests.Utilities.MockInternalServices;
 
@@ -21,7 +22,6 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
     private CurrentUser _currentUser = AuthorisationTestConstants.DefaultCurrentUser;
     private IDateTimeProvider _timeProvider = new SystemDateTimeProvider();
     private IServiceCollection _serviceCollection;
-
     private readonly AppDbContext _appContext;
 
     public ServiceTestHarness(AppDbContext context)
@@ -37,6 +37,13 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
             .AddTransient(_ => Emails.Mock)
             .AddSingleton(_ => _timeProvider)
             .AddLogging();
+    }
+
+    public ServiceTestHarness(IServiceTestHarness<IUserService> harness)
+        : this(harness.GetClearedContext())
+    {
+        Emails = harness.Emails;
+        Cognito = harness.Cognito;
     }
 
     public AppDbContext GetClearedContext()

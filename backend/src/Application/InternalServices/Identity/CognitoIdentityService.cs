@@ -133,6 +133,23 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         });
     }
 
+    public async Task UpdateUserEmail(
+        string currentEmail,
+        string updatedEmail,
+        CancellationToken cancellationToken
+    )
+    {
+        await _cognito.AdminUpdateUserAttributesAsync(
+            new AdminUpdateUserAttributesRequest
+            {
+                UserPoolId = _options.Value.UserPoolId,
+                Username = currentEmail,
+                UserAttributes = [new AttributeType { Name = "email", Value = updatedEmail }],
+            },
+            cancellationToken
+        );
+    }
+
     public async Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
         string refreshToken,
         CancellationToken cancellationToken

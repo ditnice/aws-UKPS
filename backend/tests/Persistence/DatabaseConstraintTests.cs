@@ -45,7 +45,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
         DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
         );
-        AssertUniqueViolation(exception);
+        AssertUniqueViolation(exception, ConstraintNames.UserMembershipUniqueUserAndOrgId);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
         DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
         );
-        AssertUniqueViolation(exception);
+        AssertUniqueViolation(exception, ConstraintNames.UserUniqueEmail);
     }
 
     [Fact]
@@ -83,10 +83,11 @@ public class DatabaseConstraintTests : DatabaseTestBase
         );
     }
 
-    private static void AssertUniqueViolation(DbUpdateException exception)
+    private static void AssertUniqueViolation(DbUpdateException exception, string constraintName)
     {
         PostgresException postgresException =
             exception.InnerException.ShouldBeOfType<PostgresException>();
         postgresException.SqlState.ShouldBe(UniqueViolationSqlState);
+        postgresException.ConstraintName.ShouldBe(constraintName);
     }
 }

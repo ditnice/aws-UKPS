@@ -24,5 +24,6 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasOne(x => x.OnboardingRecord)
             .WithOne(x => x.User)
             .HasForeignKey<UserOnboardingRecord>(x => x.UserId);
+        builder.Ignore(x => x.Events);
     }
 }
