@@ -107,18 +107,26 @@ describe('BackToTop', () => {
 
   it('rechecks visibility when observed content is resized', () => {
     let triggerResize = () => {}
+    const observe = vi.fn()
     vi.stubGlobal(
       'ResizeObserver',
       vi.fn().mockImplementation(function (this: unknown, callback: () => void) {
         triggerResize = callback
-        return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() }
+        return { observe, unobserve: vi.fn(), disconnect: vi.fn() }
       }),
     )
 
     setHeights({ scrollHeight: 500, innerHeight: 1000 })
-    const { container } = render(<BackToTop />)
+    const { container } = render(
+      <main data-component="main">
+        <BackToTop />
+      </main>,
+    )
+    const main = container.querySelector('[data-component="main"]') as HTMLElement
+    const backToTop = main.firstElementChild as Element
 
-    expect(isHidden(container.firstElementChild as Element)).toBe(true)
+    expect(observe).toHaveBeenCalledWith(main)
+    expect(isHidden(backToTop)).toBe(true)
 
     Object.defineProperty(document.documentElement, 'scrollHeight', {
       configurable: true,
@@ -126,6 +134,6 @@ describe('BackToTop', () => {
     })
     act(() => triggerResize())
 
-    expect(isHidden(container.firstElementChild as Element)).toBe(false)
+    expect(isHidden(backToTop)).toBe(false)
   })
 })

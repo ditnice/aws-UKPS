@@ -1,2 +1,7 @@
+// Shared 40px header control height copied from global-nav to align the logo,
+// mobile menu button and search-related controls.
 $search-height: 40;
+
+// High base copied from global-nav after cross-application stacking conflicts;
+// local header layers add small offsets for focused nav items and skip links.
 $base-z-index: 99990;

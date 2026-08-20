@@ -13,6 +13,7 @@ import type { MouseEvent } from 'react'
 export function BackToTop() {
   const [isVisible, setIsVisible] = useState(true)
 
+  // Measure before paint so short pages don't briefly flash the back-to-top link.
   useLayoutEffect(() => {
     function checkVisibility() {
       const footer = document.querySelector('[data-component="footer"]')
@@ -27,7 +28,8 @@ export function BackToTop() {
     window.addEventListener('resize', checkVisibility)
 
     const resizeObserver = new ResizeObserver(checkVisibility)
-    resizeObserver.observe(document.body)
+    const resizeObserverTarget = document.querySelector('[data-component="main"]') ?? document.body
+    resizeObserver.observe(resizeObserverTarget)
 
     return () => {
       window.removeEventListener('resize', checkVisibility)
