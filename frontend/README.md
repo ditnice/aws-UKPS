@@ -41,8 +41,8 @@ The following environment variables can be set:
 ```env
 BACKEND_API_BASE_URL=https://localhost:7180
 BACKEND_API_TIMEOUT_MS=60000
-COGNITO_ISSUER=https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_TkDrwYYZu
-COGNITO_CLIENT_ID=3tmcvgevfu18943cna02v5db5k
+COGNITO_ISSUER=https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h
+COGNITO_CLIENT_ID=ioihsfd49fj09wj3f
 AUTHENTICATION_MODE=DEV
 
 #### Docker (Optional)
