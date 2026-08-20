@@ -17,12 +17,33 @@ After you click the `Deploy` button above, you'll want to have standalone copy o
 ### Development
 
 1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+2. `cd my-project && cp .env.example .env` to copy the example environment variables.
 
 3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+4. open `https://localhost:3000` to open the app in your browser
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+#### Configuration
+
+The following environment variables can be set:
+
+| Variable                 | Required | Example                                                           | Description                                                                                                                                                                                          |
+| ------------------------ | -------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BACKEND_API_BASE_URL`   | Yes      | `https://localhost:7180`                                          | Base URL of the backend API. All API requests are sent to this endpoint.                                                                                                                             |
+| `BACKEND_API_TIMEOUT_MS` | No       | `60000`                                                           | Maximum time, in milliseconds, to wait for a backend API response before timing out.                                                                                                                 |
+| `COGNITO_ISSUER`         | Yes*     | `https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h` | AWS Cognito User Pool issuer URL used to validate authentication tokens.                                                                                                                             |
+| `COGNITO_CLIENT_ID`      | Yes*     | `ioihsfd49fj09wj3f`                                               | AWS Cognito App Client ID used during authentication and authorization flows.                                                                                                                        |
+| `AUTHENTICATION_MODE`    | No       | `DEV`                                                             | Controls how authentication is handled by the application. `DEV` means that you will be allowed to access all routes without authentications and is intended for local development and testing only. |
+
+> \* Unless AUTHENTICATION_MODE=DEV
+
+## Example Configuration
+
+```env
+BACKEND_API_BASE_URL=https://localhost:7180
+BACKEND_API_TIMEOUT_MS=60000
+COGNITO_ISSUER=https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_TkDrwYYZu
+COGNITO_CLIENT_ID=3tmcvgevfu18943cna02v5db5k
+AUTHENTICATION_MODE=DEV
 
 #### Docker (Optional)
 
@@ -65,3 +86,4 @@ That's it! The Docker instance will help you get up and running quickly while al
 ## Questions
 
 If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+```
