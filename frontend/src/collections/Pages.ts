@@ -23,14 +23,22 @@ export const Pages: CollectionConfig = {
       type: 'text',
       required: true,
     },
-    slugField({ useAsSlug: 'title' }),
+    slugField({
+      useAsSlug: 'title',
+      overrides: (field) => {
+        field.admin = { position: undefined }
+        return field
+      },
+    }),
     {
-      name: 'navigationLabel',
-      type: 'text',
-    },
-    {
-      name: 'navigationOrder',
-      type: 'number',
+      name: 'parent',
+      type: 'relationship',
+      relationTo: 'pages',
+      admin: {
+        description:
+          'Optional — create hierarchical pages, e.g. about-us/history-of-nice. Leave blank for a top-level page.',
+      },
+      filterOptions: ({ id }) => (id ? { id: { not_equals: id } } : true),
     },
     {
       name: 'layout',

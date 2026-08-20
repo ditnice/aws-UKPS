@@ -13,47 +13,68 @@ function getDefaultPageByPath(path: string) {
   return defaultPages.find((page) => page.path === path) ?? null
 }
 
-// Current design is that a path is always `/${slug}`, i.e. no nested routes like /about-us/what-is-ukps
-function pathToSlug(path: string): string {
-  return path.replace(/^\//, '')
+function splitPathIntoSlugs(path: string): string[] {
+  return path.split('/').filter(Boolean)
 }
 
-export const getAllPages = cache(async (): Promise<SitePage[]> => {
+export type HeaderNavItem = {
+  label: string
+  path: string
+}
+
+export const getHeaderNav = cache(async (): Promise<HeaderNavItem[]> => {
   try {
     const payload = await getPayloadClient()
-    const result = await payload.find({
-      collection: 'pages',
-      limit: 0,
-      pagination: false,
-      sort: 'slug',
-    })
+    // depth: 1 is enough — the `destination` relationship is restricted to top-level pages,
+    // so never has a parent.
+    const header = await payload.findGlobal({ slug: 'header', depth: 1 })
 
-    const pages = result.docs
-      .map((doc) => mapPage(doc))
-      .filter((doc): doc is SitePage => Boolean(doc))
-
-    return pages.length ? pages : defaultPages
+    return (header.headerLinks ?? [])
+      .map((item) => {
+        const page = item.destination
+        if (!page || typeof page !== 'object' || !page.slug) {
+          return null
+        }
+        return { label: item.label, path: `/${page.slug}` }
+      })
+      .filter((item): item is HeaderNavItem => Boolean(item))
   } catch (error) {
-    console.error('Failed to load pages from Payload, falling back to default pages:', error)
-    return defaultPages
+    console.error('Failed to load header navigation from Payload:', error)
+    return []
   }
 })
 
 export const getPageByPath = cache(async (path: string): Promise<SitePage | null> => {
   try {
     const payload = await getPayloadClient()
-    const result = await payload.find({
-      collection: 'pages',
-      limit: 1,
-      pagination: false,
-      where: {
-        slug: {
-          equals: pathToSlug(path),
-        },
-      },
-    })
+    const slugs = splitPathIntoSlugs(path)
 
-    const page = result.docs.map((doc) => mapPage(doc)).find((doc): doc is SitePage => Boolean(doc))
+    if (!slugs.length) {
+      return getDefaultPageByPath(path)
+    }
+
+    let parentId: number | undefined
+    let doc = null
+
+    // Slugs are not necessarily unique - you may have vaccines/resources and medicines/resources
+    // so we need to start at the top and find the right resources page with the correct parent
+    for (const slug of slugs) {
+      const result = await payload.find({
+        collection: 'pages',
+        limit: 1,
+        pagination: false,
+        where: {
+          parent: parentId ? { equals: parentId } : { exists: false },
+          slug: { equals: slug },
+        },
+      })
+
+      doc = result.docs[0] ?? null
+      if (!doc) break
+      parentId = doc.id
+    }
+
+    const page = doc ? mapPage(doc, `/${slugs.join('/')}`) : null
 
     return page ?? getDefaultPageByPath(path)
   } catch (error) {

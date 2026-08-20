@@ -49,8 +49,6 @@ export type SitePageBlock =
 export type SitePage = {
   id?: number
   layout: SitePageBlock[]
-  navigationLabel?: string
-  navigationOrder?: number
   path: string
   slug: string
   title: string
