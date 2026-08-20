@@ -138,7 +138,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         {
             _mockUserService.ClearReceivedCalls();
             var query = faker.Generate();
-            var url = AppendQueryParams(UsersUrl, faker.Generate());
+            var url = AppendQueryParams(UsersUrl, query);
             await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
             await _mockUserService
