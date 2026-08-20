@@ -163,6 +163,12 @@ public class UserController(IUserService userService) : ControllerBase
                             statusCode: StatusCodes.Status404NotFound,
                             title: "Not Found",
                             detail: "The specified user does not exist."
+                        ),
+                    conflictingEmail: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Conflict",
+                            detail: "The specified email conflicts with an existing email."
                         )
                 );
             }

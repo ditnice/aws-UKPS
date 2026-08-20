@@ -955,6 +955,27 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task UpdateUserDetails_WhenEmailConflictsWithExistingUser_ShouldReturnAnError()
+    {
+        var existingOtherUser = await AddEntity(
+            _userFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        User currentUser = await CreateExistingCurrentUser();
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate() with
+        {
+            WorkEmail = existingOtherUser.WorkEmail,
+        };
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.ConflictingEmail>();
+    }
+
+    [Fact]
     public async Task UpdateUserDetails_WhenEmailChanges_ShouldUpdateEmailAttributeInCognito()
     {
         User currentUser = await CreateExistingCurrentUser();

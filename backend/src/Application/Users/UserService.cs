@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -7,6 +8,7 @@ using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using GetUsersResult = UKPS.Api.Application.Common.Result<
@@ -247,7 +249,6 @@ internal partial class UserService(
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
             }
 
-            string previousWorkEmail = user.WorkEmail;
             user.UpdateDetails(
                 command.FullName,
                 command.WorkTelephone,
@@ -256,20 +257,23 @@ internal partial class UserService(
             );
 
             await dbContext.SaveChangesAsync(cancellationToken);
-
-            if (user.Events.OfType<User.EmailUpdatedEvent>().Any())
-            {
-                await identityService.UpdateUserEmail(
-                    previousWorkEmail,
-                    command.WorkEmail,
-                    cancellationToken
-                );
-            }
-
+            await HandleUserEvents(user, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             UserDetailsDto output = MapToDto(user);
             return UpdateUserDetailsResult.Ok(output);
+        }
+        catch (DbUpdateException updateException)
+            when (updateException.InnerException is PostgresException postgresException
+                && string.Equals(
+                    postgresException.ConstraintName,
+                    ConstraintNames.UserUniqueEmail,
+                    StringComparison.Ordinal
+                )
+            )
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.ConflictingEmail());
         }
         catch (Exception ex)
         {
@@ -277,6 +281,31 @@ internal partial class UserService(
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    private async Task HandleUserEvents(User user, CancellationToken cancellationToken)
+    {
+        foreach (var ev in user.Events)
+        {
+            switch (ev)
+            {
+                case User.EmailUpdatedEvent emailUpdatedEvent:
+                    await HandUserEvent(emailUpdatedEvent, cancellationToken);
+                    break;
+            }
+        }
+    }
+
+    private async Task HandUserEvent(
+        User.EmailUpdatedEvent emailUpdatedEvent,
+        CancellationToken cancellationToken
+    )
+    {
+        await identityService.UpdateUserEmail(
+            emailUpdatedEvent.PreviousWorkEmail,
+            emailUpdatedEvent.NewWorkEmail,
+            cancellationToken
+        );
     }
 
     private static UserDetailsDto MapToDto(User user)

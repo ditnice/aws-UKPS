@@ -332,6 +332,31 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task UpdateUserDetails_WhenNewEmailConflicts_ShouldReturnConflictResponse()
+    {
+        _mockUserService
+            .UpdateUserDetails(
+                Arg.Any<int>(),
+                Arg.Any<UpdateUserDetailsCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserDetailsDto, UpdateUserDetailsError>.Err(
+                    new UpdateUserDetailsError.ConflictingEmail()
+                )
+            );
+
+        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
+        var response = await _client.PatchAsJsonAsync(
+            url,
+            _updateUserDetailsCommandFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task UpdateUserDetails_WhenCommandIsInvalid_ShouldReturnBadRequestResponse()
     {
         Func<UpdateUserDetailsCommand, UpdateUserDetailsCommand>[] modifers =
