@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
+import { postUsersRegister } from '@/client/generated'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { Select, SelectOption } from '@/components/Select/Select'
@@ -14,6 +15,7 @@ import { Select, SelectOption } from '@/components/Select/Select'
 import styles from './RegistrationRequestForm.module.scss'
 
 const RegistrationRequest = z.object({
+  organisation: z.string(),
   fullName: z.string().trim().min(1, 'Enter your full name'),
   workEmail: z
     .string()
@@ -29,6 +31,7 @@ export function RegistrationRequestForm() {
   const router = useRouter()
   const form = useForm({
     defaultValues: {
+      organisation: '',
       fullName: '',
       workEmail: '',
       phoneNumber: '',
@@ -40,8 +43,17 @@ export function RegistrationRequestForm() {
     validators: {
       onDynamic: RegistrationRequest,
     },
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value }) => {
       RegistrationRequest.parse(value)
+
+      await postUsersRegister({
+        body: {
+          fullName: value.fullName,
+          workEmail: value.workEmail,
+          phoneNumber: value.phoneNumber,
+          organisation: value.organisation,
+        },
+      })
       router.push('/portal/register/request-submitted')
     },
   })
