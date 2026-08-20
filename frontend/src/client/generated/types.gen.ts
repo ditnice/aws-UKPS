@@ -822,6 +822,23 @@ export type PostOrganisationsResponses = {
 
 export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
 
+export type GetOrganisationsOrganisationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/organisations/organisations';
+};
+
+export type GetOrganisationsOrganisationsResponses = {
+    /**
+     * A task that represents the asynchronous operation. The task result contains
+     * the names of all organisations.
+     */
+    200: Array<string>;
+};
+
+export type GetOrganisationsOrganisationsResponse = GetOrganisationsOrganisationsResponses[keyof GetOrganisationsOrganisationsResponses];
+
 export type GetUsersData = {
     body?: never;
     path?: never;

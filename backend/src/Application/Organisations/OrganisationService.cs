@@ -140,4 +140,11 @@ internal sealed class OrganisationService : IOrganisationService
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result<OrganisationDetailsDto, CreateOrganisationError>.Ok(MapToDto(organisation));
     }
+
+    public async Task<IEnumerable<string>> GetAllOrganisations(CancellationToken cancellationToken)
+    {
+        return await _dbContext
+            .Organisations.Select(x => x.OrganisationName)
+            .ToListAsync(cancellationToken);
+    }
 }

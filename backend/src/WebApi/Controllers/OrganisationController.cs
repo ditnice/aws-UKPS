@@ -268,4 +268,22 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 }
         );
     }
+
+    /// <summary>
+    /// Gets the names of all organisations.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains
+    /// the names of all organisations.
+    /// </returns>
+    [HttpGet("organisations")]
+    public async Task<ActionResult<IEnumerable<string>>> GetAllOrganisations(
+        CancellationToken cancellationToken
+    )
+    {
+        var organisationNames = await organisationService.GetAllOrganisations(cancellationToken);
+
+        return Ok(organisationNames);
+    }
 }
