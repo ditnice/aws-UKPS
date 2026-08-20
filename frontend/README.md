@@ -36,7 +36,7 @@ The following environment variables can be set:
 
 > \* Unless AUTHENTICATION_MODE=DEV
 
-## Example Configuration
+#### Example Configuration
 
 ```env
 BACKEND_API_BASE_URL=https://localhost:7180
