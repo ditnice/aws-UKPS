@@ -237,11 +237,8 @@ internal partial class UserService(
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.UserDoesNotExist());
             }
 
-            CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
-            bool isTheCurrentUserModifyingTheirOwnDetails = string.Equals(
-                currentUser.Email,
-                user.WorkEmail,
-                StringComparison.Ordinal
+            bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
+                user.WorkEmail
             );
 
             if (!isTheCurrentUserModifyingTheirOwnDetails)
