@@ -25,6 +25,7 @@ RUN mkdir -p public
 RUN mkdir -p media
 RUN pnpm build
 
+# checkov:skip=CKV_DOCKER_2: Distroless base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP.
 FROM gcr.io/distroless/nodejs24-debian13:nonroot AS runtime
 
 WORKDIR /app
@@ -38,6 +39,8 @@ COPY --from=build --chown=nonroot:nonroot /app/.next/standalone ./
 COPY --from=build --chown=nonroot:nonroot /app/.next/static ./.next/static
 COPY --from=build --chown=nonroot:nonroot /app/public ./public
 COPY --from=build --chown=nonroot:nonroot /app/media ./media
+
+USER nonroot
 
 EXPOSE 3000
 

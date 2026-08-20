@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using Bogus;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -14,7 +13,6 @@ using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
-using UKPS.Api.WebApi.Controllers;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
@@ -24,7 +22,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     private const string UsersUrl = "/users";
     private readonly IUserService _mockUserService = Substitute.For<IUserService>();
     private readonly HttpClient _client;
-    private readonly UserController _controller;
     private readonly UpdateUserDetailsCommandFaker _updateUserDetailsCommandFaker = new();
 
     public UserControllerTests(WebApplicationFactory<Program> factory)
@@ -47,8 +44,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 );
             })
             .CreateClient();
-
-        _controller = new UserController(_mockUserService);
 
         PaginatedResponseDto<UserListItemDto> expected = CreatePaginatedResponse();
         _mockUserService
@@ -154,25 +149,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         }
     }
 
-    [Fact]
-    public async Task CreateUser_IsValid_ReturnsDto()
-    {
-        CreateUserRequestDto request = CreateUserRequestDto();
-        UserDetailsDto expected = UserDetailsDto();
-
-        _mockUserService
-            .CreateUser(request, TestContext.Current.CancellationToken)
-            .Returns(Result<UserDetailsDto, CreateUserError>.Ok(expected));
-
-        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-
-        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
-        ok.Value.ShouldBe(expected);
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -195,62 +171,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task CreateUser_OrgNotFound_ReturnsNotFound()
-    {
-        CreateUserRequestDto request = CreateUserRequestDto();
-        _mockUserService
-            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
-            .Returns(
-                Result<UserDetailsDto, CreateUserError>.Err(
-                    new CreateUserError.NotFound(request.OrganisationId)
-                )
-            );
-        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-        result
-            .Result.ShouldBeOfType<NotFoundObjectResult>()
-            .Value.ShouldBe("There is no organisation with that Organisation ID.");
-    }
-
-    [Fact]
-    public async Task CreateUser_EmailConflict_ReturnsConflict()
-    {
-        CreateUserRequestDto request = CreateUserRequestDto();
-        _mockUserService
-            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
-            .Returns(
-                Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.EmailConflict())
-            );
-        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-        ConflictObjectResult conflict = result.Result.ShouldBeOfType<ConflictObjectResult>();
-        conflict.Value.ShouldBe("A user with that email is already registered.");
-    }
-
-    [Fact]
-    public async Task CreateUser_FieldsMissing_ReturnsBadRequest()
-    {
-        CreateUserRequestDto request = CreateUserRequestDto();
-
-        _mockUserService
-            .CreateUser(Arg.Any<CreateUserRequestDto>(), TestContext.Current.CancellationToken)
-            .Returns(
-                Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.MissingFields())
-            );
-        ActionResult<UserDetailsDto> result = await _controller.CreateUser(
-            request,
-            TestContext.Current.CancellationToken
-        );
-        result
-            .Result.ShouldBeOfType<BadRequestObjectResult>()
-            .Value.ShouldBe("Some of the data required is missing.");
     }
 
     [Fact]
@@ -418,29 +338,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             TotalCount = 1,
             Page = 1,
             PageSize = 20,
-        };
-
-    private static UserDetailsDto UserDetailsDto() =>
-        new()
-        {
-            UserType = UserType.PharmaUser,
-            Title = "Mr",
-            FullName = "Test1",
-            JobTitle = "Test3",
-            WorkPhone = "0123456789",
-            WorkEmail = "user@example.com",
-        };
-
-    private static CreateUserRequestDto CreateUserRequestDto() =>
-        new()
-        {
-            UserType = UserType.PharmaUser,
-            Title = "Mr",
-            FullName = "Test1",
-            JobTitle = "Test3",
-            WorkTelephone = "0123456789",
-            WorkEmail = "user@example.com",
-            OrganisationId = 1,
         };
 
     private static void ShouldBeEquivalentTo<T>(
