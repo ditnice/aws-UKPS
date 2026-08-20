@@ -40,6 +40,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     private const string LoginUrl = "/auth/login";
     private const string RespondToMultiFactorAuthenticationChallengeUrl = "/auth/mfa";
     private const string RefreshUrl = "/auth/refresh";
+    private const string SignOutUrl = "/auth/sign-out";
     private const string ValidateSetupTokenUrl = "/auth/validate-setup-token";
     private const string SetupUserUrl = "/auth/setup-user";
     private const string VerifyMultiFactorAuthenticationUrl = "/auth/verify-mfa";
@@ -109,6 +110,9 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                 Arg.Any<CancellationToken>()
             )
             .Returns(InitiatedAuthenticationResult.Ok(_validAuthenticationCredentials));
+        _mockedLoginService
+            .SignOut(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
     }
 
     [Fact]
@@ -657,6 +661,48 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         AssertCookiesDoNotExist(response.Headers);
     }
 
+    [Fact]
+    public async Task SignOut_ShouldRevokeRefreshTokenAndClearCookies()
+    {
+        var response = await SendSignOutRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        AssertCookiesAreCleared(response.Headers);
+
+        await _mockedLoginService
+            .Received(1)
+            .SignOut("test-refresh-token", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SignOut_WhenRefreshCookieIsMissing_ShouldClearCookies()
+    {
+        var response = await SendSignOutRequest(refreshCookie: null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        AssertCookiesAreCleared(response.Headers);
+
+        await _mockedLoginService.Received(1).SignOut(string.Empty, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SignOut_WhenCsrfCookieNotSet_ShouldReturnUnauthorised()
+    {
+        var response = await SendSignOutRequest(csrfCookie: null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
+    [Fact]
+    public async Task SignOut_WhenCsrfHeaderNotSet_ShouldReturnUnauthorised()
+    {
+        var response = await SendSignOutRequest(csrfHeader: null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
     private async Task<HttpResponseMessage> SendRefreshRequest(
         string? csrfCookie = "test-csrf-token",
         string? csrfHeader = "test-csrf-token"
@@ -679,6 +725,39 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
+    private async Task<HttpResponseMessage> SendSignOutRequest(
+        string? csrfCookie = "test-csrf-token",
+        string? csrfHeader = "test-csrf-token",
+        string? refreshCookie = "test-refresh-token"
+    )
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            new Uri(SignOutUrl, UriKind.Relative)
+        );
+
+        if (csrfHeader is not null)
+        {
+            request.Headers.Add("X-CSRF-Token", csrfHeader);
+        }
+
+        List<string> cookies = [];
+        if (csrfCookie is not null)
+        {
+            cookies.Add($"{CsrfCookieName}={csrfCookie}");
+        }
+        if (refreshCookie is not null)
+        {
+            cookies.Add($"{RefreshTokenCookieName}={refreshCookie}");
+        }
+        if (cookies.Count > 0)
+        {
+            request.Headers.Add("Cookie", string.Join("; ", cookies));
+        }
+
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
     private void AssertCookiesAreSetCorrectly(
         HttpResponseHeaders headers,
         AuthenticationCredentialsDto validAuthenticationCredentials
@@ -693,7 +772,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         accessCookie.Expires.ShouldBe(CurrentDateTimOffset.AddMinutes(20));
 
         refreshCookie.Value.ShouldBe(validAuthenticationCredentials.RefreshToken);
-        refreshCookie.Path.ShouldBe("/auth/refresh");
+        refreshCookie.Path.ShouldBe("/auth");
 
         csrfCookie.Value.ShouldNotBeNullOrEmpty();
         csrfCookie.HttpOnly.ShouldBeFalse();
@@ -736,6 +815,32 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             cookieExists.ShouldBeFalse(
                 $"The cookie [{cookie}] should not exist in the response headers."
             );
+        }
+    }
+
+    private void AssertCookiesAreCleared(HttpResponseHeaders headers)
+    {
+        Cookie accessCookie = GetCookie(headers, AccessTokenCookieName).ShouldNotBeNull();
+        Cookie refreshCookie = GetCookie(headers, RefreshTokenCookieName).ShouldNotBeNull();
+        Cookie csrfCookie = GetCookie(headers, CsrfCookieName).ShouldNotBeNull();
+
+        accessCookie.Value.ShouldBe(string.Empty);
+        accessCookie.Path.ShouldBe("/");
+        accessCookie.HttpOnly.ShouldBeTrue();
+
+        refreshCookie.Value.ShouldBe(string.Empty);
+        refreshCookie.Path.ShouldBe("/auth");
+        refreshCookie.HttpOnly.ShouldBeTrue();
+
+        csrfCookie.Value.ShouldBe(string.Empty);
+        csrfCookie.Path.ShouldBe("/");
+        csrfCookie.HttpOnly.ShouldBeFalse();
+
+        foreach (var cookie in (Cookie[])[accessCookie, refreshCookie, csrfCookie])
+        {
+            cookie.Secure.ShouldBeTrue();
+            cookie.SameSite.ShouldBe(SameSiteMode.Strict);
+            cookie.Expires.ShouldBe(CurrentDateTimOffset.AddDays(-1));
         }
     }
 

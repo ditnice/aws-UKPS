@@ -27,6 +27,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
     private List<MockUser> _users;
 
     private readonly HashSet<string> _mfaSessions = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _revokedRefreshTokens = new(StringComparer.Ordinal);
 
     public MockAmazonCognitoIdentityProvider()
     {
@@ -92,6 +93,20 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 {
                     throw new NotAuthorizedException("Invalid refresh token.");
                 }
+            });
+
+        Mock.RevokeTokenAsync(Arg.Any<RevokeTokenRequest>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<RevokeTokenRequest>();
+
+                if (!IsValidRefreshToken(request.Token))
+                {
+                    throw new NotAuthorizedException("Invalid refresh token.");
+                }
+
+                _revokedRefreshTokens.Add(request.Token);
+                return Task.FromResult(new RevokeTokenResponse());
             });
 
         Mock.AdminInitiateAuthAsync(
@@ -242,7 +257,8 @@ internal sealed class MockAmazonCognitoIdentityProvider
 
     private bool IsValidRefreshToken(string refreshToken)
     {
-        return string.Equals(refreshToken, RefreshToken, StringComparison.Ordinal);
+        return string.Equals(refreshToken, RefreshToken, StringComparison.Ordinal)
+            && !_revokedRefreshTokens.Contains(refreshToken);
     }
 
     private bool IsValidMfaToken(string userCode)

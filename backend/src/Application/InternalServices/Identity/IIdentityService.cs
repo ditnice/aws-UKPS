@@ -31,6 +31,9 @@ internal interface IIdentityService
         string refreshToken,
         CancellationToken cancellationToken
     );
+
+    Task RevokeRefreshToken(string refreshToken, CancellationToken cancellationToken);
+
     Task<InitiatedAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
         string username,
         string authenticationSession,

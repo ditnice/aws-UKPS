@@ -48,4 +48,11 @@ internal class LoginService : ILoginService
     {
         return _identityService.RefreshAuthenticationToken(command.RefreshToken, cancellationToken);
     }
+
+    public Task SignOut(string refreshToken, CancellationToken cancellationToken)
+    {
+        return string.IsNullOrWhiteSpace(refreshToken)
+            ? Task.CompletedTask
+            : _identityService.RevokeRefreshToken(refreshToken, cancellationToken);
+    }
 }

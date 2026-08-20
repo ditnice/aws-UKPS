@@ -477,6 +477,29 @@ export type PostAuthRefreshResponses = {
     200: unknown;
 };
 
+export type PostAuthSignOutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/sign-out';
+};
+
+export type PostAuthSignOutErrors = {
+    /**
+     * The CSRF token was missing or invalid.
+     */
+    401: ProblemDetails;
+};
+
+export type PostAuthSignOutError = PostAuthSignOutErrors[keyof PostAuthSignOutErrors];
+
+export type PostAuthSignOutResponses = {
+    /**
+     * The user was signed out and authentication cookies were cleared.
+     */
+    200: unknown;
+};
+
 export type PostAuthMfaData = {
     /**
      * A token to monitor for cancellation requests.
