@@ -16,7 +16,7 @@
   box-sizing: border-box;
   font-family: typography.get-font-family(sans);
   position: relative;
-  z-index: header-settings.$base-z-index;
+  z-index: header-settings.$z-index-header;
 
   *,
   *:before,
@@ -87,7 +87,7 @@
   float: right;
   font-family: inherit;
   font-size: 110%;
-  height: utils.rem(header-settings.$search-height);
+  height: utils.rem(header-settings.$control-height);
   min-width: utils.rem(75); // Stops width changing when button text changes
   white-space: nowrap;
 
@@ -135,7 +135,7 @@
   }
 
   .home {
-    height: utils.rem(header-settings.$search-height);
+    height: utils.rem(header-settings.$control-height);
     margin-right: utils.rem(spacing.$large);
   }
 

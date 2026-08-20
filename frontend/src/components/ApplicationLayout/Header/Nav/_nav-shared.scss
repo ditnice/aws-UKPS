@@ -52,7 +52,7 @@ $chevron-vertical-nudge-desktop: -3 * utils.rem(spacing.$x-small);
     color: colours.$text-inverse;
     outline: utils.rem(spacing.$x-small) solid colours.$focus-inverse;
     outline-offset: utils.rem(-(spacing.$small));
-    z-index: header-settings.$base-z-index + 1; // Push above the adjacent nav items
+    z-index: header-settings.$z-index-nav-focus;
   }
 
   &:active,
