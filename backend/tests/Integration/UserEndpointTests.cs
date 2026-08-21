@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users.Dtos;
@@ -182,23 +181,6 @@ public class UserEndpointTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task CreateUser_FieldsMissing_ReturnsBadRequest()
-    {
-        var uri = new Uri($"/users", UriKind.Relative);
-        using StringContent content = new(
-            """{"FirstName":""}""",
-            Encoding.UTF8,
-            "application/json"
-        );
-        HttpResponseMessage response = await _httpClient.PostAsync(
-            uri,
-            content,
-            TestContext.Current.CancellationToken
-        );
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 }

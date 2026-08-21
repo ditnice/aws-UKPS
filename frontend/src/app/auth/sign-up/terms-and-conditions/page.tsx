@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
-import { Button } from '@nice-digital/nds-button'
 import { Panel } from '@nice-digital/nds-panel'
 
+import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import styles from './page.module.scss'

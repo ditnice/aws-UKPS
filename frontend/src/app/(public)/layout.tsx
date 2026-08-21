@@ -1,5 +1,5 @@
 import { inter, lora } from '@/app/fonts'
-import { ApplicationLayout } from '@/components/ApplicationLayout'
+import { ApplicationLayout } from '@/components/Layout/ApplicationLayout'
 import '@/styles/global.scss'
 
 import type { ReactNode } from 'react'
@@ -9,7 +9,7 @@ export const metadata = {
   title: 'UK PharmaScan',
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
       <body>

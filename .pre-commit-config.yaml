@@ -11,6 +11,7 @@ repos:
       - id: end-of-file-fixer
         exclude: ^(backend/openapi/UKPS\.Api\.json|frontend/src/payload-types\.ts)$
       - id: trailing-whitespace
+        exclude: \.snap$
       - id: check-yaml
 
   # Terraform

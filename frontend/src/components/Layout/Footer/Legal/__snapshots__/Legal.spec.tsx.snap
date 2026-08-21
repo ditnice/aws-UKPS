@@ -1,0 +1,784 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Legal > renders the 'Accessibility' link 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Legal > renders the 'Cookies' link 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Legal > renders the 'Freedom of information' link 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Legal > renders the 'Glossary' link 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Legal > renders the 'Privacy notice' link 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Legal > renders the 'Terms and conditions' link 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Legal > renders the copyright notice for the current year 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Legal > renders the legal menu navigation landmark 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Legal > renders the notice of rights link 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_316bba"
+  >
+    <div
+      class="_container_316bba"
+    >
+      <div
+        class="_layout_316bba"
+      >
+        <div
+          class="_menuWrapper_316bba"
+        >
+          <nav
+            aria-label="Legal menu"
+            class="_menu_316bba"
+          >
+            <ul>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/accessibility"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/freedom-of-information"
+                >
+                  Freedom of information
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/glossary"
+                >
+                  Glossary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions"
+                >
+                  Terms and conditions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/privacy-notice"
+                >
+                  Privacy notice
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.nice.org.uk/cookies"
+                >
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p
+            class="_copyright_316bba"
+          >
+            © 
+            <abbr
+              title="National Institute for Health and Care Excellence"
+            >
+              NICE
+            </abbr>
+             2026. All rights reserved. Subject to 
+            <a
+              href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+            >
+              Notice of rights
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

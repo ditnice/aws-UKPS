@@ -48,40 +48,6 @@ export type CreateOrganisationDto = {
 };
 
 /**
- * Represents the information required to create a new user.
- */
-export type CreateUserRequestDto = {
-    /**
-     * Gets the type of user to create.
-     */
-    userType: UserType;
-    /**
-     * Gets the user's title (for example, Mr, Mrs, Ms, or Dr).
-     */
-    title: string;
-    /**
-     * Gets the user's full name.
-     */
-    fullName: string;
-    /**
-     * Gets the user's job title.
-     */
-    jobTitle: string;
-    /**
-     * Gets the user's work telephone number.
-     */
-    workTelephone: string;
-    /**
-     * Gets the user's work email address.
-     */
-    workEmail: string;
-    /**
-     * Gets the identifier of the organisation the user belongs to.
-     */
-    organisationId: number | string;
-};
-
-/**
  * Represents the credentials provided by a user when attempting to authenticate.
  */
 export type LoginRequest = {
@@ -328,6 +294,24 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
      * The new UserRole UpdateOrgMembershipUserRoleCommandDto.UserRole to assign to the user.
      */
     userRole: UserRole;
+};
+
+/**
+ * Represents the details to update for an existing user.
+ */
+export type UpdateUserDetailsCommand = {
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
 };
 
 /**
@@ -848,41 +832,50 @@ export type GetUsersResponses = {
 
 export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
 
-export type PostUsersData = {
+export type PatchUsersByUserIdData = {
     /**
-     * A token used to cancel the operation&gt;
+     * A token to monitor for cancellation requests.
      */
-    body: CreateUserRequestDto;
-    path?: never;
+    body: UpdateUserDetailsCommand;
+    path: {
+        /**
+         * The unique identifier of the user whose details are being updated.
+         */
+        userId: number | string;
+    };
     query?: never;
-    url: '/users';
+    url: '/users/{userId}';
 };
 
-export type PostUsersErrors = {
+export type PatchUsersByUserIdErrors = {
     /**
-     * Bad Request
+     * The supplied user details are invalid.
      */
     400: ProblemDetails;
     /**
-     * Not Found
+     * The caller is not authorised to update the specified user's details.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified user does not exist.
      */
     404: ProblemDetails;
     /**
-     * Conflict
+     * The request conflicts with the existing data such as another users email.
      */
     409: ProblemDetails;
 };
 
-export type PostUsersError = PostUsersErrors[keyof PostUsersErrors];
+export type PatchUsersByUserIdError = PatchUsersByUserIdErrors[keyof PatchUsersByUserIdErrors];
 
-export type PostUsersResponses = {
+export type PatchUsersByUserIdResponses = {
     /**
-     * OK
+     * The user's details were successfully updated.
      */
     200: UserDetailsDto;
 };
 
-export type PostUsersResponse = PostUsersResponses[keyof PostUsersResponses];
+export type PatchUsersByUserIdResponse = PatchUsersByUserIdResponses[keyof PatchUsersByUserIdResponses];
 
 export type PostUsersOnboardData = {
     /**
