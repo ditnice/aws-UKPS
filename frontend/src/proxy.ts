@@ -20,8 +20,19 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
-  if (accessToken && cognitoIssuer && cognitoClientId && cognitoJwks) {
+  if (accessToken) {
     try {
+      if (!cognitoIssuer) {
+        throw Error('Cognito issuer is not configured')
+      }
+
+      if (!cognitoClientId) {
+        throw Error('Cognito client ID is not configured')
+      }
+
+      if (!cognitoJwks) {
+        throw Error('Cognito JWKS is not configured')
+      }
       const { payload } = await jwtVerify(accessToken, cognitoJwks, {
         issuer: cognitoIssuer,
       })
@@ -36,8 +47,11 @@ export async function proxy(req: NextRequest) {
           },
         })
       }
-    } catch {
-      // Invalid, expired, or untrusted tokens should use the standard sign-in redirect.
+    } catch (error) {
+      console.error('Failed to verify Cognito access token', {
+        error: error instanceof Error ? error.message : error,
+        path: req.nextUrl.pathname,
+      })
     }
   }
 

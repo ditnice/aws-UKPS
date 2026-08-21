@@ -236,19 +236,20 @@ internal partial class UserService(
             switch (ev)
             {
                 case User.EmailUpdatedEvent emailUpdatedEvent:
-                    await HandUserEvent(emailUpdatedEvent, cancellationToken);
+                    await HandleUserEvent(user, emailUpdatedEvent, cancellationToken);
                     break;
             }
         }
     }
 
-    private async Task HandUserEvent(
+    private async Task HandleUserEvent(
+        User user,
         User.EmailUpdatedEvent emailUpdatedEvent,
         CancellationToken cancellationToken
     )
     {
         await identityService.UpdateUserEmail(
-            emailUpdatedEvent.PreviousWorkEmail,
+            user.CognitoUsername,
             emailUpdatedEvent.NewWorkEmail,
             cancellationToken
         );
