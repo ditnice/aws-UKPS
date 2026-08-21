@@ -1,5 +1,15 @@
 @use '@/styles/colours';
+@use '@/styles/spacing';
 @use '@/styles/typography';
+@use '@/styles/utils';
+
+.buttonGroup {
+  margin-top: utils.rem(spacing.$large);
+
+  > * + * {
+    margin-left: utils.rem(spacing.$medium);
+  }
+}
 
 // This component renders the NDS `Button` (@nice-digital/nds-button), which
 // always applies its own `.btn` class alongside `.linkButton` below, to make

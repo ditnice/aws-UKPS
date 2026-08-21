@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { Button } from './Button'
+import { Button, ButtonGroup } from './Button'
+import styles from './Button.module.scss'
 
 afterEach(cleanup)
 
@@ -40,6 +41,23 @@ describe('Button', () => {
 
     fireEvent.click(button)
     expect(handleClick).toHaveBeenCalledTimes(1)
+    expect(asFragment()).toMatchSnapshot()
+  })
+})
+
+describe('ButtonGroup', () => {
+  it('renders multiple buttons in a group', () => {
+    const { asFragment } = render(
+      <ButtonGroup className="custom-class">
+        <Button>Continue</Button>
+        <Button variant="secondary">Cancel</Button>
+      </ButtonGroup>,
+    )
+
+    const group = screen.getByRole('button', { name: 'Continue' }).parentElement
+    expect(group?.classList.contains(styles.buttonGroup)).toBe(true)
+    expect(group?.classList.contains('custom-class')).toBe(true)
+    expect(screen.getAllByRole('button')).toHaveLength(2)
     expect(asFragment()).toMatchSnapshot()
   })
 })

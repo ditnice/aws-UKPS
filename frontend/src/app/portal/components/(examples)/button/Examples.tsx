@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@/components/Button/Button'
+import { Button, ButtonGroup } from '@/components/Button/Button'
 
 import { Example } from '../../_components/Example'
 
@@ -25,6 +25,13 @@ export function Examples() {
 
       <Example dark title="Inverse button">
         <Button variant="inverse">Inverse button</Button>
+      </Example>
+
+      <Example title="Button group">
+        <ButtonGroup>
+          <Button variant="cta">Save and continue</Button>
+          <Button variant="secondary">Cancel</Button>
+        </ButtonGroup>
       </Example>
     </>
   )
