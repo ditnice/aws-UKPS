@@ -18,7 +18,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
             Username = "test-user",
             Password = "test-user-password-123",
             Email = "example@email.com",
-            IdentityId = "b7f3c5f9-8b2d-4a71-9e6c-3d4f0a8c1e52",
+            SubjectId = "b7f3c5f9-8b2d-4a71-9e6c-3d4f0a8c1e52",
         };
 
     public IReadOnlyCollection<MockUser> Users => _users;
@@ -39,7 +39,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 (callInfo) =>
                 {
                     var request = callInfo.Arg<AdminCreateUserRequest>();
-                    var identityId = Guid.NewGuid().ToString();
+                    var subjectId = Guid.NewGuid().ToString();
                     var email =
                         request
                             .UserAttributes.FirstOrDefault(x =>
@@ -53,7 +53,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
                     var newUser = new MockUser()
                     {
                         Username = request.Username,
-                        IdentityId = identityId,
+                        SubjectId = subjectId,
                         Email = email,
                     };
                     _users.Add(newUser);
@@ -62,7 +62,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
                     {
                         User = new UserType()
                         {
-                            Attributes = [new() { Name = "sub", Value = identityId }],
+                            Attributes = [new() { Name = "sub", Value = subjectId }],
                         },
                     };
                 }
@@ -322,7 +322,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
         public MockUserFaker()
         {
             RuleFor(x => x.Username, f => f.Internet.UserName());
-            RuleFor(x => x.IdentityId, f => f.Random.Guid().ToString());
+            RuleFor(x => x.SubjectId, f => f.Random.Guid().ToString());
         }
     }
 }

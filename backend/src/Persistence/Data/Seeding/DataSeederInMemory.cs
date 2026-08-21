@@ -194,11 +194,11 @@ internal sealed class DataSeederInMemory : IDataSeeder
 
             if (
                 string.IsNullOrWhiteSpace(configuredUser.CognitoUsername)
-                || configuredUser.CognitoUsername.Length > 36
+                || configuredUser.CognitoUsername.Length > 39
             )
             {
                 throw new InvalidOperationException(
-                    $"Seeding super user '{configuredUser.Email}' must include an identityId of 36 characters or fewer."
+                    $"Seeding super user '{configuredUser.Email}' must include an cognitoUsername of 39 characters or fewer."
                 );
             }
         }
