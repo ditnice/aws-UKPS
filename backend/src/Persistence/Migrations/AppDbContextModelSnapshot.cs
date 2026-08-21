@@ -290,7 +290,7 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.Property<string>("CognitoUsername")
                         .IsRequired()
-                        .HasMaxLength(36)
+                        .HasMaxLength(39)
                         .HasColumnType("varchar(39)")
                         .HasColumnName("cognito_username");
 

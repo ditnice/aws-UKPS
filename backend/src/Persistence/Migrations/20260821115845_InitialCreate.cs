@@ -22,7 +22,7 @@ namespace UKPS.Api.Persistence.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    cognito_username = table.Column<string>(type: "varchar(39)", maxLength: 36, nullable: false),
+                    cognito_username = table.Column<string>(type: "varchar(39)", maxLength: 39, nullable: false),
                     user_type = table.Column<int>(type: "integer", nullable: false),
                     title = table.Column<string>(type: "text", nullable: true),
                     full_name = table.Column<string>(type: "text", nullable: false),

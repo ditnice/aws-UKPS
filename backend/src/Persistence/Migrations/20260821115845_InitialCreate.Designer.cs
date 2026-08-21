@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260819075510_InitialCreate")]
+    [Migration("20260821115845_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -293,7 +293,7 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.Property<string>("CognitoUsername")
                         .IsRequired()
-                        .HasMaxLength(36)
+                        .HasMaxLength(39)
                         .HasColumnType("varchar(39)")
                         .HasColumnName("cognito_username");
 
