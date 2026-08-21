@@ -297,6 +297,54 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
 };
 
 /**
+ * Represents the details to update for an existing user.
+ */
+export type UpdateUserDetailsCommand = {
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
+};
+
+/**
+ * Represents the details of a user.
+ */
+export type UserDetailsDto = {
+    /**
+     * Gets the user's type.
+     */
+    userType: UserType;
+    /**
+     * Gets the user's title (for example, Mr, Mrs, Ms, or Dr), if available.
+     */
+    title: null | string;
+    /**
+     * Gets the user's first name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's job title, if available.
+     */
+    jobTitle: null | string;
+    /**
+     * Gets the user's work telephone number, if available.
+     */
+    workPhone: null | string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+};
+
+/**
  * Represents a limited summary of a user.
  */
 export type UserListItemDto = {
@@ -331,6 +379,11 @@ export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Re
  * Represents the different roles a user can have within the system.
  */
 export type UserRole = 'Standard' | 'Champion' | 'Super';
+
+/**
+ * Represents the different types of users in the system.
+ */
+export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUser' | 'ItAdmin';
 
 /**
  * Represents the details required to verify a user's multi-factor authentication setup.
@@ -778,6 +831,51 @@ export type GetUsersResponses = {
 };
 
 export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
+
+export type PatchUsersByUserIdData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: UpdateUserDetailsCommand;
+    path: {
+        /**
+         * The unique identifier of the user whose details are being updated.
+         */
+        userId: number | string;
+    };
+    query?: never;
+    url: '/users/{userId}';
+};
+
+export type PatchUsersByUserIdErrors = {
+    /**
+     * The supplied user details are invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * The caller is not authorised to update the specified user's details.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified user does not exist.
+     */
+    404: ProblemDetails;
+    /**
+     * The request conflicts with the existing data such as another users email.
+     */
+    409: ProblemDetails;
+};
+
+export type PatchUsersByUserIdError = PatchUsersByUserIdErrors[keyof PatchUsersByUserIdErrors];
+
+export type PatchUsersByUserIdResponses = {
+    /**
+     * The user's details were successfully updated.
+     */
+    200: UserDetailsDto;
+};
+
+export type PatchUsersByUserIdResponse = PatchUsersByUserIdResponses[keyof PatchUsersByUserIdResponses];
 
 export type PostUsersOnboardData = {
     /**

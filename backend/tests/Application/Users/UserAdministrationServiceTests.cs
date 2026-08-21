@@ -14,7 +14,10 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using OnboardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
+using OnboardUserResult = UKPS.Api.Application.Common.Result<
+    int,
+    UKPS.Api.Application.Users.Errors.OnboardUserError
+>;
 
 namespace UKPS.Api.Tests.Application.Users;
 

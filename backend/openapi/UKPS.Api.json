@@ -1096,6 +1096,153 @@
         }
       }
     },
+    "/users/{userId}": {
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Updates the details of the specified user.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The unique identifier of the user whose details are being updated.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDetailsCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDetailsCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDetailsCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The user's details were successfully updated.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDetailsDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDetailsDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDetailsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The supplied user details are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified user does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to update the specified user's details.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the existing data such as another users email.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/onboard": {
       "post": {
         "tags": [
@@ -1678,6 +1825,76 @@
         },
         "description": "Represents a Data Transfer Object (DTO) for updating the user role\nin an organisation membership."
       },
+      "UpdateUserDetailsCommand": {
+        "required": [
+          "fullName",
+          "workEmail",
+          "workTelephone"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Gets the user's full name."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's work email address."
+          },
+          "workTelephone": {
+            "type": "string",
+            "description": "Gets the user's work telephone number."
+          }
+        },
+        "description": "Represents the details to update for an existing user."
+      },
+      "UserDetailsDto": {
+        "required": [
+          "userType",
+          "title",
+          "fullName",
+          "jobTitle",
+          "workPhone",
+          "workEmail"
+        ],
+        "type": "object",
+        "properties": {
+          "userType": {
+            "description": "Gets the user's type.",
+            "$ref": "#/components/schemas/UserType"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the user's title (for example, Mr, Mrs, Ms, or Dr), if available."
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Gets the user's first name."
+          },
+          "jobTitle": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the user's job title, if available."
+          },
+          "workPhone": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the user's work telephone number, if available."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's work email address."
+          }
+        },
+        "description": "Represents the details of a user."
+      },
       "UserListItemDto": {
         "required": [
           "userId",
@@ -1741,6 +1958,17 @@
         ],
         "type": "string",
         "description": "Represents the different roles a user can have within the system."
+      },
+      "UserType": {
+        "enum": [
+          "PharmaUser",
+          "HorizonScanner",
+          "StrategicUser",
+          "QaUser",
+          "ItAdmin"
+        ],
+        "type": "string",
+        "description": "Represents the different types of users in the system."
       },
       "VerifyMultiFactorAuthenticationCommand": {
         "required": [

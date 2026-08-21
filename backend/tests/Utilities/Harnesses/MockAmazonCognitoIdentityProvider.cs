@@ -195,6 +195,31 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 );
             });
 
+        Mock.AdminUpdateUserAttributesAsync(
+                Arg.Any<AdminUpdateUserAttributesRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<AdminUpdateUserAttributesRequest>();
+                var newUserName = request
+                    .UserAttributes.FirstOrDefault(x =>
+                        string.Equals(x.Name, "email", StringComparison.Ordinal)
+                    )
+                    ?.Value;
+                _users = _users
+                    .Select(u =>
+                        string.Equals(u.Username, request.Username, StringComparison.Ordinal)
+                            ? u with
+                            {
+                                Username = newUserName ?? u.Username,
+                            }
+                            : u
+                    )
+                    .ToList();
+                return Task.FromResult(new AdminUpdateUserAttributesResponse());
+            });
+
         Mock.AdminRespondToAuthChallengeAsync(
                 Arg.Any<AdminRespondToAuthChallengeRequest>(),
                 Arg.Any<CancellationToken>()

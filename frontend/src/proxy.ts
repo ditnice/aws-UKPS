@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const signInPath = '/auth/sign-in'
 const cognitoIssuer = process.env.COGNITO_ISSUER
 const cognitoClientId = process.env.COGNITO_CLIENT_ID
+const authenticationMode = process.env.AUTHENTICATION_MODE
 const cognitoJwks = cognitoIssuer
   ? createRemoteJWKSet(new URL(`${cognitoIssuer}/.well-known/jwks.json`))
   : undefined
@@ -14,6 +15,10 @@ export const config = {
 
 export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get('access_token')?.value
+
+  if (authenticationMode === 'DEV') {
+    return NextResponse.next()
+  }
 
   if (accessToken && cognitoIssuer && cognitoClientId && cognitoJwks) {
     try {

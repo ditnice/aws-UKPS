@@ -13,7 +13,10 @@ using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
-using OnboardingUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
+using OnboardingUserResult = UKPS.Api.Application.Common.Result<
+    int,
+    UKPS.Api.Application.Users.Errors.OnboardUserError
+>;
 
 namespace UKPS.Api.Application.Users;
 
@@ -49,7 +52,7 @@ internal sealed partial class UserAdministrationService(
             async result =>
             {
                 await SendUserSignUpRequestedEmail(result, cancellationToken);
-                return OnboardingUserResult.Ok();
+                return OnboardingUserResult.Ok(result.Id);
             },
             err => Task.FromResult(OnboardingUserResult.Err(err))
         );
