@@ -56,16 +56,15 @@ public class UserEndpointTests : DatabaseTestBase
     public async Task GetUsers_OrganisationIdProvided_ReturnsOnlyThatOrganisationsUsers()
     {
         var sampleUser = _faker.PickRandom(ViewableUsers);
+        var sampleUserOrgs = sampleUser.UserOrgMemberships!.Select(x => x.OrganisationId);
         var userFromOtherOrganisation = _faker.PickRandom(
             ViewableUsers.Where(vu =>
-                vu.UserOrgMemberships!.Select(x => x.OrganisationId)
-                    .Intersect(sampleUser.UserOrgMemberships!.Select(x => x.OrganisationId))
-                    .Any()
-            )
+            {
+                var otherUserOrgs = vu.UserOrgMemberships!.Select(x => x.OrganisationId);
+                return !otherUserOrgs.Intersect(sampleUserOrgs).Any();
+            })
         );
-        var randomOrganisation = _faker.PickRandom(
-            sampleUser.UserOrgMemberships!.Select(x => x.OrganisationId)
-        );
+        var randomOrganisation = _faker.PickRandom(sampleUserOrgs);
 
         var uri = new Uri(
             $"/users?organisationId={randomOrganisation}&pageSize={100}",
