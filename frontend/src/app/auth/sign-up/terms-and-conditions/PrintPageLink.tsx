@@ -1,15 +1,11 @@
 'use client'
 
+import { Button } from '@/components/Button/Button'
+
 export function PrintPageLink() {
   return (
-    <a
-      href="#"
-      onClick={(event) => {
-        event.preventDefault()
-        window.print()
-      }}
-    >
+    <Button variant="link" onClick={() => window.print()}>
       Print page
-    </a>
+    </Button>
   )
 }

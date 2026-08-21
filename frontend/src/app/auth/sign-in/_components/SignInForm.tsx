@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation'
 import { type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { postAuthLogin } from '@/client/generated'
+import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
