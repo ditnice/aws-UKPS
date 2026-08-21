@@ -1,12 +1,26 @@
+import { notFound } from 'next/navigation'
+
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
-export default function ManageUserAccess() {
+interface Props {
+  params: Promise<{ id: string; userId: string }>
+}
+
+export default async function ManageUserAccess({ params }: Props) {
+  const { id, userId } = await params
+  const organisationId = Number(id)
+  const selectedUserId = Number(userId)
+
+  if (!Number.isInteger(organisationId) || !Number.isInteger(selectedUserId)) {
+    notFound()
+  }
+
   return (
     <>
       <PageHeader
-        backLink={<BackLink href="#">Back</BackLink>}
+        backLink={<BackLink href={`/portal/organisations/${organisationId}`}>Back</BackLink>}
         heading="Manage user&#39;s access"
       />
       <p>julie.brooks@example.com is a standard user.</p>
