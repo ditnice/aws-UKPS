@@ -2,12 +2,13 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { useRouter } from 'next/navigation'
-import { ChangeEvent } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
 import { postUsersRegister } from '@/client/generated'
+import { getOrganisationsOrganisationNames } from '@/client/generated'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { Select, SelectOption } from '@/components/Select/Select'
@@ -28,6 +29,16 @@ const RegistrationRequest = z.object({
 type RegistrationRequestValues = z.input<typeof RegistrationRequest>
 
 export function RegistrationRequestForm() {
+  const [organisations, setOrganisations] = useState<string[]>([])
+  useEffect(() => {
+    const fetchOrganisations = async () => {
+      const response = await getOrganisationsOrganisationNames()
+      if (response.data) {
+        setOrganisations(response.data)
+      }
+    }
+    fetchOrganisations()
+  }, [])
   const router = useRouter()
   const form = useForm({
     defaultValues: {
@@ -74,8 +85,11 @@ export function RegistrationRequestForm() {
         width="one-third"
       >
         <SelectOption value="choose">Choose organisation</SelectOption>
-        <SelectOption value="org1">Organisation 1</SelectOption>
-        <SelectOption value="org2">Organisation 2</SelectOption>
+        {organisations.map((organisation) => (
+          <SelectOption key={organisation} value={organisation}>
+            {organisation}
+          </SelectOption>
+        ))}
       </Select>
       <p>
         If your organisation is not registered, you must{' '}
