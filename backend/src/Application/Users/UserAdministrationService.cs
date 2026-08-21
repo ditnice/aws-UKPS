@@ -49,12 +49,12 @@ internal sealed partial class UserAdministrationService(
             cancellationToken
         );
         return await createUserResult.Match(
-            async result =>
+            onOk: async result =>
             {
                 await SendUserSignUpRequestedEmail(result, cancellationToken);
                 return OnboardingUserResult.Ok(result.Id);
             },
-            err => Task.FromResult(OnboardingUserResult.Err(err))
+            onErr: err => Task.FromResult(OnboardingUserResult.Err(err))
         );
     }
 
@@ -85,8 +85,8 @@ internal sealed partial class UserAdministrationService(
             cancellationToken
         );
         return await result.Match(
-            () => CreateANewUserInDatabase(userIdentityId, command, cancellationToken),
-            HandleIdentityUserCreationFailed
+            onOk: () => CreateANewUserInDatabase(userIdentityId, command, cancellationToken),
+            onErr: HandleIdentityUserCreationFailed
         );
     }
 
