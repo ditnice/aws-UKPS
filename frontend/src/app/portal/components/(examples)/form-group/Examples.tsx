@@ -2,8 +2,9 @@
 
 import { Checkbox } from '@nice-digital/nds-checkbox'
 import { FormGroup } from '@nice-digital/nds-form-group'
-import { Input } from '@nice-digital/nds-input'
 import { Radio } from '@nice-digital/nds-radio'
+
+import { Input } from '@/components/Input/Input'
 
 import { Example } from '../../_components/Example'
 

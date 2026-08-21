@@ -1,12 +1,11 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
-import { isValidPhoneNumber } from 'libphonenumber-js/min'
+import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
 import { FormGroup } from '@nice-digital/nds-form-group'
 import { Textarea } from '@nice-digital/nds-textarea'
 
@@ -20,6 +19,7 @@ import {
 } from '@/app/common/form/ErrorMessages'
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
+import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
@@ -55,8 +55,8 @@ export function EditOrganisationDetailsForm({
   headOfficeTelephone,
 }: EditOrganisationDetailsFormProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [submitError, setSubmitError] = useState<string>()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string>()
 
   const form = useForm({
     defaultValues: {
@@ -72,20 +72,20 @@ export function EditOrganisationDetailsForm({
     validators: {
       onDynamic: editOrganisationDetailsSchema,
     },
-    onSubmit: ({ value }) => {
-      setSubmitError(undefined)
+    onSubmit: async ({ value }) => {
+      setFormError(undefined)
+      setIsSubmitting(true)
+
       const values = editOrganisationDetailsSchema.parse(value)
+      const response = await updateOrganisationDetailsAction(organisationId, values)
 
-      startTransition(async () => {
-        const result = await updateOrganisationDetailsAction(organisationId, values)
+      if (response.status === 'error') {
+        setIsSubmitting(false)
+        setFormError(response.message)
+        return
+      }
 
-        if (result.status === 'error') {
-          setSubmitError(result.message)
-          return
-        }
-
-        router.push(`/portal/organisations/${organisationId}`)
-      })
+      router.push(`/portal/organisations/${organisationId}`)
     },
   })
 
@@ -98,7 +98,7 @@ export function EditOrganisationDetailsForm({
         void form.handleSubmit()
       }}
     >
-      {submitError && <p role="alert">{submitError}</p>}
+      {formError && <p role="alert">{formError}</p>}
 
       <FormGroup>
         <form.Field name="organisationName">
@@ -192,8 +192,8 @@ export function EditOrganisationDetailsForm({
         </form.Field>
       </FormGroup>
 
-      <Button buttonType="submit" disabled={isPending} variant="cta">
-        {isPending ? 'Saving...' : 'Save changes'}
+      <Button buttonType="submit" disabled={isSubmitting} variant="cta">
+        {isSubmitting ? 'Saving...' : 'Save changes'}
       </Button>
 
       <Button buttonType="button" variant="secondary" onClick={() => router.back()}>

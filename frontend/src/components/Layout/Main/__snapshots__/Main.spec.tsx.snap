@@ -1,0 +1,96 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Main > applies padding by default 1`] = `
+<DocumentFragment>
+  <main
+    class="_main_fdaf76 _withPadding_fdaf76"
+    data-component="main"
+  >
+    <div
+      data-testid="back-to-top"
+    />
+  </main>
+</DocumentFragment>
+`;
+
+exports[`Main > forwards native main attributes 1`] = `
+<DocumentFragment>
+  <main
+    class="_main_fdaf76 _withPadding_fdaf76"
+    data-component="main"
+    id="page-main"
+  >
+    <div
+      data-testid="back-to-top"
+    />
+  </main>
+</DocumentFragment>
+`;
+
+exports[`Main > omits padding when withPadding is false 1`] = `
+<DocumentFragment>
+  <main
+    class="_main_fdaf76"
+    data-component="main"
+  >
+    <div
+      data-testid="back-to-top"
+    />
+  </main>
+</DocumentFragment>
+`;
+
+exports[`Main > preserves custom class names 1`] = `
+<DocumentFragment>
+  <main
+    class="_main_fdaf76 additional-class _withPadding_fdaf76"
+    data-component="main"
+  >
+    <div
+      data-testid="back-to-top"
+    />
+  </main>
+</DocumentFragment>
+`;
+
+exports[`Main > renders BackToTop as a child 1`] = `
+<DocumentFragment>
+  <main
+    class="_main_fdaf76 _withPadding_fdaf76"
+    data-component="main"
+  >
+    <div
+      data-testid="back-to-top"
+    />
+  </main>
+</DocumentFragment>
+`;
+
+exports[`Main > renders a main landmark with the main data-component attribute 1`] = `
+<DocumentFragment>
+  <main
+    class="_main_fdaf76 _withPadding_fdaf76"
+    data-component="main"
+  >
+    <div
+      data-testid="back-to-top"
+    />
+  </main>
+</DocumentFragment>
+`;
+
+exports[`Main > renders children 1`] = `
+<DocumentFragment>
+  <main
+    class="_main_fdaf76 _withPadding_fdaf76"
+    data-component="main"
+  >
+    <p>
+      Page content
+    </p>
+    <div
+      data-testid="back-to-top"
+    />
+  </main>
+</DocumentFragment>
+`;

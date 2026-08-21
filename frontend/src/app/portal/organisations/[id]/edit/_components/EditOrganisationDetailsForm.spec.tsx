@@ -127,10 +127,25 @@ describe('EditOrganisationDetailsForm', () => {
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
-  it('shows a format error when the phone number is invalid on submit', async () => {
+  it.each([
+    'not-a-phone-number', // Non-numeric garbage.
+    '123', // Too short, no recognisable structure.
+    '01632 960001', // Reserved Ofcom number, rejected by libphonenumber.
+    '01 42 68 53 00', // Correct French number, but no country code (parsed as GB).
+    '030 83050', // Correct German number, but no country code (parsed as GB).
+    '911 234 567', // Correct Spanish number, but no country code (parsed as GB).
+    '+999 123 4567', // Non-existent country calling code.
+    '+33 0 42 68 53 00', // France, correct length but invalid pattern (trunk 0 kept after country code).
+    '020 7946 095890', // UK, valid prefix but too many digits.
+    '020-CALL-NOW', // Alphanumeric, not a dialable format.
+    '+044 121 234 5678', // Malformed, stray leading zero before country code.
+    '+44', // Country code only, no subscriber number.
+  ])('shows a format error when the phone number %s is invalid on submit', async (phoneNumber) => {
     renderForm()
 
-    fireEvent.change(screen.getByLabelText('Company phone number'), { target: { value: '123' } })
+    fireEvent.change(screen.getByLabelText('Company phone number'), {
+      target: { value: phoneNumber },
+    })
     submit()
 
     expect(
@@ -140,11 +155,28 @@ describe('EditOrganisationDetailsForm', () => {
   })
 
   it.each([
-    '0121 234 5678',
-    '(020) 1234 5678',
-    '020-1234-5678',
-    '020 1234 5678 ext 123',
-    '+1 (212) 555-0123',
+    '020 1234 5678', // UK landline, no country code.
+    '07911 123456', // UK mobile, no country code.
+    '+44 121 234 5678', // UK, with country code.
+    '(020) 1234 5678', // UK, parenthesised area code.
+    '020-1234-5678', // UK, hyphenated.
+    '020 1234 5678 ext 123', // UK, with extension.
+    '+1 (212) 555-0123', // USA.
+    '+33 1 42 68 53 00', // France.
+    '+49 30 83050', // Germany.
+    '+34 91 123 45 67', // Spain.
+    '+39 02 3661 8300', // Italy.
+    '+31 20 794 0100', // Netherlands.
+    '+353 1 234 5678', // Ireland.
+    '+351 21 123 4567', // Portugal.
+    '+32 470 12 34 56', // Belgium.
+    '+46 8 123 456 00', // Sweden.
+    '+48 22 123 45 67', // Poland.
+    '+45 32 12 34 56', // Denmark.
+    '+358 9 123 4567', // Finland.
+    '+41 44 668 18 00', // Switzerland.
+    '+43 1 234 5678', // Austria.
+    '+47 22 12 34 56', // Norway.
   ])('accepts a phone number in the format %s', async (phoneNumber) => {
     updateOrganisationDetailsActionMock.mockResolvedValue({ status: 'success' })
     renderForm()

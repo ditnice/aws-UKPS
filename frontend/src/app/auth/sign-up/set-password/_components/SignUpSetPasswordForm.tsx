@@ -5,10 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
+import { Button } from '@/components/Button/Button'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 
 import { signUpMfaSetupStorageKey } from '../../constants'

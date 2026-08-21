@@ -2,8 +2,6 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
 import { Alert } from '@nice-digital/nds-alert'
-import { Breadcrumb, Breadcrumbs } from '@nice-digital/nds-breadcrumbs'
-import { Button } from '@nice-digital/nds-button'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import {
@@ -13,6 +11,8 @@ import {
 } from '@/app/portal/_utils/userListQuery'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
+import { BackLink } from '@/components/BackLink/BackLink'
+import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
@@ -53,9 +53,6 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
 
   return (
     <>
-      <Breadcrumbs>
-        <Breadcrumb to="/portal">Dashboard</Breadcrumb>
-      </Breadcrumbs>
       {invitedEmail && (
         <div className={styles.invitedAlert}>
           <Alert type="success">
@@ -67,7 +64,10 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         </div>
       )}
 
-      <PageHeader heading={organisation.organisationName} />
+      <PageHeader
+        heading={organisation.organisationName}
+        backLink={<BackLink href={'/portal'}>Back</BackLink>}
+      />
 
       <h2>Organisation details</h2>
       <SummaryList variant="two-column">
@@ -78,10 +78,7 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         <SummaryListRow label="Head office phone number" value={organisation.headOfficeTelephone} />
       </SummaryList>
 
-      <Button
-        variant={Button.variants.secondary}
-        to={`/portal/organisations/${organisationId}/edit`}
-      >
+      <Button variant="secondary" to={`/portal/organisations/${organisationId}/edit`}>
         Edit details
       </Button>
 

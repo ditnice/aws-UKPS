@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 
-import { Breadcrumb, Breadcrumbs } from '@nice-digital/nds-breadcrumbs'
-
 import { getOrganisationById } from '@/client/generated/sdk.gen'
+import { createServerApiClient } from '@/client/server-api'
+import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import { EditOrganisationDetailsForm } from './_components/EditOrganisationDetailsForm'
@@ -19,7 +19,9 @@ export default async function EditOrganisationPage({ params }: Props) {
     notFound()
   }
 
+  const apiClient = await createServerApiClient()
   const { data: organisation, error } = await getOrganisationById({
+    client: apiClient,
     path: { id: organisationId },
   })
 
@@ -34,12 +36,10 @@ export default async function EditOrganisationPage({ params }: Props) {
 
   return (
     <>
-      <Breadcrumbs>
-        <Breadcrumb to="/portal">Dashboard</Breadcrumb>
-        <Breadcrumb to={`/portal/organisations/${organisationId}`}>Manage organisation</Breadcrumb>
-      </Breadcrumbs>
-
-      <PageHeader heading="Edit your company's details" />
+      <PageHeader
+        backLink={<BackLink href={`/portal/organisations/${organisationId}`}>Back</BackLink>}
+        heading="Edit your company's details"
+      ></PageHeader>
 
       <EditOrganisationDetailsForm
         organisationId={organisationId}

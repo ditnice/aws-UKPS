@@ -5,10 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postAuthMfa } from '@/client/generated'
+import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 
 import { routeOnSuccessfulAuth } from '../../../constants'
