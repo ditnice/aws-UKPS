@@ -14,7 +14,7 @@ import {
 } from '@/app/common/form/ErrorMessages'
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
-import { Button } from '@/components/Button/Button'
+import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 
 import styles from './OrganisationOnboardUserForm.module.scss'
@@ -191,14 +191,14 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
         }}
       </form.Field>
 
-      <div className={styles.actions}>
+      <ButtonGroup>
         <Button disabled={isSubmitting} type="submit" variant="cta">
           Send invite
         </Button>
         <Button elementType={Link} href={cancelHref} variant="secondary">
           Cancel
         </Button>
-      </div>
+      </ButtonGroup>
     </form>
   )
 }

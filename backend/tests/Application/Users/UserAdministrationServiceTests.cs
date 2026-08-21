@@ -67,7 +67,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
 
-        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         );
         result.ShouldBeSuccess();
 
-        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]
@@ -102,7 +102,6 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             );
 
         foundUser.ShouldNotBeNull();
-        foundUser.IdentityId.ShouldNotBeNull();
         foundUser.CreatedAt.ShouldBe(_currentTime);
         foundUser.FullName.ShouldBe(command.FullName);
         foundUser.WorkTelephone.ShouldBe(command.ContactNumber);

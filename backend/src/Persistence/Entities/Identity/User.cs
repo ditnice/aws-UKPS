@@ -6,7 +6,7 @@ internal sealed class User
 {
     public IReadOnlyCollection<IUserDomainEvent> Events => _events;
     public int Id { get; set; }
-    public string? IdentityId { get; init; }
+    public required CognitoUsername CognitoUsername { get; init; }
     public UserType UserType { get; set; }
     public string? Title { get; set; }
     public required string FullName { get; set; }

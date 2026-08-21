@@ -52,11 +52,15 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
-function renderActions(status: UserListItemDto['status']) {
-  switch (status) {
+function renderActions(user: UserListItemDto, organisationId: number) {
+  switch (user.status) {
     case 'Active':
     case 'Inactive':
-      return <a>Edit role</a>
+      return (
+        <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
+          Edit role
+        </Link>
+      )
     case 'Deactivated':
       return <a>Reactivate</a>
     case 'RequestedAccess':
@@ -151,7 +155,7 @@ export async function OrganisationUsersTable({
                     <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
                     <td>{renderStatus(user.status)}</td>
                     <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user.status)}</td>
+                    <td>{renderActions(user, organisationId)}</td>
                   </tr>
                 ))
               ) : (

@@ -899,7 +899,7 @@ public class UserServiceTests : DatabaseTestBase
             command,
             TestContext.Current.CancellationToken
         );
-        MockUser? user = _harness.Cognito.GetUser(testEmail);
+        MockUser? user = _harness.Cognito.GetUserByEmail(testEmail);
         user.ShouldNotBeNull();
     }
 

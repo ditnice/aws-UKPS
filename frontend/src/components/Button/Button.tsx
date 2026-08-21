@@ -4,6 +4,8 @@ import { Button as NdsButton, type ButtonProps as NdsButtonProps } from '@nice-d
 
 import styles from './Button.module.scss'
 
+import type { ComponentPropsWithoutRef } from 'react'
+
 type NdsButtonVariant = NonNullable<NdsButtonProps['variant']>
 
 export type ButtonVariant = NdsButtonVariant | 'link'
@@ -15,6 +17,8 @@ export type ButtonProps = Omit<NdsButtonProps, 'variant'> & {
   className?: NdsButtonProps['className']
   variant?: ButtonVariant
 }
+
+type ButtonGroupProps = ComponentPropsWithoutRef<'div'>
 
 export function Button({
   buttonType = 'button',
@@ -33,4 +37,12 @@ export function Button({
   }
 
   return <NdsButton {...props} buttonType={buttonType} className={className} variant={variant} />
+}
+
+export function ButtonGroup({ children, className, ...props }: ButtonGroupProps) {
+  return (
+    <div {...props} className={clsx(styles.buttonGroup, className)}>
+      {children}
+    </div>
+  )
 }
