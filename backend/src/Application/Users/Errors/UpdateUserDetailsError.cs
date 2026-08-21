@@ -17,12 +17,22 @@ public abstract record UpdateUserDetailsError
     /// </summary>
     public sealed record UserDoesNotExist : UpdateUserDetailsError;
 
-    internal TResult Match<TResult>(Func<TResult> unauthorised, Func<TResult> userDoesNotExist)
+    /// <summary>
+    /// Indicates that the email address conflicts with an existing user's email address.
+    /// </summary>
+    internal sealed record ConflictingEmail : UpdateUserDetailsError;
+
+    internal TResult Match<TResult>(
+        Func<TResult> unauthorised,
+        Func<TResult> userDoesNotExist,
+        Func<TResult> conflictingEmail
+    )
     {
         return this switch
         {
             Unauthorised => unauthorised(),
             UserDoesNotExist => userDoesNotExist(),
+            ConflictingEmail => conflictingEmail(),
             _ => throw new UnreachableException($"Unrecognised {nameof(UpdateUserDetailsError)}"),
         };
     }

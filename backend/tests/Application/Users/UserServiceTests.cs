@@ -819,7 +819,7 @@ public class UserServiceTests : DatabaseTestBase
         {
             FullName = databaseUser.FullName,
             WorkEmail = databaseUser.WorkEmail,
-            WorkTelephone = databaseUser.WorkTelephone,
+            WorkTelephone = databaseUser.WorkTelephone ?? string.Empty,
         };
         databaseValues.ShouldBe(command);
     }
@@ -859,9 +859,30 @@ public class UserServiceTests : DatabaseTestBase
         {
             FullName = value.FullName,
             WorkEmail = value.WorkEmail,
-            WorkTelephone = value.WorkPhone,
+            WorkTelephone = value.WorkPhone ?? string.Empty,
         };
         responseValues.ShouldBe(command);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenEmailConflictsWithExistingUser_ShouldReturnAnError()
+    {
+        var existingOtherUser = await AddEntity(
+            _userFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        User currentUser = await CreateExistingCurrentUser();
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate() with
+        {
+            WorkEmail = existingOtherUser.WorkEmail,
+        };
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.ConflictingEmail>();
     }
 
     [Fact]

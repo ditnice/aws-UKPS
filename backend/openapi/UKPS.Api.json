@@ -1219,6 +1219,26 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "The request conflicts with the existing data such as another users email.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1808,7 +1828,8 @@
       "UpdateUserDetailsCommand": {
         "required": [
           "fullName",
-          "workEmail"
+          "workEmail",
+          "workTelephone"
         ],
         "type": "object",
         "properties": {
@@ -1821,10 +1842,7 @@
             "description": "Gets the user's work email address."
           },
           "workTelephone": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": "string",
             "description": "Gets the user's work telephone number."
           }
         },

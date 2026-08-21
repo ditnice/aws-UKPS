@@ -311,7 +311,7 @@ export type UpdateUserDetailsCommand = {
     /**
      * Gets the user's work telephone number.
      */
-    workTelephone?: null | string;
+    workTelephone: string;
 };
 
 /**
@@ -860,6 +860,10 @@ export type PatchUsersByUserIdErrors = {
      * The specified user does not exist.
      */
     404: ProblemDetails;
+    /**
+     * The request conflicts with the existing data such as another users email.
+     */
+    409: ProblemDetails;
 };
 
 export type PatchUsersByUserIdError = PatchUsersByUserIdErrors[keyof PatchUsersByUserIdErrors];

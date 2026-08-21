@@ -9,6 +9,6 @@ public sealed class UpdateUserDetailsCommandFaker : Faker<UpdateUserDetailsComma
     {
         RuleFor(x => x.FullName, f => f.Name.FullName());
         RuleFor(x => x.WorkEmail, f => f.Internet.Email());
-        RuleFor(x => x.WorkTelephone, f => f.Random.Bool(0.5f) ? null : f.Phone.PhoneNumber());
+        RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
     }
 }

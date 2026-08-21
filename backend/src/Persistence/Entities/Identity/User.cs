@@ -50,11 +50,17 @@ internal sealed class User
         WorkTelephone = workTelephone;
         if (!string.Equals(WorkEmail, workEmail, StringComparison.Ordinal))
         {
-            _events.Add(new EmailUpdatedEvent());
+            _events.Add(
+                new EmailUpdatedEvent() { PreviousWorkEmail = WorkEmail, NewWorkEmail = workEmail }
+            );
             WorkEmail = workEmail;
         }
         UpdatedAt = dateTime;
     }
 
-    internal record EmailUpdatedEvent : IUserDomainEvent;
+    internal record EmailUpdatedEvent : IUserDomainEvent
+    {
+        public required string PreviousWorkEmail { get; init; }
+        public required string NewWorkEmail { get; init; }
+    }
 }

@@ -77,14 +77,16 @@ public class UserController(IUserService userService) : ControllerBase
     /// <response code="400">The supplied user details are invalid.</response>
     /// <response code="403">The caller is not authorised to update the specified user's details.</response>
     /// <response code="404">The specified user does not exist.</response>
+    /// <response code="409">The request conflicts with the existing data such as another users email.</response>
     [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [HttpPatch("{userId}")]
     public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
-        int userId,
-        UpdateUserDetailsCommand command,
+        [FromRoute] int userId,
+        [FromBody] UpdateUserDetailsCommand command,
         CancellationToken cancellationToken
     )
     {
@@ -101,7 +103,18 @@ public class UserController(IUserService userService) : ControllerBase
                             title: "Forbidden",
                             detail: "You are not authorised to update this user's details."
                         ),
-                    userDoesNotExist: () => NotFound()
+                    userDoesNotExist: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Not Found",
+                            detail: "The specified user does not exist."
+                        ),
+                    conflictingEmail: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Conflict",
+                            detail: "The specified email conflicts with an existing email."
+                        )
                 );
             }
         );

@@ -1,6 +1,6 @@
 namespace UKPS.Api.Persistence.Entities.Identity;
 
-internal record struct CognitoUsername
+internal readonly record struct CognitoUsername
 {
     public required string Value { get; init; }
 

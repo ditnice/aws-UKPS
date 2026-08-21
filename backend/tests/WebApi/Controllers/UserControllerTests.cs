@@ -136,12 +136,13 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         GetUsersQueryDtoFaker faker = new GetUsersQueryDtoFaker();
         foreach (var _ in Enumerable.Range(0, 50))
         {
+            _mockUserService.ClearReceivedCalls();
             var query = faker.Generate();
             var url = AppendQueryParams(UsersUrl, faker.Generate());
             await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
             await _mockUserService
-                .Received()
+                .Received(1)
                 .GetUsers(
                     Arg.Do<GetUsersQueryDto>(x => x.ShouldBeEquivalentTo(query)),
                     Arg.Any<CancellationToken>()
@@ -251,6 +252,31 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task UpdateUserDetails_WhenNewEmailConflicts_ShouldReturnConflictResponse()
+    {
+        _mockUserService
+            .UpdateUserDetails(
+                Arg.Any<int>(),
+                Arg.Any<UpdateUserDetailsCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserDetailsDto, UpdateUserDetailsError>.Err(
+                    new UpdateUserDetailsError.ConflictingEmail()
+                )
+            );
+
+        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
+        var response = await _client.PatchAsJsonAsync(
+            url,
+            _updateUserDetailsCommandFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task UpdateUserDetails_WhenCommandIsInvalid_ShouldReturnBadRequestResponse()
     {
         Func<UpdateUserDetailsCommand, UpdateUserDetailsCommand>[] modifers =
@@ -260,6 +286,8 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             x => x with { WorkEmail = string.Empty },
             x => x with { WorkEmail = null! },
             x => x with { WorkEmail = "not a valid email" },
+            x => x with { WorkTelephone = string.Empty },
+            x => x with { WorkTelephone = null! },
         ];
 
         foreach (var mod in modifers)

@@ -23,5 +23,6 @@ public sealed record UpdateUserDetailsCommand
     /// <summary>
     /// Gets the user's work telephone number.
     /// </summary>
-    public string? WorkTelephone { get; init; }
+    [Required]
+    public required string WorkTelephone { get; init; }
 }
