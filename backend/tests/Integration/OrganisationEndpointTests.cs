@@ -128,7 +128,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
             OrganisationName = "New Pharma Ltd",
             HeadOfficeAddress = "1 New Street\nLondon\nEC1A 1AA",
             HeadOfficeEmail = "new@example.com",
-            HeadOfficeTelephone = "020 9999 9999",
+            HeadOfficeTelephone = "020 1111 1111",
         };
         var uri = new Uri("/organisations/1", UriKind.Relative);
 
@@ -156,7 +156,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
         saved.OrganisationName.ShouldBe("New Pharma Ltd");
         saved.HeadOfficeAddress.ShouldBe("1 New Street\nLondon\nEC1A 1AA");
         saved.HeadOfficeEmail.ShouldBe("new@example.com");
-        saved.HeadOfficeTelephone.ShouldBe("020 9999 9999");
+        saved.HeadOfficeTelephone.ShouldBe("020 1111 1111");
     }
 
     [Fact]

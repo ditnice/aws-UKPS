@@ -318,6 +318,82 @@ public class OrganisationControllerTests
         );
     }
 
+    [Theory]
+    [InlineData("not-a-phone-number")] // Non-numeric garbage.
+    [InlineData("123")] // Too short, no recognisable structure.
+    [InlineData("01632 960001")] // Reserved Ofcom number, rejected by libphonenumber.
+    [InlineData("01 42 68 53 00")] // Correct French number, but no country code (parsed as GB).
+    [InlineData("030 83050")] // Correct German number, but no country code (parsed as GB).
+    [InlineData("911 234 567")] // Correct Spanish number, but no country code (parsed as GB).
+    [InlineData("+999 123 4567")] // Non-existent country calling code.
+    [InlineData("+33 0 42 68 53 00")] // France, correct length but invalid pattern (trunk 0 kept after country code).
+    [InlineData("020 7946 095890")] // UK, valid prefix but too many digits.
+    [InlineData("020-CALL-NOW")] // Alphanumeric, not a dialable format.
+    [InlineData("+044 121 234 5678")] // Malformed, stray leading zero before country code.
+    [InlineData("+44")] // Country code only, no subscriber number.
+    public void UpdateOrganisationDetailsDto_TelephoneIsInvalid_IsInvalid(string telephone)
+    {
+        UpdateOrganisationDetailsDto dto = new()
+        {
+            OrganisationName = "Gov Pharma Ltd",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            HeadOfficeEmail = "info@pharma.gov.uk",
+            HeadOfficeTelephone = telephone,
+        };
+
+        List<ValidationResult> validationResults = Validate(dto);
+
+        validationResults.ShouldContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone),
+                StringComparer.Ordinal
+            )
+        );
+    }
+
+    [Theory]
+    [InlineData("020 1234 5678")] // UK landline, no country code.
+    [InlineData("07911 123456")] // UK mobile, no country code.
+    [InlineData("+44 121 234 5678")] // UK, with country code.
+    [InlineData("(020) 1234 5678")] // UK, parenthesised area code.
+    [InlineData("020-1234-5678")] // UK, hyphenated.
+    [InlineData("020 1234 5678 ext 123")] // UK, with extension.
+    [InlineData("+1 (212) 555-0123")] // USA.
+    [InlineData("+33 1 42 68 53 00")] // France.
+    [InlineData("+49 30 83050")] // Germany.
+    [InlineData("+34 91 123 45 67")] // Spain.
+    [InlineData("+39 02 3661 8300")] // Italy.
+    [InlineData("+31 20 794 0100")] // Netherlands.
+    [InlineData("+353 1 234 5678")] // Ireland.
+    [InlineData("+351 21 123 4567")] // Portugal.
+    [InlineData("+32 470 12 34 56")] // Belgium.
+    [InlineData("+46 8 123 456 00")] // Sweden.
+    [InlineData("+48 22 123 45 67")] // Poland.
+    [InlineData("+45 32 12 34 56")] // Denmark.
+    [InlineData("+358 9 123 4567")] // Finland.
+    [InlineData("+41 44 668 18 00")] // Switzerland.
+    [InlineData("+43 1 234 5678")] // Austria.
+    [InlineData("+47 22 12 34 56")] // Norway.
+    public void UpdateOrganisationDetailsDto_TelephoneIsValid_IsValid(string telephone)
+    {
+        UpdateOrganisationDetailsDto dto = new()
+        {
+            OrganisationName = "Gov Pharma Ltd",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            HeadOfficeEmail = "info@pharma.gov.uk",
+            HeadOfficeTelephone = telephone,
+        };
+
+        List<ValidationResult> validationResults = Validate(dto);
+
+        validationResults.ShouldNotContain(r =>
+            r.MemberNames.Contains(
+                nameof(UpdateOrganisationDetailsDto.HeadOfficeTelephone),
+                StringComparer.Ordinal
+            )
+        );
+    }
+
     [Fact]
     public async Task DeactivateMembership_UserIsNotAuthorised_ReturnsForbidResult()
     {

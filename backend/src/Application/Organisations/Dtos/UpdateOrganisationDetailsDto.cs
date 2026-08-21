@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Application.Organisations.Dtos;
 
@@ -58,6 +59,17 @@ public sealed record UpdateOrganisationDetailsDto : IValidatableObject
             yield return new ValidationResult(
                 "HeadOfficeAddress cannot be empty or whitespace.",
                 [nameof(HeadOfficeAddress)]
+            );
+        }
+
+        if (
+            !string.IsNullOrWhiteSpace(HeadOfficeTelephone)
+            && !PhoneNumberValidator.IsValid(HeadOfficeTelephone, "GB")
+        )
+        {
+            yield return new ValidationResult(
+                "HeadOfficeTelephone must be a valid phone number.",
+                [nameof(HeadOfficeTelephone)]
             );
         }
     }

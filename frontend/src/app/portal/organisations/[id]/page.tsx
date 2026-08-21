@@ -11,6 +11,7 @@ import {
 } from '@/app/portal/_utils/userListQuery'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
+import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
@@ -63,7 +64,10 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         </div>
       )}
 
-      <PageHeader heading={organisation.organisationName} />
+      <PageHeader
+        heading={organisation.organisationName}
+        backLink={<BackLink href={'/portal'}>Back</BackLink>}
+      />
 
       <h2>Organisation details</h2>
       <SummaryList variant="two-column">
@@ -74,7 +78,9 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
         <SummaryListRow label="Head office phone number" value={organisation.headOfficeTelephone} />
       </SummaryList>
 
-      <Button variant="secondary">Edit details</Button>
+      <Button variant="secondary" to={`/portal/organisations/${organisationId}/edit`}>
+        Edit details
+      </Button>
 
       <h2>Search and filter</h2>
       <Grid gutter="loose">

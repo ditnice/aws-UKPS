@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation'
 import { type ChangeEvent } from 'react'
 import { z } from 'zod'
 
+import {
+  EMAIL_FORMAT_ERROR_MESSAGE,
+  PERSONAL_EMAIL_REQUIRED_ERROR_MESSAGE,
+} from '@/app/common/form/ErrorMessages'
+import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postAuthLogin } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 
@@ -18,8 +22,8 @@ const signInSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, 'Enter your email address')
-    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
+    .min(1, PERSONAL_EMAIL_REQUIRED_ERROR_MESSAGE)
+    .pipe(z.email(EMAIL_FORMAT_ERROR_MESSAGE)),
   password: z.string().min(1, 'Enter your password'),
 })
 
