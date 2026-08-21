@@ -12,7 +12,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.ToTable("app_user");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.CognitoUsername).HasMaxLength(36).HasColumnType("varchar(39)");
+        builder.Property(x => x.CognitoUsername).HasMaxLength(39).HasColumnType("varchar(39)");
         builder
             .Property(x => x.CognitoUsername)
             .HasConversion((x) => x.Value, (x) => CognitoUsername.Parse(x));
