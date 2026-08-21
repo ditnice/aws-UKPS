@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { z } from 'zod'
 
+import {
+  EMAIL_FORMAT_ERROR_MESSAGE,
+  USER_EMAIL_REQUIRED_ERROR_MESSAGE,
+  USER_NAME_REQUIRED_ERROR_MESSAGE,
+  USER_PHONE_NUMBER_REQUIRED_ERROR_MESSAGE,
+} from '@/app/common/form/ErrorMessages'
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
 import { Button } from '@/components/Button/Button'
@@ -16,13 +22,13 @@ import styles from './OrganisationOnboardUserForm.module.scss'
 import type { ChangeEvent } from 'react'
 
 const onboardUserSchema = z.object({
-  fullName: z.string().trim().min(1, "Enter the user's full name"),
+  fullName: z.string().trim().min(1, USER_NAME_REQUIRED_ERROR_MESSAGE),
   newUserEmail: z
     .string()
     .trim()
-    .min(1, "Enter the user's work email address")
-    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
-  contactNumber: z.string().trim().min(1, "Enter the user's phone number"),
+    .min(1, USER_EMAIL_REQUIRED_ERROR_MESSAGE)
+    .pipe(z.email(EMAIL_FORMAT_ERROR_MESSAGE)),
+  contactNumber: z.string().trim().min(1, USER_PHONE_NUMBER_REQUIRED_ERROR_MESSAGE),
 })
 
 type OnboardUserFormValues = z.input<typeof onboardUserSchema>

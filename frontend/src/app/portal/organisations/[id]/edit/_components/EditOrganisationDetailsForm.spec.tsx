@@ -5,7 +5,7 @@ import {
   ADDRESS_REQUIRED_ERROR_MESSAGE,
   COMPANY_NAME_REQUIRED_ERROR_MESSAGE,
   EMAIL_FORMAT_ERROR_MESSAGE,
-  EMAIL_REQUIRED_ERROR_MESSAGE,
+  ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE,
   PHONE_FORMAT_ERROR_MESSAGE,
   PHONE_REQUIRED_ERROR_MESSAGE,
 } from '@/app/common/form/ErrorMessages'
@@ -96,7 +96,9 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     expect(
-      await screen.findByText(EMAIL_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE, {
+        selector: '.input__error',
+      }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })

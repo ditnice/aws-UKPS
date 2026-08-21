@@ -14,7 +14,7 @@ import {
   PHONE_FORMAT_ERROR_MESSAGE,
   COMPANY_NAME_REQUIRED_ERROR_MESSAGE,
   ADDRESS_REQUIRED_ERROR_MESSAGE,
-  EMAIL_REQUIRED_ERROR_MESSAGE,
+  ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE,
   PHONE_REQUIRED_ERROR_MESSAGE,
 } from '@/app/common/form/ErrorMessages'
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
@@ -32,7 +32,7 @@ const editOrganisationDetailsSchema = z.object({
   headOfficeEmail: z
     .string()
     .trim()
-    .min(1, EMAIL_REQUIRED_ERROR_MESSAGE)
+    .min(1, ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE)
     .pipe(z.email(EMAIL_FORMAT_ERROR_MESSAGE)),
   headOfficeTelephone: z
     .string()

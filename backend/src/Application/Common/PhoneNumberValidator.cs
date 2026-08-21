@@ -14,8 +14,8 @@ internal static class PhoneNumberValidator
     /// </summary>
     /// <param name="telephoneNumber">The phone number to validate.</param>
     /// <param name="defaultRegion">
-    /// The two-letter region code (e.g. "GB") to assume the country calling code from when
-    /// <paramref name="telephoneNumber"/> does not itself specify one.
+    /// The two-letter region code (e.g. "GB") to assume the country calling code when
+    /// <paramref name="telephoneNumber"/> doesn't specify one.
     /// </param>
     public static bool IsValid(string telephoneNumber, string defaultRegion)
     {
@@ -31,9 +31,8 @@ internal static class PhoneNumberValidator
     }
 
     /// <summary>
-    /// Determines whether <paramref name="mobileNumber"/> is a valid mobile number that
-    /// Amazon Cognito can deliver an SMS MFA challenge to, and if so, reformats it as the
-    /// E.164 string (e.g. "+14325551212") Cognito's "phone_number" attribute requires.
+    /// Determines whether <paramref name="mobileNumber"/> is a valid mobile number for
+    /// Cognito SMS MFA challenge, and if so, reformats as an E.164 string.
     /// </summary>
     /// <param name="mobileNumber">The mobile number to validate.</param>
     /// <param name="e164Number">
@@ -42,10 +41,7 @@ internal static class PhoneNumberValidator
     /// </param>
     /// <param name="defaultRegion">
     /// An optional two-letter region code to assume the country calling code from when
-    /// <paramref name="mobileNumber"/> does not carry one itself - for example, a region
-    /// inferred from the user's organisation. When omitted, <paramref name="mobileNumber"/>
-    /// must include its own country calling code (e.g. a leading "+44"): Cognito cannot
-    /// deliver an SMS without an unambiguous country code, so none is assumed by default.
+    /// <paramref name="mobileNumber"/> doesn't include one.
     /// </param>
     public static bool IsValidSmsNumber(
         string mobileNumber,

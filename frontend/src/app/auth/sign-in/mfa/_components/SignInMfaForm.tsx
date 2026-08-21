@@ -5,6 +5,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 
+import {
+  SECURITY_CODE_FORMAT_ERROR_MESSAGE,
+  SECURITY_CODE_REQUIRED_ERROR_MESSAGE,
+} from '@/app/common/form/ErrorMessages'
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postAuthMfa } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
@@ -24,10 +28,10 @@ const signInMfaSchema = z.object({
   securityCode: z
     .string()
     .trim()
-    .min(1, 'Enter your security code')
+    .min(1, SECURITY_CODE_REQUIRED_ERROR_MESSAGE)
     .refine(
       (value) => /^\d{6}$/.test(normaliseSecurityCode(value)),
-      'Enter a 6-digit security code',
+      SECURITY_CODE_FORMAT_ERROR_MESSAGE,
     ),
 })
 
