@@ -2,14 +2,6 @@
 @use '@/styles/spacing';
 @use '@/styles/utils';
 
-.actions {
-  margin-top: utils.rem(spacing.$large);
-
-  > * + * {
-    margin-left: utils.rem(spacing.$small);
-  }
-}
-
 .error {
   color: colours.$error;
   font-weight: bold;

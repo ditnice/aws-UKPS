@@ -35,3 +35,26 @@ exports[`Button > renders the link variant as a semantic button 1`] = `
   </button>
 </DocumentFragment>
 `;
+
+exports[`ButtonGroup > renders multiple buttons in a group 1`] = `
+<DocumentFragment>
+  <div
+    class="_buttonGroup_ee73f7 custom-class"
+  >
+    <button
+      class="btn"
+      data-component="button--primary--button"
+      type="button"
+    >
+      Continue
+    </button>
+    <button
+      class="btn btn--secondary"
+      data-component="button--secondary--button"
+      type="button"
+    >
+      Cancel
+    </button>
+  </div>
+</DocumentFragment>
+`;
