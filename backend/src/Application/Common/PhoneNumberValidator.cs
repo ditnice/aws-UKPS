@@ -1,0 +1,89 @@
+using PhoneNumbers;
+
+namespace UKPS.Api.Application.Common;
+
+/// <summary>
+/// Validates phone numbers using Google's libphonenumber.
+/// </summary>
+internal static class PhoneNumberValidator
+{
+    private static readonly PhoneNumberUtil _phoneNumberUtil = PhoneNumberUtil.GetInstance();
+
+    /// <summary>
+    /// Determines whether <paramref name="telephoneNumber"/> is a valid phone number.
+    /// </summary>
+    /// <param name="telephoneNumber">The phone number to validate.</param>
+    /// <param name="defaultRegion">
+    /// The two-letter region code (e.g. "GB") to assume the country calling code from when
+    /// <paramref name="telephoneNumber"/> does not itself specify one.
+    /// </param>
+    public static bool IsValid(string telephoneNumber, string defaultRegion)
+    {
+        try
+        {
+            PhoneNumber parsed = _phoneNumberUtil.Parse(telephoneNumber, defaultRegion);
+            return _phoneNumberUtil.IsValidNumber(parsed);
+        }
+        catch (NumberParseException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Determines whether <paramref name="mobileNumber"/> is a valid mobile number that
+    /// Amazon Cognito can deliver an SMS MFA challenge to, and if so, reformats it as the
+    /// E.164 string (e.g. "+14325551212") Cognito's "phone_number" attribute requires.
+    /// </summary>
+    /// <param name="mobileNumber">The mobile number to validate.</param>
+    /// <param name="e164Number">
+    /// When this method returns <see langword="true"/>, <paramref name="mobileNumber"/>
+    /// reformatted as E.164 (e.g. "+447911123456"); otherwise <see langword="null"/>.
+    /// </param>
+    /// <param name="defaultRegion">
+    /// An optional two-letter region code to assume the country calling code from when
+    /// <paramref name="mobileNumber"/> does not carry one itself - for example, a region
+    /// inferred from the user's organisation. When omitted, <paramref name="mobileNumber"/>
+    /// must include its own country calling code (e.g. a leading "+44"): Cognito cannot
+    /// deliver an SMS without an unambiguous country code, so none is assumed by default.
+    /// </param>
+    public static bool IsValidSmsNumber(
+        string mobileNumber,
+        out string? e164Number,
+        string? defaultRegion = null
+    )
+    {
+        e164Number = null;
+
+        if (string.IsNullOrWhiteSpace(mobileNumber))
+        {
+            return false;
+        }
+
+        try
+        {
+            // "ZZ" is libphonenumber's placeholder for "unknown region": it forces the
+            // number to carry its own country calling code (e.g. a leading '+') rather
+            // than silently assuming one, which is what we need for Cognito.
+            PhoneNumber parsed = _phoneNumberUtil.Parse(mobileNumber, defaultRegion ?? "ZZ");
+
+            if (!_phoneNumberUtil.IsValidNumber(parsed))
+            {
+                return false;
+            }
+
+            PhoneNumberType numberType = _phoneNumberUtil.GetNumberType(parsed);
+            if (numberType is not (PhoneNumberType.MOBILE or PhoneNumberType.FIXED_LINE_OR_MOBILE))
+            {
+                return false;
+            }
+
+            e164Number = _phoneNumberUtil.Format(parsed, PhoneNumberFormat.E164);
+            return true;
+        }
+        catch (NumberParseException)
+        {
+            return false;
+        }
+    }
+}

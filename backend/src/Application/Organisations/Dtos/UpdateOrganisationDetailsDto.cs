@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using PhoneNumbers;
+using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Application.Organisations.Dtos;
 
@@ -62,27 +62,15 @@ public sealed record UpdateOrganisationDetailsDto : IValidatableObject
             );
         }
 
-        if (!string.IsNullOrWhiteSpace(HeadOfficeTelephone) && !IsValidTelephoneNumber())
+        if (
+            !string.IsNullOrWhiteSpace(HeadOfficeTelephone)
+            && !PhoneNumberValidator.IsValid(HeadOfficeTelephone, "GB")
+        )
         {
             yield return new ValidationResult(
                 "HeadOfficeTelephone must be a valid phone number.",
                 [nameof(HeadOfficeTelephone)]
             );
-        }
-    }
-
-    private bool IsValidTelephoneNumber()
-    {
-        PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.GetInstance();
-
-        try
-        {
-            PhoneNumber parsed = phoneNumberUtil.Parse(HeadOfficeTelephone, "GB");
-            return phoneNumberUtil.IsValidNumber(parsed);
-        }
-        catch (NumberParseException)
-        {
-            return false;
         }
     }
 }
