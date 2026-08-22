@@ -6,7 +6,11 @@ internal sealed class UserOrgMembership
 {
     public int Id { get; set; }
     public required UserRole UserRole { get; set; }
-    public required UserOrgStatus Status { get; set; }
+    public required UserOrgStatus Status
+    {
+        get => _status;
+        init => _status = value;
+    }
     public required PharmaceuticalEntity AllowedPharmaceuticalEntity { get; set; }
     public required DateTime CreatedAt { get; set; }
 
@@ -14,6 +18,8 @@ internal sealed class UserOrgMembership
     public User? User { get; set; }
     public int OrganisationId { get; set; }
     public Organisation? Organisation { get; set; }
+
+    private UserOrgStatus _status;
 
     internal bool IsAuthorised()
     {
@@ -31,6 +37,11 @@ internal sealed class UserOrgMembership
                 $"User organisation membership cannot be marked as active when its current status is '{Status}'."
             );
         }
-        Status = UserOrgStatus.Active;
+        _status = UserOrgStatus.Active;
+    }
+
+    internal void Deactivate()
+    {
+        _status = UserOrgStatus.Deactivated;
     }
 }

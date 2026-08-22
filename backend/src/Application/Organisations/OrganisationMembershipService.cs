@@ -4,7 +4,6 @@ using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
-using UKPS.Api.Persistence.Enums;
 using DeactivateUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipDeactivateUserError
@@ -81,7 +80,7 @@ internal sealed class OrganisationMembershipService(
                 new OrganisationMembershipDeactivateUserError.NotFound()
             );
         }
-        membership.Status = UserOrgStatus.Inactive;
+        membership.Deactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return DeactivateUserResult.Ok(MapToDto(membership));
     }

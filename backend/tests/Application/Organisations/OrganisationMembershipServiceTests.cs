@@ -141,14 +141,14 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         );
 
         var dto = result.ShouldBeSuccess();
-        dto.Status.ShouldBe(UserOrgStatus.Inactive);
+        dto.Status.ShouldBe(UserOrgStatus.Deactivated);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
             m => m.Id == userOrgMembership.Id,
             TestContext.Current.CancellationToken
         );
-        saved.Status.ShouldBe(UserOrgStatus.Inactive);
+        saved.Status.ShouldBe(UserOrgStatus.Deactivated);
     }
 
     [Theory]
@@ -195,9 +195,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [Fact]
     public async Task DeactivateMembership_MembershipAlreadyInactive_ReturnsOkIdempotently()
     {
-        var userOrgMembership = await SetupUserOrgMembership(m =>
-            m.Status = UserOrgStatus.Inactive
-        );
+        var userOrgMembership = await SetupUserOrgMembership(m => m.Deactivate());
         var result = await _service.DeactivateMembership(
             userOrgMembership.OrganisationId,
             userOrgMembership.Id,
@@ -205,7 +203,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         );
 
         var dto = result.ShouldBeSuccess();
-        dto.Status.ShouldBe(UserOrgStatus.Inactive);
+        dto.Status.ShouldBe(UserOrgStatus.Deactivated);
     }
 
     [Fact]

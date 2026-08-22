@@ -249,14 +249,14 @@ public class OrganisationEndpointTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
         dto.ShouldNotBeNull();
-        dto.Status.ShouldBe(UserOrgStatus.Inactive);
+        dto.Status.ShouldBe(UserOrgStatus.Deactivated);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
             m => m.Id == membership.Id,
             TestContext.Current.CancellationToken
         );
-        saved.Status.ShouldBe(UserOrgStatus.Inactive);
+        saved.Status.ShouldBe(UserOrgStatus.Deactivated);
     }
 
     [Fact]
