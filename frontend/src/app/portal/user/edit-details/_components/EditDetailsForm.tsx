@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 
 import { Button, ButtonGroup } from '@/components/Button/Button'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import type { ChangeEvent } from 'react'
 

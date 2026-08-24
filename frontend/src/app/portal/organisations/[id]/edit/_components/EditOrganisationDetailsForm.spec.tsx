@@ -8,7 +8,7 @@ import {
   ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE,
   PHONE_FORMAT_ERROR_MESSAGE,
   PHONE_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/form/ErrorMessages'
+} from '@/lib/form/errorMessages'
 
 import { EditOrganisationDetailsForm } from './EditOrganisationDetailsForm'
 

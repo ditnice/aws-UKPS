@@ -1,11 +1,12 @@
-import { defaultPageSize, pageSizeOptions } from '@/app/portal/_constants/pagination'
+import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
+
+import { defaultPageSize, pageSizeOptions } from './pagination'
 import {
   filterableRoles,
   filterableStatuses,
   lastActivePresets,
   type LastActivePreset,
-} from '@/app/portal/_constants/userLabels'
-import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
+} from './userLabels'
 
 // The raw, unvalidated query string values as Next.js provides it
 export interface UserListSearchParams {

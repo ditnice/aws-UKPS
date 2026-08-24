@@ -9,6 +9,9 @@ import { z } from 'zod'
 import { FormGroup } from '@nice-digital/nds-form-group'
 import { Textarea } from '@nice-digital/nds-textarea'
 
+import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
+import { Button } from '@/components/Button/Button'
+import { Input } from '@/components/Input/Input'
 import {
   EMAIL_FORMAT_ERROR_MESSAGE,
   PHONE_FORMAT_ERROR_MESSAGE,
@@ -16,11 +19,8 @@ import {
   ADDRESS_REQUIRED_ERROR_MESSAGE,
   ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE,
   PHONE_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/form/ErrorMessages'
-import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
-import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
-import { Button } from '@/components/Button/Button'
-import { Input } from '@/components/Input/Input'
+} from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
 

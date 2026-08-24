@@ -7,18 +7,18 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import {
-  SECURITY_CODE_FORMAT_ERROR_MESSAGE,
-  SECURITY_CODE_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/form/ErrorMessages'
-import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import {
+  SECURITY_CODE_FORMAT_ERROR_MESSAGE,
+  SECURITY_CODE_REQUIRED_ERROR_MESSAGE,
+} from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { routeOnSuccessfulAuth } from '../../constants'
-import { signUpMfaSetupStorageKey } from '../constants'
+import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
 
 import styles from './page.module.scss'
 

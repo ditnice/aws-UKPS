@@ -5,16 +5,16 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import {
-  PASSWORD_FORMAT_ERROR_MESSAGE,
-  PASSWORD_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/form/ErrorMessages'
-import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
 import { Button } from '@/components/Button/Button'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
+import {
+  PASSWORD_FORMAT_ERROR_MESSAGE,
+  PASSWORD_REQUIRED_ERROR_MESSAGE,
+} from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { signUpMfaSetupStorageKey } from '../../constants'
+import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
 
 const signUpSetPasswordSchema = z.object({
   password: z

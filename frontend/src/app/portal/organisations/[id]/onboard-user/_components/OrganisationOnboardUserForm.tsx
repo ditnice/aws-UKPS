@@ -6,16 +6,16 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { z } from 'zod'
 
+import { postUsersOnboard } from '@/client/generated/sdk.gen'
+import { Button, ButtonGroup } from '@/components/Button/Button'
+import { Input } from '@/components/Input/Input'
 import {
   EMAIL_FORMAT_ERROR_MESSAGE,
   USER_EMAIL_REQUIRED_ERROR_MESSAGE,
   USER_NAME_REQUIRED_ERROR_MESSAGE,
   USER_PHONE_NUMBER_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/form/ErrorMessages'
-import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
-import { postUsersOnboard } from '@/client/generated/sdk.gen'
-import { Button, ButtonGroup } from '@/components/Button/Button'
-import { Input } from '@/components/Input/Input'
+} from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './OrganisationOnboardUserForm.module.scss'
 
