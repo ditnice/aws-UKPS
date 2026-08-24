@@ -3,12 +3,9 @@ import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
+import { Button, ButtonGroup } from '@/components/Button/Button'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
-
-import styles from './EditDetailsForm.module.scss'
 
 const EditDetails = z.object({
   fullName: z.string().trim().min(1, 'Enter your full name'),
@@ -49,85 +46,76 @@ export function EditDetailsForm() {
         void form.handleSubmit()
       }}
     >
-      <div className={styles.marginBottom}>
-        <form.Field name="fullName">
-          {(field) => {
-            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
-            return (
-              <Input
-                autoComplete="name"
-                error={Boolean(errorMessage)}
-                errorMessage={errorMessage}
-                label="Full name"
-                name={field.name}
-                onBlur={field.handleBlur}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  field.handleChange(event.target.value)
-                }
-                type="text"
-                value={field.state.value}
-                width="one-third"
-                className={styles.marginBottom}
-              />
-            )
-          }}
-        </form.Field>
-      </div>
-      <div className={styles.marginBottom}>
-        <form.Field name="workEmail">
-          {(field) => {
-            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
-            return (
-              <Input
-                autoComplete="email"
-                error={Boolean(errorMessage)}
-                errorMessage={errorMessage}
-                label="Work email address"
-                name={field.name}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  field.handleChange(event.target.value)
-                }
-                onBlur={field.handleBlur}
-                type="email"
-                value={field.state.value}
-                width="one-third"
-                className={styles.marginBottom}
-              />
-            )
-          }}
-        </form.Field>
-      </div>
-      <div className={styles.marginBottom}>
-        <form.Field name="phoneNumber">
-          {(field) => {
-            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+      <form.Field name="fullName">
+        {(field) => {
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+          return (
+            <Input
+              autoComplete="name"
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Full name"
+              name={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              type="text"
+              value={field.state.value}
+              width="one-third"
+            />
+          )
+        }}
+      </form.Field>
+      <form.Field name="workEmail">
+        {(field) => {
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+          return (
+            <Input
+              autoComplete="email"
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Work email address"
+              name={field.name}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              onBlur={field.handleBlur}
+              type="email"
+              value={field.state.value}
+              width="one-third"
+            />
+          )
+        }}
+      </form.Field>
+      <form.Field name="phoneNumber">
+        {(field) => {
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 
-            return (
-              <Input
-                autoComplete="phone number"
-                error={Boolean(errorMessage)}
-                errorMessage={errorMessage}
-                label="Contact number"
-                name={field.name}
-                onBlur={field.handleBlur}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  field.handleChange(event.target.value)
-                }
-                hint="For international numbers include the country code."
-                width="one-third"
-                value={field.state.value}
-                className={styles.marginBottom}
-              />
-            )
-          }}
-        </form.Field>
-      </div>
-      <div className={styles.buttonGap}>
+          return (
+            <Input
+              autoComplete="phone number"
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Contact number"
+              name={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              hint="For international numbers include the country code."
+              width="one-third"
+              value={field.state.value}
+            />
+          )
+        }}
+      </form.Field>
+      <ButtonGroup>
         <Button type="submit" variant="cta">
           Save
         </Button>
-        <Button variant="secondary"> Cancel</Button>
-      </div>
+        <Button variant="secondary">Cancel</Button>
+      </ButtonGroup>
     </form>
   )
 }
