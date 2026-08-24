@@ -49,9 +49,74 @@ public class UserController(IUserService userService) : ControllerBase
                 error switch
                 {
                     GetUsersError.OrganisationNotFound => BadRequest("Organisation not found."),
-                    GetUsersError.NotAllowed => Forbid("User is forbidden from accessing data."),
+                    GetUsersError.NotAllowed => Problem(
+                        statusCode: StatusCodes.Status403Forbidden,
+                        title: "Forbidden",
+                        detail: "You are not authorised to view users."
+                    ),
                     _ => throw new UnreachableException("Unhandled GetUsersError variant."),
                 }
+        );
+    }
+
+    /// <summary>
+    /// Updates the details of the specified user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose details are being updated.</param>
+    /// <param name="command">The updated user details.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// Returns <see cref="UserDetailsDto"/> with the updated user details when the operation
+    /// succeeds (200 OK).
+    /// Returns a bad request response (400 Bad Request) when the supplied user details are invalid.
+    /// Returns a not found response (404 Not Found) when the specified user does not exist.
+    /// Returns a forbidden response (403 Forbidden) when the caller is not authorised to update
+    /// the specified user's details.
+    /// </returns>
+    /// <response code="200">The user's details were successfully updated.</response>
+    /// <response code="400">The supplied user details are invalid.</response>
+    /// <response code="403">The caller is not authorised to update the specified user's details.</response>
+    /// <response code="404">The specified user does not exist.</response>
+    /// <response code="409">The request conflicts with the existing data such as another users email.</response>
+    [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [HttpPatch("{userId}")]
+    public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
+        [FromRoute] int userId,
+        [FromBody] UpdateUserDetailsCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await userService.UpdateUserDetails(userId, command, cancellationToken);
+
+        return result.Match(
+            x => Ok(x),
+            err =>
+            {
+                return err.Match<ActionResult<UserDetailsDto>>(
+                    unauthorised: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Forbidden",
+                            detail: "You are not authorised to update this user's details."
+                        ),
+                    userDoesNotExist: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Not Found",
+                            detail: "The specified user does not exist."
+                        ),
+                    conflictingEmail: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Conflict",
+                            detail: "The specified email conflicts with an existing email."
+                        )
+                );
+            }
         );
     }
 }

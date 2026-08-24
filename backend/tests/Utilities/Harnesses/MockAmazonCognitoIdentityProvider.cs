@@ -2,6 +2,7 @@ using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using NSubstitute;
+using UKPS.Api.Persistence.Entities.Identity;
 
 namespace UKPS.Api.Tests.Utilities.Harnesses;
 
@@ -16,7 +17,8 @@ internal sealed class MockAmazonCognitoIdentityProvider
         {
             Username = "test-user",
             Password = "test-user-password-123",
-            IdentityId = "b7f3c5f9-8b2d-4a71-9e6c-3d4f0a8c1e52",
+            Email = "example@email.com",
+            SubjectId = "b7f3c5f9-8b2d-4a71-9e6c-3d4f0a8c1e52",
         };
 
     public IReadOnlyCollection<MockUser> Users => _users;
@@ -37,13 +39,30 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 (callInfo) =>
                 {
                     var request = callInfo.Arg<AdminCreateUserRequest>();
-                    var identityId = Guid.NewGuid().ToString();
-                    _users.Add(new() { Username = request.Username, IdentityId = identityId });
+                    var subjectId = Guid.NewGuid().ToString();
+                    var email =
+                        request
+                            .UserAttributes.FirstOrDefault(x =>
+                                string.Equals(x.Name, "email", StringComparison.Ordinal)
+                            )
+                            ?.Value
+                        ?? throw new InvalidOperationException(
+                            "Expecting email attribute to be set."
+                        );
+
+                    var newUser = new MockUser()
+                    {
+                        Username = request.Username,
+                        SubjectId = subjectId,
+                        Email = email,
+                    };
+                    _users.Add(newUser);
+
                     return new AdminCreateUserResponse()
                     {
                         User = new UserType()
                         {
-                            Attributes = [new() { Name = "sub", Value = identityId }],
+                            Attributes = [new() { Name = "sub", Value = subjectId }],
                         },
                     };
                 }
@@ -195,6 +214,31 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 );
             });
 
+        Mock.AdminUpdateUserAttributesAsync(
+                Arg.Any<AdminUpdateUserAttributesRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<AdminUpdateUserAttributesRequest>();
+                var newEmailValue = request
+                    .UserAttributes.FirstOrDefault(x =>
+                        string.Equals(x.Name, "email", StringComparison.Ordinal)
+                    )
+                    ?.Value;
+                _users = _users
+                    .Select(u =>
+                        string.Equals(u.Username, request.Username, StringComparison.Ordinal)
+                            ? u with
+                            {
+                                Email = newEmailValue ?? u.Email,
+                            }
+                            : u
+                    )
+                    .ToList();
+                return Task.FromResult(new AdminUpdateUserAttributesResponse());
+            });
+
         Mock.AdminRespondToAuthChallengeAsync(
                 Arg.Any<AdminRespondToAuthChallengeRequest>(),
                 Arg.Any<CancellationToken>()
@@ -261,11 +305,16 @@ internal sealed class MockAmazonCognitoIdentityProvider
         _users.Add(mockUser);
     }
 
-    internal MockUser? GetUser(string targetUser)
+    internal MockUser? GetUser(CognitoUsername targetUser)
     {
         return _users.FirstOrDefault(x =>
-            string.Equals(x.Username, targetUser, StringComparison.Ordinal)
+            string.Equals(x.Username, targetUser.Value, StringComparison.Ordinal)
         );
+    }
+
+    internal MockUser? GetUserByEmail(string value)
+    {
+        return _users.FirstOrDefault(x => string.Equals(x.Email, value, StringComparison.Ordinal));
     }
 
     public sealed class MockUserFaker : Faker<MockUser>
@@ -273,7 +322,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
         public MockUserFaker()
         {
             RuleFor(x => x.Username, f => f.Internet.UserName());
-            RuleFor(x => x.IdentityId, f => f.Random.Guid().ToString());
+            RuleFor(x => x.SubjectId, f => f.Random.Guid().ToString());
         }
     }
 }

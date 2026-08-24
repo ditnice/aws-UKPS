@@ -200,9 +200,9 @@ variable "sns_alarm_emails" {
 variable "seeded_super_users" {
   description = "Super users added to seeded backend data for organisation ID 1"
   type = list(object({
-    fullName   = string
-    email      = string
-    identityId = string
+    fullName        = string
+    email           = string
+    cognitoUsername = string
   }))
   default  = []
   nullable = false
@@ -218,8 +218,8 @@ variable "seeded_super_users" {
   }
 
   validation {
-    condition     = alltrue([for user in var.seeded_super_users : length(trimspace(user.identityId)) > 0 && length(user.identityId) <= 36])
-    error_message = "Seeded super users must include identityId values of 36 characters or fewer."
+    condition     = alltrue([for user in var.seeded_super_users : length(trimspace(user.cognitoUsername)) > 0 && length(user.cognitoUsername) <= 39])
+    error_message = "Seeded super users must include cognitoUsername values of 39 characters or fewer."
   }
 
   validation {
@@ -228,7 +228,7 @@ variable "seeded_super_users" {
   }
 
   validation {
-    condition     = length(distinct([for user in var.seeded_super_users : user.identityId])) == length(var.seeded_super_users)
-    error_message = "Seeded super user identity IDs must be unique."
+    condition     = length(distinct([for user in var.seeded_super_users : user.cognitoUsername])) == length(var.seeded_super_users)
+    error_message = "Seeded super user cognitoUsernames must be unique."
   }
 }

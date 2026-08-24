@@ -130,19 +130,7 @@ aws cognito-idp admin-set-user-mfa-preference \
   --software-token-mfa-settings Enabled=true,PreferredMfa=true \
   >/dev/null
 
-USER_JSON="$(
-  aws cognito-idp admin-get-user \
-    --region "$REGION" \
-    --user-pool-id "$USER_POOL_ID" \
-    --username "$COGNITO_USERNAME"
-)"
-
-SUB="$(jq -r '.UserAttributes[] | select(.Name == "sub") | .Value' <<< "$USER_JSON")"
-
 echo
 echo "Cognito user created and TOTP MFA configured."
 echo "Cognito username: $COGNITO_USERNAME"
 echo "Email: $EMAIL"
-echo "Cognito sub: $SUB"
-echo
-echo "Use this sub as the application DB Users.IdentityId value."

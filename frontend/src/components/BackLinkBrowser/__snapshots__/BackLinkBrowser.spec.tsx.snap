@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BackLinkBrowser > navigates back without following the link 1`] = `
+<DocumentFragment>
+  <a
+    class="_back-link_71902c"
+    data-component="back-link"
+    href="#"
+  >
+    Back
+  </a>
+</DocumentFragment>
+`;
+
+exports[`BackLinkBrowser > renders the default link text 1`] = `
+<DocumentFragment>
+  <a
+    class="_back-link_71902c"
+    data-component="back-link"
+    href="#"
+  >
+    Back
+  </a>
+</DocumentFragment>
+`;

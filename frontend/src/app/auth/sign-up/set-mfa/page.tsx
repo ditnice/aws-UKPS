@@ -7,9 +7,8 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
+import { Button } from '@/components/Button/Button'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'

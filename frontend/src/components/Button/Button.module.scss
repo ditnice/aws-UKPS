@@ -1,0 +1,62 @@
+@use '@/styles/colours';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.buttonGroup {
+  margin-top: utils.rem(spacing.$large);
+
+  > * + * {
+    margin-left: utils.rem(spacing.$medium);
+  }
+}
+
+// This component renders the NDS `Button` (@nice-digital/nds-button), which
+// always applies its own `.btn` class alongside `.linkButton` below, to make
+// a button look like a plain text link. The `!important` flags below are
+// required, not stylistic: `.btn`'s base and `:hover`/`:focus`/`:active`
+// rules declare `color` `!important`, and its base rule also declares
+// `text-decoration` `!important` - only an `!important` declaration can
+// override another `!important` one, so `color` (incl. the per-state
+// overrides below) and `text-decoration` must stay `!important`.
+// `background` and `box-shadow` aren't `!important` on `.btn`, but its
+// `:hover`/`:focus`/`:active` rules carry higher selector specificity
+// (class + pseudo-class) than this rule's base selector, so without
+// `!important` those higher-specificity, non-important declarations would
+// still win on interaction.
+// Every other property here (border, border-radius, cursor, display, font,
+// margin, padding, vertical-align, white-space, and the `:active` top
+// offset) only needs to win a *tied*-specificity cascade against `.btn`,
+// which it does because this stylesheet loads after `nds-button`'s in the
+// build output - a bundler ordering artifact rather than a CSS guarantee.
+// If a future refactor changes that load order, these are the properties
+// to check first.
+.linkButton {
+  @include typography.link-default;
+  background: none !important;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none !important;
+  color: colours.$link !important;
+  cursor: pointer;
+  display: inline;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  text-decoration: underline !important;
+  vertical-align: baseline;
+  white-space: normal;
+
+  &:hover {
+    color: colours.$link-hover !important;
+  }
+
+  &:focus {
+    color: colours.$link-focus !important;
+  }
+
+  &:active {
+    color: colours.$link-active !important;
+    top: 0;
+  }
+}
