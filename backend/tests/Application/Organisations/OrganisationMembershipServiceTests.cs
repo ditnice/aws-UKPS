@@ -134,7 +134,12 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [Fact]
     public async Task DeactivateMembership_ShouldDeactivateTheSpecifiedMembership()
     {
-        var userOrgMembership = await SetupUserOrgMembership();
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
         var result = await _service.DeactivateMembership(
             userOrgMembership.OrganisationId,
             userOrgMembership.Id,
@@ -153,6 +158,32 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     }
 
     [Theory]
+    [InlineData(UserOrgStatus.AwaitingSetup)]
+    [InlineData(UserOrgStatus.RequestedAccess)]
+    [InlineData(UserOrgStatus.Rejected)]
+    public async Task DeactivateMembership_WhenInInvalidInitialState_ShouldReturnError(
+        UserOrgStatus invalidInitialState
+    )
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => invalidInitialState
+            )
+        );
+        var result = await _service.DeactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        var error = result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState>();
+        error.TransitionResult.CurrentState.ShouldBe(invalidInitialState);
+    }
+
+    [Theory]
     [InlineData(false, UserRole.Super, true)]
     [InlineData(true, UserRole.Champion, true)]
     [InlineData(true, UserRole.Standard, false)]
@@ -164,7 +195,12 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         bool expectedAuthorised
     )
     {
-        var userOrgMembership = await SetupUserOrgMembership();
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
         var harness = new ServiceTestHarness<IOrganisationMembershipService>(
             Context
         ).UpdateCurrentUser(currentUserInfo =>
@@ -196,7 +232,12 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [Fact]
     public async Task DeactivateMembership_MembershipAlreadyInactive_ReturnsOkIdempotently()
     {
-        var userOrgMembership = await SetupUserOrgMembership(m => m.Deactivate());
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Deactivated
+            )
+        );
         var result = await _service.DeactivateMembership(
             userOrgMembership.OrganisationId,
             userOrgMembership.Id,
@@ -231,6 +272,151 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         );
 
         result.ShouldBeError().ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_ShouldReactivateTheSpecifiedMembership()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Deactivated
+            )
+        );
+        var result = await _service.ReactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        var dto = result.ShouldBeSuccess();
+        dto.Status.ShouldBe(UserOrgStatus.Active);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == userOrgMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+        saved.Status.ShouldBe(UserOrgStatus.Active);
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.AwaitingSetup)]
+    [InlineData(UserOrgStatus.RequestedAccess)]
+    [InlineData(UserOrgStatus.Rejected)]
+    public async Task ReactivateMembership_WhenInInvalidInitialState_ShouldReturnError(
+        UserOrgStatus invalidInitialState
+    )
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => invalidInitialState
+            )
+        );
+        var result = await _service.ReactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        var error = result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipReactivateUserError.NotAllowedInCurrentState>();
+        error.TransitionResult.CurrentState.ShouldBe(
+            invalidInitialState,
+            $"Expected error state for invalid initial state of [{invalidInitialState}]"
+        );
+    }
+
+    [Theory]
+    [InlineData(false, UserRole.Super, true)]
+    [InlineData(true, UserRole.Champion, true)]
+    [InlineData(true, UserRole.Standard, false)]
+    [InlineData(false, UserRole.Champion, false)]
+    [InlineData(false, UserRole.Standard, false)]
+    public async Task ReactivateMembership_AuthorisesBasedOnUserRoleAndOrganisation(
+        bool organisationIdMatches,
+        UserRole userRole,
+        bool expectedAuthorised
+    )
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Deactivated
+            )
+        );
+        var harness = new ServiceTestHarness<IOrganisationMembershipService>(
+            Context
+        ).UpdateCurrentUser(currentUserInfo =>
+            currentUserInfo with
+            {
+                OrganisationId = organisationIdMatches ? userOrgMembership.OrganisationId : 999_999,
+                UserRole = userRole,
+            }
+        );
+
+        var result = await harness.Service.ReactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        if (expectedAuthorised)
+        {
+            result.ShouldBeSuccess();
+            return;
+        }
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipReactivateUserError.NotAllowed>();
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_MembershipAlreadyActive_ReturnsOkIdempotently()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
+        var result = await _service.ReactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        var dto = result.ShouldBeSuccess();
+        dto.Status.ShouldBe(UserOrgStatus.Active);
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_WhenOrganisationDoesNotExist_ShouldReturnNotFoundResult()
+    {
+        var userOrgMembership = await SetupUserOrgMembership();
+        var result = await _service.ReactivateMembership(
+            999_999,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        result.ShouldBeError().ShouldBeOfType<OrganisationMembershipReactivateUserError.NotFound>();
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_WhenMembershipDoesNotExist_ShouldReturnNotFoundResult()
+    {
+        var userOrgMembership = await SetupUserOrgMembership();
+        var result = await _service.ReactivateMembership(
+            userOrgMembership.OrganisationId,
+            999_999,
+            CancellationToken.None
+        );
+
+        result.ShouldBeError().ShouldBeOfType<OrganisationMembershipReactivateUserError.NotFound>();
     }
 
     private async Task<UserOrgMembership> SetupUserOrgMembership(

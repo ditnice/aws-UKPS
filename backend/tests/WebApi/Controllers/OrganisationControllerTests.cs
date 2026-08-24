@@ -1,35 +1,52 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
+using Bogus;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.Controllers;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 using DeactivateUserMembershipResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipDeactivateUserError
+>;
+using ReactivateUserMembershipResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
+    UKPS.Api.Application.Organisations.Errors.OrganisationMembershipReactivateUserError
 >;
 using UpdateUserRoleResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipUpdateUserRoleError
 >;
+using ValidationResult = System.ComponentModel.DataAnnotations.ValidationResult;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
-public class OrganisationControllerTests
+public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private static readonly DateTime _createdAt = new(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
     private static readonly DateTime _lastActive = new(2026, 6, 20, 12, 50, 1, DateTimeKind.Utc);
     private readonly IOrganisationService _organisationServiceMock;
     private readonly IOrganisationMembershipService _organisationMembershipService;
+    private readonly HttpClient _client;
     private readonly OrganisationController _controller;
 
-    public OrganisationControllerTests()
+    public OrganisationControllerTests(WebApplicationFactory<Program> factory)
     {
+        ArgumentNullException.ThrowIfNull(factory);
+
         _organisationMembershipService = Substitute.For<IOrganisationMembershipService>();
         _organisationServiceMock = Substitute.For<IOrganisationService>();
         _organisationServiceMock.Memberships.Returns(_organisationMembershipService);
@@ -53,6 +70,31 @@ public class OrganisationControllerTests
                     new UpdateOrganisationDetailsError.NotFound(callInfo.Arg<int>())
                 )
             );
+
+        _organisationMembershipService
+            .ReactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                ReactivateUserMembershipResult.Err(
+                    new OrganisationMembershipReactivateUserError.NotFound()
+                )
+            );
+
+        _client = factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureServices(services =>
+                {
+                    services.RemoveAll<IOrganisationService>();
+                    services.AddSingleton(_organisationServiceMock);
+                });
+                builder.ConfigureNoDatabase();
+                builder.UseSetting("AWS:LoadSecrets", $"{false}");
+                builder.UseSetting(
+                    $"{DevAuthenticationConfiguration.SectionName}:{nameof(DevAuthenticationConfiguration.IsEnabled)}",
+                    $"{true}"
+                );
+            })
+            .CreateClient();
 
         _controller = new OrganisationController(_organisationServiceMock);
     }
@@ -308,7 +350,9 @@ public class OrganisationControllerTests
             HeadOfficeTelephone = "020 1234 5678",
         };
 
-        List<ValidationResult> validationResults = Validate(dto);
+        List<System.ComponentModel.DataAnnotations.ValidationResult> validationResults = Validate(
+            dto
+        );
 
         validationResults.ShouldContain(r =>
             r.MemberNames.Contains(
@@ -333,7 +377,117 @@ public class OrganisationControllerTests
             1,
             TestContext.Current.CancellationToken
         );
-        result.Result.ShouldBeOfType<ForbidResult>();
+        result
+            .Result.ShouldBeOfType<ObjectResult>()
+            .StatusCode.ShouldBe((int)HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_UserIsNotInAValidState_ReturnsBadRequestResult()
+    {
+        _organisationMembershipService
+            .DeactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                DeactivateUserMembershipResult.Err(
+                    new OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState(
+                        new StateMachineTransitionResult<UserOrgStatus>()
+                        {
+                            CurrentState = UserOrgStatus.Active,
+                            Success = false,
+                            PermittedNextState = [],
+                        }
+                    )
+                )
+            );
+        ActionResult<OrganisationMembershipDto> result = await _controller.DeactivateMembership(
+            1,
+            1,
+            TestContext.Current.CancellationToken
+        );
+        result
+            .Result.ShouldBeOfType<ObjectResult>()
+            .StatusCode.ShouldBe((int)HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_ShouldPassValuesToTheService()
+    {
+        var organisationId = 1;
+        var membershipId = 2;
+        _ = await RunReactivateRequest(membershipId, organisationId);
+
+        await _organisationMembershipService
+            .Received(1)
+            .ReactivateMembership(organisationId, membershipId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_ShouldReturnMembershipDetails()
+    {
+        var expectedValue = new OrganisationMembershipDtoFaker().Generate();
+        _organisationMembershipService
+            .ReactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(ReactivateUserMembershipResult.Ok(expectedValue));
+
+        var response = await RunReactivateRequest();
+        var data = await response.Content.ReadFromJsonAsync<OrganisationMembershipDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+
+        data.ShouldBe(expectedValue);
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_WhenNotAuthorised_ShouldReturnNotAuthorisedResult()
+    {
+        _organisationMembershipService
+            .ReactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                ReactivateUserMembershipResult.Err(
+                    new OrganisationMembershipReactivateUserError.NotAllowed()
+                )
+            );
+
+        var response = await RunReactivateRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_WhenMembershipNotFound_ShouldReturnNotFoundResult()
+    {
+        _organisationMembershipService
+            .ReactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                ReactivateUserMembershipResult.Err(
+                    new OrganisationMembershipReactivateUserError.NotFound()
+                )
+            );
+
+        var response = await RunReactivateRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_WhenNotAllowedInCurrentState_ShouldReturnBadRequest()
+    {
+        _organisationMembershipService
+            .ReactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                ReactivateUserMembershipResult.Err(
+                    new OrganisationMembershipReactivateUserError.NotAllowedInCurrentState(
+                        new StateMachineTransitionResult<UserOrgStatus>()
+                        {
+                            Success = false,
+                            CurrentState = UserOrgStatus.Active,
+                            PermittedNextState = [],
+                        }
+                    )
+                )
+            );
+
+        var response = await RunReactivateRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -397,6 +551,22 @@ public class OrganisationControllerTests
         result.Result.ShouldBeOfType<ConflictObjectResult>();
     }
 
+    private async Task<HttpResponseMessage> RunReactivateRequest(
+        int membershipId = 1,
+        int organisationId = 2
+    )
+    {
+        using var emptyContent = new StringContent(string.Empty);
+        return await _client.PatchAsync(
+            new Uri(
+                $"/organisations/{organisationId}/memberships/{membershipId}/reactivate",
+                UriKind.Relative
+            ),
+            emptyContent,
+            TestContext.Current.CancellationToken
+        );
+    }
+
     private static OrganisationDetailsDto CreateOrganisationDetailsDto() =>
         new()
         {
@@ -452,4 +622,22 @@ public class OrganisationControllerTests
             HeadOfficeEmail = "info@pharma.gov.uk",
             HeadOfficeTelephone = "020 1234 5678",
         };
+
+    private sealed class OrganisationMembershipDtoFaker : Faker<OrganisationMembershipDto>
+    {
+        public OrganisationMembershipDtoFaker()
+        {
+            RuleFor(x => x.Id, f => f.Random.Int(1));
+            RuleFor(x => x.UserId, f => f.Random.Int(1));
+            RuleFor(x => x.OrganisationId, f => f.Random.Int(1));
+
+            RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
+
+            RuleFor(x => x.Status, f => f.PickRandom<UserOrgStatus>());
+
+            RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());
+
+            RuleFor(x => x.CreatedAt, f => f.Date.Recent());
+        }
+    }
 }

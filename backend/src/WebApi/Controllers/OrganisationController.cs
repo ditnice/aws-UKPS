@@ -155,19 +155,95 @@ public class OrganisationController(IOrganisationService organisationService) : 
             cancellationToken
         );
 
-        return result.Match<ActionResult<OrganisationMembershipDto>>(
+        return result.Match(
             x => Ok(x),
             x =>
-                x switch
-                {
-                    OrganisationMembershipDeactivateUserError.NotFound => NotFound(
-                        $"Could not find a membership with organisation ID = {organisationId} and membership ID = {membershipId}."
-                    ),
-                    OrganisationMembershipDeactivateUserError.NotAllowed => Forbid(
-                        "The user is not authorised to perform this action."
-                    ),
-                    _ => throw new UnreachableException(),
-                }
+                x.Match<ActionResult<OrganisationMembershipDto>>(
+                    notAllowed: _ =>
+                        Problem(
+                            title: "Not authorised",
+                            statusCode: StatusCodes.Status403Forbidden,
+                            detail: "The user is not authorised to perform this action."
+                        ),
+                    notFound: () =>
+                        Problem(
+                            title: "Membership not found",
+                            statusCode: StatusCodes.Status404NotFound,
+                            detail: $"Could not find a membership with organisation ID = {organisationId} and membership ID = {membershipId}."
+                        ),
+                    notAllowedInCurrentState: x =>
+                        Problem(
+                            title: "Invalid membership state",
+                            statusCode: StatusCodes.Status400BadRequest,
+                            detail: $"The organisation membership is not in a state that allows this action. Current state [{x.TransitionResult.CurrentState}]"
+                        )
+                )
+        );
+    }
+
+    /// <summary>
+    /// Reactivates an organisation membership.
+    /// </summary>
+    /// <param name="organisationId">
+    /// The identifier of the organisation that owns the membership.
+    /// </param>
+    /// <param name="membershipId">
+    /// The identifier of the membership to reactivate.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// The updated <see cref="OrganisationMembershipDto"/> representing the reactivated membership.
+    /// </returns>
+    /// <response code="200">
+    /// The membership was successfully reactivated.
+    /// </response>
+    /// <response code="404">
+    /// The specified organisation membership could not be found.
+    /// </response>
+    [HttpPatch(
+        "{organisationId:int}/memberships/{membershipId}/reactivate",
+        Name = nameof(ReactivateMembership)
+    )]
+    [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<OrganisationMembershipDto>> ReactivateMembership(
+        int organisationId,
+        int membershipId,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await organisationService.Memberships.ReactivateMembership(
+            organisationId,
+            membershipId,
+            cancellationToken
+        );
+
+        return result.Match(
+            x => Ok(x),
+            x =>
+                x.Match<ActionResult<OrganisationMembershipDto>>(
+                    notAllowed: _ =>
+                        Problem(
+                            title: "Not authorised",
+                            statusCode: StatusCodes.Status403Forbidden,
+                            detail: "The user is not authorised to perform this action."
+                        ),
+                    notFound: () =>
+                        Problem(
+                            title: "Membership not found",
+                            statusCode: StatusCodes.Status404NotFound,
+                            detail: $"Could not find a membership with organisation ID = {organisationId} and membership ID = {membershipId}."
+                        ),
+                    notAllowedInCurrentState: x =>
+                        Problem(
+                            title: "Invalid membership state",
+                            statusCode: StatusCodes.Status400BadRequest,
+                            detail: $"The organisation membership is not in a state that allows this action. Current state [{x.TransitionResult.CurrentState}]"
+                        )
+                )
         );
     }
 

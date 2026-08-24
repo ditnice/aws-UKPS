@@ -8,6 +8,10 @@ using DeactivateUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipDeactivateUserError
 >;
+using ReactivateUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
+    UKPS.Api.Application.Organisations.Errors.OrganisationMembershipReactivateUserError
+>;
 using UpdateUserRoleResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipUpdateUserRoleError
@@ -70,8 +74,9 @@ internal sealed class OrganisationMembershipService(
             var error = new OrganisationMembershipDeactivateUserError.NotAllowed(organisationId);
             return DeactivateUserResult.Err(error);
         }
-        var membership = await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
-            x => x.OrganisationId == organisationId && x.Id == membershipId,
+        var membership = await dbContext.UserOrgMemberships.GetByOrgAndMembershipId(
+            organisationId,
+            membershipId,
             cancellationToken
         );
         if (membership is null)
@@ -80,9 +85,53 @@ internal sealed class OrganisationMembershipService(
                 new OrganisationMembershipDeactivateUserError.NotFound()
             );
         }
-        membership.Deactivate();
+        var result = membership.TryDeactivate();
+        if (!result.Success)
+        {
+            return DeactivateUserResult.Err(
+                new OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState(result)
+            );
+        }
         await dbContext.SaveChangesAsync(cancellationToken);
         return DeactivateUserResult.Ok(MapToDto(membership));
+    }
+
+    public async Task<ReactivateUserResult> ReactivateMembership(
+        int organisationId,
+        int membershipId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (
+            !organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Update,
+                organisationId
+            )
+        )
+        {
+            var error = new OrganisationMembershipReactivateUserError.NotAllowed();
+            return ReactivateUserResult.Err(error);
+        }
+        var membership = await dbContext.UserOrgMemberships.GetByOrgAndMembershipId(
+            organisationId,
+            membershipId,
+            cancellationToken
+        );
+        if (membership is null)
+        {
+            return ReactivateUserResult.Err(
+                new OrganisationMembershipReactivateUserError.NotFound()
+            );
+        }
+        var result = membership.TryReactivate();
+        if (!result.Success)
+        {
+            return ReactivateUserResult.Err(
+                new OrganisationMembershipReactivateUserError.NotAllowedInCurrentState(result)
+            );
+        }
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ReactivateUserResult.Ok(MapToDto(membership));
     }
 
     private static OrganisationMembershipDto MapToDto(UserOrgMembership entity)

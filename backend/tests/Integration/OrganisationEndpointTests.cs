@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -230,7 +231,12 @@ public class OrganisationEndpointTests : DatabaseTestBase
     [Fact]
     public async Task DeactivateMembership_ValidRequest_ReturnsOkAndPersistsInactiveStatus()
     {
-        UserOrgMembership membership = await SeedMembership();
+        UserOrgMembership membership = await SeedMembership(
+            overrideMembershipFaker: new UserOrgMembershipFaker().RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
         var uri = new Uri(
             $"/organisations/{membership.OrganisationId}/memberships/{membership.Id}/deactivate",
             UriKind.Relative
@@ -382,7 +388,9 @@ public class OrganisationEndpointTests : DatabaseTestBase
             HeadOfficeTelephone = "020 1234 5678",
         };
 
-    private async Task<UserOrgMembership> SeedMembership()
+    private async Task<UserOrgMembership> SeedMembership(
+        Faker<UserOrgMembership>? overrideMembershipFaker = null
+    )
     {
         // Both FKs are Restrict, so the parent User and Organisation rows must exist first.
         User user = new UserFaker()
@@ -397,7 +405,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
         Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
-        UserOrgMembership membership = new UserOrgMembershipFaker()
+        UserOrgMembership membership = (overrideMembershipFaker ?? new UserOrgMembershipFaker())
             .Generate()
             .Update(x =>
             {
