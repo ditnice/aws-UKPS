@@ -1,4 +1,4 @@
-import { buildSignInHref, signInPath } from '@/app/auth/constants'
+import { buildSignInHref, signInPath } from '@/lib/auth/routing'
 
 import type { CreateClientConfig } from './generated/client.gen'
 

@@ -6,17 +6,19 @@ import { z } from 'zod'
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import type { ChangeEvent } from 'react'
 
 const EditDetails = z.object({
-  fullName: z.string().trim().min(1, 'Enter your full name'),
+  fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
   workEmail: z
     .string()
     .trim()
-    .min(1, 'Enter your work email address')
-    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
-  phoneNumber: z.string().trim().min(1, 'Enter your phone number'),
+    .min(1, errorMessages.workEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
+  phoneNumber: z.string().trim().min(1, errorMessages.personalPhoneRequired),
 })
 
 type EditDetailsValues = z.input<typeof EditDetails>

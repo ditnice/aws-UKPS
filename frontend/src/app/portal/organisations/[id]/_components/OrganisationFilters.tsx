@@ -12,7 +12,7 @@ import {
   roleLabels,
   statusLabels,
   type LastActivePreset,
-} from '@/app/portal/_constants/userLabels'
+} from '../_lib/userLabels'
 
 import type { ChangeEvent, SubmitEvent } from 'react'
 
