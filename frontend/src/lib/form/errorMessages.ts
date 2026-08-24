@@ -1,7 +1,7 @@
 export const errorMessages = {
   // Required
-  companyNameRequired: 'Enter the company name',
-  addressRequired: 'Enter company address',
+  organisationNameRequired: 'Enter the organisation name',
+  addressRequired: 'Enter organisation address',
   organisationEmailRequired: 'Enter an email address',
   //// Setup
   personalFullNameRequired: 'Enter your full name',
