@@ -13,8 +13,11 @@ internal sealed class MedicinesBudgetImpact
     /// <summary>Conditional on IndicationSpecificPricingPlanned = Yes.</summary>
     public string? IndicationSpecificPricingDetails { get; set; }
 
-    /// <summary>CiC — Commercially in Confidence.</summary>
-    public YesNoUnknown? NetUkBudgetImpactOver5M { get; set; }
+    /// <summary>
+    /// Estimated net budget impact for the UK over the first 3 years of NHS use.
+    /// An annual impact of £40M+ triggers specific NICE planning processes. CiC.
+    /// </summary>
+    public NetUkBudgetImpactBand? NetUkBudgetImpactBand { get; set; }
 
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }

@@ -12,11 +12,9 @@ internal sealed class MedicinesLaboratoryTestingConfiguration
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.DiagnosticTestRequired);
-        builder.Property(x => x.GenomicTestRequired);
-        builder.Property(x => x.GenomicTestInNationalDirectory);
-        builder.Property(x => x.GenomicTurnaroundConsiderations);
-        builder.Property(x => x.GenomicTestMandatory);
-        builder.Property(x => x.MonitoringTestsRequired);
+        builder.Property(x => x.BiomarkerType);
+        builder.Property(x => x.GenomicTestNgtdRelationship);
+        builder.Property(x => x.GenomicTestMandatoryStatus);
 
         builder
             .HasIndex(x => x.RevisionId)
@@ -27,12 +25,6 @@ internal sealed class MedicinesLaboratoryTestingConfiguration
             .HasOne(x => x.Revision)
             .WithMany()
             .HasForeignKey(x => x.RevisionId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.GenomicSampleType)
-            .WithMany()
-            .HasForeignKey(x => x.GenomicSampleTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder

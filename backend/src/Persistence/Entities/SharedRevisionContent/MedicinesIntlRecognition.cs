@@ -2,7 +2,7 @@ using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
-internal sealed class RecordIntlRecognition
+internal sealed class MedicinesIntlRecognition
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }

@@ -4,10 +4,10 @@ using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
 namespace UKPS.Api.Persistence.Configurations.SharedRevisionContent;
 
-internal sealed class RecordIntlRecognitionConfiguration
-    : IEntityTypeConfiguration<RecordIntlRecognition>
+internal sealed class MedicinesIntlRecognitionConfiguration
+    : IEntityTypeConfiguration<MedicinesIntlRecognition>
 {
-    public void Configure(EntityTypeBuilder<RecordIntlRecognition> builder)
+    public void Configure(EntityTypeBuilder<MedicinesIntlRecognition> builder)
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
@@ -16,7 +16,7 @@ internal sealed class RecordIntlRecognitionConfiguration
         builder
             .HasIndex(x => x.RevisionId)
             .IsUnique()
-            .HasDatabaseName("ix_record_intl_recognition_revision_id");
+            .HasDatabaseName("ix_medicines_intl_recognition_revision_id");
 
         builder
             .HasOne(x => x.Revision)
