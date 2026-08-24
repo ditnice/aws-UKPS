@@ -10,7 +10,7 @@ import { FormGroup } from '@nice-digital/nds-form-group'
 import { Textarea } from '@nice-digital/nds-textarea'
 
 import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
-import { Button } from '@/components/Button/Button'
+import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -185,13 +185,15 @@ export function EditOrganisationDetailsForm({
         </form.Field>
       </FormGroup>
 
-      <Button buttonType="submit" disabled={isSubmitting} variant="cta">
-        {isSubmitting ? 'Saving...' : 'Save changes'}
-      </Button>
+      <ButtonGroup>
+        <Button buttonType="submit" disabled={isSubmitting} variant="cta">
+          {isSubmitting ? 'Saving...' : 'Save changes'}
+        </Button>
 
-      <Button buttonType="button" variant="secondary" onClick={() => router.back()}>
-        Cancel
-      </Button>
+        <Button buttonType="button" variant="secondary" onClick={() => router.back()}>
+          Cancel
+        </Button>
+      </ButtonGroup>
     </form>
   )
 }
