@@ -1,14 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  ADDRESS_REQUIRED_ERROR_MESSAGE,
-  COMPANY_NAME_REQUIRED_ERROR_MESSAGE,
-  EMAIL_FORMAT_ERROR_MESSAGE,
-  ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE,
-  PHONE_FORMAT_ERROR_MESSAGE,
-  PHONE_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/form/ErrorMessages'
+import { errorMessages } from '@/lib/form/errorMessages'
 
 import { EditOrganisationDetailsForm } from './EditOrganisationDetailsForm'
 
@@ -72,7 +65,7 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     expect(
-      await screen.findByText(COMPANY_NAME_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(errorMessages.companyNameRequired, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
@@ -84,7 +77,7 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     expect(
-      await screen.findByText(ADDRESS_REQUIRED_ERROR_MESSAGE, { selector: '.textarea__error' }),
+      await screen.findByText(errorMessages.addressRequired, { selector: '.textarea__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
@@ -96,7 +89,7 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     expect(
-      await screen.findByText(ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE, {
+      await screen.findByText(errorMessages.organisationEmailRequired, {
         selector: '.input__error',
       }),
     ).toBeDefined()
@@ -110,7 +103,7 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     expect(
-      await screen.findByText(PHONE_REQUIRED_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(errorMessages.phoneRequired, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
@@ -124,7 +117,7 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     expect(
-      await screen.findByText(EMAIL_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(errorMessages.emailFormat, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
@@ -151,7 +144,7 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     expect(
-      await screen.findByText(PHONE_FORMAT_ERROR_MESSAGE, { selector: '.input__error' }),
+      await screen.findByText(errorMessages.phoneFormat, { selector: '.input__error' }),
     ).toBeDefined()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
@@ -189,7 +182,7 @@ describe('EditOrganisationDetailsForm', () => {
     submit()
 
     await waitFor(() => expect(updateOrganisationDetailsActionMock).toHaveBeenCalled())
-    expect(screen.queryByText(PHONE_FORMAT_ERROR_MESSAGE, { selector: '.input__error' })).toBeNull()
+    expect(screen.queryByText(errorMessages.phoneFormat, { selector: '.input__error' })).toBeNull()
   })
 
   it('submits the updated values and redirects to the organisation page on success', async () => {

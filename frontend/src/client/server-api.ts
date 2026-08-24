@@ -2,7 +2,7 @@ import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import 'server-only'
 
-import { buildSignInHref } from '@/app/auth/constants'
+import { buildSignInHref } from '@/lib/auth/routing'
 
 import { createClient } from './generated/client'
 

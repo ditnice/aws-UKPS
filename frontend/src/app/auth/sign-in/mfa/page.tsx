@@ -1,6 +1,5 @@
 import { PageHeader } from '@/components/PageHeader/PageHeader'
-
-import { getSafeReturnTo } from '../../constants'
+import { getSafeReturnTo } from '@/lib/auth/routing'
 
 import { SignInMfaForm } from './_components/SignInMfaForm'
 
