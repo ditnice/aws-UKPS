@@ -7,7 +7,6 @@ import { useState } from 'react'
 import { z } from 'zod'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
-import { Textarea } from '@nice-digital/nds-textarea'
 
 import {
   EMAIL_FORMAT_ERROR_MESSAGE,
@@ -21,6 +20,7 @@ import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { Textarea } from '@/components/Textarea/Textarea'
 
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
 
@@ -139,6 +139,7 @@ export function EditOrganisationDetailsForm({
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
                 required
+                width="one-half"
               />
             )
           }}

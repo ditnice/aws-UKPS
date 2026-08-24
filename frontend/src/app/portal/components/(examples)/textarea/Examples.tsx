@@ -1,7 +1,8 @@
 'use client'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
-import { Textarea } from '@nice-digital/nds-textarea'
+
+import { Textarea } from '@/components/Textarea/Textarea'
 
 import { Example } from '../../_components/Example'
 
