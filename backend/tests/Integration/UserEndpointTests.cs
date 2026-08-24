@@ -26,6 +26,8 @@ public class UserEndpointTests : DatabaseTestBase
     public UserEndpointTests(PostgresFixture fixture)
         : base(fixture)
     {
+        Randomizer.Seed = new Random(431); // Deterministic Randomisation
+
         _httpClient = fixture.Factory.CreateClient();
 
         var organisations = _organisationFaker.Generate(4);
