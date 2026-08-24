@@ -2,9 +2,9 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
+import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 
-import { routeOnSuccessfulAuth } from '../../constants'
-import { signUpMfaSetupStorageKey } from '../constants'
+import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
 
 import SignUpSetMfa from './page'
 

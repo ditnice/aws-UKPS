@@ -8,21 +8,22 @@ import { z } from 'zod'
 
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './OrganisationOnboardUserForm.module.scss'
 
 import type { ChangeEvent } from 'react'
 
 const onboardUserSchema = z.object({
-  fullName: z.string().trim().min(1, "Enter the user's full name"),
+  fullName: z.string().trim().min(1, errorMessages.userNameRequired),
   newUserEmail: z
     .string()
     .trim()
-    .min(1, "Enter the user's work email address")
-    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
-  contactNumber: z.string().trim().min(1, "Enter the user's phone number"),
+    .min(1, errorMessages.userEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
+  contactNumber: z.string().trim().min(1, errorMessages.userPhoneNumberRequired),
 })
 
 type OnboardUserFormValues = z.input<typeof onboardUserSchema>

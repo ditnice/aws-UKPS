@@ -8,19 +8,19 @@ import { z } from 'zod'
 import { postAuthLogin } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
-
-import { routeOnSuccessfulAuth } from '../../constants'
+import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 const signInSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, 'Enter your email address')
-    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
-  password: z.string().min(1, 'Enter your password'),
+    .min(1, errorMessages.personalEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
+  password: z.string().min(1, errorMessages.passwordRequired),
 })
 
 type SignInFormValues = z.input<typeof signInSchema>

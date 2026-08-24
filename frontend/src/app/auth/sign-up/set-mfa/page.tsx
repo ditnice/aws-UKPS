@@ -9,12 +9,13 @@ import { z } from 'zod'
 
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
 import { Button } from '@/components/Button/Button'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { routeOnSuccessfulAuth } from '../../constants'
-import { signUpMfaSetupStorageKey } from '../constants'
+import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
 
 import styles from './page.module.scss'
 
@@ -32,10 +33,10 @@ const signUpSetMfaSchema = z.object({
   securityCode: z
     .string()
     .trim()
-    .min(1, 'Enter your security code')
+    .min(1, errorMessages.securityCodeRequired)
     .refine(
       (value) => /^\d{6}$/.test(normaliseSecurityCode(value)),
-      'Enter a 6-digit security code',
+      errorMessages.securityCodeFormat,
     ),
 })
 
