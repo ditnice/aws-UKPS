@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function TextareaPage() {
   return (
-    <ComponentPage title={component.label}>
+    <ComponentPage marker="wrapper" title={component.label}>
       <Examples />
     </ComponentPage>
   )

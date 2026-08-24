@@ -9,6 +9,7 @@ const ndsWrappers = [
   { dir: 'Table', pkg: '@nice-digital/nds-table', component: 'Table' },
   { dir: 'Button', pkg: '@nice-digital/nds-button', component: 'Button' },
   { dir: 'Input', pkg: '@nice-digital/nds-input', component: 'Input' },
+  { dir: 'Textarea', pkg: '@nice-digital/nds-textarea', component: 'Textarea' },
   { dir: 'Tag', pkg: '@nice-digital/nds-tag', component: 'Tag' },
   { dir: 'PageHeader', pkg: '@nice-digital/nds-page-header', component: 'PageHeader' },
 ]
