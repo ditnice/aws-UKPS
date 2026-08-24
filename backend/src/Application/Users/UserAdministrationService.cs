@@ -17,6 +17,8 @@ using OnboardingUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Applica
 
 namespace UKPS.Api.Application.Users;
 
+using GetUserResult = Result<RegisterUserDetailsDto, GetUserDetailsError>;
+
 internal sealed partial class UserAdministrationService(
     IOrganisationAuthoriser organisationAuthoriser,
     IIdentityService administerIdentityService,
@@ -169,6 +171,20 @@ internal sealed partial class UserAdministrationService(
         dbContext.UserRegister.Add(userRegister);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result<RegisterUserDetailsDto, RegisterUserError>.Ok(MapToRegisterDto(userRegister));
+    }
+
+    public async Task<Result<RegisterUserDetailsDto, GetUserDetailsError>> GetUserDetailsById(
+        int Id,
+        CancellationToken cancellationToken
+    )
+    {
+        var user = await dbContext.UserRegister.SingleOrDefaultAsync(
+            u => u.Id == Id,
+            cancellationToken
+        );
+        return user is null
+            ? GetUserResult.Err(new GetUserDetailsError.IdNotFound(Id))
+            : GetUserResult.Ok(MapToRegisterDto(user));
     }
 
     [LoggerMessage(

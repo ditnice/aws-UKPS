@@ -962,6 +962,27 @@ export type PostUsersRegisterResponses = {
 
 export type PostUsersRegisterResponse = PostUsersRegisterResponses[keyof PostUsersRegisterResponses];
 
+export type GetUserDetailsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to retrieve.
+         */
+        Id: number;
+    };
+    query?: never;
+    url: '/users/{id}';
+};
+
+export type GetUserDetailsByIdResponses = {
+    /**
+     * The user's details were successfully retrieved.
+     */
+    200: RegisterUserDetailsDto;
+};
+
+export type GetUserDetailsByIdResponse = GetUserDetailsByIdResponses[keyof GetUserDetailsByIdResponses];
+
 export type PostUsersOnboardData = {
     /**
      * A token that can be used to cancel the operation.

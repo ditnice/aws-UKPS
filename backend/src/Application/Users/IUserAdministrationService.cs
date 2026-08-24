@@ -45,4 +45,22 @@ public interface IUserAdministrationService
         OnboardUserCommandDto command,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Retrieves the details of a user.
+    /// </summary>
+    /// <param name="Id">
+    /// The unique identifier of the user whose details are being retrieved.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A result containing the user's details if the operation was successful,
+    /// or the reason the operation failed.
+    /// </returns>
+    Task<Result<RegisterUserDetailsDto, GetUserDetailsError>> GetUserDetailsById(
+        int Id,
+        CancellationToken cancellationToken
+    );
 }

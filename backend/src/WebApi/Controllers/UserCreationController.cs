@@ -57,6 +57,45 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     }
 
     /// <summary>
+    /// Retrieves the details of a user by their unique identifier.
+    /// </summary>
+    /// <param name="Id">
+    /// The unique identifier of the user to retrieve.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult{T}"/> containing the user's details.
+    /// Returns <see cref="OkObjectResult"/> if the user was found,
+    /// or <see cref="NotFoundResult"/> if no user exists with the supplied identifier.
+    /// </returns>
+    /// <response code="200">
+    /// The user's details were successfully retrieved.
+    /// </response>
+    /// <response code="404">
+    /// No user was found with the supplied identifier.
+    /// </response>
+    [HttpGet("{id:int}", Name = nameof(GetUserDetailsById))]
+    public async Task<ActionResult<RegisterUserDetailsDto>> GetUserDetailsById(
+        int Id,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await userAdministrationService.GetUserDetailsById(Id, cancellationToken);
+
+        return result.Match<ActionResult<RegisterUserDetailsDto>>(
+            user => Ok(user),
+            error =>
+                error switch
+                {
+                    GetUserDetailsError.IdNotFound => NotFound(),
+                    _ => throw new UnreachableException("Unhandled GetUserDetailsError"),
+                }
+        );
+    }
+
+    /// <summary>
     /// Creates a new user account and initiates the onboarding process.
     /// </summary>
     /// <param name="command">
