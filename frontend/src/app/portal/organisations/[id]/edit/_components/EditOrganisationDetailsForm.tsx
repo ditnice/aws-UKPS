@@ -20,7 +20,7 @@ import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationD
 import type { ChangeEvent } from 'react'
 
 const editOrganisationDetailsSchema = z.object({
-  organisationName: z.string().trim().min(1, errorMessages.companyNameRequired),
+  organisationName: z.string().trim().min(1, errorMessages.organisationNameRequired),
   headOfficeAddress: z.string().trim().min(1, errorMessages.addressRequired),
   headOfficeEmail: z
     .string()
@@ -100,7 +100,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company name"
+                label="Organisation name"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -122,7 +122,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Textarea
-                label="Company address"
+                label="Organisation address"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -144,7 +144,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company email address"
+                label="Organisation email address"
                 name={field.name}
                 type="email"
                 value={field.state.value}
@@ -167,7 +167,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company phone number"
+                label="Organisation phone number"
                 name={field.name}
                 hint="For international numbers include the country code. For example +1 555-123-4567."
                 type="tel"
