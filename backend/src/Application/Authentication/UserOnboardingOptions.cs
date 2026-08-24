@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UKPS.Api.Application.Authentication;
 
-internal sealed record UserOnboardingConfiguration
+internal sealed record UserOnboardingOptions
 {
     public const string SectionName = "UserOnboarding";
 

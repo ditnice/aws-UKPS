@@ -1,6 +1,6 @@
 namespace UKPS.Api.Persistence.Data.Seeding;
 
-internal sealed record SeedingConfiguration
+internal sealed record SeedingOptions
 {
     public const string SectionName = "Seeding";
 

@@ -13,9 +13,7 @@ internal static class AuthenticationDependencyInjectionManagement
         services.TryAddScoped<IIdentityService, CognitoIdentityService>();
         services.TryAddScoped<IAmazonCognitoIdentityProvider>(sp =>
         {
-            CognitoConfiguration options = sp.GetRequiredService<
-                IOptions<CognitoConfiguration>
-            >().Value;
+            CognitoOptions options = sp.GetRequiredService<IOptions<CognitoOptions>>().Value;
             string serviceUrl = options.ServiceUrl.AbsoluteUri;
             var config = new AmazonCognitoIdentityProviderConfig
             {

@@ -13,11 +13,11 @@ internal static class AwsAuthenticationExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        DevAuthenticationConfiguration devAuthenticationConfiguration =
+        DevAuthenticationOptions devAuthenticationConfiguration =
             builder
-                .Configuration.GetSection(DevAuthenticationConfiguration.SectionName)
-                .Get<DevAuthenticationConfiguration>()
-            ?? new DevAuthenticationConfiguration();
+                .Configuration.GetSection(DevAuthenticationOptions.SectionName)
+                .Get<DevAuthenticationOptions>()
+            ?? new DevAuthenticationOptions();
 
         if (devAuthenticationConfiguration.IsEnabled)
         {
@@ -35,7 +35,7 @@ internal static class AwsAuthenticationExtensions
             .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                CognitoConfiguration configuration = RetrieveConfiguration(builder);
+                CognitoOptions configuration = RetrieveConfiguration(builder);
                 var authority = new Uri(configuration.ServiceUrl, configuration.UserPoolId);
                 options.Authority = authority.AbsoluteUri;
 
@@ -81,13 +81,11 @@ internal static class AwsAuthenticationExtensions
             );
     }
 
-    private static CognitoConfiguration RetrieveConfiguration(WebApplicationBuilder builder)
+    private static CognitoOptions RetrieveConfiguration(WebApplicationBuilder builder)
     {
-        return builder
-                .Configuration.GetSection(CognitoConfiguration.SectionName)
-                .Get<CognitoConfiguration>()
+        return builder.Configuration.GetSection(CognitoOptions.SectionName).Get<CognitoOptions>()
             ?? throw new InvalidOperationException(
-                $"Jwt configuration section [{CognitoConfiguration.SectionName}] is missing or invalid."
+                $"Jwt configuration section [{CognitoOptions.SectionName}] is missing or invalid."
             );
     }
 

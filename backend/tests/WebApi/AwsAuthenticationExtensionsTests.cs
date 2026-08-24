@@ -31,7 +31,7 @@ public sealed class AwsAuthenticationExtensionsTests
         var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "true",
+                [$"{DevAuthenticationOptions.SectionName}:IsEnabled"] = "true",
             }
         );
 
@@ -57,7 +57,7 @@ public sealed class AwsAuthenticationExtensionsTests
         var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "true",
+                [$"{DevAuthenticationOptions.SectionName}:IsEnabled"] = "true",
             }
         );
 
@@ -80,10 +80,10 @@ public sealed class AwsAuthenticationExtensionsTests
         var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "false",
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                [$"{DevAuthenticationOptions.SectionName}:IsEnabled"] = "false",
+                [$"{CognitoOptions.SectionName}:ServiceUrl"] =
                     "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
+                [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
             }
         );
 
@@ -107,9 +107,9 @@ public sealed class AwsAuthenticationExtensionsTests
         var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                [$"{CognitoOptions.SectionName}:ServiceUrl"] =
                     "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
+                [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
             }
         );
 
@@ -136,9 +136,9 @@ public sealed class AwsAuthenticationExtensionsTests
         var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] = serviceUrl.AbsoluteUri,
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = userPoolId,
-                [$"{CognitoConfiguration.SectionName}:Region"] = "eu-west-2",
+                [$"{CognitoOptions.SectionName}:ServiceUrl"] = serviceUrl.AbsoluteUri,
+                [$"{CognitoOptions.SectionName}:UserPoolId"] = userPoolId,
+                [$"{CognitoOptions.SectionName}:Region"] = "eu-west-2",
             }
         );
 
@@ -169,10 +169,10 @@ public sealed class AwsAuthenticationExtensionsTests
         var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                [$"{CognitoOptions.SectionName}:ServiceUrl"] =
                     "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
-                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
+                [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
+                [$"{CognitoOptions.SectionName}:Region"] = "region",
             }
         );
 
@@ -207,10 +207,10 @@ public sealed class AwsAuthenticationExtensionsTests
         var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                [$"{CognitoOptions.SectionName}:ServiceUrl"] =
                     "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
-                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
+                [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
+                [$"{CognitoOptions.SectionName}:Region"] = "region",
             }
         );
 
@@ -245,10 +245,10 @@ public sealed class AwsAuthenticationExtensionsTests
         var builder = CreateBuilder(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
+                [$"{CognitoOptions.SectionName}:ServiceUrl"] =
                     "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
-                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
+                [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
+                [$"{CognitoOptions.SectionName}:Region"] = "region",
             }
         );
 
@@ -308,7 +308,7 @@ public sealed class AwsAuthenticationExtensionsTests
         );
 
         exception.Message.ShouldBe(
-            $"Jwt configuration section [{CognitoConfiguration.SectionName}] is missing or invalid."
+            $"Jwt configuration section [{CognitoOptions.SectionName}] is missing or invalid."
         );
     }
 

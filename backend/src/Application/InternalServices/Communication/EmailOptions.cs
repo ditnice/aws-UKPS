@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UKPS.Api.Application.InternalServices.Communication;
 
-internal record EmailConfiguration
+internal record EmailOptions
 {
     public const string SectionName = "Email";
 

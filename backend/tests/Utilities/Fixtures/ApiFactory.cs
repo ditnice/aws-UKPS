@@ -35,11 +35,11 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
         builder.UseSetting("AWS:LoadSecrets", $"{false}");
         builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
         builder.UseSetting(
-            $"{SeedingConfiguration.SectionName}:{nameof(SeedingConfiguration.ReseedOnStartup)}",
+            $"{SeedingOptions.SectionName}:{nameof(SeedingOptions.ReseedOnStartup)}",
             $"{false}"
         );
         builder.UseSetting(
-            $"{DatabaseConfiguration.SectionName}:{nameof(DatabaseConfiguration.MigrateOnStartup)}",
+            $"{DatabaseOptions.SectionName}:{nameof(DatabaseOptions.MigrateOnStartup)}",
             $"{true}"
         );
     }

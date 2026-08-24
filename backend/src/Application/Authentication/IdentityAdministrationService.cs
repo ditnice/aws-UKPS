@@ -29,13 +29,13 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
 {
     private readonly AppDbContext _appDbContext;
     private readonly IIdentityService _identityService;
-    private readonly IOptions<UserOnboardingConfiguration> _options;
+    private readonly IOptions<UserOnboardingOptions> _options;
     private readonly IDateTimeProvider _dateTimeProvider;
 
     public IdentityAdministrationService(
         AppDbContext appDbContext,
         IIdentityService identityService,
-        IOptions<UserOnboardingConfiguration> options,
+        IOptions<UserOnboardingOptions> options,
         IDateTimeProvider dateTimeProvider
     )
     {
