@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
+import { Button, ButtonGroup } from '@/components/Button/Button'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 
@@ -186,14 +185,14 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
         }}
       </form.Field>
 
-      <div className={styles.actions}>
+      <ButtonGroup>
         <Button disabled={isSubmitting} type="submit" variant="cta">
           Send invite
         </Button>
         <Button elementType={Link} href={cancelHref} variant="secondary">
           Cancel
         </Button>
-      </div>
+      </ButtonGroup>
     </form>
   )
 }

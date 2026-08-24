@@ -1,6 +1,5 @@
 import Link from 'next/link'
 
-import { Button } from '@nice-digital/nds-button'
 import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
 import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
@@ -17,6 +16,7 @@ import { buildUserListHref, type UserListQuery } from '@/app/portal/_utils/userL
 import type { Client } from '@/client/generated/client'
 import { getUsers } from '@/client/generated/sdk.gen'
 import type { UserListItemDto } from '@/client/generated/types.gen'
+import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
 
@@ -52,11 +52,15 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
-function renderActions(status: UserListItemDto['status']) {
-  switch (status) {
+function renderActions(user: UserListItemDto, organisationId: number) {
+  switch (user.status) {
     case 'Active':
     case 'Inactive':
-      return <a>Edit role</a>
+      return (
+        <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
+          Edit role
+        </Link>
+      )
     case 'Deactivated':
       return <a>Reactivate</a>
     case 'RequestedAccess':
@@ -151,7 +155,7 @@ export async function OrganisationUsersTable({
                     <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
                     <td>{renderStatus(user.status)}</td>
                     <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user.status)}</td>
+                    <td>{renderActions(user, organisationId)}</td>
                   </tr>
                 ))
               ) : (

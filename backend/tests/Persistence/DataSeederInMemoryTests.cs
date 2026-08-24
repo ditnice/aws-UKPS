@@ -21,7 +21,7 @@ public sealed class DataSeederInMemoryTests
     public void BuildPayload_WhenSuperUsersJsonIsConfigured_ShouldAddSuperUserForOrganisationOne()
     {
         const string email = "bootstrap.user@example.com";
-        const string identityId = "00000000-0000-0000-0000-000000000001";
+        const string cognitoUsername = "00000000-0000-0000-0000-000000000001";
         SeedingConfiguration configuration = new()
         {
             SuperUsersJson = """
@@ -29,7 +29,7 @@ public sealed class DataSeederInMemoryTests
                   {
                     "fullName": "Bootstrap User",
                     "email": "bootstrap.user@example.com",
-                    "identityId": "00000000-0000-0000-0000-000000000001"
+                    "cognitoUsername": "00000000-0000-0000-0000-000000000001"
                   }
                 ]
                 """,
@@ -41,7 +41,7 @@ public sealed class DataSeederInMemoryTests
             string.Equals(u.WorkEmail, email, StringComparison.Ordinal)
         );
         user.FullName.ShouldBe("Bootstrap User");
-        user.IdentityId.ShouldBe(identityId);
+        user.CognitoUsername.ShouldBe(CognitoUsername.Parse(cognitoUsername));
         user.UserType.ShouldBe(UserType.ItAdmin);
         payload.Organisations.First().Status.ShouldBe(UserOrgStatus.Active);
 
@@ -61,7 +61,7 @@ public sealed class DataSeederInMemoryTests
             new SeedingConfiguration()
         );
         string generatedEmail = generatedPayload.Users.First().WorkEmail;
-        const string identityId = "00000000-0000-0000-0000-000000000002";
+        const string cognitoUsername = "00000000-0000-0000-0000-000000000002";
         SeedingConfiguration configuration = new()
         {
             SuperUsersJson = $$"""
@@ -69,7 +69,7 @@ public sealed class DataSeederInMemoryTests
                   {
                     "fullName": "Configured User",
                     "email": "{{generatedEmail}}",
-                    "identityId": "00000000-0000-0000-0000-000000000002"
+                    "cognitoUsername": "00000000-0000-0000-0000-000000000002"
                   }
                 ]
                 """,
@@ -81,7 +81,7 @@ public sealed class DataSeederInMemoryTests
             string.Equals(u.WorkEmail, generatedEmail, StringComparison.Ordinal)
         );
         user.FullName.ShouldBe("Configured User");
-        user.IdentityId.ShouldBe(identityId);
+        user.CognitoUsername.ShouldBe(CognitoUsername.Parse(cognitoUsername));
         payload.Memberships.Count(m => ReferenceEquals(m.User, user)).ShouldBe(1);
         payload
             .Memberships.Single(m => ReferenceEquals(m.User, user))
@@ -98,12 +98,12 @@ public sealed class DataSeederInMemoryTests
                   {
                     "fullName": "Bootstrap User One",
                     "email": "bootstrap.user@example.com",
-                    "identityId": "00000000-0000-0000-0000-000000000001"
+                    "cognitoUsername": "00000000-0000-0000-0000-000000000001"
                   },
                   {
                     "fullName": "Bootstrap User Two",
                     "email": "BOOTSTRAP.USER@example.com",
-                    "identityId": "00000000-0000-0000-0000-000000000002"
+                    "cognitoUsername": "00000000-0000-0000-0000-000000000002"
                   }
                 ]
                 """,
