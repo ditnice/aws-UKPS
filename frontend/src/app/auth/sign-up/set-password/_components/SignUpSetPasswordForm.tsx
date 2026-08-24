@@ -5,9 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
+import {
+  PASSWORD_FORMAT_ERROR_MESSAGE,
+  PASSWORD_REQUIRED_ERROR_MESSAGE,
+} from '@/app/common/form/ErrorMessages'
+import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
 import { Button } from '@/components/Button/Button'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 
 import { signUpMfaSetupStorageKey } from '../../constants'
@@ -15,8 +19,8 @@ import { signUpMfaSetupStorageKey } from '../../constants'
 const signUpSetPasswordSchema = z.object({
   password: z
     .string()
-    .min(1, 'Enter your password')
-    .min(8, 'Password must be at least 8 characters long'),
+    .min(1, PASSWORD_REQUIRED_ERROR_MESSAGE)
+    .min(8, PASSWORD_FORMAT_ERROR_MESSAGE),
 })
 
 type SignUpSetPasswordFormValues = z.input<typeof signUpSetPasswordSchema>
