@@ -4,7 +4,10 @@ export const errorMessages = {
   addressRequired: 'Enter company address',
   organisationEmailRequired: 'Enter an email address',
   //// Setup
+  personalFullNameRequired: 'Enter your full name',
   personalEmailRequired: 'Enter your email address',
+  workEmailRequired: 'Enter your work email address',
+  personalPhoneRequired: 'Enter your phone number',
   phoneRequired: 'Enter a phone number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
