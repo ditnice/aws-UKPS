@@ -52,6 +52,8 @@ public class UserServiceTests : DatabaseTestBase
     public UserServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
+        Randomizer.Seed = new Random(342);
+
         _harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentTime(
             _currentDateTime
         );
@@ -344,6 +346,11 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetUsers_ExcludesNeverActiveUsers_WhenLastActiveFilterProvided()
     {
+        _seededUsers.ShouldContain(
+            x => x.LastActive.HasValue,
+            "Data set should contain at least one user with LastActive value"
+        );
+
         var sampleUser = _faker.PickRandom(ViewableUsers.Where(x => x.LastActive.HasValue));
         GetUsersResult result = await Service.GetUsers(
             CreateGetUsersQuery(
@@ -357,7 +364,7 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUsers_PaginatesAndOrdersByUserId_WhenUsersExist()
+    public async Task GetUsers_Paginates_WhenUsersExist()
     {
         GetUsersResult result = await Service.GetUsers(
             new() { Page = 2, PageSize = 1 },
@@ -368,6 +375,18 @@ public class UserServiceTests : DatabaseTestBase
         dto.TotalCount.ShouldBe(ViewableMemberships.Count());
         dto.Page.ShouldBe(2);
         dto.PageSize.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task GetUsers_OrdersByUserId()
+    {
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto(),
+            TestContext.Current.CancellationToken
+        );
+
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
+        dto.Items.Select(x => x.UserId).ShouldBeInOrder();
     }
 
     [Fact]
@@ -392,13 +411,23 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetUsers_FiltersByStatus_WhenOrganisationIdIsMissing()
     {
-        GetUsersResult result = await Service.GetUsers(
+        GetUsersResult withNoFilter = await Service.GetUsers(
+            CreateGetUsersQuery(organisationId: null),
+            TestContext.Current.CancellationToken
+        );
+        withNoFilter
+            .ShouldBeSuccess()
+            .Items.Select(x => x.Status)
+            .ShouldContainSet([UserOrgStatus.Inactive, UserOrgStatus.Active]);
+
+        GetUsersResult resultWithFilter = await Service.GetUsers(
             CreateGetUsersQuery(organisationId: null, status: [UserOrgStatus.Inactive]),
             TestContext.Current.CancellationToken
         );
-
-        PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        dto.Items.Select(x => x.Status).ShouldOnlyContain([UserOrgStatus.Inactive]);
+        resultWithFilter
+            .ShouldBeSuccess()
+            .Items.Select(x => x.Status)
+            .ShouldOnlyContain([UserOrgStatus.Inactive]);
     }
 
     [Fact]

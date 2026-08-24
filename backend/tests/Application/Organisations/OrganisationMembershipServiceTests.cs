@@ -1,3 +1,4 @@
+using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Common;
@@ -233,7 +234,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     }
 
     private async Task<UserOrgMembership> SetupUserOrgMembership(
-        Action<UserOrgMembership>? modifier = null
+        Action<UserOrgMembership>? modifier = null,
+        Faker<UserOrgMembership>? overrideMembershipFaker = null
     )
     {
         // Both FKs are Restrict, so the parent User and Organisation rows must exist first.
@@ -243,7 +245,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
-        var userOrgMembership = _membershipFaker
+        var userOrgMembership = (overrideMembershipFaker ?? _membershipFaker)
             .Generate()
             .Update(x =>
             {
