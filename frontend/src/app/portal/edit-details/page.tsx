@@ -1,4 +1,4 @@
-import { BackLink } from '@/components/BackLink/BackLink'
+import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import { EditDetailsForm } from './_components/EditDetailsForm'
@@ -6,7 +6,7 @@ import { EditDetailsForm } from './_components/EditDetailsForm'
 export default function EditDetails() {
   return (
     <>
-      <PageHeader backLink={<BackLink href="#">Back</BackLink>} heading="Edit your details" />
+      <PageHeader backLink={<BackLinkBrowser />} heading="Edit your details" />
 
       <EditDetailsForm />
     </>
