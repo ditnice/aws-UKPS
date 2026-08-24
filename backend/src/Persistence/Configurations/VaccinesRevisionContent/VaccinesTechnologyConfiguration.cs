@@ -28,11 +28,5 @@ internal sealed class VaccinesTechnologyConfiguration : IEntityTypeConfiguration
             .WithMany()
             .HasForeignKey(x => x.VaccinePlatformId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.AdministrationRoute)
-            .WithMany()
-            .HasForeignKey(x => x.AdministrationRouteId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

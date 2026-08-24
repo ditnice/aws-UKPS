@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Api.Persistence.Entities.SharedRevisionContent;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-namespace UKPS.Api.Persistence.Configurations.SharedRevisionContent;
+namespace UKPS.Api.Persistence.Configurations.MedicinesRevisionContent;
 
 internal sealed class MedicinesGlobalSubmissionConfiguration
     : IEntityTypeConfiguration<MedicinesGlobalSubmission>

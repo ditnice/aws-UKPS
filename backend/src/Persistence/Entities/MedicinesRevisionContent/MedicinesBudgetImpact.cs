@@ -7,6 +7,12 @@ internal sealed class MedicinesBudgetImpact
     public int Id { get; set; }
     public int RevisionId { get; set; }
 
+    /// <summary>
+    /// Is a Patient Access Scheme or alternative discount arrangement planned
+    /// for this indication? Gates the PasRegions selection. CiC.
+    /// </summary>
+    public YesNoUnknown? PasSchemePlanned { get; set; }
+
     /// <summary>CiC — Commercially in Confidence.</summary>
     public YesNoUnknown? IndicationSpecificPricingPlanned { get; set; }
 

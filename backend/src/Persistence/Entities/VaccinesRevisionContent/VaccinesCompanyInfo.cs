@@ -6,7 +6,7 @@ internal sealed class VaccinesCompanyInfo
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }
-    public YesNoUnknown? IsOriginatorCompany { get; set; }
+    public YesNo? IsOriginatorCompany { get; set; }
 
     /// <summary>
     /// Free text; conditional on IsOriginatorCompany = No.
