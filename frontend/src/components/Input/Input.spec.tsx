@@ -67,6 +67,45 @@ describe('Input', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
+  it('associates hint text with the input', () => {
+    const { asFragment } = render(<Input hint="Please enter in years" label="Age" name="age" />)
+
+    expect(screen.getByText('Please enter in years').getAttribute('id')).toBe('age-hint')
+    expect(screen.getByLabelText('Age').getAttribute('aria-describedby')).toBe('age-hint')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('marks an input as invalid and associates its error message', () => {
+    const { asFragment } = render(
+      <Input error errorMessage="Enter your age" label="Age" name="age" />,
+    )
+
+    const input = screen.getByLabelText('Age')
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.getAttribute('aria-describedby')).toBe('age-error')
+    expect(document.getElementById('age-error')?.textContent).toContain('Enter your age')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('merges consumer descriptions with hint and error ids', () => {
+    const { asFragment } = render(
+      <Input
+        aria-describedby="existing-description"
+        error
+        errorMessage="Enter your age"
+        hint="Please enter in years"
+        id="age-input"
+        label="Age"
+        name="age"
+      />,
+    )
+
+    expect(screen.getByLabelText('Age').getAttribute('aria-describedby')).toBe(
+      'existing-description age-input-hint age-input-error',
+    )
+    expect(asFragment()).toMatchSnapshot()
+  })
+
   it.each(widths)('renders the %s width variant', (width) => {
     const { asFragment } = render(<Input label="Age" name="age" width={width} />)
 
