@@ -1,13 +1,44 @@
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
 import { Button } from '@nice-digital/nds-button'
 
+import { getUserDetailsById } from '@/client/generated/sdk.gen'
+import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
 import styles from './page.module.scss'
 
-export default function RequestSumbitted() {
+interface Props {
+  params: Promise<{ id: string }>
+}
+
+export default async function RequestSumbitted({ params }: Props) {
+  const { id } = await params
+  const userId = Number(id)
+
+  if (!Number.isInteger(userId)) {
+    notFound()
+  }
+
+  const apiClient = await createServerApiClient()
+  const { data: user, error } = await getUserDetailsById({
+    client: apiClient,
+    path: { Id: userId },
+  })
+
+  if (error || !user) {
+    return (
+      <section>
+        <PageHeader heading="Unable to load user" />
+        <p role="alert">
+          There was a problem retrieving the organisation. Please try again lateSr.
+        </p>
+      </section>
+    )
+  }
+
   return (
     <>
       <PageHeader heading="Account request submitted" />
@@ -18,10 +49,10 @@ export default function RequestSumbitted() {
       <hr></hr>
       <h2>What you told us</h2>
       <SummaryList variant="two-column" className={styles.marginBottom}>
-        <SummaryListRow label="Organisation" value="Global Car Pharmaceuticals" />
-        <SummaryListRow label="Full name" value="Julie Brooks" />
-        <SummaryListRow label="Email address" value="test@test.com" />
-        <SummaryListRow label="Contact number" value="+445628103821" />
+        <SummaryListRow label="Organisation" value={user.organisation} />
+        <SummaryListRow label="Full name" value={user.fullName} />
+        <SummaryListRow label="Email address" value={user.workEmail} />
+        <SummaryListRow label="Contact number" value={user.phoneNumber} />
       </SummaryList>
       <Link href="/portal">
         <Button>Return to UK PharmaScan home</Button>

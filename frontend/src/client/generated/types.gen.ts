@@ -261,7 +261,11 @@ export type ProblemDetails = {
 /**
  * Represents the details of a user who has been registered.
  */
-export type RegisterUserDetailsDto = {
+export type RegisterUserConfirmationDto = {
+    /**
+     * Gets the user's organisation.
+     */
+    organisation: string;
     /**
      * Gets the user's full name.
      */
@@ -957,7 +961,7 @@ export type PostUsersRegisterResponses = {
      * operation succeeds. Returns:
      * * 400 Bad Request if some of the required data is missing.
      */
-    200: RegisterUserDetailsDto;
+    200: RegisterUserConfirmationDto;
 };
 
 export type PostUsersRegisterResponse = PostUsersRegisterResponses[keyof PostUsersRegisterResponses];
@@ -978,7 +982,7 @@ export type GetUserDetailsByIdResponses = {
     /**
      * The user's details were successfully retrieved.
      */
-    200: RegisterUserDetailsDto;
+    200: RegisterUserConfirmationDto;
 };
 
 export type GetUserDetailsByIdResponse = GetUserDetailsByIdResponses[keyof GetUserDetailsByIdResponses];

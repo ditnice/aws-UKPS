@@ -36,14 +36,14 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// </list>
     /// </returns>
     [HttpPost("register")]
-    public async Task<ActionResult<RegisterUserDetailsDto>> RegisterUser(
+    public async Task<ActionResult<RegisterUserConfirmationDto>> RegisterUser(
         [FromBody] RegisterUserDto registerUserDto,
         CancellationToken cancellationToken
     )
     {
-        Result<RegisterUserDetailsDto, RegisterUserError> result =
+        Result<RegisterUserConfirmationDto, RegisterUserError> result =
             await userAdministrationService.RegisterUser(registerUserDto, cancellationToken);
-        return result.Match<ActionResult<RegisterUserDetailsDto>>(
+        return result.Match<ActionResult<RegisterUserConfirmationDto>>(
             x => Ok(x),
             x =>
                 x switch
@@ -77,14 +77,14 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// No user was found with the supplied identifier.
     /// </response>
     [HttpGet("{id:int}", Name = nameof(GetUserDetailsById))]
-    public async Task<ActionResult<RegisterUserDetailsDto>> GetUserDetailsById(
+    public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserDetailsById(
         int Id,
         CancellationToken cancellationToken
     )
     {
         var result = await userAdministrationService.GetUserDetailsById(Id, cancellationToken);
 
-        return result.Match<ActionResult<RegisterUserDetailsDto>>(
+        return result.Match<ActionResult<RegisterUserConfirmationDto>>(
             user => Ok(user),
             error =>
                 error switch

@@ -23,7 +23,7 @@ public interface IUserAdministrationService
     /// <see cref="Result{TSuccess, TError}"/> with the registered user's details, or an
     /// error of type <see cref="RegisterUserError"/> if the user could not be registered.
     /// </returns>
-    Task<Result<RegisterUserDetailsDto, RegisterUserError>> RegisterUser(
+    Task<Result<RegisterUserConfirmationDto, RegisterUserError>> RegisterUser(
         RegisterUserDto registerUserDto,
         CancellationToken cancellationToken
     );
@@ -59,7 +59,7 @@ public interface IUserAdministrationService
     /// A result containing the user's details if the operation was successful,
     /// or the reason the operation failed.
     /// </returns>
-    Task<Result<RegisterUserDetailsDto, GetUserDetailsError>> GetUserDetailsById(
+    Task<Result<RegisterUserConfirmationDto, GetUserDetailsError>> GetUserDetailsById(
         int Id,
         CancellationToken cancellationToken
     );

@@ -158,13 +158,13 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     public async Task RegisterUser_IsValid_ReturnsDto()
     {
         RegisterUserDto request = RegisterUserDto();
-        RegisterUserDetailsDto expected = RegisterUserDetailsDto();
+        RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
 
         _mockService
             .RegisterUser(request, TestContext.Current.CancellationToken)
-            .Returns(Result<RegisterUserDetailsDto, RegisterUserError>.Ok(expected));
+            .Returns(Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(expected));
 
-        ActionResult<RegisterUserDetailsDto> result = await _controller.RegisterUser(
+        ActionResult<RegisterUserConfirmationDto> result = await _controller.RegisterUser(
             request,
             TestContext.Current.CancellationToken
         );
@@ -180,11 +180,11 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
         _mockService
             .RegisterUser(Arg.Any<RegisterUserDto>(), TestContext.Current.CancellationToken)
             .Returns(
-                Result<RegisterUserDetailsDto, RegisterUserError>.Err(
+                Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
                     new RegisterUserError.MissingFields()
                 )
             );
-        ActionResult<RegisterUserDetailsDto> result = await _controller.RegisterUser(
+        ActionResult<RegisterUserConfirmationDto> result = await _controller.RegisterUser(
             request,
             TestContext.Current.CancellationToken
         );
@@ -202,10 +202,11 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             Organisation = "Test2",
         };
 
-    private static RegisterUserDetailsDto RegisterUserDetailsDto() =>
+    private static RegisterUserConfirmationDto RegisterUserConfirmationDto() =>
         new()
         {
-            FullName = "Test1",
+            Organisation = "Test1",
+            FullName = "Test2",
             PhoneNumber = "0123456789",
             WorkEmail = "user@example.com",
         };

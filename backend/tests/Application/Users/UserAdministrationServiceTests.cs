@@ -15,8 +15,8 @@ using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
 using OnboardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
-using RegisterUserResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Users.Dtos.RegisterUserDetailsDto,
+using RegisterUserConfirmation = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
     UKPS.Api.Application.Users.Errors.RegisterUserError
 >;
 
@@ -157,14 +157,15 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     public async Task RegisterUser_AllFieldsProvided_ReturnsDto()
     {
         RegisterUserDto registerUserDto = _registerUserDtoFaker.Generate();
-        RegisterUserResult result = await _harness.Service.RegisterUser(
+        RegisterUserConfirmation result = await _harness.Service.RegisterUser(
             registerUserDto,
             TestContext.Current.CancellationToken
         );
-        RegisterUserDetailsDto user = result.ShouldBeSuccess();
+        RegisterUserConfirmationDto user = result.ShouldBeSuccess();
         user.ShouldBe(
-            new RegisterUserDetailsDto
+            new RegisterUserConfirmationDto
             {
+                Organisation = registerUserDto.Organisation,
                 FullName = registerUserDto.FullName,
                 WorkEmail = registerUserDto.WorkEmail,
                 PhoneNumber = registerUserDto.PhoneNumber,

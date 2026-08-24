@@ -17,7 +17,7 @@ using OnboardingUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Applica
 
 namespace UKPS.Api.Application.Users;
 
-using GetUserResult = Result<RegisterUserDetailsDto, GetUserDetailsError>;
+using GetUserResult = Result<RegisterUserConfirmationDto, GetUserDetailsError>;
 
 internal sealed partial class UserAdministrationService(
     IOrganisationAuthoriser organisationAuthoriser,
@@ -156,7 +156,7 @@ internal sealed partial class UserAdministrationService(
         LogSendingUserSignUpRequestEmail(sanitisedGuid);
     }
 
-    public async Task<Result<RegisterUserDetailsDto, RegisterUserError>> RegisterUser(
+    public async Task<Result<RegisterUserConfirmationDto, RegisterUserError>> RegisterUser(
         RegisterUserDto registerUserDto,
         CancellationToken cancellationToken
     )
@@ -170,10 +170,12 @@ internal sealed partial class UserAdministrationService(
         };
         dbContext.UserRegister.Add(userRegister);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Result<RegisterUserDetailsDto, RegisterUserError>.Ok(MapToRegisterDto(userRegister));
+        return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(
+            MapToConfirmationDto(userRegister)
+        );
     }
 
-    public async Task<Result<RegisterUserDetailsDto, GetUserDetailsError>> GetUserDetailsById(
+    public async Task<Result<RegisterUserConfirmationDto, GetUserDetailsError>> GetUserDetailsById(
         int Id,
         CancellationToken cancellationToken
     )
@@ -184,7 +186,7 @@ internal sealed partial class UserAdministrationService(
         );
         return user is null
             ? GetUserResult.Err(new GetUserDetailsError.IdNotFound(Id))
-            : GetUserResult.Ok(MapToRegisterDto(user));
+            : GetUserResult.Ok(MapToConfirmationDto(user));
     }
 
     [LoggerMessage(
@@ -201,10 +203,11 @@ internal sealed partial class UserAdministrationService(
 
     private static string Sanitise(Guid guid) => guid.ToString().Substring(0, 8);
 
-    private static RegisterUserDetailsDto MapToRegisterDto(UserRegister userRegister)
+    private static RegisterUserConfirmationDto MapToConfirmationDto(UserRegister userRegister)
     {
         return new()
         {
+            Organisation = userRegister.Organisation,
             FullName = userRegister.FullName,
             PhoneNumber = userRegister.PhoneNumber,
             WorkEmail = userRegister.WorkEmail,
