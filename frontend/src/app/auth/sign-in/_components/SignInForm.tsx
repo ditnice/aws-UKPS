@@ -11,19 +11,16 @@ import { Details } from '@/components/Details/Details'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
-import {
-  EMAIL_FORMAT_ERROR_MESSAGE,
-  PERSONAL_EMAIL_REQUIRED_ERROR_MESSAGE,
-} from '@/lib/form/errorMessages'
+import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 const signInSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, PERSONAL_EMAIL_REQUIRED_ERROR_MESSAGE)
-    .pipe(z.email(EMAIL_FORMAT_ERROR_MESSAGE)),
-  password: z.string().min(1, 'Enter your password'),
+    .min(1, errorMessages.personalEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
+  password: z.string().min(1, errorMessages.passwordRequired),
 })
 
 type SignInFormValues = z.input<typeof signInSchema>

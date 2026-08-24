@@ -9,10 +9,7 @@ import { postAuthMfa } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
-import {
-  SECURITY_CODE_FORMAT_ERROR_MESSAGE,
-  SECURITY_CODE_REQUIRED_ERROR_MESSAGE,
-} from '@/lib/form/errorMessages'
+import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './SignInMfaForm.module.scss'
@@ -27,10 +24,10 @@ const signInMfaSchema = z.object({
   securityCode: z
     .string()
     .trim()
-    .min(1, SECURITY_CODE_REQUIRED_ERROR_MESSAGE)
+    .min(1, errorMessages.securityCodeRequired)
     .refine(
       (value) => /^\d{6}$/.test(normaliseSecurityCode(value)),
-      SECURITY_CODE_FORMAT_ERROR_MESSAGE,
+      errorMessages.securityCodeFormat,
     ),
 })
 
