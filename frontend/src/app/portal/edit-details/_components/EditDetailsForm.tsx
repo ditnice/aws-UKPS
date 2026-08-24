@@ -1,11 +1,13 @@
 'use client'
 import { revalidateLogic, useForm } from '@tanstack/react-form'
-import { ChangeEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
+
+import type { ChangeEvent } from 'react'
 
 const EditDetails = z.object({
   fullName: z.string().trim().min(1, 'Enter your full name'),
@@ -20,6 +22,7 @@ const EditDetails = z.object({
 type EditDetailsValues = z.input<typeof EditDetails>
 
 export function EditDetailsForm() {
+  const router = useRouter()
   const form = useForm({
     defaultValues: {
       fullName: 'Julie Brooks', // These default values will be from their existing account
@@ -94,7 +97,7 @@ export function EditDetailsForm() {
 
           return (
             <Input
-              autoComplete="phone number"
+              autoComplete="tel"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
               label="Contact number"
@@ -104,6 +107,7 @@ export function EditDetailsForm() {
                 field.handleChange(event.target.value)
               }
               hint="For international numbers include the country code."
+              type="tel"
               width="one-third"
               value={field.state.value}
             />
@@ -114,7 +118,9 @@ export function EditDetailsForm() {
         <Button type="submit" variant="cta">
           Save
         </Button>
-        <Button variant="secondary">Cancel</Button>
+        <Button onClick={() => router.back()} variant="secondary">
+          Cancel
+        </Button>
       </ButtonGroup>
     </form>
   )
