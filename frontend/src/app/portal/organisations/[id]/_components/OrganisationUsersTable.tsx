@@ -67,10 +67,18 @@ function renderActions(user: UserListItemDto, organisationId: number) {
       return (
         <ul className={styles.actionList}>
           <li>
-            <a>Approve</a>
+            <Link
+              href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
+            >
+              Approve
+            </Link>
           </li>
           <li>
-            <a>Reject</a>
+            <Link
+              href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
+            >
+              Reject
+            </Link>
           </li>
         </ul>
       )
