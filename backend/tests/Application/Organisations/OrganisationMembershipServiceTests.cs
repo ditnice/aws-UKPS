@@ -230,7 +230,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task DeactivateMembership_MembershipAlreadyInactive_ReturnsOkIdempotently()
+    public async Task DeactivateMembership_MembershipAlreadyDeactivated_ReturnsOkIdempotently()
     {
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
