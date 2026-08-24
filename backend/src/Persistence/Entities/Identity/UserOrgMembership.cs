@@ -42,6 +42,15 @@ internal sealed class UserOrgMembership
 
     internal void Deactivate()
     {
+        UserOrgStatus[] validInitialStates = [UserOrgStatus.Deactivated, UserOrgStatus.Rejected];
+
+        if (!validInitialStates.Contains(Status))
+        {
+            throw new InvalidOperationException(
+                $"User organisation membership cannot be marked be deactivated when its current status is '{Status}'."
+            );
+        }
+
         _status = UserOrgStatus.Deactivated;
     }
 }
