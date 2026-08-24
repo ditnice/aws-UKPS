@@ -62,10 +62,7 @@ public sealed record UpdateOrganisationDetailsDto : IValidatableObject
             );
         }
 
-        if (
-            !string.IsNullOrWhiteSpace(HeadOfficeTelephone)
-            && !PhoneNumberValidator.IsValid(HeadOfficeTelephone, "GB")
-        )
+        if (!PhoneNumberValidator.IsValid(HeadOfficeTelephone))
         {
             yield return new ValidationResult(
                 "HeadOfficeTelephone must be a valid phone number.",

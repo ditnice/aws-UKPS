@@ -13,7 +13,7 @@ public class PhoneNumberValidatorTests
     [InlineData("+1 (212) 555-0123")] // USA, with country code.
     public void IsValid_ValidNumber_ReturnsTrue(string telephoneNumber)
     {
-        PhoneNumberValidator.IsValid(telephoneNumber, "GB").ShouldBeTrue();
+        PhoneNumberValidator.IsValid(telephoneNumber).ShouldBeTrue();
     }
 
     [Theory]
@@ -23,7 +23,7 @@ public class PhoneNumberValidatorTests
     [InlineData("01 42 68 53 00")] // Correct French number, but no country code (parsed as GB).
     public void IsValid_InvalidNumber_ReturnsFalse(string telephoneNumber)
     {
-        PhoneNumberValidator.IsValid(telephoneNumber, "GB").ShouldBeFalse();
+        PhoneNumberValidator.IsValid(telephoneNumber).ShouldBeFalse();
     }
 
     [Theory]
@@ -44,7 +44,7 @@ public class PhoneNumberValidatorTests
     }
 
     [Theory]
-    [InlineData("07911 123456")] // UK mobile, but no country code and no default region supplied.
+    [InlineData("01 42 68 53 00")] // Correct French number, but no country code supplied.
     [InlineData("+44 20 7946 0958")] // UK landline - not mobile-capable.
     [InlineData("not-a-phone-number")]
     [InlineData("")]
@@ -58,13 +58,9 @@ public class PhoneNumberValidatorTests
     }
 
     [Fact]
-    public void IsValidSmsNumber_NoCountryCodeButDefaultRegionSupplied_InfersCountryCode()
+    public void IsValidSmsNumber_NoCountryCodeButValidGBNumber()
     {
-        bool result = PhoneNumberValidator.IsValidSmsNumber(
-            "07911 123456",
-            out string? e164Number,
-            defaultRegion: "GB"
-        );
+        bool result = PhoneNumberValidator.IsValidSmsNumber("07911 123456", out string? e164Number);
 
         result.ShouldBeTrue();
         e164Number.ShouldBe("+447911123456");

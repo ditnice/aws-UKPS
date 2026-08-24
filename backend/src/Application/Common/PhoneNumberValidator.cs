@@ -13,15 +13,19 @@ internal static class PhoneNumberValidator
     /// Determines whether <paramref name="telephoneNumber"/> is a valid phone number.
     /// </summary>
     /// <param name="telephoneNumber">The phone number to validate.</param>
-    /// <param name="defaultRegion">
-    /// The two-letter region code (e.g. "GB") to assume the country calling code when
-    /// <paramref name="telephoneNumber"/> doesn't specify one.
+    /// <param name="regionCode">The assumed region code when <paramref name="telephoneNumber"/>
+    /// doesn't specify one a country code. Default is "GB".
     /// </param>
-    public static bool IsValid(string telephoneNumber, string defaultRegion)
+    public static bool IsValid(string telephoneNumber, string regionCode = "GB")
     {
+        if (string.IsNullOrWhiteSpace(telephoneNumber))
+        {
+            return false;
+        }
+
         try
         {
-            PhoneNumber parsed = _phoneNumberUtil.Parse(telephoneNumber, defaultRegion);
+            PhoneNumber parsed = _phoneNumberUtil.Parse(telephoneNumber, regionCode);
             return _phoneNumberUtil.IsValidNumber(parsed);
         }
         catch (NumberParseException)
@@ -39,14 +43,13 @@ internal static class PhoneNumberValidator
     /// When this method returns <see langword="true"/>, <paramref name="mobileNumber"/>
     /// reformatted as E.164 (e.g. "+447911123456"); otherwise <see langword="null"/>.
     /// </param>
-    /// <param name="defaultRegion">
-    /// An optional two-letter region code to assume the country calling code from when
-    /// <paramref name="mobileNumber"/> doesn't include one.
+    /// <param name="regionCode">The assumed region code when <paramref name="mobileNumber"/>
+    /// doesn't specify one a country code. Default is "GB".
     /// </param>
     public static bool IsValidSmsNumber(
         string mobileNumber,
         out string? e164Number,
-        string? defaultRegion = null
+        string regionCode = "GB"
     )
     {
         e164Number = null;
@@ -58,10 +61,7 @@ internal static class PhoneNumberValidator
 
         try
         {
-            // "ZZ" is libphonenumber's placeholder for "unknown region": it forces the
-            // number to carry its own country calling code (e.g. a leading '+') rather
-            // than silently assuming one, which is what we need for Cognito.
-            PhoneNumber parsed = _phoneNumberUtil.Parse(mobileNumber, defaultRegion ?? "ZZ");
+            PhoneNumber parsed = _phoneNumberUtil.Parse(mobileNumber, regionCode);
 
             if (!_phoneNumberUtil.IsValidNumber(parsed))
             {
