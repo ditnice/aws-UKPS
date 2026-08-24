@@ -10,8 +10,8 @@ import type { UserListItemDto } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
+import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
 
-import { pageSizeOptions } from '../_lib/pagination'
 import {
   lastActivePresetDays,
   roleLabels,
