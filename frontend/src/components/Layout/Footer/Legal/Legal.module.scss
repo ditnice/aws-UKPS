@@ -1,0 +1,81 @@
+@use '@/styles/typography';
+@use '@/styles/variables';
+@use '@/styles/utils';
+@use '@/styles/spacing';
+@use '@/styles/layout';
+@use '@/styles/visibility';
+@use '@/styles/media-queries';
+
+.wrapper {
+  @include typography.font-size(-1);
+  background: variables.$footer-legal-background;
+  padding: utils.rem(spacing.$medium 0);
+
+  a {
+    text-decoration-line: underline;
+  }
+}
+
+.container {
+  @include layout.container;
+}
+
+.menu {
+  @include visibility.hide-print;
+  margin: utils.rem(0 0 spacing.$medium);
+
+  ul {
+    list-style: none;
+    margin: 0;
+    max-width: 100%;
+    padding: 0;
+  }
+
+  li {
+    margin: 0;
+  }
+
+  a {
+    display: block;
+  }
+}
+
+.copyright {
+  @include typography.font-size(-1);
+  margin: 0;
+  @media print {
+    float: none !important;
+    max-width: 100%;
+  }
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.menuWrapper {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+
+@include media-queries.mq($from: sm) {
+  .menu {
+    li {
+      display: inline-block;
+      margin-right: utils.rem(spacing.$medium);
+    }
+  }
+}
+
+@include media-queries.mq($from: lg) {
+  .wrapper {
+    @include layout.clearfix;
+  }
+
+  .menu {
+    margin-bottom: 0;
+  }
+}

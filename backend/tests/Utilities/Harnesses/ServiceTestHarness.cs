@@ -21,7 +21,6 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
     private CurrentUser _currentUser = AuthorisationTestConstants.DefaultCurrentUser;
     private IDateTimeProvider _timeProvider = new SystemDateTimeProvider();
     private IServiceCollection _serviceCollection;
-
     private readonly AppDbContext _appContext;
 
     public ServiceTestHarness(AppDbContext context)
@@ -37,6 +36,13 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
             .AddTransient(_ => Emails.Mock)
             .AddSingleton(_ => _timeProvider)
             .AddLogging();
+    }
+
+    public ServiceTestHarness(IServiceTestHarness harness)
+        : this(harness.GetClearedContext())
+    {
+        Emails = harness.Emails;
+        Cognito = harness.Cognito;
     }
 
     public AppDbContext GetClearedContext()

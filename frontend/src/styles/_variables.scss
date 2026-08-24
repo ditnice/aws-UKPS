@@ -1,2 +1,18 @@
+@use '@/styles/colours';
+
 $white: #fff;
+$black: #000;
+$black-tint-1: #404040;
+$custom-grey-4: #e9e9e9;
+$nice-cream-tint-1: #adadad;
 $nice-teal: #228096; // nice-teal is not public, this is a duplication of it
+
+// BackToTop
+$back-to-top-background: $custom-grey-4;
+$back-to-top-hover-background: $nice-cream-tint-1;
+$back-to-top-border: colours.$border;
+
+// Footer
+$footer-background: $black;
+$footer-text: colours.$text-inverse;
+$footer-legal-background: $black-tint-1;

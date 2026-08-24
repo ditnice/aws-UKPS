@@ -53,12 +53,12 @@ public class UserCreationController(IUserAdministrationService userAdministratio
         CancellationToken cancellationToken
     )
     {
-        Result<OnboardUserError> result = await userAdministrationService.OnboardUser(
+        Result<int, OnboardUserError> result = await userAdministrationService.OnboardUser(
             command,
             cancellationToken
         );
         return result.Match(
-            Created,
+            _ => Created(),
             err =>
                 err.Match<ActionResult>(
                     usernameAlreadyExists: _ =>

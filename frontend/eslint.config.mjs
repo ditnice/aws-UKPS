@@ -1,6 +1,41 @@
 import coreWebVitals from 'eslint-config-next/core-web-vitals'
 import typescript from 'eslint-config-next/typescript'
 
+// Local wrappers around NDS components that everything else should import
+// instead of the raw @nice-digital package. Each entry needs a matching
+// `no-restricted-imports` "off ramp" for its own directory below, since a
+// wrapper has to import the package it wraps.
+const ndsWrappers = [
+  { dir: 'Table', pkg: '@nice-digital/nds-table', component: 'Table' },
+  { dir: 'Button', pkg: '@nice-digital/nds-button', component: 'Button' },
+  { dir: 'Input', pkg: '@nice-digital/nds-input', component: 'Input' },
+  { dir: 'Tag', pkg: '@nice-digital/nds-tag', component: 'Tag' },
+  { dir: 'PageHeader', pkg: '@nice-digital/nds-page-header', component: 'PageHeader' },
+]
+
+const restrictedImportPaths = ndsWrappers.map(({ pkg, dir, component }) => ({
+  name: pkg,
+  message: `Use the local wrapper @/components/${dir}/${component} instead.`,
+}))
+
+const ndsWrapperRestrictions = [
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', { paths: restrictedImportPaths }],
+    },
+  },
+  ...ndsWrappers.map(({ dir, pkg }) => ({
+    files: [`src/components/${dir}/**/*.{ts,tsx}`],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: restrictedImportPaths.filter((path) => path.name !== pkg) },
+      ],
+    },
+  })),
+]
+
 const eslintConfig = [
   ...coreWebVitals,
   ...typescript,
@@ -68,23 +103,7 @@ const eslintConfig = [
       ],
     },
   },
-  {
-    files: ['**/*.{ts,tsx}'],
-    ignores: ['src/components/Table/**'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          paths: [
-            {
-              name: '@nice-digital/nds-table',
-              message: 'Use the local wrapper @/components/Table/Table instead.',
-            },
-          ],
-        },
-      ],
-    },
-  },
+  ...ndsWrapperRestrictions,
   {
     ignores: [
       '.next/',

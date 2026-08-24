@@ -1,0 +1,165 @@
+@use '@/styles/colours';
+@use '@/styles/utils';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/variables';
+@use '@/styles/layout';
+@use '@/styles/visibility';
+@use '@/styles/focus';
+@use '@/styles/media-queries';
+
+@use 'header-settings';
+
+.header {
+  background: colours.$fill-page-background;
+  border-bottom: utils.rem(spacing.$xx-small) solid variables.$white;
+  box-sizing: border-box;
+  font-family: typography.get-font-family(sans);
+  position: relative;
+  z-index: header-settings.$z-index-header;
+
+  *,
+  *:before,
+  *:after {
+    box-sizing: inherit;
+    font-family: inherit;
+  }
+
+  @media print {
+    border-bottom: none;
+  }
+}
+
+.container {
+  @include layout.container;
+  padding: utils.rem(spacing.$medium 0 0 0);
+
+  &:after {
+    clear: both;
+    content: '';
+    display: table;
+  }
+}
+
+.home {
+  @include visibility.remove-appended-print-link;
+  color: colours.$text;
+  display: inline-block;
+  float: left;
+  height: utils.rem(30);
+  margin-bottom: utils.rem(spacing.$medium);
+
+  &:focus {
+    @include focus.default-focus-style;
+  }
+
+  &:visited {
+    color: colours.$text;
+  }
+
+  .icon {
+    height: 100%;
+    width: auto;
+  }
+}
+
+.wrapper {
+  @include visibility.hide-print;
+  display: flex;
+  flex-grow: 1;
+  float: right;
+  justify-content: space-between;
+  margin-bottom: utils.rem(spacing.$medium);
+  width: 50%;
+
+  &:after {
+    clear: both;
+    content: '';
+    display: table;
+  }
+}
+
+.mobileMenuBtn {
+  appearance: none;
+  background: none;
+  border: 1px solid colours.$text;
+  cursor: pointer;
+  float: right;
+  font-family: inherit;
+  font-size: 110%;
+  height: utils.rem(header-settings.$control-height);
+  min-width: utils.rem(75); // Stops width changing when button text changes
+  white-space: nowrap;
+
+  &:after {
+    border-left: utils.rem(spacing.$x-small) solid transparent;
+    border-right: utils.rem(spacing.$x-small) solid transparent;
+    border-top: utils.rem(spacing.$small) solid colours.$form-group-hint; // This is not the default but $black-tint-1 is internal
+    content: '';
+    display: inline-block;
+    height: 0;
+    margin-left: utils.rem(spacing.$small);
+    vertical-align: middle;
+    width: 0;
+  }
+
+  &[aria-expanded='true']:after {
+    border-bottom: utils.rem(spacing.$small) solid colours.$text;
+    border-top: 0;
+  }
+}
+
+.account {
+  display: none;
+}
+
+@include media-queries.mq($until: md) {
+  .home {
+    float: none;
+  }
+
+  .wrapper {
+    float: none;
+    width: auto;
+  }
+}
+
+@include media-queries.mq($from: md) {
+  .header {
+    border-bottom: utils.rem(spacing.$x-small) solid colours.$fill-page-background;
+  }
+
+  .container {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .home {
+    height: utils.rem(header-settings.$control-height);
+    margin-right: utils.rem(spacing.$large);
+  }
+
+  .wrapper {
+    justify-content: flex-end;
+  }
+
+  .mobileMenuBtn {
+    display: none;
+  }
+
+  .account {
+    display: block;
+  }
+}
+
+.a11yLinks {
+  @include visibility.hide-print;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    list-style: none;
+    margin: 0;
+  }
+}
