@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { patchUsersByUserId } from '@/client/generated'
 import { UpdateUserDetailsCommand, ValidationProblemDetails } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Paceholder/ErrorState'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 const isValidationProblemDetails = (value: unknown): value is ValidationProblemDetails => {
   if (!value || typeof value !== 'object') {
@@ -46,13 +47,13 @@ const setErrors = (
 }
 
 const EditDetails = z.object({
-  fullName: z.string().trim().min(1, 'Enter your full name'),
+  fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
   workEmail: z
     .string()
     .trim()
-    .min(1, 'Enter your work email address')
-    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
-  workTelephone: z.string().trim().min(1, 'Enter your phone number'),
+    .min(1, errorMessages.workEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
+  workTelephone: z.string().trim().min(1, errorMessages.personalPhoneRequired),
 })
 
 type EditDetailsFormProps = { userId: number; initialValues: UpdateUserDetailsCommand }

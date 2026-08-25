@@ -45,7 +45,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
                 builder.UseSetting(
-                    $"{DevAuthenticationConfiguration.SectionName}:{nameof(DevAuthenticationConfiguration.IsEnabled)}",
+                    $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
                     $"{true}"
                 );
             })

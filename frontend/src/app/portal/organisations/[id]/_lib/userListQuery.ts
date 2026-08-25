@@ -1,11 +1,13 @@
-import { defaultPageSize, pageSizeOptions } from '@/app/portal/_constants/pagination'
+import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
+import { parsePage, parsePageSize } from '@/lib/search-and-filter/pagination'
+import { parseMulti } from '@/lib/search-and-filter/query'
+
 import {
   filterableRoles,
   filterableStatuses,
   lastActivePresets,
   type LastActivePreset,
-} from '@/app/portal/_constants/userLabels'
-import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
+} from './userLabels'
 
 // The raw, unvalidated query string values as Next.js provides it
 export interface UserListSearchParams {
@@ -25,27 +27,6 @@ export interface UserListQuery {
   role: UserRole[]
   email?: string
   lastActive?: LastActivePreset
-}
-
-function parsePage(page: string | undefined): number {
-  const parsedPage = Number(page)
-
-  return Number.isInteger(parsedPage) && parsedPage >= 1 ? parsedPage : 1
-}
-
-function parsePageSize(pageSize: string | undefined): number {
-  const parsedPageSize = Number(pageSize)
-
-  return pageSizeOptions.includes(parsedPageSize) ? parsedPageSize : defaultPageSize
-}
-
-function parseMulti<T extends string>(
-  param: string | string[] | undefined,
-  validValues: readonly T[],
-): T[] {
-  const values = Array.isArray(param) ? param : param ? [param] : []
-
-  return values.filter((value): value is T => validValues.includes(value as T))
 }
 
 function parseEmail(email: string | undefined): string | undefined {

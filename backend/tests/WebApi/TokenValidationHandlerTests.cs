@@ -43,7 +43,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         );
         _user = _userFaker.Generate();
         var options = Options.Create(
-            new CognitoConfiguration
+            new CognitoOptions
             {
                 ClientId = "test-client-id",
                 ClientSecret = "test-client-secret",

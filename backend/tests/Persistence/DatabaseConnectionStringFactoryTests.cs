@@ -16,7 +16,7 @@ public sealed class DatabaseConnectionStringFactoryTests
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 ["ConnectionStrings:DefaultConnection"] = connectionString,
-                [$"{DatabaseConfiguration.SectionName}:Host"] = "aurora.example.com",
+                [$"{DatabaseOptions.SectionName}:Host"] = "aurora.example.com",
             }
         );
 
@@ -31,11 +31,11 @@ public sealed class DatabaseConnectionStringFactoryTests
         IConfiguration configuration = CreateConfiguration(
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{DatabaseConfiguration.SectionName}:Host"] = "aurora.example.com",
-                [$"{DatabaseConfiguration.SectionName}:Name"] = "ukpsdev_backend",
-                [$"{DatabaseConfiguration.SectionName}:Password"] = "secret-password",
-                [$"{DatabaseConfiguration.SectionName}:Port"] = "5432",
-                [$"{DatabaseConfiguration.SectionName}:Username"] = "ukpsadmin",
+                [$"{DatabaseOptions.SectionName}:Host"] = "aurora.example.com",
+                [$"{DatabaseOptions.SectionName}:Name"] = "ukpsdev_backend",
+                [$"{DatabaseOptions.SectionName}:Password"] = "secret-password",
+                [$"{DatabaseOptions.SectionName}:Port"] = "5432",
+                [$"{DatabaseOptions.SectionName}:Username"] = "ukpsadmin",
             }
         );
 

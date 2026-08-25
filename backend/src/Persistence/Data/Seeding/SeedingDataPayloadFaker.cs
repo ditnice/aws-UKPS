@@ -39,7 +39,7 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                         (f, _) =>
                             userFaker.RuleFor(
                                 x => x.WorkEmail,
-                                _ => DevAuthenticationOptions.DefaultUserEmail
+                                _ => DevAuthenticationClaims.DefaultUserEmail
                             )
                     )
                     .RuleFor(x => x.UserRole, _ => UserRole.Super);

@@ -7,38 +7,31 @@ import { useState } from 'react'
 import { z } from 'zod'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
-import { Textarea } from '@nice-digital/nds-textarea'
 
-import {
-  EMAIL_FORMAT_ERROR_MESSAGE,
-  PHONE_FORMAT_ERROR_MESSAGE,
-  COMPANY_NAME_REQUIRED_ERROR_MESSAGE,
-  ADDRESS_REQUIRED_ERROR_MESSAGE,
-  ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE,
-  PHONE_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/form/ErrorMessages'
-import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
-import { Button } from '@/components/Button/Button'
+import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { Textarea } from '@/components/Textarea/Textarea'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
 
 import type { ChangeEvent } from 'react'
 
 const editOrganisationDetailsSchema = z.object({
-  organisationName: z.string().trim().min(1, COMPANY_NAME_REQUIRED_ERROR_MESSAGE),
-  headOfficeAddress: z.string().trim().min(1, ADDRESS_REQUIRED_ERROR_MESSAGE),
+  organisationName: z.string().trim().min(1, errorMessages.organisationNameRequired),
+  headOfficeAddress: z.string().trim().min(1, errorMessages.addressRequired),
   headOfficeEmail: z
     .string()
     .trim()
-    .min(1, ORGANISATION_EMAIL_REQUIRED_ERROR_MESSAGE)
-    .pipe(z.email(EMAIL_FORMAT_ERROR_MESSAGE)),
+    .min(1, errorMessages.organisationEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
   headOfficeTelephone: z
     .string()
     .trim()
-    .min(1, PHONE_REQUIRED_ERROR_MESSAGE)
-    .refine((value) => isValidPhoneNumber(value, 'GB'), PHONE_FORMAT_ERROR_MESSAGE),
+    .min(1, errorMessages.phoneRequired)
+    .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 
 type EditOrganisationDetailsFormValues = z.input<typeof editOrganisationDetailsSchema>
@@ -107,7 +100,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company name"
+                label="Organisation name"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -129,7 +122,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Textarea
-                label="Company address"
+                label="Organisation address"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -139,6 +132,7 @@ export function EditOrganisationDetailsForm({
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
                 required
+                width="one-half"
               />
             )
           }}
@@ -150,7 +144,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company email address"
+                label="Organisation email address"
                 name={field.name}
                 type="email"
                 value={field.state.value}
@@ -173,7 +167,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company phone number"
+                label="Organisation phone number"
                 name={field.name}
                 hint="For international numbers include the country code. For example +1 555-123-4567."
                 type="tel"
@@ -192,13 +186,15 @@ export function EditOrganisationDetailsForm({
         </form.Field>
       </FormGroup>
 
-      <Button buttonType="submit" disabled={isSubmitting} variant="cta">
-        {isSubmitting ? 'Saving...' : 'Save changes'}
-      </Button>
+      <ButtonGroup>
+        <Button buttonType="submit" disabled={isSubmitting} variant="cta">
+          {isSubmitting ? 'Saving...' : 'Save changes'}
+        </Button>
 
-      <Button buttonType="button" variant="secondary" onClick={() => router.back()}>
-        Cancel
-      </Button>
+        <Button buttonType="button" variant="secondary" onClick={() => router.back()}>
+          Cancel
+        </Button>
+      </ButtonGroup>
     </form>
   )
 }

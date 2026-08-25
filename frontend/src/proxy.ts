@@ -1,7 +1,8 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 
-const signInPath = '/auth/sign-in'
+import { signInPath } from '@/lib/auth/routing'
+
 const cognitoIssuer = process.env.COGNITO_ISSUER
 const cognitoClientId = process.env.COGNITO_CLIENT_ID
 const authenticationMode = process.env.AUTHENTICATION_MODE

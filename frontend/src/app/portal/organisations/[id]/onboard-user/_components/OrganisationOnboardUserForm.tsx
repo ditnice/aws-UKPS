@@ -6,29 +6,24 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { z } from 'zod'
 
-import {
-  EMAIL_FORMAT_ERROR_MESSAGE,
-  USER_EMAIL_REQUIRED_ERROR_MESSAGE,
-  USER_NAME_REQUIRED_ERROR_MESSAGE,
-  USER_PHONE_NUMBER_REQUIRED_ERROR_MESSAGE,
-} from '@/app/common/form/ErrorMessages'
-import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './OrganisationOnboardUserForm.module.scss'
 
 import type { ChangeEvent } from 'react'
 
 const onboardUserSchema = z.object({
-  fullName: z.string().trim().min(1, USER_NAME_REQUIRED_ERROR_MESSAGE),
+  fullName: z.string().trim().min(1, errorMessages.userNameRequired),
   newUserEmail: z
     .string()
     .trim()
-    .min(1, USER_EMAIL_REQUIRED_ERROR_MESSAGE)
-    .pipe(z.email(EMAIL_FORMAT_ERROR_MESSAGE)),
-  contactNumber: z.string().trim().min(1, USER_PHONE_NUMBER_REQUIRED_ERROR_MESSAGE),
+    .min(1, errorMessages.userEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
+  contactNumber: z.string().trim().min(1, errorMessages.userPhoneNumberRequired),
 })
 
 type OnboardUserFormValues = z.input<typeof onboardUserSchema>

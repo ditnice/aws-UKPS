@@ -4,22 +4,22 @@ import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
 import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
-import { pageSizeOptions } from '@/app/portal/_constants/pagination'
-import {
-  lastActivePresetDays,
-  roleLabels,
-  statusLabels,
-  statusTagColours,
-  type LastActivePreset,
-} from '@/app/portal/_constants/userLabels'
-import { buildUserListHref, type UserListQuery } from '@/app/portal/_utils/userListQuery'
 import type { Client } from '@/client/generated/client'
 import { getUsers } from '@/client/generated/sdk.gen'
 import type { UserListItemDto } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
+import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
 
+import {
+  lastActivePresetDays,
+  roleLabels,
+  statusLabels,
+  statusTagColours,
+  type LastActivePreset,
+} from '../_lib/userLabels'
+import { buildUserListHref, type UserListQuery } from '../_lib/userListQuery'
 import styles from '../page.module.scss'
 
 import type { ComponentProps } from 'react'

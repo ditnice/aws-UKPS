@@ -4,11 +4,6 @@ import { Suspense } from 'react'
 import { Alert } from '@nice-digital/nds-alert'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
-import {
-  buildUserListHref,
-  parseUserListQuery,
-  type UserListSearchParams,
-} from '@/app/portal/_utils/userListQuery'
 import { getOrganisationById } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
@@ -18,6 +13,11 @@ import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryLis
 
 import { OrganisationFilters } from './_components/OrganisationFilters'
 import { OrganisationUsersTable } from './_components/OrganisationUsersTable'
+import {
+  buildUserListHref,
+  parseUserListQuery,
+  type UserListSearchParams,
+} from './_lib/userListQuery'
 import styles from './page.module.scss'
 
 interface Props {

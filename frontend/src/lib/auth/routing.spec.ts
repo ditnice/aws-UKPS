@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildSignInHref, getSafeReturnTo, signInPath } from './constants'
+import { buildSignInHref, getSafeReturnTo, signInPath } from './routing'
 
-describe('auth constants', () => {
+describe('auth routing', () => {
   it('returns safe relative returnTo paths', () => {
     expect(getSafeReturnTo('/portal/organisations/1?tab=users')).toBe(
       '/portal/organisations/1?tab=users',

@@ -20,12 +20,12 @@ namespace UKPS.Api.Application.InternalServices.Identity;
 internal sealed partial class CognitoIdentityService : IIdentityService
 {
     private readonly IAmazonCognitoIdentityProvider _cognito;
-    private readonly IOptions<CognitoConfiguration> _options;
+    private readonly IOptions<CognitoOptions> _options;
     private readonly ILogger<CognitoIdentityService> _logger;
 
     public CognitoIdentityService(
         IAmazonCognitoIdentityProvider cognito,
-        IOptions<CognitoConfiguration> options,
+        IOptions<CognitoOptions> options,
         ILogger<CognitoIdentityService> logger
     )
     {
