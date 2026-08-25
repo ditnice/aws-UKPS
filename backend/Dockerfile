@@ -1,5 +1,12 @@
 # syntax=docker/dockerfile:1.7
 
+FROM scratch AS rds-ca
+
+# checkov:skip=CKV_DOCKER_4: COPY cannot fetch remote URLs; the AWS RDS CA bundle is integrity-pinned with ADD --checksum.
+ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda800a4494 \
+    https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
+    /eu-west-2-bundle.pem
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS restore
 
 WORKDIR /src
@@ -26,6 +33,7 @@ WORKDIR /app
 
 ENV ASPNETCORE_HTTP_PORTS=8080
 
+COPY --from=rds-ca --chown=$APP_UID:$APP_UID /eu-west-2-bundle.pem ./certs/eu-west-2-bundle.pem
 COPY --from=build /app/publish .
 COPY --from=native-deps /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2* /usr/lib/x86_64-linux-gnu/
 COPY --from=native-deps /usr/lib/x86_64-linux-gnu/libkrb5.so.3* /usr/lib/x86_64-linux-gnu/
