@@ -676,6 +676,10 @@ export type DeactivateMembershipData = {
 
 export type DeactivateMembershipErrors = {
     /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
      * Forbidden
      */
     403: ProblemDetails;
@@ -713,6 +717,10 @@ export type ReactivateMembershipData = {
 };
 
 export type ReactivateMembershipErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
     /**
      * Forbidden
      */

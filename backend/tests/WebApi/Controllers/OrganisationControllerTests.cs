@@ -390,12 +390,7 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
             .Returns(
                 DeactivateUserMembershipResult.Err(
                     new OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState(
-                        new StateMachineTransitionResult<UserOrgStatus>()
-                        {
-                            CurrentState = UserOrgStatus.Active,
-                            Success = false,
-                            PermittedNextState = [],
-                        }
+                        new StateMachineTransitionResultFaker<UserOrgStatus>().Generate()
                     )
                 )
             );
@@ -476,12 +471,7 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
             .Returns(
                 ReactivateUserMembershipResult.Err(
                     new OrganisationMembershipReactivateUserError.NotAllowedInCurrentState(
-                        new StateMachineTransitionResult<UserOrgStatus>()
-                        {
-                            Success = false,
-                            CurrentState = UserOrgStatus.Active,
-                            PermittedNextState = [],
-                        }
+                        new StateMachineTransitionResultFaker<UserOrgStatus>().Generate()
                     )
                 )
             );
@@ -638,6 +628,23 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
             RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());
 
             RuleFor(x => x.CreatedAt, f => f.Date.Recent());
+        }
+    }
+
+    private sealed class StateMachineTransitionResultFaker<TState>
+        : Faker<StateMachineTransitionResult<TState>>
+        where TState : struct, Enum
+    {
+        public StateMachineTransitionResultFaker()
+        {
+            RuleFor(x => x.Success, f => f.Random.Bool());
+
+            RuleFor(x => x.CurrentState, f => f.PickRandom<TState>());
+
+            RuleFor(
+                x => x.PermittedNextState,
+                f => f.Make(f.Random.Int(0, 3), () => f.PickRandom<TState>()).ToArray()
+            );
         }
     }
 }
