@@ -35,8 +35,8 @@ internal static class AwsAuthenticationExtensions
             .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                CognitoOptions configuration = RetrieveConfiguration(builder);
-                var authority = new Uri(configuration.ServiceUrl, configuration.UserPoolId);
+                Uri authority = RetrieveAuthority(builder);
+
                 options.Authority = authority.AbsoluteUri;
 
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -66,7 +66,7 @@ internal static class AwsAuthenticationExtensions
 
     private static void ConfigureDevAuthentication(IServiceCollection services)
     {
-        var authOptions = new DevAuthenticationOptions();
+        var authOptions = new DevAuthenticationClaims();
         services.AddSingleton(authOptions);
 
         services
@@ -81,12 +81,24 @@ internal static class AwsAuthenticationExtensions
             );
     }
 
-    private static CognitoOptions RetrieveConfiguration(WebApplicationBuilder builder)
+    private static Uri RetrieveAuthority(WebApplicationBuilder builder)
     {
-        return builder.Configuration.GetSection(CognitoOptions.SectionName).Get<CognitoOptions>()
-            ?? throw new InvalidOperationException(
-                $"Jwt configuration section [{CognitoOptions.SectionName}] is missing or invalid."
+        try
+        {
+            var configuration =
+                builder.Configuration.GetSection(CognitoOptions.SectionName).Get<CognitoOptions>()
+                ?? throw new InvalidOperationException(
+                    $"Jwt configuration section [{CognitoOptions.SectionName}] is missing or invalid."
+                );
+            return new Uri(configuration.ServiceUrl, configuration.UserPoolId);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                $"Jwt configuration section [{CognitoOptions.SectionName}] is missing or invalid.",
+                ex
             );
+        }
     }
 
     private static Task HandleOnMessageReceived(MessageReceivedContext context)
