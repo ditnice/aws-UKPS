@@ -6,6 +6,7 @@ namespace UKPS.Api.WebApi.InternalServices.Authentication;
 
 internal class DevAuthenticationOptions
 {
+    public const string DefaultUserEmail = "example.user@email.com";
     public static IReadOnlyCollection<Claim> DefaultClaims { get; } =
     [
         new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),

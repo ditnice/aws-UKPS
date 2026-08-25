@@ -2,6 +2,7 @@ using Bogus;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.Persistence.Data.Seeding;
 
@@ -20,13 +21,29 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         RuleFor(
             x => x.Users,
             (f, o) =>
-                o.Organisations.SelectMany(_ => userFaker.Generate(usersPerOrganisation)).ToArray()
+            {
+                return o
+                    .Organisations.SelectMany(_ => userFaker.Generate(usersPerOrganisation))
+                    .ToArray();
+            }
         );
         RuleFor(
             x => x.Memberships,
             (f, o) =>
             {
-                return o
+                // This membership is added to enable mock auth access.
+                var mockUserMembership = membershipFaker
+                    .RuleFor(x => x.Organisation, (f, _) => o.Organisations.First())
+                    .RuleFor(
+                        x => x.User,
+                        (f, _) =>
+                            userFaker.RuleFor(
+                                x => x.WorkEmail,
+                                _ => DevAuthenticationOptions.DefaultUserEmail
+                            )
+                    )
+                    .RuleFor(x => x.UserRole, _ => UserRole.Super);
+                var otherMemberships = o
                     .Organisations.SelectMany(
                         (org, orgIndex) =>
                         {
@@ -48,6 +65,7 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                         }
                     )
                     .ToArray();
+                return otherMemberships.Append(mockUserMembership.Generate()).ToArray();
             }
         );
     }

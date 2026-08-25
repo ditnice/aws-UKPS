@@ -1,0 +1,37 @@
+import Link from 'next/link'
+
+import { CurrentUserInformationDto } from '@/client/generated'
+import { Button, ButtonGroup } from '@/components/Button/Button'
+import { ErrorState } from '@/components/Paceholder/ErrorState'
+import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
+
+export const UserDetails = ({
+  currentUser,
+}: {
+  currentUser: CurrentUserInformationDto | undefined
+}) => {
+  if (!currentUser)
+    return (
+      <ErrorState>
+        <div data-testid="failed-user-retrieval">Failed to retrieve the user.</div>
+      </ErrorState>
+    )
+  return (
+    <div>
+      <SummaryList>
+        <SummaryListRow label="Organisation" value={currentUser.organisationName} />
+        <SummaryListRow label="Full name" value={currentUser.fullName} />
+        <SummaryListRow label="Email address" value={currentUser.emailAddress} />
+        <SummaryListRow label="Contact Number" value={currentUser.workTelephone} />
+      </SummaryList>
+      <ButtonGroup>
+        <Button elementType={Link} href={'/placeholder'} variant="cta">
+          Edit Details
+        </Button>
+        <Button elementType={Link} href={'/placeholder'}>
+          Return to view and manage records
+        </Button>
+      </ButtonGroup>
+    </div>
+  )
+}

@@ -17,6 +17,27 @@ namespace UKPS.Api.WebApi.Controllers;
 public class UserController(IUserService userService) : ControllerBase
 {
     /// <summary>
+    /// Gets the information for the currently authenticated user.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the request.
+    /// </param>
+    /// <response code="200">
+    /// Returns the information for the currently authenticated user.
+    /// </response>
+    /// <returns>
+    /// The current user's information.
+    /// </returns>
+    [ProducesResponseType<CurrentUserInformationDto>(StatusCodes.Status200OK)]
+    [HttpGet("me")]
+    public async Task<ActionResult<CurrentUserInformationDto>> GetCurrentUser(
+        CancellationToken cancellationToken
+    )
+    {
+        return await userService.GetCurrentUser(cancellationToken);
+    }
+
+    /// <summary>
     /// Retrieves a paginated list of users based on the specified query parameters.
     /// </summary>
     /// <param name="getUsersQuery">The query parameters for retrieving users, including organisation ID, page, page size, status, role, and email filters.</param>
