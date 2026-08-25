@@ -165,6 +165,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         user.ShouldBe(
             new RegisterUserConfirmationDto
             {
+                Id = user.Id,
                 Organisation = registerUserDto.Organisation,
                 FullName = registerUserDto.FullName,
                 WorkEmail = registerUserDto.WorkEmail,

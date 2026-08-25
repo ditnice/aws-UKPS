@@ -57,7 +57,7 @@ export function RegistrationRequestForm() {
     onSubmit: async ({ value }) => {
       RegistrationRequest.parse(value)
 
-      await postUsersRegister({
+      const response = await postUsersRegister({
         body: {
           fullName: value.fullName,
           workEmail: value.workEmail,
@@ -65,7 +65,7 @@ export function RegistrationRequestForm() {
           organisation: value.organisation,
         },
       })
-      router.push('/portal/register/request-submitted')
+      router.push('/portal/register/request-submitted/${response.data.id}')
     },
   })
 

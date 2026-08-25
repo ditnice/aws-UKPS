@@ -1880,6 +1880,7 @@
       },
       "RegisterUserConfirmationDto": {
         "required": [
+          "id",
           "organisation",
           "fullName",
           "workEmail",
@@ -1887,6 +1888,15 @@
         ],
         "type": "object",
         "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "ID for the user.",
+            "format": "int32"
+          },
           "organisation": {
             "type": "string",
             "description": "Gets the user's organisation."

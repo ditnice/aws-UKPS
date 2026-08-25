@@ -207,6 +207,7 @@ internal sealed partial class UserAdministrationService(
     {
         return new()
         {
+            Id = userRegister.Id,
             Organisation = userRegister.Organisation,
             FullName = userRegister.FullName,
             PhoneNumber = userRegister.PhoneNumber,

@@ -263,6 +263,10 @@ export type ProblemDetails = {
  */
 export type RegisterUserConfirmationDto = {
     /**
+     * ID for the user.
+     */
+    id: number | string;
+    /**
      * Gets the user's organisation.
      */
     organisation: string;

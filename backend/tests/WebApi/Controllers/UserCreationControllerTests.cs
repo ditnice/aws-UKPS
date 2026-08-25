@@ -205,6 +205,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     private static RegisterUserConfirmationDto RegisterUserConfirmationDto() =>
         new()
         {
+            Id = 1,
             Organisation = "Test1",
             FullName = "Test2",
             PhoneNumber = "0123456789",

@@ -8,6 +8,12 @@ namespace UKPS.Api.Application.Users.Dtos;
 public sealed record RegisterUserConfirmationDto
 {
     /// <summary>
+    /// ID for the user.
+    /// </summary>
+    [Required]
+    public required int Id { get; init; }
+
+    /// <summary>
     /// Gets the user's organisation.
     /// </summary>
     [Required]
