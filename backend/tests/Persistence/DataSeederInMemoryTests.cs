@@ -10,7 +10,7 @@ public sealed class DataSeederInMemoryTests
     [Fact]
     public void BuildPayload_WhenSuperUsersJsonIsEmpty_ShouldKeepGeneratedSeedData()
     {
-        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingConfiguration());
+        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
 
         payload.Organisations.Count.ShouldBe(5);
         payload.Users.Count.ShouldBe(80);
@@ -22,7 +22,7 @@ public sealed class DataSeederInMemoryTests
     {
         const string email = "bootstrap.user@example.com";
         const string cognitoUsername = "00000000-0000-0000-0000-000000000001";
-        SeedingConfiguration configuration = new()
+        SeedingOptions configuration = new()
         {
             SuperUsersJson = """
                 [
@@ -57,12 +57,10 @@ public sealed class DataSeederInMemoryTests
     [Fact]
     public void BuildPayload_WhenSuperUserMatchesGeneratedEmail_ShouldReplaceGeneratedUser()
     {
-        SeedingDataPayload generatedPayload = DataSeederInMemory.BuildPayload(
-            new SeedingConfiguration()
-        );
+        SeedingDataPayload generatedPayload = DataSeederInMemory.BuildPayload(new SeedingOptions());
         string generatedEmail = generatedPayload.Users.First().WorkEmail;
         const string cognitoUsername = "00000000-0000-0000-0000-000000000002";
-        SeedingConfiguration configuration = new()
+        SeedingOptions configuration = new()
         {
             SuperUsersJson = $$"""
                 [
@@ -91,7 +89,7 @@ public sealed class DataSeederInMemoryTests
     [Fact]
     public void BuildPayload_WhenSuperUsersJsonHasDuplicateEmails_ShouldThrow()
     {
-        SeedingConfiguration configuration = new()
+        SeedingOptions configuration = new()
         {
             SuperUsersJson = """
                 [
@@ -118,7 +116,7 @@ public sealed class DataSeederInMemoryTests
     [Fact]
     public void BuildPayload_WhenSuperUsersJsonIsInvalidJson_ShouldThrow()
     {
-        SeedingConfiguration configuration = new() { SuperUsersJson = "not-json" };
+        SeedingOptions configuration = new() { SuperUsersJson = "not-json" };
 
         InvalidOperationException exception = Should.Throw<InvalidOperationException>(() =>
             DataSeederInMemory.BuildPayload(configuration)

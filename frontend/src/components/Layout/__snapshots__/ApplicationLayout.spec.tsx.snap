@@ -3,243 +3,247 @@
 exports[`ApplicationLayout > renders the application chrome around children 1`] = `
 <DocumentFragment>
   <div
-    class="_header_2e1c09"
-    data-component="header"
-    id="top"
+    class="_contentWrapper_4c3b28"
   >
-    <header
-      aria-label="Site header"
+    <div
+      class="_header_2e1c09"
+      data-component="header"
+      id="top"
     >
-      <ul
-        aria-label="Accessibility links"
-        class="_a11yLinks_2e1c09"
+      <header
+        aria-label="Site header"
       >
-        <li>
-          <a
-            class="_link_7c5f24"
-            href="#content-start"
-          >
-            Skip to content
-          </a>
-        </li>
-        <li>
-          <a
-            class="_link_7c5f24"
-            href="/accessibility"
-          >
-            Accessibility help
-          </a>
-        </li>
-      </ul>
-      <div
-        class="_container_2e1c09"
-      >
-        <a
-          aria-label="NICE: National Institute for Health and Care Excellence homepage"
-          class="_home_2e1c09"
-          href="/"
+        <ul
+          aria-label="Accessibility links"
+          class="_a11yLinks_2e1c09"
         >
-          <img
-            alt=""
-            class="_icon_2e1c09"
-            height="82"
-            src="/assets/ukps-logo.png"
-            width="750"
-          />
-        </a>
+          <li>
+            <a
+              class="_link_7c5f24"
+              href="#content-start"
+            >
+              Skip to content
+            </a>
+          </li>
+          <li>
+            <a
+              class="_link_7c5f24"
+              href="/accessibility"
+            >
+              Accessibility help
+            </a>
+          </li>
+        </ul>
         <div
-          class="_wrapper_2e1c09"
+          class="_container_2e1c09"
         >
-          <button
-            aria-controls="header-menu"
-            aria-expanded="false"
-            aria-haspopup="menu"
-            aria-label="Expand site menu"
-            class="_mobileMenuBtn_2e1c09"
-            id="header-menu-button"
-            type="button"
+          <a
+            aria-label="NICE: National Institute for Health and Care Excellence homepage"
+            class="_home_2e1c09"
+            href="/"
           >
-            Menu
-          </button>
+            <img
+              alt=""
+              class="_icon_2e1c09"
+              height="82"
+              src="/assets/ukps-logo.png"
+              width="750"
+            />
+          </a>
+          <div
+            class="_wrapper_2e1c09"
+          >
+            <button
+              aria-controls="header-menu"
+              aria-expanded="false"
+              aria-haspopup="menu"
+              aria-label="Expand site menu"
+              class="_mobileMenuBtn_2e1c09"
+              id="header-menu-button"
+              type="button"
+            >
+              Menu
+            </button>
+          </div>
         </div>
-      </div>
-      <div
-        class="_wrapper_9cdc15"
-        id="header-menu"
-      >
-        <nav
-          aria-label="primary navigation"
-          class="_nav_9cdc15"
-        >
-          <div
-            class="_menuWrapper_9cdc15"
-          >
-            <ul
-              aria-labelledby="header-menu-button"
-              class="_menuList_12dd76"
-            >
-              <li>
-                <a
-                  aria-current="page"
-                  class="_link_12dd76"
-                  href="/"
-                >
-                  Home
-                </a>
-              </li>
-              <li>
-                <a
-                  class="_link_12dd76"
-                  href="/about-us"
-                >
-                  About
-                </a>
-              </li>
-            </ul>
-          </div>
-        </nav>
-      </div>
-    </header>
-  </div>
-  <main
-    class="_main_fdaf76 _withPadding_fdaf76"
-    data-component="main"
-    id="content-start"
-  >
-    <div
-      data-testid="container"
-    >
-      Page content
-    </div>
-    <div
-      class="_wrapper_034542 _hidden_034542"
-    >
-      <nav
-        aria-labelledby="back-to-top-link"
-        class="_nav_034542"
-      >
-        <a
-          class="_anchor_034542"
-          href="#top"
-          id="back-to-top-link"
-        >
-          <div
-            data-testid="container"
-          >
-            <svg
-              aria-hidden="true"
-              class="icon"
-              fill="none"
-              focusable="false"
-              height="1em"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M478.152 338.576c0 10.091-3.525 18.661-10.576 25.712l-21.424 21.424c-7.243 7.243-15.909 10.864-26 10.864-10.283 0-18.853-3.621-25.712-10.864L255.576 247.136 116.712 385.712c-6.859 7.243-15.429 10.864-25.712 10.864s-18.853-3.621-25.712-10.864l-21.424-21.424C36.621 357.429 33 348.859 33 338.576c0-10.091 3.621-18.757 10.864-26l186-186c7.051-7.051 15.621-10.576 25.712-10.576 9.909 0 18.576 3.525 26 10.576l185.712 186c7.243 7.243 10.864 15.909 10.864 26Z"
-                fill="currentColor"
-              />
-            </svg>
-             Back to top
-          </div>
-        </a>
-      </nav>
-    </div>
-  </main>
-  <footer
-    class="_footer_9890c6"
-    data-component="footer"
-  >
-    <div
-      class="_container_9890c6"
-    >
-      <p>
-        Footer placeholder content
-      </p>
-    </div>
-    <div
-      class="_wrapper_316bba"
-    >
-      <div
-        class="_container_316bba"
-      >
         <div
-          class="_layout_316bba"
+          class="_wrapper_9cdc15"
+          id="header-menu"
         >
-          <div
-            class="_menuWrapper_316bba"
+          <nav
+            aria-label="primary navigation"
+            class="_nav_9cdc15"
           >
-            <nav
-              aria-label="Legal menu"
-              class="_menu_316bba"
+            <div
+              class="_menuWrapper_9cdc15"
             >
-              <ul>
+              <ul
+                aria-labelledby="header-menu-button"
+                class="_menuList_12dd76"
+              >
                 <li>
                   <a
-                    href="https://www.nice.org.uk/accessibility"
+                    aria-current="page"
+                    class="_link_12dd76"
+                    href="/"
                   >
-                    Accessibility
+                    Home
                   </a>
                 </li>
                 <li>
                   <a
-                    href="https://www.nice.org.uk/freedom-of-information"
+                    class="_link_12dd76"
+                    href="/about-us"
                   >
-                    Freedom of information
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://www.nice.org.uk/glossary"
-                  >
-                    Glossary
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://www.nice.org.uk/terms-and-conditions"
-                  >
-                    Terms and conditions
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://www.nice.org.uk/privacy-notice"
-                  >
-                    Privacy notice
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://www.nice.org.uk/cookies"
-                  >
-                    Cookies
+                    About
                   </a>
                 </li>
               </ul>
-            </nav>
-            <p
-              class="_copyright_316bba"
+            </div>
+          </nav>
+        </div>
+      </header>
+    </div>
+    <main
+      class="_main_fdaf76 _mainContent_4c3b28 _withPadding_fdaf76"
+      data-component="main"
+      id="content-start"
+    >
+      <div
+        data-testid="container"
+      >
+        Page content
+      </div>
+      <div
+        class="_wrapper_034542 _hidden_034542"
+      >
+        <nav
+          aria-labelledby="back-to-top-link"
+          class="_nav_034542"
+        >
+          <a
+            class="_anchor_034542"
+            href="#top"
+            id="back-to-top-link"
+          >
+            <div
+              data-testid="container"
             >
-              © 
-              <abbr
-                title="National Institute for Health and Care Excellence"
+              <svg
+                aria-hidden="true"
+                class="icon"
+                fill="none"
+                focusable="false"
+                height="1em"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                NICE
-              </abbr>
-               2026. All rights reserved. Subject to 
-              <a
-                href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+                <path
+                  d="M478.152 338.576c0 10.091-3.525 18.661-10.576 25.712l-21.424 21.424c-7.243 7.243-15.909 10.864-26 10.864-10.283 0-18.853-3.621-25.712-10.864L255.576 247.136 116.712 385.712c-6.859 7.243-15.429 10.864-25.712 10.864s-18.853-3.621-25.712-10.864l-21.424-21.424C36.621 357.429 33 348.859 33 338.576c0-10.091 3.621-18.757 10.864-26l186-186c7.051-7.051 15.621-10.576 25.712-10.576 9.909 0 18.576 3.525 26 10.576l185.712 186c7.243 7.243 10.864 15.909 10.864 26Z"
+                  fill="currentColor"
+                />
+              </svg>
+               Back to top
+            </div>
+          </a>
+        </nav>
+      </div>
+    </main>
+    <footer
+      class="_footer_9890c6"
+      data-component="footer"
+    >
+      <div
+        class="_container_9890c6"
+      >
+        <p>
+          Footer placeholder content
+        </p>
+      </div>
+      <div
+        class="_wrapper_316bba"
+      >
+        <div
+          class="_container_316bba"
+        >
+          <div
+            class="_layout_316bba"
+          >
+            <div
+              class="_menuWrapper_316bba"
+            >
+              <nav
+                aria-label="Legal menu"
+                class="_menu_316bba"
               >
-                Notice of rights
-              </a>
-              .
-            </p>
+                <ul>
+                  <li>
+                    <a
+                      href="https://www.nice.org.uk/accessibility"
+                    >
+                      Accessibility
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.nice.org.uk/freedom-of-information"
+                    >
+                      Freedom of information
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.nice.org.uk/glossary"
+                    >
+                      Glossary
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.nice.org.uk/terms-and-conditions"
+                    >
+                      Terms and conditions
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.nice.org.uk/privacy-notice"
+                    >
+                      Privacy notice
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.nice.org.uk/cookies"
+                    >
+                      Cookies
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+              <p
+                class="_copyright_316bba"
+              >
+                © 
+                <abbr
+                  title="National Institute for Health and Care Excellence"
+                >
+                  NICE
+                </abbr>
+                 2026. All rights reserved. Subject to 
+                <a
+                  href="https://www.nice.org.uk/terms-and-conditions#notice-of-rights"
+                >
+                  Notice of rights
+                </a>
+                .
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </footer>
+    </footer>
+  </div>
 </DocumentFragment>
 `;

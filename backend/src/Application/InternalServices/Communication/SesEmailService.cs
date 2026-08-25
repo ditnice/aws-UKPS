@@ -7,12 +7,12 @@ namespace UKPS.Api.Application.InternalServices.Communication;
 internal sealed partial class SesEmailService : IEmailService
 {
     private readonly IAmazonSimpleEmailServiceV2 _ses;
-    private readonly EmailConfiguration _configuration;
+    private readonly EmailOptions _configuration;
     private readonly ILogger<SesEmailService> _logger;
 
     public SesEmailService(
         IAmazonSimpleEmailServiceV2 ses,
-        IOptions<EmailConfiguration> configuration,
+        IOptions<EmailOptions> configuration,
         ILogger<SesEmailService> logger
     )
     {
