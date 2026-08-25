@@ -100,7 +100,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// <response code="404">The specified user does not exist.</response>
     /// <response code="409">The request conflicts with the existing data such as another users email.</response>
     [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

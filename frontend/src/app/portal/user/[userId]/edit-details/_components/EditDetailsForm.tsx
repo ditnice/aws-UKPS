@@ -1,13 +1,55 @@
 'use client'
-import { revalidateLogic, useForm } from '@tanstack/react-form'
+
+import {
+  FormApi,
+  FormAsyncValidateOrFn,
+  FormValidateOrFn,
+  revalidateLogic,
+  useForm,
+} from '@tanstack/react-form'
 import { useRouter } from 'next/navigation'
+import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
 import { getFieldErrorMessage } from '@/app/common/form/getFieldErrorMessage'
+import { patchUsersByUserId } from '@/client/generated'
+import { UpdateUserDetailsCommand, ValidationProblemDetails } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { ErrorState } from '@/components/Paceholder/ErrorState'
 
-import type { ChangeEvent } from 'react'
+const isValidationProblemDetails = (value: unknown): value is ValidationProblemDetails => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const candidate = value as Record<string, unknown>
+
+  if (
+    !candidate.errors ||
+    typeof candidate.errors !== 'object' ||
+    Array.isArray(candidate.errors)
+  ) {
+    return false
+  }
+
+  return Object.values(candidate.errors).every(
+    (error) => Array.isArray(error) && error.every((message) => typeof message === 'string'),
+  )
+}
+
+const setErrors = (
+  validationProblemDetails: ValidationProblemDetails,
+  key: string,
+): import('@tanstack/react-form').Updater<import('@tanstack/react-form').AnyFieldLikeMetaBase> => {
+  return (meta) => ({
+    ...meta,
+    errorMap: {
+      ...meta.errorMap,
+      onSubmit: validationProblemDetails.errors[key],
+    },
+  })
+}
 
 const EditDetails = z.object({
   fullName: z.string().trim().min(1, 'Enter your full name'),
@@ -16,19 +58,19 @@ const EditDetails = z.object({
     .trim()
     .min(1, 'Enter your work email address')
     .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
-  phoneNumber: z.string().trim().min(1, 'Enter your phone number'),
+  workTelephone: z.string().trim().min(1, 'Enter your phone number'),
 })
 
-type EditDetailsValues = z.input<typeof EditDetails>
-
-export function EditDetailsForm() {
+type EditDetailsFormProps = { userId: number; initialValues: UpdateUserDetailsCommand }
+export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps) {
+  const [error, setError] = useState(false)
   const router = useRouter()
   const form = useForm({
     defaultValues: {
-      fullName: 'Julie Brooks', // These default values will be from their existing account
-      workEmail: 'admin@bigpharma1.com',
-      phoneNumber: '01234567890',
-    } satisfies EditDetailsValues,
+      fullName: initialValues.fullName, // These default values will be from their existing account
+      workEmail: initialValues.workEmail,
+      workTelephone: initialValues.workTelephone,
+    } satisfies UpdateUserDetailsCommand,
     validationLogic: revalidateLogic({
       mode: 'submit',
       modeAfterSubmission: 'blur',
@@ -36,8 +78,23 @@ export function EditDetailsForm() {
     validators: {
       onDynamic: EditDetails,
     },
-    onSubmit: ({ value }) => {
-      EditDetails.parse(value)
+    onSubmit: async ({ value, formApi }) => {
+      setError(false)
+      const data = EditDetails.parse(value)
+      const response = await patchUsersByUserId({ path: { userId }, body: data })
+
+      if (response.response?.ok) {
+        router.push('/portal/user/me')
+        return
+      }
+
+      setError(true)
+
+      if (response && isValidationProblemDetails(response.error)) {
+        formApi.setFieldMeta('fullName', setErrors(response.error, 'FullName'))
+        formApi.setFieldMeta('workEmail', setErrors(response.error, 'WorkEmail'))
+        formApi.setFieldMeta('workTelephone', setErrors(response.error, 'WorkTelephone'))
+      }
     },
   })
   return (
@@ -49,6 +106,7 @@ export function EditDetailsForm() {
         void form.handleSubmit()
       }}
     >
+      {error && <ErrorState>An Error Occurred when trying to update the user.</ErrorState>}
       <form.Field name="fullName">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
@@ -91,7 +149,7 @@ export function EditDetailsForm() {
           )
         }}
       </form.Field>
-      <form.Field name="phoneNumber">
+      <form.Field name="workTelephone">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 

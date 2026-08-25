@@ -469,7 +469,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.OrganisationMembershipId, f => f.Random.Int(1));
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1));
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
-            RuleFor(x => x.EmailAddress, f => f.Internet.Email());
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
         }
     }

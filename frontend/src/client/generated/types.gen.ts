@@ -53,6 +53,10 @@ export type CreateOrganisationDto = {
  */
 export type CurrentUserInformationDto = {
     /**
+     * Gets the unique identifier of the user.
+     */
+    userId: number | string;
+    /**
      * Gets the full name of the user.
      */
     fullName: string;
@@ -63,7 +67,7 @@ export type CurrentUserInformationDto = {
     /**
      * Gets the user's email address.
      */
-    emailAddress: string;
+    workEmail: string;
     /**
      * Gets the unique identifier of the user's organisation membership.
      */
@@ -419,6 +423,17 @@ export type UserRole = 'Standard' | 'Champion' | 'Super';
  * Represents the different types of users in the system.
  */
 export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUser' | 'ItAdmin';
+
+export type ValidationProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number | string;
+    detail?: null | string;
+    instance?: null | string;
+    errors: {
+        [key: string]: Array<string>;
+    };
+};
 
 /**
  * Represents the details required to verify a user's multi-factor authentication setup.
@@ -902,7 +917,7 @@ export type PatchUsersByUserIdErrors = {
     /**
      * The supplied user details are invalid.
      */
-    400: ProblemDetails;
+    400: ValidationProblemDetails;
     /**
      * The caller is not authorised to update the specified user's details.
      */

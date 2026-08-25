@@ -9,6 +9,11 @@ namespace UKPS.Api.Application.Users.Dtos;
 public record CurrentUserInformationDto
 {
     /// <summary>
+    /// Gets the unique identifier of the user.
+    /// </summary>
+    public required int UserId { get; init; }
+
+    /// <summary>
     /// Gets the full name of the user.
     /// </summary>
     public required string FullName { get; init; }
@@ -21,7 +26,7 @@ public record CurrentUserInformationDto
     /// <summary>
     /// Gets the user's email address.
     /// </summary>
-    public required string EmailAddress { get; init; }
+    public required string WorkEmail { get; init; }
 
     /// <summary>
     /// Gets the unique identifier of the user's organisation membership.

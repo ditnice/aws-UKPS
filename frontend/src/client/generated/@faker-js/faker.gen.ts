@@ -2,7 +2,7 @@
 
 import { faker, type Faker } from '@faker-js/faker';
 
-import type { AuthenticationProblemDetails, CreateOrganisationDto, CurrentUserInformationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, ProblemDetails, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserListItemDto, UserOrgStatus, UserRole, UserType, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { AuthenticationProblemDetails, CreateOrganisationDto, CurrentUserInformationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, ProblemDetails, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserListItemDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -188,9 +188,10 @@ export const fakeUserRole = (options?: Options): UserRole => {
 export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInformationDto => {
     const f = options?.faker ?? faker;
     return {
+        userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
         fullName: f.person.fullName(),
         workTelephone: f.string.sample(),
-        emailAddress: f.internet.email(),
+        workEmail: f.internet.email(),
         organisationMembershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
         organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
         organisationName: f.string.sample(),
@@ -256,6 +257,24 @@ export const fakeUserDetailsDto = (options?: Options): UserDetailsDto => {
         jobTitle: f.datatype.boolean() ? f.person.jobTitle() : null,
         workPhone: f.datatype.boolean() ? f.phone.number() : null,
         workEmail: f.internet.email()
+    };
+};
+
+export const fakeValidationProblemDetails = (options?: Options): ValidationProblemDetails => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.helpers.arrayElement([
+                f.number.int(),
+                f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$'),
+                null
+            ]) as any },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
+        errors: !resolveCondition(options?.includeOptional ?? true, f) ? {} as {} : {
+            additionalProp: f.helpers.multiple(() => f.string.sample())
+        }
     };
 };
 
@@ -439,7 +458,7 @@ export const fakePatchUsersByUserIdRequest = (options?: Options): Omit<PatchUser
 
 export const fakePatchUsersByUserIdResponse200 = (options?: Options): PatchUsersByUserIdResponses[200] => fakeUserDetailsDto(options);
 
-export const fakePatchUsersByUserIdResponse400 = (options?: Options): PatchUsersByUserIdErrors[400] => fakeProblemDetails(options);
+export const fakePatchUsersByUserIdResponse400 = (options?: Options): PatchUsersByUserIdErrors[400] => fakeValidationProblemDetails(options);
 
 export const fakePatchUsersByUserIdResponse403 = (options?: Options): PatchUsersByUserIdErrors[403] => fakeProblemDetails(options);
 

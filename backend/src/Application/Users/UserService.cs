@@ -54,9 +54,10 @@ internal partial class UserService(
 
         return new CurrentUserInformationDto
         {
+            UserId = user.Id,
             FullName = user.FullName,
             WorkTelephone = user.WorkTelephone ?? string.Empty,
-            EmailAddress = currentUser.Email,
+            WorkEmail = currentUser.Email,
             OrganisationMembershipId = membership.Id,
             OrganisationId = membership.Organisation!.Id,
             OrganisationName = membership.Organisation.OrganisationName,

@@ -1195,17 +1195,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               }
             }
@@ -1461,9 +1461,10 @@
       },
       "CurrentUserInformationDto": {
         "required": [
+          "userId",
           "fullName",
           "workTelephone",
-          "emailAddress",
+          "workEmail",
           "organisationMembershipId",
           "organisationId",
           "organisationName",
@@ -1471,6 +1472,15 @@
         ],
         "type": "object",
         "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Gets the unique identifier of the user.",
+            "format": "int32"
+          },
           "fullName": {
             "type": "string",
             "description": "Gets the full name of the user."
@@ -1479,7 +1489,7 @@
             "type": "string",
             "description": "Gets the user's work telephone number."
           },
-          "emailAddress": {
+          "workEmail": {
             "type": "string",
             "description": "Gets the user's email address."
           },
@@ -2052,6 +2062,56 @@
         ],
         "type": "string",
         "description": "Represents the different types of users in the system."
+      },
+      "ValidationProblemDetails": {
+        "required": [
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
       },
       "VerifyMultiFactorAuthenticationCommand": {
         "required": [
