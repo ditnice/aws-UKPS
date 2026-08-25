@@ -2,8 +2,9 @@ import Link from 'next/link'
 
 import { CurrentUserInformationDto } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
-import { ErrorState } from '@/components/Paceholder/ErrorState'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
+import { errorMessages } from '@/lib/form/errorMessages'
 
 export const UserDetails = ({
   currentUser,
@@ -13,7 +14,7 @@ export const UserDetails = ({
   if (!currentUser)
     return (
       <ErrorState>
-        <div data-testid="failed-user-retrieval">Failed to retrieve the user.</div>
+        <div data-testid="failed-user-retrieval">{errorMessages.failedToRetrieveCurrentUser}</div>
       </ErrorState>
     )
   return (

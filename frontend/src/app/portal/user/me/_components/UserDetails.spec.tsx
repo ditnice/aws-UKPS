@@ -31,7 +31,7 @@ describe('UserDetails', () => {
 
     expectDefinitionValue('Organisation', currentUser.organisationName)
     expectDefinitionValue('Full name', currentUser.fullName)
-    expectDefinitionValue('Email address', currentUser.emailAddress)
+    expectDefinitionValue('Email address', currentUser.workEmail)
     expectDefinitionValue('Contact Number', currentUser.workTelephone)
   })
 
@@ -43,7 +43,7 @@ describe('UserDetails', () => {
     const link = getLinkByContent(container, 'Edit Details')
 
     expect(link).toBeDefined()
-    expect(link!.getAttribute('href')).toBe('/placeholder')
+    expect(link!.getAttribute('href')).toBe('/portal/user/me/edit-details')
   })
 
   it('renders the return to view and manage records link', () => {

@@ -9,7 +9,7 @@ import { patchUsersByUserId } from '@/client/generated'
 import { UpdateUserDetailsCommand, ValidationProblemDetails } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
-import { ErrorState } from '@/components/Paceholder/ErrorState'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
@@ -56,7 +56,7 @@ const EditDetails = z.object({
   workTelephone: z.string().trim().min(1, errorMessages.personalPhoneRequired),
 })
 
-type EditDetailsFormProps = { userId: number; initialValues: UpdateUserDetailsCommand }
+export type EditDetailsFormProps = { userId: number; initialValues: UpdateUserDetailsCommand }
 export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps) {
   const [error, setError] = useState(false)
   const router = useRouter()

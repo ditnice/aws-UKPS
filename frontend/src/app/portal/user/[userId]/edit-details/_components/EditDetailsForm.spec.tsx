@@ -1,17 +1,33 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { EditDetailsForm } from './EditDetailsForm'
+import { UpdateUserDetailsCommand } from '@/client/generated'
+import { fakeUpdateUserDetailsCommand } from '@/client/generated/@faker-js/faker.gen'
+
+import { EditDetailsForm, EditDetailsFormProps } from './EditDetailsForm'
 
 const mocks = vi.hoisted(() => ({
   back: vi.fn(),
+  push: vi.fn(),
+  patchUsersByUserId: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     back: mocks.back,
+    push: mocks.push,
   }),
 }))
+
+vi.mock('@/client/generated', () => ({
+  patchUsersByUserId: mocks.patchUsersByUserId,
+}))
+
+mocks.patchUsersByUserId.mockResolvedValue({
+  response: {
+    ok: true,
+  },
+})
 
 afterEach(() => {
   cleanup()
@@ -24,8 +40,13 @@ const requiredErrors = [
   { label: 'Contact number', message: 'Enter your phone number' },
 ]
 
-function renderForm() {
-  render(<EditDetailsForm />)
+function renderForm(override?: Partial<EditDetailsFormProps>) {
+  const defaults: EditDetailsFormProps = {
+    userId: 123,
+    initialValues: fakeUpdateUserDetailsCommand(),
+  }
+  const props = { ...defaults, ...override }
+  render(<EditDetailsForm userId={props.userId} initialValues={props.initialValues} />)
 }
 
 function setFieldValue(label: string, value: string) {
@@ -39,9 +60,21 @@ function clearForm(value = '') {
 }
 
 function fillValidForm() {
-  setFieldValue('Full name', 'Test User')
-  setFieldValue('Work email address', 'test@example.com')
-  setFieldValue('Contact number', '01234567890')
+  updateForm({
+    fullName: 'Test User',
+    workEmail: 'test@example.com',
+    workTelephone: '01234567890',
+  })
+}
+
+function updateForm(validRequest: UpdateUserDetailsCommand) {
+  setFieldValue('Full name', validRequest.fullName)
+  setFieldValue('Work email address', validRequest.workEmail)
+  setFieldValue('Contact number', validRequest.workTelephone)
+}
+
+function clickSubmit() {
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 }
 
 describe('EditDetailsForm', () => {
@@ -80,9 +113,8 @@ describe('EditDetailsForm', () => {
 
   it('shows required errors and associates them with invalid inputs', async () => {
     renderForm()
-
     clearForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    clickSubmit()
 
     for (const { message } of requiredErrors) {
       expect(await screen.findByText(message)).toBeDefined()
@@ -91,7 +123,7 @@ describe('EditDetailsForm', () => {
     const expectedDescriptions = new Map([
       ['Full name', 'fullName-error'],
       ['Work email address', 'workEmail-error'],
-      ['Contact number', 'phoneNumber-hint phoneNumber-error'],
+      ['Contact number', 'workTelephone-hint workTelephone-error'],
     ])
 
     for (const [label, description] of expectedDescriptions) {
@@ -109,7 +141,7 @@ describe('EditDetailsForm', () => {
     renderForm()
 
     clearForm('   ')
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    clickSubmit()
 
     for (const { message } of requiredErrors) {
       expect(await screen.findByText(message)).toBeDefined()
@@ -121,7 +153,7 @@ describe('EditDetailsForm', () => {
 
     fillValidForm()
     setFieldValue('Work email address', 'not-an-email-address')
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    clickSubmit()
 
     expect(
       await screen.findByText(
@@ -156,7 +188,7 @@ describe('EditDetailsForm', () => {
     renderForm()
 
     fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    clickSubmit()
 
     await waitFor(() => {
       for (const { message } of requiredErrors) {
@@ -165,6 +197,34 @@ describe('EditDetailsForm', () => {
       expect(
         screen.queryByText('Enter an email address in the correct format, like name@example.com'),
       ).toBeNull()
+    })
+  })
+
+  it('sends command on valid on valid submit', async () => {
+    const exampleUserId = 342
+    renderForm({ userId: exampleUserId })
+    const validRequest = {
+      fullName: 'Test User',
+      workEmail: 'test@example.com',
+      workTelephone: '01234567890',
+    }
+    updateForm(validRequest)
+    clickSubmit()
+
+    await waitFor(() => {
+      expect(mocks.patchUsersByUserId).toHaveBeenCalledWith({
+        path: { userId: exampleUserId },
+        body: validRequest,
+      })
+    })
+  })
+
+  it('forwards you to your current user details on success', async () => {
+    renderForm()
+    fillValidForm()
+    clickSubmit()
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith('/portal/user/me')
     })
   })
 

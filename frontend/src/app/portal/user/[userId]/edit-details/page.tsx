@@ -2,8 +2,8 @@ import { isNumber } from 'payload/shared'
 
 import { getUsersMe } from '@/client/generated'
 import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
-import { ErrorState } from '@/components/Paceholder/ErrorState'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import { EditDetailsForm } from './_components/EditDetailsForm'
 
