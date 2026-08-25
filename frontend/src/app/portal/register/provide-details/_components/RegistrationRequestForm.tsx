@@ -57,6 +57,8 @@ export function RegistrationRequestForm() {
     onSubmit: async ({ value }) => {
       RegistrationRequest.parse(value)
 
+      console.log('Organisation:', value.organisation)
+
       const response = await postUsersRegister({
         body: {
           fullName: value.fullName,
@@ -65,7 +67,15 @@ export function RegistrationRequestForm() {
           organisation: value.organisation,
         },
       })
-      router.push('/portal/register/request-submitted/${response.data.id}')
+      // console.log({
+      //   fullName: value.fullName,
+      //   workEmail: value.workEmail,
+      //   phoneNumber: value.phoneNumber,
+      //   organisation: value.organisation,
+      // })
+      if (response.data) {
+        router.push(`/portal/register/request-submitted/${response.data.id}`)
+      }
     },
   })
 
@@ -78,24 +88,32 @@ export function RegistrationRequestForm() {
         void form.handleSubmit()
       }}
     >
-      <Select
-        defaultValue="choose"
-        label="Select the organisation you are requesting access for"
-        name="select-organisation-hint"
-        width="one-third"
-      >
-        <SelectOption value="choose">Choose organisation</SelectOption>
-        {organisations.map((organisation) => (
-          <SelectOption key={organisation} value={organisation}>
-            {organisation}
-          </SelectOption>
-        ))}
-      </Select>
-      <p>
-        If your organisation is not registered, you must{' '}
-        <a href="URL">register your organisation (opens in a new tab)</a> before you can set up your
-        account.
-      </p>
+      <form.Field name="organisation">
+        {(field) => (
+          <>
+            <Select
+              defaultValue="choose"
+              label="Select the organisation you are requesting access for"
+              name="organisation"
+              width="one-third"
+              value={field.state.value}
+              onChange={(event) => field.handleChange(event.target.value)}
+            >
+              <SelectOption value="choose">Choose organisation</SelectOption>
+              {organisations.map((organisation) => (
+                <SelectOption key={organisation} value={organisation}>
+                  {organisation}
+                </SelectOption>
+              ))}
+            </Select>
+            <p>
+              If your organisation is not registered, you must{' '}
+              <a href="URL">register your organisation (opens in a new tab)</a> before you can set
+              up your account.
+            </p>
+          </>
+        )}
+      </form.Field>
       <form.Field name="fullName">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
