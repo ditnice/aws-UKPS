@@ -3,7 +3,7 @@ namespace UKPS.Api.Application.Authentication;
 /// <summary>
 /// Represents the configuration settings required to connect to Amazon Cognito.
 /// </summary>
-public sealed record CognitoConfiguration
+public sealed record CognitoOptions
 {
     /// <summary>
     /// Gets the configuration section name used to bind Cognito settings.

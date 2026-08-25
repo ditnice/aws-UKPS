@@ -457,13 +457,13 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             .ConfigureServices(services =>
             {
                 services
-                    .AddOptions<UserOnboardingConfiguration>()
+                    .AddOptions<UserOnboardingOptions>()
                     .Configure(options =>
                         options.SetupTokenExpiryTimeSeconds = (int)_testExpiryTokenTime.TotalSeconds
                     );
                 services.AddSingleton(
                     Options.Create(
-                        new CognitoConfiguration
+                        new CognitoOptions
                         {
                             ClientId = "client-id",
                             Region = "eu-west-2",

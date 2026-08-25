@@ -13,9 +13,9 @@ namespace UKPS.Api.WebApi;
 internal class TokenValidationHandler : ITokenValidationHandler
 {
     private readonly AppDbContext _appDbContext;
-    private readonly IOptions<CognitoConfiguration> _options;
+    private readonly IOptions<CognitoOptions> _options;
 
-    public TokenValidationHandler(AppDbContext appDbContext, IOptions<CognitoConfiguration> options)
+    public TokenValidationHandler(AppDbContext appDbContext, IOptions<CognitoOptions> options)
     {
         _appDbContext = appDbContext;
         _options = options;

@@ -73,15 +73,13 @@ public sealed class AuthenticationDependencyInjectionManagementTests
         var services = CreateServices(x => x with { ServiceUrlOverride = null });
         using var provider = services.BuildServiceProvider();
 
-        CognitoConfiguration options = provider
-            .GetRequiredService<IOptions<CognitoConfiguration>>()
-            .Value;
+        CognitoOptions options = provider.GetRequiredService<IOptions<CognitoOptions>>().Value;
         var client = provider.GetRequiredService<IAmazonCognitoIdentityProvider>();
         client.Config.ServiceURL.ShouldBe($"https://cognito-idp.{options.Region}.amazonaws.com/");
     }
 
     private static ServiceCollection CreateServices(
-        Func<CognitoConfiguration, CognitoConfiguration>? modifier = null
+        Func<CognitoOptions, CognitoOptions>? modifier = null
     )
     {
         var services = new ServiceCollection();
@@ -103,7 +101,7 @@ public sealed class AuthenticationDependencyInjectionManagementTests
         return services.BuildServiceProvider();
     }
 
-    private static CognitoConfiguration CreateCognitoConfiguration() =>
+    private static CognitoOptions CreateCognitoConfiguration() =>
         new()
         {
             ClientId = "client-id",

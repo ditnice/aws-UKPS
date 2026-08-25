@@ -16,6 +16,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.MockInternalServices;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
@@ -100,6 +101,10 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                 });
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
+                builder.UseSetting(
+                    $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
+                    $"{true}"
+                );
             })
             .CreateClient();
 

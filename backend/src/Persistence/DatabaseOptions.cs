@@ -1,10 +1,10 @@
 namespace UKPS.Api.Persistence;
 
-internal sealed record DatabaseConfiguration
+internal sealed record DatabaseOptions
 {
     public const string SectionName = "Database";
-    public string? Host { get; init; }
     public bool MigrateOnStartup { get; init; }
+    public string? Host { get; init; }
     public string? Name { get; init; }
     public string? Password { get; init; }
     public int? Port { get; init; }
