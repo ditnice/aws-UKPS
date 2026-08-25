@@ -143,8 +143,8 @@ internal sealed class OrganisationService : IOrganisationService
 
     public async Task<IEnumerable<string>> GetAllOrganisations(CancellationToken cancellationToken)
     {
-        return await _dbContext
-            .Organisations.Select(x => x.OrganisationName)
-            .ToListAsync(cancellationToken);
+        var query = _dbContext.Organisations.Select(x => x.OrganisationName);
+        var orgnaisationNames = await query.ToListAsync(cancellationToken);
+        return orgnaisationNames;
     }
 }
