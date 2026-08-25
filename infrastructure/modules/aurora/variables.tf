@@ -75,6 +75,21 @@ variable "engine_version" {
   default     = "17.9"
 }
 
+variable "ca_cert_identifier" {
+  description = "Certificate authority used to sign the Aurora instance certificate"
+  type        = string
+  default     = "rds-ca-rsa2048-g1"
+
+  validation {
+    condition = contains([
+      "rds-ca-rsa2048-g1",
+      "rds-ca-rsa4096-g1",
+      "rds-ca-ecc384-g1",
+    ], var.ca_cert_identifier)
+    error_message = "CA certificate identifier must be a supported Amazon RDS G1 certificate authority."
+  }
+}
+
 variable "cluster_parameter_group_family" {
   description = "Aurora PostgreSQL cluster parameter group family"
   type        = string

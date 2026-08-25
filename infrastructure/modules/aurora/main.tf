@@ -47,6 +47,7 @@ resource "aws_rds_cluster" "aurora" {
 resource "aws_rds_cluster_instance" "aurora_postgres_instance" {
   identifier                      = "${var.aurora_postgres_identifier}-${var.environment}"
   cluster_identifier              = aws_rds_cluster.aurora.id
+  ca_cert_identifier              = var.ca_cert_identifier
   instance_class                  = "db.serverless"
   engine                          = aws_rds_cluster.aurora.engine
   engine_version                  = aws_rds_cluster.aurora.engine_version
@@ -78,6 +79,12 @@ resource "aws_rds_cluster_parameter_group" "aurora_postgres" {
     apply_method = "immediate"
     name         = "log_min_duration_statement"
     value        = "1000"
+  }
+
+  parameter {
+    apply_method = "immediate"
+    name         = "rds.force_ssl"
+    value        = "1"
   }
 
   tags = merge(var.tags, {

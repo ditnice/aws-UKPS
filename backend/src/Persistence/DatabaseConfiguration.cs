@@ -8,5 +8,6 @@ internal sealed record DatabaseConfiguration
     public string? Name { get; init; }
     public string? Password { get; init; }
     public int? Port { get; init; }
+    public string? RootCertificate { get; init; }
     public string? Username { get; init; }
 }
