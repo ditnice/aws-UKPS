@@ -68,15 +68,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task AddAwsBearerAuthentication_ShouldRegisterStandardAuthentication_WhenDevAuthenticationIsDisabled()
     {
-        var builder = CreateBuilder(
-        // new Dictionary<string, string?>(StringComparer.Ordinal)
-        // {
-        //     [$"{DevAuthenticationOptions.SectionName}:IsEnabled"] = "false",
-        //     [$"{CognitoOptions.SectionName}:ServiceUrl"] =
-        //         "https://cognito-idp.eu-west-2.amazonaws.com/",
-        //     [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
-        // }
-        );
+        var builder = CreateBuilder();
 
         builder.AddAwsBearerAuthentication();
 
@@ -95,14 +87,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task AddAwsBearerAuthentication_ShouldRegisterStandardAuthentication_WhenDevAuthenticationConfigurationIsMissing()
     {
-        var builder = CreateBuilder(
-        // new Dictionary<string, string?>(StringComparer.Ordinal)
-        // {
-        //     [$"{CognitoOptions.SectionName}:ServiceUrl"] =
-        //         "https://cognito-idp.eu-west-2.amazonaws.com/",
-        //     [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
-        // }
-        );
+        var builder = CreateBuilder();
 
         builder.AddAwsBearerAuthentication();
 
@@ -156,15 +141,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task OnMessageReceived_ShouldReadAccessTokenFromCookie()
     {
-        var builder = CreateBuilder(
-        // new Dictionary<string, string?>(StringComparer.Ordinal)
-        // {
-        //     [$"{CognitoOptions.SectionName}:ServiceUrl"] =
-        //         "https://cognito-idp.eu-west-2.amazonaws.com/",
-        //     [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
-        //     [$"{CognitoOptions.SectionName}:Region"] = "region",
-        // }
-        );
+        var builder = CreateBuilder();
 
         builder.AddAwsBearerAuthentication();
 
@@ -194,15 +171,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task OnMessageReceived_ShouldSetTokenToNull_WhenAccessTokenCookieIsMissing()
     {
-        var builder = CreateBuilder(
-        // new Dictionary<string, string?>(StringComparer.Ordinal)
-        // {
-        //     [$"{CognitoOptions.SectionName}:ServiceUrl"] =
-        //         "https://cognito-idp.eu-west-2.amazonaws.com/",
-        //     [$"{CognitoOptions.SectionName}:UserPoolId"] = "eu-west-2_example",
-        //     [$"{CognitoOptions.SectionName}:Region"] = "region",
-        // }
-        );
+        var builder = CreateBuilder();
 
         builder.AddAwsBearerAuthentication();
 
@@ -277,7 +246,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public void AddAwsBearerAuthentication_ShouldThrow_WhenCognitoConfigurationIsMissing()
     {
-        var builder = CreateBuilder(x => null);
+        var builder = CreateBuilder(x => null!);
 
         builder.AddAwsBearerAuthentication();
 

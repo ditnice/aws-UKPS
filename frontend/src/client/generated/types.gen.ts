@@ -591,6 +591,70 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
+export type PatchMembershipRequestsByMembershipRequestIdApproveData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the membership request to approve.
+         */
+        membershipRequestId: number | string;
+    };
+    query?: never;
+    url: '/membership-requests/{membershipRequestId}/approve';
+};
+
+export type PatchMembershipRequestsByMembershipRequestIdApproveErrors = {
+    /**
+     * The current user is not allowed to update the membership request.
+     */
+    403: ProblemDetails;
+    /**
+     * The membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type PatchMembershipRequestsByMembershipRequestIdApproveError = PatchMembershipRequestsByMembershipRequestIdApproveErrors[keyof PatchMembershipRequestsByMembershipRequestIdApproveErrors];
+
+export type PatchMembershipRequestsByMembershipRequestIdApproveResponses = {
+    /**
+     * The membership request was successfully approved.
+     */
+    200: unknown;
+};
+
+export type PatchMembershipRequestsByMembershipRequestIdRejectData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the membership request to reject.
+         */
+        membershipRequestId: number | string;
+    };
+    query?: never;
+    url: '/membership-requests/{membershipRequestId}/reject';
+};
+
+export type PatchMembershipRequestsByMembershipRequestIdRejectErrors = {
+    /**
+     * The current user is not allowed to update the membership request.
+     */
+    403: ProblemDetails;
+    /**
+     * The membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type PatchMembershipRequestsByMembershipRequestIdRejectError = PatchMembershipRequestsByMembershipRequestIdRejectErrors[keyof PatchMembershipRequestsByMembershipRequestIdRejectErrors];
+
+export type PatchMembershipRequestsByMembershipRequestIdRejectResponses = {
+    /**
+     * The membership request was successfully rejected.
+     */
+    200: unknown;
+};
+
 export type GetOrganisationByIdData = {
     body?: never;
     path: {

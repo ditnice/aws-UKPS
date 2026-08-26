@@ -457,6 +457,144 @@
         }
       }
     },
+    "/membership-requests/{membershipRequestId}/approve": {
+      "patch": {
+        "tags": [
+          "MembershipRequest"
+        ],
+        "summary": "Approves the specified membership request.",
+        "parameters": [
+          {
+            "name": "membershipRequestId",
+            "in": "path",
+            "description": "The identifier of the membership request to approve.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The membership request was successfully approved."
+          },
+          "403": {
+            "description": "The current user is not allowed to update the membership request.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The membership request could not be found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/membership-requests/{membershipRequestId}/reject": {
+      "patch": {
+        "tags": [
+          "MembershipRequest"
+        ],
+        "summary": "Rejects the specified membership request.",
+        "parameters": [
+          {
+            "name": "membershipRequestId",
+            "in": "path",
+            "description": "The identifier of the membership request to reject.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The membership request was successfully rejected."
+          },
+          "403": {
+            "description": "The current user is not allowed to update the membership request.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The membership request could not be found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organisations/{id}": {
       "get": {
         "tags": [
@@ -2137,6 +2275,9 @@
   "tags": [
     {
       "name": "Authentication"
+    },
+    {
+      "name": "MembershipRequest"
     },
     {
       "name": "Organisation"
