@@ -726,6 +726,10 @@ export type DeactivateMembershipData = {
 
 export type DeactivateMembershipErrors = {
     /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
      * Forbidden
      */
     403: ProblemDetails;
@@ -745,6 +749,48 @@ export type DeactivateMembershipResponses = {
 };
 
 export type DeactivateMembershipResponse = DeactivateMembershipResponses[keyof DeactivateMembershipResponses];
+
+export type ReactivateMembershipData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation that owns the membership.
+         */
+        organisationId: number;
+        /**
+         * The identifier of the membership to reactivate.
+         */
+        membershipId: number | string;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/memberships/{membershipId}/reactivate';
+};
+
+export type ReactivateMembershipErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Forbidden
+     */
+    403: ProblemDetails;
+    /**
+     * The specified organisation membership could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type ReactivateMembershipError = ReactivateMembershipErrors[keyof ReactivateMembershipErrors];
+
+export type ReactivateMembershipResponses = {
+    /**
+     * The membership was successfully reactivated.
+     */
+    200: OrganisationMembershipDto;
+};
+
+export type ReactivateMembershipResponse = ReactivateMembershipResponses[keyof ReactivateMembershipResponses];
 
 export type UpdateUserRoleData = {
     /**

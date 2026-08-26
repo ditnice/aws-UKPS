@@ -53,12 +53,18 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                                 .Select(
                                     (u, i) =>
                                     {
-                                        UserOrgMembership generatedMembership =
-                                            membershipFaker.Generate();
+                                        UserOrgMembership generatedMembership = membershipFaker
+                                            .RuleFor(
+                                                x => x.Status,
+                                                _ =>
+                                                {
+                                                    // Cycle through every status at least once per organisation for variety.
+                                                    return statuses[i % statuses.Length];
+                                                }
+                                            )
+                                            .Generate();
                                         generatedMembership.User = u;
                                         generatedMembership.Organisation = org;
-                                        // Cycle through every status at least once per organisation for variety.
-                                        generatedMembership.Status = statuses[i % statuses.Length];
                                         return generatedMembership;
                                     }
                                 );
