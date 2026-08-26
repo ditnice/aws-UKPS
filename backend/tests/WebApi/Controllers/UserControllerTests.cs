@@ -10,6 +10,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -457,7 +458,10 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.Title, f => f.PickRandom("Mr", "Mrs", "Ms", "Miss", "Dr", null));
             RuleFor(x => x.FullName, f => f.Name.FullName());
             RuleFor(x => x.JobTitle, f => f.Random.Bool() ? f.Name.JobTitle() : null);
-            RuleFor(x => x.WorkPhone, f => f.Random.Bool() ? f.Phone.PhoneNumber() : null);
+            RuleFor(
+                x => x.WorkPhone,
+                f => f.Random.Bool() ? new TelephoneNumberFaker().Generate() : null
+            );
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
         }
     }

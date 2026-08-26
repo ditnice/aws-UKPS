@@ -262,7 +262,7 @@ public class UserServiceTests : DatabaseTestBase
         var randomlyCapitalised = _faker.GetRandomlyCapitalisedString(randomSubString);
 
         GetUsersResult result = await Service.GetUsers(
-            new() { Email = randomlyCapitalised },
+            new() { Email = randomlyCapitalised, PageSize = 1000 },
             TestContext.Current.CancellationToken
         );
 

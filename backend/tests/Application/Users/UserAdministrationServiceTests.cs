@@ -248,7 +248,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         {
             UseSeed(12);
             RuleFor(x => x.FullName, f => f.Name.FullName());
-            RuleFor(x => x.ContactNumber, f => f.Phone.PhoneNumber());
+            RuleFor(x => x.ContactNumber, _ => new TelephoneNumberFaker().Generate());
             RuleFor(x => x.NewUserEmail, f => f.Internet.Email());
         }
     }
