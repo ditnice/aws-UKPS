@@ -591,21 +591,25 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
-export type PatchMembershipRequestsByMembershipRequestIdApproveData = {
+export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveData = {
     body?: never;
     path: {
         /**
-         * The identifier of the membership request to approve.
+         * The identifier of the organisation containing the membership request.
          */
-        membershipRequestId: number | string;
+        organisationId: number;
+        /**
+         * The identifier of the user associated with the membership request.
+         */
+        userId: number;
     };
     query?: never;
-    url: '/membership-requests/{membershipRequestId}/approve';
+    url: '/organisations/{organisationId}/users/{userId}/membership-requests/approve';
 };
 
-export type PatchMembershipRequestsByMembershipRequestIdApproveErrors = {
+export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors = {
     /**
-     * The current user is not allowed to update the membership request.
+     * The current user is not allowed to approve the membership request.
      */
     403: ProblemDetails;
     /**
@@ -614,30 +618,34 @@ export type PatchMembershipRequestsByMembershipRequestIdApproveErrors = {
     404: ProblemDetails;
 };
 
-export type PatchMembershipRequestsByMembershipRequestIdApproveError = PatchMembershipRequestsByMembershipRequestIdApproveErrors[keyof PatchMembershipRequestsByMembershipRequestIdApproveErrors];
+export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveError = PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors[keyof PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors];
 
-export type PatchMembershipRequestsByMembershipRequestIdApproveResponses = {
+export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveResponses = {
     /**
      * The membership request was successfully approved.
      */
     200: unknown;
 };
 
-export type PatchMembershipRequestsByMembershipRequestIdRejectData = {
+export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectData = {
     body?: never;
     path: {
         /**
-         * The identifier of the membership request to reject.
+         * The identifier of the organisation containing the membership request.
          */
-        membershipRequestId: number | string;
+        organisationId: number;
+        /**
+         * The identifier of the user associated with the membership request.
+         */
+        userId: number;
     };
     query?: never;
-    url: '/membership-requests/{membershipRequestId}/reject';
+    url: '/organisations/{organisationId}/users/{userId}/membership-requests/reject';
 };
 
-export type PatchMembershipRequestsByMembershipRequestIdRejectErrors = {
+export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors = {
     /**
-     * The current user is not allowed to update the membership request.
+     * The current user is not allowed to reject the membership request.
      */
     403: ProblemDetails;
     /**
@@ -646,9 +654,9 @@ export type PatchMembershipRequestsByMembershipRequestIdRejectErrors = {
     404: ProblemDetails;
 };
 
-export type PatchMembershipRequestsByMembershipRequestIdRejectError = PatchMembershipRequestsByMembershipRequestIdRejectErrors[keyof PatchMembershipRequestsByMembershipRequestIdRejectErrors];
+export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectError = PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors[keyof PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors];
 
-export type PatchMembershipRequestsByMembershipRequestIdRejectResponses = {
+export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectResponses = {
     /**
      * The membership request was successfully rejected.
      */

@@ -7,11 +7,11 @@ using UKPS.Api.Application.Users.Errors;
 namespace UKPS.Api.WebApi.Controllers;
 
 /// <summary>
-/// Provides endpoints for updating membership requests.
+/// Provides endpoints for approving and rejecting membership requests.
 /// </summary>
 [Authorize]
 [ApiController]
-[Route("membership-requests")]
+[Route("organisations/{organisationId:int}/users/{userId:int}/membership-requests")]
 public class MembershipRequestController : ControllerBase
 {
     private readonly IMembershipRequestService _membershipRequestService;
@@ -20,7 +20,7 @@ public class MembershipRequestController : ControllerBase
     /// Initializes a new instance of the <see cref="MembershipRequestController"/> class.
     /// </summary>
     /// <param name="membershipRequestService">
-    /// The service used to update membership requests.
+    /// The service used to approve and reject membership requests.
     /// </param>
     public MembershipRequestController(IMembershipRequestService membershipRequestService)
     {
@@ -28,76 +28,88 @@ public class MembershipRequestController : ControllerBase
     }
 
     /// <summary>
-    /// Approves the specified membership request.
+    /// Approves the membership request for the specified user within the specified organisation.
     /// </summary>
-    /// <param name="membershipRequestId">
-    /// The identifier of the membership request to approve.
+    /// <param name="organisationId">
+    /// The identifier of the organisation containing the membership request.
+    /// </param>
+    /// <param name="userId">
+    /// The identifier of the user associated with the membership request.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// The updated membership request when the operation succeeds.
+    /// An <see cref="ActionResult"/> indicating whether the membership request was successfully approved.
     /// </returns>
     /// <response code="200">
     /// The membership request was successfully approved.
     /// </response>
     /// <response code="403">
-    /// The current user is not allowed to update the membership request.
+    /// The current user is not allowed to approve the membership request.
     /// </response>
     /// <response code="404">
     /// The membership request could not be found.
     /// </response>
-    [HttpPatch("{membershipRequestId}/approve")]
+    [HttpPatch("approve")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Approve(
-        int membershipRequestId,
+        int organisationId,
+        int userId,
         CancellationToken cancellationToken
     )
     {
         var result = await _membershipRequestService.ApproveRequest(
-            membershipRequestId,
+            organisationId,
+            userId,
             cancellationToken
         );
+
         return HandleResult(result);
     }
 
     /// <summary>
-    /// Rejects the specified membership request.
+    /// Rejects the membership request for the specified user within the specified organisation.
     /// </summary>
-    /// <param name="membershipRequestId">
-    /// The identifier of the membership request to reject.
+    /// <param name="organisationId">
+    /// The identifier of the organisation containing the membership request.
+    /// </param>
+    /// <param name="userId">
+    /// The identifier of the user associated with the membership request.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// The updated membership request when the operation succeeds.
+    /// An <see cref="ActionResult"/> indicating whether the membership request was successfully rejected.
     /// </returns>
     /// <response code="200">
     /// The membership request was successfully rejected.
     /// </response>
     /// <response code="403">
-    /// The current user is not allowed to update the membership request.
+    /// The current user is not allowed to reject the membership request.
     /// </response>
     /// <response code="404">
     /// The membership request could not be found.
     /// </response>
-    [HttpPatch("{membershipRequestId}/reject")]
+    [HttpPatch("reject")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Reject(
-        int membershipRequestId,
+        int organisationId,
+        int userId,
         CancellationToken cancellationToken
     )
     {
         var result = await _membershipRequestService.RejectRequest(
-            membershipRequestId,
+            organisationId,
+            userId,
             cancellationToken
         );
+
         return HandleResult(result);
     }
 

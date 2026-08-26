@@ -457,24 +457,32 @@
         }
       }
     },
-    "/membership-requests/{membershipRequestId}/approve": {
+    "/organisations/{organisationId}/users/{userId}/membership-requests/approve": {
       "patch": {
         "tags": [
           "MembershipRequest"
         ],
-        "summary": "Approves the specified membership request.",
+        "summary": "Approves the membership request for the specified user within the specified organisation.",
         "parameters": [
           {
-            "name": "membershipRequestId",
+            "name": "organisationId",
             "in": "path",
-            "description": "The identifier of the membership request to approve.",
+            "description": "The identifier of the organisation containing the membership request.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The identifier of the user associated with the membership request.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -484,7 +492,7 @@
             "description": "The membership request was successfully approved."
           },
           "403": {
-            "description": "The current user is not allowed to update the membership request.",
+            "description": "The current user is not allowed to approve the membership request.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -526,24 +534,32 @@
         }
       }
     },
-    "/membership-requests/{membershipRequestId}/reject": {
+    "/organisations/{organisationId}/users/{userId}/membership-requests/reject": {
       "patch": {
         "tags": [
           "MembershipRequest"
         ],
-        "summary": "Rejects the specified membership request.",
+        "summary": "Rejects the membership request for the specified user within the specified organisation.",
         "parameters": [
           {
-            "name": "membershipRequestId",
+            "name": "organisationId",
             "in": "path",
-            "description": "The identifier of the membership request to reject.",
+            "description": "The identifier of the organisation containing the membership request.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The identifier of the user associated with the membership request.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -553,7 +569,7 @@
             "description": "The membership request was successfully rejected."
           },
           "403": {
-            "description": "The current user is not allowed to update the membership request.",
+            "description": "The current user is not allowed to reject the membership request.",
             "content": {
               "text/plain": {
                 "schema": {

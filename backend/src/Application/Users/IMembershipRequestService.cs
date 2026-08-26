@@ -9,38 +9,46 @@ namespace UKPS.Api.Application.Users;
 public interface IMembershipRequestService
 {
     /// <summary>
-    /// Approves a membership request.
+    /// Approves a membership request for the specified user and organisation.
     /// </summary>
-    /// <param name="requestId">
-    /// The unique identifier of the membership request to approve.
+    /// <param name="organisationId">
+    /// The unique identifier of the organisation associated with the membership request.
+    /// </param>
+    /// <param name="userId">
+    /// The unique identifier of the user whose membership request is being approved.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// A result containing an <see cref="ApproveRequestError"/> if the request
-    /// could not be approved.
+    /// A task representing the asynchronous operation. The result contains an
+    /// <see cref="ApproveRequestError"/> if the request could not be approved.
     /// </returns>
     Task<Result<ApproveRequestError>> ApproveRequest(
-        int requestId,
+        int organisationId,
+        int userId,
         CancellationToken cancellationToken
     );
 
     /// <summary>
-    /// Rejects a membership request.
+    /// Rejects a membership request for the specified user and organisation.
     /// </summary>
-    /// <param name="requestId">
-    /// The unique identifier of the membership request to reject.
+    /// <param name="organisationId">
+    /// The unique identifier of the organisation associated with the membership request.
+    /// </param>
+    /// <param name="userId">
+    /// The unique identifier of the user whose membership request is being rejected.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// A result containing a <see cref="RejectRequestError"/> if the request
-    /// could not be rejected.
+    /// A task representing the asynchronous operation. The result contains a
+    /// <see cref="RejectRequestError"/> if the request could not be rejected.
     /// </returns>
     Task<Result<RejectRequestError>> RejectRequest(
-        int requestId,
+        int organisationId,
+        int userId,
         CancellationToken cancellationToken
     );
 }

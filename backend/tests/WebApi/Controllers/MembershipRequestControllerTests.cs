@@ -15,8 +15,8 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class MembershipRequestControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private const int ExistingRequestId = 1;
-    private const int NoneExistingUserId = 2;
+    private const int ExistingUserId = 1;
+    private const int ExistingOrganisationId = 2;
     private readonly IMembershipRequestService _mock = Substitute.For<IMembershipRequestService>();
     private readonly HttpClient _client;
 
@@ -42,58 +42,120 @@ public class MembershipRequestControllerTests : IClassFixture<WebApplicationFact
             .CreateClient();
 
         _mock
-            .ApproveRequest(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .ApproveRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<ApproveRequestError>.Err(new ApproveRequestError.RequestNotFound()));
         _mock
-            .ApproveRequest(ExistingRequestId, Arg.Any<CancellationToken>())
+            .ApproveRequest(ExistingOrganisationId, ExistingUserId, Arg.Any<CancellationToken>())
             .Returns(Result<ApproveRequestError>.Ok());
 
         _mock
-            .RejectRequest(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .RejectRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<RejectRequestError>.Err(new RejectRequestError.RequestNotFound()));
         _mock
-            .RejectRequest(ExistingRequestId, Arg.Any<CancellationToken>())
+            .RejectRequest(ExistingOrganisationId, ExistingUserId, Arg.Any<CancellationToken>())
             .Returns(Result<RejectRequestError>.Ok());
     }
 
     [Fact]
     public async Task ApproveRequest_OnValidRequest_ReturnsOk()
     {
-        HttpResponseMessage response = await SendApproveRequest(ExistingRequestId);
+        HttpResponseMessage response = await SendApproveRequest(
+            ExistingOrganisationId,
+            ExistingUserId
+        );
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]
     public async Task ApproveRequest_OnValidRequest_CallsServiceWithId()
     {
-        _ = await SendApproveRequest(ExistingRequestId);
-        await _mock.Received(1).ApproveRequest(ExistingRequestId, Arg.Any<CancellationToken>());
+        _ = await SendApproveRequest(ExistingOrganisationId, ExistingUserId);
+        await _mock
+            .Received(1)
+            .ApproveRequest(ExistingOrganisationId, ExistingUserId, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task ApproveRequest_OnRequestNotFound_ReturnsNotFound()
     {
-        HttpResponseMessage response = await SendApproveRequest(NoneExistingUserId);
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        HttpResponseMessage response = await SendApproveRequest(999, 999);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task ApproveRequest_OnNotAllowed_ReturnsForbidden()
     {
         _mock
-            .ApproveRequest(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .ApproveRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<ApproveRequestError>.Err(new ApproveRequestError.NotAllowed()));
-        HttpResponseMessage response = await SendApproveRequest(NoneExistingUserId);
+        HttpResponseMessage response = await SendApproveRequest(
+            ExistingOrganisationId,
+            ExistingUserId
+        );
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
-    private async Task<HttpResponseMessage> SendApproveRequest(int requestId)
+    [Fact]
+    public async Task RejectRequest_OnValidRequest_ReturnsOk()
+    {
+        HttpResponseMessage response = await SendRejectRequest(
+            ExistingOrganisationId,
+            ExistingUserId
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task RejectRequest_OnValidRequest_CallsServiceWithId()
+    {
+        _ = await SendRejectRequest(ExistingOrganisationId, ExistingUserId);
+        await _mock
+            .Received(1)
+            .RejectRequest(ExistingOrganisationId, ExistingUserId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RejectRequest_OnRequestNotFound_ReturnsNotFound()
+    {
+        HttpResponseMessage response = await SendRejectRequest(999, 999);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task RejectRequest_OnNotAllowed_ReturnsForbidden()
+    {
+        _mock
+            .RejectRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Result<RejectRequestError>.Err(new RejectRequestError.NotAllowed()));
+        HttpResponseMessage response = await SendRejectRequest(
+            ExistingOrganisationId,
+            ExistingUserId
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    private async Task<HttpResponseMessage> SendApproveRequest(int organisationId, int userId)
     {
         using var content = new StringContent(string.Empty);
         return await _client.PatchAsync(
-            new Uri($"/membership-requests/{requestId}", UriKind.Relative),
+            new Uri($"{CreateBasedUrl(organisationId, userId)}/approve", UriKind.Relative),
             content,
             TestContext.Current.CancellationToken
         );
+    }
+
+    private async Task<HttpResponseMessage> SendRejectRequest(int organisationId, int userId)
+    {
+        using var content = new StringContent(string.Empty);
+        return await _client.PatchAsync(
+            new Uri($"{CreateBasedUrl(organisationId, userId)}/reject", UriKind.Relative),
+            content,
+            TestContext.Current.CancellationToken
+        );
+    }
+
+    private static string CreateBasedUrl(int organisationId, int userId)
+    {
+        return $"/organisations/{organisationId}/users/{userId}/membership-requests";
     }
 }
