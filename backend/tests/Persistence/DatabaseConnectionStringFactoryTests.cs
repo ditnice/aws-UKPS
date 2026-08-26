@@ -35,6 +35,8 @@ public sealed class DatabaseConnectionStringFactoryTests
                 [$"{DatabaseOptions.SectionName}:Name"] = "ukpsdev_backend",
                 [$"{DatabaseOptions.SectionName}:Password"] = "secret-password",
                 [$"{DatabaseOptions.SectionName}:Port"] = "5432",
+                [$"{DatabaseOptions.SectionName}:RootCertificate"] =
+                    "/app/certs/eu-west-2-bundle.pem",
                 [$"{DatabaseOptions.SectionName}:Username"] = "ukpsadmin",
             }
         );
@@ -47,6 +49,8 @@ public sealed class DatabaseConnectionStringFactoryTests
         builder.Database.ShouldBe("ukpsdev_backend");
         builder.Username.ShouldBe("ukpsadmin");
         builder.Password.ShouldBe("secret-password");
+        builder.SslMode.ShouldBe(SslMode.VerifyFull);
+        builder.RootCertificate.ShouldBe("/app/certs/eu-west-2-bundle.pem");
     }
 
     [Fact]

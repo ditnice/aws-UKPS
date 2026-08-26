@@ -22,6 +22,7 @@ internal static class DatabaseConnectionStringFactory
         EnsureConfigured(settings.Name, nameof(DatabaseOptions.Name));
         EnsureConfigured(settings.Username, nameof(DatabaseOptions.Username));
         EnsureConfigured(settings.Password, nameof(DatabaseOptions.Password));
+        EnsureConfigured(settings.RootCertificate, nameof(DatabaseOptions.RootCertificate));
 
         return new NpgsqlConnectionStringBuilder
         {
@@ -30,6 +31,8 @@ internal static class DatabaseConnectionStringFactory
             Database = settings.Name,
             Username = settings.Username,
             Password = settings.Password,
+            SslMode = SslMode.VerifyFull,
+            RootCertificate = settings.RootCertificate,
         }.ConnectionString;
     }
 
