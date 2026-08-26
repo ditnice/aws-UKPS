@@ -4,6 +4,7 @@ import { getUsersMe } from '@/client/generated'
 import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { errorMessages } from '@/lib/form/errorMessages'
 
 import { EditDetailsForm } from './_components/EditDetailsForm'
 
@@ -14,15 +15,15 @@ export default async function EditDetails({ params }: { params: Promise<{ userId
 
   const createPageContent = () => {
     if (userId !== 'me') {
-      return <ErrorState>Editing another users values is not supported.</ErrorState>
+      return <ErrorState>{errorMessages.editingAnotherUserIsNotCurrentSupported}</ErrorState>
     }
 
     if (!me) {
-      return <ErrorState>Failed to load data for the current user.</ErrorState>
+      return <ErrorState>{errorMessages.failedToRetrieveCurrentUser}</ErrorState>
     }
 
     if (!isNumber(me.userId)) {
-      return <ErrorState>Invalid user details.</ErrorState>
+      throw Error('Unexpected user details.')
     }
 
     return <EditDetailsForm userId={me.userId} initialValues={{ ...me }} />

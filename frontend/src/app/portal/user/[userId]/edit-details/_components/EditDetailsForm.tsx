@@ -11,40 +11,9 @@ import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
-
-const isValidationProblemDetails = (value: unknown): value is ValidationProblemDetails => {
-  if (!value || typeof value !== 'object') {
-    return false
-  }
-
-  const candidate = value as Record<string, unknown>
-
-  if (
-    !candidate.errors ||
-    typeof candidate.errors !== 'object' ||
-    Array.isArray(candidate.errors)
-  ) {
-    return false
-  }
-
-  return Object.values(candidate.errors).every(
-    (error) => Array.isArray(error) && error.every((message) => typeof message === 'string'),
-  )
-}
-
-const setErrors = (
-  validationProblemDetails: ValidationProblemDetails,
-  key: string,
-): import('@tanstack/react-form').Updater<import('@tanstack/react-form').AnyFieldLikeMetaBase> => {
-  return (meta) => ({
-    ...meta,
-    errorMap: {
-      ...meta.errorMap,
-      onSubmit: validationProblemDetails.errors[key],
-    },
-  })
-}
+import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
 const EditDetails = z.object({
   fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
@@ -86,9 +55,9 @@ export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps)
       setError(true)
 
       if (response && isValidationProblemDetails(response.error)) {
-        formApi.setFieldMeta('fullName', setErrors(response.error, 'FullName'))
-        formApi.setFieldMeta('workEmail', setErrors(response.error, 'WorkEmail'))
-        formApi.setFieldMeta('workTelephone', setErrors(response.error, 'WorkTelephone'))
+        formApi.setFieldMeta('fullName', updateFormApiErrors(response.error, 'FullName'))
+        formApi.setFieldMeta('workEmail', updateFormApiErrors(response.error, 'WorkEmail'))
+        formApi.setFieldMeta('workTelephone', updateFormApiErrors(response.error, 'WorkTelephone'))
       }
     },
   })
@@ -101,7 +70,7 @@ export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps)
         void form.handleSubmit()
       }}
     >
-      {error && <ErrorState>An Error Occurred when trying to update the user.</ErrorState>}
+      {error && <ErrorState>{errorMessages.updatingUserDetailsError}</ErrorState>}
       <form.Field name="fullName">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
