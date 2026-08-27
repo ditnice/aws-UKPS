@@ -1,9 +1,9 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { BackLink } from '@/components/BackLink/BackLink'
-import { Button, ButtonGroup } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+
+import ModifyUserMembershipRequestControls from '../../ModifyUserMembershipRequestControls'
 
 interface Props {
   params: Promise<{ id: string; userId: string }>
@@ -18,6 +18,8 @@ export default async function RejectUser({ params }: Props) {
     notFound()
   }
 
+  const exampleUserEmail = 'julie.brooks@email.com'
+
   const organisationHref = `/portal/organisations/${organisationId}`
 
   return (
@@ -26,14 +28,15 @@ export default async function RejectUser({ params }: Props) {
         backLink={<BackLink href={organisationHref}>Back</BackLink>}
         heading="Reject user"
       />
-      <p>You are about to reject julie.brooks@email.com&#39;s request for an account.</p>
+      <p>You are about to reject {exampleUserEmail}&#39;s request for an account.</p>
 
-      <ButtonGroup>
-        <Button variant="cta">Reject user</Button>
-        <Button elementType={Link} href={organisationHref} variant="secondary">
-          Cancel
-        </Button>
-      </ButtonGroup>
+      <ModifyUserMembershipRequestControls
+        action="Reject"
+        organisationId={organisationId}
+        userId={selectedUserId}
+        successLink={`${organisationHref}`}
+        backLink={organisationHref}
+      />
     </>
   )
 }
