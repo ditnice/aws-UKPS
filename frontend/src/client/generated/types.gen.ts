@@ -371,6 +371,16 @@ export type UserListItemDto = {
 };
 
 /**
+ * Represents a request for a user's membership.
+ */
+export type UserMembershipRequestDto = {
+    /**
+     * Gets the unique identifier of the membership request.
+     */
+    id: number | string;
+};
+
+/**
  * Represents the status of a user's association with an organisation.
  */
 export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Rejected' | 'Inactive' | 'Deactivated';
@@ -590,6 +600,45 @@ export type PostAuthVerifyMfaResponses = {
      */
     200: unknown;
 };
+
+export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the organisation.
+         */
+        organisationId: number;
+        /**
+         * The unique identifier of the user.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/users/{userId}/membership-requests';
+};
+
+export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsErrors = {
+    /**
+     * The authenticated user is not allowed to access the requested membership
+     * request.
+     */
+    403: ProblemDetails;
+    /**
+     * The requested user membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsError = GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsErrors[keyof GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsErrors];
+
+export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsResponses = {
+    /**
+     * The user membership request was found and returned successfully.
+     */
+    200: UserMembershipRequestDto;
+};
+
+export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsResponse = GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsResponses[keyof GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsResponses];
 
 export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveData = {
     body?: never;
