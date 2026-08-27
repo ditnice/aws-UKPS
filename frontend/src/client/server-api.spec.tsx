@@ -12,6 +12,13 @@ const mocks = vi.hoisted(() => ({
 vi.mock('next/headers', () => ({ cookies: mocks.cookies, headers: mocks.headers }))
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }))
 vi.mock('server-only', () => ({}))
+vi.mock('@/env/server', () => ({
+  env: {
+    get BACKEND_API_BASE_URL() {
+      return process.env.BACKEND_API_BASE_URL
+    },
+  },
+}))
 vi.mock('./generated/client', () => ({ createClient: mocks.createClient }))
 
 type ClientWithFetch = { fetch: typeof fetch }
@@ -108,16 +115,5 @@ describe('createServerApiClient', () => {
 
     await expect(client.fetch('https://api.example.test/users')).resolves.toBe(successResponse)
     expect(mocks.redirect).not.toHaveBeenCalled()
-  })
-
-  it('fails clearly when the backend API base URL is absent', async () => {
-    vi.stubEnv('BACKEND_API_BASE_URL', '')
-
-    await expect(createServerApiClient()).rejects.toThrow(
-      'BACKEND_API_BASE_URL is required to create the server API client.',
-    )
-    expect(mocks.cookies).not.toHaveBeenCalled()
-    expect(mocks.headers).not.toHaveBeenCalled()
-    expect(mocks.createClient).not.toHaveBeenCalled()
   })
 })

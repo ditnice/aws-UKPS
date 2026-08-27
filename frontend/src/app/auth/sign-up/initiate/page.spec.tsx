@@ -2,10 +2,12 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getAuthValidateSetupToken } from '@/client/generated/sdk.gen'
+import { createServerApiClient } from '@/client/server-api'
 
 import SignUpInitiate from './page'
 
 const redirect = vi.fn()
+const serverClient = { request: vi.fn() }
 
 vi.mock('next/navigation', () => ({
   redirect: (url: string) => {
@@ -18,7 +20,12 @@ vi.mock('@/client/generated/sdk.gen', () => ({
   getAuthValidateSetupToken: vi.fn(),
 }))
 
+vi.mock('@/client/server-api', () => ({
+  createServerApiClient: vi.fn(),
+}))
+
 beforeEach(() => {
+  vi.mocked(createServerApiClient).mockResolvedValue(serverClient as never)
   vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
     data: undefined,
     error: undefined,
@@ -46,6 +53,7 @@ describe('SignUpInitiate', () => {
     ).rejects.toThrow('NEXT_REDIRECT')
 
     expect(getAuthValidateSetupToken).toHaveBeenCalledWith({
+      client: serverClient,
       query: { setupToken: 'test-token' },
     })
     expect(redirect).toHaveBeenCalledWith(
@@ -59,6 +67,7 @@ describe('SignUpInitiate', () => {
     ).rejects.toThrow('NEXT_REDIRECT')
 
     expect(getAuthValidateSetupToken).toHaveBeenCalledWith({
+      client: serverClient,
       query: { setupToken: 'test-token' },
     })
     expect(redirect).toHaveBeenCalledWith(

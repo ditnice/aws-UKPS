@@ -1,14 +1,19 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 
+import { env } from '@/env/server'
 import { signInPath } from '@/lib/auth/routing'
 
-const cognitoIssuer = process.env.COGNITO_ISSUER
-const cognitoClientId = process.env.COGNITO_CLIENT_ID
-const authenticationMode = process.env.AUTHENTICATION_MODE
-const cognitoJwks = cognitoIssuer
-  ? createRemoteJWKSet(new URL(`${cognitoIssuer}/.well-known/jwks.json`))
-  : undefined
+const cognitoIssuer = env.COGNITO_ISSUER
+const cognitoClientId = env.COGNITO_CLIENT_ID
+const authenticationMode = env.AUTHENTICATION_MODE
+const cognitoJwks = cognitoIssuer ? createRemoteJWKSet(getCognitoJwksUrl(cognitoIssuer)) : undefined
+
+function getCognitoJwksUrl(issuer: string): URL {
+  const url = new URL(issuer)
+  url.pathname = `${url.pathname.replace(/\/$/, '')}/.well-known/jwks.json`
+  return url
+}
 
 export const config = {
   matcher: ['/portal/:path*'],

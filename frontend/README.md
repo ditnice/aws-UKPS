@@ -24,37 +24,35 @@ After you click the `Deploy` button above, you'll want to have standalone copy o
 
 ### Configuration
 
-The following environment variables can be set:
+Environment variables are validated when the server starts. They are all server-only; browser API calls use the relative `/backend-api` proxy.
 
-| Variable                 | Required | Example                                                           | Description                                                                                                                                                                                                                                                             |
-| ------------------------ | -------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BACKEND_API_BASE_URL`   | Yes      | `https://localhost:7180`                                          | Base URL of the backend API. All API requests are sent to this endpoint.                                                                                                                                                                                                |
-| `BACKEND_API_TIMEOUT_MS` | No       | `60000`                                                           | Maximum time, in milliseconds, to wait for a backend API response before timing out.                                                                                                                                                                                    |
-| `COGNITO_ISSUER`         | Yes*     | `https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h` | AWS Cognito User Pool issuer URL used to validate authentication tokens.                                                                                                                                                                                                |
-| `COGNITO_CLIENT_ID`      | Yes*     | `ioihsfd49fj09wj3f`                                               | AWS Cognito App Client ID used during authentication and authorization flows.                                                                                                                                                                                           |
-| `AUTHENTICATION_MODE`    | No       | `DEV`                                                             | Controls how authentication is handled by the application. `DEV` means that you will be allowed to access all routes without authentication and is intended for local development and testing only. If this is enabled you will not be able to use the login processes. |
-
-> \* Unless AUTHENTICATION_MODE=DEV
+| Variable                 | Required    | Description                                                                                        |
+| ------------------------ | ----------- | -------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`           | Conditional | PostgreSQL TCP URL with a hostname and database path. Required unless all split variables are set. |
+| `DATABASE_HOST`          | Conditional | DNS hostname or IPv4 address used by ECS split database configuration.                             |
+| `DATABASE_NAME`          | Conditional | PostgreSQL database name without leading or trailing whitespace.                                   |
+| `DATABASE_PORT`          | Conditional | Positive PostgreSQL port used by ECS split database configuration.                                 |
+| `DATABASE_USERNAME`      | Conditional | PostgreSQL username without leading or trailing whitespace.                                        |
+| `DATABASE_PASSWORD`      | Conditional | Opaque, non-empty PostgreSQL password preserved exactly.                                           |
+| `PAYLOAD_SECRET`         | Yes         | Secret of at least 32 characters used to sign and encrypt Payload data.                            |
+| `BACKEND_API_BASE_URL`   | Yes         | HTTPS base URL without credentials, query, fragment, or trailing slash. Path prefixes are allowed. |
+| `BACKEND_API_TIMEOUT_MS` | No          | Positive upstream timeout in milliseconds, up to `300000`. Defaults to `15000`.                    |
+| `FRONTEND_PUBLIC_ORIGIN` | No          | Exact HTTPS origin; HTTP is accepted only for localhost and loopback development.                  |
+| `AUTHENTICATION_MODE`    | No          | Exact `DEV` bypasses Cognito outside production; omission enables Cognito authentication.          |
+| `COGNITO_ISSUER`         | Conditional | Canonical AWS Cognito User Pool issuer. Required unless `AUTHENTICATION_MODE=DEV`.                 |
+| `COGNITO_CLIENT_ID`      | Conditional | Alphanumeric Cognito App Client ID. Required unless `AUTHENTICATION_MODE=DEV`.                     |
 
 #### Example Configuration
 
 ```env
 BACKEND_API_BASE_URL=https://localhost:7180
-BACKEND_API_TIMEOUT_MS=60000
-COGNITO_ISSUER=https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h
-COGNITO_CLIENT_ID=ioihsfd49fj09wj3f
+BACKEND_API_TIMEOUT_MS=15000
+DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/ukps-payload
+PAYLOAD_SECRET=local-development-secret-at-least-32-characters
 AUTHENTICATION_MODE=DEV
 ```
 
-#### Docker (Optional)
-
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
-
-To do so, follow these steps:
-
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+The production image uses Next.js standalone output. Application variables are injected when the container starts and are validated before the Node server accepts requests. `SKIP_ENV_VALIDATION=1` is honored only during the Docker production-build phase, so secrets are not required while building the image and validation cannot be skipped at runtime.
 
 ## How it works
 
@@ -74,20 +72,6 @@ See the [Collections](https://payloadcms.com/docs/configuration/collections) doc
 
   This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
 
-### Docker
-
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
-
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
-
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
-
 ## Questions
 
 If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
-
-```
-
-```

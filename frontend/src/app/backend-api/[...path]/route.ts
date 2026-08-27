@@ -1,3 +1,5 @@
+import { env } from '@/env/server'
+
 import type { NextRequest } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -50,11 +52,7 @@ const defaultUpstreamTimeoutMs = 15_000
 const privateNoStore = 'private, no-store'
 
 async function proxyRequest(request: NextRequest, context: RouteContext): Promise<Response> {
-  const backendApiBaseUrl = process.env.BACKEND_API_BASE_URL
-
-  if (!backendApiBaseUrl) {
-    return errorResponse(500, 'BACKEND_API_BASE_URL is not configured.')
-  }
+  const backendApiBaseUrl = env.BACKEND_API_BASE_URL
 
   if (unsafeMethods.has(request.method) && !hasSameOrigin(request)) {
     logOriginRejection(request)
@@ -152,7 +150,7 @@ function hasSameOrigin(request: NextRequest): boolean {
   if (!origin) return false
 
   try {
-    const expectedOrigin = process.env.FRONTEND_PUBLIC_ORIGIN ?? new URL(request.url).origin
+    const expectedOrigin = env.FRONTEND_PUBLIC_ORIGIN ?? new URL(request.url).origin
     return new URL(origin).origin === expectedOrigin
   } catch {
     return false
@@ -180,10 +178,7 @@ function logOriginRejection(request: NextRequest): void {
 }
 
 function getUpstreamTimeoutMs(): number {
-  const configuredTimeout = Number(process.env.BACKEND_API_TIMEOUT_MS)
-  return Number.isInteger(configuredTimeout) && configuredTimeout > 0
-    ? configuredTimeout
-    : defaultUpstreamTimeoutMs
+  return env.BACKEND_API_TIMEOUT_MS ?? defaultUpstreamTimeoutMs
 }
 
 function filterRequestCookies(cookieHeader: string | null): string {

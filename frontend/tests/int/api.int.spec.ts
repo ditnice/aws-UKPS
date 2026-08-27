@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 import { getPayload, Payload } from 'payload'
 import { describe, it, beforeAll, expect } from 'vitest'
 

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { getAuthValidateSetupToken } from '@/client/generated/sdk.gen'
 import type { ProblemDetails } from '@/client/generated/types.gen'
+import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 type SignUpInitiateProps = {
@@ -25,7 +26,9 @@ export default async function SignUpInitiate({ searchParams }: SignUpInitiatePro
   let result: Awaited<ReturnType<typeof getAuthValidateSetupToken>>
 
   try {
+    const client = await createServerApiClient()
     result = await getAuthValidateSetupToken({
+      client,
       query: { setupToken },
     })
   } catch {

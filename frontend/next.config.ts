@@ -36,6 +36,8 @@ const niceDesignSystemPackages = [
   '@nice-digital/nds-textarea',
 ]
 
+const standalonePackages = ['@t3-oss/env-core', '@t3-oss/env-nextjs']
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
@@ -57,7 +59,7 @@ const nextConfig: NextConfig = {
 
     return webpackConfig
   },
-  transpilePackages: niceDesignSystemPackages,
+  transpilePackages: [...niceDesignSystemPackages, ...standalonePackages],
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })

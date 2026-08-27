@@ -13,6 +13,13 @@ function createRequest(url: string, cookie?: string) {
 async function loadProxy() {
   vi.resetModules()
   vi.doMock('jose', () => ({ createRemoteJWKSet, jwtVerify }))
+  vi.doMock('@/env/server', () => ({
+    env: {
+      AUTHENTICATION_MODE: process.env.AUTHENTICATION_MODE,
+      COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
+      COGNITO_ISSUER: process.env.COGNITO_ISSUER,
+    },
+  }))
   vi.stubEnv('COGNITO_ISSUER', issuer)
   vi.stubEnv('COGNITO_CLIENT_ID', clientId)
   vi.stubEnv('AUTHENTICATION_MODE', undefined)
@@ -22,6 +29,7 @@ async function loadProxy() {
 
 afterEach(() => {
   vi.doUnmock('jose')
+  vi.doUnmock('@/env/server')
   createRemoteJWKSet.mockClear()
   jwtVerify.mockReset()
   vi.unstubAllEnvs()
@@ -44,6 +52,7 @@ describe('proxy', () => {
     expect(response.status).toBe(200)
     expect(response.headers.get('location')).toBeNull()
     expect(response.headers.get('x-middleware-request-x-ukps-return-to')).toBe('/portal')
+    expect(createRemoteJWKSet).toHaveBeenCalledWith(new URL(`${issuer}/.well-known/jwks.json`))
     expect(jwtVerify).toHaveBeenCalledWith('valid-token', 'jwks', { issuer })
   })
 

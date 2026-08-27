@@ -2,6 +2,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DELETE, dynamic, GET, POST, runtime } from './route'
 
+vi.mock('@/env/server', () => ({
+  env: {
+    get BACKEND_API_BASE_URL() {
+      return process.env.BACKEND_API_BASE_URL
+    },
+    get BACKEND_API_TIMEOUT_MS() {
+      const timeout = Number(process.env.BACKEND_API_TIMEOUT_MS)
+      return Number.isInteger(timeout) && timeout > 0 ? timeout : 15_000
+    },
+    get FRONTEND_PUBLIC_ORIGIN() {
+      return process.env.FRONTEND_PUBLIC_ORIGIN
+    },
+  },
+}))
+
 const originalBaseUrl = process.env.BACKEND_API_BASE_URL
 const originalFrontendPublicOrigin = process.env.FRONTEND_PUBLIC_ORIGIN
 
@@ -52,8 +67,8 @@ describe('backend API route', () => {
     expect(dynamic).toBe('force-dynamic')
   })
 
-  it('constructs a URL below the configured base path and preserves only the request query', async () => {
-    process.env.BACKEND_API_BASE_URL = 'https://api.example/root/api?configured=ignored#fragment'
+  it('constructs a URL below the configured base path and preserves the request query', async () => {
+    process.env.BACKEND_API_BASE_URL = 'https://api.example/root/api'
 
     await GET(request() as never, context('people', 'a/b'))
 

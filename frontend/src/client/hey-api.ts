@@ -4,6 +4,8 @@ import type { CreateClientConfig } from './generated/client.gen'
 
 const browserBaseUrl = '/backend-api'
 const refreshUrl = `${browserBaseUrl}/auth/refresh`
+const serverSingletonError =
+  'The generated API singleton is browser-only. Use createServerApiClient() on the server.'
 
 let browserRefreshPromise: Promise<boolean> | null = null
 let browserRefreshGeneration = 0
@@ -13,11 +15,15 @@ export const createClientConfig: CreateClientConfig = (config) => {
 
   return {
     ...config,
-    baseUrl: isBrowser ? browserBaseUrl : process.env.BACKEND_API_BASE_URL,
+    baseUrl: browserBaseUrl,
     // TODO: Server Components cannot persist refreshed cookies. Until a renewal layer exists,
     // server-side 401 responses should redirect to authentication.
-    fetch: isBrowser ? browserFetch : globalThis.fetch,
+    fetch: isBrowser ? browserFetch : serverSingletonFetch,
   }
+}
+
+const serverSingletonFetch: typeof fetch = async () => {
+  throw new Error(serverSingletonError)
 }
 
 const browserFetch: typeof fetch = async (input, init) => {

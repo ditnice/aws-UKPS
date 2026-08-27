@@ -30,7 +30,7 @@ COPY --from=deps /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml 
 COPY . .
 RUN mkdir -p public
 RUN mkdir -p media
-RUN pnpm build
+RUN NEXT_PHASE=phase-production-build SKIP_ENV_VALIDATION=1 pnpm build
 
 # checkov:skip=CKV_DOCKER_2: Distroless base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP.
 FROM gcr.io/distroless/nodejs24-debian13:nonroot AS runtime
