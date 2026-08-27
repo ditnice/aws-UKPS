@@ -1,4 +1,5 @@
 import { getUsersMe } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -21,21 +22,22 @@ export default async function EditDetails({ params }: { params: Promise<{ userId
   if (userId !== 'me') {
     return (
       <PageWrapper>
-        <ErrorState>{errorMessages.editingAnotherUserIsNotCurrentSupported}</ErrorState>
+        <ErrorState>{errorMessages.editingAnotherUserIsNotCurrentlySupported}</ErrorState>
       </PageWrapper>
     )
   }
 
-  const result = await getUsersMe()
+  const client = await createServerApiClient()
+  const { data: me, error } = await getUsersMe({ client })
 
-  if (!result.data || result.error) {
+  if (!me || error) {
     return (
       <PageWrapper>
         <ErrorState>{errorMessages.failedToRetrieveCurrentUser}</ErrorState>
       </PageWrapper>
     )
   }
-  const me = result.data
+
   if (!Number.isInteger(me.userId)) {
     throw Error(`Unexpected user details [UserId:${me.userId}].`)
   }

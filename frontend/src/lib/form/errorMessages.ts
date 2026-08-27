@@ -25,6 +25,6 @@ export const errorMessages = {
   // Data retrieval
   failedToRetrieveCurrentUser: 'Failed to retrieve the current user.',
 
-  editingAnotherUserIsNotCurrentSupported: 'Editing another user is not current supported',
+  editingAnotherUserIsNotCurrentlySupported: 'Editing another user is not currently supported',
   updatingUserDetailsError: 'An error occurred when updating user details.',
 } as const

@@ -114,7 +114,7 @@ describe('EditDetails', () => {
     render(result)
 
     expect(screen.getByTestId('error-state').textContent).toBe(
-      errorMessages.editingAnotherUserIsNotCurrentSupported,
+      errorMessages.editingAnotherUserIsNotCurrentlySupported,
     )
 
     expect(screen.queryByTestId('edit-details-form')).toBeFalsy()
