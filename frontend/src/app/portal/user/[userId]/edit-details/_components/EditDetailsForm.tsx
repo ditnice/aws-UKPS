@@ -31,7 +31,7 @@ export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps)
   const router = useRouter()
   const form = useForm({
     defaultValues: {
-      fullName: initialValues.fullName, // These default values will be from their existing account
+      fullName: initialValues.fullName,
       workEmail: initialValues.workEmail,
       workTelephone: initialValues.workTelephone,
     } satisfies UpdateUserDetailsCommand,
