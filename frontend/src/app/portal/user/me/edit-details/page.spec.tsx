@@ -15,6 +15,10 @@ vi.mock('@/components/BackLinkBrowser/BackLinkBrowser', () => ({
   BackLinkBrowser: () => <div data-testid="back-link" />,
 }))
 
+vi.mock('@/client/server-api', () => ({
+  createServerApiClient: vi.fn(),
+}))
+
 vi.mock('@/components/PageHeader/PageHeader', () => ({
   PageHeader: ({ heading, backLink }: { heading: string; backLink: React.ReactNode }) => (
     <div data-testid="page-header">
@@ -67,9 +71,7 @@ describe('EditDetails', () => {
       response: { ok: true } as Response,
     })
 
-    const result = await EditDetails({
-      params: Promise.resolve({ userId: 'me' }),
-    })
+    const result = await EditDetails()
 
     render(result)
 
@@ -83,9 +85,7 @@ describe('EditDetails', () => {
       data: exampleUser,
     } as Awaited<ReturnType<typeof getUsersMe>>)
 
-    const result = await EditDetails({
-      params: Promise.resolve({ userId: 'me' }),
-    })
+    const result = await EditDetails()
 
     render(result)
 
@@ -101,33 +101,12 @@ describe('EditDetails', () => {
     )
   })
 
-  it('renders an error when attempting to edit another user', async () => {
-    mockedGetUsersMe.mockResolvedValue({
-      data: fakeCurrentUserInformationDto(),
-      response: { ok: true } as Response,
-    })
-
-    const result = await EditDetails({
-      params: Promise.resolve({ userId: '456' }),
-    })
-
-    render(result)
-
-    expect(screen.getByTestId('error-state').textContent).toBe(
-      errorMessages.editingAnotherUserIsNotCurrentlySupported,
-    )
-
-    expect(screen.queryByTestId('edit-details-form')).toBeFalsy()
-  })
-
   it('renders an error when the current user cannot be retrieved', async () => {
     mockedGetUsersMe.mockResolvedValue({
       data: undefined,
     } as Awaited<ReturnType<typeof getUsersMe>>)
 
-    const result = await EditDetails({
-      params: Promise.resolve({ userId: 'me' }),
-    })
+    const result = await EditDetails()
 
     render(result)
 
@@ -144,10 +123,8 @@ describe('EditDetails', () => {
       response: { ok: true } as Response,
     })
 
-    await expect(
-      EditDetails({
-        params: Promise.resolve({ userId: 'me' }),
-      }),
-    ).rejects.toThrow(`Unexpected user details [UserId:incorrect-details].`)
+    await expect(EditDetails()).rejects.toThrow(
+      `Unexpected user details [UserId:incorrect-details].`,
+    )
   })
 })

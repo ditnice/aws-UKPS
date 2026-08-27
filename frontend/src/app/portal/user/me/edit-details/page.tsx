@@ -16,17 +16,7 @@ const PageWrapper = (props: React.PropsWithChildren) => {
   )
 }
 
-export default async function EditDetails({ params }: { params: Promise<{ userId: string }> }) {
-  const { userId } = await params
-
-  if (userId !== 'me') {
-    return (
-      <PageWrapper>
-        <ErrorState>{errorMessages.editingAnotherUserIsNotCurrentlySupported}</ErrorState>
-      </PageWrapper>
-    )
-  }
-
+export default async function EditDetails() {
   const client = await createServerApiClient()
   const { data: me, error } = await getUsersMe({ client })
 
