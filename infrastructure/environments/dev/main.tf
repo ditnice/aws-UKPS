@@ -210,9 +210,10 @@ module "ecs_backend" {
     Cognito__ClientId           = module.cognito.app_client_id
     Cognito__Authority          = module.cognito.user_pool_issuer
     Database__Host              = module.aurora_backend.cluster_endpoint
-    Database__MigrateOnStartup  = "true"
+    Database__MigrateOnStartup  = "false"
     Database__Name              = module.aurora_backend.database_name
     Database__Port              = tostring(module.aurora_backend.port)
+    Database__RootCertificate   = "/app/certs/eu-west-2-bundle.pem"
     Email__Region               = var.region
     Email__BaseDomain           = module.alb.frontend_host_name
     Email__FromAddress          = module.ses.from_email_address

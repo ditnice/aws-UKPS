@@ -1,0 +1,11 @@
+@use '@/styles/spacing';
+
+// Shared header control height copied from global-nav to align the logo,
+// mobile menu button and search-related controls.
+$control-height: spacing.$large + spacing.$small;
+
+// High base copied from global-nav after cross-application stacking conflicts;
+// local header layers add small offsets for focused nav items and skip links.
+$z-index-header: 99990;
+$z-index-nav-focus: $z-index-header + 1;
+$z-index-skip-link: $z-index-header + 5;

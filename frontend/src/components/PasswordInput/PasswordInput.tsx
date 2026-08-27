@@ -3,8 +3,7 @@
 import clsx from 'clsx'
 import { useState } from 'react'
 
-import { Button } from '@nice-digital/nds-button'
-
+import { Button } from '@/components/Button/Button'
 import { inputWidthStyles } from '@/components/Input/Input'
 import type { InputWidth } from '@/components/Input/Input'
 
@@ -95,6 +94,7 @@ export function PasswordInput({
         <Button
           aria-controls={name}
           aria-label={visible ? 'Hide password' : 'Show password'}
+          buttonType="button"
           className={styles.toggle}
           onClick={handleToggleClick}
           variant="inverse"

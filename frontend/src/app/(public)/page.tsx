@@ -1,10 +1,10 @@
-import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { notFound } from 'next/navigation'
 
-export default function HomePage() {
-  return (
-    <>
-      <PageHeader heading="Public site root - Placeholder" />
-      <p>This page and all under a non `/portal` route will be managed by the CMS solution.</p>
-    </>
-  )
+import RenderPageLayout from '@/components/RenderPageLayout'
+import { getPageByPath } from '@/payload/PayloadContent'
+
+export default async function HomePage() {
+  const page = await getPageByPath('/')
+  if (!page) notFound()
+  return <RenderPageLayout blocks={page.layout} />
 }

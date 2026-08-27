@@ -46,6 +46,35 @@ exports[`Input > applies a width for a fluid width 1`] = `
 </DocumentFragment>
 `;
 
+exports[`Input > associates hint text with the input 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <p
+      class="input__hint"
+      id="age-hint"
+    >
+      Please enter in years
+    </p>
+    <input
+      aria-describedby="age-hint"
+      class="input__input"
+      id="age"
+      name="age"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
 exports[`Input > forwards other input props 1`] = `
 <DocumentFragment>
   <div
@@ -60,12 +89,90 @@ exports[`Input > forwards other input props 1`] = `
     </label>
     <p
       class="input__hint"
+      id="age-hint"
     >
       Please enter in years
     </p>
     <input
+      aria-describedby="age-hint"
       class="input__input"
       id="age"
+      name="age"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > marks an input as invalid and associates its error message 1`] = `
+<DocumentFragment>
+  <div
+    class="input input--error"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age"
+    >
+      Age
+    </label>
+    <p
+      class="input__error"
+      id="age-error"
+    >
+      <span
+        class="visually-hidden"
+      >
+        Error:
+      </span>
+       Enter your age
+    </p>
+    <input
+      aria-describedby="age-error"
+      aria-invalid="true"
+      class="input__input"
+      id="age"
+      name="age"
+      type="text"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Input > merges consumer descriptions with hint and error ids 1`] = `
+<DocumentFragment>
+  <div
+    class="input input--error"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="age-input"
+    >
+      Age
+    </label>
+    <p
+      class="input__hint"
+      id="age-input-hint"
+    >
+      Please enter in years
+    </p>
+    <p
+      class="input__error"
+      id="age-input-error"
+    >
+      <span
+        class="visually-hidden"
+      >
+        Error:
+      </span>
+       Enter your age
+    </p>
+    <input
+      aria-describedby="existing-description age-input-hint age-input-error"
+      aria-invalid="true"
+      class="input__input"
+      id="age-input"
       name="age"
       type="text"
     />

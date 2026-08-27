@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
 
-import { signUpMfaSetupStorageKey } from '../../constants'
+import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
 
 import { SignUpSetPasswordForm } from './SignUpSetPasswordForm'
 
