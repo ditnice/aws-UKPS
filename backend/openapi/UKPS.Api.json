@@ -2326,7 +2326,8 @@
       },
       "UserMembershipRequestDto": {
         "required": [
-          "id"
+          "id",
+          "workEmail"
         ],
         "type": "object",
         "properties": {
@@ -2338,6 +2339,10 @@
             ],
             "description": "Gets the unique identifier of the membership request.",
             "format": "int32"
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "The email associated with the email address."
           }
         },
         "description": "Represents a request for a user's membership."

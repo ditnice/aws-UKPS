@@ -235,7 +235,9 @@ public class MembershipRequestControllerTests : IClassFixture<WebApplicationFact
     {
         public UserMembershipRequestDtoFaker()
         {
+            StrictMode(true);
             RuleFor(x => x.Id, f => f.Random.Int(1));
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
         }
     }
 }

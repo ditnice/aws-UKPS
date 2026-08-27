@@ -9,4 +9,9 @@ public record UserMembershipRequestDto
     /// Gets the unique identifier of the membership request.
     /// </summary>
     public required int Id { get; init; }
+
+    /// <summary>
+    /// The email associated with the email address.
+    /// </summary>
+    public required string WorkEmail { get; init; }
 }

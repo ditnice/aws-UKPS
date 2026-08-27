@@ -33,6 +33,20 @@ internal static class DependencyInjectionManager
                 .Returns(Result<ApproveRequestError>.Ok());
             mock.RejectRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                 .Returns(Result<RejectRequestError>.Ok());
+            mock.GetUserMembershipRequest(
+                    Arg.Any<int>(),
+                    Arg.Any<int>(),
+                    Arg.Any<CancellationToken>()
+                )
+                .Returns(
+                    GetUserMembershipRequestResult.Ok(
+                        new Users.Dtos.UserMembershipRequestDto()
+                        {
+                            Id = 1,
+                            WorkEmail = "example@email.com",
+                        }
+                    )
+                );
             return mock;
         });
 

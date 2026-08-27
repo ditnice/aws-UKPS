@@ -378,6 +378,10 @@ export type UserMembershipRequestDto = {
      * Gets the unique identifier of the membership request.
      */
     id: number | string;
+    /**
+     * The email associated with the email address.
+     */
+    workEmail: string;
 };
 
 /**
