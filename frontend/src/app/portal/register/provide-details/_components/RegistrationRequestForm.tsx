@@ -7,8 +7,11 @@ import { z } from 'zod'
 
 import { Button } from '@nice-digital/nds-button'
 
-import { postUsersRegister } from '@/client/generated'
-import { getOrganisationsOrganisationNames } from '@/client/generated'
+import {
+  getOrganisationsPublicOptions,
+  OrganisationListDto,
+  postUsersRegister,
+} from '@/client/generated'
 import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
 import { Input } from '@/components/Input/Input'
 import { Select, SelectOption } from '@/components/Select/Select'
@@ -29,10 +32,10 @@ const RegistrationRequest = z.object({
 type RegistrationRequestValues = z.input<typeof RegistrationRequest>
 
 export function RegistrationRequestForm() {
-  const [organisations, setOrganisations] = useState<string[]>([])
+  const [organisations, setOrganisations] = useState<OrganisationListDto[]>([])
   useEffect(() => {
     const fetchOrganisations = async () => {
-      const response = await getOrganisationsOrganisationNames()
+      const response = await getOrganisationsPublicOptions()
       if (response.data) {
         setOrganisations(response.data)
       }
@@ -64,15 +67,9 @@ export function RegistrationRequestForm() {
           fullName: value.fullName,
           workEmail: value.workEmail,
           phoneNumber: value.phoneNumber,
-          organisation: value.organisation,
+          organisationId: value.organisation,
         },
       })
-      // console.log({
-      //   fullName: value.fullName,
-      //   workEmail: value.workEmail,
-      //   phoneNumber: value.phoneNumber,
-      //   organisation: value.organisation,
-      // })
       if (response.data) {
         router.push(`/portal/register/request-submitted/${response.data.id}`)
       }
@@ -101,8 +98,8 @@ export function RegistrationRequestForm() {
             >
               <SelectOption value="choose">Choose organisation</SelectOption>
               {organisations.map((organisation) => (
-                <SelectOption key={organisation} value={organisation}>
-                  {organisation}
+                <SelectOption key={organisation.organisationName} value={organisation.id}>
+                  {organisation.organisationName}
                 </SelectOption>
               ))}
             </Select>

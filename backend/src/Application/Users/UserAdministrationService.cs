@@ -17,8 +17,6 @@ using OnboardingUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Applica
 
 namespace UKPS.Api.Application.Users;
 
-using GetUserResult = Result<RegisterUserConfirmationDto, GetUserDetailsError>;
-
 internal sealed partial class UserAdministrationService(
     IOrganisationAuthoriser organisationAuthoriser,
     IIdentityService administerIdentityService,
@@ -191,13 +189,26 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
-        var user = await dbContext.UserRegistrationRequest.SingleOrDefaultAsync(
-            u => u.Id == Id,
-            cancellationToken
-        );
-        return user is null
-            ? GetUserResult.Err(new GetUserDetailsError.IdNotFound(Id))
-            : GetUserResult.Ok(MapToConfirmationDto(user));
+        var dto = await dbContext
+            .UserRegistrationRequest.AsNoTracking()
+            .Where(x => x.Id == Id)
+            .Select(x => new RegisterUserConfirmationDto
+            {
+                Id = x.Id,
+                OrganisationName = x.Organisation!.OrganisationName,
+                FullName = x.FullName,
+                WorkEmail = x.WorkEmail,
+                PhoneNumber = x.PhoneNumber,
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (dto is null)
+        {
+            return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                new GetUserDetailsError.IdNotFound(Id)
+            );
+        }
+        return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(dto);
     }
 
     [LoggerMessage(
@@ -213,18 +224,4 @@ internal sealed partial class UserAdministrationService(
     private partial void LogSendingUserSignUpRequestEmail(string token);
 
     private static string Sanitise(Guid guid) => guid.ToString().Substring(0, 8);
-
-    private static RegisterUserConfirmationDto MapToConfirmationDto(
-        UserRegistrationRequest userRegister
-    )
-    {
-        return new()
-        {
-            Id = userRegister.Id,
-            OrganisationName = userRegister.Organisation!.OrganisationName,
-            FullName = userRegister.FullName,
-            PhoneNumber = userRegister.PhoneNumber,
-            WorkEmail = userRegister.WorkEmail,
-        };
-    }
 }

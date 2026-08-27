@@ -932,10 +932,10 @@
         }
       }
     },
-    "/organisations/organisationNames": {
+    "/organisations/publicOptions": {
       "get": {
         "tags": [
-          "Organisation"
+          "OrganisationPublic"
         ],
         "summary": "Gets the names of all organisations.",
         "responses": {
@@ -946,7 +946,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/OrganisationListDto"
                   }
                 }
               },
@@ -954,7 +954,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/OrganisationListDto"
                   }
                 }
               },
@@ -962,7 +962,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/OrganisationListDto"
                   }
                 }
               }
@@ -1304,7 +1304,7 @@
         "operationId": "GetUserDetailsById",
         "parameters": [
           {
-            "name": "Id",
+            "name": "id",
             "in": "path",
             "description": "The unique identifier of the user to retrieve.",
             "required": true,
@@ -1720,6 +1720,29 @@
           }
         },
         "description": "Represents the details of an organisation."
+      },
+      "OrganisationListDto": {
+        "required": [
+          "organisationName",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Gets the unique identifier of the organisation.",
+            "format": "int32"
+          },
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the organisation."
+          }
+        },
+        "description": "Represents the ID and name of an organisation."
       },
       "OrganisationMembershipDto": {
         "required": [
@@ -2194,6 +2217,9 @@
     },
     {
       "name": "Organisation"
+    },
+    {
+      "name": "OrganisationPublic"
     },
     {
       "name": "User"

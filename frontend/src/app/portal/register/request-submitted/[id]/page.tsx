@@ -25,16 +25,14 @@ export default async function RequestSumbitted({ params }: Props) {
   const apiClient = await createServerApiClient()
   const { data: user, error } = await getUserDetailsById({
     client: apiClient,
-    path: { Id: userId },
+    path: { id: userId },
   })
 
   if (error || !user) {
     return (
       <section>
         <PageHeader heading="Unable to load user" />
-        <p role="alert">
-          There was a problem retrieving the organisation. Please try again lateSr.
-        </p>
+        <p role="alert">There was a problem retrieving the organisation. Please try again later.</p>
       </section>
     )
   }
@@ -49,7 +47,7 @@ export default async function RequestSumbitted({ params }: Props) {
       <hr></hr>
       <h2>What you told us</h2>
       <SummaryList variant="two-column" className={styles.marginBottom}>
-        <SummaryListRow label="Organisation" value={user.organisation} />
+        <SummaryListRow label="Organisation" value={user.organisationName} />
         <SummaryListRow label="Full name" value={user.fullName} />
         <SummaryListRow label="Email address" value={user.workEmail} />
         <SummaryListRow label="Contact number" value={user.phoneNumber} />

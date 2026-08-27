@@ -59,7 +59,7 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// <summary>
     /// Retrieves the details of a user by their unique identifier.
     /// </summary>
-    /// <param name="Id">
+    /// <param name="id">
     /// The unique identifier of the user to retrieve.
     /// </param>
     /// <param name="cancellationToken">
@@ -78,11 +78,11 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// </response>
     [HttpGet("{id:int}", Name = nameof(GetUserDetailsById))]
     public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserDetailsById(
-        int Id,
+        int id,
         CancellationToken cancellationToken
     )
     {
-        var result = await userAdministrationService.GetUserDetailsById(Id, cancellationToken);
+        var result = await userAdministrationService.GetUserDetailsById(id, cancellationToken);
 
         return result.Match<ActionResult<RegisterUserConfirmationDto>>(
             user => Ok(user),

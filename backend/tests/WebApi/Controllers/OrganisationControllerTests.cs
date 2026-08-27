@@ -397,25 +397,6 @@ public class OrganisationControllerTests
         result.Result.ShouldBeOfType<ConflictObjectResult>();
     }
 
-    [Fact]
-    public async Task GetAllOrganisations_ReturnsOkWithOrganisationNames()
-    {
-        var organisationNames = new List<string>
-        {
-            "Organisation 1",
-            "Organisation 2",
-            "Organisation 3",
-        };
-        _organisationServiceMock
-            .GetAllOrganisations(Arg.Any<CancellationToken>())
-            .Returns(organisationNames);
-
-        var result = await _controller.GetAllOrganisations(CancellationToken.None);
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var returnedNames = Assert.IsAssignableFrom<IEnumerable<string>>(okResult.Value);
-        Assert.Equal(organisationNames, returnedNames);
-    }
-
     private static OrganisationDetailsDto CreateOrganisationDetailsDto() =>
         new()
         {

@@ -72,5 +72,7 @@ public interface IOrganisationService
     /// <see cref="Result{TSuccess, TError}"/> object with the organisation names
     /// or an error of type <see cref="GetOrganisationByIdError"/>.
     /// </returns>
-    Task<IEnumerable<string>> GetAllOrganisations(CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<OrganisationListDto>> GetAllOrganisations(
+        CancellationToken cancellationToken
+    );
 }

@@ -141,10 +141,16 @@ internal sealed class OrganisationService : IOrganisationService
         return Result<OrganisationDetailsDto, CreateOrganisationError>.Ok(MapToDto(organisation));
     }
 
-    public async Task<IEnumerable<string>> GetAllOrganisations(CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<OrganisationListDto>> GetAllOrganisations(
+        CancellationToken cancellationToken
+    )
     {
-        var query = _dbContext.Organisations.Select(x => x.OrganisationName);
-        var orgnaisationNames = await query.ToListAsync(cancellationToken);
-        return orgnaisationNames;
+        return await _dbContext
+            .Organisations.Select(o => new OrganisationListDto
+            {
+                Id = o.Id,
+                OrganisationName = o.OrganisationName,
+            })
+            .ToListAsync(cancellationToken);
     }
 }

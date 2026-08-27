@@ -183,6 +183,20 @@ export type OrganisationDetailsDto = {
 };
 
 /**
+ * Represents the ID and name of an organisation.
+ */
+export type OrganisationListDto = {
+    /**
+     * Gets the unique identifier of the organisation.
+     */
+    id: number | string;
+    /**
+     * Gets the name of the organisation.
+     */
+    organisationName: string;
+};
+
+/**
  * Represents the data transfer object for an organisation membership.
  */
 export type OrganisationMembershipDto = {
@@ -830,22 +844,22 @@ export type PostOrganisationsResponses = {
 
 export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
 
-export type GetOrganisationsOrganisationNamesData = {
+export type GetOrganisationsPublicOptionsData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/organisations/organisationNames';
+    url: '/organisations/publicOptions';
 };
 
-export type GetOrganisationsOrganisationNamesResponses = {
+export type GetOrganisationsPublicOptionsResponses = {
     /**
      * A task that represents the asynchronous operation. The task result contains
      * the names of all organisations.
      */
-    200: Array<string>;
+    200: Array<OrganisationListDto>;
 };
 
-export type GetOrganisationsOrganisationNamesResponse = GetOrganisationsOrganisationNamesResponses[keyof GetOrganisationsOrganisationNamesResponses];
+export type GetOrganisationsPublicOptionsResponse = GetOrganisationsPublicOptionsResponses[keyof GetOrganisationsPublicOptionsResponses];
 
 export type GetUsersData = {
     body?: never;
@@ -976,7 +990,7 @@ export type GetUserDetailsByIdData = {
         /**
          * The unique identifier of the user to retrieve.
          */
-        Id: number;
+        id: number;
     };
     query?: never;
     url: '/users/{id}';
