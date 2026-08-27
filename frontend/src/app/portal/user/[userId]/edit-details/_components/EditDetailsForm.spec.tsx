@@ -200,7 +200,7 @@ describe('EditDetailsForm', () => {
     })
   })
 
-  it('sends command on valid on valid submit', async () => {
+  it('sends command on valid submit', async () => {
     const exampleUserId = 342
     renderForm({ userId: exampleUserId })
     const validRequest = {
