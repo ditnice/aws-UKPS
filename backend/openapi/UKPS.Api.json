@@ -1881,7 +1881,7 @@
       "RegisterUserConfirmationDto": {
         "required": [
           "id",
-          "organisation",
+          "organisationName",
           "fullName",
           "workEmail",
           "phoneNumber"
@@ -1897,9 +1897,9 @@
             "description": "ID for the user.",
             "format": "int32"
           },
-          "organisation": {
+          "organisationName": {
             "type": "string",
-            "description": "Gets the user's organisation."
+            "description": "Gets the name of the user's organisation."
           },
           "fullName": {
             "type": "string",
@@ -1921,7 +1921,7 @@
           "fullName",
           "workEmail",
           "phoneNumber",
-          "organisation"
+          "organisationId"
         ],
         "type": "object",
         "properties": {
@@ -1937,9 +1937,14 @@
             "type": "string",
             "description": "Gets the user phone number."
           },
-          "organisation": {
-            "type": "string",
-            "description": "Gets the name of the organisation the user is requesting access to."
+          "organisationId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Gets the name of the organisation the user is requesting access to.",
+            "format": "int32"
           }
         },
         "description": "Represents the information required to register a new user."

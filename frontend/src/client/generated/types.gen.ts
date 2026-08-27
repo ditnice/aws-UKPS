@@ -267,9 +267,9 @@ export type RegisterUserConfirmationDto = {
      */
     id: number | string;
     /**
-     * Gets the user's organisation.
+     * Gets the name of the user's organisation.
      */
-    organisation: string;
+    organisationName: string;
     /**
      * Gets the user's full name.
      */
@@ -303,7 +303,7 @@ export type RegisterUserDto = {
     /**
      * Gets the name of the organisation the user is requesting access to.
      */
-    organisation: string;
+    organisationId: number | string;
 };
 
 /**

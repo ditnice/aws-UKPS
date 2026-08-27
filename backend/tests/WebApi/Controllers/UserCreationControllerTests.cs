@@ -199,14 +199,14 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             FullName = "Test1",
             PhoneNumber = "0123456789",
             WorkEmail = "user@example.com",
-            Organisation = "Test2",
+            OrganisationId = 1,
         };
 
     private static RegisterUserConfirmationDto RegisterUserConfirmationDto() =>
         new()
         {
             Id = 1,
-            Organisation = "Test1",
+            OrganisationName = "Test",
             FullName = "Test2",
             PhoneNumber = "0123456789",
             WorkEmail = "user@example.com",

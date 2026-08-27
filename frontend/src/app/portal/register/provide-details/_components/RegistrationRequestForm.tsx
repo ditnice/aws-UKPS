@@ -96,7 +96,7 @@ export function RegistrationRequestForm() {
               label="Select the organisation you are requesting access for"
               name="organisation"
               width="one-third"
-              value={field.state.value}
+              //value={field.state.value}
               onChange={(event) => field.handleChange(event.target.value)}
             >
               <SelectOption value="choose">Choose organisation</SelectOption>

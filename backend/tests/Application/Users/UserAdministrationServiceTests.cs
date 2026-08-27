@@ -166,7 +166,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             new RegisterUserConfirmationDto
             {
                 Id = user.Id,
-                Organisation = registerUserDto.Organisation,
+                OrganisationName = user.OrganisationName,
                 FullName = registerUserDto.FullName,
                 WorkEmail = registerUserDto.WorkEmail,
                 PhoneNumber = registerUserDto.PhoneNumber,
@@ -284,7 +284,6 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             RuleFor(x => x.FullName, f => f.Name.FullName());
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
             RuleFor(x => x.PhoneNumber, f => f.Phone.PhoneNumber());
-            RuleFor(x => x.Organisation, f => f.Company.CompanyName());
         }
     }
 }

@@ -161,18 +161,29 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
-        var userRegister = new UserRegister()
+        var userRegister = new UserRegistrationRequest()
         {
-            Organisation = registerUserDto.Organisation,
+            OrganisationId = registerUserDto.OrganisationId,
             FullName = registerUserDto.FullName,
             PhoneNumber = registerUserDto.PhoneNumber,
             WorkEmail = registerUserDto.WorkEmail,
         };
-        dbContext.UserRegister.Add(userRegister);
+        dbContext.UserRegistrationRequest.Add(userRegister);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(
-            MapToConfirmationDto(userRegister)
-        );
+        var dto = await dbContext
+            .UserRegistrationRequest.AsNoTracking()
+            .Where(x => x.Id == userRegister.Id)
+            .Select(x => new RegisterUserConfirmationDto
+            {
+                Id = x.Id,
+                OrganisationName = x.Organisation!.OrganisationName,
+                FullName = x.FullName,
+                WorkEmail = x.WorkEmail,
+                PhoneNumber = x.PhoneNumber,
+            })
+            .SingleAsync(cancellationToken);
+
+        return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
     }
 
     public async Task<Result<RegisterUserConfirmationDto, GetUserDetailsError>> GetUserDetailsById(
@@ -180,7 +191,7 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
-        var user = await dbContext.UserRegister.SingleOrDefaultAsync(
+        var user = await dbContext.UserRegistrationRequest.SingleOrDefaultAsync(
             u => u.Id == Id,
             cancellationToken
         );
@@ -203,12 +214,14 @@ internal sealed partial class UserAdministrationService(
 
     private static string Sanitise(Guid guid) => guid.ToString().Substring(0, 8);
 
-    private static RegisterUserConfirmationDto MapToConfirmationDto(UserRegister userRegister)
+    private static RegisterUserConfirmationDto MapToConfirmationDto(
+        UserRegistrationRequest userRegister
+    )
     {
         return new()
         {
             Id = userRegister.Id,
-            Organisation = userRegister.Organisation,
+            OrganisationName = userRegister.Organisation!.OrganisationName,
             FullName = userRegister.FullName,
             PhoneNumber = userRegister.PhoneNumber,
             WorkEmail = userRegister.WorkEmail,

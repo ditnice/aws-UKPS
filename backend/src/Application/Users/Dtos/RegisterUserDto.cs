@@ -30,5 +30,5 @@ public sealed record RegisterUserDto
     /// Gets the name of the organisation the user is requesting access to.
     /// </summary>
     [Required]
-    public required string Organisation { get; init; }
+    public required int OrganisationId { get; init; }
 }
