@@ -11,7 +11,7 @@ internal class DevAuthenticationClaims
     [
         new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
         new Claim(UkpsClaimTypes.OrganisationId, $"{1}"),
-        new Claim(UkpsClaimTypes.Email, "example.user@email.com"),
+        new Claim(UkpsClaimTypes.Email, DefaultUserEmail),
     ];
 
     public ICollection<Claim> Claims { get; } = DefaultClaims.ToList();
