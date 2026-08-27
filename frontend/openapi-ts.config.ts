@@ -10,6 +10,6 @@ export default defineConfig({
     },
     '@hey-api/sdk',
     '@hey-api/typescript',
-    '@faker-js/faker',
+    { name: '@faker-js/faker', locale: 'en_GB' },
   ],
 })
