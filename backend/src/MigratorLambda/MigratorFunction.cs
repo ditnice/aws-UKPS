@@ -38,8 +38,8 @@ public sealed class MigratorFunction
             .AddInMemoryCollection(
                 new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
                 {
-                    [$"Database__{nameof(DatabaseConfiguration.Username)}"] = secret.Username,
-                    [$"Database__{nameof(DatabaseConfiguration.Password)}"] = secret.Password,
+                    [$"Database__{nameof(DatabaseOptions.Username)}"] = secret.Username,
+                    [$"Database__{nameof(DatabaseOptions.Password)}"] = secret.Password,
                 }
             )
             .Build();
@@ -56,13 +56,16 @@ public sealed class MigratorFunction
         await new DatabaseMigrator(dbContext).MigrateAsync();
         context.Logger.LogInformation("Migrations completed successfully.");
 
-        IConfigurationSection seedingConfigSection = config.GetSection("Seeding");
-        SeedingConfiguration SeedingConfig =
-            seedingConfigSection.Get<SeedingConfiguration>()
+        SeedingOptions seedingOptions = config.GetSection("Seeding").Get<SeedingOptions>()
             ?? throw new InvalidOperationException("Seeding configuration is not set.");
+        if (!seedingOptions.ReseedOnStartup)
+        {
+            context.Logger.LogInformation("Seeding skipped - ReseedOnStartup is false.");
+            return;
+        }
 
         context.Logger.LogInformation("Starting data seeding...");
-        await new DataSeederInMemory(new SeedDataWriter(dbContext)).SeedData(SeedingConfig);
+        await new DataSeederInMemory(new SeedDataWriter(dbContext)).SeedData(seedingOptions);
         context.Logger.LogInformation("Data seeding completed successfully.");
     }
 
