@@ -34,13 +34,15 @@ internal partial class UserService(
     public async Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+        User? possibleUser = await dbContext
+            .Users.Include(x => x.UserOrgMemberships)!
+                .ThenInclude(x => x.Organisation)
+            .FirstOrDefaultAsync(
+                x => x.CognitoUsername == currentUser.CognitoUsername,
+                cancellationToken
+            );
         User user =
-            (
-                await dbContext
-                    .Users.Include(x => x.UserOrgMemberships)!
-                        .ThenInclude(x => x.Organisation)
-                    .GetByEmailOrDefault(currentUser.Email, cancellationToken)
-            )
+            possibleUser
             ?? throw new InvalidOperationException(
                 "Could not find current user by email in the database as expected."
             );

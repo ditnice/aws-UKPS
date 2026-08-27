@@ -34,6 +34,7 @@ internal sealed class MockCurrentUserInfoService : ICurrentUserInfoService
             OrganisationId = 1,
             UserRole = UserRole.Super,
             Email = sampleUser.User!.WorkEmail,
+            CognitoUsername = sampleUser.User.CognitoUsername,
         };
     }
 }
