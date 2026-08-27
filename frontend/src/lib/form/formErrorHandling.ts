@@ -1,9 +1,11 @@
+import { AnyFieldLikeMetaBase, Updater } from '@tanstack/react-form'
+
 import { ValidationProblemDetails } from '@/client/generated'
 
 export const updateFormApiErrors = (
   validationProblemDetails: ValidationProblemDetails,
   key: string,
-): import('@tanstack/react-form').Updater<import('@tanstack/react-form').AnyFieldLikeMetaBase> => {
+): Updater<AnyFieldLikeMetaBase> => {
   return (meta) => ({
     ...meta,
     errorMap: {
