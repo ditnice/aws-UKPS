@@ -1,6 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import { getUsersMe } from '@/client/generated'
+import { CurrentUserInformationDto, getUsersMe } from '@/client/generated'
 import { fakeCurrentUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
 
@@ -40,52 +41,64 @@ vi.mock('./_components/EditDetailsForm', () => ({
 
 const mockedGetUsersMe = vi.mocked(getUsersMe)
 
-describe('EditDetails', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+const exampleUser: CurrentUserInformationDto = {
+  userId: 1,
+  fullName: 'John Smith',
+  workTelephone: '020 7123 4567',
+  workEmail: 'john.smith@example.com',
+  organisationMembershipId: 10,
+  organisationId: 100,
+  organisationName: 'Example Organisation',
+  userRole: 'Standard',
+}
 
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+afterEach(() => {
+  cleanup()
+})
+
+describe('EditDetails', () => {
   it('renders the page header', async () => {
     mockedGetUsersMe.mockResolvedValue({
-      data: {
-        userId: 123,
-        fullName: 'John Smith',
-        workEmail: 'john@example.com',
-        workTelephone: '01234567890',
-      },
-    } as Awaited<ReturnType<typeof getUsersMe>>)
+      data: exampleUser,
+      response: { ok: true } as Response,
+    })
 
     const result = await EditDetails({
       params: Promise.resolve({ userId: 'me' }),
     })
 
-    expect(result).toBeDefined()
+    render(result)
 
-    // The returned fragment contains the PageHeader and page content.
-    expect(result.props.children).toHaveLength(2)
+    expect(screen.getByRole('heading', { name: 'Edit your details' })).toBeDefined()
+
+    expect(screen.getByTestId('back-link')).toBeDefined()
   })
 
   it('renders the edit details form when editing the current user', async () => {
-    const currentUser = {
-      userId: 123,
-      fullName: 'John Smith',
-      workEmail: 'john@example.com',
-      workTelephone: '01234567890',
-    }
-
     mockedGetUsersMe.mockResolvedValue({
-      data: currentUser,
+      data: exampleUser,
     } as Awaited<ReturnType<typeof getUsersMe>>)
 
     const result = await EditDetails({
       params: Promise.resolve({ userId: 'me' }),
     })
 
-    const content = result.props.children[1]
+    render(result)
 
-    expect(content.type).toBeDefined()
-    expect(content.props.userId).toBe(123)
-    expect(content.props.initialValues).toEqual(currentUser)
+    expect(screen.getByTestId('edit-details-form')).toBeDefined()
+    const textContent = screen.getByTestId('user-id').textContent.trim()
+    expect(textContent).toBe(exampleUser.userId.toString())
+    expect(screen.getByTestId('initial-values').textContent).toBe(
+      JSON.stringify({
+        fullName: exampleUser.fullName,
+        workEmail: exampleUser.workEmail,
+        workTelephone: exampleUser.workTelephone,
+      }),
+    )
   })
 
   it('renders an error when attempting to edit another user', async () => {
@@ -98,9 +111,13 @@ describe('EditDetails', () => {
       params: Promise.resolve({ userId: '456' }),
     })
 
-    const content = result.props.children[1]
+    render(result)
 
-    expect(content.props.children).toBe(errorMessages.editingAnotherUserIsNotCurrentSupported)
+    expect(screen.getByTestId('error-state').textContent).toBe(
+      errorMessages.editingAnotherUserIsNotCurrentSupported,
+    )
+
+    expect(screen.queryByTestId('edit-details-form')).toBeFalsy()
   })
 
   it('renders an error when the current user cannot be retrieved', async () => {
@@ -112,14 +129,18 @@ describe('EditDetails', () => {
       params: Promise.resolve({ userId: 'me' }),
     })
 
-    const content = result.props.children[1]
+    render(result)
 
-    expect(content.props.children).toBe(errorMessages.failedToRetrieveCurrentUser)
+    expect(screen.getByTestId('error-state').textContent).toBe(
+      errorMessages.failedToRetrieveCurrentUser,
+    )
+
+    expect(screen.queryByTestId('edit-details-form')).toBeFalsy()
   })
 
   it('throws when the current user id is not a number', async () => {
     mockedGetUsersMe.mockResolvedValue({
-      data: fakeCurrentUserInformationDto(),
+      data: { ...fakeCurrentUserInformationDto(), userId: 'incorrect-details' },
       response: { ok: true } as Response,
     })
 
@@ -127,6 +148,6 @@ describe('EditDetails', () => {
       EditDetails({
         params: Promise.resolve({ userId: 'me' }),
       }),
-    ).rejects.toThrow('Unexpected user details.')
+    ).rejects.toThrow(`Unexpected user details [UserId:incorrect-details].`)
   })
 })

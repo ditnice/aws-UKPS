@@ -1,5 +1,3 @@
-import { isNumber } from 'payload/shared'
-
 import { getUsersMe } from '@/client/generated'
 import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -22,11 +20,20 @@ export default async function EditDetails({ params }: { params: Promise<{ userId
       return <ErrorState>{errorMessages.failedToRetrieveCurrentUser}</ErrorState>
     }
 
-    if (!isNumber(me.userId)) {
-      throw Error('Unexpected user details.')
+    if (!Number.isInteger(me.userId)) {
+      throw Error(`Unexpected user details [UserId:${me.userId}].`)
     }
 
-    return <EditDetailsForm userId={me.userId} initialValues={{ ...me }} />
+    return (
+      <EditDetailsForm
+        userId={Number(me.userId)}
+        initialValues={{
+          fullName: me.fullName,
+          workEmail: me.workEmail,
+          workTelephone: me.workTelephone,
+        }}
+      />
+    )
   }
 
   return (
