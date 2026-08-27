@@ -412,7 +412,7 @@ public class UserServiceTests : DatabaseTestBase
     public async Task GetUsers_FiltersByStatus_WhenOrganisationIdIsMissing()
     {
         GetUsersResult withNoFilter = await Service.GetUsers(
-            CreateGetUsersQuery(organisationId: null),
+            _getAllUserQuery,
             TestContext.Current.CancellationToken
         );
         withNoFilter
@@ -421,7 +421,10 @@ public class UserServiceTests : DatabaseTestBase
             .ShouldContainSet([UserOrgStatus.Inactive, UserOrgStatus.Active]);
 
         GetUsersResult resultWithFilter = await Service.GetUsers(
-            CreateGetUsersQuery(organisationId: null, status: [UserOrgStatus.Inactive]),
+            _getAllUserQuery with
+            {
+                Status = [UserOrgStatus.Inactive],
+            },
             TestContext.Current.CancellationToken
         );
         resultWithFilter
