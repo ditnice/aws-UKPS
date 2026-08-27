@@ -13,8 +13,8 @@ export const UserDetails = ({
 }) => {
   if (!currentUser)
     return (
-      <ErrorState>
-        <div data-testid="failed-user-retrieval">{errorMessages.failedToRetrieveCurrentUser}</div>
+      <ErrorState data-testid="failed-user-retrieval">
+        {errorMessages.failedToRetrieveCurrentUser}
       </ErrorState>
     )
   return (

@@ -1,3 +1,8 @@
 export const ErrorState = (props: React.PropsWithChildren) => {
-  return <p role="alert">{props.children}</p>
+  const { children, ...otherProps } = props
+  return (
+    <p role="alert" {...otherProps}>
+      {props.children}
+    </p>
+  )
 }
