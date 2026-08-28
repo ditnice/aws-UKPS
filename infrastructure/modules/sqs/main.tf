@@ -15,7 +15,7 @@ resource "aws_sqs_queue" "queue" {
     maxReceiveCount     = var.max_receives
   })
   tags = merge(var.tags, {
-    Name        = "${var.project}-${var.environment}-${var.service_name}"
+    Name        = "${var.project}-${var.environment}-${var.service_name}-sqs"
     Environment = var.environment
     Project     = var.project
     Service     = var.service_name
@@ -35,7 +35,7 @@ resource "aws_sqs_queue" "dlq" {
   message_retention_seconds   = var.dlq_message_retention_seconds
 
   tags = merge(var.tags, {
-    Name        = "${var.project}-${var.environment}-${var.service_name}"
+    Name        = "${var.project}-${var.environment}-${var.service_name}-sqs-dlq"
     Environment = var.environment
     Project     = var.project
     Service     = var.service_name
