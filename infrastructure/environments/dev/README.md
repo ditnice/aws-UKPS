@@ -25,6 +25,7 @@
 | <a name="module_backend_aurora_alerts"></a> [backend\_aurora\_alerts](#module\_backend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
 | <a name="module_backend_ecs_alerts"></a> [backend\_ecs\_alerts](#module\_backend\_ecs\_alerts) | ../../modules/cloudwatch/ecs-alerts | n/a |
 | <a name="module_cognito"></a> [cognito](#module\_cognito) | ../../modules/cognito | n/a |
+| <a name="module_db_migrator_lambda"></a> [db\_migrator\_lambda](#module\_db\_migrator\_lambda) | ../../modules/lambda/dbMigrator | n/a |
 | <a name="module_ecs_backend"></a> [ecs\_backend](#module\_ecs\_backend) | ../../modules/ecs | n/a |
 | <a name="module_ecs_frontend"></a> [ecs\_frontend](#module\_ecs\_frontend) | ../../modules/ecs | n/a |
 | <a name="module_frontend_aurora_alerts"></a> [frontend\_aurora\_alerts](#module\_frontend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |

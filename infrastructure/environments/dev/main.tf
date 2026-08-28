@@ -379,3 +379,38 @@ module "backend_aurora_alerts" {
   sns_topic_arn         = module.sns.rds_alarms_topic_arn
   connection_threshold  = var.connection_threshold
 }
+
+# Lambda - DB Migrator
+
+module "db_migrator_lambda" {
+  source = "../../modules/lambda/dbMigrator"
+
+  project      = local.project
+  environment  = local.environment
+  service_name = "db-migrator"
+
+  lambda_zip_path = "placeholder.zip" # TODO - update this when known
+
+  vpc_id     = module.networking.vpc_id
+  subnet_ids = module.networking.app_subnet_ids
+
+  db_secret_arn        = module.aurora_backend.master_user_secret_arn
+  db_security_group_id = module.aurora_backend.security_group_id
+  db_host              = module.aurora_backend.cluster_endpoint
+  db_port              = module.aurora_backend.port
+  db_name              = module.aurora_backend.database_name
+
+  kms_key_id         = module.kms_backend.app_key_id
+  cloudwatch_kms_arn = module.kms_backend.app_key_arn
+  region             = var.region
+
+  seeded_super_users_json = jsonencode(var.seeded_super_users)
+
+  log_retention_days = var.ecs_log_retention
+
+  tags = {
+    Environment = local.environment
+    Project     = local.project
+    ManagedBy   = "terraform"
+  }
+}
