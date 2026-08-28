@@ -26,6 +26,7 @@ No modules.
 | [aws_sqs_queue.queue](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
 | [aws_sqs_queue_policy.dlq_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy) | resource |
 | [aws_sqs_queue_policy.queue_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy) | resource |
+| [aws_sqs_queue_redrive_allow_policy.dlq_redrive_allow_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_redrive_allow_policy) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.dlq_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.queue_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -34,6 +35,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_dlq_message_retention_seconds"></a> [dlq\_message\_retention\_seconds](#input\_dlq\_message\_retention\_seconds) | The number of seconds the DLQ retains a message | `number` | `1209600` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, staging, etc.) | `string` | n/a | yes |
 | <a name="input_fifo"></a> [fifo](#input\_fifo) | Whether the SQS queue is a FIFO queue | `bool` | `false` | no |
 | <a name="input_max_receives"></a> [max\_receives](#input\_max\_receives) | Maximum number of receive attempts before a message is placed in the DLQ | `number` | `3` | no |

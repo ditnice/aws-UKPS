@@ -14,12 +14,6 @@ resource "aws_sqs_queue" "queue" {
     deadLetterTargetArn = aws_sqs_queue.dlq.arn
     maxReceiveCount     = var.max_receives
   })
-
-  redrive_allow_policy = jsonencode({
-    redrivePermission = "byQueue",
-    sourceQueueArns   = [aws_sqs_queue.dlq.arn]
-  })
-
   tags = merge(var.tags, {
     Name        = "${var.project}-${var.environment}-${var.service_name}"
     Environment = var.environment
@@ -38,6 +32,7 @@ resource "aws_sqs_queue" "dlq" {
   fifo_queue                  = var.fifo
   content_based_deduplication = var.fifo
   sqs_managed_sse_enabled     = true
+  message_retention_seconds   = var.dlq_message_retention_seconds
 
   tags = merge(var.tags, {
     Name        = "${var.project}-${var.environment}-${var.service_name}"
@@ -50,4 +45,12 @@ resource "aws_sqs_queue" "dlq" {
 resource "aws_sqs_queue_policy" "dlq_policy_attachment" {
   queue_url = aws_sqs_queue.dlq.id
   policy    = data.aws_iam_policy_document.dlq_policy.json
+}
+
+resource "aws_sqs_queue_redrive_allow_policy" "dlq_redrive_allow_policy" {
+  queue_url = aws_sqs_queue.dlq.id
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue",
+    sourceQueueArns   = [aws_sqs_queue.queue.arn]
+  })
 }

@@ -56,6 +56,18 @@ variable "visibility_timeout_seconds" {
   }
 }
 
+variable "dlq_message_retention_seconds" {
+  description = "The number of seconds the DLQ retains a message"
+  type        = number
+  default     = 1209600 # 14 days
+
+  validation {
+    condition     = var.dlq_message_retention_seconds >= 60 && var.dlq_message_retention_seconds <= 1209600
+    error_message = "DLQ message retention must be between 1 minute and 14 days."
+  }
+
+}
+
 variable "tags" {
   description = "Additional tags to apply to SQS resources"
   type        = map(string)
