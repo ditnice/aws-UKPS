@@ -29,7 +29,34 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], channel: 'chromium', ignoreHTTPSErrors: true },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: { args: ['--ignore-certificate-errors'] },
+      },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'Google Chrome',
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'chrome',
+        launchOptions: { args: ['--ignore-certificate-errors'] },
+      },
+    },
+    {
+      name: 'Microsoft Edge',
+      use: {
+        ...devices['Desktop Edge'],
+        channel: 'msedge',
+        launchOptions: { args: ['--ignore-certificate-errors'] },
+      },
     },
   ],
   webServer: {
