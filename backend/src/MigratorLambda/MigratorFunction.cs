@@ -18,6 +18,10 @@ public sealed class MigratorFunction
 {
     public static async Task FunctionHandler(string input, ILambdaContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
+        using var cancellationTokenSource = new CancellationTokenSource(context.RemainingTime);
+
         string secretArn =
             Environment.GetEnvironmentVariable("DB_SECRET_ARN")
             ?? throw new InvalidOperationException("DB_SECRET_ARN is not set.");
@@ -26,7 +30,8 @@ public sealed class MigratorFunction
 
         using AmazonSecretsManagerClient secretsClient = new();
         GetSecretValueResponse secretResponse = await secretsClient.GetSecretValueAsync(
-            new GetSecretValueRequest { SecretId = secretArn }
+            new GetSecretValueRequest { SecretId = secretArn },
+            cancellationTokenSource.Token
         );
 
         DbSecret secret =
@@ -44,16 +49,16 @@ public sealed class MigratorFunction
             )
             .Build();
 
-        string DB_CONNECTION_STRING = DatabaseConnectionStringFactory.GetConnectionString(config);
+        string dbConnectionString = DatabaseConnectionStringFactory.GetConnectionString(config);
 
         DbContextOptions<AppDbContext> options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(DB_CONNECTION_STRING)
+            .UseNpgsql(dbConnectionString)
             .Options;
 
         await using AppDbContext dbContext = new(options);
 
         context.Logger.LogInformation("Starting migrations...");
-        await new DatabaseMigrator(dbContext).MigrateAsync();
+        await new DatabaseMigrator(dbContext).MigrateAsync(cancellationTokenSource.Token);
         context.Logger.LogInformation("Migrations completed successfully.");
 
         SeedingOptions seedingOptions = config.GetSection("Seeding").Get<SeedingOptions>()
@@ -65,7 +70,7 @@ public sealed class MigratorFunction
         }
 
         context.Logger.LogInformation("Starting data seeding...");
-        await new DataSeederInMemory(new SeedDataWriter(dbContext)).SeedData(seedingOptions);
+        await new DataSeederInMemory(new SeedDataWriter(dbContext)).SeedData(seedingOptions, cancellationTokenSource.Token);
         context.Logger.LogInformation("Data seeding completed successfully.");
     }
 
