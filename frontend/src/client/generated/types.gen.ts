@@ -345,6 +345,44 @@ export type UserDetailsDto = {
 };
 
 /**
+ * Represents information about a user and their membership within an organisation.
+ */
+export type UserInformationDto = {
+    /**
+     * Gets the unique identifier of the user.
+     */
+    userId: number | string;
+    /**
+     * Gets the full name of the user.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
+    /**
+     * Gets the user's email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the unique identifier of the user's organisation membership.
+     */
+    organisationMembershipId: number | string;
+    /**
+     * Gets the unique identifier of the user's organisation.
+     */
+    organisationId: number | string;
+    /**
+     * Gets the name of the user's organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets the role assigned to the user within the organisation.
+     */
+    userRole: UserRole;
+};
+
+/**
  * Represents a limited summary of a user.
  */
 export type UserListItemDto = {
@@ -877,6 +915,49 @@ export type GetUsersResponses = {
 };
 
 export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
+
+export type GetUserDetailsWithinOrganisationData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to retrieve.
+         */
+        userId: number;
+        /**
+         * The unique identifier of the organisation to read the user's membership from. A user may
+         * belong to several organisations, so their role is resolved against this organisation.
+         */
+        organisationId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/organisations/{organisationId}';
+};
+
+export type GetUserDetailsWithinOrganisationErrors = {
+    /**
+     * Returned if the specified organisation does not exist.
+     */
+    400: ProblemDetails;
+    /**
+     * Returned if the caller is not authorised to view the organisation's users.
+     */
+    403: ProblemDetails;
+    /**
+     * Returned if the user is not a member of the specified organisation.
+     */
+    404: ProblemDetails;
+};
+
+export type GetUserDetailsWithinOrganisationError = GetUserDetailsWithinOrganisationErrors[keyof GetUserDetailsWithinOrganisationErrors];
+
+export type GetUserDetailsWithinOrganisationResponses = {
+    /**
+     * Returns the user's details and their role within the organisation.
+     */
+    200: UserInformationDto;
+};
+
+export type GetUserDetailsWithinOrganisationResponse = GetUserDetailsWithinOrganisationResponses[keyof GetUserDetailsWithinOrganisationResponses];
 
 export type PatchUsersByUserIdData = {
     /**

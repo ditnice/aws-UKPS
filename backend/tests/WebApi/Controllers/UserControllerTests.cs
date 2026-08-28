@@ -61,6 +61,18 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     new UserDetailsDtoFaker().Generate()
                 )
             );
+
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Ok(
+                    new UserInformationDtoFaker().Generate()
+                )
+            );
     }
 
     [Fact]
@@ -172,6 +184,109 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsOk_WhenTheUserIsAMember()
+    {
+        UserInformationDto expected = new UserInformationDtoFaker().Generate();
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<UserInformationDto, GetUsersError>.Ok(expected));
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationUrl(expected.UserId, expected.OrganisationId),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<UserInformationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_PassesRouteValuesToService()
+    {
+        _ = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 7, organisationId: 12),
+            TestContext.Current.CancellationToken
+        );
+
+        await _mockUserService
+            .Received(1)
+            .GetUserDetailsWithinOrganisation(7, 12, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsBadRequest_WhenOrganisationDoesNotExist()
+    {
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Err(
+                    new GetUsersError.OrganisationNotFound(1)
+                )
+            );
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 1, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsNotFound_WhenTheUserIsNotAMember()
+    {
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Err(new GetUsersError.UserNotFound(1, 1))
+            );
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 1, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsForbidden_WhenNotAllowed()
+    {
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Err(new GetUsersError.NotAllowed(1))
+            );
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 1, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -303,6 +418,9 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         }
     }
 
+    private static Uri UserWithinOrganisationUrl(int userId, int organisationId) =>
+        new($"{UsersUrl}/{userId}/organisations/{organisationId}", UriKind.Relative);
+
     private static Uri AppendQueryParams(string url, GetUsersQueryDto query)
     {
         var queryParams = new List<string>();
@@ -429,6 +547,21 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     );
                 }
             );
+        }
+    }
+
+    private sealed class UserInformationDtoFaker : Faker<UserInformationDto>
+    {
+        public UserInformationDtoFaker()
+        {
+            RuleFor(x => x.UserId, f => f.Random.Int(1, 1000));
+            RuleFor(x => x.FullName, f => f.Name.FullName());
+            RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
+            RuleFor(x => x.OrganisationMembershipId, f => f.Random.Int(1, 1000));
+            RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
+            RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
+            RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
         }
     }
 

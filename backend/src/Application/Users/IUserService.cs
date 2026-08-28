@@ -43,4 +43,23 @@ public interface IUserService
         UpdateUserDetailsCommand command,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Retrieves the details of a user, along with their membership of the specified organisation.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to retrieve.</param>
+    /// <param name="organisationId">
+    /// The unique identifier of the organisation the user's membership should be read from. A user
+    /// may belong to several organisations, so their role is resolved against this organisation.
+    /// </param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the user's
+    /// details and their role within the organisation, or the reason the request failed.
+    /// </returns>
+    Task<Result<UserInformationDto, GetUsersError>> GetUserDetailsWithinOrganisation(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    );
 }

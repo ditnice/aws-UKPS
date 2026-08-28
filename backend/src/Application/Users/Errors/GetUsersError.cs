@@ -16,4 +16,12 @@ public abstract record GetUsersError
     /// </summary>
     /// <param name="OrganisationId">The identifier of the organisation that was not found.</param>
     public sealed record OrganisationNotFound(int OrganisationId) : GetUsersError;
+
+    /// <summary>
+    /// Represents an error indicating that the specified user is not a member of the
+    /// specified organisation.
+    /// </summary>
+    /// <param name="UserId">The identifier of the user that was not found.</param>
+    /// <param name="OrganisationId">The identifier of the organisation that was searched.</param>
+    public sealed record UserNotFound(int UserId, int OrganisationId) : GetUsersError;
 }

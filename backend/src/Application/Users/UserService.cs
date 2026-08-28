@@ -11,6 +11,10 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using GetUserInformationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserInformationDto,
+    UKPS.Api.Application.Users.Errors.GetUsersError
+>;
 using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
@@ -79,6 +83,43 @@ internal partial class UserService(
                 PageSize = getUsersQuery.PageSize,
             }
         );
+    }
+
+    public async Task<GetUserInformationResult> GetUserDetailsWithinOrganisation(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        GetUsersError? organisationError = await ValidateOrganisationAsync(
+            organisationId,
+            cancellationToken
+        );
+        if (organisationError is not null)
+        {
+            return GetUserInformationResult.Err(organisationError);
+        }
+
+        UserInformationDto? user = await dbContext
+            .UserOrgMemberships.AsNoTracking()
+            .Where(m => m.UserId == userId && m.OrganisationId == organisationId)
+            .Where(m => m.Status != UserOrgStatus.Rejected)
+            .Select(m => new UserInformationDto
+            {
+                UserId = m.User!.Id,
+                FullName = m.User.FullName,
+                WorkTelephone = m.User.WorkTelephone ?? string.Empty,
+                WorkEmail = m.User.WorkEmail,
+                OrganisationMembershipId = m.Id,
+                OrganisationId = m.OrganisationId,
+                OrganisationName = m.Organisation!.OrganisationName,
+                UserRole = m.UserRole,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return user is null
+            ? GetUserInformationResult.Err(new GetUsersError.UserNotFound(userId, organisationId))
+            : GetUserInformationResult.Ok(user);
     }
 
     private async Task<GetUsersError?> ValidateOrganisationAsync(
