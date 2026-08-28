@@ -289,7 +289,7 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
         Context.Organisations.AddRange(
             new Organisation
             {
-                Id = 1,
+                Id = 2,
                 OrganisationName = "Organisation1",
                 HeadOfficeEmail = "test1@email.com",
                 HeadOfficeTelephone = "07943162541",
@@ -297,8 +297,8 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
             },
             new Organisation
             {
-                Id = 1,
-                OrganisationName = "Orgnisation2",
+                Id = 3,
+                OrganisationName = "Organisation2",
                 HeadOfficeEmail = "test2@email.com",
                 HeadOfficeTelephone = "07943162542",
                 HeadOfficeAddress = "11 Downing Street\nLondon\nSW1A 2AA",
@@ -312,10 +312,10 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
         result.ShouldNotBeNull();
         result.Count.ShouldBe(2);
 
-        var organisation1 = result.Single(x => x.Id == 1);
+        var organisation1 = result.Single(x => x.Id == 2);
         organisation1.OrganisationName.ShouldBe("Organisation1");
 
-        var organisation2 = result.Single(x => x.Id == 2);
+        var organisation2 = result.Single(x => x.Id == 3);
         organisation2.OrganisationName.ShouldBe("Organisation2");
     }
 
