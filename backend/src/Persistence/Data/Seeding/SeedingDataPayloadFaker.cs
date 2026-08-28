@@ -31,6 +31,35 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
 
     private UserOrgMembership[] FakeMemberships(SeedingDataPayload o)
     {
+        var otherMemberships = o
+            .Organisations.SelectMany(
+                (org, orgIndex) =>
+                {
+                    return o
+                        .Users.Skip(orgIndex * UsersPerOrganisation)
+                        .Take(UsersPerOrganisation)
+                        .Select(
+                            (u, i) =>
+                            {
+                                UserOrgMembership generatedMembership = _membershipFaker
+                                    .RuleFor(
+                                        x => x.Status,
+                                        _ =>
+                                        {
+                                            // Cycle through every status at least once per organisation for variety.
+                                            return _statuses[i % _statuses.Length];
+                                        }
+                                    )
+                                    .Generate();
+                                generatedMembership.User = u;
+                                generatedMembership.Organisation = org;
+                                return generatedMembership;
+                            }
+                        );
+                }
+            )
+            .ToArray();
+
         // This membership is added to enable mock auth access.
         var mockUserMembership = _membershipFaker
             .RuleFor(x => x.Organisation, (f, _) => o.Organisations.First())
@@ -43,32 +72,6 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                     )
             )
             .RuleFor(x => x.UserRole, _ => UserRole.Super);
-        var otherMemberships = o.Organisations.SelectMany(
-            (org, orgIndex) =>
-            {
-                return o
-                    .Users.Skip(orgIndex * UsersPerOrganisation)
-                    .Take(UsersPerOrganisation)
-                    .Select(
-                        (u, i) =>
-                        {
-                            UserOrgMembership generatedMembership = _membershipFaker
-                                .RuleFor(
-                                    x => x.Status,
-                                    _ =>
-                                    {
-                                        // Cycle through every status at least once per organisation for variety.
-                                        return _statuses[i % _statuses.Length];
-                                    }
-                                )
-                                .Generate();
-                            generatedMembership.User = u;
-                            generatedMembership.Organisation = org;
-                            return generatedMembership;
-                        }
-                    );
-            }
-        );
 
         return otherMemberships.Append(mockUserMembership.Generate()).ToArray();
     }
