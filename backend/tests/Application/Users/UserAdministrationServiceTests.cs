@@ -278,6 +278,19 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         );
     }
 
+    [Fact]
+    public async Task GetUserDetailsById_UserDoesNotExist_ReturnsIdNotFound()
+    {
+        int id = 999;
+
+        GetUserDetails result = await _harness.Service.GetUserDetailsById(
+            id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<GetUserDetailsError.IdNotFound>();
+    }
+
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
         var harness = new ServiceTestHarness<IUserAdministrationService>(Context)
