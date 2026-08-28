@@ -224,7 +224,22 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task RegisterUser_AllFieldsProvided_ReturnsDto()
     {
-        RegisterUserDto registerUserDto = _registerUserDtoFaker.Generate();
+        var context = _harness.GetClearedContext();
+
+        var organisation = new Organisation
+        {
+            OrganisationName = "Test",
+            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+            HeadOfficeTelephone = "07123456789",
+            HeadOfficeEmail = "test@example.com",
+        };
+
+        context.Organisations.Add(organisation);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        RegisterUserDto registerUserDto = _registerUserDtoFaker
+            .RuleFor(x => x.OrganisationId, _ => 1)
+            .Generate();
         RegisterUserConfirmation result = await _harness.Service.RegisterUser(
             registerUserDto,
             TestContext.Current.CancellationToken

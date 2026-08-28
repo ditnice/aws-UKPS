@@ -170,8 +170,10 @@ internal sealed partial class UserAdministrationService(
         await dbContext.SaveChangesAsync(cancellationToken);
         var request = await dbContext
             .UserRegistrationRequest.AsNoTracking()
+            .Include(x => x.Organisation)
             .Where(x => x.Id == userRegister.Id)
             .SingleAsync(cancellationToken);
+
         var dto = MapToDto(request);
 
         return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
@@ -182,25 +184,20 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
-        var dto = await dbContext
+        var request = await dbContext
             .UserRegistrationRequest.AsNoTracking()
+            .Include(x => x.Organisation)
             .Where(x => x.Id == Id)
-            .Select(x => new RegisterUserConfirmationDto
-            {
-                Id = x.Id,
-                OrganisationName = x.Organisation!.OrganisationName,
-                FullName = x.FullName,
-                WorkEmail = x.WorkEmail,
-                PhoneNumber = x.PhoneNumber,
-            })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (dto is null)
+        if (request is null)
         {
             return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
                 new GetUserDetailsError.IdNotFound(Id)
             );
         }
+
+        var dto = MapToDto(request);
         return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(dto);
     }
 
