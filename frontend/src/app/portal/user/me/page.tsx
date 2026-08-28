@@ -7,6 +7,8 @@ import { errorMessages } from '@/lib/form/errorMessages'
 
 import { UserDetails } from './_components/UserDetails'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Me() {
   const apiClient = await createServerApiClient()
   const { data: me, error } = await getUsersMe({

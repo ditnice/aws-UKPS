@@ -7,6 +7,8 @@ import { errorMessages } from '@/lib/form/errorMessages'
 
 import { EditDetailsForm } from './_components/EditDetailsForm'
 
+export const dynamic = 'force-dynamic'
+
 const PageWrapper = (props: React.PropsWithChildren) => {
   return (
     <>
