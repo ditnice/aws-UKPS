@@ -193,6 +193,22 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             .Value.ShouldBe("Some of the data required is missing.");
     }
 
+    [Fact]
+    public async Task GetUserDetailsById_UserExists_ReturnsDto()
+    {
+        RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
+        _mockService
+            .GetUserDetailsById(1, TestContext.Current.CancellationToken)
+            .Returns(Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(expected));
+
+        ActionResult<RegisterUserConfirmationDto> result = await _controller.GetUserDetailsById(
+            1,
+            TestContext.Current.CancellationToken
+        );
+        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(expected);
+    }
+
     private static RegisterUserDto RegisterUserDto() =>
         new()
         {

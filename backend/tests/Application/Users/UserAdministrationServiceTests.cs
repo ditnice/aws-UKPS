@@ -153,27 +153,6 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         }
     }
 
-    [Fact]
-    public async Task RegisterUser_AllFieldsProvided_ReturnsDto()
-    {
-        RegisterUserDto registerUserDto = _registerUserDtoFaker.Generate();
-        RegisterUserConfirmation result = await _harness.Service.RegisterUser(
-            registerUserDto,
-            TestContext.Current.CancellationToken
-        );
-        RegisterUserConfirmationDto user = result.ShouldBeSuccess();
-        user.ShouldBe(
-            new RegisterUserConfirmationDto
-            {
-                Id = user.Id,
-                OrganisationName = user.OrganisationName,
-                FullName = registerUserDto.FullName,
-                WorkEmail = registerUserDto.WorkEmail,
-                PhoneNumber = registerUserDto.PhoneNumber,
-            }
-        );
-    }
-
     [Theory]
     [InlineData(UserRole.Super, true)]
     [InlineData(UserRole.Champion, true)]
@@ -236,6 +215,27 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         result.ShouldBeError().ShouldBeOfType<OnboardUserError.UsernameAlreadyExists>();
+    }
+
+    [Fact]
+    public async Task RegisterUser_AllFieldsProvided_ReturnsDto()
+    {
+        RegisterUserDto registerUserDto = _registerUserDtoFaker.Generate();
+        RegisterUserConfirmation result = await _harness.Service.RegisterUser(
+            registerUserDto,
+            TestContext.Current.CancellationToken
+        );
+        RegisterUserConfirmationDto user = result.ShouldBeSuccess();
+        user.ShouldBe(
+            new RegisterUserConfirmationDto
+            {
+                Id = user.Id,
+                OrganisationName = user.OrganisationName,
+                FullName = registerUserDto.FullName,
+                WorkEmail = registerUserDto.WorkEmail,
+                PhoneNumber = registerUserDto.PhoneNumber,
+            }
+        );
     }
 
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
