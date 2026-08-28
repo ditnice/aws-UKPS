@@ -88,14 +88,14 @@ resource "aws_cloudwatch_metric_alarm" "oldest_message_age_high" {
 resource "aws_cloudwatch_metric_alarm" "dlq_messages_visible" {
   alarm_name          = "${var.project}-${var.environment}-${var.service_name}-dlq-messages-visible"
   comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = var.evaluation_periods
+  evaluation_periods  = 1
   metric_name         = "ApproximateNumberOfMessagesVisible"
   namespace           = "AWS/SQS"
   period              = var.monitoring_period
   statistic           = "Sum"
   threshold           = var.dlq_messages_threshold
   treat_missing_data  = "notBreaching"
-  datapoints_to_alarm = var.datapoints_to_alarm
+  datapoints_to_alarm = 1
 
   alarm_description = "Messages are present in the DLQ for ${var.service_name}"
 

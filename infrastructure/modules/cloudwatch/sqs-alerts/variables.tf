@@ -80,8 +80,8 @@ variable "queue_name" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9_-]{1,80}$", var.queue_name))
-    error_message = "Queue name must be 1-80 characters and contain only letters, numbers, hyphens, or underscores."
+    condition     = can(regex("^([a-zA-Z0-9_-]{1,80}|[a-zA-Z0-9_-]{1,75}\\.fifo)$", var.queue_name))
+    error_message = "Queue name must be a valid standard or FIFO SQS queue name with a maximum length of 80 characters."
   }
 }
 
@@ -90,8 +90,8 @@ variable "dlq_name" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9_-]{1,80}$", var.dlq_name))
-    error_message = "Queue name must be 1-80 characters and contain only letters, numbers, hyphens, or underscores."
+    condition     = can(regex("^([a-zA-Z0-9_-]{1,80}|[a-zA-Z0-9_-]{1,75}\\.fifo)$", var.dlq_name))
+    error_message = "Queue name must be a valid standard or FIFO SQS queue name with a maximum length of 80 characters."
   }
 }
 
