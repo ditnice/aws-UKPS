@@ -3,16 +3,16 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import { UserRole } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
-import { getSwitchedRole, switchRoleButtonLabels, type SwitchableRole } from '../../_lib/userRoles'
 import { changeUserPermissionsAction } from '../_actions/changeUserPermissions'
 
 export interface ChangePermissionsFormProps {
   organisationId: number
   userId: number
   membershipId: number
-  currentRole: SwitchableRole
+  currentRole: UserRole
 }
 
 export function ChangePermissionsForm({
@@ -25,7 +25,7 @@ export function ChangePermissionsForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string>()
 
-  const manageUserAccessHref = `/portal/organisations/${organisationId}/manage-user-access/${userId}`
+  const switchedRole = currentRole === 'Standard' ? 'Champion' : 'Standard'
 
   return (
     <form
@@ -41,7 +41,7 @@ export function ChangePermissionsForm({
           organisationId,
           userId,
           membershipId,
-          getSwitchedRole(currentRole),
+          switchedRole,
         )
 
         if (response.status === 'error') {
@@ -50,14 +50,14 @@ export function ChangePermissionsForm({
           return
         }
 
-        router.push(manageUserAccessHref)
+        router.push(`/portal/organisations/${organisationId}/manage-user-access/${userId}`)
       }}
     >
       {formError && <p role="alert">{formError}</p>}
 
       <ButtonGroup>
         <Button buttonType="submit" disabled={isSubmitting} variant="cta">
-          {isSubmitting ? 'Saving...' : switchRoleButtonLabels[currentRole]}
+          {isSubmitting ? 'Saving...' : `Make ${switchedRole.toLowerCase()} user`}
         </Button>
 
         <Button buttonType="button" variant="secondary" onClick={() => router.back()}>

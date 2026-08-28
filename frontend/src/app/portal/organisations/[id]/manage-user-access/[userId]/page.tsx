@@ -7,8 +7,6 @@ import { BackLink } from '@/components/BackLink/BackLink'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
-import { isSwitchableRole, roleDescriptions } from './_lib/userRoles'
-
 interface Props {
   params: Promise<{ id: string; userId: string }>
 }
@@ -49,7 +47,7 @@ export default async function ManageUserAccess({ params }: Props) {
     <>
       <PageHeader backLink={backLink} heading="Manage user&#39;s access" />
       <p>
-        {user.workEmail} is {roleDescriptions[user.userRole]}.
+        {user.workEmail} is a {user.userRole.toLowerCase()} user.
       </p>
       <p>Choose what you want to do:</p>
       <ul>
@@ -61,15 +59,13 @@ export default async function ManageUserAccess({ params }: Props) {
       </ul>
 
       <ButtonGroup>
-        {isSwitchableRole(user.userRole) && (
-          <Button
-            elementType={Link}
-            href={`/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`}
-            variant="cta"
-          >
-            Change permissions
-          </Button>
-        )}
+        <Button
+          elementType={Link}
+          href={`/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`}
+          variant="cta"
+        >
+          Change permissions
+        </Button>
         <Button variant="secondary">Deactivate user</Button>
         <Button variant="secondary">Remove user</Button>
       </ButtonGroup>

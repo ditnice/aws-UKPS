@@ -46,6 +46,7 @@ public class UserServiceTests : DatabaseTestBase
     private readonly GetUsersQueryDto _getAllUserQuery = new GetUsersQueryDto() { PageSize = 1000 };
     private readonly Faker _faker = new Faker();
     private readonly IReadOnlyCollection<User> _seededUsers;
+
     private IEnumerable<User> ViewableUsers =>
         _seededUsers.Where(x => x.UserOrgMemberships!.Any(x => x.Status != UserOrgStatus.Rejected));
     private IEnumerable<UserOrgMembership> SeededMemberships =>
@@ -84,6 +85,43 @@ public class UserServiceTests : DatabaseTestBase
     {
         await base.InitializeAsync();
         await AddEntities(_seededUsers, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetCurrentUser_ShouldReturnTheDetailsForTheCurrentUser()
+    {
+        foreach (var _ in Enumerable.Range(0, 10))
+        {
+            User currentUser = _faker.PickRandom(ViewableUsers);
+            UserOrgMembership currentUserMembership = _faker.PickRandom(
+                currentUser.UserOrgMemberships!.Where(x => x.Status != UserOrgStatus.Rejected)
+            );
+            _harness.UpdateCurrentUser(x =>
+                x with
+                {
+                    OrganisationId = currentUserMembership.OrganisationId,
+                    UserRole = currentUserMembership.UserRole,
+                    Email = currentUser.WorkEmail,
+                    CognitoUsername = currentUser.CognitoUsername,
+                }
+            );
+            CurrentUserInformationDto result = await Service.GetCurrentUser(
+                TestContext.Current.CancellationToken
+            );
+            result.ShouldBe(
+                new CurrentUserInformationDto()
+                {
+                    UserId = currentUser.Id,
+                    FullName = currentUser.FullName,
+                    WorkEmail = currentUser.WorkEmail,
+                    WorkTelephone = currentUser.WorkTelephone ?? string.Empty,
+                    OrganisationMembershipId = currentUserMembership.Id,
+                    OrganisationId = currentUserMembership.OrganisationId,
+                    OrganisationName = currentUserMembership.Organisation!.OrganisationName,
+                    UserRole = currentUserMembership.UserRole,
+                }
+            );
+        }
     }
 
     [Fact]
@@ -416,7 +454,7 @@ public class UserServiceTests : DatabaseTestBase
     public async Task GetUsers_FiltersByStatus_WhenOrganisationIdIsMissing()
     {
         GetUsersResult withNoFilter = await Service.GetUsers(
-            CreateGetUsersQuery(organisationId: null),
+            CreateGetUsersQuery(organisationId: null, pageSize: 1000),
             TestContext.Current.CancellationToken
         );
         withNoFilter
@@ -425,7 +463,11 @@ public class UserServiceTests : DatabaseTestBase
             .ShouldContainSet([UserOrgStatus.Inactive, UserOrgStatus.Active]);
 
         GetUsersResult resultWithFilter = await Service.GetUsers(
-            CreateGetUsersQuery(organisationId: null, status: [UserOrgStatus.Inactive]),
+            CreateGetUsersQuery(
+                organisationId: null,
+                status: [UserOrgStatus.Inactive],
+                pageSize: 1000
+            ),
             TestContext.Current.CancellationToken
         );
         resultWithFilter
