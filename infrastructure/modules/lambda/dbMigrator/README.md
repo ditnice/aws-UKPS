@@ -49,6 +49,7 @@ No modules.
 | <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, alpha, etc.) | `string` | n/a | yes |
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | KMS key ARN or ID used for Lambda encryption | `string` | n/a | yes |
 | <a name="input_lambda_zip_path"></a> [lambda\_zip\_path](#input\_lambda\_zip\_path) | Local path to the built Lambda zip artifact. | `string` | n/a | yes |
+| <a name="input_lambda_zip_source_code_hash"></a> [lambda\_zip\_source\_code\_hash](#input\_lambda\_zip\_source\_code\_hash) | Source code hash of the built lambda zip artifact | `string` | n/a | yes |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | How many days to retain Lambda logs in CloudWatch. | `number` | `365` | no |
 | <a name="input_memory_size"></a> [memory\_size](#input\_memory\_size) | Lambda memory in MB. | `number` | `512` | no |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |

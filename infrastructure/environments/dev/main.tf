@@ -381,7 +381,22 @@ module "backend_aurora_alerts" {
 }
 
 # Lambda - DB Migrator
+resource "null_resource" "build_lambda" {
+  triggers = {
+    source_hash = sha1(join("", [for f in fileset("${path.root}/../../../backend/migration", "**") : filesha1("${path.root}/../../../backend/migration/${f}")]))
+  }
 
+  provisioner "local-exec" {
+    command = "dotnet publish ${path.root}/../../../backend/migration -c Release -r linux-x64 --self-contained true -o ${path.root}/../../../backend/migration/publish"
+  }
+}
+
+data "archive_file" "lambda_zip" {
+  depends_on  = [null_resource.build_lambda]
+  type        = "zip"
+  source_dir  = "${path.root}/../../../backend/migration/publish"
+  output_path = "${path.root}/../../../backend/migration/migration.zip"
+}
 module "db_migrator_lambda" {
   source = "../../modules/lambda/dbMigrator"
 
@@ -389,7 +404,8 @@ module "db_migrator_lambda" {
   environment  = local.environment
   service_name = "db-migrator"
 
-  lambda_zip_path = "placeholder.zip" # TODO - update this when known
+  lambda_zip_path             = data.archive_file.lambda_zip.output_path
+  lambda_zip_source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   vpc_id     = module.networking.vpc_id
   subnet_ids = module.networking.app_subnet_ids
@@ -400,7 +416,7 @@ module "db_migrator_lambda" {
   db_port              = module.aurora_backend.port
   db_name              = module.aurora_backend.database_name
 
-  kms_key_id         = module.kms_backend.app_key_id
+  kms_key_id         = module.kms_backend.app_key_arn
   cloudwatch_kms_arn = module.kms_backend.app_key_arn
   region             = var.region
 

@@ -38,6 +38,16 @@ variable "lambda_zip_path" {
   }
 }
 
+variable "lambda_zip_source_code_hash" {
+  description = "Source code hash of the built lambda zip artifact"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-fA-F0-9]{64}$", var.lambda_zip_source_code_hash))
+    error_message = "The source code hash must be a valid 64-character hexadecimal SHA-256 string."
+  }
+}
+
 variable "vpc_id" {
   description = "ID of the VPC to place the Lambda in."
   type        = string
