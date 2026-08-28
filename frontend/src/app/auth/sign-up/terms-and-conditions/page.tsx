@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
-import { Button } from '@nice-digital/nds-button'
 import { Panel } from '@nice-digital/nds-panel'
 
+import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
+import { PrintPageLink } from './_components/PrintPageLink'
 import styles from './page.module.scss'
-import { PrintPageLink } from './PrintPageLink'
 
 type SignUpTermsAndConditionsProps = {
   searchParams: Promise<{

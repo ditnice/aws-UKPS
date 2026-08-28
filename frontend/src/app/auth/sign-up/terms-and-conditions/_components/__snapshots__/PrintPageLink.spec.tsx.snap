@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PrintPageLink > prints the page from a semantic button 1`] = `
+<DocumentFragment>
+  <button
+    class="btn _linkButton_ee73f7"
+    data-component="button--primary--button"
+    type="button"
+  >
+    Print page
+  </button>
+</DocumentFragment>
+`;

@@ -2,7 +2,7 @@
 
 This directory contains Cognito authentication notes and helper scripts for creating and deleting Cognito users in an environment.
 
-The bootstrap script only configures Cognito. It does not create the matching application database records. After the script completes, use the printed Cognito `sub` as the application DB `Users.IdentityId` value. Similarly, the delete script only deletes from Cognito, and does not delete from the application DB.
+The bootstrap script only configures Cognito. It does not create the matching application database records. After the script completes, use the printed Cognito user as the application DB `Users.CognitoUsername` value. Similarly, the delete script only deletes from Cognito, and does not delete from the application DB.
 
 ## First Cognito User
 
@@ -40,14 +40,14 @@ The script will:
 - verify the software token
 - complete the `MFA_SETUP` challenge
 - set software token MFA as enabled and preferred
-- print the Cognito `sub`
+- print the Cognito username
 
 ## Database Step
 
 Manually create the corresponding application database records after the Cognito user exists. The important link is:
 
 ```text
-Users.IdentityId = <printed Cognito sub>
+Users.CognitoUser = <printed Cognito username>
 ```
 
 The user also needs an appropriate organisation membership and role before app authorization will work.

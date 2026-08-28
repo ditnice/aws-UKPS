@@ -1,17 +1,17 @@
-using System.Security.Claims;
-using UKPS.Api.Persistence.Enums;
-using UKPS.Api.WebApi.InternalServices.Identity;
-
 namespace UKPS.Api.WebApi.InternalServices.Authentication;
 
-internal class DevAuthenticationOptions
+/// <summary>
+/// Represents configuration settings for development authentication.
+/// </summary>
+public sealed record DevAuthenticationOptions
 {
-    public static IReadOnlyCollection<Claim> DefaultClaims { get; } =
-    [
-        new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
-        new Claim(UkpsClaimTypes.OrganisationId, $"{1}"),
-        new Claim(UkpsClaimTypes.Email, "example.user@email.com"),
-    ];
+    /// <summary>
+    /// Gets the configuration section name used to bind development authentication settings.
+    /// </summary>
+    public const string SectionName = "DevAuthentication";
 
-    public ICollection<Claim> Claims { get; } = DefaultClaims.ToList();
+    /// <summary>
+    /// Gets a value indicating whether development authentication is enabled.
+    /// </summary>
+    public bool IsEnabled { get; init; }
 }

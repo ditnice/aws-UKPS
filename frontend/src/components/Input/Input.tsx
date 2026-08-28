@@ -1,7 +1,8 @@
-import { Input as NdsInput } from '@nice-digital/nds-input'
-import type { InputProps as NdsInputProps } from '@nice-digital/nds-input'
+import clsx from 'clsx'
 
-import type { CSSProperties } from 'react'
+import '@nice-digital/nds-input/scss/input.scss'
+
+import type { ComponentPropsWithoutRef, CSSProperties, Ref } from 'react'
 
 export type InputFixedWidth = 2 | 3 | 4 | 5 | 10 | 20 | 30
 
@@ -10,8 +11,14 @@ export type InputFluidWidth =
 
 export type InputWidth = InputFixedWidth | InputFluidWidth
 
-export type InputProps = NdsInputProps & {
-  style?: CSSProperties
+export type InputProps = Omit<ComponentPropsWithoutRef<'input'>, 'className'> & {
+  className?: string
+  error?: boolean
+  errorMessage?: string
+  hint?: string
+  inputRef?: Ref<HTMLInputElement>
+  label: string | null
+  name: string
   /**
    * Fixed widths (2, 3, 4, 5, 10, 20, 30) constrain the input to a character-based
    * max-width. Fluid widths resize the input as a percentage of its container.
@@ -36,8 +43,56 @@ export const inputWidthStyles: Record<InputWidth, CSSProperties> = {
   'one-quarter': { width: '25%' },
 }
 
-export function Input({ style, width, ...rest }: InputProps) {
+export function Input({
+  'aria-describedby': describedBy,
+  'aria-invalid': ariaInvalid,
+  className,
+  error,
+  errorMessage,
+  hint,
+  id,
+  inputRef,
+  label,
+  name,
+  style,
+  type = 'text',
+  width,
+  ...rest
+}: InputProps) {
+  const inputId = id ?? name
+  const hintId = hint ? `${inputId}-hint` : undefined
+  const errorId = error ? `${inputId}-error` : undefined
+  const ariaDescribedBy = [describedBy, hintId, errorId].filter(Boolean).join(' ') || undefined
   const inputStyle = width ? { ...style, ...inputWidthStyles[width] } : style
 
-  return <NdsInput style={inputStyle} {...rest} />
+  return (
+    <div className={clsx('input', error && 'input--error', className)} data-component="input">
+      {label && (
+        <label className="input__label" htmlFor={inputId}>
+          {label}
+        </label>
+      )}
+      {hint && (
+        <p className="input__hint" id={hintId}>
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p className="input__error" id={errorId}>
+          <span className="visually-hidden">Error:</span> {errorMessage}
+        </p>
+      )}
+      <input
+        {...rest}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={error ? true : ariaInvalid}
+        className="input__input"
+        id={inputId}
+        name={name}
+        ref={inputRef}
+        style={inputStyle}
+        type={type}
+      />
+    </div>
+  )
 }

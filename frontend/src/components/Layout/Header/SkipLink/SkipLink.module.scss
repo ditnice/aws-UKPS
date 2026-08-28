@@ -1,0 +1,34 @@
+@use '@/styles/colours';
+@use '@/styles/spacing';
+@use '@/styles/utils';
+
+@use '../header-settings';
+
+%link {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+
+  &:focus {
+    background: #fff;
+    clip-path: none;
+    color: colours.$link;
+    display: block;
+    height: auto;
+    left: utils.rem(spacing.$x-small);
+    outline: 3px solid colours.$focus;
+    overflow: visible;
+    padding: utils.rem(spacing.$small spacing.$medium);
+    position: absolute;
+    top: utils.rem(spacing.$x-small);
+    white-space: nowrap;
+    width: auto;
+    z-index: header-settings.$z-index-skip-link;
+  }
+}
+
+.link {
+  @extend %link;
+}

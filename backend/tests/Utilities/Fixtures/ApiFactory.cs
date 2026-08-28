@@ -2,9 +2,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.Tests.Utilities.Fixtures;
 
@@ -16,6 +19,21 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
     {
         ArgumentNullException.ThrowIfNull(builder);
 
+        builder.ConfigureAppConfiguration(
+            (context, config) =>
+            {
+                config.AddInMemoryCollection(
+                    new Dictionary<string, string?>(StringComparer.Ordinal)
+                    {
+                        [
+                            $"{CognitoOptions.SectionName}:{nameof(CognitoOptions.ServiceUrlOverride)}"
+                        ] = "https://validurl.com",
+                        [$"{CognitoOptions.SectionName}:{nameof(CognitoOptions.Region)}"] =
+                            "eu-west-2",
+                    }
+                );
+            }
+        );
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton(AuthOptions);
@@ -35,11 +53,15 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
         builder.UseSetting("AWS:LoadSecrets", $"{false}");
         builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
         builder.UseSetting(
-            $"{SeedingConfiguration.SectionName}:{nameof(SeedingConfiguration.ReseedOnStartup)}",
+            $"{SeedingOptions.SectionName}:{nameof(SeedingOptions.ReseedOnStartup)}",
             $"{false}"
         );
         builder.UseSetting(
-            $"{DatabaseConfiguration.SectionName}:{nameof(DatabaseConfiguration.MigrateOnStartup)}",
+            $"{DatabaseOptions.SectionName}:{nameof(DatabaseOptions.MigrateOnStartup)}",
+            $"{true}"
+        );
+        builder.UseSetting(
+            $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
             $"{true}"
         );
     }

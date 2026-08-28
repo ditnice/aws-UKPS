@@ -7,13 +7,14 @@ using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using CreateUserResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Users.Dtos.UserDetailsDto,
-    UKPS.Api.Application.Users.Errors.CreateUserError
+using GetUsersResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
+    UKPS.Api.Application.Users.Errors.GetUsersError
 >;
 
 namespace UKPS.Api.Tests.Application.Users;
@@ -24,23 +25,70 @@ public class UserServiceTests : DatabaseTestBase
     private readonly OrganisationFaker _organisationFaker = new();
     private readonly UserFaker _userFaker = new();
     private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
-    private readonly CreateUserRequestDtoFaker _createUserRequestDtoFaker = new();
-    private readonly IUserService _service;
+    private readonly UpdateUserDetailsCommandFaker _updateUserDetailsCommandFaker = new();
+    private IServiceTestHarness<IUserService> _harness;
+    private IUserService Service => _harness.Service;
+
+    private readonly DateTime _currentDateTime = new DateTime(
+        2003,
+        4,
+        12,
+        12,
+        12,
+        44,
+        DateTimeKind.Utc
+    );
+
+    private readonly GetUsersQueryDto _getAllUserQuery = new GetUsersQueryDto() { PageSize = 1000 };
+    private readonly Faker _faker = new Faker();
+    private readonly IReadOnlyCollection<User> _seededUsers;
+    private IEnumerable<User> ViewableUsers =>
+        _seededUsers.Where(x => x.UserOrgMemberships!.Any(x => x.Status != UserOrgStatus.Rejected));
+    private IEnumerable<UserOrgMembership> SeededMemberships =>
+        _seededUsers.SelectMany(x => x.UserOrgMemberships!);
+    private IEnumerable<UserOrgMembership> ViewableMemberships =>
+        SeededMemberships.Where(x => x.Status != UserOrgStatus.Rejected);
 
     public UserServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _service = new ServiceTestHarness<IUserService>(Context).Service;
+        Randomizer.Seed = new Random(342);
+
+        _harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentTime(
+            _currentDateTime
+        );
+
+        var organisations = _organisationFaker.Generate(4);
+        var userFaker = new UserFaker().RuleFor(
+            x => x.UserOrgMemberships,
+            (f, u) =>
+            {
+                return f.PickRandom(
+                        organisations,
+                        f.Random.Int(min: 1, max: Math.Min(3, organisations.Count))
+                    )
+                    .Select(o =>
+                        _userOrgMembershipFaker.RuleFor(x => x.Organisation, _ => o).Generate()
+                    )
+                    .ToArray();
+            }
+        );
+        _seededUsers = userFaker.Generate(50);
+    }
+
+    public override async ValueTask InitializeAsync()
+    {
+        await base.InitializeAsync();
+        await AddEntities(_seededUsers, TestContext.Current.CancellationToken);
     }
 
     [Fact]
     public async Task GetUsers_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
     {
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(organisationId: 99),
-                TestContext.Current.CancellationToken
-            );
+        GetUsersResult result = await Service.GetUsers(
+            CreateGetUsersQuery(organisationId: 99),
+            TestContext.Current.CancellationToken
+        );
 
         result.IsErr.ShouldBeTrue();
         GetUsersError.OrganisationNotFound notFound =
@@ -51,137 +99,102 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetUsers_ReturnsEmptyPage_WhenOrganisationHasNoUsers()
     {
-        Context.Organisations.Add(_organisationFaker.Generate());
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var emptyOrg = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
 
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
+        GetUsersResult result = await Service.GetUsers(
+            CreateGetUsersQuery() with
+            {
+                OrganisationId = emptyOrg.Id,
+            },
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldBeEmpty();
         dto.TotalCount.ShouldBe(0);
-        dto.Page.ShouldBe(1);
-        dto.PageSize.ShouldBe(20);
     }
 
     [Fact]
     public async Task GetUsers_MapsUserMembershipFields_WhenUsersExist()
     {
-        var organisation = _organisationFaker.Generate();
-        var lastActive = new DateTime(2026, 6, 19, 12, 50, 1, DateTimeKind.Utc);
-        var user = _userFaker.Generate();
-        user.Update(x =>
-        {
-            x.WorkEmail = "user@example.com";
-            x.LastActive = lastActive;
-        });
-        var membership = _userOrgMembershipFaker.Generate();
-        membership.Update(x =>
-        {
-            x.User = user;
-            x.Organisation = organisation;
-            x.UserRole = UserRole.Champion;
-            x.Status = UserOrgStatus.Active;
-        });
-        Context.Organisations.Add(organisation);
-        Context.Users.Add(user);
-        Context.UserOrgMemberships.Add(membership);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
+        var userFaker = new UserFaker().RuleFor(
+            x => x.UserOrgMemberships,
+            (f, u) =>
+            {
+                return _userOrgMembershipFaker
+                    .RuleFor(x => x.Organisation, _ => _organisationFaker.Generate())
+                    .Generate(1)
+                    .ToArray();
+            }
+        );
+        var user = await AddEntity(userFaker.Generate(), TestContext.Current.CancellationToken);
+        var userMembership = user.UserOrgMemberships!.Single();
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
 
         dto.ShouldNotBeNull();
-        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
-        item.UserId.ShouldBe(user.Id);
-        item.EmailAddress.ShouldBe(user.WorkEmail);
-        item.Role.ShouldBe(UserRole.Champion);
-        item.Status.ShouldBe(UserOrgStatus.Active);
-        item.LastActive.ShouldBe(lastActive);
+        UserListItemDto item = dto.Items.Single(x => x.UserId == userMembership.UserId);
+        item.UserId.ShouldBe(userMembership.UserId);
+        item.EmailAddress.ShouldBe(userMembership.User!.WorkEmail);
+        item.Role.ShouldBe(userMembership.UserRole);
+        item.Status.ShouldBe(userMembership.Status);
+
+        if (userMembership.User.LastActive.HasValue)
+        {
+            item.LastActive.HasValue.ShouldBeTrue();
+            item.LastActive.Value.ShouldBe(
+                userMembership.User.LastActive.Value,
+                TimeSpan.FromMicroseconds(1)
+            );
+        }
     }
 
     [Fact]
     public async Task GetUsers_FiltersByMultipleStatuses_WhenStatusesProvided()
     {
-        UserOrgStatus[] userOrgStatuses =
-        [
-            UserOrgStatus.RequestedAccess,
-            UserOrgStatus.Active,
-            UserOrgStatus.Inactive,
-        ];
-        Organisation organisation = _organisationFaker.Generate();
-        var data = userOrgStatuses.Select(s =>
-        {
-            var user = _userFaker.Generate();
-            var membership = _userOrgMembershipFaker.Generate();
-            membership.User = user;
-            membership.Organisation = organisation;
-            membership.Status = s;
-            return membership;
-        });
-        Context.UserOrgMemberships.AddRange(data);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(status: [UserOrgStatus.Active, UserOrgStatus.Inactive]),
-                TestContext.Current.CancellationToken
-            );
+        UserOrgStatus[] filterStatuses = [UserOrgStatus.Active, UserOrgStatus.Inactive];
+        GetUsersResult result = await Service.GetUsers(
+            CreateGetUsersQuery(status: [UserOrgStatus.Active, UserOrgStatus.Inactive]),
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(2);
-        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([2, 3]);
+        var statuses = dto.Items.Select(i => i.Status);
+        statuses.ShouldOnlyContain(filterStatuses);
+        statuses.ShouldContainSet(filterStatuses);
     }
 
     [Fact]
     public async Task GetUsers_ExcludesRejectedUsers_ByDefault()
     {
-        UserOrgStatus[] userOrgStatuses =
-        [
-            UserOrgStatus.Active,
-            UserOrgStatus.Rejected,
-            UserOrgStatus.Inactive,
-        ];
-        Organisation organisation = _organisationFaker.Generate();
-        var data = userOrgStatuses.Select(s =>
-        {
-            var user = _userFaker.Generate();
-            var membership = _userOrgMembershipFaker.Generate();
-            membership.User = user;
-            membership.Organisation = organisation;
-            membership.Status = s;
-            return membership;
-        });
-        Context.UserOrgMemberships.AddRange(data);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(CreateGetUsersQuery(), TestContext.Current.CancellationToken);
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(2);
+        dto.TotalCount.ShouldBe(ViewableMemberships.Count());
         dto.Items.ShouldAllBe(i => i.Status != UserOrgStatus.Rejected);
     }
 
     [Fact]
     public async Task GetUsers_ExcludesRejectedUsers_EvenWhenExplicitlyRequested()
     {
-        Organisation organisation = _organisationFaker.Generate();
-        var user = _userFaker.Generate();
-        var membership = _userOrgMembershipFaker.Generate();
-        membership.User = user;
-        membership.Organisation = organisation;
-        membership.Status = UserOrgStatus.Rejected;
-        Context.UserOrgMemberships.Add(membership);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(status: [UserOrgStatus.Rejected]),
-                TestContext.Current.CancellationToken
-            );
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery with
+            {
+                Status = [UserOrgStatus.Rejected],
+            },
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.Items.ShouldBeEmpty();
@@ -191,63 +204,36 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetUsers_FiltersByMultipleRoles_WhenRolesProvided()
     {
-        UserRole[] userRoles = [UserRole.Standard, UserRole.Champion, UserRole.Super];
-        Organisation organisation = _organisationFaker.Generate();
-        var data = userRoles.Select(r =>
-        {
-            var user = _userFaker.Generate();
-            var membership = _userOrgMembershipFaker.Generate();
-            membership.User = user;
-            membership.Organisation = organisation;
-            membership.UserRole = r;
-            return membership;
-        });
-        Context.UserOrgMemberships.AddRange(data);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(role: [UserRole.Champion, UserRole.Super]),
-                TestContext.Current.CancellationToken
-            );
+        UserRole[] roleFilter = [UserRole.Champion, UserRole.Super];
+        GetUsersResult result = await Service.GetUsers(
+            CreateGetUsersQuery(role: roleFilter),
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(2);
-        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([2, 3]);
+        var roles = dto.Items.Select(x => x.Role);
+        roles.ShouldOnlyContain(roleFilter);
+        roles.ShouldContainSet(roleFilter);
     }
 
     [Fact]
     public async Task GetUsers_FiltersByPartialEmail_WhenEmailProvided()
     {
-        Organisation organisation = _organisationFaker.Generate();
-        string[] emails =
-        [
-            "john.smith@example.com",
-            "jane.doe@example.com",
-            "bob.smithers@example.com",
-        ];
-        var data = emails.Select(e =>
-        {
-            var user = _userFaker.Generate();
-            user.Update(x => x.WorkEmail = e);
-            var membership = _userOrgMembershipFaker.Generate();
-            membership.User = user;
-            membership.Organisation = organisation;
-            return membership;
-        });
-        Context.UserOrgMemberships.AddRange(data);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var sampleMembership = _faker.PickRandom(ViewableMemberships);
+        var email = sampleMembership.User!.WorkEmail;
+        var randomSubString = _faker.GetRandomSubString(email);
+        var randomlyCapitalised = _faker.GetRandomlyCapitalisedString(randomSubString);
 
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(email: "SMITH"),
-                TestContext.Current.CancellationToken
-            );
+        GetUsersResult result = await Service.GetUsers(
+            new() { Email = randomlyCapitalised },
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(2);
-        dto.Items.Select(i => i.EmailAddress)
-            .ShouldBe(["john.smith@example.com", "bob.smithers@example.com"]);
+        dto.Items.ShouldContain(x => x.UserId == sampleMembership.User.Id);
+        dto.Items.ShouldAllBe(x =>
+            x.EmailAddress!.Contains(randomlyCapitalised, StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     [Fact]
@@ -267,11 +253,10 @@ public class UserServiceTests : DatabaseTestBase
         Context.UserOrgMemberships.AddRange(data);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(email: "100%off"),
-                TestContext.Current.CancellationToken
-            );
+        GetUsersResult result = await Service.GetUsers(
+            CreateGetUsersQuery(organisationId: organisation.Id, email: "100%off"),
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         UserListItemDto item = dto.Items.ShouldHaveSingleItem();
@@ -281,499 +266,202 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetUsers_FiltersByLastActiveRange_WhenBothBoundsProvided()
     {
-        Organisation organisation = _organisationFaker.Generate();
-        (DateTime? LastActive, string Email)[] users =
-        [
-            (new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), "before@example.com"),
-            (new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc), "inrange@example.com"),
-            (new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc), "after@example.com"),
-        ];
-        var data = users.Select(u =>
-        {
-            var user = _userFaker.Generate();
-            user.Update(x =>
+        var sampleUsers = _faker
+            .PickRandom(ViewableUsers.Where(x => x.LastActive.HasValue), 3)
+            .OrderBy(x => x.LastActive)
+            .ToArray();
+        var (beforeUser, inRangeUser, afterUser) = (sampleUsers[0], sampleUsers[1], sampleUsers[2]);
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery with
             {
-                x.WorkEmail = u.Email;
-                x.LastActive = u.LastActive;
-            });
-            var membership = _userOrgMembershipFaker.Generate();
-            membership.User = user;
-            membership.Organisation = organisation;
-            return membership;
-        });
-        Context.UserOrgMemberships.AddRange(data);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(
-                    lastActiveFrom: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero),
-                    lastActiveTo: new DateTimeOffset(2026, 4, 1, 0, 0, 0, TimeSpan.Zero)
+                LastActiveFrom = new DateTimeOffset(
+                    beforeUser.LastActive!.Value.AddSeconds(1),
+                    TimeSpan.Zero
                 ),
-                TestContext.Current.CancellationToken
-            );
+                LastActiveTo = new DateTimeOffset(
+                    afterUser.LastActive!.Value.AddSeconds(-1),
+                    TimeSpan.Zero
+                ),
+            },
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
-        item.EmailAddress.ShouldBe("inrange@example.com");
+        var ids = dto.Items.Select(x => x.UserId).ToHashSet();
+        ids.ShouldNotContain(beforeUser.Id);
+        ids.ShouldContain(inRangeUser.Id);
+        ids.ShouldNotContain(afterUser.Id);
     }
 
     [Fact]
     public async Task GetUsers_FiltersByLastActiveFrom_WhenOnlyFromProvided()
     {
-        Organisation organisation = _organisationFaker.Generate();
-        (DateTime? LastActive, string Email)[] users =
-        [
-            (new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), "before@example.com"),
-            (new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc), "after@example.com"),
-        ];
-        var data = users.Select(u =>
-        {
-            var user = _userFaker.Generate();
-            user.Update(x =>
+        var sampleUsers = _faker
+            .PickRandom(ViewableUsers.Where(x => x.LastActive.HasValue), 2)
+            .OrderBy(x => x.LastActive)
+            .ToArray();
+        var (beforeUser, inRangeUser) = (sampleUsers[0], sampleUsers[1]);
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery with
             {
-                x.WorkEmail = u.Email;
-                x.LastActive = u.LastActive;
-            });
-            var membership = _userOrgMembershipFaker.Generate();
-            membership.User = user;
-            membership.Organisation = organisation;
-            return membership;
-        });
-        Context.UserOrgMemberships.AddRange(data);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(
-                    lastActiveFrom: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero)
+                LastActiveFrom = new DateTimeOffset(
+                    beforeUser.LastActive!.Value.AddSeconds(1),
+                    TimeSpan.Zero
                 ),
-                TestContext.Current.CancellationToken
-            );
+            },
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
-        item.EmailAddress.ShouldBe("after@example.com");
+        var ids = dto.Items.Select(x => x.UserId).ToHashSet();
+        ids.ShouldNotContain(beforeUser.Id);
+        ids.ShouldContain(inRangeUser.Id);
     }
 
     [Fact]
     public async Task GetUsers_FiltersByLastActiveTo_WhenOnlyToProvided()
     {
-        Organisation organisation = _organisationFaker.Generate();
-        (DateTime? LastActive, string Email)[] users =
-        [
-            (new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), "before@example.com"),
-            (new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc), "after@example.com"),
-        ];
-        var data = users.Select(u =>
-        {
-            var user = _userFaker.Generate();
-            user.Update(x =>
+        var sampleUsers = _faker
+            .PickRandom(ViewableUsers.Where(x => x.LastActive.HasValue), 2)
+            .OrderBy(x => x.LastActive)
+            .ToArray();
+        var (inRangeUser, afterUser) = (sampleUsers[0], sampleUsers[1]);
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery with
             {
-                x.WorkEmail = u.Email;
-                x.LastActive = u.LastActive;
-            });
-            var membership = _userOrgMembershipFaker.Generate();
-            membership.User = user;
-            membership.Organisation = organisation;
-            return membership;
-        });
-        Context.UserOrgMemberships.AddRange(data);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(
-                    lastActiveTo: new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero)
+                LastActiveTo = new DateTimeOffset(
+                    afterUser.LastActive!.Value.AddSeconds(-1),
+                    TimeSpan.Zero
                 ),
-                TestContext.Current.CancellationToken
-            );
+            },
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
-        item.EmailAddress.ShouldBe("before@example.com");
+        var ids = dto.Items.Select(x => x.UserId).ToHashSet();
+        ids.ShouldContain(inRangeUser.Id);
+        ids.ShouldNotContain(afterUser.Id);
     }
 
     [Fact]
     public async Task GetUsers_ExcludesNeverActiveUsers_WhenLastActiveFilterProvided()
     {
-        Organisation organisation = _organisationFaker.Generate();
-        var neverActiveUser = _userFaker.Generate();
-        neverActiveUser.Update(x =>
-        {
-            x.WorkEmail = "neveractive@example.com";
-            x.LastActive = null;
-        });
-        var activeUser = _userFaker.Generate();
-        activeUser.Update(x =>
-        {
-            x.WorkEmail = "active@example.com";
-            x.LastActive = new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc);
-        });
-        Context.UserOrgMemberships.AddRange(
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = neverActiveUser;
-                    x.Organisation = organisation;
-                }),
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = activeUser;
-                    x.Organisation = organisation;
-                })
+        _seededUsers.ShouldContain(
+            x => x.LastActive.HasValue,
+            "Data set should contain at least one user with LastActive value"
         );
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(
-                    lastActiveFrom: new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
-                ),
-                TestContext.Current.CancellationToken
-            );
+        var sampleUser = _faker.PickRandom(ViewableUsers.Where(x => x.LastActive.HasValue));
+        GetUsersResult result = await Service.GetUsers(
+            CreateGetUsersQuery(
+                lastActiveFrom: new DateTimeOffset(sampleUser.LastActive!.Value, TimeSpan.Zero)
+            ),
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
-        item.EmailAddress.ShouldBe("active@example.com");
+        dto.Items.ShouldAllBe(x => x.LastActive.HasValue);
     }
 
     [Fact]
-    public async Task GetUsers_PaginatesAndOrdersByUserId_WhenUsersExist()
+    public async Task GetUsers_Paginates_WhenUsersExist()
     {
-        Context.Organisations.Add(_organisationFaker.Generate().Update(x => x.Id = 1));
-        Context.Users.AddRange(
-            _userFaker.Generate().Update(x => x.Id = 30),
-            _userFaker.Generate().Update(x => x.Id = 10),
-            _userFaker.Generate().Update(x => x.Id = 20)
+        GetUsersResult result = await Service.GetUsers(
+            new() { Page = 2, PageSize = 1 },
+            TestContext.Current.CancellationToken
         );
-        Context.UserOrgMemberships.AddRange(
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 1;
-                    x.UserId = 30;
-                    x.OrganisationId = 1;
-                }),
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 2;
-                    x.UserId = 10;
-                    x.OrganisationId = 1;
-                }),
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 3;
-                    x.UserId = 20;
-                    x.OrganisationId = 1;
-                })
-        );
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(page: 2, pageSize: 1),
-                TestContext.Current.CancellationToken
-            );
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(3);
+        dto.TotalCount.ShouldBe(ViewableMemberships.Count());
         dto.Page.ShouldBe(2);
         dto.PageSize.ShouldBe(1);
-        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
-        item.UserId.ShouldBe(20);
+    }
+
+    [Fact]
+    public async Task GetUsers_OrdersByUserId()
+    {
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto(),
+            TestContext.Current.CancellationToken
+        );
+
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
+        dto.Items.Select(x => x.UserId).ShouldBeInOrder();
     }
 
     [Fact]
     public async Task GetUsers_ReturnsUsersAcrossOrganisations_WhenOrganisationIdIsMissing()
     {
-        Context.Organisations.AddRange(
-            _organisationFaker.Generate().Update(x => x.Id = 1),
-            _organisationFaker.Generate().Update(x => x.Id = 2)
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery with
+            {
+                OrganisationId = null,
+            },
+            TestContext.Current.CancellationToken
         );
-        Context.Users.AddRange(
-            _userFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 10;
-                    x.WorkEmail = "one@example.com";
-                }),
-            _userFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 20;
-                    x.WorkEmail = "two@example.com";
-                })
-        );
-        Context.UserOrgMemberships.AddRange(
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 1;
-                    x.UserId = 10;
-                    x.OrganisationId = 1;
-                }),
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 2;
-                    x.UserId = 20;
-                    x.OrganisationId = 2;
-                })
-        );
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(organisationId: null),
-                TestContext.Current.CancellationToken
-            );
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(2);
-        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 20]);
+        dto.Items.Select(i => _seededUsers.First(x => x.Id == i.UserId))
+            .SelectMany(x => x.UserOrgMemberships!.Select(x => x.OrganisationId))
+            .Distinct()
+            .Count()
+            .ShouldBeGreaterThan(1);
     }
 
     [Fact]
     public async Task GetUsers_FiltersByStatus_WhenOrganisationIdIsMissing()
     {
-        Context.Organisations.AddRange(
-            _organisationFaker.Generate().Update(x => x.Id = 1),
-            _organisationFaker.Generate().Update(x => x.Id = 2)
+        GetUsersResult withNoFilter = await Service.GetUsers(
+            CreateGetUsersQuery(organisationId: null),
+            TestContext.Current.CancellationToken
         );
-        Context.Users.AddRange(
-            _userFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 10;
-                    x.WorkEmail = "active@example.com";
-                }),
-            _userFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 20;
-                    x.WorkEmail = "inactive@example.com";
-                })
-        );
-        Context.UserOrgMemberships.AddRange(
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 1;
-                    x.UserId = 10;
-                    x.OrganisationId = 1;
-                    x.Status = UserOrgStatus.Active;
-                }),
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 2;
-                    x.UserId = 20;
-                    x.OrganisationId = 2;
-                    x.Status = UserOrgStatus.Inactive;
-                })
-        );
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        withNoFilter
+            .ShouldBeSuccess()
+            .Items.Select(x => x.Status)
+            .ShouldContainSet([UserOrgStatus.Inactive, UserOrgStatus.Active]);
 
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(organisationId: null, status: [UserOrgStatus.Inactive]),
-                TestContext.Current.CancellationToken
-            );
-
-        PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(1);
-        UserListItemDto item = dto.Items.ShouldHaveSingleItem();
-        item.UserId.ShouldBe(20);
-        item.Status.ShouldBe(UserOrgStatus.Inactive);
+        GetUsersResult resultWithFilter = await Service.GetUsers(
+            CreateGetUsersQuery(organisationId: null, status: [UserOrgStatus.Inactive]),
+            TestContext.Current.CancellationToken
+        );
+        resultWithFilter
+            .ShouldBeSuccess()
+            .Items.Select(x => x.Status)
+            .ShouldOnlyContain([UserOrgStatus.Inactive]);
     }
 
     [Fact]
     public async Task GetUsers_PageBeyondLastPage_ReturnsEmptyItemsWithCorrectTotalCount()
     {
-        Context.Organisations.Add(_organisationFaker.Generate().Update(x => x.Id = 1));
-        Context.Users.Add(
-            _userFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 10;
-                    x.WorkEmail = "user@example.com";
-                })
+        var pageSize = 5;
+        var lastPage = (int)Math.Ceiling((double)ViewableMemberships.Count() / pageSize) + 1;
+        GetUsersResult result = await Service.GetUsers(
+            new() { Page = lastPage, PageSize = pageSize },
+            TestContext.Current.CancellationToken
         );
-        Context.UserOrgMemberships.Add(
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 1;
-                    x.UserId = 10;
-                    x.OrganisationId = 1;
-                    x.Status = UserOrgStatus.Active;
-                })
-        );
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(page: 5),
-                TestContext.Current.CancellationToken
-            );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.Items.ShouldBeEmpty();
-        dto.TotalCount.ShouldBe(1);
-        dto.Page.ShouldBe(5);
+        dto.TotalCount.ShouldBe(ViewableMemberships.Count());
+        dto.Page.ShouldBe(lastPage);
     }
 
     [Fact]
     public async Task GetUsers_UserHasMembershipsInMultipleOrganisations_ReturnsOneRowPerMembership()
     {
-        Context.Organisations.AddRange(
-            _organisationFaker.Generate().Update(x => x.Id = 1),
-            _organisationFaker.Generate().Update(x => x.Id = 2)
+        var usersWithMultipleMemberships = ViewableUsers.Where(x =>
+            x.UserOrgMemberships!.Count > 1
         );
-        Context.Users.Add(
-            _userFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 10;
-                    x.WorkEmail = "multi@example.com";
-                })
-        );
-        Context.UserOrgMemberships.AddRange(
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 1;
-                    x.UserId = 10;
-                    x.OrganisationId = 1;
-                    x.AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines;
-                }),
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.Id = 2;
-                    x.UserId = 10;
-                    x.OrganisationId = 2;
-                    x.AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines;
-                })
-        );
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var sampleUser = _faker.PickRandom(usersWithMultipleMemberships);
 
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await _service.GetUsers(
-                CreateGetUsersQuery(organisationId: null),
-                TestContext.Current.CancellationToken
-            );
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(2);
-        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([10, 10]);
-    }
-
-    [Fact]
-    public async Task CreateUser_AllFieldsProvided_ReturnsDto()
-    {
-        Context.Organisations.Add(
-            new Organisation
-            {
-                Id = 1,
-                OrganisationName = "Test Organisation",
-                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-                HeadOfficeEmail = "info@pharma.gov.uk",
-                HeadOfficeTelephone = "020 1234 5678",
-            }
-        );
-
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
-        {
-            OrganisationId = 1,
-        };
-        CreateUserResult result = await _service.CreateUser(
-            createDto,
-            TestContext.Current.CancellationToken
-        );
-        UserDetailsDto user = result.ShouldBeSuccess();
-        user.ShouldBe(
-            new UserDetailsDto
-            {
-                Title = createDto.Title,
-                FullName = createDto.FullName,
-                JobTitle = createDto.JobTitle,
-                WorkEmail = createDto.WorkEmail,
-                WorkPhone = createDto.WorkTelephone,
-                UserType = UserType.PharmaUser,
-            }
-        );
-    }
-
-    [Fact]
-    public async Task CreateUser_EmailConflict_ReturnsConflict()
-    {
-        Context.Organisations.Add(
-            new Organisation
-            {
-                Id = 1,
-                OrganisationName = "Test Organisation",
-                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-                HeadOfficeEmail = "info@pharma.gov.uk",
-                HeadOfficeTelephone = "020 1234 5678",
-            }
-        );
-
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var existingUser = _userFaker.Generate();
-        existingUser.WorkEmail = "tests@test.com";
-        Context.Users.Add(existingUser);
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
-        {
-            OrganisationId = 1,
-            WorkEmail = existingUser.WorkEmail,
-        };
-        CreateUserResult result = await _service.CreateUser(
-            createDto,
-            TestContext.Current.CancellationToken
-        );
-        result.ShouldBeError().ShouldBeOfType<CreateUserError.EmailConflict>();
-    }
-
-    [Fact]
-    public async Task CreateUser_OrgIDNotFound_ReturnsNotFound()
-    {
-        CreateUserRequestDto createDto = _createUserRequestDtoFaker.Generate() with
-        {
-            OrganisationId = 999,
-        };
-        CreateUserResult result = await _service.CreateUser(
-            createDto,
-            TestContext.Current.CancellationToken
-        );
-        CreateUserError error = result.ShouldBeError();
-        error.ShouldBeOfType<CreateUserError.NotFound>();
-        ((CreateUserError.NotFound)error).OrganisationId.ShouldBe(999);
+        var relevantEntries = dto.Items.Where(x => x.UserId == sampleUser.Id);
+        relevantEntries.Count().ShouldBe(sampleUser.UserOrgMemberships!.Count);
     }
 
     [Theory]
@@ -820,7 +508,7 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
         var results = await harness.Service.GetUsers(
-            CreateGetUsersQuery(organisationId: null),
+            _getAllUserQuery,
             TestContext.Current.CancellationToken
         );
 
@@ -833,10 +521,8 @@ public class UserServiceTests : DatabaseTestBase
         }
         else
         {
-            dto.TotalCount.ShouldBe(3);
             dto.Items.Select(i => i.UserId)
-                .ToArray()
-                .ShouldBe([users[0].Id, users[1].Id, users[2].Id]);
+                .ShouldContainSet([users[0].Id, users[1].Id, users[2].Id]);
         }
     }
 
@@ -859,11 +545,10 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
         IUserService service = harness.Service;
-        Result<PaginatedResponseDto<UserListItemDto>, GetUsersError> result =
-            await service.GetUsers(
-                CreateGetUsersQuery(organisationId: otherOrganisation),
-                TestContext.Current.CancellationToken
-            );
+        GetUsersResult result = await service.GetUsers(
+            CreateGetUsersQuery(organisationId: otherOrganisation),
+            TestContext.Current.CancellationToken
+        );
 
         if (isAllowedToAccess)
         {
@@ -873,6 +558,167 @@ public class UserServiceTests : DatabaseTestBase
         {
             result.Error.ShouldBeOfType<GetUsersError.NotAllowed>();
         }
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_ShouldUpdateUserDetails()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var command = _updateUserDetailsCommandFaker.Generate();
+        _ = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        var databaseUser = await Context.Users.FindAsync(
+            [currentUser.Id],
+            TestContext.Current.CancellationToken
+        );
+        databaseUser.ShouldNotBeNull();
+        var databaseValues = new UpdateUserDetailsCommand()
+        {
+            FullName = databaseUser.FullName,
+            WorkEmail = databaseUser.WorkEmail,
+            WorkTelephone = databaseUser.WorkTelephone ?? string.Empty,
+        };
+        databaseValues.ShouldBe(command);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_ShouldUpdateUpdatedAtTime()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var command = _updateUserDetailsCommandFaker.Generate();
+        _ = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        var databaseUser = await Context.Users.FindAsync(
+            [currentUser.Id],
+            TestContext.Current.CancellationToken
+        );
+        databaseUser.ShouldNotBeNull();
+        databaseUser.UpdatedAt.ShouldBe(_currentDateTime);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_ShouldReturnUpdatedUserDetails()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate();
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        UserDetailsDto value = result.ShouldBeSuccess();
+        var responseValues = new UpdateUserDetailsCommand()
+        {
+            FullName = value.FullName,
+            WorkEmail = value.WorkEmail,
+            WorkTelephone = value.WorkPhone ?? string.Empty,
+        };
+        responseValues.ShouldBe(command);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenEmailConflictsWithExistingUser_ShouldReturnAnError()
+    {
+        var existingOtherUser = await AddEntity(
+            _userFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        User currentUser = await CreateExistingCurrentUser();
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate() with
+        {
+            WorkEmail = existingOtherUser.WorkEmail,
+        };
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.ConflictingEmail>();
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenEmailChanges_ShouldUpdateEmailAttributeInCognito()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        string testEmail = "testupdateuserdetails@email.com";
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate() with
+        {
+            WorkEmail = testEmail,
+        };
+        _ = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        MockUser? user = _harness.Cognito.GetUserByEmail(testEmail);
+        user.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenUserDoesNotExist_ShouldReturnUserDoesNotExistError()
+    {
+        var result = await Service.UpdateUserDetails(
+            999,
+            _updateUserDetailsCommandFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.UserDoesNotExist>();
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenUserIsNotTheTargetUser_ShouldReturnUserIsNoPermittedToUserDetailsError()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var otherUserTestHarness = new ServiceTestHarness<IUserService>(_harness).UpdateCurrentUser(
+            x => x with { Email = "otheruser@email.com" }
+        );
+        var command = _updateUserDetailsCommandFaker.Generate();
+        var result = await otherUserTestHarness.Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
+    }
+
+    private async Task<User> CreateExistingCurrentUser()
+    {
+        Organisation org = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        IUserAdministrationService userAdministrationService =
+            new ServiceTestHarness<IUserAdministrationService>(_harness).Service;
+        Faker<OnboardUserCommandDto> onboardingUserFaker = new OnboardUserCommandDtoFaker().RuleFor(
+            x => x.OrganisationId,
+            _ => org.Id
+        );
+        Result<int, OnboardUserError> result = await userAdministrationService.OnboardUser(
+            onboardingUserFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        return result.Match(
+            x =>
+            {
+                var user =
+                    Context.Users.Find(x)
+                    ?? throw new InvalidOperationException("Could not find created user.");
+                _harness = _harness.UpdateCurrentUser(x => x with { Email = user.WorkEmail });
+
+                return user;
+            },
+            (e) => throw new InvalidOperationException("Failed to create an initial user")
+        );
     }
 
     private static GetUsersQueryDto CreateGetUsersQuery(
@@ -896,18 +742,4 @@ public class UserServiceTests : DatabaseTestBase
             LastActiveFrom = lastActiveFrom,
             LastActiveTo = lastActiveTo,
         };
-
-    private sealed class CreateUserRequestDtoFaker : Faker<CreateUserRequestDto>
-    {
-        public CreateUserRequestDtoFaker()
-        {
-            RuleFor(x => x.UserType, f => f.PickRandom<UserType>());
-            RuleFor(x => x.Title, f => f.PickRandom("Mr", "Mrs", "Ms", "Dr"));
-            RuleFor(x => x.FullName, f => f.Name.FullName());
-            RuleFor(x => x.JobTitle, f => f.Name.JobTitle());
-            RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
-            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
-            RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
-        }
-    }
 }

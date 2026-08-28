@@ -15,6 +15,7 @@ async function loadProxy() {
   vi.doMock('jose', () => ({ createRemoteJWKSet, jwtVerify }))
   vi.stubEnv('COGNITO_ISSUER', issuer)
   vi.stubEnv('COGNITO_CLIENT_ID', clientId)
+  vi.stubEnv('AUTHENTICATION_MODE', undefined)
 
   return import('./proxy')
 }

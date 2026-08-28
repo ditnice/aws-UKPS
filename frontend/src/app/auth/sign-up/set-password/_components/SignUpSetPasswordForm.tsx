@@ -5,19 +5,16 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
+import { Button } from '@/components/Button/Button'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { signUpMfaSetupStorageKey } from '../../constants'
+import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
 
 const signUpSetPasswordSchema = z.object({
-  password: z
-    .string()
-    .min(1, 'Enter your password')
-    .min(8, 'Password must be at least 8 characters long'),
+  password: z.string().min(1, errorMessages.passwordRequired).min(8, errorMessages.passwordFormat),
 })
 
 type SignUpSetPasswordFormValues = z.input<typeof signUpSetPasswordSchema>

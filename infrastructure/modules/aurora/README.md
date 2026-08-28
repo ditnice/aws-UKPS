@@ -45,6 +45,7 @@ No modules.
 | <a name="input_aurora_postgres_min_capacity"></a> [aurora\_postgres\_min\_capacity](#input\_aurora\_postgres\_min\_capacity) | The minimum capacity for an Aurora Serverless v2 cluster | `number` | `0.5` | no |
 | <a name="input_aurora_postgres_port"></a> [aurora\_postgres\_port](#input\_aurora\_postgres\_port) | Database connection port | `number` | `5432` | no |
 | <a name="input_backup_retention_period"></a> [backup\_retention\_period](#input\_backup\_retention\_period) | The number of days to retain backups for the Aurora cluster | `number` | `7` | no |
+| <a name="input_ca_cert_identifier"></a> [ca\_cert\_identifier](#input\_ca\_cert\_identifier) | Certificate authority used to sign the Aurora instance certificate | `string` | `"rds-ca-rsa2048-g1"` | no |
 | <a name="input_cluster_parameter_group_family"></a> [cluster\_parameter\_group\_family](#input\_cluster\_parameter\_group\_family) | Aurora PostgreSQL cluster parameter group family | `string` | `"aurora-postgresql17"` | no |
 | <a name="input_db_name"></a> [db\_name](#input\_db\_name) | Name of the database | `string` | n/a | yes |
 | <a name="input_db_subnet_group_name"></a> [db\_subnet\_group\_name](#input\_db\_subnet\_group\_name) | Name of the DB subnet group used by the Aurora cluster | `string` | n/a | yes |

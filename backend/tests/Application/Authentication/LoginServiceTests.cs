@@ -4,6 +4,8 @@ using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
@@ -20,8 +22,9 @@ public class LoginServiceTests : DatabaseTestBase
     private readonly IServiceTestHarness<ILoginService> _harness;
 
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
-    private readonly LoginRequest _defaultLoginRequest;
-    private readonly RespondToMultiFactorAuthenticationChallengeCommand _defaultResponseToMfaCommand;
+    private LoginRequest _defaultLoginRequest = null!;
+    private RespondToMultiFactorAuthenticationChallengeCommand _defaultResponseToMfaCommand = null!;
+    private User _user = null!;
 
     public LoginServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -32,7 +35,7 @@ public class LoginServiceTests : DatabaseTestBase
             {
                 services.AddSingleton(
                     Options.Create(
-                        new CognitoConfiguration
+                        new CognitoOptions
                         {
                             ClientId = "client-id",
                             Region = "eu-west-2",
@@ -44,17 +47,27 @@ public class LoginServiceTests : DatabaseTestBase
                 );
                 return services;
             });
+    }
+
+    public override async ValueTask InitializeAsync()
+    {
+        await base.InitializeAsync();
         var testUser = _harness.Cognito.TestUser;
+        var userFaker = new UserFaker().RuleFor(
+            x => x.CognitoUsername,
+            _ => new CognitoUsername() { Value = testUser.Username }
+        );
+        _user = await AddEntity(userFaker.Generate(), TestContext.Current.CancellationToken);
         _defaultLoginRequest = new LoginRequest()
         {
-            Username = testUser.Username,
+            Username = _user.WorkEmail,
             Password =
                 testUser.Password
                 ?? throw new InvalidOperationException("The test users password is not set."),
         };
         _defaultResponseToMfaCommand = new RespondToMultiFactorAuthenticationChallengeCommand()
         {
-            Username = testUser.Username,
+            Username = _user.WorkEmail,
             Code = _harness.Cognito.ValidMfaCode,
             AuthenticationSession = "authentication-session",
         };

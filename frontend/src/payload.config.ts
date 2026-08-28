@@ -27,7 +27,7 @@ function getDatabaseConnectionString(): string {
     const password = encodeURIComponent(DATABASE_PASSWORD)
     const databaseName = encodeURIComponent(DATABASE_NAME)
 
-    return `postgres://${username}:${password}@${DATABASE_HOST}:${DATABASE_PORT}/${databaseName}?sslmode=require`
+    return `postgres://${username}:${password}@${DATABASE_HOST}:${DATABASE_PORT}/${databaseName}?sslmode=verify-full`
   }
 
   return ''

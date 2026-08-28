@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import { postAuthLogin } from '@/client/generated'
-
-import { routeOnSuccessfulAuth } from '../../constants'
+import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 
 import { SignInForm } from './SignInForm'
 

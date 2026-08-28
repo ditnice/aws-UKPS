@@ -1,22 +1,24 @@
 'use client'
 
-import { Footer, Main } from '@nice-digital/global-nav'
 import { Container } from '@nice-digital/nds-container'
 
-import { Header } from '../Header/Header'
+import styles from './ApplicationLayout.module.scss'
+import { Footer } from './Footer/Footer'
+import { Header } from './Header/Header'
+import { Main } from './Main/Main'
 
 import type { ReactNode } from 'react'
 
 export function ApplicationLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <Header skipLinkId="content-start" />
-
-      <Main id="content-start">
-        <Container>{children}</Container>
-      </Main>
-
-      <Footer />
+      <div className={styles.contentWrapper}>
+        <Header skipLinkId="content-start" />
+        <Main className={styles.mainContent} id="content-start">
+          <Container>{children}</Container>
+        </Main>
+        <Footer />
+      </div>
     </>
   )
 }

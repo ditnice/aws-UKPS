@@ -1,0 +1,60 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Button > passes design-system variants through 1`] = `
+<DocumentFragment>
+  <button
+    class="btn btn--cta"
+    data-component="button--cta--button"
+    type="button"
+  >
+    Continue
+  </button>
+</DocumentFragment>
+`;
+
+exports[`Button > renders a design-system button by default 1`] = `
+<DocumentFragment>
+  <button
+    class="btn"
+    data-component="button--primary--button"
+    type="button"
+  >
+    Continue
+  </button>
+</DocumentFragment>
+`;
+
+exports[`Button > renders the link variant as a semantic button 1`] = `
+<DocumentFragment>
+  <button
+    class="btn _linkButton_ee73f7 custom-class"
+    data-component="button--primary--button"
+    type="button"
+  >
+    Print page
+  </button>
+</DocumentFragment>
+`;
+
+exports[`ButtonGroup > renders multiple buttons in a group 1`] = `
+<DocumentFragment>
+  <div
+    class="_buttonGroup_ee73f7 custom-class"
+  >
+    <button
+      class="btn"
+      data-component="button--primary--button"
+      type="button"
+    >
+      Continue
+    </button>
+    <button
+      class="btn btn--secondary"
+      data-component="button--secondary--button"
+      type="button"
+    >
+      Cancel
+    </button>
+  </div>
+</DocumentFragment>
+`;

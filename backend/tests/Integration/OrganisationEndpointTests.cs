@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -128,7 +129,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
             OrganisationName = "New Pharma Ltd",
             HeadOfficeAddress = "1 New Street\nLondon\nEC1A 1AA",
             HeadOfficeEmail = "new@example.com",
-            HeadOfficeTelephone = "020 9999 9999",
+            HeadOfficeTelephone = "020 1111 1111",
         };
         var uri = new Uri("/organisations/1", UriKind.Relative);
 
@@ -156,7 +157,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
         saved.OrganisationName.ShouldBe("New Pharma Ltd");
         saved.HeadOfficeAddress.ShouldBe("1 New Street\nLondon\nEC1A 1AA");
         saved.HeadOfficeEmail.ShouldBe("new@example.com");
-        saved.HeadOfficeTelephone.ShouldBe("020 9999 9999");
+        saved.HeadOfficeTelephone.ShouldBe("020 1111 1111");
     }
 
     [Fact]
@@ -230,7 +231,12 @@ public class OrganisationEndpointTests : DatabaseTestBase
     [Fact]
     public async Task DeactivateMembership_ValidRequest_ReturnsOkAndPersistsInactiveStatus()
     {
-        UserOrgMembership membership = await SeedMembership();
+        UserOrgMembership membership = await SeedMembership(
+            overrideMembershipFaker: new UserOrgMembershipFaker().RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
         var uri = new Uri(
             $"/organisations/{membership.OrganisationId}/memberships/{membership.Id}/deactivate",
             UriKind.Relative
@@ -249,14 +255,14 @@ public class OrganisationEndpointTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
         dto.ShouldNotBeNull();
-        dto.Status.ShouldBe(UserOrgStatus.Inactive);
+        dto.Status.ShouldBe(UserOrgStatus.Deactivated);
 
         await using AppDbContext verifyContext = Fixture.CreateContext();
         UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
             m => m.Id == membership.Id,
             TestContext.Current.CancellationToken
         );
-        saved.Status.ShouldBe(UserOrgStatus.Inactive);
+        saved.Status.ShouldBe(UserOrgStatus.Deactivated);
     }
 
     [Fact]
@@ -382,7 +388,9 @@ public class OrganisationEndpointTests : DatabaseTestBase
             HeadOfficeTelephone = "020 1234 5678",
         };
 
-    private async Task<UserOrgMembership> SeedMembership()
+    private async Task<UserOrgMembership> SeedMembership(
+        Faker<UserOrgMembership>? overrideMembershipFaker = null
+    )
     {
         // Both FKs are Restrict, so the parent User and Organisation rows must exist first.
         User user = new UserFaker()
@@ -397,7 +405,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
         Context.Organisations.Add(organisation);
         await Context.SaveChangesAsync();
 
-        UserOrgMembership membership = new UserOrgMembershipFaker()
+        UserOrgMembership membership = (overrideMembershipFaker ?? new UserOrgMembershipFaker())
             .Generate()
             .Update(x =>
             {
