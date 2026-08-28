@@ -50,7 +50,7 @@ export function ChangePermissionsForm({
           return
         }
 
-        router.push(`/portal/organisations/${organisationId}/manage-user-access/${userId}`)
+        router.push(`/portal/organisations/${organisationId}`)
       }}
     >
       {formError && <p role="alert">{formError}</p>}

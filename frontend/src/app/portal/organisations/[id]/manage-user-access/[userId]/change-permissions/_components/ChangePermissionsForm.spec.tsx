@@ -59,13 +59,13 @@ describe('ChangePermissionsForm', () => {
     })
   })
 
-  it("returns to the user's access page once the role has changed", async () => {
+  it('returns to the main manage-organisation page once the role has changed', async () => {
     render(<ChangePermissionsForm {...props} currentRole="Standard" />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Make champion user' }))
 
     await waitFor(() => {
-      expect(push).toHaveBeenCalledWith('/portal/organisations/2/manage-user-access/4')
+      expect(push).toHaveBeenCalledWith('/portal/organisations/2')
     })
   })
 
