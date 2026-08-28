@@ -57,11 +57,7 @@ describe('UserMembershipRetrievalWrapper', () => {
       data: { id: 3, workEmail: 'example@email.com' },
     })
     await renderComponent({
-      children: (request) => (
-        <>
-          <div data-testid="data">{JSON.stringify(request)}</div>
-        </>
-      ),
+      children: (request) => <div data-testid="data">{JSON.stringify(request)}</div>,
     })
     const content = screen.getByTestId('data')
     expect(content.textContent).toBe(JSON.stringify(testData))
