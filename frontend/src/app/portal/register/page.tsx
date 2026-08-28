@@ -1,7 +1,6 @@
 import Link from 'next/link'
 
-import { Button } from '@nice-digital/nds-button'
-
+import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import styles from './page.module.scss'
@@ -32,7 +31,7 @@ export default function RegistrationInfo() {
       </p>
       <p className={styles.marginBottom}>It takes around 5 minutes to request access.</p>
       <Link href="/portal/register/provide-details">
-        <Button variant={Button.variants.cta}>Start now</Button>
+        <Button variant="cta">Start now</Button>
       </Link>
     </>
   )

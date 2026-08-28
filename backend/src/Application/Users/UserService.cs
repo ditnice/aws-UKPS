@@ -1,25 +1,72 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
 >;
+using UpdateUserDetailsResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserDetailsDto,
+    UKPS.Api.Application.Users.Errors.UpdateUserDetailsError
+>;
 
 namespace UKPS.Api.Application.Users;
 
-internal sealed class UserService(
+internal partial class UserService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
-    IDateTimeProvider timeProvider
+    IDateTimeProvider timeProvider,
+    IIdentityService identityService,
+    ICurrentUserInfoService currentUserInfoService,
+    ILogger<UserService> logger
 ) : IUserService
 {
+    public async Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
+    {
+        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+        User? possibleUser = await dbContext
+            .Users.Include(x => x.UserOrgMemberships)!
+                .ThenInclude(x => x.Organisation)
+            .FirstOrDefaultAsync(
+                x => x.CognitoUsername == currentUser.CognitoUsername,
+                cancellationToken
+            );
+        User user =
+            possibleUser
+            ?? throw new InvalidOperationException(
+                "Could not find current user by email in the database as expected."
+            );
+        var membership =
+            user.UserOrgMemberships!.FirstOrDefault(x =>
+                x.OrganisationId == currentUser.OrganisationId
+            )
+            ?? throw new InvalidOperationException(
+                "Current user did not have the membership as expected."
+            );
+
+        return new CurrentUserInformationDto
+        {
+            UserId = user.Id,
+            FullName = user.FullName,
+            WorkTelephone = user.WorkTelephone ?? string.Empty,
+            WorkEmail = currentUser.Email,
+            OrganisationMembershipId = membership.Id,
+            OrganisationId = membership.Organisation!.Id,
+            OrganisationName = membership.Organisation.OrganisationName,
+            UserRole = currentUser.UserRole,
+        };
+    }
+
     public async Task<GetUsersResult> GetUsers(
         GetUsersQueryDto getUsersQuery,
         CancellationToken cancellationToken
@@ -157,55 +204,91 @@ internal sealed class UserService(
         return organisationMemberships;
     }
 
-    public async Task<Result<UserDetailsDto, CreateUserError>> CreateUser(
-        CreateUserRequestDto createUserRequestDto,
+    public async Task<UpdateUserDetailsResult> UpdateUserDetails(
+        int userId,
+        UpdateUserDetailsCommand command,
         CancellationToken cancellationToken
     )
-    // TODO URP 412: Add in authorisation logic
     {
-        var organisation = await dbContext.Organisations.FindAsync(
-            [createUserRequestDto.OrganisationId],
+        await using IDbContextTransaction transaction =
+            await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+            if (user is null)
+            {
+                return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.UserDoesNotExist());
+            }
+
+            bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
+                user.WorkEmail
+            );
+
+            if (!isTheCurrentUserModifyingTheirOwnDetails)
+            {
+                return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
+            }
+
+            user.UpdateDetails(
+                command.FullName,
+                command.WorkTelephone,
+                command.WorkEmail,
+                timeProvider.GetUtcNow()
+            );
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await HandleUserEvents(user, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            UserDetailsDto output = MapToDto(user);
+            return UpdateUserDetailsResult.Ok(output);
+        }
+        catch (DbUpdateException updateException)
+            when (updateException.InnerException is PostgresException postgresException
+                && string.Equals(
+                    postgresException.ConstraintName,
+                    ConstraintNames.UserUniqueEmail,
+                    StringComparison.Ordinal
+                )
+            )
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.ConflictingEmail());
+        }
+        catch (Exception ex)
+        {
+            LogUpdatingUserDetailsFailed(ex);
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    private async Task HandleUserEvents(User user, CancellationToken cancellationToken)
+    {
+        foreach (var ev in user.Events)
+        {
+            switch (ev)
+            {
+                case User.EmailUpdatedEvent emailUpdatedEvent:
+                    await HandleUserEvent(user, emailUpdatedEvent, cancellationToken);
+                    break;
+            }
+        }
+    }
+
+    private async Task HandleUserEvent(
+        User user,
+        User.EmailUpdatedEvent emailUpdatedEvent,
+        CancellationToken cancellationToken
+    )
+    {
+        await identityService.UpdateUserEmail(
+            user.CognitoUsername,
+            emailUpdatedEvent.NewWorkEmail,
             cancellationToken
         );
-        if (organisation is null)
-        {
-            return Result<UserDetailsDto, CreateUserError>.Err(
-                new CreateUserError.NotFound(createUserRequestDto.OrganisationId)
-            );
-        }
-        bool UserExists = await dbContext.Users.AnyAsync(
-            x => x.WorkEmail == createUserRequestDto.WorkEmail,
-            cancellationToken: cancellationToken
-        );
-        if (UserExists)
-        {
-            return Result<UserDetailsDto, CreateUserError>.Err(new CreateUserError.EmailConflict());
-        }
-        var user = new User()
-        {
-            UserType = UserType.PharmaUser,
-            Title = createUserRequestDto.Title,
-            FullName = createUserRequestDto.FullName,
-            JobTitle = createUserRequestDto.JobTitle,
-            WorkTelephone = createUserRequestDto.WorkTelephone,
-            WorkEmail = createUserRequestDto.WorkEmail,
-            CreatedAt = timeProvider.GetUtcNow(),
-
-            UserOrgMemberships =
-            [
-                new UserOrgMembership()
-                {
-                    OrganisationId = createUserRequestDto.OrganisationId,
-                    UserRole = UserRole.Standard,
-                    Status = UserOrgStatus.RequestedAccess,
-                    AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines,
-                    CreatedAt = timeProvider.GetUtcNow(),
-                },
-            ],
-        };
-        dbContext.Users.Add(user);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return Result<UserDetailsDto, CreateUserError>.Ok(MapToDto(user));
     }
 
     private static UserDetailsDto MapToDto(User user)
@@ -226,4 +309,10 @@ internal sealed class UserService(
             .Replace("\\", "\\\\", StringComparison.Ordinal)
             .Replace("%", "\\%", StringComparison.Ordinal)
             .Replace("_", "\\_", StringComparison.Ordinal);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "An error occur whilst updating user details."
+    )]
+    private partial void LogUpdatingUserDetailsFailed(Exception ex);
 }

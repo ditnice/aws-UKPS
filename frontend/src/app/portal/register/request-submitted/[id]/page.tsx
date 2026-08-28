@@ -1,10 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { getUserDetailsById } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
+import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 

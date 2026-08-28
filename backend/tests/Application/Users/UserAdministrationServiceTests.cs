@@ -18,7 +18,10 @@ using GetUserDetails = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
     UKPS.Api.Application.Users.Errors.GetUserDetailsError
 >;
-using OnboardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
+using OnboardUserResult = UKPS.Api.Application.Common.Result<
+    int,
+    UKPS.Api.Application.Users.Errors.OnboardUserError
+>;
 using RegisterUserConfirmation = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
     UKPS.Api.Application.Users.Errors.RegisterUserError
@@ -73,7 +76,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
 
-        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]
@@ -86,7 +89,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         );
         result.ShouldBeSuccess();
 
-        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]
@@ -108,7 +111,6 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             );
 
         foundUser.ShouldNotBeNull();
-        foundUser.IdentityId.ShouldNotBeNull();
         foundUser.CreatedAt.ShouldBe(_currentTime);
         foundUser.FullName.ShouldBe(command.FullName);
         foundUser.WorkTelephone.ShouldBe(command.ContactNumber);

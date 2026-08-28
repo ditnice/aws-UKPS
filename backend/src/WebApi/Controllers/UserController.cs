@@ -17,6 +17,27 @@ namespace UKPS.Api.WebApi.Controllers;
 public class UserController(IUserService userService) : ControllerBase
 {
     /// <summary>
+    /// Gets the information for the currently authenticated user.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the request.
+    /// </param>
+    /// <response code="200">
+    /// Returns the information for the currently authenticated user.
+    /// </response>
+    /// <returns>
+    /// The current user's information.
+    /// </returns>
+    [ProducesResponseType<CurrentUserInformationDto>(StatusCodes.Status200OK)]
+    [HttpGet("me")]
+    public async Task<ActionResult<CurrentUserInformationDto>> GetCurrentUser(
+        CancellationToken cancellationToken
+    )
+    {
+        return await userService.GetCurrentUser(cancellationToken);
+    }
+
+    /// <summary>
     /// Retrieves a paginated list of users based on the specified query parameters.
     /// </summary>
     /// <param name="getUsersQuery">The query parameters for retrieving users, including organisation ID, page, page size, status, role, and email filters.</param>
@@ -49,66 +70,74 @@ public class UserController(IUserService userService) : ControllerBase
                 error switch
                 {
                     GetUsersError.OrganisationNotFound => BadRequest("Organisation not found."),
-                    GetUsersError.NotAllowed => Forbid("User is forbidden from accessing data."),
+                    GetUsersError.NotAllowed => Problem(
+                        statusCode: StatusCodes.Status403Forbidden,
+                        title: "Forbidden",
+                        detail: "You are not authorised to view users."
+                    ),
                     _ => throw new UnreachableException("Unhandled GetUsersError variant."),
                 }
         );
     }
 
     /// <summary>
-    /// Creates a new user.
+    /// Updates the details of the specified user.
     /// </summary>
-    /// <param name="createUserRequestDto">
-    /// The details required to create the user.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A token used to cancel the operation>
-    /// </param>
+    /// <param name="userId">The unique identifier of the user whose details are being updated.</param>
+    /// <param name="command">The updated user details.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
-    /// An <see cref="ActionResult{TValue}"/> containing the created user's details when the
-    /// operation succeeds. Returns:
-    /// <list type="bullet">
-    /// <item>
-    /// <description><c>400 Bad Request</c> if required data is missing.</description>
-    /// </item>
-    /// <item>
-    /// <description><c>404 Not Found</c> if the specified organisation does not exist.</description>
-    /// </item>
-    /// <item>
-    /// <description><c>409 Conflict</c> if a user with the supplied email address already exists.</description>
-    /// </item>
-    /// </list>
+    /// Returns <see cref="UserDetailsDto"/> with the updated user details when the operation
+    /// succeeds (200 OK).
+    /// Returns a bad request response (400 Bad Request) when the supplied user details are invalid.
+    /// Returns a not found response (404 Not Found) when the specified user does not exist.
+    /// Returns a forbidden response (403 Forbidden) when the caller is not authorised to update
+    /// the specified user's details.
     /// </returns>
-    [HttpPost]
+    /// <response code="200">The user's details were successfully updated.</response>
+    /// <response code="400">The supplied user details are invalid.</response>
+    /// <response code="403">The caller is not authorised to update the specified user's details.</response>
+    /// <response code="404">The specified user does not exist.</response>
+    /// <response code="409">The request conflicts with the existing data such as another users email.</response>
     [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<UserDetailsDto>> CreateUser(
-        [FromBody] CreateUserRequestDto createUserRequestDto,
+    [HttpPatch("{userId}")]
+    public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
+        [FromRoute] int userId,
+        [FromBody] UpdateUserDetailsCommand command,
         CancellationToken cancellationToken
     )
     {
-        Result<UserDetailsDto, CreateUserError> result = await userService.CreateUser(
-            createUserRequestDto,
-            cancellationToken
-        );
-        return result.Match<ActionResult<UserDetailsDto>>(
+        var result = await userService.UpdateUserDetails(userId, command, cancellationToken);
+
+        return result.Match(
             x => Ok(x),
-            x =>
-                x switch
-                {
-                    CreateUserError.NotFound => NotFound(
-                        "There is no organisation with that Organisation ID."
-                    ),
-                    CreateUserError.MissingFields => BadRequest(
-                        "Some of the data required is missing."
-                    ),
-                    CreateUserError.EmailConflict => Conflict(
-                        "A user with that email is already registered."
-                    ),
-                    _ => throw new UnreachableException(),
-                }
+            err =>
+            {
+                return err.Match<ActionResult<UserDetailsDto>>(
+                    unauthorised: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Forbidden",
+                            detail: "You are not authorised to update this user's details."
+                        ),
+                    userDoesNotExist: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Not Found",
+                            detail: "The specified user does not exist."
+                        ),
+                    conflictingEmail: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Conflict",
+                            detail: "The specified email conflicts with an existing email."
+                        )
+                );
+            }
         );
     }
 }

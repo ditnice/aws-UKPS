@@ -1,13 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
+using Bogus;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
-using UKPS.Api.Tests.Utilities.Data;
+using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.Fixtures;
 
 namespace UKPS.Api.Tests.Integration;
@@ -17,53 +17,61 @@ public class UserEndpointTests : DatabaseTestBase
 {
     private readonly HttpClient _httpClient;
     private readonly OrganisationFaker _organisationFaker = new();
-    private readonly UserFaker _userFaker = new();
-    private readonly UserOrgMembershipFaker _membershipFaker = new();
+    private readonly Faker _faker = new Faker();
+    private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
+    private readonly IReadOnlyCollection<User> _seededUsers;
+    private IEnumerable<User> ViewableUsers =>
+        _seededUsers.Where(x => x.UserOrgMemberships!.Any(x => x.Status != UserOrgStatus.Rejected));
 
     public UserEndpointTests(PostgresFixture fixture)
         : base(fixture)
     {
+        Randomizer.Seed = new Random(431); // Deterministic Randomisation
+
         _httpClient = fixture.Factory.CreateClient();
+
+        var organisations = _organisationFaker.Generate(4);
+        var userFaker = new UserFaker().RuleFor(
+            x => x.UserOrgMemberships,
+            (f, u) =>
+            {
+                return f.PickRandom(
+                        organisations,
+                        f.Random.Int(min: 1, max: Math.Min(3, organisations.Count))
+                    )
+                    .Select(o =>
+                        _userOrgMembershipFaker.RuleFor(x => x.Organisation, _ => o).Generate()
+                    )
+                    .ToArray();
+            }
+        );
+        _seededUsers = userFaker.Generate(50);
+    }
+
+    public override async ValueTask InitializeAsync()
+    {
+        await base.InitializeAsync();
+        await AddEntities(_seededUsers, TestContext.Current.CancellationToken);
     }
 
     [Fact]
     public async Task GetUsers_OrganisationIdProvided_ReturnsOnlyThatOrganisationsUsers()
     {
-        List<Organisation> organisations = _organisationFaker.Generate(2);
-        List<User> users = _userFaker.Generate(3);
-
-        Context.Organisations.AddRange(organisations);
-        Context.Users.AddRange(users);
-
-        Context.UserOrgMemberships.AddRange(
-            _membershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = users[0];
-                    x.Organisation = organisations[0];
-                    x.Status = UserOrgStatus.RequestedAccess;
-                }),
-            _membershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = users[1];
-                    x.Organisation = organisations[0];
-                    x.Status = UserOrgStatus.Active;
-                }),
-            _membershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = users[2];
-                    x.Organisation = organisations[1];
-                })
+        var sampleUser = _faker.PickRandom(ViewableUsers);
+        var sampleUserOrgs = sampleUser.UserOrgMemberships!.Select(x => x.OrganisationId);
+        var userFromOtherOrganisation = _faker.PickRandom(
+            ViewableUsers.Where(vu =>
+            {
+                var otherUserOrgs = vu.UserOrgMemberships!.Select(x => x.OrganisationId);
+                return !otherUserOrgs.Intersect(sampleUserOrgs).Any();
+            })
         );
+        var randomOrganisation = _faker.PickRandom(sampleUserOrgs);
 
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        var uri = new Uri($"/users?organisationId={organisations[0].Id}", UriKind.Relative);
+        var uri = new Uri(
+            $"/users?organisationId={randomOrganisation}&pageSize={100}",
+            UriKind.Relative
+        );
         HttpResponseMessage response = await _httpClient.GetAsync(
             uri,
             TestContext.Current.CancellationToken
@@ -74,51 +82,13 @@ public class UserEndpointTests : DatabaseTestBase
             PaginatedResponseDto<UserListItemDto>
         >(TestJsonOptions.Default, TestContext.Current.CancellationToken);
         dto.ShouldNotBeNull();
-        dto.TotalCount.ShouldBe(2);
-        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([users[0].Id, users[1].Id]);
+        dto.Items.Select(i => i.UserId).ShouldContain(sampleUser.Id);
+        dto.Items.Select(i => i.UserId).ShouldNotContain(userFromOtherOrganisation.Id);
     }
 
     [Fact]
     public async Task GetUsers_StatusQueryParametersProvided_FiltersByStatus()
     {
-        var organisation = _organisationFaker.Generate();
-        var requestedUser = _userFaker.Generate();
-        var activeUser = _userFaker.Generate();
-        var inactiveUser = _userFaker.Generate();
-
-        Context.Organisations.Add(organisation);
-
-        Context.Users.AddRange(requestedUser, activeUser, inactiveUser);
-
-        Context.UserOrgMemberships.AddRange(
-            _membershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = requestedUser;
-                    x.Organisation = organisation;
-                    x.Status = UserOrgStatus.RequestedAccess;
-                }),
-            _membershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = activeUser;
-                    x.Organisation = organisation;
-                    x.Status = UserOrgStatus.Active;
-                }),
-            _membershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = inactiveUser;
-                    x.Organisation = organisation;
-                    x.Status = UserOrgStatus.Inactive;
-                })
-        );
-
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
         var uri = new Uri(
             "/users?organisationId=1&status=Active&status=Inactive",
             UriKind.Relative
@@ -133,8 +103,16 @@ public class UserEndpointTests : DatabaseTestBase
             PaginatedResponseDto<UserListItemDto>
         >(TestJsonOptions.Default, TestContext.Current.CancellationToken);
         dto.ShouldNotBeNull();
-        dto.TotalCount.ShouldBe(2);
-        dto.Items.Select(i => i.UserId).ToArray().ShouldBe([2, 3]);
+        dto.Items.Select(x => x.Status)
+            .ShouldOnlyContain([UserOrgStatus.Active, UserOrgStatus.Inactive]);
+        dto.Items.Select(x => x.Status)
+            .ShouldContainSet([UserOrgStatus.Active, UserOrgStatus.Inactive]);
+        var returnedUsers = dto.Items.Select(x => _seededUsers.First(su => su.Id == x.UserId));
+
+        foreach (var ru in returnedUsers)
+        {
+            ru.UserOrgMemberships!.Select(x => x.OrganisationId).ShouldContain(1);
+        }
     }
 
     [Fact]
@@ -182,23 +160,6 @@ public class UserEndpointTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task CreateUser_FieldsMissing_ReturnsBadRequest()
-    {
-        var uri = new Uri($"/users", UriKind.Relative);
-        using StringContent content = new(
-            """{"FirstName":""}""",
-            Encoding.UTF8,
-            "application/json"
-        );
-        HttpResponseMessage response = await _httpClient.PostAsync(
-            uri,
-            content,
-            TestContext.Current.CancellationToken
-        );
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 }

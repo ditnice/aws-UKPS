@@ -14,6 +14,10 @@ using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.Controllers;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using UserOnboardingResult = UKPS.Api.Application.Common.Result<
+    int,
+    UKPS.Api.Application.Users.Errors.OnboardUserError
+>;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -33,7 +37,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
 
         _mockService
             .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
-            .Returns(Result<OnboardUserError>.Ok());
+            .Returns(UserOnboardingResult.Ok(1));
         _client = factory
             .WithWebHostBuilder(builder =>
             {
@@ -45,7 +49,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
                 builder.UseSetting(
-                    $"{DevAuthenticationConfiguration.SectionName}:{nameof(DevAuthenticationConfiguration.IsEnabled)}",
+                    $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
                     $"{true}"
                 );
             })
@@ -84,7 +88,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     {
         _mockService
             .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
-            .Returns(Result<OnboardUserError>.Err(new OnboardUserError.NotAllowed()));
+            .Returns(UserOnboardingResult.Err(new OnboardUserError.NotAllowed()));
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
             OnboardEndpoint,
@@ -99,7 +103,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     {
         _mockService
             .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
-            .Returns(Result<OnboardUserError>.Err(new OnboardUserError.UsernameAlreadyExists()));
+            .Returns(UserOnboardingResult.Err(new OnboardUserError.UsernameAlreadyExists()));
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
             OnboardEndpoint,
@@ -114,7 +118,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     {
         _mockService
             .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
-            .Returns(Result<OnboardUserError>.Err(new OnboardUserError.InvalidOrganisation()));
+            .Returns(UserOnboardingResult.Err(new OnboardUserError.InvalidOrganisation()));
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
             OnboardEndpoint,

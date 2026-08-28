@@ -1,25 +1,25 @@
 import Link from 'next/link'
 
-import { Button } from '@nice-digital/nds-button'
 import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
 import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
-import { pageSizeOptions } from '@/app/portal/_constants/pagination'
+import type { Client } from '@/client/generated/client'
+import { getUsers } from '@/client/generated/sdk.gen'
+import type { UserListItemDto } from '@/client/generated/types.gen'
+import { Button } from '@/components/Button/Button'
+import { Table } from '@/components/Table/Table'
+import { Tag } from '@/components/Tag/Tag'
+import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
+
 import {
   lastActivePresetDays,
   roleLabels,
   statusLabels,
   statusTagColours,
   type LastActivePreset,
-} from '@/app/portal/_constants/userLabels'
-import { buildUserListHref, type UserListQuery } from '@/app/portal/_utils/userListQuery'
-import type { Client } from '@/client/generated/client'
-import { getUsers } from '@/client/generated/sdk.gen'
-import type { UserListItemDto } from '@/client/generated/types.gen'
-import { Table } from '@/components/Table/Table'
-import { Tag } from '@/components/Tag/Tag'
-
+} from '../_lib/userLabels'
+import { buildUserListHref, type UserListQuery } from '../_lib/userListQuery'
 import styles from '../page.module.scss'
 
 import type { ComponentProps } from 'react'
@@ -52,21 +52,33 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
-function renderActions(status: UserListItemDto['status']) {
-  switch (status) {
+function renderActions(user: UserListItemDto, organisationId: number) {
+  switch (user.status) {
     case 'Active':
     case 'Inactive':
-      return <a>Edit role</a>
+      return (
+        <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
+          Edit role
+        </Link>
+      )
     case 'Deactivated':
       return <a>Reactivate</a>
     case 'RequestedAccess':
       return (
         <ul className={styles.actionList}>
           <li>
-            <a>Approve</a>
+            <Link
+              href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
+            >
+              Approve
+            </Link>
           </li>
           <li>
-            <a>Reject</a>
+            <Link
+              href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
+            >
+              Reject
+            </Link>
           </li>
         </ul>
       )
@@ -151,7 +163,7 @@ export async function OrganisationUsersTable({
                     <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
                     <td>{renderStatus(user.status)}</td>
                     <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user.status)}</td>
+                    <td>{renderActions(user, organisationId)}</td>
                   </tr>
                 ))
               ) : (

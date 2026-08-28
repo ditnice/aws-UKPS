@@ -7,7 +7,9 @@ import { buildConfig } from 'payload'
 import sharp from 'sharp'
 
 import { Media } from './collections/Media'
+import { Pages } from './collections/Pages'
 import { Users } from './collections/Users'
+import { Header } from './globals/Header'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -25,7 +27,7 @@ function getDatabaseConnectionString(): string {
     const password = encodeURIComponent(DATABASE_PASSWORD)
     const databaseName = encodeURIComponent(DATABASE_NAME)
 
-    return `postgres://${username}:${password}@${DATABASE_HOST}:${DATABASE_PORT}/${databaseName}?sslmode=require`
+    return `postgres://${username}:${password}@${DATABASE_HOST}:${DATABASE_PORT}/${databaseName}?sslmode=verify-full`
   }
 
   return ''
@@ -38,8 +40,9 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media],
+  collections: [Users, Media, Pages],
   editor: lexicalEditor(),
+  globals: [Header],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

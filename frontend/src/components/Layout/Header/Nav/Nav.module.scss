@@ -1,0 +1,30 @@
+@use '@/styles/visibility';
+@use '@/styles/media-queries';
+@use '@/styles/variables';
+
+.wrapper {
+  @include visibility.hide-print;
+  display: none;
+  position: relative;
+
+  @include media-queries.mq($from: md) {
+    display: block;
+  }
+}
+
+.wrapperExpanded {
+  display: block;
+}
+
+.nav {
+  abbr[title] {
+    border-bottom: 0;
+    cursor: help;
+    text-decoration: none;
+  }
+}
+
+.menuWrapper {
+  background: variables.$nice-teal;
+  color: variables.$white;
+}

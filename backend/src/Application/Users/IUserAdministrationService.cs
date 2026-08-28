@@ -41,7 +41,7 @@ public interface IUserAdministrationService
     /// A result indicating whether the user was successfully onboarded or
     /// containing the reason the operation failed.
     /// </returns>
-    Task<Result<OnboardUserError>> OnboardUser(
+    Task<Result<int, OnboardUserError>> OnboardUser(
         OnboardUserCommandDto command,
         CancellationToken cancellationToken
     );

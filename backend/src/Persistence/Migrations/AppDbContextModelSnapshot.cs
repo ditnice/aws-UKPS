@@ -288,6 +288,12 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CognitoUsername")
+                        .IsRequired()
+                        .HasMaxLength(39)
+                        .HasColumnType("varchar(39)")
+                        .HasColumnName("cognito_username");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
@@ -296,11 +302,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("full_name");
-
-                    b.Property<string>("IdentityId")
-                        .HasMaxLength(36)
-                        .HasColumnType("varchar(36)")
-                        .HasColumnName("identity_id");
 
                     b.Property<string>("JobTitle")
                         .HasColumnType("text")

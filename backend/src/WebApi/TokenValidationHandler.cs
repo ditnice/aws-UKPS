@@ -13,9 +13,9 @@ namespace UKPS.Api.WebApi;
 internal class TokenValidationHandler : ITokenValidationHandler
 {
     private readonly AppDbContext _appDbContext;
-    private readonly IOptions<CognitoConfiguration> _options;
+    private readonly IOptions<CognitoOptions> _options;
 
-    public TokenValidationHandler(AppDbContext appDbContext, IOptions<CognitoConfiguration> options)
+    public TokenValidationHandler(AppDbContext appDbContext, IOptions<CognitoOptions> options)
     {
         _appDbContext = appDbContext;
         _options = options;
@@ -32,14 +32,14 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
     private async Task AppendIdentityClaims(TokenValidatedContext context)
     {
-        var subject =
+        var username =
             context.Principal?.FindFirst("username")?.Value
             ?? throw new InvalidOperationException(
                 "Subject could not be found as expected on the JWT."
             );
         var user = await _appDbContext
             .Users.Include(x => x.UserOrgMemberships)
-            .FirstOrDefaultAsync(x => x.IdentityId == subject);
+            .FirstOrDefaultAsync(x => x.CognitoUsername == CognitoUsername.Parse(username));
 
         if (user is null)
         {

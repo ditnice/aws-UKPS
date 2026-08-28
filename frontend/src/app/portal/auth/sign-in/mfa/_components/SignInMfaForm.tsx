@@ -4,10 +4,9 @@ import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
+import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './SignInMfaForm.module.scss'
 

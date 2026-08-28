@@ -14,14 +14,15 @@ internal static class DatabaseConnectionStringFactory
             return configuredConnectionString;
         }
 
-        DatabaseConfiguration settings =
-            configuration.GetSection(DatabaseConfiguration.SectionName).Get<DatabaseConfiguration>()
-            ?? new DatabaseConfiguration();
+        DatabaseOptions settings =
+            configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>()
+            ?? new DatabaseOptions();
 
-        EnsureConfigured(settings.Host, nameof(DatabaseConfiguration.Host));
-        EnsureConfigured(settings.Name, nameof(DatabaseConfiguration.Name));
-        EnsureConfigured(settings.Username, nameof(DatabaseConfiguration.Username));
-        EnsureConfigured(settings.Password, nameof(DatabaseConfiguration.Password));
+        EnsureConfigured(settings.Host, nameof(DatabaseOptions.Host));
+        EnsureConfigured(settings.Name, nameof(DatabaseOptions.Name));
+        EnsureConfigured(settings.Username, nameof(DatabaseOptions.Username));
+        EnsureConfigured(settings.Password, nameof(DatabaseOptions.Password));
+        EnsureConfigured(settings.RootCertificate, nameof(DatabaseOptions.RootCertificate));
 
         return new NpgsqlConnectionStringBuilder
         {
@@ -30,6 +31,8 @@ internal static class DatabaseConnectionStringFactory
             Database = settings.Name,
             Username = settings.Username,
             Password = settings.Password,
+            SslMode = SslMode.VerifyFull,
+            RootCertificate = settings.RootCertificate,
         }.ConnectionString;
     }
 

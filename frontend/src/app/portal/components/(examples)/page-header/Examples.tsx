@@ -1,9 +1,9 @@
 'use client'
 
 import { Breadcrumb, Breadcrumbs } from '@nice-digital/nds-breadcrumbs'
-import { Button } from '@nice-digital/nds-button'
 
 import { BackLink } from '@/components/BackLink/BackLink'
+import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import { Example } from '../../_components/Example'

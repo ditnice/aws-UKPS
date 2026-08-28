@@ -2,8 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthMfa } from '@/client/generated'
-
-import { routeOnSuccessfulAuth } from '../../../constants'
+import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 
 import { SignInMfaForm } from './SignInMfaForm'
 

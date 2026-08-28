@@ -5,16 +5,15 @@ import { useRouter } from 'next/navigation'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import {
   getOrganisationsPublicOptions,
   OrganisationListDto,
   postUsersRegister,
 } from '@/client/generated'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
+import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { Select, SelectOption } from '@/components/Select/Select'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './RegistrationRequestForm.module.scss'
 
