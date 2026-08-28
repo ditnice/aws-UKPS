@@ -31,6 +31,42 @@ internal partial class UserService(
     ILogger<UserService> logger
 ) : IUserService
 {
+    public async Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
+    {
+        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+        User? possibleUser = await dbContext
+            .Users.Include(x => x.UserOrgMemberships)!
+                .ThenInclude(x => x.Organisation)
+            .FirstOrDefaultAsync(
+                x => x.CognitoUsername == currentUser.CognitoUsername,
+                cancellationToken
+            );
+        User user =
+            possibleUser
+            ?? throw new InvalidOperationException(
+                "Could not find current user by email in the database as expected."
+            );
+        var membership =
+            user.UserOrgMemberships!.FirstOrDefault(x =>
+                x.OrganisationId == currentUser.OrganisationId
+            )
+            ?? throw new InvalidOperationException(
+                "Current user did not have the membership as expected."
+            );
+
+        return new CurrentUserInformationDto
+        {
+            UserId = user.Id,
+            FullName = user.FullName,
+            WorkTelephone = user.WorkTelephone ?? string.Empty,
+            WorkEmail = currentUser.Email,
+            OrganisationMembershipId = membership.Id,
+            OrganisationId = membership.Organisation!.Id,
+            OrganisationName = membership.Organisation.OrganisationName,
+            UserRole = currentUser.UserRole,
+        };
+    }
+
     public async Task<GetUsersResult> GetUsers(
         GetUsersQueryDto getUsersQuery,
         CancellationToken cancellationToken

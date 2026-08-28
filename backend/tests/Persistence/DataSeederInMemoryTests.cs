@@ -14,7 +14,7 @@ public sealed class DataSeederInMemoryTests
 
         payload.Organisations.Count.ShouldBe(5);
         payload.Users.Count.ShouldBe(80);
-        payload.Memberships.Count.ShouldBe(80);
+        payload.Memberships.Count.ShouldBe(81); //Additional membership for dev user
     }
 
     [Fact]

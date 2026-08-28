@@ -1,14 +1,19 @@
 'use client'
+
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { useRouter } from 'next/navigation'
+import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
+import { patchUsersByUserId } from '@/client/generated'
+import { UpdateUserDetailsCommand } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
-
-import type { ChangeEvent } from 'react'
+import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
 const EditDetails = z.object({
   fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
@@ -17,19 +22,19 @@ const EditDetails = z.object({
     .trim()
     .min(1, errorMessages.workEmailRequired)
     .pipe(z.email(errorMessages.emailFormat)),
-  phoneNumber: z.string().trim().min(1, errorMessages.personalPhoneRequired),
+  workTelephone: z.string().trim().min(1, errorMessages.personalPhoneRequired),
 })
 
-type EditDetailsValues = z.input<typeof EditDetails>
-
-export function EditDetailsForm() {
+export type EditDetailsFormProps = { userId: number; initialValues: UpdateUserDetailsCommand }
+export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps) {
+  const [error, setError] = useState(false)
   const router = useRouter()
   const form = useForm({
     defaultValues: {
-      fullName: 'Julie Brooks', // These default values will be from their existing account
-      workEmail: 'admin@bigpharma1.com',
-      phoneNumber: '01234567890',
-    } satisfies EditDetailsValues,
+      fullName: initialValues.fullName,
+      workEmail: initialValues.workEmail,
+      workTelephone: initialValues.workTelephone,
+    } satisfies UpdateUserDetailsCommand,
     validationLogic: revalidateLogic({
       mode: 'submit',
       modeAfterSubmission: 'blur',
@@ -37,8 +42,23 @@ export function EditDetailsForm() {
     validators: {
       onDynamic: EditDetails,
     },
-    onSubmit: ({ value }) => {
-      EditDetails.parse(value)
+    onSubmit: async ({ value, formApi }) => {
+      setError(false)
+      const data = EditDetails.parse(value)
+      const response = await patchUsersByUserId({ path: { userId }, body: data })
+
+      if (response.response?.ok) {
+        router.push('/portal/user/me')
+        return
+      }
+
+      setError(true)
+
+      if (response && isValidationProblemDetails(response.error)) {
+        formApi.setFieldMeta('fullName', updateFormApiErrors(response.error, 'FullName'))
+        formApi.setFieldMeta('workEmail', updateFormApiErrors(response.error, 'WorkEmail'))
+        formApi.setFieldMeta('workTelephone', updateFormApiErrors(response.error, 'WorkTelephone'))
+      }
     },
   })
   return (
@@ -50,6 +70,7 @@ export function EditDetailsForm() {
         void form.handleSubmit()
       }}
     >
+      {error && <ErrorState>{errorMessages.updatingUserDetailsError}</ErrorState>}
       <form.Field name="fullName">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
@@ -92,7 +113,7 @@ export function EditDetailsForm() {
           )
         }}
       </form.Field>
-      <form.Field name="phoneNumber">
+      <form.Field name="workTelephone">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 
