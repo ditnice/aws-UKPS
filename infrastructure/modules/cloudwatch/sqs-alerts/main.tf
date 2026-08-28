@@ -92,7 +92,7 @@ resource "aws_cloudwatch_metric_alarm" "dlq_messages_visible" {
   metric_name         = "ApproximateNumberOfMessagesVisible"
   namespace           = "AWS/SQS"
   period              = var.monitoring_period
-  statistic           = "Sum"
+  statistic           = "Maximum"
   threshold           = var.dlq_messages_threshold
   treat_missing_data  = "notBreaching"
   datapoints_to_alarm = 1

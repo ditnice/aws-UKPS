@@ -50,7 +50,7 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
-| <a name="output_alarm_arns"></a> [alarm\_arns](#output\_alarm\_arns) | Map of RDS CloudWatch alarm ARNs keyed by alarm purpose |
+| <a name="output_alarm_arns"></a> [alarm\_arns](#output\_alarm\_arns) | Map of SQS CloudWatch alarm ARNs keyed by alarm purpose |
 | <a name="output_dlq_messages_visible_alarm_arn"></a> [dlq\_messages\_visible\_alarm\_arn](#output\_dlq\_messages\_visible\_alarm\_arn) | ARN of the SQS message in DLQ alarm arn |
 | <a name="output_messages_not_visible_high_alarm_arn"></a> [messages\_not\_visible\_high\_alarm\_arn](#output\_messages\_not\_visible\_high\_alarm\_arn) | ARN of the SQS message not visible high alarm arn |
 | <a name="output_messages_visible_high_alarm_arn"></a> [messages\_visible\_high\_alarm\_arn](#output\_messages\_visible\_high\_alarm\_arn) | ARN of the SQS message visible high alarm arn |

@@ -19,7 +19,7 @@ output "dlq_messages_visible_alarm_arn" {
 }
 
 output "alarm_arns" {
-  description = "Map of RDS CloudWatch alarm ARNs keyed by alarm purpose"
+  description = "Map of SQS CloudWatch alarm ARNs keyed by alarm purpose"
   value = {
     messages_visible_high     = aws_cloudwatch_metric_alarm.messages_visible_high.arn
     messages_not_visible_high = aws_cloudwatch_metric_alarm.messages_not_visible_high.arn
