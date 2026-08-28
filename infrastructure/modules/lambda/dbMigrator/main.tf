@@ -6,7 +6,7 @@ resource "aws_lambda_function" "db_migrator" {
   function_name    = local.function_name
   role             = aws_iam_role.this.arn
   filename         = var.lambda_zip_path
-  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  source_code_hash = var.lambda_zip_source_code_hash
 
   runtime                        = "dotnet10"
   handler                        = "MigratorLambda::MigratorLambda.Function::FunctionHandler"
