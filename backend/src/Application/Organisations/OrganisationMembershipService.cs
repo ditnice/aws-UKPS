@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
 using UKPS.Api.Persistence;
@@ -21,7 +22,8 @@ namespace UKPS.Api.Application.Organisations;
 
 internal sealed class OrganisationMembershipService(
     AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    ICurrentUserInfoService currentUserInfoService
 ) : IOrganisationMembershipService
 {
     public async Task<UpdateUserRoleResult> UpdateUserRole(
@@ -41,10 +43,12 @@ internal sealed class OrganisationMembershipService(
             var error = new OrganisationMembershipUpdateUserRoleError.NotAllowed(organisationId);
             return UpdateUserRoleResult.Err(error);
         }
-        var membership = await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
-            x => x.OrganisationId == organisationId && x.Id == membershipId,
-            cancellationToken
-        );
+        var membership = await dbContext
+            .UserOrgMemberships.Include(x => x.User)
+            .FirstOrDefaultAsync(
+                x => x.OrganisationId == organisationId && x.Id == membershipId,
+                cancellationToken
+            );
         if (membership is null)
         {
             var error = new OrganisationMembershipUpdateUserRoleError.NotFound(
@@ -52,6 +56,12 @@ internal sealed class OrganisationMembershipService(
                 membershipId
             );
             return UpdateUserRoleResult.Err(error);
+        }
+        if (IsCurrentUsersOwnMembership(membership))
+        {
+            return UpdateUserRoleResult.Err(
+                new OrganisationMembershipUpdateUserRoleError.CannotChangeOwnRole(membershipId)
+            );
         }
         membership.UserRole = command.UserRole;
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -83,6 +93,12 @@ internal sealed class OrganisationMembershipService(
         {
             return DeactivateUserResult.Err(
                 new OrganisationMembershipDeactivateUserError.NotFound()
+            );
+        }
+        if (IsCurrentUsersOwnMembership(membership))
+        {
+            return DeactivateUserResult.Err(
+                new OrganisationMembershipDeactivateUserError.CannotDeactivateSelf(membershipId)
             );
         }
         var result = membership.TryDeactivate();
@@ -133,6 +149,11 @@ internal sealed class OrganisationMembershipService(
         await dbContext.SaveChangesAsync(cancellationToken);
         return ReactivateUserResult.Ok(MapToDto(membership));
     }
+
+    // Users must not be able to change their own role or deactivate themselves, regardless of
+    // the permissions their role would otherwise grant them over the organisation.
+    private bool IsCurrentUsersOwnMembership(UserOrgMembership membership) =>
+        currentUserInfoService.IsCurrentUser(membership.User!.WorkEmail);
 
     private static OrganisationMembershipDto MapToDto(UserOrgMembership entity)
     {

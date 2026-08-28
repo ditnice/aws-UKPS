@@ -729,7 +729,7 @@ export type DeactivateMembershipErrors = {
      */
     400: ProblemDetails;
     /**
-     * Forbidden
+     * The caller is not authorised to deactivate the membership, or the membership is their own.
      */
     403: ProblemDetails;
     /**
@@ -812,7 +812,7 @@ export type UpdateUserRoleData = {
 
 export type UpdateUserRoleErrors = {
     /**
-     * Forbidden
+     * The caller is not authorised to update the membership, or the membership is their own.
      */
     403: ProblemDetails;
     /**

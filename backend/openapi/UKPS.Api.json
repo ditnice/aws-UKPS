@@ -700,7 +700,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "The caller is not authorised to deactivate the membership, or the membership is their own.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -937,7 +937,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "The caller is not authorised to update the membership, or the membership is their own.",
             "content": {
               "text/plain": {
                 "schema": {

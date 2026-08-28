@@ -36,16 +36,25 @@ public abstract record OrganisationMembershipDeactivateUserError
         StateMachineTransitionResult<UserOrgStatus> TransitionResult
     ) : OrganisationMembershipDeactivateUserError;
 
+    /// <summary>
+    /// Represents an error indicating that a user attempted to deactivate themselves.
+    /// </summary>
+    /// <param name="MembershipId">The identifier of the caller's own membership.</param>
+    public sealed record CannotDeactivateSelf(int MembershipId)
+        : OrganisationMembershipDeactivateUserError;
+
     internal TResult Match<TResult>(
         Func<NotAllowed, TResult> notAllowed,
         Func<TResult> notFound,
-        Func<NotAllowedInCurrentState, TResult> notAllowedInCurrentState
+        Func<NotAllowedInCurrentState, TResult> notAllowedInCurrentState,
+        Func<CannotDeactivateSelf, TResult> cannotDeactivateSelf
     ) =>
         this switch
         {
             NotAllowed error => notAllowed(error),
             NotFound => notFound(),
             NotAllowedInCurrentState error => notAllowedInCurrentState(error),
+            CannotDeactivateSelf error => cannotDeactivateSelf(error),
             _ => throw new InvalidOperationException($"Unknown error type: {GetType().Name}"),
         };
 }

@@ -419,6 +419,74 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<OrganisationMembershipReactivateUserError.NotFound>();
     }
 
+    [Fact]
+    public async Task UpdateUserRole_ShouldReturnError_WhenTheMembershipBelongsToTheCurrentUser()
+    {
+        var userOrgMembership = await SetupUserOrgMembership();
+        UserRole originalRole = userOrgMembership.UserRole;
+        var harness = await CreateHarnessActingAsMembershipOwner(userOrgMembership);
+
+        var result = await harness.Service.UpdateUserRole(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            CancellationToken.None
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.CannotChangeOwnRole>();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == userOrgMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+        saved.UserRole.ShouldBe(originalRole);
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_ShouldReturnError_WhenTheMembershipBelongsToTheCurrentUser()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
+        var harness = await CreateHarnessActingAsMembershipOwner(userOrgMembership);
+
+        var result = await harness.Service.DeactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipDeactivateUserError.CannotDeactivateSelf>();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == userOrgMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+        saved.Status.ShouldBe(UserOrgStatus.Active);
+    }
+
+    // The caller is recognised by the email claim, so acting as the membership's own user means
+    // giving the current user the same work email.
+    private async Task<
+        IServiceTestHarness<IOrganisationMembershipService>
+    > CreateHarnessActingAsMembershipOwner(UserOrgMembership membership)
+    {
+        User owner = await Context.Users.SingleAsync(u => u.Id == membership.UserId);
+
+        return new ServiceTestHarness<IOrganisationMembershipService>(Context).UpdateCurrentUser(
+            currentUser => currentUser with { Email = owner.WorkEmail }
+        );
+    }
+
     private async Task<UserOrgMembership> SetupUserOrgMembership(
         Action<UserOrgMembership>? modifier = null,
         Faker<UserOrgMembership>? overrideMembershipFaker = null

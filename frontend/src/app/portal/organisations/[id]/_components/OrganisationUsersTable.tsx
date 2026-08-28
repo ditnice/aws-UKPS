@@ -5,7 +5,7 @@ import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import type { Client } from '@/client/generated/client'
-import { getUsers } from '@/client/generated/sdk.gen'
+import { getUsers, getUsersMe } from '@/client/generated/sdk.gen'
 import type { UserListItemDto } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
@@ -52,7 +52,16 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
-function renderActions(user: UserListItemDto, organisationId: number) {
+function renderActions(
+  user: UserListItemDto,
+  organisationId: number,
+  currentUserId: number | undefined,
+) {
+  // Users cannot change their own role or deactivate themselves
+  if (Number(user.userId) === currentUserId) {
+    return 'Not applicable'
+  }
+
   switch (user.status) {
     case 'Active':
     case 'Inactive':
@@ -112,6 +121,9 @@ export async function OrganisationUsersTable({
 }: OrganisationUsersTableProps) {
   const { page, pageSize, status, role, email, lastActive } = query
 
+  const { data: me } = await getUsersMe({ client: apiClient })
+  const currentUserId = me ? Number(me.userId) : undefined
+
   const { data: users, error: usersError } = await getUsers({
     client: apiClient,
     query: {
@@ -163,7 +175,7 @@ export async function OrganisationUsersTable({
                     <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
                     <td>{renderStatus(user.status)}</td>
                     <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user, organisationId)}</td>
+                    <td>{renderActions(user, organisationId, currentUserId)}</td>
                   </tr>
                 ))
               ) : (
