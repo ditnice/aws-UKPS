@@ -6,7 +6,7 @@ import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
 import { patchUsersByUserId } from '@/client/generated'
-import { UpdateUserDetailsCommand, ValidationProblemDetails } from '@/client/generated/types.gen'
+import { UpdateUserDetailsCommand } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
