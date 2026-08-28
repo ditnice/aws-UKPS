@@ -146,8 +146,8 @@ var isOpenApiGeneration = Environment.CommandLine.Contains(
 );
 if (!isOpenApiGeneration)
 {
-    await app.MigrateDatabase();
     await app.SeedData();
+    await app.MigrateDatabase();
 }
 
 await app.RunAsync();
