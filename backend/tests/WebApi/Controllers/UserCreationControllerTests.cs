@@ -209,6 +209,25 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
         ok.Value.ShouldBe(expected);
     }
 
+    [Fact]
+    public async Task GetUserDetailsById_UserDoesNotExist_ReturnsNotFound()
+    {
+        _mockService
+            .GetUserDetailsById(1, TestContext.Current.CancellationToken)
+            .Returns(
+                Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                    new GetUserDetailsError.IdNotFound(1)
+                )
+            );
+
+        ActionResult<RegisterUserConfirmationDto> result = await _controller.GetUserDetailsById(
+            1,
+            TestContext.Current.CancellationToken
+        );
+
+        result.Result.ShouldBeOfType<NotFoundResult>();
+    }
+
     private static RegisterUserDto RegisterUserDto() =>
         new()
         {
