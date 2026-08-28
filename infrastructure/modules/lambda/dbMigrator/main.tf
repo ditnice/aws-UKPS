@@ -8,7 +8,7 @@ resource "aws_lambda_function" "db_migrator" {
   filename         = var.lambda_zip_path
   source_code_hash = filebase64sha256(var.lambda_zip_path)
 
-  runtime                        = "dotnet8"
+  runtime                        = "dotnet10"
   handler                        = "MigratorLambda::MigratorLambda.Function::FunctionHandler"
   memory_size                    = var.memory_size
   timeout                        = var.timeout
