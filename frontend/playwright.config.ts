@@ -1,6 +1,13 @@
 import { defineConfig, devices } from '@playwright/test'
 import 'dotenv/config'
 
+const localBaseURL = 'https://localhost:3000'
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? localBaseURL
+const isLocal = new URL(baseURL).hostname === 'localhost'
+const localChromiumOptions = isLocal
+  ? { launchOptions: { args: ['--ignore-certificate-errors'] } }
+  : {}
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -17,21 +24,21 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'https://localhost:3000',
+    baseURL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
 
     /* The dev server uses a locally-trusted mkcert certificate, but this keeps
      * test runs robust on machines/CI where the mkcert CA isn't installed. */
-    ignoreHTTPSErrors: true,
+    ignoreHTTPSErrors: isLocal,
   },
   projects: [
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        launchOptions: { args: ['--ignore-certificate-errors'] },
+        ...localChromiumOptions,
       },
     },
     {
@@ -47,7 +54,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         channel: 'chrome',
-        launchOptions: { args: ['--ignore-certificate-errors'] },
+        ...localChromiumOptions,
       },
     },
     {
@@ -55,14 +62,16 @@ export default defineConfig({
       use: {
         ...devices['Desktop Edge'],
         channel: 'msedge',
-        launchOptions: { args: ['--ignore-certificate-errors'] },
+        ...localChromiumOptions,
       },
     },
   ],
-  webServer: {
-    command: 'pnpm dev',
-    reuseExistingServer: true,
-    url: 'https://localhost:3000',
-    ignoreHTTPSErrors: true,
-  },
+  webServer: isLocal
+    ? {
+        command: 'pnpm dev',
+        reuseExistingServer: true,
+        url: localBaseURL,
+        ignoreHTTPSErrors: true,
+      }
+    : undefined,
 })

@@ -24,6 +24,8 @@
     "test": "pnpm run test:unit && pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:e2e:chrome": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts --project=chromium",
+    "test:e2e:dev": "cross-env PLAYWRIGHT_BASE_URL=https://dev.ukps.nice.org.uk pnpm run test:e2e",
+    "test:e2e:dev:ui": "cross-env PLAYWRIGHT_BASE_URL=https://dev.ukps.nice.org.uk pnpm run test:e2e --ui",
     "test:e2e:ui": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts --ui",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/int --config ./vitest.config.mts",
     "test:unit": "cross-env NODE_OPTIONS=--no-deprecation vitest run src --config ./vitest.config.mts",
