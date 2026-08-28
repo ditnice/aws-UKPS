@@ -168,18 +168,11 @@ internal sealed partial class UserAdministrationService(
         };
         dbContext.UserRegistrationRequest.Add(userRegister);
         await dbContext.SaveChangesAsync(cancellationToken);
-        var dto = await dbContext
+        var request = await dbContext
             .UserRegistrationRequest.AsNoTracking()
             .Where(x => x.Id == userRegister.Id)
-            .Select(x => new RegisterUserConfirmationDto
-            {
-                Id = x.Id,
-                OrganisationName = x.Organisation!.OrganisationName,
-                FullName = x.FullName,
-                WorkEmail = x.WorkEmail,
-                PhoneNumber = x.PhoneNumber,
-            })
             .SingleAsync(cancellationToken);
+        var dto = MapToDto(request);
 
         return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
     }
@@ -224,4 +217,18 @@ internal sealed partial class UserAdministrationService(
     private partial void LogSendingUserSignUpRequestEmail(string token);
 
     private static string Sanitise(Guid guid) => guid.ToString().Substring(0, 8);
+
+    private static RegisterUserConfirmationDto MapToDto(
+        UserRegistrationRequest userRegistrationRequest
+    )
+    {
+        return new()
+        {
+            Id = userRegistrationRequest.Id,
+            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
+            FullName = userRegistrationRequest.FullName,
+            WorkEmail = userRegistrationRequest.WorkEmail,
+            PhoneNumber = userRegistrationRequest.PhoneNumber,
+        };
+    }
 }
