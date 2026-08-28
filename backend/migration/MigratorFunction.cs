@@ -57,21 +57,22 @@ public sealed class MigratorFunction
 
         await using AppDbContext dbContext = new(options);
 
-        context.Logger.LogInformation("Starting migrations...");
-        await new DatabaseMigrator(dbContext).MigrateAsync(cancellationTokenSource.Token);
-        context.Logger.LogInformation("Migrations completed successfully.");
-
         SeedingOptions seedingOptions = config.GetSection("Seeding").Get<SeedingOptions>()
             ?? throw new InvalidOperationException("Seeding configuration is not set.");
-        if (!seedingOptions.ReseedOnStartup)
-        {
-            context.Logger.LogInformation("Seeding skipped - ReseedOnStartup is false.");
-            return;
-        }
 
-        context.Logger.LogInformation("Starting data seeding...");
-        await new DataSeederInMemory(new SeedDataWriter(dbContext)).SeedData(seedingOptions, cancellationTokenSource.Token);
-        context.Logger.LogInformation("Data seeding completed successfully.");
+        if (seedingOptions.ReseedOnStartup)
+        {
+            context.Logger.LogInformation("Seeding enabled - skipping migrations.");
+            context.Logger.LogInformation("Starting data seeding...");
+            await new DataSeederInMemory(new SeedDataWriter(dbContext)).SeedData(seedingOptions, cancellationTokenSource.Token);
+            context.Logger.LogInformation("Data seeding completed successfully.");
+        }
+        else
+        {
+            context.Logger.LogInformation("Seeding skipped - starting migrations...");
+            await new DatabaseMigrator(dbContext).MigrateAsync(cancellationTokenSource.Token);
+            context.Logger.LogInformation("Migrations completed successfully.");
+        }
     }
 
     private sealed class DbSecret
