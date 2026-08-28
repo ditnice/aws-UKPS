@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260828143934_InitialCreate")]
+    [Migration("20260828155759_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
