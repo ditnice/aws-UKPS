@@ -724,7 +724,7 @@ public class UserServiceTests : DatabaseTestBase
     private static GetUsersQueryDto CreateGetUsersQuery(
         int? organisationId = 1,
         int page = 1,
-        int pageSize = 20,
+        int pageSize = 100,
         ICollection<UserOrgStatus>? status = null,
         ICollection<UserRole>? role = null,
         string? email = null,
