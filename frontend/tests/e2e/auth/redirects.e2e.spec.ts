@@ -1,18 +1,7 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures/test'
 
-test.describe('Frontend', () => {
-  test('loads the homepage', async ({ page }) => {
-    const response = await page.goto('/')
-
-    expect(response?.status()).toBe(200)
-    await expect(page).toHaveURL('/')
-    await expect(page).toHaveTitle('UK PharmaScan')
-    await expect(page.getByRole('banner', { name: 'Site header' })).toBeVisible()
-    await expect(page.getByRole('main')).toBeVisible()
-    await expect(page.getByRole('contentinfo')).toBeVisible()
-  })
-
-  test('redirects unauthenticated portal visits to sign-in', async ({ page }) => {
+test.describe('unauthenticated portal access', () => {
+  test('redirects portal visits to sign-in', async ({ page }) => {
     await page.goto('/portal', { waitUntil: 'domcontentloaded' })
 
     await expect(page).toHaveURL((url) => {

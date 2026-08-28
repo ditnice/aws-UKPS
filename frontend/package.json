@@ -24,6 +24,9 @@
     "test": "pnpm run test:unit && pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:e2e:chrome": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts --project=chromium",
+    "test:e2e:smoke": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test smoke --config=playwright.config.ts --project=chromium",
+    "test:e2e:accessibility": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts --project=accessibility",
+    "test:e2e:authenticated-dev": "cross-env PLAYWRIGHT_BASE_URL=https://dev.ukps.nice.org.uk NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts --project=authenticated-chromium",
     "test:e2e:dev": "cross-env PLAYWRIGHT_BASE_URL=https://dev.ukps.nice.org.uk pnpm run test:e2e",
     "test:e2e:dev:ui": "cross-env PLAYWRIGHT_BASE_URL=https://dev.ukps.nice.org.uk pnpm run test:e2e --ui",
     "test:e2e:ui": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts --ui",
@@ -85,6 +88,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/config-helpers": "^0.7.0",
     "@faker-js/faker": "^10.6.0",
     "@hey-api/openapi-ts": "0.99.0",
@@ -100,6 +104,7 @@
     "eslint-plugin-import": "^2.32.0",
     "fallow": "2.104.0",
     "jsdom": "28.1.0",
+    "otpauth": "^9.5.1",
     "prettier": "^3.9.6",
     "sass": "1.79.6",
     "stylelint": "^17.14.1",
