@@ -36,6 +36,7 @@
 | <a name="module_ses"></a> [ses](#module\_ses) | ../../modules/ses | n/a |
 | <a name="module_sns"></a> [sns](#module\_sns) | ../../modules/sns | n/a |
 | <a name="module_sqs_email_backend"></a> [sqs\_email\_backend](#module\_sqs\_email\_backend) | ../../modules/sqs | n/a |
+| <a name="module_sqs_email_backend_alerts"></a> [sqs\_email\_backend\_alerts](#module\_sqs\_email\_backend\_alerts) | ../../modules/cloudwatch/sqs-alerts | n/a |
 
 ## Resources
 

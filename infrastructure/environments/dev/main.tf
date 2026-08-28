@@ -196,6 +196,18 @@ module "sqs_email_backend" {
   }
 }
 
+# SQS - Email Backend Alerts
+module "sqs_email_backend_alerts" {
+  source = "../../modules/cloudwatch/sqs-alerts"
+
+  project       = local.project
+  environment   = local.environment
+  service_name  = "email-backend"
+  sns_topic_arn = module.sns.sqs_alarms_topic_arn
+  queue_name    = module.sqs_email_backend.queue_name
+  dlq_name      = module.sqs_email_backend.dlq_name
+}
+
 # ECS - Backend
 module "ecs_backend" {
   source = "../../modules/ecs"
