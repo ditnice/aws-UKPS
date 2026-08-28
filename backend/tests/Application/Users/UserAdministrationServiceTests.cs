@@ -14,6 +14,10 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using GetUserDetails = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
+    UKPS.Api.Application.Users.Errors.GetUserDetailsError
+>;
 using OnboardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
 using RegisterUserConfirmation = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
@@ -234,6 +238,42 @@ public class UserAdministrationServiceTests : DatabaseTestBase
                 FullName = registerUserDto.FullName,
                 WorkEmail = registerUserDto.WorkEmail,
                 PhoneNumber = registerUserDto.PhoneNumber,
+            }
+        );
+    }
+
+    [Fact]
+    public async Task GetUserDetailsById_UserExists_ReturnsDto()
+    {
+        OrganisationFaker organisationFaker = new();
+        var organisation = organisationFaker.Generate();
+        Context.Organisations.Add(organisation);
+        UserRegistrationRequest request = new()
+        {
+            Organisation = organisation,
+            OrganisationId = organisation.Id,
+            FullName = "Test",
+            WorkEmail = "test@example.com",
+            PhoneNumber = "07654281622",
+        };
+        Context.UserRegistrationRequest.Add(request);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        GetUserDetails result = await _harness.Service.GetUserDetailsById(
+            request.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        RegisterUserConfirmationDto user = result.ShouldBeSuccess();
+
+        user.ShouldBe(
+            new RegisterUserConfirmationDto
+            {
+                Id = request.Id,
+                OrganisationName = organisation.OrganisationName,
+                FullName = request.FullName,
+                WorkEmail = request.WorkEmail,
+                PhoneNumber = request.PhoneNumber,
             }
         );
     }
