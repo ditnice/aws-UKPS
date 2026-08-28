@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { AuthenticationProblemDetails, CreateOrganisationDto, CurrentUserInformationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { AuthenticationProblemDetails, CreateOrganisationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -184,20 +184,6 @@ export const fakeUserRole = (options?: Options): UserRole => {
         'Champion',
         'Super'
     ]);
-};
-
-export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInformationDto => {
-    const f = options?.faker ?? faker;
-    return {
-        userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        fullName: f.person.fullName(),
-        workTelephone: f.string.sample(),
-        workEmail: f.internet.email(),
-        organisationMembershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        organisationName: f.string.sample(),
-        userRole: fakeUserRole(options)
-    };
 };
 
 export const fakeOrganisationMembershipDto = (options?: Options): OrganisationMembershipDto => {
@@ -457,7 +443,7 @@ export const fakePostOrganisationsResponse400 = (options?: Options): PostOrganis
 
 export const fakePostOrganisationsResponse409 = (options?: Options): PostOrganisationsErrors[409] => fakeProblemDetails(options);
 
-export const fakeGetUsersMeResponse = (options?: Options): GetUsersMeResponse => fakeCurrentUserInformationDto(options);
+export const fakeGetUsersMeResponse = (options?: Options): GetUsersMeResponse => fakeUserInformationDto(options);
 
 export const fakeGetUsersRequest = (options?: Options): Omit<GetUsersData, 'url'> => {
     const f = options?.faker ?? faker;

@@ -35,7 +35,7 @@ internal partial class UserService(
     ILogger<UserService> logger
 ) : IUserService
 {
-    public async Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
+    public async Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
         User? possibleUser = await dbContext
@@ -58,7 +58,7 @@ internal partial class UserService(
                 "Current user did not have the membership as expected."
             );
 
-        return new CurrentUserInformationDto
+        return new UserInformationDto
         {
             UserId = user.Id,
             FullName = user.FullName,

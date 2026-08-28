@@ -3,12 +3,14 @@
 import { revalidatePath } from 'next/cache'
 
 import { updateUserRole } from '@/client/generated/sdk.gen'
+import type { UserRole } from '@/client/generated/types.gen'
 import { createServerApiClient } from '@/client/server-api'
 
-import type { SwitchableRole } from '../../_lib/userRoles'
+// Super users are managed via a different flow, so only standard and champion users
+// can be switched between roles from here.
+type SwitchableRole = Exclude<UserRole, 'Super'>
 
-export type ChangeUserPermissionsResult =
-  { status: 'success' } | { status: 'error'; message: string }
+type ChangeUserPermissionsResult = { status: 'success' } | { status: 'error'; message: string }
 
 export async function changeUserPermissionsAction(
   organisationId: number,

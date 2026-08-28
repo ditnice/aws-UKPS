@@ -1082,17 +1082,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                  "$ref": "#/components/schemas/UserInformationDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                  "$ref": "#/components/schemas/UserInformationDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                  "$ref": "#/components/schemas/UserInformationDto"
                 }
               }
             }
@@ -1711,69 +1711,6 @@
           }
         },
         "description": "Represents the information required to create a new organisation."
-      },
-      "CurrentUserInformationDto": {
-        "required": [
-          "userId",
-          "fullName",
-          "workTelephone",
-          "workEmail",
-          "organisationMembershipId",
-          "organisationId",
-          "organisationName",
-          "userRole"
-        ],
-        "type": "object",
-        "properties": {
-          "userId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the unique identifier of the user.",
-            "format": "int32"
-          },
-          "fullName": {
-            "type": "string",
-            "description": "Gets the full name of the user."
-          },
-          "workTelephone": {
-            "type": "string",
-            "description": "Gets the user's work telephone number."
-          },
-          "workEmail": {
-            "type": "string",
-            "description": "Gets the user's email address."
-          },
-          "organisationMembershipId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the unique identifier of the user's organisation membership.",
-            "format": "int32"
-          },
-          "organisationId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Gets the unique identifier of the user's organisation.",
-            "format": "int32"
-          },
-          "organisationName": {
-            "type": "string",
-            "description": "Gets the name of the user's organisation."
-          },
-          "userRole": {
-            "description": "Gets the role assigned to the user within the organisation.",
-            "$ref": "#/components/schemas/UserRole"
-          }
-        },
-        "description": "Represents information about the currently authenticated user and their\nmembership within an organisation."
       },
       "LoginRequest": {
         "required": [

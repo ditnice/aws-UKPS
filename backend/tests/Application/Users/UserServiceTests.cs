@@ -105,11 +105,11 @@ public class UserServiceTests : DatabaseTestBase
                     CognitoUsername = currentUser.CognitoUsername,
                 }
             );
-            CurrentUserInformationDto result = await Service.GetCurrentUser(
+            UserInformationDto result = await Service.GetCurrentUser(
                 TestContext.Current.CancellationToken
             );
             result.ShouldBe(
-                new CurrentUserInformationDto()
+                new UserInformationDto()
                 {
                     UserId = currentUser.Id,
                     FullName = currentUser.FullName,

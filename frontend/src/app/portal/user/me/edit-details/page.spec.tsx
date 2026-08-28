@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import { CurrentUserInformationDto, getUsersMe } from '@/client/generated'
-import { fakeCurrentUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
+import { UserInformationDto, getUsersMe } from '@/client/generated'
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import EditDetails from './page'
@@ -45,7 +45,7 @@ vi.mock('./_components/EditDetailsForm', () => ({
 
 const mockedGetUsersMe = vi.mocked(getUsersMe)
 
-const exampleUser: CurrentUserInformationDto = {
+const exampleUser: UserInformationDto = {
   userId: 1,
   fullName: 'John Smith',
   workTelephone: '020 7123 4567',
@@ -119,7 +119,7 @@ describe('EditDetails', () => {
 
   it('throws when the current user id is not a number', async () => {
     mockedGetUsersMe.mockResolvedValue({
-      data: { ...fakeCurrentUserInformationDto(), userId: 'incorrect-details' },
+      data: { ...fakeUserInformationDto(), userId: 'incorrect-details' },
       response: { ok: true } as Response,
     })
 

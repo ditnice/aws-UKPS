@@ -26,8 +26,6 @@ export default async function ManageUserAccess({ params }: Props) {
     path: { userId: selectedUserId, organisationId },
   })
 
-  console.log({ user, response })
-
   if (response?.status === 404) {
     notFound()
   }
@@ -59,13 +57,15 @@ export default async function ManageUserAccess({ params }: Props) {
       </ul>
 
       <ButtonGroup>
-        <Button
-          elementType={Link}
-          href={`/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`}
-          variant="cta"
-        >
-          Change permissions
-        </Button>
+        {user.userRole !== 'Super' && (
+          <Button
+            elementType={Link}
+            href={`/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`}
+            variant="cta"
+          >
+            Change permissions
+          </Button>
+        )}
         <Button variant="secondary">Deactivate user</Button>
         <Button variant="secondary">Remove user</Button>
       </ButtonGroup>

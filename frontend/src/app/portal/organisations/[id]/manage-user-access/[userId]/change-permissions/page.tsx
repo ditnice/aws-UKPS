@@ -52,26 +52,30 @@ export default async function ChangeUserPermissions({ params }: Props) {
         {user.workEmail} is a {user.userRole.toLowerCase()} user.
       </p>
 
-      <>
-        <p>
-          If you change this user’s role, they will{' '}
-          {user.userRole === 'Standard'
-            ? 'gain access to additional capabilities in UK PharmaScan, including:'
-            : 'lose access to the following capabilities in UK PharmaScan:'}
-        </p>
-        <ul>
-          <li>adding users to your organisation</li>
-          <li>changing user roles</li>
-          <li>deactivating and removing users</li>
-        </ul>
+      {user.userRole === 'Super' ? (
+        <p>This user’s role cannot be changed from here.</p>
+      ) : (
+        <>
+          <p>
+            If you change this user’s role, they will{' '}
+            {user.userRole === 'Standard'
+              ? 'gain access to additional capabilities in UK PharmaScan, including:'
+              : 'lose access to the following capabilities in UK PharmaScan:'}
+          </p>
+          <ul>
+            <li>adding users to your organisation</li>
+            <li>changing user roles</li>
+            <li>deactivating and removing users</li>
+          </ul>
 
-        <ChangePermissionsForm
-          currentRole={user.userRole}
-          membershipId={Number(user.organisationMembershipId)}
-          organisationId={organisationId}
-          userId={selectedUserId}
-        />
-      </>
+          <ChangePermissionsForm
+            currentRole={user.userRole}
+            membershipId={Number(user.organisationMembershipId)}
+            organisationId={organisationId}
+            userId={selectedUserId}
+          />
+        </>
+      )}
     </>
   )
 }

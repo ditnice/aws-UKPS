@@ -19,7 +19,7 @@ public interface IUserService
     /// A task that represents the asynchronous operation. The task result contains
     /// the current user's details, including their organisation membership and role.
     /// </returns>
-    Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken);
+    Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken);
 
     /// <summary>
     /// Retrieves a paginated list of users based on the specified criteria.
