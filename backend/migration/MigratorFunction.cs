@@ -57,14 +57,18 @@ public sealed class MigratorFunction
 
         await using AppDbContext dbContext = new(options);
 
-        SeedingOptions seedingOptions = config.GetSection("Seeding").Get<SeedingOptions>()
+        SeedingOptions seedingOptions =
+            config.GetSection("Seeding").Get<SeedingOptions>()
             ?? throw new InvalidOperationException("Seeding configuration is not set.");
 
         if (seedingOptions.ReseedOnStartup)
         {
             context.Logger.LogInformation("Seeding enabled - skipping migrations.");
             context.Logger.LogInformation("Starting data seeding...");
-            await new DataSeederInMemory(new SeedDataWriter(dbContext)).SeedData(seedingOptions, cancellationTokenSource.Token);
+            await new DataSeederInMemory(new SeedDataWriter(dbContext)).SeedData(
+                seedingOptions,
+                cancellationTokenSource.Token
+            );
             context.Logger.LogInformation("Data seeding completed successfully.");
         }
         else
