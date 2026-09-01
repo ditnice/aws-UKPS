@@ -19,6 +19,9 @@ internal sealed class PhoneNumberAttribute : ValidationAttribute
             return ValidationResult.Success!;
         }
 
-        return new ValidationResult(ErrorMessage ?? "Value must be a valid phone number.");
+        return new ValidationResult(
+            ErrorMessage ?? "Value must be a valid phone number.",
+            validationContext.MemberName is null ? null : [validationContext.MemberName]
+        );
     }
 }
