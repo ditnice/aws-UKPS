@@ -98,6 +98,7 @@ public class UserServiceTests : DatabaseTestBase
                     OrganisationId = currentUserMembership.OrganisationId,
                     UserRole = currentUserMembership.UserRole,
                     Email = currentUser.WorkEmail,
+                    CognitoUsername = currentUser.CognitoUsername,
                 }
             );
             CurrentUserInformationDto result = await Service.GetCurrentUser(

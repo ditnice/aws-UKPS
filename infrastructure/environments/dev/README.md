@@ -6,14 +6,18 @@
 | Name | Version |
 | ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11, < 2.0 |
+| <a name="requirement_archive"></a> [archive](#requirement\_archive) | ~> 2.8 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.3.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.7 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
+| <a name="provider_archive"></a> [archive](#provider\_archive) | ~> 2.8 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | ~> 3.3.1 |
 
 ## Modules
 
@@ -25,6 +29,7 @@
 | <a name="module_backend_aurora_alerts"></a> [backend\_aurora\_alerts](#module\_backend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
 | <a name="module_backend_ecs_alerts"></a> [backend\_ecs\_alerts](#module\_backend\_ecs\_alerts) | ../../modules/cloudwatch/ecs-alerts | n/a |
 | <a name="module_cognito"></a> [cognito](#module\_cognito) | ../../modules/cognito | n/a |
+| <a name="module_db_migrator_lambda"></a> [db\_migrator\_lambda](#module\_db\_migrator\_lambda) | ../../modules/lambda/dbMigrator | n/a |
 | <a name="module_ecs_backend"></a> [ecs\_backend](#module\_ecs\_backend) | ../../modules/ecs | n/a |
 | <a name="module_ecs_frontend"></a> [ecs\_frontend](#module\_ecs\_frontend) | ../../modules/ecs | n/a |
 | <a name="module_frontend_aurora_alerts"></a> [frontend\_aurora\_alerts](#module\_frontend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
@@ -35,6 +40,8 @@
 | <a name="module_route53"></a> [route53](#module\_route53) | ../../modules/route53 | n/a |
 | <a name="module_ses"></a> [ses](#module\_ses) | ../../modules/ses | n/a |
 | <a name="module_sns"></a> [sns](#module\_sns) | ../../modules/sns | n/a |
+| <a name="module_sqs_email_backend"></a> [sqs\_email\_backend](#module\_sqs\_email\_backend) | ../../modules/sqs | n/a |
+| <a name="module_sqs_email_backend_alerts"></a> [sqs\_email\_backend\_alerts](#module\_sqs\_email\_backend\_alerts) | ../../modules/cloudwatch/sqs-alerts | n/a |
 
 ## Resources
 
@@ -43,6 +50,8 @@
 | [aws_db_subnet_group.aurora](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group) | resource |
 | [aws_secretsmanager_secret.frontend_payload_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_secretsmanager_secret_version.frontend_payload_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
+| [null_resource.build_lambda](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [archive_file.lambda_zip](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [aws_iam_policy_document.backend_cognito](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.backend_cognito_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.frontend_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |

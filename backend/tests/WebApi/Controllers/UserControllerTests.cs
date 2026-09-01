@@ -470,10 +470,14 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     {
         public CurrentUserInformationDtoFaker()
         {
+            StrictMode(true);
+            RuleFor(x => x.UserId, f => f.Random.Int(1));
+            RuleFor(x => x.FullName, f => f.Name.FullName());
+            RuleFor(x => x.WorkTelephone, f => new TelephoneNumberFaker().Generate());
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
             RuleFor(x => x.OrganisationMembershipId, f => f.Random.Int(1));
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1));
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
-            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
         }
     }
