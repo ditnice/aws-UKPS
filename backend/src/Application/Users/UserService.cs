@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
@@ -84,7 +85,7 @@ internal partial class UserService(
         var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
             Operation.Read
         );
-        var organisationMemberships = ApplyFilters(
+        IQueryable<UserOrgMembership> organisationMemberships = ApplyFilters(
             dbContext.UserOrgMemberships.AsNoTracking(),
             permittedOrganisationIds,
             getUsersQuery
@@ -92,8 +93,12 @@ internal partial class UserService(
 
         int totalCount = await organisationMemberships.CountAsync(cancellationToken);
 
-        List<UserListItemDto> items = await organisationMemberships
-            .OrderBy(m => m.User!.Id)
+        IQueryable<UserOrgMembership> orderedOrganisationMemberships = Sort(
+            organisationMemberships,
+            getUsersQuery.SortBy,
+            getUsersQuery.SortDirection
+        );
+        List<UserListItemDto> items = await orderedOrganisationMemberships
             .Skip((getUsersQuery.Page - 1) * getUsersQuery.PageSize)
             .Take(getUsersQuery.PageSize)
             .Select(m => new UserListItemDto
@@ -115,6 +120,35 @@ internal partial class UserService(
                 PageSize = getUsersQuery.PageSize,
             }
         );
+    }
+
+    private static IQueryable<UserOrgMembership> Sort(
+        IQueryable<UserOrgMembership> value,
+        GetUsersQuerySortValue sortBy,
+        SortDirection sortDirection
+    )
+    {
+        Expression<Func<UserOrgMembership, object?>> sortExpression = sortBy switch
+        {
+            GetUsersQuerySortValue.LastActive => m =>
+                m.User!.LastActive == null ? DateTime.MinValue : m.User.LastActive.Value,
+            GetUsersQuerySortValue.Email => m => m.User!.WorkEmail,
+            GetUsersQuerySortValue.Role => m => m.UserRole,
+            GetUsersQuerySortValue.Status => m => m.Status,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(sortBy),
+                $"Unexpected value: {sortBy}"
+            ),
+        };
+        return sortDirection switch
+        {
+            SortDirection.Ascending => value.OrderBy(sortExpression),
+            SortDirection.Descending => value.OrderByDescending(sortExpression),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(sortDirection),
+                $"Unexpected value: {sortDirection}"
+            ),
+        };
     }
 
     private async Task<GetUsersError?> ValidateOrganisationAsync(

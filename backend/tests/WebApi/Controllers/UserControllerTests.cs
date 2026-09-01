@@ -16,6 +16,7 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using SortDirection = UKPS.Api.Application.Users.Dtos.SortDirection;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -448,6 +449,9 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     );
                 }
             );
+
+            RuleFor(x => x.SortBy, f => f.PickRandom<GetUsersQuerySortValue>());
+            RuleFor(x => x.SortDirection, f => f.PickRandom<SortDirection>());
         }
     }
 
