@@ -457,6 +457,162 @@
         }
       }
     },
+    "/organisations/{organisationId}/users/{userId}/membership-requests/approve": {
+      "patch": {
+        "tags": [
+          "MembershipRequest"
+        ],
+        "summary": "Approves the membership request for the specified user within the specified organisation.",
+        "operationId": "Approve",
+        "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The identifier of the organisation containing the membership request.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The identifier of the user associated with the membership request.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The membership request was successfully approved."
+          },
+          "403": {
+            "description": "The current user is not allowed to approve the membership request.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The membership request could not be found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organisations/{organisationId}/users/{userId}/membership-requests/reject": {
+      "patch": {
+        "tags": [
+          "MembershipRequest"
+        ],
+        "summary": "Rejects the membership request for the specified user within the specified organisation.",
+        "operationId": "Reject",
+        "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The identifier of the organisation containing the membership request.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The identifier of the user associated with the membership request.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The membership request was successfully rejected."
+          },
+          "403": {
+            "description": "The current user is not allowed to reject the membership request.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The membership request could not be found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organisations/{id}": {
       "get": {
         "tags": [
@@ -2280,6 +2436,9 @@
   "tags": [
     {
       "name": "Authentication"
+    },
+    {
+      "name": "MembershipRequest"
     },
     {
       "name": "Organisation"

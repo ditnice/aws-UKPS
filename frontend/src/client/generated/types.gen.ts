@@ -641,6 +641,78 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
+export type ApproveData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+        /**
+         * The identifier of the user associated with the membership request.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/users/{userId}/membership-requests/approve';
+};
+
+export type ApproveErrors = {
+    /**
+     * The current user is not allowed to approve the membership request.
+     */
+    403: ProblemDetails;
+    /**
+     * The membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type ApproveError = ApproveErrors[keyof ApproveErrors];
+
+export type ApproveResponses = {
+    /**
+     * The membership request was successfully approved.
+     */
+    200: unknown;
+};
+
+export type RejectData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+        /**
+         * The identifier of the user associated with the membership request.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/users/{userId}/membership-requests/reject';
+};
+
+export type RejectErrors = {
+    /**
+     * The current user is not allowed to reject the membership request.
+     */
+    403: ProblemDetails;
+    /**
+     * The membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type RejectError = RejectErrors[keyof RejectErrors];
+
+export type RejectResponses = {
+    /**
+     * The membership request was successfully rejected.
+     */
+    200: unknown;
+};
+
 export type GetOrganisationByIdData = {
     body?: never;
     path: {
