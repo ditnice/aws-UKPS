@@ -1,4 +1,5 @@
 @use '@/styles/colours';
+@use '@/styles/focus';
 
 .header {
   .button {
@@ -22,12 +23,7 @@
     }
 
     &:focus {
-      background-color: #fd0;
-      box-shadow:
-        0 -2px #fd0,
-        0 4px #0b0c0c;
-      color: #0b0c0c;
-      outline: none;
+      @include focus.default-focus-style;
     }
   }
 }
