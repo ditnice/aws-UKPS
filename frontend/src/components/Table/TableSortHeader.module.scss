@@ -1,0 +1,39 @@
+@use '@/styles/colours';
+
+.header {
+  .button {
+    align-items: center;
+    background-color: transparent;
+    border-width: 0;
+    box-shadow: none;
+    color: colours.$link;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: inherit;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    text-align: inherit;
+
+    &:hover {
+      color: colours.$link;
+    }
+
+    &:focus {
+      background-color: #fd0;
+      box-shadow:
+        0 -2px #fd0,
+        0 4px #0b0c0c;
+      color: #0b0c0c;
+      outline: none;
+    }
+  }
+}
+
+.indicator {
+  flex: 0 0 auto;
+  height: 22px;
+  width: 22px;
+}
