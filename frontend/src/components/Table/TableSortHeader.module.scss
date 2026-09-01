@@ -1,35 +1,25 @@
 @use '@/styles/colours';
 @use '@/styles/focus';
+@use '@/styles/utils';
 
-.header {
-  .button {
-    align-items: center;
-    background-color: transparent;
-    border-width: 0;
-    box-shadow: none;
-    color: colours.$link;
-    cursor: pointer;
-    display: inline-flex;
-    font-family: inherit;
-    font-size: 1em;
-    font-weight: inherit;
-    margin: 0;
-    padding: 0;
-    position: relative;
-    text-align: inherit;
+.button {
+  align-items: center;
+  background-color: transparent;
+  border: 0;
+  color: colours.$link;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: inherit;
+  padding: 0;
+  text-align: inherit;
 
-    &:hover {
-      color: colours.$link;
-    }
-
-    &:focus {
-      @include focus.default-focus-style;
-    }
+  &:focus {
+    @include focus.default-focus-style;
   }
 }
 
 .indicator {
   flex: 0 0 auto;
-  height: 22px;
-  width: 22px;
+  height: utils.rem(22);
+  width: utils.rem(22);
 }

@@ -7,7 +7,6 @@ exports[`TableSortHeader > renders the ascending state 1`] = `
       <tr>
         <th
           aria-sort="ascending"
-          class="_header_36696c"
           scope="col"
         >
           <button
@@ -18,17 +17,12 @@ exports[`TableSortHeader > renders the ascending state 1`] = `
             <svg
               aria-hidden="true"
               class="_indicator_36696c"
-              fill="none"
+              fill="currentColor"
               focusable="false"
-              height="22"
-              role="img"
               viewBox="0 0 22 22"
-              width="22"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 d="M6.5625 15.5L11 6.63125L15.4375 15.5H6.5625Z"
-                fill="currentColor"
               />
             </svg>
           </button>
@@ -46,7 +40,6 @@ exports[`TableSortHeader > renders the descending state 1`] = `
       <tr>
         <th
           aria-sort="descending"
-          class="_header_36696c"
           scope="col"
         >
           <button
@@ -57,17 +50,12 @@ exports[`TableSortHeader > renders the descending state 1`] = `
             <svg
               aria-hidden="true"
               class="_indicator_36696c"
-              fill="none"
+              fill="currentColor"
               focusable="false"
-              height="22"
-              role="img"
               viewBox="0 0 22 22"
-              width="22"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 d="M15.4375 7L11 15.8687L6.5625 7L15.4375 7Z"
-                fill="currentColor"
               />
             </svg>
           </button>
@@ -85,7 +73,6 @@ exports[`TableSortHeader > renders the none state 1`] = `
       <tr>
         <th
           aria-sort="none"
-          class="_header_36696c"
           scope="col"
         >
           <button
@@ -96,21 +83,15 @@ exports[`TableSortHeader > renders the none state 1`] = `
             <svg
               aria-hidden="true"
               class="_indicator_36696c"
-              fill="none"
+              fill="currentColor"
               focusable="false"
-              height="22"
-              role="img"
               viewBox="0 0 22 22"
-              width="22"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 d="M8.1875 9.5L10.9609 3.95703L13.7344 9.5H8.1875Z"
-                fill="currentColor"
               />
               <path
                 d="M13.7344 12.0781L10.9609 17.6211L8.1875 12.0781H13.7344Z"
-                fill="currentColor"
               />
             </svg>
           </button>
