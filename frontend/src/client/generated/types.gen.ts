@@ -11,7 +11,7 @@ export type ClientOptions = {
 export type AuthenticationProblemDetails = {
     type?: null | string;
     title?: null | string;
-    status?: null | number | string;
+    status?: null | number;
     detail?: null | string;
     instance?: null | string;
     challengeType?: null | UkpsChallengeType;
@@ -134,7 +134,7 @@ export type OnboardUserCommandDto = {
     /**
      * Specifies the organisation that the new user will be created for.
      */
-    organisationId: number | string;
+    organisationId: number;
 };
 
 /**
@@ -144,7 +144,7 @@ export type OrganisationDetailsDto = {
     /**
      * Gets the unique identifier of the organisation.
      */
-    id: number | string;
+    id: number;
     /**
      * Gets the name of the organisation.
      */
@@ -194,15 +194,15 @@ export type OrganisationMembershipDto = {
     /**
      * Gets the unique identifier of the organisation membership.
      */
-    id: number | string;
+    id: number;
     /**
      * Gets the unique identifier of the user associated with the membership.
      */
-    userId: number | string;
+    userId: number;
     /**
      * Gets the unique identifier of the organisation associated with the membership.
      */
-    organisationId: number | string;
+    organisationId: number;
     /**
      * Gets the role of the user within the organisation.
      */
@@ -237,15 +237,15 @@ export type PaginatedResponseDtoOfUserListItemDto = {
     /**
      * Gets the total number of items across all pages.
      */
-    totalCount: number | string;
+    totalCount: number;
     /**
      * Gets the current page number (1-based index).
      */
-    page: number | string;
+    page: number;
     /**
      * Gets the number of items per page.
      */
-    pageSize: number | string;
+    pageSize: number;
 };
 
 /**
@@ -258,7 +258,7 @@ export type PharmaceuticalEntity = string;
 export type ProblemDetails = {
     type?: null | string;
     title?: null | string;
-    status?: null | number | string;
+    status?: null | number;
     detail?: null | string;
     instance?: null | string;
 };
@@ -390,7 +390,7 @@ export type UserListItemDto = {
     /**
      * Gets the unique identifier of the user.
      */
-    userId: number | string;
+    userId: number;
     /**
      * Gets the email address of the user, if available.
      */
@@ -790,7 +790,7 @@ export type DeactivateMembershipData = {
         /**
          * The identifier of the membership to deactivate.
          */
-        membershipId: number | string;
+        membershipId: number;
     };
     query?: never;
     url: '/organisations/{organisationId}/memberships/{membershipId}/deactivate';
@@ -832,7 +832,7 @@ export type ReactivateMembershipData = {
         /**
          * The identifier of the membership to reactivate.
          */
-        membershipId: number | string;
+        membershipId: number;
     };
     query?: never;
     url: '/organisations/{organisationId}/memberships/{membershipId}/reactivate';
@@ -877,7 +877,7 @@ export type UpdateUserRoleData = {
         /**
          * The identifier of the membership to update.
          */
-        membershipId: number | string;
+        membershipId: number;
     };
     query?: never;
     url: '/organisations/{organisationId}/memberships/{membershipId}/update-role';
@@ -957,17 +957,17 @@ export type GetUsersData = {
         /**
          * Gets or initialises the optional ID of the organisation to filter users by.
          */
-        OrganisationId?: number | string;
+        OrganisationId?: number;
         /**
          * Gets or initialises the page number for pagination.
          * Must be greater than or equal to 1.
          */
-        Page?: number | string;
+        Page?: number;
         /**
          * Gets or initialises the number of items per page for pagination.
          * Must be between 1 and 100.
          */
-        PageSize?: number | string;
+        PageSize?: number;
         /**
          * Gets or initialises the collection of user organisation statuses to filter users by.
          * Users with a UserOrgStatus.Rejected status are always excluded from
@@ -1025,7 +1025,7 @@ export type PatchUsersByUserIdData = {
         /**
          * The unique identifier of the user whose details are being updated.
          */
-        userId: number | string;
+        userId: number;
     };
     query?: never;
     url: '/users/{userId}';
