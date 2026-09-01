@@ -463,6 +463,7 @@
           "MembershipRequest"
         ],
         "summary": "Approves the membership request for the specified user within the specified organisation.",
+        "operationId": "Approve",
         "parameters": [
           {
             "name": "organisationId",
@@ -540,6 +541,7 @@
           "MembershipRequest"
         ],
         "summary": "Rejects the membership request for the specified user within the specified organisation.",
+        "operationId": "Reject",
         "parameters": [
           {
             "name": "organisationId",

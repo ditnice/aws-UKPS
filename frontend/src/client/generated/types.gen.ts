@@ -591,7 +591,7 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveData = {
+export type ApproveData = {
     body?: never;
     path: {
         /**
@@ -607,7 +607,7 @@ export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApp
     url: '/organisations/{organisationId}/users/{userId}/membership-requests/approve';
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors = {
+export type ApproveErrors = {
     /**
      * The current user is not allowed to approve the membership request.
      */
@@ -618,16 +618,16 @@ export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApp
     404: ProblemDetails;
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveError = PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors[keyof PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors];
+export type ApproveError = ApproveErrors[keyof ApproveErrors];
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveResponses = {
+export type ApproveResponses = {
     /**
      * The membership request was successfully approved.
      */
     200: unknown;
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectData = {
+export type RejectData = {
     body?: never;
     path: {
         /**
@@ -643,7 +643,7 @@ export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRej
     url: '/organisations/{organisationId}/users/{userId}/membership-requests/reject';
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors = {
+export type RejectErrors = {
     /**
      * The current user is not allowed to reject the membership request.
      */
@@ -654,9 +654,9 @@ export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRej
     404: ProblemDetails;
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectError = PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors[keyof PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors];
+export type RejectError = RejectErrors[keyof RejectErrors];
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectResponses = {
+export type RejectResponses = {
     /**
      * The membership request was successfully rejected.
      */

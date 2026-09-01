@@ -51,7 +51,7 @@ public class MembershipRequestController : ControllerBase
     /// <response code="404">
     /// The membership request could not be found.
     /// </response>
-    [HttpPatch("approve")]
+    [HttpPatch("approve", Name = nameof(Approve))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -94,7 +94,7 @@ public class MembershipRequestController : ControllerBase
     /// <response code="404">
     /// The membership request could not be found.
     /// </response>
-    [HttpPatch("reject")]
+    [HttpPatch("reject", Name = nameof(Reject))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
