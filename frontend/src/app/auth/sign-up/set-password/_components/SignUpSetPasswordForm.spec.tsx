@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
+import { errorMessages } from '@/lib/form/errorMessages'
 
 import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
 
@@ -116,7 +117,7 @@ describe('SignUpSetPasswordForm', () => {
     enterPassword('a'.repeat(257))
     submitForm()
 
-    expect(await screen.findByText('Password must be 256 characters or fewer')).toBeDefined()
+    expect(await screen.findByText(errorMessages.passwordTooLong)).toBeDefined()
     expect(postAuthSetupUser).not.toHaveBeenCalled()
   })
 
@@ -131,9 +132,7 @@ describe('SignUpSetPasswordForm', () => {
     enterPassword(password)
     submitForm()
 
-    expect(
-      await screen.findByText('Password must not contain spaces or other whitespace'),
-    ).toBeDefined()
+    expect(await screen.findByText(errorMessages.passwordWhitespace)).toBeDefined()
     expect(postAuthSetupUser).not.toHaveBeenCalled()
   })
 
