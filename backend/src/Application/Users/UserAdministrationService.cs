@@ -151,8 +151,12 @@ internal sealed partial class UserAdministrationService(
             throw new InvalidOperationException("Onboarding record was not set as expected.");
         }
         await emailService.SendEmail(
-            user.WorkEmail,
-            new UserSignUpRequestEmail() { Link = link },
+            new SendEmailCommand()
+            {
+                CognitoUsername = user.CognitoUsername,
+                RecipientAddress = user.WorkEmail,
+                Email = new UserSignUpRequestEmail() { Link = link },
+            },
             cancellationToken
         );
         string sanitisedGuid = Sanitise(user.OnboardingRecord.SetupToken);
