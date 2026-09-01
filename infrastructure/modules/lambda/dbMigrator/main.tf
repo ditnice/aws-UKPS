@@ -3,13 +3,11 @@ locals {
 }
 
 resource "aws_lambda_function" "db_migrator" {
-  function_name    = local.function_name
-  role             = aws_iam_role.this.arn
-  filename         = var.lambda_zip_path
-  source_code_hash = var.lambda_zip_source_code_hash
+  function_name = local.function_name
+  role          = aws_iam_role.this.arn
+  package_type  = "Image"
+  image_uri     = "${var.image_repository_url}:${var.image_tag}"
 
-  runtime                        = "dotnet10"
-  handler                        = "MigratorLambda::MigratorLambda.Function::FunctionHandler"
   memory_size                    = var.memory_size
   timeout                        = var.timeout
   reserved_concurrent_executions = var.reserved_concurrent_executions

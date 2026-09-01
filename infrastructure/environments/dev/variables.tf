@@ -81,6 +81,16 @@ variable "backend_image_repository_url" {
   }
 }
 
+variable "migrator_image_repository_url" {
+  description = "Container image repository URL for the database migration Lambda, without an image tag or digest"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9]+([._/-][a-z0-9]+)*$", var.migrator_image_repository_url))
+    error_message = "Migrator image repository URL must be a private AWS ECR repository URL without an image tag or digest."
+  }
+}
+
 variable "image_tag" {
   description = "Container image tag for the backend service"
   type        = string

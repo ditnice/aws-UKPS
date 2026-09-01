@@ -44,6 +44,7 @@ Example using SemVer image tags:
 ```bash
 export TF_VAR_frontend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-frontend"
 export TF_VAR_backend_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-backend"
+export TF_VAR_migrator_image_repository_url="628270103586.dkr.ecr.eu-west-2.amazonaws.com/ukps-db-migrator"
 export TF_VAR_image_tag="1.2.3"
 export TF_VAR_sns_alarm_emails='[{"name":"platform","email":"platform@example.org"},{"name":"service","email":"service@example.org"}]'
 export TF_VAR_cloudfront_distribution_id="E123ABC456DEF"
