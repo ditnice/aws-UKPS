@@ -1,9 +1,11 @@
 import { defineConfig, devices } from '@playwright/test'
 import 'dotenv/config'
 
+import { isAuthenticatedTargetAllowed, isLocalBaseURL } from './tests/e2e/helpers/test-environment'
+
 const localBaseURL = 'https://localhost:3000'
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? localBaseURL
-const isLocal = new URL(baseURL).hostname === 'localhost'
+const isLocal = isLocalBaseURL(baseURL)
 const localWebServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? 'pnpm dev'
 const localChromiumOptions = isLocal
   ? { launchOptions: { args: ['--ignore-certificate-errors'] } }
@@ -13,12 +15,14 @@ const publicTestIgnore = [
   /\.authenticated\.e2e\.spec\.ts/,
   /accessibility\/.*\.e2e\.spec\.ts/,
 ]
-const hasAuthenticatedDevCredentials = [
+const hasAuthenticatedCredentials = [
   'E2E_USER_EMAIL',
   'E2E_USER_PASSWORD',
   'E2E_TOTP_SECRET',
   'E2E_ORGANISATION_ID',
 ].every((name) => Boolean(process.env[name]?.trim()))
+const canRunAuthenticatedTests =
+  hasAuthenticatedCredentials && isAuthenticatedTargetAllowed(baseURL)
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -75,7 +79,7 @@ export default defineConfig({
         ...localChromiumOptions,
       },
     },
-    ...(hasAuthenticatedDevCredentials
+    ...(canRunAuthenticatedTests
       ? [
           {
             name: 'auth-setup',

@@ -1,8 +1,9 @@
 import { expect, test } from '../fixtures/test'
 
 test('loads the current-user details form', async ({ page }) => {
-  await page.goto('/portal/user/edit-details')
+  await page.goto('/portal/user/me/edit-details')
 
+  await expect(page).toHaveURL('/portal/user/me/edit-details')
   await expect(page.getByLabel('Full name')).toBeVisible()
   await expect(page.getByLabel('Work email address')).toBeVisible()
   await expect(page.getByLabel('Contact number')).toBeVisible()

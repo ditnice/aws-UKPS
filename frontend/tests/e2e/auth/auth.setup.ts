@@ -3,11 +3,16 @@ import { dirname } from 'node:path'
 
 import { expect, test as setup } from '@playwright/test'
 
-import { authStatePath, requireEnvironmentVariable } from '../helpers/test-environment'
+import {
+  authStatePath,
+  requireAuthenticatedTarget,
+  requireEnvironmentVariable,
+} from '../helpers/test-environment'
 import { generateTotp } from '../helpers/totp'
 import { SignInPage } from '../pages/sign-in.page'
 
-setup('authenticate the dev user', async ({ page }) => {
+setup('authenticate the dev user', async ({ baseURL, page }) => {
+  requireAuthenticatedTarget(baseURL)
   const email = requireEnvironmentVariable('E2E_USER_EMAIL')
   const password = requireEnvironmentVariable('E2E_USER_PASSWORD')
   const totpSecret = requireEnvironmentVariable('E2E_TOTP_SECRET')

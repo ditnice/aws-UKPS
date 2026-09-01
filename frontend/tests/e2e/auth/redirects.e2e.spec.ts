@@ -1,6 +1,11 @@
 import { expect, test } from '../fixtures/test'
+import { isLocalBaseURL } from '../helpers/test-environment'
 
 test.describe('unauthenticated portal access', () => {
+  test.beforeEach(({ baseURL }) => {
+    test.skip(isLocalBaseURL(baseURL), 'Local development uses AUTHENTICATION_MODE=DEV.')
+  })
+
   test('redirects portal visits to sign-in', async ({ page }) => {
     await page.goto('/portal', { waitUntil: 'domcontentloaded' })
 
