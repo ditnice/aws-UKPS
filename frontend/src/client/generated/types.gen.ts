@@ -48,6 +48,45 @@ export type CreateOrganisationDto = {
 };
 
 /**
+ * Represents information about the currently authenticated user and their
+ * membership within an organisation.
+ */
+export type CurrentUserInformationDto = {
+    /**
+     * Gets the unique identifier of the user.
+     */
+    userId: number | string;
+    /**
+     * Gets the full name of the user.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
+    /**
+     * Gets the user's email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the unique identifier of the user's organisation membership.
+     */
+    organisationMembershipId: number | string;
+    /**
+     * Gets the unique identifier of the user's organisation.
+     */
+    organisationId: number | string;
+    /**
+     * Gets the name of the user's organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets the role assigned to the user within the organisation.
+     */
+    userRole: UserRole;
+};
+
+/**
  * Represents the credentials provided by a user when attempting to authenticate.
  */
 export type LoginRequest = {
@@ -384,6 +423,17 @@ export type UserRole = 'Standard' | 'Champion' | 'Super';
  * Represents the different types of users in the system.
  */
 export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUser' | 'ItAdmin';
+
+export type ValidationProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number | string;
+    detail?: null | string;
+    instance?: null | string;
+    errors: {
+        [key: string]: Array<string>;
+    };
+};
 
 /**
  * Represents the details required to verify a user's multi-factor authentication setup.
@@ -884,6 +934,22 @@ export type PostOrganisationsResponses = {
 
 export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
 
+export type GetUsersMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me';
+};
+
+export type GetUsersMeResponses = {
+    /**
+     * Returns the information for the currently authenticated user.
+     */
+    200: CurrentUserInformationDto;
+};
+
+export type GetUsersMeResponse = GetUsersMeResponses[keyof GetUsersMeResponses];
+
 export type GetUsersData = {
     body?: never;
     path?: never;
@@ -969,7 +1035,7 @@ export type PatchUsersByUserIdErrors = {
     /**
      * The supplied user details are invalid.
      */
-    400: ProblemDetails;
+    400: ValidationProblemDetails;
     /**
      * The caller is not authorised to update the specified user's details.
      */

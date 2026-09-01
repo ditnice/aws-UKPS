@@ -17,6 +17,27 @@ namespace UKPS.Api.WebApi.Controllers;
 public class UserController(IUserService userService) : ControllerBase
 {
     /// <summary>
+    /// Gets the information for the currently authenticated user.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the request.
+    /// </param>
+    /// <response code="200">
+    /// Returns the information for the currently authenticated user.
+    /// </response>
+    /// <returns>
+    /// The current user's information.
+    /// </returns>
+    [ProducesResponseType<CurrentUserInformationDto>(StatusCodes.Status200OK)]
+    [HttpGet("me")]
+    public async Task<ActionResult<CurrentUserInformationDto>> GetCurrentUser(
+        CancellationToken cancellationToken
+    )
+    {
+        return await userService.GetCurrentUser(cancellationToken);
+    }
+
+    /// <summary>
     /// Retrieves a paginated list of users based on the specified query parameters.
     /// </summary>
     /// <param name="getUsersQuery">The query parameters for retrieving users, including organisation ID, page, page size, status, role, and email filters.</param>
@@ -79,7 +100,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// <response code="404">The specified user does not exist.</response>
     /// <response code="409">The request conflicts with the existing data such as another users email.</response>
     [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

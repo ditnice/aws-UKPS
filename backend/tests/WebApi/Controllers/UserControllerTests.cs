@@ -65,6 +65,23 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task GetCurrentUser_ShouldReturnUserFromTheUserService()
+    {
+        CurrentUserInformationDto expectedValue = new CurrentUserInformationDtoFaker().Generate();
+        _mockUserService.GetCurrentUser(Arg.Any<CancellationToken>()).Returns(expectedValue);
+
+        var url = new Uri($"{UsersUrl}/me", UriKind.Relative);
+        var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var data = await response.Content.ReadFromJsonAsync<CurrentUserInformationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        data.ShouldBe(expectedValue);
+    }
+
+    [Fact]
     public async Task GetUsers_ReturnsOk_WhenOrganisationExists()
     {
         PaginatedResponseDto<UserListItemDto> expected = CreatePaginatedResponse();
@@ -443,6 +460,22 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.JobTitle, f => f.Random.Bool() ? f.Name.JobTitle() : null);
             RuleFor(x => x.WorkPhone, f => f.Random.Bool() ? f.Phone.PhoneNumber() : null);
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
+        }
+    }
+
+    private sealed class CurrentUserInformationDtoFaker : Faker<CurrentUserInformationDto>
+    {
+        public CurrentUserInformationDtoFaker()
+        {
+            StrictMode(true);
+            RuleFor(x => x.UserId, f => f.Random.Int(1));
+            RuleFor(x => x.FullName, f => f.Name.FullName());
+            RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
+            RuleFor(x => x.OrganisationMembershipId, f => f.Random.Int(1));
+            RuleFor(x => x.OrganisationId, f => f.Random.Int(1));
+            RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
+            RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
         }
     }
 }
