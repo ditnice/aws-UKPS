@@ -14,7 +14,12 @@ import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
 
 const signUpSetPasswordSchema = z.object({
-  password: z.string().min(1, errorMessages.passwordRequired).min(8, errorMessages.passwordFormat),
+  password: z
+    .string()
+    .min(1, errorMessages.passwordRequired)
+    .min(8, errorMessages.passwordFormat)
+    .max(256, errorMessages.passwordTooLong)
+    .regex(/^\S+$/, errorMessages.passwordWhitespace),
 })
 
 type SignUpSetPasswordFormValues = z.input<typeof signUpSetPasswordSchema>
@@ -105,6 +110,8 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
       <p>Your password must:</p>
       <ul>
         <li>be at least 8 characters long</li>
+        <li>be 256 characters or fewer</li>
+        <li>not contain spaces or other whitespace</li>
       </ul>
 
       <form.Field name="password">

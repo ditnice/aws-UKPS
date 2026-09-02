@@ -9,6 +9,7 @@ import sharp from 'sharp'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Users } from './collections/Users'
+import { Header } from './globals/Header'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -41,6 +42,7 @@ export default buildConfig({
   },
   collections: [Users, Media, Pages],
   editor: lexicalEditor(),
+  globals: [Header],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

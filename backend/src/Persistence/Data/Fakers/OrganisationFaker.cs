@@ -13,7 +13,7 @@ internal sealed class OrganisationFaker : Faker<Organisation>
         RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());
         RuleFor(x => x.CountryOrRegion, f => f.Address.Country());
         RuleFor(x => x.HeadOfficeAddress, f => f.Address.FullAddress());
-        RuleFor(x => x.HeadOfficeTelephone, f => f.Phone.PhoneNumber());
+        RuleFor(x => x.HeadOfficeTelephone, _ => new TelephoneNumberFaker().Generate());
         RuleFor(
             x => x.HeadOfficeEmail,
             (f, o) =>

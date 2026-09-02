@@ -19,8 +19,8 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@/client/generated', () => ({
-  patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApprove: mocks.approve,
-  patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsReject: mocks.reject,
+  approve: mocks.approve,
+  reject: mocks.reject,
 }))
 
 afterEach(cleanup)

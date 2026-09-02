@@ -1,6 +1,7 @@
 using Amazon.SimpleEmailV2;
 using Amazon.SimpleEmailV2.Model;
 using Microsoft.Extensions.Options;
+using UKPS.Api.Persistence.Entities.Identity;
 
 namespace UKPS.Api.Application.InternalServices.Communication;
 
@@ -21,24 +22,24 @@ internal sealed partial class SesEmailService : IEmailService
         _configuration = configuration.Value;
     }
 
-    public async Task SendEmail(string recipient, IEmail email, CancellationToken cancellationToken)
+    public async Task SendEmail(SendEmailCommand command, CancellationToken cancellationToken)
     {
-        LogEmailProcessStart(recipient, email.Subject);
+        LogEmailProcessStart(command.CognitoUsername, command.Email.Subject);
 
         var request = new SendEmailRequest
         {
             FromEmailAddress = _configuration.FromAddress,
-            Destination = new Destination { ToAddresses = [recipient] },
+            Destination = new Destination { ToAddresses = [command.RecipientAddress] },
             Content = new EmailContent
             {
                 Simple = new Message
                 {
-                    Subject = new Content { Data = email.Subject, Charset = "UTF-8" },
+                    Subject = new Content { Data = command.Email.Subject, Charset = "UTF-8" },
                     Body = new Body
                     {
                         Html = new Content
                         {
-                            Data = WrapHtml(email.GetHtmlContent()),
+                            Data = WrapHtml(command.Email.GetHtmlContent()),
                             Charset = "UTF-8",
                         },
                     },
@@ -48,12 +49,12 @@ internal sealed partial class SesEmailService : IEmailService
 
         try
         {
-            var response = await _ses.SendEmailAsync(request, cancellationToken);
-            LogSuccessfulEmailSent(recipient, response.MessageId);
+            SendEmailResponse response = await _ses.SendEmailAsync(request, cancellationToken);
+            LogSuccessfulEmailSent(command.CognitoUsername, response.MessageId);
         }
         catch (Exception ex)
         {
-            LogEmailSendError(recipient, email.Subject, ex);
+            LogEmailSendError(command.CognitoUsername, command.Email.Subject, ex);
             throw;
         }
     }
@@ -65,19 +66,19 @@ internal sealed partial class SesEmailService : IEmailService
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Sending email to {Recipient} with subject {Subject}"
+        Message = "Sending email to {Username} with subject {Subject}"
     )]
-    private partial void LogEmailProcessStart(string recipient, string subject);
+    private partial void LogEmailProcessStart(CognitoUsername username, string subject);
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Email successfully sent to {Recipient}. Message ID: {MessageId}"
+        Message = "Email successfully sent to {Username}. Message ID: {MessageId}"
     )]
-    private partial void LogSuccessfulEmailSent(string recipient, string messageId);
+    private partial void LogSuccessfulEmailSent(CognitoUsername username, string messageId);
 
     [LoggerMessage(
         Level = LogLevel.Error,
-        Message = "Failed to send email to {Recipient} with subject {Subject}"
+        Message = "Failed to send email to {Username} with subject {Subject}"
     )]
-    private partial void LogEmailSendError(string recipient, string subject, Exception ex);
+    private partial void LogEmailSendError(CognitoUsername username, string subject, Exception ex);
 }
