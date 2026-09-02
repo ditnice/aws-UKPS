@@ -23,6 +23,11 @@ resource "aws_lambda_function" "db_migrator" {
     mode = "Active"
   }
 
+  logging_config {
+    log_format = "Text"
+    log_group  = aws_cloudwatch_log_group.db_migrator_log_group.name
+  }
+
   vpc_config {
     subnet_ids         = var.subnet_ids
     security_group_ids = [aws_security_group.this.id]
@@ -42,7 +47,6 @@ resource "aws_lambda_function" "db_migrator" {
   }
 
   depends_on = [
-    aws_cloudwatch_log_group.db_migrator_log_group,
     aws_iam_role_policy_attachment.vpc_execution,
     aws_iam_role_policy_attachment.xray,
   ]
