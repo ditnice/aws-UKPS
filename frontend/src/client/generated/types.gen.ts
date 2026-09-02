@@ -77,6 +77,16 @@ export type MultiFactorAuthenticationSetupDto = {
 };
 
 /**
+ * Represents the outcome of onboarding a new user.
+ */
+export type OnboardedUserDto = {
+    /**
+     * Gets the unique identifier of the newly onboarded user.
+     */
+    userId: number;
+};
+
+/**
  * Represents the data required to onboard a new user.
  */
 export type OnboardUserCommandDto = {
@@ -1129,3 +1139,13 @@ export type PostUsersOnboardErrors = {
 };
 
 export type PostUsersOnboardError = PostUsersOnboardErrors[keyof PostUsersOnboardErrors];
+
+export type PostUsersOnboardResponses = {
+    /**
+     * The user was successfully onboarded. The response contains the
+     * identifier of the newly created user.
+     */
+    200: OnboardedUserDto;
+};
+
+export type PostUsersOnboardResponse = PostUsersOnboardResponses[keyof PostUsersOnboardResponses];

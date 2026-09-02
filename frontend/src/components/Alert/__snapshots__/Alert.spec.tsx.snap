@@ -1,0 +1,84 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Alert > announces caution alerts assertively 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_7b834f"
+  >
+    <div
+      class="alert alert--caution"
+      data-component="alert--caution"
+      role="alert"
+    >
+      Something went wrong
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Alert > announces error alerts assertively 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_7b834f"
+  >
+    <div
+      class="alert alert--error"
+      data-component="alert--error"
+      role="alert"
+    >
+      Something went wrong
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Alert > announces info alerts politely 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_7b834f"
+  >
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      class="alert alert--info"
+      data-component="alert--info"
+    >
+      Invitation sent
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Alert > announces success alerts politely 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_7b834f"
+  >
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      class="alert alert--success"
+      data-component="alert--success"
+    >
+      Invitation sent
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Alert > renders an info alert by default 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_7b834f"
+  >
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      class="alert alert--info"
+      data-component="alert--info"
+    >
+      Your changes have been saved.
+    </div>
+  </div>
+</DocumentFragment>
+`;

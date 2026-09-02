@@ -1671,6 +1671,26 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "The user was successfully onboarded. The response contains the\nidentifier of the newly created user.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardedUserDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardedUserDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardedUserDto"
+                }
+              }
+            }
+          },
           "400": {
             "description": "The request was invalid.",
             "content": {
@@ -1865,6 +1885,20 @@
           }
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
+      },
+      "OnboardedUserDto": {
+        "required": [
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the newly onboarded user.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the outcome of onboarding a new user."
       },
       "OnboardUserCommandDto": {
         "required": [

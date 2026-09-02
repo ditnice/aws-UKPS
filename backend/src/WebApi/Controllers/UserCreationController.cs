@@ -28,12 +28,13 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// </param>
     /// <returns>
     /// An <see cref="ActionResult"/> indicating the outcome of the operation.
-    /// Returns <see cref="OkResult"/> if the user was successfully onboarded,
-    /// or <see cref="ForbidResult"/> if the current user is not permitted to
-    /// onboard users.
+    /// Returns <see cref="OkObjectResult"/> containing the new user's identifier
+    /// if the user was successfully onboarded, or a forbidden response if the
+    /// current user is not permitted to onboard users.
     /// </returns>
     /// <response code="200">
-    /// The user was successfully onboarded.
+    /// The user was successfully onboarded. The response contains the
+    /// identifier of the newly created user.
     /// </response>
     /// <response code="400">
     /// The request was invalid.
@@ -45,10 +46,11 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// A user with the supplied username already exists.
     /// </response>
     [HttpPost("onboard")]
+    [ProducesResponseType<OnboardedUserDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult> OnboardUser(
+    public async Task<ActionResult<OnboardedUserDto>> OnboardUser(
         [FromBody] OnboardUserCommandDto command,
         CancellationToken cancellationToken
     )
@@ -57,10 +59,10 @@ public class UserCreationController(IUserAdministrationService userAdministratio
             command,
             cancellationToken
         );
-        return result.Match(
-            _ => Created(),
+        return result.Match<ActionResult<OnboardedUserDto>>(
+            userId => Ok(new OnboardedUserDto { UserId = userId }),
             err =>
-                err.Match<ActionResult>(
+                err.Match<ActionResult<OnboardedUserDto>>(
                     usernameAlreadyExists: _ =>
                         Conflict("A user with the specified username already exists."),
                     invalidOrganisation: _ =>

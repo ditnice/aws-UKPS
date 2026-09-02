@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { UserRole } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
+import { buildUserActionHref } from '../../../../_lib/userActionAlert'
 import { changeUserPermissionsAction } from '../_actions/changeUserPermissions'
 
 export interface ChangePermissionsFormProps {
@@ -50,7 +51,7 @@ export function ChangePermissionsForm({
           return
         }
 
-        router.push(`/portal/organisations/${organisationId}`)
+        router.push(buildUserActionHref(organisationId, 'permissions-updated', userId))
       }}
     >
       {formError && <p role="alert">{formError}</p>}

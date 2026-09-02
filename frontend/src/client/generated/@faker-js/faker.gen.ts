@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationProblemDetails, CreateOrganisationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationProblemDetails, CreateOrganisationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -47,6 +47,13 @@ export const fakeMultiFactorAuthenticationSetupDto = (options?: Options): MultiF
     return {
         otpAuthUri: f.internet.url(),
         authenticationSession: f.string.sample()
+    };
+};
+
+export const fakeOnboardedUserDto = (options?: Options): OnboardedUserDto => {
+    const f = options?.faker ?? faker;
+    return {
+        userId: f.number.int()
     };
 };
 
@@ -528,6 +535,8 @@ export const fakePatchUsersByUserIdResponse409 = (options?: Options): PatchUsers
 export const fakePostUsersOnboardRequest = (options?: Options): Omit<PostUsersOnboardData, 'url'> => ({
     body: fakeOnboardUserCommandDto(options)
 });
+
+export const fakePostUsersOnboardResponse200 = (options?: Options): PostUsersOnboardResponses[200] => fakeOnboardedUserDto(options);
 
 export const fakePostUsersOnboardResponse400 = (options?: Options): PostUsersOnboardErrors[400] => fakeProblemDetails(options);
 

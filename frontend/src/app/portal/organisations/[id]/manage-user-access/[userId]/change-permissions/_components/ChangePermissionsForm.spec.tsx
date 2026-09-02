@@ -59,13 +59,15 @@ describe('ChangePermissionsForm', () => {
     })
   })
 
-  it('returns to the main manage-organisation page once the role has changed', async () => {
+  it('returns to the main manage-organisation page with the user id once the role has changed', async () => {
     render(<ChangePermissionsForm {...props} currentRole="Standard" />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Make champion user' }))
 
     await waitFor(() => {
-      expect(push).toHaveBeenCalledWith('/portal/organisations/2')
+      expect(push).toHaveBeenCalledWith(
+        '/portal/organisations/2?action=permissions-updated&userId=4',
+      )
     })
   })
 
