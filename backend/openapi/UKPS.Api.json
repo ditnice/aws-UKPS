@@ -457,6 +457,99 @@
         }
       }
     },
+    "/organisations/{organisationId}/users/{userId}/membership-requests": {
+      "get": {
+        "tags": [
+          "MembershipRequest"
+        ],
+        "summary": "Gets the membership request for a user within an organisation.",
+        "operationId": "GetUserMembershipRequest",
+        "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The unique identifier of the organisation.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The unique identifier of the user.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user membership request was found and returned successfully.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMembershipRequestDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMembershipRequestDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMembershipRequestDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user is not allowed to access the requested membership\nrequest.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested user membership request could not be found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organisations/{organisationId}/users/{userId}/membership-requests/approve": {
       "patch": {
         "tags": [
@@ -2235,6 +2328,25 @@
           }
         },
         "description": "Represents a limited summary of a user."
+      },
+      "UserMembershipRequestDto": {
+        "required": [
+          "id",
+          "workEmail"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the membership request.",
+            "format": "int32"
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "The email associated with the email address."
+          }
+        },
+        "description": "Represents a request for a user's membership."
       },
       "UserOrgStatus": {
         "enum": [
