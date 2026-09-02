@@ -17,7 +17,7 @@ vi.mock('next/navigation', () => ({
   notFound,
 }))
 vi.mock('@/client/generated', () => ({
-  getOrganisationsByOrganisationIdUsersByUserIdMembershipRequests: mockGetMembership,
+  getUserMembershipRequest: mockGetMembership,
 }))
 vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
