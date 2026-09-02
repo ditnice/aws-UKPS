@@ -1,0 +1,25 @@
+@use '@/styles/colours';
+@use '@/styles/focus';
+@use '@/styles/utils';
+
+.button {
+  align-items: center;
+  background-color: transparent;
+  border: 0;
+  color: colours.$link;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: inherit;
+  padding: 0;
+  text-align: inherit;
+
+  &:focus {
+    @include focus.default-focus-style;
+  }
+}
+
+.indicator {
+  flex: 0 0 auto;
+  height: utils.rem(22);
+  width: utils.rem(22);
+}

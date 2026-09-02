@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetUserDetailsByIdData, GetUserDetailsByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersRegisterData, PostUsersRegisterResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetUserDetailsByIdData, GetUserDetailsByIdResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersRegisterData, PostUsersRegisterResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -80,6 +80,21 @@ export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options:
         ...options.headers
     }
 });
+
+/**
+ * Gets the membership request for a user within an organisation.
+ */
+export const getUserMembershipRequest = <ThrowOnError extends boolean = false>(options: Options<GetUserMembershipRequestData, ThrowOnError>): RequestResult<GetUserMembershipRequestResponses, GetUserMembershipRequestErrors, ThrowOnError> => (options.client ?? client).get<GetUserMembershipRequestResponses, GetUserMembershipRequestErrors, ThrowOnError>({ url: '/organisations/{organisationId}/users/{userId}/membership-requests', ...options });
+
+/**
+ * Approves the membership request for the specified user within the specified organisation.
+ */
+export const approve = <ThrowOnError extends boolean = false>(options: Options<ApproveData, ThrowOnError>): RequestResult<ApproveResponses, ApproveErrors, ThrowOnError> => (options.client ?? client).patch<ApproveResponses, ApproveErrors, ThrowOnError>({ url: '/organisations/{organisationId}/users/{userId}/membership-requests/approve', ...options });
+
+/**
+ * Rejects the membership request for the specified user within the specified organisation.
+ */
+export const reject = <ThrowOnError extends boolean = false>(options: Options<RejectData, ThrowOnError>): RequestResult<RejectResponses, RejectErrors, ThrowOnError> => (options.client ?? client).patch<RejectResponses, RejectErrors, ThrowOnError>({ url: '/organisations/{organisationId}/users/{userId}/membership-requests/reject', ...options });
 
 /**
  * Retrieves an organisation by its unique identifier.

@@ -8,11 +8,8 @@ public interface IEmailService
     /// <summary>
     /// Sends an email message to the specified email address.
     /// </summary>
-    /// <param name="recipient">
-    /// The email address of the recipient.
-    /// </param>
-    /// <param name="email">
-    /// The email message containing the subject and content to send.
+    /// <param name="command">
+    /// The command containing the recipient address and email message to send.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the asynchronous operation.
@@ -20,5 +17,5 @@ public interface IEmailService
     /// <returns>
     /// A task representing the asynchronous send operation.
     /// </returns>
-    Task SendEmail(string recipient, IEmail email, CancellationToken cancellationToken);
+    Task SendEmail(SendEmailCommand command, CancellationToken cancellationToken);
 }

@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { AuthenticationProblemDetails, CreateOrganisationDto, CurrentUserInformationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationsPublicOptionsResponse, GetUserDetailsByIdData, GetUserDetailsByIdResponse, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersRegisterData, PostUsersRegisterResponse, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserConfirmationDto, RegisterUserDto, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserListItemDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationProblemDetails, CreateOrganisationDto, CurrentUserInformationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationsPublicOptionsResponse, GetUserDetailsByIdData, GetUserDetailsByIdResponse, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersRegisterData, PostUsersRegisterResponse, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserConfirmationDto, RegisterUserDto, RejectData, RejectErrors, RejectResponses, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserListItemDto, UserMembershipRequestDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -56,14 +56,14 @@ export const fakeOnboardUserCommandDto = (options?: Options): OnboardUserCommand
         fullName: f.person.fullName(),
         contactNumber: f.string.sample(),
         newUserEmail: f.internet.email(),
-        organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+        organisationId: f.number.int()
     };
 };
 
 export const fakeOrganisationListDto = (options?: Options): OrganisationListDto => {
     const f = options?.faker ?? faker;
     return {
-        id: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        id: f.number.int(),
         organisationName: f.string.sample()
     };
 };
@@ -88,11 +88,7 @@ export const fakeProblemDetails = (options?: Options): ProblemDetails => {
     return {
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.helpers.arrayElement([
-                f.number.int(),
-                f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$'),
-                null
-            ]) as any },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null }
     };
@@ -101,7 +97,7 @@ export const fakeProblemDetails = (options?: Options): ProblemDetails => {
 export const fakeRegisterUserConfirmationDto = (options?: Options): RegisterUserConfirmationDto => {
     const f = options?.faker ?? faker;
     return {
-        id: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        id: f.number.int(),
         organisationName: f.string.sample(),
         fullName: f.person.fullName(),
         workEmail: f.internet.email(),
@@ -115,7 +111,7 @@ export const fakeRegisterUserDto = (options?: Options): RegisterUserDto => {
         fullName: f.person.fullName(),
         workEmail: f.internet.email(),
         phoneNumber: f.phone.number(),
-        organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+        organisationId: f.number.int()
     };
 };
 
@@ -146,11 +142,7 @@ export const fakeAuthenticationProblemDetails = (options?: Options): Authenticat
     return {
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.helpers.arrayElement([
-                f.number.int(),
-                f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$'),
-                null
-            ]) as any },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { challengeType: f.datatype.boolean() ? fakeUkpsChallengeType(options) : null },
@@ -177,6 +169,14 @@ export const fakeUpdateUserDetailsCommand = (options?: Options): UpdateUserDetai
     };
 };
 
+export const fakeUserMembershipRequestDto = (options?: Options): UserMembershipRequestDto => {
+    const f = options?.faker ?? faker;
+    return {
+        id: f.number.int(),
+        workEmail: f.internet.email()
+    };
+};
+
 export const fakeUserOrgStatus = (options?: Options): UserOrgStatus => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement([
@@ -192,7 +192,7 @@ export const fakeUserOrgStatus = (options?: Options): UserOrgStatus => {
 export const fakeOrganisationDetailsDto = (options?: Options): OrganisationDetailsDto => {
     const f = options?.faker ?? faker;
     return {
-        id: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        id: f.number.int(),
         organisationName: f.string.sample(),
         organisationType: fakeOrganisationType(options),
         allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
@@ -218,12 +218,12 @@ export const fakeUserRole = (options?: Options): UserRole => {
 export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInformationDto => {
     const f = options?.faker ?? faker;
     return {
-        userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        userId: f.number.int(),
         fullName: f.person.fullName(),
         workTelephone: f.string.sample(),
         workEmail: f.internet.email(),
-        organisationMembershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        organisationMembershipId: f.number.int(),
+        organisationId: f.number.int(),
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options)
     };
@@ -232,9 +232,9 @@ export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInf
 export const fakeOrganisationMembershipDto = (options?: Options): OrganisationMembershipDto => {
     const f = options?.faker ?? faker;
     return {
-        id: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        id: f.number.int(),
+        userId: f.number.int(),
+        organisationId: f.number.int(),
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
         allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
@@ -249,7 +249,7 @@ export const fakeUpdateOrgMembershipUserRoleCommandDto = (options?: Options): Up
 export const fakeUserListItemDto = (options?: Options): UserListItemDto => {
     const f = options?.faker ?? faker;
     return {
-        userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        userId: f.number.int(),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { emailAddress: f.datatype.boolean() ? f.internet.email() : null },
         role: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
@@ -261,9 +261,9 @@ export const fakePaginatedResponseDtoOfUserListItemDto = (options?: Options): Pa
     const f = options?.faker ?? faker;
     return {
         items: f.helpers.multiple(() => fakeUserListItemDto(options)),
-        totalCount: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        page: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        pageSize: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+        totalCount: f.number.int(),
+        page: f.number.int(),
+        pageSize: f.number.int()
     };
 };
 
@@ -295,11 +295,7 @@ export const fakeValidationProblemDetails = (options?: Options): ValidationProbl
     return {
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.helpers.arrayElement([
-                f.number.int(),
-                f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$'),
-                null
-            ]) as any },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
         errors: !resolveCondition(options?.includeOptional ?? true, f) ? {} as {} : {
@@ -380,6 +376,54 @@ export const fakePostAuthVerifyMfaResponse200 = (): PostAuthVerifyMfaResponses[2
 
 export const fakePostAuthVerifyMfaResponse400 = (options?: Options): PostAuthVerifyMfaErrors[400] => fakeProblemDetails(options);
 
+export const fakeGetUserMembershipRequestRequest = (options?: Options): Omit<GetUserMembershipRequestData, 'url'> => {
+    const f = options?.faker ?? faker;
+    return {
+        path: {
+            organisationId: f.number.int(),
+            userId: f.number.int()
+        }
+    };
+};
+
+export const fakeGetUserMembershipRequestResponse200 = (options?: Options): GetUserMembershipRequestResponses[200] => fakeUserMembershipRequestDto(options);
+
+export const fakeGetUserMembershipRequestResponse403 = (options?: Options): GetUserMembershipRequestErrors[403] => fakeProblemDetails(options);
+
+export const fakeGetUserMembershipRequestResponse404 = (options?: Options): GetUserMembershipRequestErrors[404] => fakeProblemDetails(options);
+
+export const fakeApproveRequest = (options?: Options): Omit<ApproveData, 'url'> => {
+    const f = options?.faker ?? faker;
+    return {
+        path: {
+            organisationId: f.number.int(),
+            userId: f.number.int()
+        }
+    };
+};
+
+export const fakeApproveResponse200 = (): ApproveResponses[200] => undefined;
+
+export const fakeApproveResponse403 = (options?: Options): ApproveErrors[403] => fakeProblemDetails(options);
+
+export const fakeApproveResponse404 = (options?: Options): ApproveErrors[404] => fakeProblemDetails(options);
+
+export const fakeRejectRequest = (options?: Options): Omit<RejectData, 'url'> => {
+    const f = options?.faker ?? faker;
+    return {
+        path: {
+            organisationId: f.number.int(),
+            userId: f.number.int()
+        }
+    };
+};
+
+export const fakeRejectResponse200 = (): RejectResponses[200] => undefined;
+
+export const fakeRejectResponse403 = (options?: Options): RejectErrors[403] => fakeProblemDetails(options);
+
+export const fakeRejectResponse404 = (options?: Options): RejectErrors[404] => fakeProblemDetails(options);
+
 export const fakeGetOrganisationByIdRequest = (options?: Options): Omit<GetOrganisationByIdData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
@@ -414,7 +458,7 @@ export const fakeDeactivateMembershipRequest = (options?: Options): Omit<Deactiv
     return {
         path: {
             organisationId: f.number.int(),
-            membershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+            membershipId: f.number.int()
         }
     };
 };
@@ -432,7 +476,7 @@ export const fakeReactivateMembershipRequest = (options?: Options): Omit<Reactiv
     return {
         path: {
             organisationId: f.number.int(),
-            membershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+            membershipId: f.number.int()
         }
     };
 };
@@ -451,7 +495,7 @@ export const fakeUpdateUserRoleRequest = (options?: Options): Omit<UpdateUserRol
         body: fakeUpdateOrgMembershipUserRoleCommandDto(options),
         path: {
             organisationId: f.number.int(),
-            membershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+            membershipId: f.number.int()
         }
     };
 };
@@ -483,9 +527,9 @@ export const fakeGetUsersRequest = (options?: Options): Omit<GetUsersData, 'url'
     const f = options?.faker ?? faker;
     return {
         query: {
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { OrganisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any },
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Page: f.helpers.arrayElement([f.number.int({ min: 1, max: 2147483647 }), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any },
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { PageSize: f.helpers.arrayElement([f.number.int({ min: 1, max: 100 }), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { OrganisationId: f.number.int() },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Page: f.number.int({ min: 1, max: 2147483647 }) },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { PageSize: f.number.int({ min: 1, max: 100 }) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Status: f.helpers.multiple(() => fakeUserOrgStatus(options)) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Role: f.helpers.multiple(() => fakeUserRole(options)) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Email: f.internet.email() },
@@ -506,7 +550,7 @@ export const fakePatchUsersByUserIdRequest = (options?: Options): Omit<PatchUser
     return {
         body: fakeUpdateUserDetailsCommand(options),
         path: {
-            userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+            userId: f.number.int()
         }
     };
 };

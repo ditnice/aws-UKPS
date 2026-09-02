@@ -12,7 +12,12 @@ public class MockEmailService
 
     public MockEmailService()
     {
-        Mock.WhenForAnyArgs(x => x.SendEmail(default!, default!, default!))
-            .Do((callInfo) => _sent.Add(callInfo.Arg<IEmail>()));
+        Mock.SendEmail(Arg.Any<SendEmailCommand>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var command = callInfo.Arg<SendEmailCommand>();
+                _sent.Add(command.Email);
+                return Task.CompletedTask;
+            });
     }
 }

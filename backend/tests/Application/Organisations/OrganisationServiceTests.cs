@@ -399,7 +399,7 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
             RuleFor(o => o.OrganisationName, f => f.Company.CompanyName());
             RuleFor(o => o.HeadOfficeAddress, f => f.Address.FullAddress());
             RuleFor(o => o.HeadOfficeEmail, f => f.Internet.Email());
-            RuleFor(o => o.HeadOfficeTelephone, f => f.Phone.PhoneNumber());
+            RuleFor(o => o.HeadOfficeTelephone, _ => new TelephoneNumberFaker().Generate());
         }
     }
 }

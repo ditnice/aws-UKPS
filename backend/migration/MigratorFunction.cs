@@ -79,6 +79,7 @@ public sealed class MigratorFunction
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812")]
     private sealed class DbSecret
     {
         [JsonPropertyName("username")]

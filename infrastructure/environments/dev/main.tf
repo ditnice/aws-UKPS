@@ -381,7 +381,6 @@ module "backend_aurora_alerts" {
 }
 
 # Lambda - DB Migrator
-
 module "db_migrator_lambda" {
   source = "../../modules/lambda/dbMigrator"
 
@@ -389,7 +388,8 @@ module "db_migrator_lambda" {
   environment  = local.environment
   service_name = "db-migrator"
 
-  lambda_zip_path = "placeholder.zip" # TODO - update this when known
+  image_repository_url = var.migrator_image_repository_url
+  image_tag            = var.image_tag
 
   vpc_id     = module.networking.vpc_id
   subnet_ids = module.networking.app_subnet_ids
@@ -400,7 +400,7 @@ module "db_migrator_lambda" {
   db_port              = module.aurora_backend.port
   db_name              = module.aurora_backend.database_name
 
-  kms_key_id         = module.kms_backend.app_key_id
+  kms_key_id         = module.kms_backend.app_key_arn
   cloudwatch_kms_arn = module.kms_backend.app_key_arn
   region             = var.region
 

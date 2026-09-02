@@ -28,13 +28,23 @@ variable "service_name" {
   }
 }
 
-variable "lambda_zip_path" {
-  description = "Local path to the built Lambda zip artifact."
+variable "image_repository_url" {
+  description = "ECR repository URL for the container image used by the migration Lambda."
   type        = string
 
   validation {
-    condition     = can(regex("\\.zip$", var.lambda_zip_path))
-    error_message = "Lambda zip path must point to a .zip file."
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9]+([._/-][a-z0-9]+)*$", var.image_repository_url))
+    error_message = "Image repository URL must be a private AWS ECR repository URL without an image tag or digest."
+  }
+}
+
+variable "image_tag" {
+  description = "ECR image tag passed directly to the migration Lambda. Use a unique, immutable tag for each deployment."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$", var.image_tag))
+    error_message = "Image tag must be a valid Docker image tag."
   }
 }
 

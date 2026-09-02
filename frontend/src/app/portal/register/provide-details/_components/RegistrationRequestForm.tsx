@@ -65,8 +65,6 @@ export function RegistrationRequestForm() {
     onSubmit: async ({ value }) => {
       RegistrationRequest.parse(value)
 
-      console.log('Organisation:', value.organisation)
-
       const response = await postUsersRegister({
         body: {
           fullName: value.fullName,
