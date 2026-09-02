@@ -1,6 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import { useRouter } from 'next/navigation'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { z } from 'zod'
@@ -13,19 +14,24 @@ import {
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { Select, SelectOption } from '@/components/Select/Select'
+import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './RegistrationRequestForm.module.scss'
 
 const RegistrationRequest = z.object({
   organisation: z.string(),
-  fullName: z.string().trim().min(1, 'Enter your full name'),
+  fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
   workEmail: z
     .string()
     .trim()
-    .min(1, 'Enter your work email address')
-    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
-  phoneNumber: z.string().trim().min(1, 'Enter your phone number'),
+    .min(1, errorMessages.organisationEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(1, errorMessages.personalPhoneRequired)
+    .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 
 type RegistrationRequestValues = z.input<typeof RegistrationRequest>
@@ -162,16 +168,18 @@ export function RegistrationRequestForm() {
           return (
             <Input
               autoComplete="phone number"
-              error={Boolean(errorMessage)}
-              errorMessage={errorMessage}
               label="Phone number"
               name={field.name}
               onBlur={field.handleBlur}
+              type="tel"
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 field.handleChange(event.target.value)
               }
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
               hint="For international numbers include the country code."
               width="one-third"
+              required
               value={field.state.value}
               className={styles.marginBottom}
             />
