@@ -6,10 +6,7 @@ locals {
   account_root_arn = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"
   alias_prefix     = "${var.project}-${var.environment}-${var.service_name}"
   cloudwatch_log_group_arns = concat(
-    [
-      "arn:${data.aws_partition.current.partition}:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${var.project}/${var.environment}/*",
-      "arn:${data.aws_partition.current.partition}:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.project}-${var.environment}-*",
-    ],
+    ["arn:${data.aws_partition.current.partition}:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${var.project}/${var.environment}/*"],
     [for name in var.additional_cloudwatch_log_group_names : "arn:${data.aws_partition.current.partition}:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:${name}"]
   )
 }
