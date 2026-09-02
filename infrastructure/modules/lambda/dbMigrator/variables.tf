@@ -39,7 +39,7 @@ variable "image_repository_url" {
 }
 
 variable "image_tag" {
-  description = "Container image tag for the migration Lambda."
+  description = "Mutable ECR tag that Terraform resolves to the migration Lambda image digest."
   type        = string
 
   validation {

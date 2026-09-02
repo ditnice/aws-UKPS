@@ -82,7 +82,7 @@ variable "backend_image_repository_url" {
 }
 
 variable "migrator_image_repository_url" {
-  description = "Container image repository URL for the database migration Lambda, without an image tag or digest"
+  description = "Container image repository URL for the backend database migration Lambda, without an image tag or digest"
   type        = string
 
   validation {
@@ -92,7 +92,7 @@ variable "migrator_image_repository_url" {
 }
 
 variable "image_tag" {
-  description = "Container image tag for the backend service"
+  description = "Container image tag for the frontend and backend services and the migrator Lambda"
   type        = string
 
   validation {
