@@ -1,14 +1,5 @@
 locals {
-  function_name        = "${var.project}-${var.environment}-${var.service_name}-image"
-  repository_url_parts = split("/", var.image_repository_url)
-  repository_name      = join("/", slice(local.repository_url_parts, 1, length(local.repository_url_parts)))
-  registry_id          = split(".", local.repository_url_parts[0])[0]
-}
-
-data "aws_ecr_image" "db_migrator" {
-  repository_name = local.repository_name
-  registry_id     = local.registry_id
-  image_tag       = var.image_tag
+  function_name = "${var.project}-${var.environment}-${var.service_name}-image"
 }
 
 resource "aws_lambda_function" "db_migrator" {
@@ -16,7 +7,7 @@ resource "aws_lambda_function" "db_migrator" {
   function_name = local.function_name
   role          = aws_iam_role.this.arn
   package_type  = "Image"
-  image_uri     = "${var.image_repository_url}@${data.aws_ecr_image.db_migrator.image_digest}"
+  image_uri     = "${var.image_repository_url}:${var.image_tag}"
   architectures = ["x86_64"]
 
   memory_size                    = var.memory_size
