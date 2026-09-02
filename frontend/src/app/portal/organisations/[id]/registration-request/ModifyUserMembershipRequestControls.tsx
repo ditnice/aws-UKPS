@@ -9,6 +9,7 @@ import {
   patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsReject,
 } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 type ModificationAction = 'Approve' | 'Reject'
 export type ModifyUserMembershipRequestControlsProps = {
@@ -59,7 +60,9 @@ const ModifyUserMembershipRequestControls = ({
   return (
     <>
       {error && (
-        <p data-testid="action-error">An error occurred when trying to approved the user.</p>
+        <ErrorState data-testid="action-error">
+          An error occurred when trying to approve the user.
+        </ErrorState>
       )}
       <ButtonGroup>
         <Button data-testid="action-button" variant="cta" onClick={initiateRequest}>

@@ -11,7 +11,7 @@ export type ClientOptions = {
 export type AuthenticationProblemDetails = {
     type?: null | string;
     title?: null | string;
-    status?: null | number | string;
+    status?: null | number;
     detail?: null | string;
     instance?: null | string;
     challengeType?: null | UkpsChallengeType;
@@ -45,6 +45,45 @@ export type CreateOrganisationDto = {
      * Gets or sets the head office telephone number of the organisation.
      */
     headOfficeTelephone: string;
+};
+
+/**
+ * Represents information about the currently authenticated user and their
+ * membership within an organisation.
+ */
+export type CurrentUserInformationDto = {
+    /**
+     * Gets the unique identifier of the user.
+     */
+    userId: number;
+    /**
+     * Gets the full name of the user.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
+    /**
+     * Gets the user's email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the unique identifier of the user's organisation membership.
+     */
+    organisationMembershipId: number;
+    /**
+     * Gets the unique identifier of the user's organisation.
+     */
+    organisationId: number;
+    /**
+     * Gets the name of the user's organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets the role assigned to the user within the organisation.
+     */
+    userRole: UserRole;
 };
 
 /**
@@ -95,7 +134,7 @@ export type OnboardUserCommandDto = {
     /**
      * Specifies the organisation that the new user will be created for.
      */
-    organisationId: number | string;
+    organisationId: number;
 };
 
 /**
@@ -105,7 +144,7 @@ export type OrganisationDetailsDto = {
     /**
      * Gets the unique identifier of the organisation.
      */
-    id: number | string;
+    id: number;
     /**
      * Gets the name of the organisation.
      */
@@ -155,15 +194,15 @@ export type OrganisationMembershipDto = {
     /**
      * Gets the unique identifier of the organisation membership.
      */
-    id: number | string;
+    id: number;
     /**
      * Gets the unique identifier of the user associated with the membership.
      */
-    userId: number | string;
+    userId: number;
     /**
      * Gets the unique identifier of the organisation associated with the membership.
      */
-    organisationId: number | string;
+    organisationId: number;
     /**
      * Gets the role of the user within the organisation.
      */
@@ -198,15 +237,15 @@ export type PaginatedResponseDtoOfUserListItemDto = {
     /**
      * Gets the total number of items across all pages.
      */
-    totalCount: number | string;
+    totalCount: number;
     /**
      * Gets the current page number (1-based index).
      */
-    page: number | string;
+    page: number;
     /**
      * Gets the number of items per page.
      */
-    pageSize: number | string;
+    pageSize: number;
 };
 
 /**
@@ -219,7 +258,7 @@ export type PharmaceuticalEntity = string;
 export type ProblemDetails = {
     type?: null | string;
     title?: null | string;
-    status?: null | number | string;
+    status?: null | number;
     detail?: null | string;
     instance?: null | string;
 };
@@ -351,7 +390,7 @@ export type UserListItemDto = {
     /**
      * Gets the unique identifier of the user.
      */
-    userId: number | string;
+    userId: number;
     /**
      * Gets the email address of the user, if available.
      */
@@ -384,6 +423,17 @@ export type UserRole = 'Standard' | 'Champion' | 'Super';
  * Represents the different types of users in the system.
  */
 export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUser' | 'ItAdmin';
+
+export type ValidationProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    errors: {
+        [key: string]: Array<string>;
+    };
+};
 
 /**
  * Represents the details required to verify a user's multi-factor authentication setup.
@@ -591,7 +641,7 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveData = {
+export type ApproveData = {
     body?: never;
     path: {
         /**
@@ -607,7 +657,7 @@ export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApp
     url: '/organisations/{organisationId}/users/{userId}/membership-requests/approve';
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors = {
+export type ApproveErrors = {
     /**
      * The current user is not allowed to approve the membership request.
      */
@@ -618,16 +668,16 @@ export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApp
     404: ProblemDetails;
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveError = PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors[keyof PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveErrors];
+export type ApproveError = ApproveErrors[keyof ApproveErrors];
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApproveResponses = {
+export type ApproveResponses = {
     /**
      * The membership request was successfully approved.
      */
     200: unknown;
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectData = {
+export type RejectData = {
     body?: never;
     path: {
         /**
@@ -643,7 +693,7 @@ export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRej
     url: '/organisations/{organisationId}/users/{userId}/membership-requests/reject';
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors = {
+export type RejectErrors = {
     /**
      * The current user is not allowed to reject the membership request.
      */
@@ -654,9 +704,9 @@ export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRej
     404: ProblemDetails;
 };
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectError = PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors[keyof PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectErrors];
+export type RejectError = RejectErrors[keyof RejectErrors];
 
-export type PatchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsRejectResponses = {
+export type RejectResponses = {
     /**
      * The membership request was successfully rejected.
      */
@@ -740,7 +790,7 @@ export type DeactivateMembershipData = {
         /**
          * The identifier of the membership to deactivate.
          */
-        membershipId: number | string;
+        membershipId: number;
     };
     query?: never;
     url: '/organisations/{organisationId}/memberships/{membershipId}/deactivate';
@@ -782,7 +832,7 @@ export type ReactivateMembershipData = {
         /**
          * The identifier of the membership to reactivate.
          */
-        membershipId: number | string;
+        membershipId: number;
     };
     query?: never;
     url: '/organisations/{organisationId}/memberships/{membershipId}/reactivate';
@@ -827,7 +877,7 @@ export type UpdateUserRoleData = {
         /**
          * The identifier of the membership to update.
          */
-        membershipId: number | string;
+        membershipId: number;
     };
     query?: never;
     url: '/organisations/{organisationId}/memberships/{membershipId}/update-role';
@@ -884,6 +934,22 @@ export type PostOrganisationsResponses = {
 
 export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
 
+export type GetUsersMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me';
+};
+
+export type GetUsersMeResponses = {
+    /**
+     * Returns the information for the currently authenticated user.
+     */
+    200: CurrentUserInformationDto;
+};
+
+export type GetUsersMeResponse = GetUsersMeResponses[keyof GetUsersMeResponses];
+
 export type GetUsersData = {
     body?: never;
     path?: never;
@@ -891,17 +957,17 @@ export type GetUsersData = {
         /**
          * Gets or initialises the optional ID of the organisation to filter users by.
          */
-        OrganisationId?: number | string;
+        OrganisationId?: number;
         /**
          * Gets or initialises the page number for pagination.
          * Must be greater than or equal to 1.
          */
-        Page?: number | string;
+        Page?: number;
         /**
          * Gets or initialises the number of items per page for pagination.
          * Must be between 1 and 100.
          */
-        PageSize?: number | string;
+        PageSize?: number;
         /**
          * Gets or initialises the collection of user organisation statuses to filter users by.
          * Users with a UserOrgStatus.Rejected status are always excluded from
@@ -959,7 +1025,7 @@ export type PatchUsersByUserIdData = {
         /**
          * The unique identifier of the user whose details are being updated.
          */
-        userId: number | string;
+        userId: number;
     };
     query?: never;
     url: '/users/{userId}';
@@ -969,7 +1035,7 @@ export type PatchUsersByUserIdErrors = {
     /**
      * The supplied user details are invalid.
      */
-    400: ProblemDetails;
+    400: ValidationProblemDetails;
     /**
      * The caller is not authorised to update the specified user's details.
      */

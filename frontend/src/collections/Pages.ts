@@ -1,10 +1,21 @@
+import { slugField } from 'payload'
+
+import { authenticated } from '@/access/authenticated'
+import { authenticatedOrPublished } from '@/access/authenticatedOrPublished'
+
 import type { CollectionConfig } from 'payload'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
+  access: {
+    create: authenticated,
+    delete: authenticated,
+    read: authenticatedOrPublished,
+    update: authenticated,
+  },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'path', 'navigationGroup'],
+    defaultColumns: ['title', 'slug', '_status'],
   },
   fields: [
     {
@@ -12,34 +23,22 @@ export const Pages: CollectionConfig = {
       type: 'text',
       required: true,
     },
-    {
-      name: 'slug',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'URL-safe identifier, e.g. "home" or "about-us"',
+    slugField({
+      useAsSlug: 'title',
+      overrides: (field) => {
+        field.admin = { position: undefined }
+        return field
       },
-    },
+    }),
     {
-      name: 'path',
-      type: 'text',
-      required: true,
-      unique: true,
+      name: 'parent',
+      type: 'relationship',
+      relationTo: 'pages',
       admin: {
-        description: 'Full path, e.g. "/" or "/about-us/what-is-uk-pharmascan"',
+        description:
+          'Optional — create hierarchical pages, e.g. about-us/history-of-nice. Leave blank for a top-level page.',
       },
-    },
-    {
-      name: 'navigationGroup',
-      type: 'text',
-    },
-    {
-      name: 'navigationLabel',
-      type: 'text',
-    },
-    {
-      name: 'navigationOrder',
-      type: 'number',
+      filterOptions: ({ id }) => (id ? { id: { not_equals: id } } : true),
     },
     {
       name: 'layout',
@@ -108,4 +107,5 @@ export const Pages: CollectionConfig = {
       ],
     },
   ],
+  versions: { drafts: { autosave: true } },
 }
