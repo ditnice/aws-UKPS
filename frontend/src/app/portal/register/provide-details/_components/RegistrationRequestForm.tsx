@@ -20,7 +20,7 @@ import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import styles from './RegistrationRequestForm.module.scss'
 
 const RegistrationRequest = z.object({
-  organisation: z.string(),
+  organisation: z.string().nonempty(errorMessages.organisationRequired),
   fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
   workEmail: z
     .string()
@@ -82,114 +82,121 @@ export function RegistrationRequestForm() {
   })
 
   return (
-    <form
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault()
-        event.stopPropagation()
-        void form.handleSubmit()
-      }}
-    >
-      <form.Field name="organisation">
-        {(field) => (
-          <>
-            <Select
-              defaultValue="choose"
-              label="Select the organisation you are requesting access for"
-              name="organisation"
-              width="one-third"
-              //value={field.state.value}
-              onChange={(event) => field.handleChange(event.target.value)}
-            >
-              <SelectOption value="choose">Choose organisation</SelectOption>
-              {organisations.map((organisation) => (
-                <SelectOption key={organisation.organisationName} value={organisation.id}>
-                  {organisation.organisationName}
-                </SelectOption>
-              ))}
-            </Select>
-            <p>
-              If your organisation is not registered, you must{' '}
-              <a href="URL">register your organisation (opens in a new tab)</a> before you can set
-              up your account.
-            </p>
-          </>
-        )}
-      </form.Field>
-      <form.Field name="fullName">
-        {(field) => {
-          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
-          return (
-            <Input
-              autoComplete="name"
-              error={Boolean(errorMessage)}
-              errorMessage={errorMessage}
-              label="Full name"
-              name={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                field.handleChange(event.target.value)
-              }
-              type="text"
-              value={field.state.value}
-              width="one-third"
-              className={styles.marginBottom}
-            />
-          )
+    <>
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          void form.handleSubmit()
         }}
-      </form.Field>
-      <form.Field name="workEmail">
-        {(field) => {
-          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
-          return (
-            <Input
-              autoComplete="email"
-              error={Boolean(errorMessage)}
-              errorMessage={errorMessage}
-              label="Work email address"
-              name={field.name}
-              hint="We'll use this email address to contact you about your request. You must use an email address from your organisation."
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                field.handleChange(event.target.value)
-              }
-              onBlur={field.handleBlur}
-              type="email"
-              value={field.state.value}
-              width="one-third"
-              className={styles.marginBottom}
-            />
-          )
-        }}
-      </form.Field>
-      <form.Field name="phoneNumber">
-        {(field) => {
-          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+      >
+        <form.Field name="organisation">
+          {(field) => {
+            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+            return (
+              <>
+                <Select
+                  defaultValue="choose"
+                  label="Select the organisation you are requesting access for"
+                  name="organisation"
+                  width="one-third"
+                  error={Boolean(errorMessage)}
+                  errorMessage={errorMessage}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  onBlur={field.handleBlur}
+                >
+                  <SelectOption value="choose">Choose organisation</SelectOption>
+                  {organisations.map((organisation) => (
+                    <SelectOption key={organisation.organisationName} value={organisation.id}>
+                      {organisation.organisationName}
+                    </SelectOption>
+                  ))}
+                </Select>
+                <p>
+                  If your organisation is not registered, you must{' '}
+                  <a href="URL">register your organisation (opens in a new tab)</a> before you can
+                  set up your account.
+                </p>
+              </>
+            )
+          }}
+        </form.Field>
 
-          return (
-            <Input
-              autoComplete="phone number"
-              label="Phone number"
-              name={field.name}
-              onBlur={field.handleBlur}
-              type="tel"
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                field.handleChange(event.target.value)
-              }
-              error={Boolean(errorMessage)}
-              errorMessage={errorMessage}
-              hint="For international numbers include the country code."
-              width="one-third"
-              required
-              value={field.state.value}
-              className={styles.marginBottom}
-            />
-          )
-        }}
-      </form.Field>
+        <form.Field name="fullName">
+          {(field) => {
+            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+            return (
+              <Input
+                autoComplete="name"
+                error={Boolean(errorMessage)}
+                errorMessage={errorMessage}
+                label="Full name"
+                name={field.name}
+                onBlur={field.handleBlur}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  field.handleChange(event.target.value)
+                }
+                type="text"
+                value={field.state.value}
+                width="one-third"
+                className={styles.marginBottom}
+              />
+            )
+          }}
+        </form.Field>
+        <form.Field name="workEmail">
+          {(field) => {
+            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+            return (
+              <Input
+                autoComplete="email"
+                error={Boolean(errorMessage)}
+                errorMessage={errorMessage}
+                label="Work email address"
+                name={field.name}
+                hint="We'll use this email address to contact you about your request. You must use an email address from your organisation."
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  field.handleChange(event.target.value)
+                }
+                onBlur={field.handleBlur}
+                type="email"
+                value={field.state.value}
+                width="one-third"
+                className={styles.marginBottom}
+              />
+            )
+          }}
+        </form.Field>
+        <form.Field name="phoneNumber">
+          {(field) => {
+            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 
-      <Button type="submit" variant="cta">
-        Submit request
-      </Button>
-    </form>
+            return (
+              <Input
+                autoComplete="phone number"
+                label="Phone number"
+                name={field.name}
+                onBlur={field.handleBlur}
+                type="tel"
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  field.handleChange(event.target.value)
+                }
+                error={Boolean(errorMessage)}
+                errorMessage={errorMessage}
+                hint="For international numbers include the country code."
+                width="one-third"
+                required
+                value={field.state.value}
+                className={styles.marginBottom}
+              />
+            )
+          }}
+        </form.Field>
+        <Button type="submit" variant="cta">
+          Submit request
+        </Button>
+      </form>
+    </>
   )
 }
