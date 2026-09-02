@@ -24,12 +24,16 @@ internal sealed partial class QueuedEmailService : IEmailService
 
     public async Task SendEmail(SendEmailCommand command, CancellationToken cancellationToken)
     {
-        var jsonString = JsonSerializer.Serialize(command);
+        var serialisedCommand = JsonSerializer.Serialize(command);
 
         LogSendingEmail(_emailOptions.QueueUrl);
 
         await _sqs.SendMessageAsync(
-            new SendMessageRequest { QueueUrl = _emailOptions.QueueUrl, MessageBody = jsonString },
+            new SendMessageRequest
+            {
+                QueueUrl = _emailOptions.QueueUrl,
+                MessageBody = serialisedCommand,
+            },
             cancellationToken
         );
 

@@ -29,7 +29,7 @@ internal sealed partial class EmailQueueProcessor
         var receiveRequest = new ReceiveMessageRequest
         {
             QueueUrl = _emailOptions.QueueUrl,
-            MaxNumberOfMessages = 10,
+            MaxNumberOfMessages = 1,
             WaitTimeSeconds = 20,
         };
 

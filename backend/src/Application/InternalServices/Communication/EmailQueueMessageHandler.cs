@@ -16,10 +16,10 @@ internal sealed class EmailQueueMessageHandler
         CancellationToken cancellationToken
     )
     {
-        var command = JsonSerializer.Deserialize<SendEmailCommand>(messageBody);
-        if (command != null)
-        {
-            await _emailService.SendEmail(command, cancellationToken);
-        }
+        var command =
+            JsonSerializer.Deserialize<SendEmailCommand>(messageBody)
+            ?? throw new JsonException("Email queue message deserialized to null.");
+
+        await _emailService.SendEmail(command, cancellationToken);
     }
 }

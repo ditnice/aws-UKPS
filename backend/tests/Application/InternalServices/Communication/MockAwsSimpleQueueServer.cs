@@ -32,10 +32,7 @@ internal sealed class MockAwsSimpleQueueServer
             });
 
         Mock.ReceiveMessageAsync(Arg.Any<ReceiveMessageRequest>(), Arg.Any<CancellationToken>())
-            .Returns(
-                (callInfo) =>
-                    Task.FromResult(new ReceiveMessageResponse { Messages = Messages.ToList() })
-            );
+            .Returns(_ => new ReceiveMessageResponse { Messages = Messages.ToList() });
 
         Mock.DeleteMessageAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>

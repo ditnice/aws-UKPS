@@ -2,7 +2,6 @@ using Amazon.SimpleEmailV2;
 using Amazon.SimpleEmailV2.Model;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -17,7 +16,7 @@ namespace UKPS.Api.Tests.Application.InternalServices.Communication;
 
 public class EmailServiceTests
 {
-    private readonly IEnumerable<IHostedService> _backgroundServices;
+    private readonly EmailQueueProcessor _processor;
     private readonly IEmailService _sut;
     private readonly MockAwsSimpleQueueServer _mockAwsSqs;
     private readonly IAmazonSimpleEmailServiceV2 _mockEmailService;
@@ -51,10 +50,8 @@ public class EmailServiceTests
             .AddLogging(x => x.AddProvider(Logs));
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
-        _backgroundServices = serviceProvider.GetServices<IHostedService>();
+        _processor = serviceProvider.GetRequiredService<EmailQueueProcessor>();
         _sut = serviceProvider.GetRequiredService<IEmailService>();
-
-        StartBackgroundServices();
     }
 
     [Fact]
@@ -62,7 +59,7 @@ public class EmailServiceTests
     {
         var htmlContent = _validEmailCommand.Email.GetHtmlContent();
         await _sut.SendEmail(_validEmailCommand, TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _processor.ProcessEmailQueue(TestContext.Current.CancellationToken);
 
         await _mockEmailService
             .Received(1)
@@ -83,7 +80,7 @@ public class EmailServiceTests
     public async Task SendEmail_OnSuccess_DeleteMessage()
     {
         await _sut.SendEmail(_validEmailCommand, TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _processor.ProcessEmailQueue(TestContext.Current.CancellationToken);
 
         _mockAwsSqs.Messages.Count().ShouldBe(0);
         _mockAwsSqs.DeletedMessages.Count().ShouldBe(1);
@@ -98,18 +95,10 @@ public class EmailServiceTests
             .ThrowsAsync(exception);
 
         await _sut.SendEmail(_validEmailCommand, TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _processor.ProcessEmailQueue(TestContext.Current.CancellationToken);
         _mockAwsSqs.Messages.Count().ShouldBe(1);
 
         AssertUserEmailNotLogged(_validEmailCommand.RecipientAddress);
-    }
-
-    private void StartBackgroundServices()
-    {
-        foreach (var backgroundService in _backgroundServices)
-        {
-            _ = backgroundService.StartAsync(TestContext.Current.CancellationToken);
-        }
     }
 
     private void AssertUserEmailNotLogged(string userEmail)
