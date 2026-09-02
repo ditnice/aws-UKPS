@@ -39,7 +39,7 @@ variable "image_repository_url" {
 }
 
 variable "image_tag" {
-  description = "Mutable ECR tag that Terraform resolves to the migration Lambda image digest."
+  description = "ECR image tag passed directly to the migration Lambda. Use a unique, immutable tag for each deployment."
   type        = string
 
   validation {
