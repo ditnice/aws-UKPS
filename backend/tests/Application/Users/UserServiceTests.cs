@@ -778,14 +778,19 @@ public class UserServiceTests : DatabaseTestBase
         );
 
         UserInformationDto dto = result.ShouldBeSuccess();
-        dto.UserId.ShouldBe(user.Id);
-        dto.FullName.ShouldBe(user.FullName);
-        dto.WorkEmail.ShouldBe(user.WorkEmail);
-        dto.WorkTelephone.ShouldBe(user.WorkTelephone!);
-        dto.OrganisationMembershipId.ShouldBe(membership.Id);
-        dto.OrganisationId.ShouldBe(membership.OrganisationId);
-        dto.OrganisationName.ShouldBe(membership.Organisation!.OrganisationName);
-        dto.UserRole.ShouldBe(membership.UserRole);
+        dto.ShouldBe(
+            new UserInformationDto()
+            {
+                UserId = user.Id,
+                FullName = user.FullName,
+                WorkEmail = user.WorkEmail,
+                WorkTelephone = user.WorkTelephone!,
+                OrganisationMembershipId = membership.Id,
+                OrganisationId = membership.OrganisationId,
+                OrganisationName = membership.Organisation!.OrganisationName,
+                UserRole = membership.UserRole,
+            }
+        );
     }
 
     [Fact]

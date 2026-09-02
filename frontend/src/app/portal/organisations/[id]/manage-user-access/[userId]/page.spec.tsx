@@ -28,12 +28,19 @@ const user: UserInformationDto = {
   userRole: 'Standard',
 }
 
-function mockResponse(overrides: Partial<UserInformationDto> = {}, status = 200) {
+function mockResponse(overrides: Partial<UserInformationDto> = {}) {
   vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
     data: { ...user, ...overrides },
-    response: { status } as Response,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
+    error: undefined,
+  })
+}
+
+function mockErrorResponse(status: number) {
+  vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
+    data: undefined,
+    error: { status },
+    response: new Response(null, { status }),
+  })
 }
 
 const params = Promise.resolve({ id: '2', userId: '4' })
@@ -91,10 +98,7 @@ describe('ManageUserAccess', () => {
   })
 
   it('calls notFound when the user is not a member of the organisation', async () => {
-    vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
-      response: { status: 404 } as Response,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
+    mockErrorResponse(404)
 
     await ManageUserAccess({ params })
 
@@ -102,11 +106,7 @@ describe('ManageUserAccess', () => {
   })
 
   it('renders an error when the user cannot be retrieved', async () => {
-    vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
-      error: {},
-      response: { status: 500 } as Response,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
+    mockErrorResponse(500)
 
     render(await ManageUserAccess({ params }))
 

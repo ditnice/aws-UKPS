@@ -276,11 +276,11 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 Arg.Any<CancellationToken>()
             )
             .Returns(
-                Result<UserInformationDto, GetUsersError>.Err(new GetUsersError.UserNotFound(1, 1))
+                Result<UserInformationDto, GetUsersError>.Err(new GetUsersError.UserNotFound(2, 1))
             );
 
         var response = await _client.GetAsync(
-            UserWithinOrganisationUrl(userId: 1, organisationId: 1),
+            UserWithinOrganisationUrl(userId: 2, organisationId: 1),
             TestContext.Current.CancellationToken
         );
 
