@@ -55,7 +55,7 @@ export type CurrentUserInformationDto = {
     /**
      * Gets the unique identifier of the user.
      */
-    userId: number | string;
+    userId: number;
     /**
      * Gets the full name of the user.
      */
@@ -71,11 +71,11 @@ export type CurrentUserInformationDto = {
     /**
      * Gets the unique identifier of the user's organisation membership.
      */
-    organisationMembershipId: number | string;
+    organisationMembershipId: number;
     /**
      * Gets the unique identifier of the user's organisation.
      */
-    organisationId: number | string;
+    organisationId: number;
     /**
      * Gets the name of the user's organisation.
      */
@@ -427,7 +427,7 @@ export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUs
 export type ValidationProblemDetails = {
     type?: null | string;
     title?: null | string;
-    status?: null | number | string;
+    status?: null | number;
     detail?: null | string;
     instance?: null | string;
     errors: {
