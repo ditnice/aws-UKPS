@@ -61,4 +61,6 @@ aws ecr get-login-password --region eu-west-2 | docker login --username AWS --pa
 docker buildx build --platform linux/amd64 --provenance=false --file backend/migration/Dockerfile --tag "${TF_VAR_migrator_image_repository_url}:${TF_VAR_image_tag}" --push backend
 ```
 
-Terraform passes `image_tag` directly to Lambda as part of the ECR image URI. Use a new, immutable tag for each deployment because replacing an existing tag does not change the Terraform configuration and will not trigger a Lambda update. The tagged image must exist before Terraform applies the change.
+Terraform looks up the current digest for `image_tag` during planning and passes that immutable digest to Lambda. After replacing a mutable tag in ECR, create and review a new Terraform plan so the Lambda deployment is updated to the new digest.
+
+The Terraform execution role requires `ecr:DescribeImages` permission for the migrator repository. The tag must exist before Terraform creates the plan.

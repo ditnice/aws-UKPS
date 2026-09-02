@@ -33,6 +33,7 @@ No modules.
 | [aws_sqs_queue.db_migrator_dlq](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
 | [aws_vpc_security_group_egress_rule.aurora](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.secrets_manager](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_ecr_image.db_migrator](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecr_image) | data source |
 
 ## Inputs
 
@@ -46,7 +47,7 @@ No modules.
 | <a name="input_db_security_group_id"></a> [db\_security\_group\_id](#input\_db\_security\_group\_id) | Security group ID of the Aurora backend cluster. | `string` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, alpha, etc.) | `string` | n/a | yes |
 | <a name="input_image_repository_url"></a> [image\_repository\_url](#input\_image\_repository\_url) | ECR repository URL for the container image used by the migration Lambda. | `string` | n/a | yes |
-| <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | ECR image tag passed directly to the migration Lambda. Use a unique, immutable tag for each deployment. | `string` | n/a | yes |
+| <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Mutable ECR tag that Terraform resolves to the migration Lambda image digest. | `string` | n/a | yes |
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | KMS key ARN or ID used for Lambda encryption | `string` | n/a | yes |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | How many days to retain Lambda logs in CloudWatch. | `number` | `365` | no |
 | <a name="input_memory_size"></a> [memory\_size](#input\_memory\_size) | Lambda memory in MB. | `number` | `512` | no |
