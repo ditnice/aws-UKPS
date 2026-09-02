@@ -1,12 +1,8 @@
 import { notFound } from 'next/navigation'
 
-import { getOrganisationsByOrganisationIdUsersByUserIdMembershipRequests } from '@/client/generated'
-import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
-import { errorMessages } from '@/lib/form/errorMessages'
 
-import ModifyUserMembershipRequestControls from '../../ModifyUserMembershipRequestControls'
 import ModifyUserMembershipRequestControls from '../../ModifyUserMembershipRequestControls'
 import UserMembershipRetrievalWrapper from '../../UserMembershipRetrievalWrapper'
 
@@ -22,8 +18,6 @@ export default async function RejectUser({ params }: Props) {
   if (!Number.isInteger(organisationId) || !Number.isInteger(selectedUserId)) {
     notFound()
   }
-
-  const exampleUserEmail = 'julie.brooks@email.com'
 
   const organisationHref = `/portal/organisations/${organisationId}`
   return (

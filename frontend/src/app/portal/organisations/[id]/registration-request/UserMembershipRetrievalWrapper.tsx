@@ -1,9 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import {
-  getOrganisationsByOrganisationIdUsersByUserIdMembershipRequests,
-  UserMembershipRequestDto,
-} from '@/client/generated'
+import { getUserMembershipRequest, UserMembershipRequestDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 
@@ -18,7 +15,7 @@ const UserMembershipRetrievalWrapper = async ({
   children,
 }: UserMembershipRetrievalWrapperProps) => {
   const client = await createServerApiClient()
-  const { data, error } = await getOrganisationsByOrganisationIdUsersByUserIdMembershipRequests({
+  const { data, error } = await getUserMembershipRequest({
     client,
     path: { organisationId, userId },
   })

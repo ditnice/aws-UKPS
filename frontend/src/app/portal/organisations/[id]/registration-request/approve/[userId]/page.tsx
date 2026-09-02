@@ -1,17 +1,12 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import {
-  getOrganisationsByOrganisationIdUsersByUserIdMembershipRequests,
-  UserMembershipRequestDto,
-} from '@/client/generated'
+import { getUserMembershipRequest, UserMembershipRequestDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { errorMessages } from '@/lib/form/errorMessages'
 
-import ModifyUserMembershipRequestControlsProps from '../../ModifyUserMembershipRequestControls'
-import ModifyUserMembershipRequestControlsProps from '../../ModifyUserMembershipRequestControls'
+import ModifyUserMembershipRequestControls from '../../ModifyUserMembershipRequestControls'
 
 type UserMembershipRetrievalWrapperProps = {
   organisationId: number
@@ -24,7 +19,7 @@ const UserMembershipRetrievalWrapper = async ({
   children,
 }: UserMembershipRetrievalWrapperProps) => {
   const client = await createServerApiClient()
-  const { data, error } = await getOrganisationsByOrganisationIdUsersByUserIdMembershipRequests({
+  const { data, error } = await getUserMembershipRequest({
     client,
     path: { organisationId, userId },
   })
@@ -57,9 +52,6 @@ export default async function ApproveUser({ params }: Props) {
 
   const organisationHref = `/portal/organisations/${organisationId}`
 
-  // TODO 313 - Implement method for retrieving requests for a user id and org id.
-  const exampleUserEmail = 'julie.brooks@email.com'
-
   return (
     <>
       <PageHeader
@@ -72,7 +64,7 @@ export default async function ApproveUser({ params }: Props) {
             <p>You are about to approve {request.workEmail}&#39;s request for an account.</p>
             <p>Once approved they will be able to access your organisation&#39;s UKPS account.</p>
 
-            <ModifyUserMembershipRequestControlsProps
+            <ModifyUserMembershipRequestControls
               action="Approve"
               organisationId={organisationId}
               userId={selectedUserId}
