@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
+using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 
 namespace UKPS.Api.WebApi.Controllers;
@@ -25,6 +26,69 @@ public class MembershipRequestController : ControllerBase
     public MembershipRequestController(IMembershipRequestService membershipRequestService)
     {
         _membershipRequestService = membershipRequestService;
+    }
+
+    /// <summary>
+    /// Gets the membership request for a user within an organisation.
+    /// </summary>
+    /// <param name="organisationId">
+    /// The unique identifier of the organisation.
+    /// </param>
+    /// <param name="userId">
+    /// The unique identifier of the user.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// A <see cref="UserMembershipRequestDto"/> representing the user's membership
+    /// request.
+    /// </returns>
+    /// <response code="200">
+    /// The user membership request was found and returned successfully.
+    /// </response>
+    /// <response code="403">
+    /// The authenticated user is not allowed to access the requested membership
+    /// request.
+    /// </response>
+    /// <response code="404">
+    /// The requested user membership request could not be found.
+    /// </response>
+    [HttpGet(Name = nameof(GetUserMembershipRequest))]
+    [ProducesResponseType<UserMembershipRequestDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserMembershipRequestDto>> GetUserMembershipRequest(
+        int organisationId,
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        GetUserMembershipRequestResult result =
+            await _membershipRequestService.GetUserMembershipRequest(
+                organisationId,
+                userId,
+                cancellationToken
+            );
+
+        return result.Match(
+            x => Ok(x),
+            err =>
+                err.Match<ActionResult<UserMembershipRequestDto>>(
+                    notFound: _ =>
+                        Problem(
+                            title: "User membership request not found",
+                            detail: "The requested user membership request could not be found.",
+                            statusCode: StatusCodes.Status404NotFound
+                        ),
+                    notAllowed: _ =>
+                        Problem(
+                            title: "User membership request access denied",
+                            detail: "You are not allowed to access the requested user membership request.",
+                            statusCode: StatusCodes.Status403Forbidden
+                        )
+                )
+        );
     }
 
     /// <summary>

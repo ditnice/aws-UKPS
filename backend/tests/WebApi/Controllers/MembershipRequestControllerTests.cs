@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Json;
+using Bogus;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -7,9 +9,14 @@ using NSubstitute.ReceivedExtensions;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
+using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using GetUserMembershipRequestResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserMembershipRequestDto,
+    UKPS.Api.Application.Users.Errors.GetUserMembershipRequestError
+>;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -19,6 +26,7 @@ public class MembershipRequestControllerTests : IClassFixture<WebApplicationFact
     private const int ExistingOrganisationId = 2;
     private readonly IMembershipRequestService _mock = Substitute.For<IMembershipRequestService>();
     private readonly HttpClient _client;
+    private readonly UserMembershipRequestDto _userMembershipRequest;
 
     public MembershipRequestControllerTests(WebApplicationFactory<Program> factory)
     {
@@ -41,6 +49,19 @@ public class MembershipRequestControllerTests : IClassFixture<WebApplicationFact
             })
             .CreateClient();
 
+        _userMembershipRequest = new UserMembershipRequestDtoFaker().Generate();
+        _mock
+            .GetUserMembershipRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                GetUserMembershipRequestResult.Err(new GetUserMembershipRequestError.NotFound())
+            );
+        _mock
+            .GetUserMembershipRequest(
+                ExistingOrganisationId,
+                ExistingUserId,
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(GetUserMembershipRequestResult.Ok(_userMembershipRequest));
         _mock
             .ApproveRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<ApproveRequestError>.Err(new ApproveRequestError.RequestNotFound()));
@@ -54,6 +75,46 @@ public class MembershipRequestControllerTests : IClassFixture<WebApplicationFact
         _mock
             .RejectRequest(ExistingOrganisationId, ExistingUserId, Arg.Any<CancellationToken>())
             .Returns(Result<RejectRequestError>.Ok());
+    }
+
+    [Fact]
+    public async Task GetUserMembershipRequest_OnValidRequest_ReturnsOkWithTheValue()
+    {
+        HttpResponseMessage response = await SendGetUserMembershipRequest(
+            ExistingOrganisationId,
+            ExistingUserId
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        UserMembershipRequestDto? content =
+            await response.Content.ReadFromJsonAsync<UserMembershipRequestDto>(
+                TestJsonOptions.Default,
+                TestContext.Current.CancellationToken
+            );
+
+        content.ShouldNotBeNull();
+        content.ShouldBe(_userMembershipRequest);
+    }
+
+    [Fact]
+    public async Task GetUserMembershipRequest_OnRequestNotFound_ReturnsNotFound()
+    {
+        HttpResponseMessage response = await SendGetUserMembershipRequest(999, 999);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetUserMembershipRequest_OnNotAllowed_ReturnsForbidden()
+    {
+        _mock
+            .GetUserMembershipRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                GetUserMembershipRequestResult.Err(new GetUserMembershipRequestError.NotAllowed())
+            );
+        HttpResponseMessage response = await SendGetUserMembershipRequest(
+            ExistingOrganisationId,
+            ExistingUserId
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -154,8 +215,29 @@ public class MembershipRequestControllerTests : IClassFixture<WebApplicationFact
         );
     }
 
+    private async Task<HttpResponseMessage> SendGetUserMembershipRequest(
+        int organisationId,
+        int userId
+    )
+    {
+        return await _client.GetAsync(
+            new Uri(CreateBasedUrl(organisationId, userId), UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+    }
+
     private static string CreateBasedUrl(int organisationId, int userId)
     {
         return $"/organisations/{organisationId}/users/{userId}/membership-requests";
+    }
+
+    private sealed class UserMembershipRequestDtoFaker : Faker<UserMembershipRequestDto>
+    {
+        public UserMembershipRequestDtoFaker()
+        {
+            StrictMode(true);
+            RuleFor(x => x.Id, f => f.Random.Int(1));
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
+        }
     }
 }

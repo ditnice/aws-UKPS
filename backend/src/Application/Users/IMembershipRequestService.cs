@@ -1,3 +1,7 @@
+global using GetUserMembershipRequestResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserMembershipRequestDto,
+    UKPS.Api.Application.Users.Errors.GetUserMembershipRequestError
+>;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users.Errors;
 
@@ -8,6 +12,29 @@ namespace UKPS.Api.Application.Users;
 /// </summary>
 public interface IMembershipRequestService
 {
+    /// <summary>
+    /// Retrieves the membership request for the specified user and organisation.
+    /// </summary>
+    /// <param name="organisationId">
+    /// The unique identifier of the organisation associated with the membership request.
+    /// </param>
+    /// <param name="userId">
+    /// The unique identifier of the user whose membership request is being retrieved.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The result contains the
+    /// membership request if one exists, or a <see cref="GetUserMembershipRequestError"/>
+    /// if the request could not be retrieved.
+    /// </returns>
+    Task<GetUserMembershipRequestResult> GetUserMembershipRequest(
+        int organisationId,
+        int userId,
+        CancellationToken cancellationToken
+    );
+
     /// <summary>
     /// Approves a membership request for the specified user and organisation.
     /// </summary>
