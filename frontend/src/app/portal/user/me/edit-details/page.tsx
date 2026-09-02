@@ -30,14 +30,10 @@ export default async function EditDetails() {
     )
   }
 
-  if (!Number.isInteger(me.userId)) {
-    throw Error(`Unexpected user details [UserId:${me.userId}].`)
-  }
-
   return (
     <PageWrapper>
       <EditDetailsForm
-        userId={Number(me.userId)}
+        userId={me.userId}
         initialValues={{
           fullName: me.fullName,
           workEmail: me.workEmail,
