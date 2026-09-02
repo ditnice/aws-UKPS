@@ -3,7 +3,7 @@ locals {
 }
 
 resource "aws_lambda_function" "db_migrator" {
-  # checkov:skip=CKV_AWS_272: Lambda code signing only supports ZIP packages; Terraform resolves the ECR tag to an immutable digest.
+  # checkov:skip=CKV_AWS_272: Lambda code signing only supports ZIP packages, not container images.
   function_name = local.function_name
   role          = aws_iam_role.this.arn
   package_type  = "Image"
