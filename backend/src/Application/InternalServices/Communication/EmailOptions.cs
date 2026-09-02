@@ -8,4 +8,7 @@ internal record EmailOptions
 
     [Required]
     public required string FromAddress { get; init; }
+
+    [Required]
+    public required string QueueUrl { get; init; }
 }

@@ -2,12 +2,14 @@ using Amazon.SimpleEmailV2;
 using Amazon.SimpleEmailV2.Model;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Shouldly;
 using UKPS.Api.Application.InternalServices.Communication;
+using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Tests.Utilities.Harnesses;
 
@@ -15,7 +17,9 @@ namespace UKPS.Api.Tests.Application.InternalServices.Communication;
 
 public class EmailServiceTests
 {
+    private readonly IEnumerable<IHostedService> _backgroundServices;
     private readonly IEmailService _sut;
+    private readonly MockAwsSimpleQueueServer _mockAwsSqs;
     private readonly IAmazonSimpleEmailServiceV2 _mockEmailService;
 
     public MockLoggerProvider Logs { get; } = new();
@@ -26,17 +30,31 @@ public class EmailServiceTests
 
     public EmailServiceTests()
     {
+        _mockAwsSqs = new MockAwsSimpleQueueServer();
         _mockEmailService = Substitute.For<IAmazonSimpleEmailServiceV2>();
         _mockEmailService
             .SendEmailAsync(Arg.Any<SendEmailRequest>(), Arg.Any<CancellationToken>())
             .Returns(new SendEmailResponse() { MessageId = "123" });
         var serviceCollection = new ServiceCollection()
-            .AddSingleton(_ => Options.Create(new EmailOptions() { FromAddress = _fromAddress }))
+            .AddSingleton(_ =>
+                Options.Create(
+                    new EmailOptions()
+                    {
+                        FromAddress = _fromAddress,
+                        QueueUrl = "https://sqs.us-east-1.amazonaws.com/123456789012/my-queue",
+                    }
+                )
+            )
             .AddEmailServices()
             .AddTransient(_ => _mockEmailService)
+            .AddSingleton(_ => _mockAwsSqs.Mock)
             .AddLogging(x => x.AddProvider(Logs));
 
-        _sut = serviceCollection.BuildServiceProvider().GetRequiredService<IEmailService>();
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+        _backgroundServices = serviceProvider.GetServices<IHostedService>();
+        _sut = serviceProvider.GetRequiredService<IEmailService>();
+
+        StartBackgroundServices();
     }
 
     [Fact]
@@ -44,6 +62,7 @@ public class EmailServiceTests
     {
         var htmlContent = _validEmailCommand.Email.GetHtmlContent();
         await _sut.SendEmail(_validEmailCommand, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
         await _mockEmailService
             .Received(1)
@@ -61,21 +80,36 @@ public class EmailServiceTests
     }
 
     [Fact]
-    public async Task SendEmail_OnExceptionFromService_ShouldLogAndPassOnException()
+    public async Task SendEmail_OnSuccess_DeleteMessage()
+    {
+        await _sut.SendEmail(_validEmailCommand, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
+
+        _mockAwsSqs.Messages.Count().ShouldBe(0);
+        _mockAwsSqs.DeletedMessages.Count().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task SendEmail_OnExceptionFromService_ShouldNotDeleteMessage()
     {
         var exception = new InvalidOperationException("Test Exception");
         _mockEmailService
             .SendEmailAsync(Arg.Any<SendEmailRequest>(), Arg.Any<CancellationToken>())
             .ThrowsAsync(exception);
 
-        InvalidOperationException foundException =
-            await Should.ThrowAsync<InvalidOperationException>(async () =>
-            {
-                await _sut.SendEmail(_validEmailCommand, TestContext.Current.CancellationToken);
-            });
-        foundException.Message.ShouldBe(exception.Message);
+        await _sut.SendEmail(_validEmailCommand, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
+        _mockAwsSqs.Messages.Count().ShouldBe(1);
 
         AssertUserEmailNotLogged(_validEmailCommand.RecipientAddress);
+    }
+
+    private void StartBackgroundServices()
+    {
+        foreach (var backgroundService in _backgroundServices)
+        {
+            _ = backgroundService.StartAsync(TestContext.Current.CancellationToken);
+        }
     }
 
     private void AssertUserEmailNotLogged(string userEmail)
@@ -96,17 +130,10 @@ public class EmailServiceTests
                 f => new CognitoUsername() { Value = f.Random.Guid().ToString() }
             );
             RuleFor(x => x.RecipientAddress, f => f.Internet.Email());
-            RuleFor(x => x.Email, _ => new TestEmail());
-        }
-    }
-
-    private sealed class TestEmail : IEmail
-    {
-        public string Subject => "Test";
-
-        public string GetHtmlContent()
-        {
-            return "<p>Test</p>";
+            RuleFor(
+                x => x.Email,
+                f => new UserSignUpRequestEmail() { Link = new Uri(f.Internet.Url()) }
+            );
         }
     }
 }
