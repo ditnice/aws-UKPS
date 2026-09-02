@@ -54,7 +54,7 @@ public class MembershipRequestController : ControllerBase
     /// <response code="404">
     /// The requested user membership request could not be found.
     /// </response>
-    [HttpGet]
+    [HttpGet(Name = nameof(GetUserMembershipRequest))]
     [ProducesResponseType<UserMembershipRequestDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

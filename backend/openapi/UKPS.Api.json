@@ -463,6 +463,7 @@
           "MembershipRequest"
         ],
         "summary": "Gets the membership request for a user within an organisation.",
+        "operationId": "GetUserMembershipRequest",
         "parameters": [
           {
             "name": "organisationId",

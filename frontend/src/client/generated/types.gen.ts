@@ -655,7 +655,7 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
-export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsData = {
+export type GetUserMembershipRequestData = {
     body?: never;
     path: {
         /**
@@ -671,7 +671,7 @@ export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsData 
     url: '/organisations/{organisationId}/users/{userId}/membership-requests';
 };
 
-export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsErrors = {
+export type GetUserMembershipRequestErrors = {
     /**
      * The authenticated user is not allowed to access the requested membership
      * request.
@@ -683,16 +683,16 @@ export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsError
     404: ProblemDetails;
 };
 
-export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsError = GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsErrors[keyof GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsErrors];
+export type GetUserMembershipRequestError = GetUserMembershipRequestErrors[keyof GetUserMembershipRequestErrors];
 
-export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsResponses = {
+export type GetUserMembershipRequestResponses = {
     /**
      * The user membership request was found and returned successfully.
      */
     200: UserMembershipRequestDto;
 };
 
-export type GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsResponse = GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsResponses[keyof GetOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsResponses];
+export type GetUserMembershipRequestResponse = GetUserMembershipRequestResponses[keyof GetUserMembershipRequestResponses];
 
 export type ApproveData = {
     body?: never;
