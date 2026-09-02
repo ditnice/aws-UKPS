@@ -2,7 +2,6 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
 import { UserInformationDto, getUsersMe } from '@/client/generated'
-import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import EditDetails from './page'
@@ -115,16 +114,5 @@ describe('EditDetails', () => {
     )
 
     expect(screen.queryByTestId('edit-details-form')).toBeFalsy()
-  })
-
-  it('throws when the current user id is not a number', async () => {
-    mockedGetUsersMe.mockResolvedValue({
-      data: { ...fakeUserInformationDto(), userId: 'incorrect-details' },
-      response: { ok: true } as Response,
-    })
-
-    await expect(EditDetails()).rejects.toThrow(
-      `Unexpected user details [UserId:incorrect-details].`,
-    )
   })
 })

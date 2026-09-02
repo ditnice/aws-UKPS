@@ -23,6 +23,9 @@ internal static class DependencyInjectionManager
         // TODO URP 405: Implement the IEmailService
         services.TryAddScoped(static _ => Substitute.For<IEmailService>());
 
+        // TODO URP 313: Implement IMembershipRequestService
+        services.TryAddScoped(static _ => Substitute.For<IMembershipRequestService>());
+
         services.TryAddScoped<ILoginService, LoginService>();
         services.TryAddScoped<IDateTimeProvider, SystemDateTimeProvider>();
         services.TryAddScoped<IOrganisationAuthoriser, OrganisationAuthoriser>();

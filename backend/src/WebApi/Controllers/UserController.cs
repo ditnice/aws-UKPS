@@ -160,7 +160,7 @@ public class UserController(IUserService userService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [HttpPatch("{userId}")]
+    [HttpPatch("{userId:int}")]
     public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
         [FromRoute] int userId,
         [FromBody] UpdateUserDetailsCommand command,

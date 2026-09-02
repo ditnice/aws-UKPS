@@ -140,7 +140,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// The specified organisation membership could not be found.
     /// </response>
     [HttpPatch(
-        "{organisationId:int}/memberships/{membershipId}/deactivate",
+        "{organisationId:int}/memberships/{membershipId:int}/deactivate",
         Name = nameof(DeactivateMembership)
     )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
@@ -213,7 +213,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// The specified organisation membership could not be found.
     /// </response>
     [HttpPatch(
-        "{organisationId:int}/memberships/{membershipId}/reactivate",
+        "{organisationId:int}/memberships/{membershipId:int}/reactivate",
         Name = nameof(ReactivateMembership)
     )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
@@ -286,7 +286,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// The specified organisation membership could not be found.
     /// </response>
     [HttpPatch(
-        "{organisationId:int}/memberships/{membershipId}/update-role",
+        "{organisationId:int}/memberships/{membershipId:int}/update-role",
         Name = nameof(UpdateUserRole)
     )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]

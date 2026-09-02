@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -574,7 +576,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             StrictMode(true);
             RuleFor(x => x.UserId, f => f.Random.Int(1, 1000));
             RuleFor(x => x.FullName, f => f.Name.FullName());
-            RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
+            RuleFor(x => x.WorkTelephone, f => new TelephoneNumberFaker().Generate());
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
             RuleFor(x => x.OrganisationMembershipId, f => f.Random.Int(1, 1000));
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
@@ -591,7 +593,10 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.Title, f => f.PickRandom("Mr", "Mrs", "Ms", "Miss", "Dr", null));
             RuleFor(x => x.FullName, f => f.Name.FullName());
             RuleFor(x => x.JobTitle, f => f.Random.Bool() ? f.Name.JobTitle() : null);
-            RuleFor(x => x.WorkPhone, f => f.Random.Bool() ? f.Phone.PhoneNumber() : null);
+            RuleFor(
+                x => x.WorkPhone,
+                f => f.Random.Bool() ? new TelephoneNumberFaker().Generate() : null
+            );
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
         }
     }
