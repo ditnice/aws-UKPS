@@ -158,7 +158,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         {
             _mockUserService.ClearReceivedCalls();
             var query = faker.Generate();
-            var url = AppendQueryParams(UsersUrl, faker.Generate());
+            var url = AppendQueryParams(UsersUrl, query);
             await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
             await _mockUserService
@@ -332,6 +332,8 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
         queryParams.Add($"page={query.Page}");
         queryParams.Add($"pageSize={query.PageSize}");
+        queryParams.Add($"sortBy={Uri.EscapeDataString(query.SortBy.ToString())}");
+        queryParams.Add($"sortDirection={Uri.EscapeDataString(query.SortDirection.ToString())}");
 
         foreach (var status in query.Status)
             queryParams.Add($"status={Uri.EscapeDataString(status.ToString())}");

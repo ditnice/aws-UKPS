@@ -142,8 +142,10 @@ internal partial class UserService(
         };
         return sortDirection switch
         {
-            SortDirection.Ascending => value.OrderBy(sortExpression),
-            SortDirection.Descending => value.OrderByDescending(sortExpression),
+            SortDirection.Ascending => value.OrderBy(sortExpression).ThenBy(x => x.Id),
+            SortDirection.Descending => value
+                .OrderByDescending(sortExpression)
+                .ThenByDescending(x => x.Id),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(sortDirection),
                 $"Unexpected value: {sortDirection}"
