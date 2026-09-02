@@ -45,3 +45,10 @@ using System.Diagnostics.CodeAnalysis;
     Scope = "namespaceanddescendants",
     Target = "~N:UKPS.Api.Persistence"
 )]
+[assembly: SuppressMessage(
+    "Minor Code Smell",
+    "S2292:Trivial properties should be auto-implemented",
+    Justification = "This rule inhibits us from using publicly initalisable but privately setting able values",
+    Scope = "namespaceanddescendants",
+    Target = "~N:UKPS.Api"
+)]

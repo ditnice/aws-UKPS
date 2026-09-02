@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.Organisations.Dtos;
 
@@ -42,6 +43,7 @@ public sealed record UpdateOrganisationDetailsDto : IValidatableObject
     /// This field is required.
     /// </remarks>
     [Required]
+    [PhoneNumber(errorMessage: "HeadOfficeTelephone must be a valid phone number.")]
     public required string HeadOfficeTelephone { get; init; }
 
     /// <summary>

@@ -5,19 +5,21 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
+import { Button } from '@/components/Button/Button'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { signUpMfaSetupStorageKey } from '../../constants'
+import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
 
 const signUpSetPasswordSchema = z.object({
   password: z
     .string()
-    .min(1, 'Enter your password')
-    .min(8, 'Password must be at least 8 characters long'),
+    .min(1, errorMessages.passwordRequired)
+    .min(8, errorMessages.passwordFormat)
+    .max(256, errorMessages.passwordTooLong)
+    .regex(/^\S+$/, errorMessages.passwordWhitespace),
 })
 
 type SignUpSetPasswordFormValues = z.input<typeof signUpSetPasswordSchema>
@@ -108,6 +110,8 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
       <p>Your password must:</p>
       <ul>
         <li>be at least 8 characters long</li>
+        <li>be 256 characters or fewer</li>
+        <li>not contain spaces or other whitespace</li>
       </ul>
 
       <form.Field name="password">

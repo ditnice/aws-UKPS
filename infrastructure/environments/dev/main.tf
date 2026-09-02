@@ -179,6 +179,35 @@ module "frontend_ecs_alerts" {
   }
 }
 
+
+# SQS - Email Backend
+module "sqs_email_backend" {
+  source = "../../modules/sqs"
+
+  project      = local.project
+  environment  = local.environment
+  service_name = "email-backend"
+  fifo         = false
+
+  tags = {
+    Name        = "${local.project}-${local.environment}-${local.service_name}-email-backend"
+    Environment = local.environment
+    Project     = local.project
+  }
+}
+
+# SQS - Email Backend Alerts
+module "sqs_email_backend_alerts" {
+  source = "../../modules/cloudwatch/sqs-alerts"
+
+  project       = local.project
+  environment   = local.environment
+  service_name  = "email-backend"
+  sns_topic_arn = module.sns.sqs_alarms_topic_arn
+  queue_name    = module.sqs_email_backend.queue_name
+  dlq_name      = module.sqs_email_backend.dlq_name
+}
+
 # ECS - Backend
 module "ecs_backend" {
   source = "../../modules/ecs"
@@ -210,14 +239,16 @@ module "ecs_backend" {
     Cognito__ClientId           = module.cognito.app_client_id
     Cognito__Authority          = module.cognito.user_pool_issuer
     Database__Host              = module.aurora_backend.cluster_endpoint
-    Database__MigrateOnStartup  = "true"
+    Database__MigrateOnStartup  = "false"
     Database__Name              = module.aurora_backend.database_name
     Database__Port              = tostring(module.aurora_backend.port)
+    Database__RootCertificate   = "/app/certs/eu-west-2-bundle.pem"
     Email__Region               = var.region
     Email__BaseDomain           = module.alb.frontend_host_name
     Email__FromAddress          = module.ses.from_email_address
     Email__ReplyToAddress       = module.ses.from_email_address
     Email__ConfigurationSetName = module.ses.configuration_set_name
+    Email__QueueUrl             = module.sqs_email_backend.queue_url
     Seeding__ReseedOnStartup    = "true"
     Seeding__SuperUsersJson     = jsonencode(var.seeded_super_users)
     UserOnboarding__SetupLink   = "https://${module.alb.frontend_host_name}"
@@ -347,4 +378,55 @@ module "backend_aurora_alerts" {
   db_instance_id        = module.aurora_backend.instance_id
   sns_topic_arn         = module.sns.rds_alarms_topic_arn
   connection_threshold  = var.connection_threshold
+}
+
+# Lambda - DB Migrator
+resource "null_resource" "build_lambda" {
+  triggers = {
+    source_hash = sha1(join("", [for f in fileset("${path.root}/../../../backend/migration", "**") : filesha1("${path.root}/../../../backend/migration/${f}")]))
+  }
+
+  provisioner "local-exec" {
+    command = "dotnet publish ${path.root}/../../../backend/migration -c Release -r linux-x64 --self-contained true -o ${path.root}/../../../backend/migration/publish"
+  }
+}
+
+data "archive_file" "lambda_zip" {
+  depends_on  = [null_resource.build_lambda]
+  type        = "zip"
+  source_dir  = "${path.root}/../../../backend/migration/publish"
+  output_path = "${path.root}/../../../backend/migration/migration.zip"
+}
+module "db_migrator_lambda" {
+  source = "../../modules/lambda/dbMigrator"
+
+  project      = local.project
+  environment  = local.environment
+  service_name = "db-migrator"
+
+  lambda_zip_path             = data.archive_file.lambda_zip.output_path
+  lambda_zip_source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+
+  vpc_id     = module.networking.vpc_id
+  subnet_ids = module.networking.app_subnet_ids
+
+  db_secret_arn        = module.aurora_backend.master_user_secret_arn
+  db_security_group_id = module.aurora_backend.security_group_id
+  db_host              = module.aurora_backend.cluster_endpoint
+  db_port              = module.aurora_backend.port
+  db_name              = module.aurora_backend.database_name
+
+  kms_key_id         = module.kms_backend.app_key_arn
+  cloudwatch_kms_arn = module.kms_backend.app_key_arn
+  region             = var.region
+
+  seeded_super_users_json = jsonencode(var.seeded_super_users)
+
+  log_retention_days = var.ecs_log_retention
+
+  tags = {
+    Environment = local.environment
+    Project     = local.project
+    ManagedBy   = "terraform"
+  }
 }

@@ -1,0 +1,120 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`NavLinks > marks nested portal links as active 1`] = `
+<DocumentFragment>
+  <ul
+    aria-labelledby="header-menu-button"
+    class="_menuList_12dd76"
+  >
+    <li>
+      <a
+        aria-current="page"
+        class="_link_12dd76"
+        href="/portal"
+      >
+        Dashboard
+      </a>
+    </li>
+    <li>
+      <a
+        aria-current="page"
+        class="_link_12dd76"
+        href="/portal/components"
+      >
+        Components
+      </a>
+    </li>
+  </ul>
+</DocumentFragment>
+`;
+
+exports[`NavLinks > renders custom portal links 1`] = `
+<DocumentFragment>
+  <ul
+    aria-labelledby="header-menu-button"
+    class="_menuList_12dd76"
+  >
+    <li>
+      <a
+        aria-current="page"
+        class="_link_12dd76"
+        href="/portal/settings"
+      >
+        Settings
+      </a>
+    </li>
+  </ul>
+</DocumentFragment>
+`;
+
+exports[`NavLinks > renders custom root links 1`] = `
+<DocumentFragment>
+  <ul
+    aria-labelledby="header-menu-button"
+    class="_menuList_12dd76"
+  >
+    <li>
+      <a
+        class="_link_12dd76"
+        href="/guidance"
+      >
+        Guidance
+      </a>
+    </li>
+  </ul>
+</DocumentFragment>
+`;
+
+exports[`NavLinks > renders portal links for the portal path 1`] = `
+<DocumentFragment>
+  <ul
+    aria-labelledby="header-menu-button"
+    class="_menuList_12dd76"
+  >
+    <li>
+      <a
+        aria-current="page"
+        class="_link_12dd76"
+        href="/portal"
+      >
+        Dashboard
+      </a>
+    </li>
+    <li>
+      <a
+        class="_link_12dd76"
+        href="/portal/components"
+      >
+        Components
+      </a>
+    </li>
+  </ul>
+</DocumentFragment>
+`;
+
+exports[`NavLinks > renders root links for the root path 1`] = `
+<DocumentFragment>
+  <ul
+    aria-labelledby="header-menu-button"
+    class="_menuList_12dd76"
+  >
+    <li>
+      <a
+        aria-current="page"
+        class="_link_12dd76"
+        href="/"
+      >
+        Home
+      </a>
+    </li>
+    <li>
+      <a
+        class="_link_12dd76"
+        href="/about-us"
+      >
+        About
+      </a>
+    </li>
+  </ul>
+</DocumentFragment>
+`;

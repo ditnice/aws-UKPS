@@ -6,24 +6,24 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { z } from 'zod'
 
-import { Button } from '@nice-digital/nds-button'
-
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
-import { getFieldErrorMessage } from '@/components/Form/getFieldErrorMessage'
+import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { errorMessages } from '@/lib/form/errorMessages'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './OrganisationOnboardUserForm.module.scss'
 
 import type { ChangeEvent } from 'react'
 
 const onboardUserSchema = z.object({
-  fullName: z.string().trim().min(1, "Enter the user's full name"),
+  fullName: z.string().trim().min(1, errorMessages.userNameRequired),
   newUserEmail: z
     .string()
     .trim()
-    .min(1, "Enter the user's work email address")
-    .pipe(z.email('Enter an email address in the correct format, like name@example.com')),
-  contactNumber: z.string().trim().min(1, "Enter the user's phone number"),
+    .min(1, errorMessages.userEmailRequired)
+    .pipe(z.email(errorMessages.emailFormat)),
+  contactNumber: z.string().trim().min(1, errorMessages.userPhoneNumberRequired),
 })
 
 type OnboardUserFormValues = z.input<typeof onboardUserSchema>
@@ -186,14 +186,14 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
         }}
       </form.Field>
 
-      <div className={styles.actions}>
+      <ButtonGroup>
         <Button disabled={isSubmitting} type="submit" variant="cta">
           Send invite
         </Button>
         <Button elementType={Link} href={cancelHref} variant="secondary">
           Cancel
         </Button>
-      </div>
+      </ButtonGroup>
     </form>
   )
 }

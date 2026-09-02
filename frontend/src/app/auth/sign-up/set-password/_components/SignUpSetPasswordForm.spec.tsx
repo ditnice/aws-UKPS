@@ -2,8 +2,9 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
+import { errorMessages } from '@/lib/form/errorMessages'
 
-import { signUpMfaSetupStorageKey } from '../../constants'
+import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
 
 import { SignUpSetPasswordForm } from './SignUpSetPasswordForm'
 
@@ -56,6 +57,8 @@ describe('SignUpSetPasswordForm', () => {
 
     expect(screen.getByText('Your password must:')).toBeDefined()
     expect(screen.getByText('be at least 8 characters long')).toBeDefined()
+    expect(screen.getByText('be 256 characters or fewer')).toBeDefined()
+    expect(screen.getByText('not contain spaces or other whitespace')).toBeDefined()
     expect(screen.getByLabelText('Password')).toBeDefined()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDefined()
   })
@@ -77,21 +80,70 @@ describe('SignUpSetPasswordForm', () => {
   it('shows a minimum length validation error for a short password', async () => {
     renderForm()
 
-    enterPassword('short')
+    enterPassword('1234567')
     submitForm()
 
     expect(await screen.findByText('Password must be at least 8 characters long')).toBeDefined()
+    expect(postAuthSetupUser).not.toHaveBeenCalled()
   })
 
-  it('does not show validation errors for a valid password', async () => {
+  it('accepts a password at the minimum length', async () => {
     renderForm()
 
-    enterPassword('fourteen-chars')
+    enterPassword('12345678')
     submitForm()
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your password')).toBeNull()
       expect(screen.queryByText('Password must be at least 8 characters long')).toBeNull()
+      expect(postAuthSetupUser).toHaveBeenCalledOnce()
+    })
+  })
+
+  it('accepts a password at the maximum length', async () => {
+    renderForm()
+
+    enterPassword('a'.repeat(256))
+    submitForm()
+
+    await waitFor(() => {
+      expect(postAuthSetupUser).toHaveBeenCalledOnce()
+    })
+  })
+
+  it('shows a maximum length validation error for a password over 256 characters', async () => {
+    renderForm()
+
+    enterPassword('a'.repeat(257))
+    submitForm()
+
+    expect(await screen.findByText(errorMessages.passwordTooLong)).toBeDefined()
+    expect(postAuthSetupUser).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['leading space', ' password'],
+    ['trailing space', 'password '],
+    ['embedded space', 'pass word'],
+    ['tab', 'pass\tword'],
+  ])('rejects a password containing a %s', async (_description, password) => {
+    renderForm()
+
+    enterPassword(password)
+    submitForm()
+
+    expect(await screen.findByText(errorMessages.passwordWhitespace)).toBeDefined()
+    expect(postAuthSetupUser).not.toHaveBeenCalled()
+  })
+
+  it('accepts special characters', async () => {
+    renderForm()
+
+    enterPassword('^$*.[]{}')
+    submitForm()
+
+    await waitFor(() => {
+      expect(postAuthSetupUser).toHaveBeenCalledOnce()
     })
   })
 

@@ -13,7 +13,10 @@ using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
-using OnboardingUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
+using OnboardingUserResult = UKPS.Api.Application.Common.Result<
+    int,
+    UKPS.Api.Application.Users.Errors.OnboardUserError
+>;
 
 namespace UKPS.Api.Application.Users;
 
@@ -46,12 +49,12 @@ internal sealed partial class UserAdministrationService(
             cancellationToken
         );
         return await createUserResult.Match(
-            async result =>
+            onOk: async result =>
             {
                 await SendUserSignUpRequestedEmail(result, cancellationToken);
-                return OnboardingUserResult.Ok();
+                return OnboardingUserResult.Ok(result.Id);
             },
-            err => Task.FromResult(OnboardingUserResult.Err(err))
+            onErr: err => Task.FromResult(OnboardingUserResult.Err(err))
         );
     }
 
@@ -75,18 +78,20 @@ internal sealed partial class UserAdministrationService(
             };
         }
 
+        CognitoUsername userIdentityId = CognitoUsername.GenerateNew();
         var result = await administerIdentityService.CreateNewUser(
+            userIdentityId,
             command.NewUserEmail,
             cancellationToken
         );
         return await result.Match(
-            x => CreateANewUserInDatabase(x, command, cancellationToken),
-            HandleIdentityUserCreationFailed
+            onOk: () => CreateANewUserInDatabase(userIdentityId, command, cancellationToken),
+            onErr: HandleIdentityUserCreationFailed
         );
     }
 
     private async Task<Result<User, OnboardUserError>> CreateANewUserInDatabase(
-        string identityId,
+        CognitoUsername cognitoUsername,
         OnboardUserCommandDto command,
         CancellationToken cancellationToken
     )
@@ -107,7 +112,7 @@ internal sealed partial class UserAdministrationService(
         };
         var user = new User()
         {
-            IdentityId = identityId,
+            CognitoUsername = cognitoUsername,
             FullName = command.FullName,
             WorkEmail = command.NewUserEmail,
             WorkTelephone = command.ContactNumber,
@@ -146,8 +151,12 @@ internal sealed partial class UserAdministrationService(
             throw new InvalidOperationException("Onboarding record was not set as expected.");
         }
         await emailService.SendEmail(
-            user.WorkEmail,
-            new UserSignUpRequestEmail() { Link = link },
+            new SendEmailCommand()
+            {
+                CognitoUsername = user.CognitoUsername,
+                RecipientAddress = user.WorkEmail,
+                Email = new UserSignUpRequestEmail() { Link = link },
+            },
             cancellationToken
         );
         string sanitisedGuid = Sanitise(user.OnboardingRecord.SetupToken);

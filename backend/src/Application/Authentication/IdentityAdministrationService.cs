@@ -30,13 +30,13 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
 {
     private readonly AppDbContext _appDbContext;
     private readonly IIdentityService _identityService;
-    private readonly IOptions<UserOnboardingConfiguration> _options;
+    private readonly IOptions<UserOnboardingOptions> _options;
     private readonly IDateTimeProvider _dateTimeProvider;
 
     public IdentityAdministrationService(
         AppDbContext appDbContext,
         IIdentityService identityService,
-        IOptions<UserOnboardingConfiguration> options,
+        IOptions<UserOnboardingOptions> options,
         IDateTimeProvider dateTimeProvider
     )
     {
@@ -77,12 +77,10 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         try
         {
             userRecord.MarkAsConsumed(_dateTimeProvider.GetUtcNow());
-
             await _appDbContext.SaveChangesAsync(cancellationToken);
-
             Result<UpdatePasswordError> updatePasswordResult =
                 await _identityService.UpdatePassword(
-                    userRecord.User!.WorkEmail,
+                    userRecord.User!.CognitoUsername,
                     command.NewPassword,
                     cancellationToken
                 );
@@ -104,8 +102,8 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
-
         return await InitiateAuthenticationAndGetOtp(
+            userRecord.User.CognitoUsername,
             userRecord.User.WorkEmail,
             command.NewPassword,
             cancellationToken
@@ -124,13 +122,13 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         try
         {
             AuthenticationCredentialsDto credentials = await _identityService.VerifySoftwareToken(
-                userRecord.User!.WorkEmail,
+                userRecord.User!.CognitoUsername,
                 command.AuthenticationSession,
                 command.Code,
                 cancellationToken
             );
             await _identityService.MarkEmailAsVerified(
-                userRecord.User.WorkEmail,
+                userRecord.User.CognitoUsername,
                 cancellationToken
             );
             userRecord.User.FinaliseSetup();
@@ -146,6 +144,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     }
 
     private async Task<SetupUserResult> InitiateAuthenticationAndGetOtp(
+        CognitoUsername userIdentityId,
         string userEmail,
         string newPassword,
         CancellationToken cancellationToken
@@ -153,7 +152,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     {
         InitiateAuthenticationResult initiateAuthenticationResult =
             await _identityService.InitiateAuthentication(
-                userEmail,
+                userIdentityId,
                 newPassword,
                 cancellationToken
             );

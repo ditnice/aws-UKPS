@@ -14,7 +14,10 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using OnboardUserResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.OnboardUserError>;
+using OnboardUserResult = UKPS.Api.Application.Common.Result<
+    int,
+    UKPS.Api.Application.Users.Errors.OnboardUserError
+>;
 
 namespace UKPS.Api.Tests.Application.Users;
 
@@ -64,7 +67,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
 
-        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]
@@ -77,7 +80,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         );
         result.ShouldBeSuccess();
 
-        _harness.Cognito.Users.ShouldContain(x => x.Username == command.NewUserEmail);
+        _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]
@@ -99,7 +102,6 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             );
 
         foundUser.ShouldNotBeNull();
-        foundUser.IdentityId.ShouldNotBeNull();
         foundUser.CreatedAt.ShouldBe(_currentTime);
         foundUser.FullName.ShouldBe(command.FullName);
         foundUser.WorkTelephone.ShouldBe(command.ContactNumber);
@@ -246,7 +248,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         {
             UseSeed(12);
             RuleFor(x => x.FullName, f => f.Name.FullName());
-            RuleFor(x => x.ContactNumber, f => f.Phone.PhoneNumber());
+            RuleFor(x => x.ContactNumber, _ => new TelephoneNumberFaker().Generate());
             RuleFor(x => x.NewUserEmail, f => f.Internet.Email());
         }
     }

@@ -6,9 +6,9 @@ internal static class WebApplicationSeedingExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        SeedingConfiguration? settings = app
-            .Configuration.GetSection(SeedingConfiguration.SectionName)
-            .Get<SeedingConfiguration>();
+        SeedingOptions? settings = app
+            .Configuration.GetSection(SeedingOptions.SectionName)
+            .Get<SeedingOptions>();
 
         if (settings is null || !settings.ReseedOnStartup)
         {

@@ -1,5 +1,12 @@
 # syntax=docker/dockerfile:1.7
 
+FROM scratch AS rds-ca
+
+# checkov:skip=CKV_DOCKER_4: COPY cannot fetch remote URLs; the AWS RDS CA bundle is integrity-pinned with ADD --checksum.
+ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda800a4494 \
+    https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
+    /eu-west-2-bundle.pem
+
 FROM node:24-bookworm AS base
 
 WORKDIR /app
@@ -31,10 +38,12 @@ FROM gcr.io/distroless/nodejs24-debian13:nonroot AS runtime
 WORKDIR /app
 
 ENV HOSTNAME=0.0.0.0 \
+    NODE_EXTRA_CA_CERTS=/app/certs/eu-west-2-bundle.pem \
     NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000
 
+COPY --from=rds-ca --chown=nonroot:nonroot /eu-west-2-bundle.pem ./certs/eu-west-2-bundle.pem
 COPY --from=build --chown=nonroot:nonroot /app/.next/standalone ./
 COPY --from=build --chown=nonroot:nonroot /app/.next/static ./.next/static
 COPY --from=build --chown=nonroot:nonroot /app/public ./public

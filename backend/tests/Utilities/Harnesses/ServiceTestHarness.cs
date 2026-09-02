@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using UKPS.Api.Application;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -16,12 +17,12 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
 
     public MockEmailService Emails { get; } = new();
     public MockAmazonCognitoIdentityProvider Cognito { get; } = new();
+    public MockLoggerProvider Logs { get; } = new();
 
     private readonly ICurrentUserInfoService _mockCurrentUserInfoService;
     private CurrentUser _currentUser = AuthorisationTestConstants.DefaultCurrentUser;
     private IDateTimeProvider _timeProvider = new SystemDateTimeProvider();
     private IServiceCollection _serviceCollection;
-
     private readonly AppDbContext _appContext;
 
     public ServiceTestHarness(AppDbContext context)
@@ -36,7 +37,18 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
             .AddTransient(_ => Cognito.Mock)
             .AddTransient(_ => Emails.Mock)
             .AddSingleton(_ => _timeProvider)
-            .AddLogging();
+            .AddLogging(x =>
+            {
+                x.ClearProviders();
+                x.AddProvider(Logs);
+            });
+    }
+
+    public ServiceTestHarness(IServiceTestHarness harness)
+        : this(harness.GetClearedContext())
+    {
+        Emails = harness.Emails;
+        Cognito = harness.Cognito;
     }
 
     public AppDbContext GetClearedContext()

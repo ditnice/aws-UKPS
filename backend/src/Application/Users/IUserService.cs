@@ -10,6 +10,18 @@ namespace UKPS.Api.Application.Users;
 public interface IUserService
 {
     /// <summary>
+    /// Retrieves information about the currently authenticated user.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains
+    /// the current user's details, including their organisation membership and role.
+    /// </returns>
+    Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken);
+
+    /// <summary>
     /// Retrieves a paginated list of users based on the specified criteria.
     /// </summary>
     /// <param name="getUsersQuery">The query parameters used to filter and paginate users.</param>
@@ -25,21 +37,22 @@ public interface IUserService
     );
 
     /// <summary>
-    /// Creates a new user.
+    /// Updates the details of an existing user.
     /// </summary>
-    /// <param name="createUserRequestDto">
-    /// The details required to create the user.
-    /// </param>
+    /// <param name="userId">The unique identifier of the user to update.</param>
+    /// <param name="command">The details to update for the user.</param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a
-    /// <see cref="Result{TSuccess, TError}"/> with the created user's details, or an
-    /// error of type <see cref="CreateUserError"/> if the user could not be created.
+    /// <see cref="Result{TSuccess, TError}"/> with the updated user's details, or an
+    /// error of type <see cref="UpdateUserDetailsError"/> if the user's details could
+    /// not be updated.
     /// </returns>
-    Task<Result<UserDetailsDto, CreateUserError>> CreateUser(
-        CreateUserRequestDto createUserRequestDto,
+    Task<Result<UserDetailsDto, UpdateUserDetailsError>> UpdateUserDetails(
+        int userId,
+        UpdateUserDetailsCommand command,
         CancellationToken cancellationToken
     );
 }

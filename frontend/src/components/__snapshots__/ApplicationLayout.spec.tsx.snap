@@ -87,6 +87,14 @@ exports[`ApplicationLayout > renders the application chrome around children 1`] 
                   Home
                 </a>
               </li>
+              <li>
+                <a
+                  class="_link_f62762"
+                  href="/about-us"
+                >
+                  About
+                </a>
+              </li>
             </ul>
           </div>
         </nav>
