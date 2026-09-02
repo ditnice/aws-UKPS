@@ -4,10 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import {
-  patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApprove,
-  patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsReject,
-} from '@/client/generated'
+import { approve, reject } from '@/client/generated/sdk.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
@@ -33,16 +30,14 @@ const ModifyUserMembershipRequestControls = ({
     const path = { organisationId, userId }
     switch (action) {
       case 'Approve':
-        const approveResponse =
-          await patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApprove({
-            path,
-          })
+        const approveResponse = await approve({
+          path,
+        })
         return approveResponse.response
       case 'Reject':
-        const rejectResponse =
-          await patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsReject({
-            path,
-          })
+        const rejectResponse = await reject({
+          path,
+        })
         return rejectResponse.response
     }
   }
