@@ -471,7 +471,6 @@
             "description": "The identifier of the organisation containing the membership request.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -482,7 +481,6 @@
             "description": "The identifier of the user associated with the membership request.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -549,7 +547,6 @@
             "description": "The identifier of the organisation containing the membership request.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -560,7 +557,6 @@
             "description": "The identifier of the user associated with the membership request.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -1732,11 +1728,7 @@
         "type": "object",
         "properties": {
           "userId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the user.",
             "format": "int32"
           },
@@ -1753,20 +1745,12 @@
             "description": "Gets the user's email address."
           },
           "organisationMembershipId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the user's organisation membership.",
             "format": "int32"
           },
           "organisationId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the user's organisation.",
             "format": "int32"
           },
@@ -2303,11 +2287,9 @@
             ]
           },
           "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
