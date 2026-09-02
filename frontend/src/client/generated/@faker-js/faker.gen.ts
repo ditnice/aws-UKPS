@@ -56,7 +56,7 @@ export const fakeOnboardUserCommandDto = (options?: Options): OnboardUserCommand
         fullName: f.person.fullName(),
         contactNumber: f.string.sample(),
         newUserEmail: f.internet.email(),
-        organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+        organisationId: f.number.int()
     };
 };
 
@@ -80,11 +80,7 @@ export const fakeProblemDetails = (options?: Options): ProblemDetails => {
     return {
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.helpers.arrayElement([
-                f.number.int(),
-                f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$'),
-                null
-            ]) as any },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null }
     };
@@ -117,11 +113,7 @@ export const fakeAuthenticationProblemDetails = (options?: Options): Authenticat
     return {
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.helpers.arrayElement([
-                f.number.int(),
-                f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$'),
-                null
-            ]) as any },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { challengeType: f.datatype.boolean() ? fakeUkpsChallengeType(options) : null },
@@ -163,7 +155,7 @@ export const fakeUserOrgStatus = (options?: Options): UserOrgStatus => {
 export const fakeOrganisationDetailsDto = (options?: Options): OrganisationDetailsDto => {
     const f = options?.faker ?? faker;
     return {
-        id: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        id: f.number.int(),
         organisationName: f.string.sample(),
         organisationType: fakeOrganisationType(options),
         allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
@@ -189,12 +181,12 @@ export const fakeUserRole = (options?: Options): UserRole => {
 export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInformationDto => {
     const f = options?.faker ?? faker;
     return {
-        userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        userId: f.number.int(),
         fullName: f.person.fullName(),
         workTelephone: f.string.sample(),
         workEmail: f.internet.email(),
-        organisationMembershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        organisationMembershipId: f.number.int(),
+        organisationId: f.number.int(),
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options)
     };
@@ -203,9 +195,9 @@ export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInf
 export const fakeOrganisationMembershipDto = (options?: Options): OrganisationMembershipDto => {
     const f = options?.faker ?? faker;
     return {
-        id: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        organisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        id: f.number.int(),
+        userId: f.number.int(),
+        organisationId: f.number.int(),
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
         allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
@@ -220,7 +212,7 @@ export const fakeUpdateOrgMembershipUserRoleCommandDto = (options?: Options): Up
 export const fakeUserListItemDto = (options?: Options): UserListItemDto => {
     const f = options?.faker ?? faker;
     return {
-        userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
+        userId: f.number.int(),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { emailAddress: f.datatype.boolean() ? f.internet.email() : null },
         role: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
@@ -232,9 +224,9 @@ export const fakePaginatedResponseDtoOfUserListItemDto = (options?: Options): Pa
     const f = options?.faker ?? faker;
     return {
         items: f.helpers.multiple(() => fakeUserListItemDto(options)),
-        totalCount: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        page: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any,
-        pageSize: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+        totalCount: f.number.int(),
+        page: f.number.int(),
+        pageSize: f.number.int()
     };
 };
 
@@ -266,11 +258,7 @@ export const fakeValidationProblemDetails = (options?: Options): ValidationProbl
     return {
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.helpers.arrayElement([
-                f.number.int(),
-                f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$'),
-                null
-            ]) as any },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
         errors: !resolveCondition(options?.includeOptional ?? true, f) ? {} as {} : {
@@ -417,7 +405,7 @@ export const fakeDeactivateMembershipRequest = (options?: Options): Omit<Deactiv
     return {
         path: {
             organisationId: f.number.int(),
-            membershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+            membershipId: f.number.int()
         }
     };
 };
@@ -435,7 +423,7 @@ export const fakeReactivateMembershipRequest = (options?: Options): Omit<Reactiv
     return {
         path: {
             organisationId: f.number.int(),
-            membershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+            membershipId: f.number.int()
         }
     };
 };
@@ -454,7 +442,7 @@ export const fakeUpdateUserRoleRequest = (options?: Options): Omit<UpdateUserRol
         body: fakeUpdateOrgMembershipUserRoleCommandDto(options),
         path: {
             organisationId: f.number.int(),
-            membershipId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+            membershipId: f.number.int()
         }
     };
 };
@@ -481,9 +469,9 @@ export const fakeGetUsersRequest = (options?: Options): Omit<GetUsersData, 'url'
     const f = options?.faker ?? faker;
     return {
         query: {
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { OrganisationId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any },
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Page: f.helpers.arrayElement([f.number.int({ min: 1, max: 2147483647 }), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any },
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { PageSize: f.helpers.arrayElement([f.number.int({ min: 1, max: 100 }), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { OrganisationId: f.number.int() },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Page: f.number.int({ min: 1, max: 2147483647 }) },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { PageSize: f.number.int({ min: 1, max: 100 }) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Status: f.helpers.multiple(() => fakeUserOrgStatus(options)) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Role: f.helpers.multiple(() => fakeUserRole(options)) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Email: f.internet.email() },
@@ -504,7 +492,7 @@ export const fakePatchUsersByUserIdRequest = (options?: Options): Omit<PatchUser
     return {
         body: fakeUpdateUserDetailsCommand(options),
         path: {
-            userId: f.helpers.arrayElement([f.number.int(), f.helpers.fromRegExp('^-?(?:0|[1-9]\\d*)$')]) as any
+            userId: f.number.int()
         }
     };
 };
