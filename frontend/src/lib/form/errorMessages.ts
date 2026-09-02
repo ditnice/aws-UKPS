@@ -24,4 +24,11 @@ export const errorMessages = {
 
   anErrorOccurredWhenTryingToRetrieveTheUserMembershipRequest:
     'An error occurred when trying to retrieve the user membership request',
+  passwordTooLong: 'Your password must be 256 characters or less',
+  passwordWhitespace: 'Your password cannot contain spaces',
+
+  // Data retrieval
+  failedToRetrieveCurrentUser: 'Failed to retrieve the current user.',
+
+  updatingUserDetailsError: 'An error occurred when updating user details.',
 } as const

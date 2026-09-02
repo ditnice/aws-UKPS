@@ -25,6 +25,7 @@
 | <a name="module_backend_aurora_alerts"></a> [backend\_aurora\_alerts](#module\_backend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
 | <a name="module_backend_ecs_alerts"></a> [backend\_ecs\_alerts](#module\_backend\_ecs\_alerts) | ../../modules/cloudwatch/ecs-alerts | n/a |
 | <a name="module_cognito"></a> [cognito](#module\_cognito) | ../../modules/cognito | n/a |
+| <a name="module_db_migrator_lambda"></a> [db\_migrator\_lambda](#module\_db\_migrator\_lambda) | ../../modules/lambda/dbMigrator | n/a |
 | <a name="module_ecs_backend"></a> [ecs\_backend](#module\_ecs\_backend) | ../../modules/ecs | n/a |
 | <a name="module_ecs_frontend"></a> [ecs\_frontend](#module\_ecs\_frontend) | ../../modules/ecs | n/a |
 | <a name="module_frontend_aurora_alerts"></a> [frontend\_aurora\_alerts](#module\_frontend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
@@ -35,6 +36,8 @@
 | <a name="module_route53"></a> [route53](#module\_route53) | ../../modules/route53 | n/a |
 | <a name="module_ses"></a> [ses](#module\_ses) | ../../modules/ses | n/a |
 | <a name="module_sns"></a> [sns](#module\_sns) | ../../modules/sns | n/a |
+| <a name="module_sqs_email_backend"></a> [sqs\_email\_backend](#module\_sqs\_email\_backend) | ../../modules/sqs | n/a |
+| <a name="module_sqs_email_backend_alerts"></a> [sqs\_email\_backend\_alerts](#module\_sqs\_email\_backend\_alerts) | ../../modules/cloudwatch/sqs-alerts | n/a |
 
 ## Resources
 
@@ -77,7 +80,8 @@
 | <a name="input_frontend_db_master_username"></a> [frontend\_db\_master\_username](#input\_frontend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
 | <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpsdev_frontend"` | no |
 | <a name="input_frontend_image_repository_url"></a> [frontend\_image\_repository\_url](#input\_frontend\_image\_repository\_url) | Container image repository URL for the frontend service, without an image tag or digest | `string` | n/a | yes |
-| <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Container image tag for the backend service | `string` | n/a | yes |
+| <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Container image tag for the frontend and backend services and the migrator Lambda | `string` | n/a | yes |
+| <a name="input_migrator_image_repository_url"></a> [migrator\_image\_repository\_url](#input\_migrator\_image\_repository\_url) | Container image repository URL for the backend database migration Lambda, without an image tag or digest | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
 | <a name="input_seeded_super_users"></a> [seeded\_super\_users](#input\_seeded\_super\_users) | Super users added to seeded backend data for organisation ID 1 | <pre>list(object({<br/>    fullName        = string<br/>    email           = string<br/>    cognitoUsername = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | <pre>list(object({<br/>    name  = string<br/>    email = string<br/>  }))</pre> | n/a | yes |

@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import ModifyUserMembershipRequestControls from '../../ModifyUserMembershipRequestControls'
+import ModifyUserMembershipRequestControls from '../../ModifyUserMembershipRequestControls'
 import UserMembershipRetrievalWrapper from '../../UserMembershipRetrievalWrapper'
 
 interface Props {
@@ -21,6 +22,8 @@ export default async function RejectUser({ params }: Props) {
   if (!Number.isInteger(organisationId) || !Number.isInteger(selectedUserId)) {
     notFound()
   }
+
+  const exampleUserEmail = 'julie.brooks@email.com'
 
   const organisationHref = `/portal/organisations/${organisationId}`
   return (

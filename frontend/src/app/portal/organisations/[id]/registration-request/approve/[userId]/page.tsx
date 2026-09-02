@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import ModifyUserMembershipRequestControlsProps from '../../ModifyUserMembershipRequestControls'
+import ModifyUserMembershipRequestControlsProps from '../../ModifyUserMembershipRequestControls'
 
 type UserMembershipRetrievalWrapperProps = {
   organisationId: number
@@ -55,6 +56,9 @@ export default async function ApproveUser({ params }: Props) {
   }
 
   const organisationHref = `/portal/organisations/${organisationId}`
+
+  // TODO 313 - Implement method for retrieving requests for a user id and org id.
+  const exampleUserEmail = 'julie.brooks@email.com'
 
   return (
     <>

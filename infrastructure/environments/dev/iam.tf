@@ -57,7 +57,17 @@ data "aws_iam_policy_document" "backend_cognito" {
     }
   }
 
+  statement {
+    sid    = "SendEmailToQueue"
+    effect = "Allow"
+    actions = [
+      "sqs:SendMessage",
+      "sqs:GetQueueAttributes",
+    ]
+    resources = [module.sqs_email_backend.queue_arn]
+  }
 }
+
 
 data "aws_iam_policy_document" "frontend_secrets" {
   statement {

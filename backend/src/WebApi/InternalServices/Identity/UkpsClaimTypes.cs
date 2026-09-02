@@ -19,4 +19,9 @@ internal static class UkpsClaimTypes
     /// The claim type representing the email of the user.
     /// </summary>
     public const string Email = "email";
+
+    /// <summary>
+    /// The claim type representing the username of the user.
+    /// </summary>
+    public const string Username = "username";
 }

@@ -154,5 +154,6 @@ await app.RunAsync();
 
 static void ConfigureJsonEnums(JsonSerializerOptions options)
 {
+    options.NumberHandling = JsonNumberHandling.Strict;
     options.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 }

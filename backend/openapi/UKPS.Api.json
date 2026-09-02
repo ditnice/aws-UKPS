@@ -463,6 +463,7 @@
           "MembershipRequest"
         ],
         "summary": "Gets the membership request for a user within an organisation.",
+        "operationId": "GetUserMembershipRequest",
         "parameters": [
           {
             "name": "organisationId",
@@ -470,7 +471,6 @@
             "description": "The unique identifier of the organisation.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -481,7 +481,6 @@
             "description": "The unique identifier of the user.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -557,6 +556,7 @@
           "MembershipRequest"
         ],
         "summary": "Approves the membership request for the specified user within the specified organisation.",
+        "operationId": "Approve",
         "parameters": [
           {
             "name": "organisationId",
@@ -564,7 +564,6 @@
             "description": "The identifier of the organisation containing the membership request.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -575,7 +574,6 @@
             "description": "The identifier of the user associated with the membership request.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -634,6 +632,7 @@
           "MembershipRequest"
         ],
         "summary": "Rejects the membership request for the specified user within the specified organisation.",
+        "operationId": "Reject",
         "parameters": [
           {
             "name": "organisationId",
@@ -641,7 +640,6 @@
             "description": "The identifier of the organisation containing the membership request.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -652,7 +650,6 @@
             "description": "The identifier of the user associated with the membership request.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -719,7 +716,6 @@
             "description": "The identifier of the organisation to retrieve.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -781,7 +777,6 @@
             "description": "The identifier of the organisation to update.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -886,7 +881,6 @@
             "description": "The identifier of the organisation that owns the membership.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -897,11 +891,7 @@
             "description": "The identifier of the membership to deactivate.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -1004,7 +994,6 @@
             "description": "The identifier of the organisation that owns the membership.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -1015,11 +1004,7 @@
             "description": "The identifier of the membership to reactivate.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -1122,7 +1107,6 @@
             "description": "The identifier of the organisation that owns the membership.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": "integer",
               "format": "int32"
             }
@@ -1133,11 +1117,7 @@
             "description": "The identifier of the membership to update.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -1318,6 +1298,36 @@
         }
       }
     },
+    "/users/me": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Gets the information for the currently authenticated user.",
+        "responses": {
+          "200": {
+            "description": "Returns the information for the currently authenticated user.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users": {
       "get": {
         "tags": [
@@ -1331,11 +1341,7 @@
             "in": "query",
             "description": "Gets or initialises the optional ID of the organisation to filter users by.",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           },
@@ -1346,11 +1352,7 @@
             "schema": {
               "maximum": 2147483647,
               "minimum": 1,
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           },
@@ -1361,11 +1363,7 @@
             "schema": {
               "maximum": 100,
               "minimum": 1,
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           },
@@ -1495,11 +1493,7 @@
             "description": "The unique identifier of the user whose details are being updated.",
             "required": true,
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -1551,17 +1545,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               }
             }
@@ -1739,11 +1733,9 @@
             ]
           },
           "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -1815,6 +1807,57 @@
         },
         "description": "Represents the information required to create a new organisation."
       },
+      "CurrentUserInformationDto": {
+        "required": [
+          "userId",
+          "fullName",
+          "workTelephone",
+          "workEmail",
+          "organisationMembershipId",
+          "organisationId",
+          "organisationName",
+          "userRole"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user.",
+            "format": "int32"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Gets the full name of the user."
+          },
+          "workTelephone": {
+            "type": "string",
+            "description": "Gets the user's work telephone number."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's email address."
+          },
+          "organisationMembershipId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user's organisation membership.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user's organisation.",
+            "format": "int32"
+          },
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the user's organisation."
+          },
+          "userRole": {
+            "description": "Gets the role assigned to the user within the organisation.",
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "description": "Represents information about the currently authenticated user and their\nmembership within an organisation."
+      },
       "LoginRequest": {
         "required": [
           "username",
@@ -1876,11 +1919,7 @@
             "description": "Gets the email address of the user to onboard."
           },
           "organisationId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Specifies the organisation that the new user will be created for.",
             "format": "int32"
           }
@@ -1901,11 +1940,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the organisation.",
             "format": "int32"
           },
@@ -1976,29 +2011,17 @@
         "type": "object",
         "properties": {
           "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the organisation membership.",
             "format": "int32"
           },
           "userId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the user associated with the membership.",
             "format": "int32"
           },
           "organisationId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the organisation associated with the membership.",
             "format": "int32"
           },
@@ -2049,29 +2072,17 @@
             "description": "Gets the collection of items in the current page."
           },
           "totalCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the total number of items across all pages.",
             "format": "int32"
           },
           "page": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the current page number (1-based index).",
             "format": "int32"
           },
           "pageSize": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the number of items per page.",
             "format": "int32"
           }
@@ -2098,11 +2109,9 @@
             ]
           },
           "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -2290,11 +2299,7 @@
         "type": "object",
         "properties": {
           "userId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the user.",
             "format": "int32"
           },
@@ -2332,11 +2337,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Gets the unique identifier of the membership request.",
             "format": "int32"
           },
@@ -2378,6 +2379,54 @@
         ],
         "type": "string",
         "description": "Represents the different types of users in the system."
+      },
+      "ValidationProblemDetails": {
+        "required": [
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
       },
       "VerifyMultiFactorAuthenticationCommand": {
         "required": [

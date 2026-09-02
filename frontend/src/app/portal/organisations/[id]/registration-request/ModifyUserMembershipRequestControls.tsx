@@ -4,11 +4,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import {
-  patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApprove,
-  patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsReject,
-} from '@/client/generated'
+import { approve, reject } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 type ModificationAction = 'Approve' | 'Reject'
 export type ModifyUserMembershipRequestControlsProps = {
@@ -32,16 +30,14 @@ const ModifyUserMembershipRequestControls = ({
     const path = { organisationId, userId }
     switch (action) {
       case 'Approve':
-        const approveResponse =
-          await patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsApprove({
-            path,
-          })
+        const approveResponse = await approve({
+          path,
+        })
         return approveResponse.response
       case 'Reject':
-        const rejectResponse =
-          await patchOrganisationsByOrganisationIdUsersByUserIdMembershipRequestsReject({
-            path,
-          })
+        const rejectResponse = await reject({
+          path,
+        })
         return rejectResponse.response
     }
   }
@@ -59,7 +55,9 @@ const ModifyUserMembershipRequestControls = ({
   return (
     <>
       {error && (
-        <p data-testid="action-error">An error occurred when trying to approved the user.</p>
+        <ErrorState data-testid="action-error">
+          An error occurred when trying to approve the user.
+        </ErrorState>
       )}
       <ButtonGroup>
         <Button data-testid="action-button" variant="cta" onClick={initiateRequest}>
