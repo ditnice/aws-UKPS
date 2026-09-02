@@ -641,7 +641,7 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
-export type MembershipRequestApproveData = {
+export type ApproveData = {
     body?: never;
     path: {
         /**
@@ -657,7 +657,7 @@ export type MembershipRequestApproveData = {
     url: '/organisations/{organisationId}/users/{userId}/membership-requests/approve';
 };
 
-export type MembershipRequestApproveErrors = {
+export type ApproveErrors = {
     /**
      * The current user is not allowed to approve the membership request.
      */
@@ -668,9 +668,9 @@ export type MembershipRequestApproveErrors = {
     404: ProblemDetails;
 };
 
-export type MembershipRequestApproveError = MembershipRequestApproveErrors[keyof MembershipRequestApproveErrors];
+export type ApproveError = ApproveErrors[keyof ApproveErrors];
 
-export type MembershipRequestApproveResponses = {
+export type ApproveResponses = {
     /**
      * The membership request was successfully approved.
      */
