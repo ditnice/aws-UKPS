@@ -75,6 +75,7 @@ export function RegistrationRequestForm() {
       })
       if (response.data) {
         router.push(`/portal/register/request-submitted/${response.data.id}`)
+        // TODO URP-312: Add the email being sent to request access to UKPS
       }
     },
   })
