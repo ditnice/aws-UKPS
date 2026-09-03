@@ -4,6 +4,10 @@ import { Alert } from '@/components/Alert/Alert'
 
 import { Example } from '../../_components/Example'
 
+// Info and success alerts report on something the user has already done, so
+// they're announced politely rather than interrupting whatever the screen
+// reader is currently saying. Caution and error alerts need the user's
+// attention straight away, so they keep the NDS default of `role="alert"`.
 export function Examples() {
   return (
     <>

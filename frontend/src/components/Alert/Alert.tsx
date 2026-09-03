@@ -14,10 +14,8 @@ export type AlertProps = Omit<ComponentPropsWithoutRef<'div'>, 'children'> & {
   type?: AlertType
 }
 
-// Info and success alerts report on something the user has already done, so
-// they're announced politely rather than interrupting whatever the screen
-// reader is currently saying. Caution and error alerts need the user's
-// attention straight away, so they keep the NDS default of `role="alert"`.
+// nonIntrusive means the screen reader doesn't interrupt itself to read out the alert
+// banner (i.e. announced politely). Caution and error alerts by default interrupt the screen reader
 const nonIntrusiveByType: Record<AlertType, boolean> = {
   caution: false,
   error: false,
