@@ -50,7 +50,7 @@ function mockSuccessfulOnboardResponse(userId: number) {
   vi.mocked(postUsersOnboard).mockResolvedValueOnce({
     data: { userId },
     error: undefined,
-    response: new Response(null, { status: 200 }),
+    response: new Response(null, { status: 201 }),
   })
 }
 
@@ -181,7 +181,7 @@ describe('OrganisationOnboardUserForm', () => {
       // happen, just without the id the organisation page needs for the alert.
       data: {} as OnboardedUserDto,
       error: undefined,
-      response: new Response(null, { status: 200 }),
+      response: new Response(null, { status: 201 }),
     })
     renderForm()
 

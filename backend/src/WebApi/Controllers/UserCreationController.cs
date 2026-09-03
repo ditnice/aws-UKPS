@@ -28,11 +28,11 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// </param>
     /// <returns>
     /// An <see cref="ActionResult"/> indicating the outcome of the operation.
-    /// Returns <see cref="OkObjectResult"/> containing the new user's identifier
+    /// Returns <see cref="CreatedResult"/> containing the new user's identifier
     /// if the user was successfully onboarded, or a forbidden response if the
     /// current user is not permitted to onboard users.
     /// </returns>
-    /// <response code="200">
+    /// <response code="201">
     /// The user was successfully onboarded. The response contains the
     /// identifier of the newly created user.
     /// </response>
@@ -46,7 +46,7 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// A user with the supplied username already exists.
     /// </response>
     [HttpPost("onboard")]
-    [ProducesResponseType<OnboardedUserDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<OnboardedUserDto>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -60,7 +60,11 @@ public class UserCreationController(IUserAdministrationService userAdministratio
             cancellationToken
         );
         return result.Match<ActionResult<OnboardedUserDto>>(
-            userId => Ok(new OnboardedUserDto { UserId = userId }),
+            userId =>
+                Created(
+                    new Uri($"/users/{userId}/organisations/{command.OrganisationId}"),
+                    new OnboardedUserDto { UserId = userId }
+                ),
             err =>
                 err.Match<ActionResult<OnboardedUserDto>>(
                     usernameAlreadyExists: _ =>

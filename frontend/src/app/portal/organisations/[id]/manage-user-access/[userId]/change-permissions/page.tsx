@@ -70,7 +70,7 @@ export default async function ChangeUserPermissions({ params }: Props) {
 
           <ChangePermissionsForm
             currentRole={user.userRole}
-            membershipId={Number(user.organisationMembershipId)}
+            membershipId={user.organisationMembershipId}
             organisationId={organisationId}
             userId={selectedUserId}
           />

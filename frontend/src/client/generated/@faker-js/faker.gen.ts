@@ -560,7 +560,7 @@ export const fakePostUsersOnboardRequest = (options?: Options): Omit<PostUsersOn
     body: fakeOnboardUserCommandDto(options)
 });
 
-export const fakePostUsersOnboardResponse200 = (options?: Options): PostUsersOnboardResponses[200] => fakeOnboardedUserDto(options);
+export const fakePostUsersOnboardResponse201 = (options?: Options): PostUsersOnboardResponses[201] => fakeOnboardedUserDto(options);
 
 export const fakePostUsersOnboardResponse400 = (options?: Options): PostUsersOnboardErrors[400] => fakeProblemDetails(options);
 

@@ -1764,7 +1764,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "The user was successfully onboarded. The response contains the\nidentifier of the newly created user.",
             "content": {
               "text/plain": {

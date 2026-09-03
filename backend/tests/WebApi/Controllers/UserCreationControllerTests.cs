@@ -66,7 +66,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task Post_WhenSuccessResult_ShouldReturnHttpOk()
+    public async Task Post_WhenSuccessResult_ShouldReturnHttpCreated()
     {
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
@@ -75,7 +75,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
     }
 
     [Fact]

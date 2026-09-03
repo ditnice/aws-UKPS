@@ -937,6 +937,42 @@ public class UserServiceTests : DatabaseTestBase
         }
     }
 
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task GetUserDetailsWithinOrganisation_OnlyAllowsChampionsAndSupers_WhenTheOrganisationIsTheCallersOwn(
+        UserRole callerRole,
+        bool isAllowedToAccess
+    )
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        IUserService service = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    UserRole = callerRole,
+                    OrganisationId = membership.OrganisationId,
+                }
+            )
+            .Service;
+
+        GetUserInformationResult result = await service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            membership.OrganisationId,
+            TestContext.Current.CancellationToken
+        );
+
+        if (isAllowedToAccess)
+        {
+            result.ShouldBeSuccess();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<GetUsersError.NotAllowed>();
+        }
+    }
+
     private async Task<(User User, UserOrgMembership Membership)> AddUserWithMembership(
         Action<User>? configureUser = null,
         UserOrgStatus status = UserOrgStatus.Active

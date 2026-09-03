@@ -58,7 +58,7 @@ function renderActions(
   currentUserId: number | undefined,
 ) {
   // Users cannot change their own role or deactivate themselves
-  if (Number(user.userId) === currentUserId) {
+  if (user.userId === currentUserId) {
     return 'Not applicable'
   }
 
@@ -121,23 +121,24 @@ export async function OrganisationUsersTable({
 }: OrganisationUsersTableProps) {
   const { page, pageSize, status, role, email, lastActive } = query
 
-  const { data: me } = await getUsersMe({ client: apiClient })
-  const currentUserId = me ? Number(me.userId) : undefined
+  const [{ data: me }, { data: users, error: usersError }] = await Promise.all([
+    getUsersMe({ client: apiClient }),
+    getUsers({
+      client: apiClient,
+      query: {
+        OrganisationId: organisationId,
+        Page: page,
+        PageSize: pageSize,
+        Status: status.length ? status : undefined,
+        Role: role.length ? role : undefined,
+        Email: email,
+        LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
+      },
+    }),
+  ])
+  const currentUserId = me?.userId
 
-  const { data: users, error: usersError } = await getUsers({
-    client: apiClient,
-    query: {
-      OrganisationId: organisationId,
-      Page: page,
-      PageSize: pageSize,
-      Status: status.length ? status : undefined,
-      Role: role.length ? role : undefined,
-      Email: email,
-      LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
-    },
-  })
-
-  const totalCount = users ? Number(users.totalCount) : 0
+  const totalCount = users?.totalCount ?? 0
 
   return (
     <>

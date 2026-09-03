@@ -78,6 +78,7 @@ internal partial class UserService(
     {
         GetUsersError? organisationError = await ValidateOrganisationAsync(
             getUsersQuery.OrganisationId,
+            Operation.Read,
             cancellationToken
         );
         if (organisationError is not null)
@@ -129,6 +130,7 @@ internal partial class UserService(
     {
         GetUsersError? organisationError = await ValidateOrganisationAsync(
             organisationId,
+            Operation.ElevatedRead,
             cancellationToken
         );
         if (organisationError is not null)
@@ -160,6 +162,7 @@ internal partial class UserService(
 
     private async Task<GetUsersError?> ValidateOrganisationAsync(
         int? organisationId,
+        Operation operation,
         CancellationToken cancellationToken
     )
     {
@@ -169,7 +172,7 @@ internal partial class UserService(
         }
 
         bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
-            Operation.Read,
+            operation,
             organisationId.Value
         );
         if (!actionPermitted)

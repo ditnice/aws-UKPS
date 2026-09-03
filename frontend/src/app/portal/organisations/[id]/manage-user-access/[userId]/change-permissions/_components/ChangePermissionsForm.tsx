@@ -58,7 +58,7 @@ export function ChangePermissionsForm({
 
       <ButtonGroup>
         <Button buttonType="submit" disabled={isSubmitting} variant="cta">
-          {isSubmitting ? 'Saving...' : `Make ${switchedRole.toLowerCase()} user`}
+          {`Make ${switchedRole.toLowerCase()} user`}
         </Button>
 
         <Button buttonType="button" variant="secondary" onClick={() => router.back()}>

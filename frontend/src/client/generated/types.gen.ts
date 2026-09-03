@@ -1198,7 +1198,7 @@ export type PostUsersOnboardResponses = {
      * The user was successfully onboarded. The response contains the
      * identifier of the newly created user.
      */
-    200: OnboardedUserDto;
+    201: OnboardedUserDto;
 };
 
 export type PostUsersOnboardResponse = PostUsersOnboardResponses[keyof PostUsersOnboardResponses];
