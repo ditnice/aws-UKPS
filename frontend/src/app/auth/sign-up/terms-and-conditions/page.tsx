@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { Alert } from '@nice-digital/nds-alert'
 import { Panel } from '@nice-digital/nds-panel'
 
 import { Button } from '@/components/Button/Button'
@@ -38,10 +39,10 @@ export default async function SignUpTermsAndConditions({
 
       <p>Read and accept the terms and conditions before continuing.</p>
 
-      <Panel>
+      <Alert type="caution">
         By accepting, you confirm you will use UK PharmaScan only for authorised purposes in line
         with your organisation&apos;s data use agreement.
-      </Panel>
+      </Alert>
 
       <p>[Full terms and conditions to be defined - placeholder]</p>
 
