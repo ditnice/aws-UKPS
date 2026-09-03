@@ -29,8 +29,8 @@ internal sealed partial class EmailQueueProcessor
         var receiveRequest = new ReceiveMessageRequest
         {
             QueueUrl = _emailOptions.QueueUrl,
-            MaxNumberOfMessages = 1,
-            WaitTimeSeconds = 20,
+            MaxNumberOfMessages = _emailOptions.QueueMaxNumberOfMessages,
+            WaitTimeSeconds = _emailOptions.QueueWaitTimeInSeconds,
         };
 
         var receiveResponse = await _sqs.ReceiveMessageAsync(receiveRequest, cancellationToken);

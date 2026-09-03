@@ -11,4 +11,7 @@ internal record EmailOptions
 
     [Required]
     public required string QueueUrl { get; init; }
+
+    public int QueueMaxNumberOfMessages { get; init; } = 1;
+    public int QueueWaitTimeInSeconds { get; init; } = 20;
 }
