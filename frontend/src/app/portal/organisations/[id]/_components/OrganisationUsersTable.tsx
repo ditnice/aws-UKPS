@@ -154,6 +154,7 @@ export async function OrganisationUsersTable({
         ...query,
         sortBy: column,
         sortDirection: direction == 'ascending' ? 'Ascending' : 'Descending',
+        page: 1,
       }
 
       return buildUserListHref(newQuery)
