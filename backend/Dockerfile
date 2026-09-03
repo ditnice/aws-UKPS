@@ -32,6 +32,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra AS runtime
 WORKDIR /app
 
 ENV ASPNETCORE_HTTP_PORTS=8080
+ENV Database__RootCertificate=/app/certs/eu-west-2-bundle.pem
 
 COPY --from=rds-ca --chown=$APP_UID:$APP_UID /eu-west-2-bundle.pem ./certs/eu-west-2-bundle.pem
 COPY --from=build /app/publish .

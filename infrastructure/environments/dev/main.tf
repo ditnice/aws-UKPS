@@ -242,7 +242,6 @@ module "ecs_backend" {
     Database__MigrateOnStartup  = "false"
     Database__Name              = module.aurora_backend.database_name
     Database__Port              = tostring(module.aurora_backend.port)
-    Database__RootCertificate   = "/app/certs/eu-west-2-bundle.pem"
     Email__Region               = var.region
     Email__BaseDomain           = module.alb.frontend_host_name
     Email__FromAddress          = module.ses.from_email_address
@@ -359,7 +358,7 @@ module "aurora_backend" {
   engine_version               = var.aurora_engine_version
   master_username              = var.backend_db_master_username
   aurora_postgres_identifier   = "${local.project}-${local.environment}-${local.service_name}-backend"
-  allowed_security_group_ids   = [module.ecs_backend.security_group_id]
+  allowed_security_group_ids   = [module.ecs_backend.security_group_id, module.db_migrator_lambda.security_group_id]
   kms_key_id                   = module.kms_backend.data_key_arn
   apply_immediately            = var.aurora_apply_immediately
   allow_major_version_upgrade  = var.aurora_allow_major_version_upgrade
