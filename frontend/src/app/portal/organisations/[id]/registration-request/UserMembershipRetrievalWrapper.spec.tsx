@@ -23,10 +23,15 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
+const testData: UserMembershipRequestDto = { id: 3, workEmail: 'example@email.com' }
+
 afterEach(cleanup)
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockGetMembership.mockResolvedValue({
+    data: testData,
+  })
 })
 
 const renderComponent = async (overrides?: Partial<UserMembershipRetrievalWrapperProps>) => {
@@ -52,10 +57,6 @@ const confirmChildrenNotRendered = () => {
 
 describe('UserMembershipRetrievalWrapper', () => {
   it('renders child content on success', async () => {
-    const testData: UserMembershipRequestDto = { id: 3, workEmail: 'example@email.com' }
-    mockGetMembership.mockResolvedValue({
-      data: testData,
-    })
     await renderComponent({
       children: (request) => <div data-testid="data">{JSON.stringify(request)}</div>,
     })
