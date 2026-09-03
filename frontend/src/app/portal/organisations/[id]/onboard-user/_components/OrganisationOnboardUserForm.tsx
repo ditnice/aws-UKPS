@@ -1,6 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -23,7 +24,11 @@ const onboardUserSchema = z.object({
     .trim()
     .min(1, errorMessages.userEmailRequired)
     .pipe(z.email(errorMessages.emailFormat)),
-  contactNumber: z.string().trim().min(1, errorMessages.userPhoneNumberRequired),
+  contactNumber: z
+    .string()
+    .trim()
+    .min(1, errorMessages.userPhoneNumberRequired)
+    .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 
 type OnboardUserFormValues = z.input<typeof onboardUserSchema>

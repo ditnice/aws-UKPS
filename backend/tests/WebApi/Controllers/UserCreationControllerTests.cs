@@ -124,32 +124,37 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task Post_WhenEmailNotSet_ShouldReturnHttpBadRequest()
+    public async Task Post_WhenValuesNotValid_ShouldReturnHttpBadRequest()
     {
-        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate() with
-        {
-            NewUserEmail = string.Empty,
-        };
-        var response = await _client.PostAsJsonAsync(
-            OnboardEndpoint,
-            command,
-            TestContext.Current.CancellationToken
-        );
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
+        (string Label, Func<OnboardUserCommandDto, OnboardUserCommandDto> Value)[] modifiers =
+        [
+            (
+                nameof(OnboardUserCommandDto.NewUserEmail),
+                x => x with { NewUserEmail = "invalid-email" }
+            ),
+            (
+                nameof(OnboardUserCommandDto.NewUserEmail),
+                x => x with { NewUserEmail = string.Empty }
+            ),
+            (
+                nameof(OnboardUserCommandDto.ContactNumber),
+                x => x with { ContactNumber = "invalid-contact-number" }
+            ),
+        ];
 
-    [Fact]
-    public async Task Post_WhenEmailNotValidaEmail_ShouldReturnHttpBadRequest()
-    {
-        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate() with
+        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
+        foreach (var modifier in modifiers)
         {
-            NewUserEmail = "invalid-email",
-        };
-        HttpResponseMessage response = await _client.PostAsJsonAsync(
-            OnboardEndpoint,
-            command,
-            TestContext.Current.CancellationToken
-        );
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            var modifiedCommand = modifier.Value(command);
+            HttpResponseMessage response = await _client.PostAsJsonAsync(
+                OnboardEndpoint,
+                modifiedCommand,
+                TestContext.Current.CancellationToken
+            );
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+            var errors = await response.Content.ShouldContainValidationErrors();
+            errors.ShouldContainKey(modifier.Label);
+        }
     }
 }
