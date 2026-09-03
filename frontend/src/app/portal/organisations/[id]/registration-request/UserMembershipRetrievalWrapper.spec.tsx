@@ -54,7 +54,7 @@ describe('UserMembershipRetrievalWrapper', () => {
   it('renders child content on success', async () => {
     const testData: UserMembershipRequestDto = { id: 3, workEmail: 'example@email.com' }
     mockGetMembership.mockResolvedValue({
-      data: { id: 3, workEmail: 'example@email.com' },
+      data: testData,
     })
     await renderComponent({
       children: (request) => <div data-testid="data">{JSON.stringify(request)}</div>,
