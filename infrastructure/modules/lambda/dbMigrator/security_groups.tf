@@ -4,7 +4,7 @@ resource "aws_security_group" "lambda_sg" {
   vpc_id      = var.vpc_id
 
   tags = merge(var.tags, {
-    Name        = "${var.project}-${var.environment}-${var.service_name}-lamda-sg"
+    Name        = "${var.project}-${var.environment}-${var.service_name}-lambda-sg"
     Environment = var.environment
     Project     = var.project
     Service     = var.service_name
