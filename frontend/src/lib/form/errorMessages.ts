@@ -1,8 +1,12 @@
 export const errorMessages = {
+  // Authentication
+  incorrectMfaCode: 'The code is incorrect. Try again.',
+
   // Required
   organisationNameRequired: 'Enter the organisation name',
   addressRequired: 'Enter organisation address',
   organisationEmailRequired: 'Enter an email address',
+
   //// Setup
   personalFullNameRequired: 'Enter your full name',
   personalEmailRequired: 'Enter your email address',
@@ -11,6 +15,7 @@ export const errorMessages = {
   phoneRequired: 'Enter a phone number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
+
   //// Onboarding
   userNameRequired: "Enter the user's full name",
   userEmailRequired: "Enter the user's work email address",

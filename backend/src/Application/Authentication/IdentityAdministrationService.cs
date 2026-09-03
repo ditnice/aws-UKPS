@@ -138,6 +138,12 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             await _appDbContext.SaveChangesAsync(cancellationToken);
             return VerifyMultiFactorAuthenticationResult.Ok(credentials);
         }
+        catch (EnableSoftwareTokenMFAException)
+        {
+            return VerifyMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.InvalidCode()
+            );
+        }
         catch (CodeMismatchException)
         {
             return VerifyMultiFactorAuthenticationResult.Err(
