@@ -29,6 +29,8 @@ export const errorMessages = {
 
   // Data retrieval
   failedToRetrieveCurrentUser: 'Failed to retrieve the current user.',
+  anErrorOccurredWhenTryingToRetrieveTheUserMembershipRequest:
+    "An error occurred when trying to retrieve the user's membership request.",
 
   updatingUserDetailsError: 'An error occurred when updating user details.',
 } as const
