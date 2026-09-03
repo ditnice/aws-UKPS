@@ -5,7 +5,7 @@ import type {
   UserRole,
 } from '@/client/generated/types.gen'
 import { parsePage, parsePageSize } from '@/lib/search-and-filter/pagination'
-import { parseMulti } from '@/lib/search-and-filter/query'
+import { parseMulti, parseSortDirection } from '@/lib/search-and-filter/query'
 
 import {
   filterableRoles,
@@ -54,13 +54,6 @@ function parseSortBy(sortBy: string | undefined): GetUsersQuerySortValue | undef
   const validSortValues: GetUsersQuerySortValue[] = ['Email', 'Role', 'Status', 'LastActive']
   return validSortValues.includes(sortBy as GetUsersQuerySortValue)
     ? (sortBy as GetUsersQuerySortValue)
-    : undefined
-}
-
-function parseSortDirection(sortDirection: string | undefined): SortDirection | undefined {
-  const validSortDirections: SortDirection[] = ['Ascending', 'Descending']
-  return validSortDirections.includes(sortDirection as SortDirection)
-    ? (sortDirection as SortDirection)
     : undefined
 }
 

@@ -12,6 +12,7 @@ import { Table } from '@/components/Table/Table'
 import { TableSortDirection, TableSortHeaderLink } from '@/components/Table/TableSortHeader'
 import { Tag } from '@/components/Tag/Tag'
 import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
+import { getNextSortDirection } from '@/lib/search-and-filter/query'
 
 import {
   lastActivePresetDays,
@@ -141,13 +142,6 @@ export async function OrganisationUsersTable({
 
   const totalCount = users?.totalCount ?? 0
 
-  const directionFor = (column: GetUsersQuerySortValue): TableSortDirection => {
-    if (sortBy === column && sortDirection) {
-      return sortDirection == 'Ascending' ? 'ascending' : 'descending'
-    }
-    return 'none'
-  }
-
   const createSortHref =
     (column: GetUsersQuerySortValue) => (direction: Exclude<TableSortDirection, 'none'>) => {
       const newQuery: UserListQuery = {
@@ -167,11 +161,16 @@ export async function OrganisationUsersTable({
       ['Last active', 'LastActive'],
       ['Actions', null],
     ]
+
     return headers.map(([label, sortColumn]) =>
       sortColumn ? (
         <TableSortHeaderLink
           key={label}
-          direction={directionFor(sortColumn)}
+          direction={getNextSortDirection<GetUsersQuerySortValue>({
+            column: sortColumn,
+            sortBy,
+            sortDirection,
+          })}
           createHref={createSortHref(sortColumn)}
         >
           {label}
