@@ -16,6 +16,7 @@ import { getNextSortDirection } from '@/lib/search-and-filter/query'
 
 import {
   lastActivePresetDays,
+  organisationUserTableHeaders,
   roleLabels,
   statusLabels,
   statusTagColours,
@@ -156,11 +157,11 @@ export async function OrganisationUsersTable({
 
   const renderHeaders = () => {
     const headers: [string, GetUsersQuerySortValue | null][] = [
-      ['Email address', 'Email'],
-      ['Role', 'Role'],
-      ['Status', 'Status'],
-      ['Last active', 'LastActive'],
-      ['Actions', null],
+      [organisationUserTableHeaders.email, 'Email'],
+      [organisationUserTableHeaders.role, 'Role'],
+      [organisationUserTableHeaders.status, 'Status'],
+      [organisationUserTableHeaders.lastActive, 'LastActive'],
+      [organisationUserTableHeaders.actions, null],
     ]
 
     return headers.map(([label, sortColumn]) =>
