@@ -16,7 +16,7 @@ namespace MigratorLambda;
 
 public sealed class MigratorFunction
 {
-    public static async Task FunctionHandler(string input, ILambdaContext context)
+    public static async Task FunctionHandler(object input, ILambdaContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
