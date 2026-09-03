@@ -1,13 +1,20 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { OnboardUserCommandDto } from '@/client/generated'
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
+import { errorMessages } from '@/lib/form/errorMessages'
 import { NextLinkMock } from '@/test-utils/nextMocks'
 
 import { OrganisationOnboardUserForm } from './OrganisationOnboardUserForm'
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
+  phoneNumberValidationMock: vi.fn(),
+}))
+
+vi.mock('libphonenumber-js/max', () => ({
+  isValidPhoneNumber: mocks.phoneNumberValidationMock,
 }))
 
 vi.mock('@/client/generated/sdk.gen', () => ({
@@ -24,25 +31,44 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
+beforeEach(() => {
+  mocks.phoneNumberValidationMock.mockReturnValue(true)
+})
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
 })
 
+type FormValues = Omit<OnboardUserCommandDto, 'organisationId'>
+const validFormValues: FormValues = {
+  fullName: 'Test User',
+  newUserEmail: 'test@test.com',
+  contactNumber: '01234567890',
+}
+
 function renderForm() {
   render(<OrganisationOnboardUserForm organisationId={123} />)
 }
 
-function fillValidForm() {
+function enterValuesIntoForm(validFormValues: FormValues) {
   fireEvent.change(screen.getByLabelText('Full name'), {
-    target: { value: 'Test User' },
+    target: { value: validFormValues.fullName },
   })
   fireEvent.change(screen.getByLabelText('Work email address'), {
-    target: { value: 'test@test.com' },
+    target: { value: validFormValues.newUserEmail },
   })
   fireEvent.change(screen.getByLabelText('Phone number'), {
-    target: { value: '01234567890' },
+    target: { value: validFormValues.contactNumber },
   })
+}
+
+function fillValidForm() {
+  enterValuesIntoForm(validFormValues)
+}
+
+function submitForm() {
+  fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
 }
 
 function mockOnboardResponse(status: number) {
@@ -81,6 +107,20 @@ describe('OrganisationOnboardUserForm', () => {
     expect(await screen.findByText("Enter the user's work email address")).toBeDefined()
     expect(await screen.findByText("Enter the user's phone number")).toBeDefined()
     expect(postUsersOnboard).not.toHaveBeenCalled()
+  })
+
+  it('validates the phone number as a valid phone number', async () => {
+    mocks.phoneNumberValidationMock.mockReturnValue(false)
+
+    const examplePhoneNumber = '63846484638'
+    renderForm()
+    enterValuesIntoForm({ ...validFormValues, contactNumber: examplePhoneNumber })
+    submitForm()
+
+    await waitFor(async () => {
+      expect(mocks.phoneNumberValidationMock).toHaveBeenCalledWith(examplePhoneNumber, 'GB')
+      expect(await screen.findByText(errorMessages.phoneFormat)).toBeDefined()
+    })
   })
 
   it('shows an email format validation error', async () => {
