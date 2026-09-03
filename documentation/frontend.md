@@ -63,3 +63,33 @@ cd frontend && pnpm dev    # https://localhost:3000
 
 Open `https://localhost:3000`, log in, and confirm in DevTools → Application → Cookies that
 `access_token`, `refresh_token`, and `csrf_token` are present with `Secure` checked.
+
+### Coding Standards
+
+The following is a collection of agreed coding standards.
+
+#### URL structure
+
+1. URLs should be resource-focused, with actions reserved, where possible, for the final path segment.
+
+```text
+NO:  my-api/organisation/manage-user/update-details/change-age
+
+YES: my-api/organisations/[orgId]/users/[userId]/details/change-age
+```
+
+2. When referencing an entity by ID, the ID should immediately follow the entity it identifies.
+
+```text
+NO:  my-api/organisations/[orgId]/users/details/[userId]
+
+YES: my-api/organisations/[orgId]/users/[userId]/details
+```
+
+3. Resource collections should use plural nouns.
+
+```text
+NO:  my-api/organisation/[orgId]/user/[userId]/requests
+
+YES: my-api/organisations/[orgId]/users/[userId]/requests
+```
