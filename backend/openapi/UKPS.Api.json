@@ -1713,7 +1713,7 @@
         }
       }
     },
-    "/users/{id}": {
+    "/users/registration-requests/{id}": {
       "get": {
         "tags": [
           "UserCreation"

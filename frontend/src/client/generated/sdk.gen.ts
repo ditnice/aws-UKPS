@@ -189,7 +189,7 @@ export const postUsersRegister = <ThrowOnError extends boolean = false>(options:
 /**
  * Retrieves the details of a user by their unique identifier.
  */
-export const getUserRegistrationById = <ThrowOnError extends boolean = false>(options: Options<GetUserRegistrationByIdData, ThrowOnError>): RequestResult<GetUserRegistrationByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetUserRegistrationByIdResponses, unknown, ThrowOnError>({ url: '/users/{id}', ...options });
+export const getUserRegistrationById = <ThrowOnError extends boolean = false>(options: Options<GetUserRegistrationByIdData, ThrowOnError>): RequestResult<GetUserRegistrationByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetUserRegistrationByIdResponses, unknown, ThrowOnError>({ url: '/users/registration-requests/{id}', ...options });
 
 /**
  * Creates a new user account and initiates the onboarding process.

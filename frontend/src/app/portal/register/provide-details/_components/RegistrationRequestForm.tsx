@@ -87,7 +87,7 @@ export function RegistrationRequestForm() {
         onSubmit={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          void form.handleSubmit()
+          form.handleSubmit()
         }}
       >
         <form.Field name="organisationId">

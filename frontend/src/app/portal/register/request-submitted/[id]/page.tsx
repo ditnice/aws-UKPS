@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { GetUserRegistrationById } from '@/client/generated/sdk.gen'
+import { Client } from '@/client/generated/client'
+import { getUserRegistrationById } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -13,7 +14,7 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-export default async function RequestSumbitted({ params }: Props) {
+export default async function RequestSubmitted({ params }: Props) {
   const { id } = await params
   const userId = Number(id)
 
@@ -22,7 +23,7 @@ export default async function RequestSumbitted({ params }: Props) {
   }
 
   const apiClient = await createServerApiClient()
-  const { data: user, error } = await GetUserRegistrationById({
+  const { data: user, error } = await getUserRegistrationById({
     client: apiClient,
     path: { id: userId },
   })

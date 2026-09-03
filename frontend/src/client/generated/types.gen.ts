@@ -1223,7 +1223,7 @@ export type GetUserRegistrationByIdData = {
         id: number;
     };
     query?: never;
-    url: '/users/{id}';
+    url: '/users/registration-requests/{id}';
 };
 
 export type GetUserRegistrationByIdResponses = {

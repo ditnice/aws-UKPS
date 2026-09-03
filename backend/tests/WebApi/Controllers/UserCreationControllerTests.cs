@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,7 +11,6 @@ using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
-using UKPS.Api.WebApi.Controllers;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 using UserOnboardingResult = UKPS.Api.Application.Common.Result<
     int,
@@ -27,7 +25,6 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
 
     private readonly OnboardUserCommandDtoFaker _onboardUserCommandDtoFaker = new();
     private readonly HttpClient _client;
-    private readonly UserCreationController _controller;
     private readonly IUserAdministrationService _mockService =
         Substitute.For<IUserAdministrationService>();
 
@@ -54,7 +51,6 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
                 );
             })
             .CreateClient();
-        _controller = new UserCreationController(_mockService);
     }
 
     [Fact]
@@ -165,16 +161,20 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
         RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
 
         _mockService
-            .RegisterUser(request, TestContext.Current.CancellationToken)
+            .RegisterUser(request, Arg.Any<CancellationToken>())
             .Returns(Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(expected));
 
-        ActionResult<RegisterUserConfirmationDto> result = await _controller.RegisterUser(
+        var response = await _client.PostAsJsonAsync(
+            new Uri("/users/register"),
             request,
             TestContext.Current.CancellationToken
         );
-
-        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
-        ok.Value.ShouldBe(expected);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
     }
 
     [Fact]
@@ -182,19 +182,18 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     {
         RegisterUserCommandDto request = RegisterUserCommandDto();
         _mockService
-            .RegisterUser(Arg.Any<RegisterUserCommandDto>(), TestContext.Current.CancellationToken)
+            .RegisterUser(Arg.Any<RegisterUserCommandDto>(), Arg.Any<CancellationToken>())
             .Returns(
                 Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
                     new RegisterUserError.MissingFields()
                 )
             );
-        ActionResult<RegisterUserConfirmationDto> result = await _controller.RegisterUser(
+        var response = await _client.PostAsJsonAsync(
+            new Uri("/users/register"),
             request,
             TestContext.Current.CancellationToken
         );
-        result
-            .Result.ShouldBeOfType<BadRequestObjectResult>()
-            .Value.ShouldBe("Some of the data required is missing.");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -202,37 +201,43 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     {
         RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
         _mockService
-            .GetUserRegistrationById(1, TestContext.Current.CancellationToken)
+            .GetUserRegistrationById(1, Arg.Any<CancellationToken>())
             .Returns(Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(expected));
 
-        ActionResult<RegisterUserConfirmationDto> result =
-            await _controller.GetUserRegistrationById(1, TestContext.Current.CancellationToken);
-        OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
-        ok.Value.ShouldBe(expected);
+        var response = await _client.GetAsync(
+            new Uri("/users/registration-requests/1"),
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
     }
 
     [Fact]
     public async Task GetUserRegistrationById_UserDoesNotExist_ReturnsNotFound()
     {
         _mockService
-            .GetUserRegistrationById(1, TestContext.Current.CancellationToken)
+            .GetUserRegistrationById(1, Arg.Any<CancellationToken>())
             .Returns(
                 Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
                     new GetUserDetailsError.IdNotFound(1)
                 )
             );
-
-        ActionResult<RegisterUserConfirmationDto> result =
-            await _controller.GetUserRegistrationById(1, TestContext.Current.CancellationToken);
-
-        result.Result.ShouldBeOfType<NotFoundResult>();
+        var response = await _client.GetAsync(
+            new Uri("/users/registration-request/1"),
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     private static RegisterUserCommandDto RegisterUserCommandDto() =>
         new()
         {
             FullName = "Test1",
-            PhoneNumber = "0123456789",
+            PhoneNumber = "07845796823",
             WorkEmail = "user@example.com",
             OrganisationId = 1,
         };
@@ -243,7 +248,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             Id = 1,
             OrganisationName = "Test",
             FullName = "Test2",
-            PhoneNumber = "0123456789",
+            PhoneNumber = "07845796823",
             WorkEmail = "user@example.com",
         };
 }

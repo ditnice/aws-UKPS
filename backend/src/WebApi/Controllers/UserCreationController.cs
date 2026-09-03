@@ -76,7 +76,7 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// <response code="404">
     /// No user was found with the supplied identifier.
     /// </response>
-    [HttpGet("{id:int}", Name = nameof(GetUserRegistrationById))]
+    [HttpGet("registration-requests/{id:int}", Name = nameof(GetUserRegistrationById))]
     public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserRegistrationById(
         int id,
         CancellationToken cancellationToken
