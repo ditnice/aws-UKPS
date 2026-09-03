@@ -1414,6 +1414,22 @@
               "type": "string",
               "format": "date-time"
             }
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "description": "Gets or initialises the field by which users are sorted.\nDefaults to GetUsersQuerySortValue.LastActive.",
+            "schema": {
+              "$ref": "#/components/schemas/GetUsersQuerySortValue"
+            }
+          },
+          {
+            "name": "SortDirection",
+            "in": "query",
+            "description": "Gets or initialises the direction in which users are sorted.\nDefaults to SortDirection.Descending.",
+            "schema": {
+              "$ref": "#/components/schemas/SortDirection"
+            }
           }
         ],
         "responses": {
@@ -1940,6 +1956,16 @@
         },
         "description": "Represents the information required to create a new organisation."
       },
+      "GetUsersQuerySortValue": {
+        "enum": [
+          "LastActive",
+          "Email",
+          "Role",
+          "Status"
+        ],
+        "type": "string",
+        "description": "Specifies the fields by which users can be sorted when querying users."
+      },
       "LoginRequest": {
         "required": [
           "username",
@@ -2266,6 +2292,14 @@
           }
         },
         "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a new password to the user."
+      },
+      "SortDirection": {
+        "enum": [
+          "Ascending",
+          "Descending"
+        ],
+        "type": "string",
+        "description": "Specifies the direction in which query results are sorted."
       },
       "UkpsChallengeType": {
         "enum": [

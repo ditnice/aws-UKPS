@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationProblemDetails, CreateOrganisationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipRequestDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationProblemDetails, CreateOrganisationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersQuerySortValue, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipRequestDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -32,6 +32,16 @@ export const fakeCreateOrganisationDto = (options?: Options): CreateOrganisation
         headOfficeEmail: f.internet.email(),
         headOfficeTelephone: f.string.sample()
     };
+};
+
+export const fakeGetUsersQuerySortValue = (options?: Options): GetUsersQuerySortValue => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'LastActive',
+        'Email',
+        'Role',
+        'Status'
+    ]);
 };
 
 export const fakeLoginRequest = (options?: Options): LoginRequest => {
@@ -108,6 +118,11 @@ export const fakeSetupUserCommand = (options?: Options): SetupUserCommand => {
         setupToken: f.string.uuid(),
         newPassword: f.string.sample()
     };
+};
+
+export const fakeSortDirection = (options?: Options): SortDirection => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement(['Ascending', 'Descending']);
 };
 
 export const fakeUkpsChallengeType = (options?: Options): UkpsChallengeType => {
@@ -507,7 +522,9 @@ export const fakeGetUsersRequest = (options?: Options): Omit<GetUsersData, 'url'
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Role: f.helpers.multiple(() => fakeUserRole(options)) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Email: f.internet.email() },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { LastActiveFrom: f.date.recent().toISOString() },
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { LastActiveTo: f.date.recent().toISOString() }
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { LastActiveTo: f.date.recent().toISOString() },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { SortBy: fakeGetUsersQuerySortValue(options) },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { SortDirection: fakeSortDirection(options) }
         }
     };
 };

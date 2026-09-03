@@ -20,6 +20,7 @@ using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
 >;
+using SortDirection = UKPS.Api.Application.Users.Dtos.SortDirection;
 
 namespace UKPS.Api.Tests.Application.Users;
 
@@ -161,6 +162,87 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetUsers_WhenSortParametersNotSet_ShouldDefaultToSortingByLastActiveDescending()
+    {
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto(),
+            TestContext.Current.CancellationToken
+        );
+
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
+        var lastActiveValues = dto.Items.Select(x => x.LastActive).ToArray();
+        lastActiveValues.ShouldBeInOrder(Shouldly.SortDirection.Descending);
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenSortingByLastActive_NoValueSetIsTreatedAsALowValue()
+    {
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery with
+            {
+                SortBy = GetUsersQuerySortValue.LastActive,
+                SortDirection = SortDirection.Ascending,
+                PageSize = 1000,
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
+        int greatestIndexOfTheUsersWhereLastActiveIsNull = dto
+            .Items.Enumerate()
+            .Where(x => !x.Value.LastActive.HasValue)
+            .Max(x => x.Index);
+        int minIndexOfTheUsersWhereLastActiveIsSet = dto
+            .Items.Enumerate()
+            .Where(x => x.Value.LastActive.HasValue)
+            .Min(x => x.Index);
+        greatestIndexOfTheUsersWhereLastActiveIsNull.ShouldBeLessThan(
+            minIndexOfTheUsersWhereLastActiveIsSet
+        );
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenSortParametersSet_ShouldSortBySpecifiedField()
+    {
+        var getterLookup = new Dictionary<GetUsersQuerySortValue, Func<UserListItemDto, object?>>()
+        {
+            { GetUsersQuerySortValue.LastActive, x => x.LastActive },
+            { GetUsersQuerySortValue.Email, x => x.EmailAddress },
+            { GetUsersQuerySortValue.Role, x => x.Role },
+            { GetUsersQuerySortValue.Status, x => x.Status },
+        };
+
+        foreach (var sortableValue in Enum.GetValues<GetUsersQuerySortValue>())
+        {
+            var getter = getterLookup.TryGetValue(sortableValue, out var g)
+                ? g
+                : throw new InvalidOperationException($"No getter defined for {sortableValue}");
+
+            var baseQuery = new GetUsersQueryDto() { SortBy = sortableValue };
+
+            GetUsersResult resultAsc = await Service.GetUsers(
+                baseQuery with
+                {
+                    SortDirection = SortDirection.Ascending,
+                },
+                TestContext.Current.CancellationToken
+            );
+            var dataAsc = resultAsc.ShouldBeSuccess();
+            dataAsc.Items.Select(getter).ShouldBeInOrder(Shouldly.SortDirection.Ascending);
+
+            GetUsersResult resultDesc = await Service.GetUsers(
+                baseQuery with
+                {
+                    SortDirection = SortDirection.Descending,
+                },
+                TestContext.Current.CancellationToken
+            );
+            var dataDesc = resultDesc.ShouldBeSuccess();
+            dataDesc.Items.Select(getter).ShouldBeInOrder(Shouldly.SortDirection.Descending);
+        }
+    }
+
+    [Fact]
     public async Task GetUsers_MapsUserMembershipFields_WhenUsersExist()
     {
         var userFaker = new UserFaker().RuleFor(
@@ -263,7 +345,7 @@ public class UserServiceTests : DatabaseTestBase
     {
         var sampleMembership = _faker.PickRandom(ViewableMemberships);
         var email = sampleMembership.User!.WorkEmail;
-        var randomSubString = _faker.GetRandomSubString(email);
+        var randomSubString = _faker.GetRandomSubString(email, minLength: 2);
         var randomlyCapitalised = _faker.GetRandomlyCapitalisedString(randomSubString);
 
         GetUsersResult result = await Service.GetUsers(
@@ -417,18 +499,6 @@ public class UserServiceTests : DatabaseTestBase
         dto.TotalCount.ShouldBe(ViewableMemberships.Count());
         dto.Page.ShouldBe(2);
         dto.PageSize.ShouldBe(1);
-    }
-
-    [Fact]
-    public async Task GetUsers_OrdersByUserId()
-    {
-        GetUsersResult result = await Service.GetUsers(
-            new GetUsersQueryDto(),
-            TestContext.Current.CancellationToken
-        );
-
-        PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
-        dto.Items.Select(x => x.UserId).ShouldBeInOrder();
     }
 
     [Fact]
