@@ -298,27 +298,42 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task UpdateUserDetails_WhenCommandIsInvalid_ShouldReturnBadRequestResponse()
     {
-        Func<UpdateUserDetailsCommand, UpdateUserDetailsCommand>[] modifers =
+        (
+            string Label,
+            Func<UpdateUserDetailsCommand, UpdateUserDetailsCommand> Value
+        )[] modifiers =
         [
-            x => x with { FullName = string.Empty },
-            x => x with { FullName = null! },
-            x => x with { WorkEmail = string.Empty },
-            x => x with { WorkEmail = null! },
-            x => x with { WorkEmail = "not a valid email" },
-            x => x with { WorkTelephone = string.Empty },
-            x => x with { WorkTelephone = null! },
+            (nameof(UpdateUserDetailsCommand.FullName), x => x with { FullName = string.Empty }),
+            (nameof(UpdateUserDetailsCommand.FullName), x => x with { FullName = null! }),
+            (nameof(UpdateUserDetailsCommand.WorkEmail), x => x with { WorkEmail = string.Empty }),
+            (nameof(UpdateUserDetailsCommand.WorkEmail), x => x with { WorkEmail = null! }),
+            (
+                nameof(UpdateUserDetailsCommand.WorkEmail),
+                x => x with { WorkEmail = "not a valid email" }
+            ),
+            (
+                nameof(UpdateUserDetailsCommand.WorkTelephone),
+                x => x with { WorkTelephone = string.Empty }
+            ),
+            (nameof(UpdateUserDetailsCommand.WorkTelephone), x => x with { WorkTelephone = null! }),
+            (
+                nameof(UpdateUserDetailsCommand.WorkTelephone),
+                x => x with { WorkTelephone = "invalid-telephone-number" }
+            ),
         ];
 
-        foreach (var mod in modifers)
+        foreach (var mod in modifiers)
         {
             var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
             var response = await _client.PatchAsJsonAsync(
                 url,
-                mod(_updateUserDetailsCommandFaker.Generate()),
+                mod.Value(_updateUserDetailsCommandFaker.Generate()),
                 TestContext.Current.CancellationToken
             );
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            var errors = await response.Content.ShouldContainValidationErrors();
+            errors.ShouldContainKey(mod.Label);
         }
     }
 

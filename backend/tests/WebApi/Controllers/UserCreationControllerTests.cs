@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -154,12 +153,8 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             );
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-            var content = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
-                TestContext.Current.CancellationToken
-            );
-
-            content.ShouldNotBeNull();
-            content.Errors.ShouldContainKey(modifier.Label);
+            var errors = await response.Content.ShouldContainValidationErrors();
+            errors.ShouldContainKey(modifier.Label);
         }
     }
 }
