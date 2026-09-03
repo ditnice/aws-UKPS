@@ -57,7 +57,7 @@ internal sealed partial class EmailQueueProcessor
 
     [LoggerMessage(
         Level = LogLevel.Error,
-        Message = "An error occur whilst handling email message. [ReceiptHandle: {ReceiptHandle}]"
+        Message = "An error occurred whilst handling email message. [ReceiptHandle: {ReceiptHandle}]"
     )]
     private partial void LogEmailHandlingFailure(Exception ex, string receiptHandle);
 }
