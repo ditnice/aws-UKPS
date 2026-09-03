@@ -1,6 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
@@ -22,7 +23,11 @@ const EditDetails = z.object({
     .trim()
     .min(1, errorMessages.workEmailRequired)
     .pipe(z.email(errorMessages.emailFormat)),
-  workTelephone: z.string().trim().min(1, errorMessages.personalPhoneRequired),
+  workTelephone: z
+    .string()
+    .trim()
+    .min(1, errorMessages.personalPhoneRequired)
+    .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 
 export type EditDetailsFormProps = { userId: number; initialValues: UpdateUserDetailsCommand }
