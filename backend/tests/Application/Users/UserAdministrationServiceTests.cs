@@ -47,7 +47,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
     private readonly Faker<MockUser> _mockUserFaker =
         new MockAmazonCognitoIdentityProvider.MockUserFaker();
-    private readonly RegisterUserDtoFaker _registerUserDtoFaker = new();
+    private readonly RegisterUserCommandDtoFaker _registerUserCommandDtoFaker = new();
 
     public UserAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -239,11 +239,11 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         context.Organisations.Add(organisation);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        RegisterUserDto registerUserDto = _registerUserDtoFaker
+        RegisterUserCommandDto registerUserCommandDto = _registerUserCommandDtoFaker
             .RuleFor(x => x.OrganisationId, _ => 1)
             .Generate();
         RegisterUserConfirmation result = await _harness.Service.RegisterUser(
-            registerUserDto,
+            registerUserCommandDto,
             TestContext.Current.CancellationToken
         );
         RegisterUserConfirmationDto user = result.ShouldBeSuccess();
@@ -252,15 +252,15 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             {
                 Id = user.Id,
                 OrganisationName = user.OrganisationName,
-                FullName = registerUserDto.FullName,
-                WorkEmail = registerUserDto.WorkEmail,
-                PhoneNumber = registerUserDto.PhoneNumber,
+                FullName = registerUserCommandDto.FullName,
+                WorkEmail = registerUserCommandDto.WorkEmail,
+                PhoneNumber = registerUserCommandDto.PhoneNumber,
             }
         );
     }
 
     [Fact]
-    public async Task GetUserDetailsById_UserExists_ReturnsDto()
+    public async Task GetUserRegistrationById_UserExists_ReturnsDto()
     {
         OrganisationFaker organisationFaker = new();
         var organisation = organisationFaker.Generate();
@@ -273,10 +273,10 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             WorkEmail = "test@example.com",
             PhoneNumber = "07654281622",
         };
-        Context.UserRegistrationRequest.Add(request);
+        Context.UserRegistrationRequests.Add(request);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        GetUserDetails result = await _harness.Service.GetUserDetailsById(
+        GetUserDetails result = await _harness.Service.GetUserRegistrationById(
             request.Id,
             TestContext.Current.CancellationToken
         );
@@ -296,11 +296,11 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUserDetailsById_UserDoesNotExist_ReturnsIdNotFound()
+    public async Task GetUserRegistrationById_UserDoesNotExist_ReturnsIdNotFound()
     {
         int id = 999;
 
-        GetUserDetails result = await _harness.Service.GetUserDetailsById(
+        GetUserDetails result = await _harness.Service.GetUserRegistrationById(
             id,
             TestContext.Current.CancellationToken
         );
@@ -347,9 +347,9 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         }
     }
 
-    private sealed class RegisterUserDtoFaker : Faker<RegisterUserDto>
+    private sealed class RegisterUserCommandDtoFaker : Faker<RegisterUserCommandDto>
     {
-        public RegisterUserDtoFaker()
+        public RegisterUserCommandDtoFaker()
         {
             RuleFor(x => x.FullName, f => f.Name.FullName());
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());

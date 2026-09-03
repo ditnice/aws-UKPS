@@ -1673,17 +1673,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RegisterUserDto"
+                "$ref": "#/components/schemas/RegisterUserCommandDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/RegisterUserDto"
+                "$ref": "#/components/schemas/RegisterUserCommandDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/RegisterUserDto"
+                "$ref": "#/components/schemas/RegisterUserCommandDto"
               }
             }
           },
@@ -1719,7 +1719,7 @@
           "UserCreation"
         ],
         "summary": "Retrieves the details of a user by their unique identifier.",
-        "operationId": "GetUserDetailsById",
+        "operationId": "GetUserRegistrationById",
         "parameters": [
           {
             "name": "id",
@@ -2281,6 +2281,35 @@
           }
         }
       },
+      "RegisterUserCommandDto": {
+        "required": [
+          "fullName",
+          "workEmail",
+          "phoneNumber",
+          "organisationId"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Gets the user's full name."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's work email address."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the user phone number."
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the name of the organisation the user is requesting access to.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the information required to register a new user."
+      },
       "RegisterUserConfirmationDto": {
         "required": [
           "id",
@@ -2314,35 +2343,6 @@
           }
         },
         "description": "Represents the details of a user who has been registered."
-      },
-      "RegisterUserDto": {
-        "required": [
-          "fullName",
-          "workEmail",
-          "phoneNumber",
-          "organisationId"
-        ],
-        "type": "object",
-        "properties": {
-          "fullName": {
-            "type": "string",
-            "description": "Gets the user's full name."
-          },
-          "workEmail": {
-            "type": "string",
-            "description": "Gets the user's work email address."
-          },
-          "phoneNumber": {
-            "type": "string",
-            "description": "Gets the user phone number."
-          },
-          "organisationId": {
-            "type": "integer",
-            "description": "Gets the name of the organisation the user is requesting access to.",
-            "format": "int32"
-          }
-        },
-        "description": "Represents the information required to register a new user."
       },
       "RespondToMultiFactorAuthenticationChallengeCommand": {
         "required": [

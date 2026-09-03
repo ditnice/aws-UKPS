@@ -12,7 +12,7 @@ public interface IUserAdministrationService
     /// <summary>
     /// Registers a new user.
     /// </summary>
-    /// <param name="registerUserDto">
+    /// <param name="registerUserCommandDto">
     /// The details required to register the user.
     /// </param>
     /// <param name="cancellationToken">
@@ -24,7 +24,7 @@ public interface IUserAdministrationService
     /// error of type <see cref="RegisterUserError"/> if the user could not be registered.
     /// </returns>
     Task<Result<RegisterUserConfirmationDto, RegisterUserError>> RegisterUser(
-        RegisterUserDto registerUserDto,
+        RegisterUserCommandDto registerUserCommandDto,
         CancellationToken cancellationToken
     );
 
@@ -59,7 +59,7 @@ public interface IUserAdministrationService
     /// A result containing the user's details if the operation was successful,
     /// or the reason the operation failed.
     /// </returns>
-    Task<Result<RegisterUserConfirmationDto, GetUserDetailsError>> GetUserDetailsById(
+    Task<Result<RegisterUserConfirmationDto, GetUserDetailsError>> GetUserRegistrationById(
         int Id,
         CancellationToken cancellationToken
     );

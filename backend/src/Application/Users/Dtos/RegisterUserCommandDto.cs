@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.Users.Dtos;
 
 /// <summary>
 /// Represents the information required to register a new user.
 /// </summary>
-public sealed record RegisterUserDto
+public sealed record RegisterUserCommandDto
 {
     /// <summary>
     /// Gets the user's full name.
@@ -24,6 +25,7 @@ public sealed record RegisterUserDto
     /// Gets the user phone number.
     /// </summary>
     [Required]
+    [PhoneNumber]
     public required string PhoneNumber { get; init; }
 
     /// <summary>

@@ -161,7 +161,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task RegisterUser_IsValid_ReturnsDto()
     {
-        RegisterUserDto request = RegisterUserDto();
+        RegisterUserCommandDto request = RegisterUserCommandDto();
         RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
 
         _mockService
@@ -180,9 +180,9 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task RegisterUser_FieldsMissing_ReturnsBadRequest()
     {
-        RegisterUserDto request = RegisterUserDto();
+        RegisterUserCommandDto request = RegisterUserCommandDto();
         _mockService
-            .RegisterUser(Arg.Any<RegisterUserDto>(), TestContext.Current.CancellationToken)
+            .RegisterUser(Arg.Any<RegisterUserCommandDto>(), TestContext.Current.CancellationToken)
             .Returns(
                 Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
                     new RegisterUserError.MissingFields()
@@ -198,41 +198,37 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task GetUserDetailsById_UserExists_ReturnsDto()
+    public async Task GetUserRegistrationById_UserExists_ReturnsDto()
     {
         RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
         _mockService
-            .GetUserDetailsById(1, TestContext.Current.CancellationToken)
+            .GetUserRegistrationById(1, TestContext.Current.CancellationToken)
             .Returns(Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(expected));
 
-        ActionResult<RegisterUserConfirmationDto> result = await _controller.GetUserDetailsById(
-            1,
-            TestContext.Current.CancellationToken
-        );
+        ActionResult<RegisterUserConfirmationDto> result =
+            await _controller.GetUserRegistrationById(1, TestContext.Current.CancellationToken);
         OkObjectResult ok = result.Result.ShouldBeOfType<OkObjectResult>();
         ok.Value.ShouldBe(expected);
     }
 
     [Fact]
-    public async Task GetUserDetailsById_UserDoesNotExist_ReturnsNotFound()
+    public async Task GetUserRegistrationById_UserDoesNotExist_ReturnsNotFound()
     {
         _mockService
-            .GetUserDetailsById(1, TestContext.Current.CancellationToken)
+            .GetUserRegistrationById(1, TestContext.Current.CancellationToken)
             .Returns(
                 Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
                     new GetUserDetailsError.IdNotFound(1)
                 )
             );
 
-        ActionResult<RegisterUserConfirmationDto> result = await _controller.GetUserDetailsById(
-            1,
-            TestContext.Current.CancellationToken
-        );
+        ActionResult<RegisterUserConfirmationDto> result =
+            await _controller.GetUserRegistrationById(1, TestContext.Current.CancellationToken);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
     }
 
-    private static RegisterUserDto RegisterUserDto() =>
+    private static RegisterUserCommandDto RegisterUserCommandDto() =>
         new()
         {
             FullName = "Test1",

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { getUserDetailsById } from '@/client/generated/sdk.gen'
+import { GetUserRegistrationById } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -22,7 +22,7 @@ export default async function RequestSumbitted({ params }: Props) {
   }
 
   const apiClient = await createServerApiClient()
-  const { data: user, error } = await getUserDetailsById({
+  const { data: user, error } = await GetUserRegistrationById({
     client: apiClient,
     path: { id: userId },
   })

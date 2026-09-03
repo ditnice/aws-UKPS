@@ -20,7 +20,7 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// <summary>
     /// Registers a new user.
     /// </summary>
-    /// <param name="registerUserDto">
+    /// <param name="registerUserCommandDto">
     /// The details required to register the user.
     /// </param>
     /// <param name="cancellationToken">
@@ -37,12 +37,12 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// </returns>
     [HttpPost("register")]
     public async Task<ActionResult<RegisterUserConfirmationDto>> RegisterUser(
-        [FromBody] RegisterUserDto registerUserDto,
+        [FromBody] RegisterUserCommandDto registerUserCommandDto,
         CancellationToken cancellationToken
     )
     {
         Result<RegisterUserConfirmationDto, RegisterUserError> result =
-            await userAdministrationService.RegisterUser(registerUserDto, cancellationToken);
+            await userAdministrationService.RegisterUser(registerUserCommandDto, cancellationToken);
         return result.Match<ActionResult<RegisterUserConfirmationDto>>(
             x => Ok(x),
             x =>
@@ -76,13 +76,13 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// <response code="404">
     /// No user was found with the supplied identifier.
     /// </response>
-    [HttpGet("{id:int}", Name = nameof(GetUserDetailsById))]
-    public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserDetailsById(
+    [HttpGet("{id:int}", Name = nameof(GetUserRegistrationById))]
+    public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserRegistrationById(
         int id,
         CancellationToken cancellationToken
     )
     {
-        var result = await userAdministrationService.GetUserDetailsById(id, cancellationToken);
+        var result = await userAdministrationService.GetUserRegistrationById(id, cancellationToken);
 
         return result.Match<ActionResult<RegisterUserConfirmationDto>>(
             user => Ok(user),

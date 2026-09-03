@@ -278,6 +278,28 @@ export type ProblemDetails = {
 };
 
 /**
+ * Represents the information required to register a new user.
+ */
+export type RegisterUserCommandDto = {
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
+    /**
+     * Gets the name of the organisation the user is requesting access to.
+     */
+    organisationId: number;
+};
+
+/**
  * Represents the details of a user who has been registered.
  */
 export type RegisterUserConfirmationDto = {
@@ -301,28 +323,6 @@ export type RegisterUserConfirmationDto = {
      * Gets the user phone number.
      */
     phoneNumber: string;
-};
-
-/**
- * Represents the information required to register a new user.
- */
-export type RegisterUserDto = {
-    /**
-     * Gets the user's full name.
-     */
-    fullName: string;
-    /**
-     * Gets the user's work email address.
-     */
-    workEmail: string;
-    /**
-     * Gets the user phone number.
-     */
-    phoneNumber: string;
-    /**
-     * Gets the name of the organisation the user is requesting access to.
-     */
-    organisationId: number;
 };
 
 /**
@@ -1197,7 +1197,7 @@ export type PostUsersRegisterData = {
     /**
      * A token used to cancel the operation.
      */
-    body: RegisterUserDto;
+    body: RegisterUserCommandDto;
     path?: never;
     query?: never;
     url: '/users/register';
@@ -1214,7 +1214,7 @@ export type PostUsersRegisterResponses = {
 
 export type PostUsersRegisterResponse = PostUsersRegisterResponses[keyof PostUsersRegisterResponses];
 
-export type GetUserDetailsByIdData = {
+export type GetUserRegistrationByIdData = {
     body?: never;
     path: {
         /**
@@ -1226,14 +1226,14 @@ export type GetUserDetailsByIdData = {
     url: '/users/{id}';
 };
 
-export type GetUserDetailsByIdResponses = {
+export type GetUserRegistrationByIdResponses = {
     /**
      * The user's details were successfully retrieved.
      */
     200: RegisterUserConfirmationDto;
 };
 
-export type GetUserDetailsByIdResponse = GetUserDetailsByIdResponses[keyof GetUserDetailsByIdResponses];
+export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];
 
 export type PostUsersOnboardData = {
     /**

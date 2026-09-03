@@ -552,7 +552,7 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_registration_request",
+                name: "user_registration_requests",
                 schema: "ukps",
                 columns: table => new
                 {
@@ -567,16 +567,16 @@ namespace UKPS.Api.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user_registration_request", x => x.id);
+                    table.PrimaryKey("pk_user_registration_requests", x => x.id);
                     table.ForeignKey(
-                        name: "fk_user_registration_request_app_user_rejected_by",
+                        name: "fk_user_registration_requests_app_user_rejected_by",
                         column: x => x.rejected_by,
                         principalSchema: "ukps",
                         principalTable: "app_user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "fk_user_registration_request_organisations_organisation_id",
+                        name: "fk_user_registration_requests_organisations_organisation_id",
                         column: x => x.organisation_id,
                         principalSchema: "ukps",
                         principalTable: "organisations",
@@ -2167,15 +2167,15 @@ namespace UKPS.Api.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ix_user_registration_request_organisation_id",
+                name: "ix_user_registration_requests_organisation_id",
                 schema: "ukps",
-                table: "user_registration_request",
+                table: "user_registration_requests",
                 column: "organisation_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_user_registration_request_rejected_by",
+                name: "ix_user_registration_requests_rejected_by",
                 schema: "ukps",
-                table: "user_registration_request",
+                table: "user_registration_requests",
                 column: "rejected_by");
 
             migrationBuilder.CreateIndex(
@@ -2741,7 +2741,7 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "user_registration_request",
+                name: "user_registration_requests",
                 schema: "ukps");
 
             migrationBuilder.DropTable(

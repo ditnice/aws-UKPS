@@ -5,7 +5,7 @@ using UKPS.Api.Application.Organisations.Dtos;
 namespace UKPS.Api.WebApi.Controllers;
 
 /// <summary>
-/// Provides endpoints for retrieving and managing organisations and their memberships.
+/// Provides endpoints for retrieving and managing organisations and their memberships that is not protect by authentication.
 /// </summary>
 /// <param name="organisationService">
 /// Service used to retrieve and update organisation data and manage organisation memberships.

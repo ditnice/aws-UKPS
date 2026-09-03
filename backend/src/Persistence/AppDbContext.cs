@@ -21,7 +21,8 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<UserOnboardingRecord> UserOnboardingRecords => Set<UserOnboardingRecord>();
     public DbSet<UserOrgMembership> UserOrgMemberships => Set<UserOrgMembership>();
     public DbSet<UserAudit> UserAudits => Set<UserAudit>();
-    public DbSet<UserRegistrationRequest> UserRegistrationRequest => Set<UserRegistrationRequest>();
+    public DbSet<UserRegistrationRequest> UserRegistrationRequests =>
+        Set<UserRegistrationRequest>();
 
     // ── Record Core Workflow ─────────────────────────────────────────────────
     public DbSet<Record> Records => Set<Record>();

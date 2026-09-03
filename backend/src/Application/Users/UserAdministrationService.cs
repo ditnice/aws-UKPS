@@ -164,37 +164,35 @@ internal sealed partial class UserAdministrationService(
     }
 
     public async Task<Result<RegisterUserConfirmationDto, RegisterUserError>> RegisterUser(
-        RegisterUserDto registerUserDto,
+        RegisterUserCommandDto registerUserCommandDto,
         CancellationToken cancellationToken
     )
     {
         var userRegister = new UserRegistrationRequest()
         {
-            OrganisationId = registerUserDto.OrganisationId,
-            FullName = registerUserDto.FullName,
-            PhoneNumber = registerUserDto.PhoneNumber,
-            WorkEmail = registerUserDto.WorkEmail,
+            OrganisationId = registerUserCommandDto.OrganisationId,
+            FullName = registerUserCommandDto.FullName,
+            PhoneNumber = registerUserCommandDto.PhoneNumber,
+            WorkEmail = registerUserCommandDto.WorkEmail,
         };
-        dbContext.UserRegistrationRequest.Add(userRegister);
+        dbContext.UserRegistrationRequests.Add(userRegister);
         await dbContext.SaveChangesAsync(cancellationToken);
         var request = await dbContext
-            .UserRegistrationRequest.AsNoTracking()
+            .UserRegistrationRequests.AsNoTracking()
             .Include(x => x.Organisation)
-            .Where(x => x.Id == userRegister.Id)
-            .SingleAsync(cancellationToken);
+            .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
 
         var dto = MapToDto(request);
 
         return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
     }
 
-    public async Task<Result<RegisterUserConfirmationDto, GetUserDetailsError>> GetUserDetailsById(
-        int Id,
-        CancellationToken cancellationToken
-    )
+    public async Task<
+        Result<RegisterUserConfirmationDto, GetUserDetailsError>
+    > GetUserRegistrationById(int Id, CancellationToken cancellationToken)
     {
         var request = await dbContext
-            .UserRegistrationRequest.AsNoTracking()
+            .UserRegistrationRequests.AsNoTracking()
             .Include(x => x.Organisation)
             .Where(x => x.Id == Id)
             .SingleOrDefaultAsync(cancellationToken);
