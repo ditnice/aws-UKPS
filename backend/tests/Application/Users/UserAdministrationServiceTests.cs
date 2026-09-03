@@ -228,13 +228,8 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     {
         var context = _harness.GetClearedContext();
 
-        var organisation = new Organisation
-        {
-            OrganisationName = "Test",
-            HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
-            HeadOfficeTelephone = "07123456789",
-            HeadOfficeEmail = "test@example.com",
-        };
+        OrganisationFaker organisationFaker = new();
+        var organisation = organisationFaker.Generate();
 
         context.Organisations.Add(organisation);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -265,14 +260,8 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         OrganisationFaker organisationFaker = new();
         var organisation = organisationFaker.Generate();
         Context.Organisations.Add(organisation);
-        UserRegistrationRequest request = new()
-        {
-            Organisation = organisation,
-            OrganisationId = organisation.Id,
-            FullName = "Test",
-            WorkEmail = "test@example.com",
-            PhoneNumber = "07654281622",
-        };
+
+        UserRegistrationRequest request = new UserRegistrationRequestFaker().Generate();
         Context.UserRegistrationRequests.Add(request);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -353,7 +342,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         {
             RuleFor(x => x.FullName, f => f.Name.FullName());
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
-            RuleFor(x => x.PhoneNumber, f => f.Phone.PhoneNumber());
+            RuleFor(x => x.PhoneNumber, _ => new TelephoneNumberFaker().Generate());
         }
     }
 }
