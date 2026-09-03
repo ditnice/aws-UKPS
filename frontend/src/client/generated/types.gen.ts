@@ -87,6 +87,11 @@ export type CurrentUserInformationDto = {
 };
 
 /**
+ * Specifies the fields by which users can be sorted when querying users.
+ */
+export type GetUsersQuerySortValue = 'LastActive' | 'Email' | 'Role' | 'Status';
+
+/**
  * Represents the credentials provided by a user when attempting to authenticate.
  */
 export type LoginRequest = {
@@ -298,6 +303,11 @@ export type SetupUserCommand = {
      */
     newPassword: string;
 };
+
+/**
+ * Specifies the direction in which query results are sorted.
+ */
+export type SortDirection = 'Ascending' | 'Descending';
 
 export type UkpsChallengeType = 'MultiFactorAuthenticationRequired' | 'MultiFactorAuthenticationSetupRequired';
 
@@ -1043,6 +1053,16 @@ export type GetUsersData = {
          * Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.
          */
         LastActiveTo?: string;
+        /**
+         * Gets or initialises the field by which users are sorted.
+         * Defaults to GetUsersQuerySortValue.LastActive.
+         */
+        SortBy?: GetUsersQuerySortValue;
+        /**
+         * Gets or initialises the direction in which users are sorted.
+         * Defaults to SortDirection.Descending.
+         */
+        SortDirection?: SortDirection;
     };
     url: '/users';
 };

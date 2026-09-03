@@ -16,6 +16,7 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using SortDirection = UKPS.Api.Application.Users.Dtos.SortDirection;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -157,7 +158,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         {
             _mockUserService.ClearReceivedCalls();
             var query = faker.Generate();
-            var url = AppendQueryParams(UsersUrl, faker.Generate());
+            var url = AppendQueryParams(UsersUrl, query);
             await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
             await _mockUserService
@@ -331,6 +332,8 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
         queryParams.Add($"page={query.Page}");
         queryParams.Add($"pageSize={query.PageSize}");
+        queryParams.Add($"sortBy={Uri.EscapeDataString(query.SortBy.ToString())}");
+        queryParams.Add($"sortDirection={Uri.EscapeDataString(query.SortDirection.ToString())}");
 
         foreach (var status in query.Status)
             queryParams.Add($"status={Uri.EscapeDataString(status.ToString())}");
@@ -448,6 +451,9 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     );
                 }
             );
+
+            RuleFor(x => x.SortBy, f => f.PickRandom<GetUsersQuerySortValue>());
+            RuleFor(x => x.SortDirection, f => f.PickRandom<SortDirection>());
         }
     }
 
