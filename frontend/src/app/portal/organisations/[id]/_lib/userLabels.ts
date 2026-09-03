@@ -1,6 +1,14 @@
 import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import type { TagColour } from '@/components/Tag/Tag'
 
+export const organisationUserTableHeaders = {
+  email: 'Email Address',
+  role: 'Role',
+  status: 'Status',
+  lastActive: 'Last Active',
+  actions: 'Actions',
+} as const
+
 export const roleLabels: Record<UserRole, string> = {
   Champion: 'Champion user',
   Standard: 'Standard user',
