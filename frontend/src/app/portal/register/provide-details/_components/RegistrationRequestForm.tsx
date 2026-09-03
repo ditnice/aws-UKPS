@@ -20,7 +20,7 @@ import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import styles from './RegistrationRequestForm.module.scss'
 
 const RegistrationRequest = z.object({
-  organisation: z.string().nonempty(errorMessages.organisationRequired),
+  organisationId: z.number().min(1, errorMessages.organisationRequired),
   fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
   workEmail: z
     .string()
@@ -50,7 +50,7 @@ export function RegistrationRequestForm() {
   const router = useRouter()
   const form = useForm({
     defaultValues: {
-      organisation: '',
+      organisationId: 0,
       fullName: '',
       workEmail: '',
       phoneNumber: '',
@@ -70,7 +70,7 @@ export function RegistrationRequestForm() {
           fullName: value.fullName,
           workEmail: value.workEmail,
           phoneNumber: value.phoneNumber,
-          organisationId: value.organisation,
+          organisationId: value.organisationId,
         },
       })
       if (response.data) {
@@ -89,7 +89,7 @@ export function RegistrationRequestForm() {
           void form.handleSubmit()
         }}
       >
-        <form.Field name="organisation">
+        <form.Field name="organisationId">
           {(field) => {
             const errorMessage = getFieldErrorMessage(field.state.meta.errors)
             return (
@@ -101,7 +101,7 @@ export function RegistrationRequestForm() {
                   width="one-third"
                   error={Boolean(errorMessage)}
                   errorMessage={errorMessage}
-                  onChange={(event) => field.handleChange(event.target.value)}
+                  onChange={(event) => field.handleChange(Number(event.target.value))}
                   onBlur={field.handleBlur}
                 >
                   <SelectOption value="choose">Choose organisation</SelectOption>
