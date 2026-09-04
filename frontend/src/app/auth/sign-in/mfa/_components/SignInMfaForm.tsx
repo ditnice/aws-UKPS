@@ -68,7 +68,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         formApi.setErrorMap({
           onSubmit: {
             fields: {
-              securityCode: 'Invalid security code.',
+              securityCode: errorMessages.incorrectMfaCode,
             },
           },
         })
@@ -94,7 +94,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
               autoComplete="one-time-code"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              hint={`Enter the 6-digit authentication code shown in the app for ${username}.`}
+              hint={`Enter the 6-digit authentication code shown in the app.`}
               inputMode="numeric"
               label="Security code"
               name={field.name}

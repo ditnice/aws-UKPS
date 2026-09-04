@@ -199,7 +199,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
 
                 if (!IsValidMfaToken(request.UserCode))
                 {
-                    throw new CodeMismatchException("Invalid MFA code.");
+                    throw new EnableSoftwareTokenMFAException("Code mismatch");
                 }
 
                 var newSession = Guid.NewGuid().ToString();
