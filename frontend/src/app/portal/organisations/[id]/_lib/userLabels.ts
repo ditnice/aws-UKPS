@@ -1,13 +1,18 @@
-import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
+import type { GetUsersQuerySortValue, UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import type { TagColour } from '@/components/Tag/Tag'
 
-export const organisationUserTableHeaders = {
-  email: 'Email Address',
-  role: 'Role',
-  status: 'Status',
-  lastActive: 'Last Active',
-  actions: 'Actions',
-} as const
+export type OrganisationUserTableHeader = {
+  key: string
+  label: string
+  sortColumn: GetUsersQuerySortValue | null
+}
+export const organisationUserTableHeaders: OrganisationUserTableHeader[] = [
+  { key: 'email', label: 'Email Address', sortColumn: 'Email' },
+  { key: 'role', label: 'Role', sortColumn: 'Role' },
+  { key: 'status', label: 'Status', sortColumn: 'Status' },
+  { key: 'lastActive', label: 'Last Active', sortColumn: 'LastActive' },
+  { key: 'actions', label: 'Actions', sortColumn: null },
+] as const
 
 export const roleLabels: Record<UserRole, string> = {
   Champion: 'Champion user',

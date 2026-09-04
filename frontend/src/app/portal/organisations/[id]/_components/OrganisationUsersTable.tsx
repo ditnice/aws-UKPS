@@ -162,15 +162,7 @@ export async function OrganisationUsersTable({
     }
 
   const renderHeaders = () => {
-    const headers: [string, GetUsersQuerySortValue | null][] = [
-      [organisationUserTableHeaders.email, 'Email'],
-      [organisationUserTableHeaders.role, 'Role'],
-      [organisationUserTableHeaders.status, 'Status'],
-      [organisationUserTableHeaders.lastActive, 'LastActive'],
-      [organisationUserTableHeaders.actions, null],
-    ]
-
-    return headers.map(([label, sortColumn]) =>
+    return organisationUserTableHeaders.map(({ label, sortColumn }) =>
       sortColumn ? (
         <TableSortHeaderLink
           key={label}
