@@ -12,6 +12,10 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using GetUserInformationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserInformationDto,
+    UKPS.Api.Application.Users.Errors.GetUsersError
+>;
 using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
@@ -32,7 +36,7 @@ internal partial class UserService(
     ILogger<UserService> logger
 ) : IUserService
 {
-    public async Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
+    public async Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
         User? possibleUser = await dbContext
@@ -55,7 +59,7 @@ internal partial class UserService(
                 "Current user did not have the membership as expected."
             );
 
-        return new CurrentUserInformationDto
+        return new UserInformationDto
         {
             UserId = user.Id,
             FullName = user.FullName,
@@ -75,6 +79,7 @@ internal partial class UserService(
     {
         GetUsersError? organisationError = await ValidateOrganisationAsync(
             getUsersQuery.OrganisationId,
+            Operation.Read,
             cancellationToken
         );
         if (organisationError is not null)
@@ -122,6 +127,44 @@ internal partial class UserService(
         );
     }
 
+    public async Task<GetUserInformationResult> GetUserDetailsWithinOrganisation(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        GetUsersError? organisationError = await ValidateOrganisationAsync(
+            organisationId,
+            Operation.ElevatedRead,
+            cancellationToken
+        );
+        if (organisationError is not null)
+        {
+            return GetUserInformationResult.Err(organisationError);
+        }
+
+        UserInformationDto? user = await dbContext
+            .UserOrgMemberships.AsNoTracking()
+            .Where(m => m.UserId == userId && m.OrganisationId == organisationId)
+            .Where(m => m.Status != UserOrgStatus.Rejected)
+            .Select(m => new UserInformationDto
+            {
+                UserId = m.User!.Id,
+                FullName = m.User.FullName,
+                WorkTelephone = m.User.WorkTelephone ?? string.Empty,
+                WorkEmail = m.User.WorkEmail,
+                OrganisationMembershipId = m.Id,
+                OrganisationId = m.OrganisationId,
+                OrganisationName = m.Organisation!.OrganisationName,
+                UserRole = m.UserRole,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return user is null
+            ? GetUserInformationResult.Err(new GetUsersError.UserNotFound(userId, organisationId))
+            : GetUserInformationResult.Ok(user);
+    }
+
     private static IQueryable<UserOrgMembership> Sort(
         IQueryable<UserOrgMembership> value,
         GetUsersQuerySortValue sortBy,
@@ -155,6 +198,7 @@ internal partial class UserService(
 
     private async Task<GetUsersError?> ValidateOrganisationAsync(
         int? organisationId,
+        Operation operation,
         CancellationToken cancellationToken
     )
     {
@@ -164,7 +208,7 @@ internal partial class UserService(
         }
 
         bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
-            Operation.Read,
+            operation,
             organisationId.Value
         );
         if (!actionPermitted)

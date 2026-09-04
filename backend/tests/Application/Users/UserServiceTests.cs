@@ -12,6 +12,10 @@ using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using GetUserInformationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserInformationDto,
+    UKPS.Api.Application.Users.Errors.GetUsersError
+>;
 using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
@@ -102,11 +106,11 @@ public class UserServiceTests : DatabaseTestBase
                     CognitoUsername = currentUser.CognitoUsername,
                 }
             );
-            CurrentUserInformationDto result = await Service.GetCurrentUser(
+            UserInformationDto result = await Service.GetCurrentUser(
                 TestContext.Current.CancellationToken
             );
             result.ShouldBe(
-                new CurrentUserInformationDto()
+                new UserInformationDto()
                 {
                     UserId = currentUser.Id,
                     FullName = currentUser.FullName,
@@ -830,6 +834,232 @@ public class UserServiceTests : DatabaseTestBase
             },
             (e) => throw new InvalidOperationException("Failed to create an initial user")
         );
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_MapsUserAndMembershipFields_WhenTheUserIsAMember()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+
+        GetUserInformationResult result = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            membership.OrganisationId,
+            TestContext.Current.CancellationToken
+        );
+
+        UserInformationDto dto = result.ShouldBeSuccess();
+        dto.ShouldBe(
+            new UserInformationDto()
+            {
+                UserId = user.Id,
+                FullName = user.FullName,
+                WorkEmail = user.WorkEmail,
+                WorkTelephone = user.WorkTelephone!,
+                OrganisationMembershipId = membership.Id,
+                OrganisationId = membership.OrganisationId,
+                OrganisationName = membership.Organisation!.OrganisationName,
+                UserRole = membership.UserRole,
+            }
+        );
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsEmptyTelephone_WhenTheUserHasNone()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership(configureUser: x =>
+            x.WorkTelephone = null
+        );
+
+        GetUserInformationResult result = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            membership.OrganisationId,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().WorkTelephone.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsTheRoleForTheRequestedOrganisation_WhenTheUserBelongsToSeveral()
+    {
+        User user = _userFaker.Generate();
+        UserOrgMembership standardMembership = _userOrgMembershipFaker
+            .Generate()
+            .Update(x =>
+            {
+                x.User = user;
+                x.Organisation = _organisationFaker.Generate();
+                x.UserRole = UserRole.Standard;
+            });
+        UserOrgMembership championMembership = _userOrgMembershipFaker
+            .Generate()
+            .Update(x =>
+            {
+                x.User = user;
+                x.Organisation = _organisationFaker.Generate();
+                x.UserRole = UserRole.Champion;
+            });
+        await AddEntities(
+            new[] { standardMembership, championMembership },
+            TestContext.Current.CancellationToken
+        );
+        GetUserInformationResult standardResult = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            standardMembership.OrganisationId,
+            TestContext.Current.CancellationToken
+        );
+        GetUserInformationResult championResult = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            championMembership.OrganisationId,
+            TestContext.Current.CancellationToken
+        );
+
+        standardResult.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Standard);
+        championResult.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Champion);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
+    {
+        GetUserInformationResult result = await Service.GetUserDetailsWithinOrganisation(
+            userId: 1,
+            organisationId: 99,
+            TestContext.Current.CancellationToken
+        );
+
+        GetUsersError.OrganisationNotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetUsersError.OrganisationNotFound>();
+        notFound.OrganisationId.ShouldBe(99);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsUserNotFoundError_WhenTheUserIsNotAMemberOfTheOrganisation()
+    {
+        (User user, _) = await AddUserWithMembership();
+        Organisation otherOrganisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        GetUserInformationResult result = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            otherOrganisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        GetUsersError.UserNotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetUsersError.UserNotFound>();
+        notFound.UserId.ShouldBe(user.Id);
+        notFound.OrganisationId.ShouldBe(otherOrganisation.Id);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsUserNotFoundError_WhenTheMembershipIsRejected()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership(
+            status: UserOrgStatus.Rejected
+        );
+
+        GetUserInformationResult result = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            membership.OrganisationId,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<GetUsersError.UserNotFound>();
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsNotAllowedError_WhenTheOrganisationIsNotTheCallersOwn(
+        UserRole callerRole,
+        bool isAllowedToAccess
+    )
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        IUserService service = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    UserRole = callerRole,
+                    OrganisationId = membership.OrganisationId + 1,
+                }
+            )
+            .Service;
+
+        GetUserInformationResult result = await service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            membership.OrganisationId,
+            TestContext.Current.CancellationToken
+        );
+
+        if (isAllowedToAccess)
+        {
+            result.ShouldBeSuccess();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<GetUsersError.NotAllowed>();
+        }
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task GetUserDetailsWithinOrganisation_OnlyAllowsChampionsAndSupers_WhenTheOrganisationIsTheCallersOwn(
+        UserRole callerRole,
+        bool isAllowedToAccess
+    )
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        IUserService service = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    UserRole = callerRole,
+                    OrganisationId = membership.OrganisationId,
+                }
+            )
+            .Service;
+
+        GetUserInformationResult result = await service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            membership.OrganisationId,
+            TestContext.Current.CancellationToken
+        );
+
+        if (isAllowedToAccess)
+        {
+            result.ShouldBeSuccess();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<GetUsersError.NotAllowed>();
+        }
+    }
+
+    private async Task<(User User, UserOrgMembership Membership)> AddUserWithMembership(
+        Action<User>? configureUser = null,
+        UserOrgStatus status = UserOrgStatus.Active
+    )
+    {
+        User user = _userFaker.Generate().Update(x => configureUser?.Invoke(x));
+        UserOrgMembership membership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.Status, _ => status)
+            .Generate()
+            .Update(x =>
+            {
+                x.User = user;
+                x.Organisation = _organisationFaker.Generate();
+            });
+
+        await AddEntity(membership, TestContext.Current.CancellationToken);
+        return (user, membership);
     }
 
     private static GetUsersQueryDto CreateGetUsersQuery(

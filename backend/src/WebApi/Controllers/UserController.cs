@@ -28,9 +28,9 @@ public class UserController(IUserService userService) : ControllerBase
     /// <returns>
     /// The current user's information.
     /// </returns>
-    [ProducesResponseType<CurrentUserInformationDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<UserInformationDto>(StatusCodes.Status200OK)]
     [HttpGet("me")]
-    public async Task<ActionResult<CurrentUserInformationDto>> GetCurrentUser(
+    public async Task<ActionResult<UserInformationDto>> GetCurrentUser(
         CancellationToken cancellationToken
     )
     {
@@ -74,6 +74,62 @@ public class UserController(IUserService userService) : ControllerBase
                         statusCode: StatusCodes.Status403Forbidden,
                         title: "Forbidden",
                         detail: "You are not authorised to view users."
+                    ),
+                    _ => throw new UnreachableException("Unhandled GetUsersError variant."),
+                }
+        );
+    }
+
+    /// <summary>
+    /// Retrieves a user's details along with their role within the specified organisation.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to retrieve.</param>
+    /// <param name="organisationId">
+    /// The unique identifier of the organisation to read the user's membership from. A user may
+    /// belong to several organisations, so their role is resolved against this organisation.
+    /// </param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="UserInformationDto"/> describing the user and their organisation membership if
+    /// successful, or an appropriate error response if the request fails.
+    /// </returns>
+    /// <response code="200">Returns the user's details and their role within the organisation.</response>
+    /// <response code="400">Returned if the specified organisation does not exist.</response>
+    /// <response code="403">Returned if the caller is not authorised to view the organisation's users.</response>
+    /// <response code="404">Returned if the user is not a member of the specified organisation.</response>
+    [HttpGet(
+        "{userId:int}/organisations/{organisationId:int}",
+        Name = nameof(GetUserDetailsWithinOrganisation)
+    )]
+    [ProducesResponseType<UserInformationDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserInformationDto>> GetUserDetailsWithinOrganisation(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await userService.GetUserDetailsWithinOrganisation(
+            userId,
+            organisationId,
+            cancellationToken
+        );
+
+        return result.Match<ActionResult<UserInformationDto>>(
+            user => Ok(user),
+            error =>
+                error switch
+                {
+                    GetUsersError.OrganisationNotFound => BadRequest("Organisation not found."),
+                    GetUsersError.UserNotFound => NotFound(
+                        "The user is not a member of this organisation."
+                    ),
+                    GetUsersError.NotAllowed => Problem(
+                        statusCode: StatusCodes.Status403Forbidden,
+                        title: "Forbidden",
+                        detail: "You are not authorised to view this user."
                     ),
                     _ => throw new UnreachableException("Unhandled GetUsersError variant."),
                 }

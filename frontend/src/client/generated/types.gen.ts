@@ -48,45 +48,6 @@ export type CreateOrganisationDto = {
 };
 
 /**
- * Represents information about the currently authenticated user and their
- * membership within an organisation.
- */
-export type CurrentUserInformationDto = {
-    /**
-     * Gets the unique identifier of the user.
-     */
-    userId: number;
-    /**
-     * Gets the full name of the user.
-     */
-    fullName: string;
-    /**
-     * Gets the user's work telephone number.
-     */
-    workTelephone: string;
-    /**
-     * Gets the user's email address.
-     */
-    workEmail: string;
-    /**
-     * Gets the unique identifier of the user's organisation membership.
-     */
-    organisationMembershipId: number;
-    /**
-     * Gets the unique identifier of the user's organisation.
-     */
-    organisationId: number;
-    /**
-     * Gets the name of the user's organisation.
-     */
-    organisationName: string;
-    /**
-     * Gets the role assigned to the user within the organisation.
-     */
-    userRole: UserRole;
-};
-
-/**
  * Specifies the fields by which users can be sorted when querying users.
  */
 export type GetUsersQuerySortValue = 'LastActive' | 'Email' | 'Role' | 'Status';
@@ -118,6 +79,16 @@ export type MultiFactorAuthenticationSetupDto = {
      * multi-factor authentication setup flow.
      */
     authenticationSession: string;
+};
+
+/**
+ * Represents the outcome of onboarding a new user.
+ */
+export type OnboardedUserDto = {
+    /**
+     * Gets the unique identifier of the newly onboarded user.
+     */
+    userId: number;
 };
 
 /**
@@ -453,6 +424,44 @@ export type UserDetailsDto = {
      * Gets the user's work email address.
      */
     workEmail: string;
+};
+
+/**
+ * Represents information about a user and their membership within an organisation.
+ */
+export type UserInformationDto = {
+    /**
+     * Gets the unique identifier of the user.
+     */
+    userId: number;
+    /**
+     * Gets the full name of the user.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
+    /**
+     * Gets the user's email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the unique identifier of the user's organisation membership.
+     */
+    organisationMembershipId: number;
+    /**
+     * Gets the unique identifier of the user's organisation.
+     */
+    organisationId: number;
+    /**
+     * Gets the name of the user's organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets the role assigned to the user within the organisation.
+     */
+    userRole: UserRole;
 };
 
 /**
@@ -927,7 +936,7 @@ export type DeactivateMembershipErrors = {
      */
     400: ProblemDetails;
     /**
-     * Forbidden
+     * The caller is not authorised to deactivate the membership, or the membership is their own.
      */
     403: ProblemDetails;
     /**
@@ -1010,7 +1019,7 @@ export type UpdateUserRoleData = {
 
 export type UpdateUserRoleErrors = {
     /**
-     * Forbidden
+     * The caller is not authorised to update the membership, or the membership is their own.
      */
     403: ProblemDetails;
     /**
@@ -1087,7 +1096,7 @@ export type GetUsersMeResponses = {
     /**
      * Returns the information for the currently authenticated user.
      */
-    200: CurrentUserInformationDto;
+    200: UserInformationDto;
 };
 
 export type GetUsersMeResponse = GetUsersMeResponses[keyof GetUsersMeResponses];
@@ -1167,6 +1176,49 @@ export type GetUsersResponses = {
 };
 
 export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
+
+export type GetUserDetailsWithinOrganisationData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to retrieve.
+         */
+        userId: number;
+        /**
+         * The unique identifier of the organisation to read the user's membership from. A user may
+         * belong to several organisations, so their role is resolved against this organisation.
+         */
+        organisationId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/organisations/{organisationId}';
+};
+
+export type GetUserDetailsWithinOrganisationErrors = {
+    /**
+     * Returned if the specified organisation does not exist.
+     */
+    400: ProblemDetails;
+    /**
+     * Returned if the caller is not authorised to view the organisation's users.
+     */
+    403: ProblemDetails;
+    /**
+     * Returned if the user is not a member of the specified organisation.
+     */
+    404: ProblemDetails;
+};
+
+export type GetUserDetailsWithinOrganisationError = GetUserDetailsWithinOrganisationErrors[keyof GetUserDetailsWithinOrganisationErrors];
+
+export type GetUserDetailsWithinOrganisationResponses = {
+    /**
+     * Returns the user's details and their role within the organisation.
+     */
+    200: UserInformationDto;
+};
+
+export type GetUserDetailsWithinOrganisationResponse = GetUserDetailsWithinOrganisationResponses[keyof GetUserDetailsWithinOrganisationResponses];
 
 export type PatchUsersByUserIdData = {
     /**
@@ -1281,3 +1333,13 @@ export type PostUsersOnboardErrors = {
 };
 
 export type PostUsersOnboardError = PostUsersOnboardErrors[keyof PostUsersOnboardErrors];
+
+export type PostUsersOnboardResponses = {
+    /**
+     * The user was successfully onboarded. The response contains the
+     * identifier of the newly created user.
+     */
+    201: OnboardedUserDto;
+};
+
+export type PostUsersOnboardResponse = PostUsersOnboardResponses[keyof PostUsersOnboardResponses];

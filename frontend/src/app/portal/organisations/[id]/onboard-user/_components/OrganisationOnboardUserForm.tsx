@@ -12,6 +12,8 @@ import { Input } from '@/components/Input/Input'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
+import { buildUserActionHref } from '../../_lib/userActionAlert'
+
 import styles from './OrganisationOnboardUserForm.module.scss'
 
 import type { ChangeEvent } from 'react'
@@ -42,7 +44,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
   const [formError, setFormError] = useState<string | null>(null)
   const [emailApiError, setEmailApiError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const cancelHref = `/portal/organisations/${organisationId}`
+  const rootHref = `/portal/organisations/${organisationId}`
 
   const form = useForm({
     defaultValues: {
@@ -90,8 +92,13 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
         }
       }
 
-      // TODO: Look to use a short-lived flash cookie or server-side action state so the email is not visible in the URL
-      router.push(`${cancelHref}?invited=${encodeURIComponent(parsedValue.newUserEmail)}`)
+      const newUserId = response.data?.userId
+
+      router.push(
+        newUserId === undefined
+          ? rootHref
+          : buildUserActionHref(organisationId, 'invited', newUserId),
+      )
     },
   })
 
@@ -190,7 +197,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
         <Button disabled={isSubmitting} type="submit" variant="cta">
           Send invite
         </Button>
-        <Button elementType={Link} href={cancelHref} variant="secondary">
+        <Button elementType={Link} href={rootHref} variant="secondary">
           Cancel
         </Button>
       </ButtonGroup>

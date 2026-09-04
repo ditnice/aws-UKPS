@@ -133,6 +133,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// <response code="200">
     /// The membership was successfully deactivated.
     /// </response>
+    /// <response code="403">
+    /// The caller is not authorised to deactivate the membership, or the membership is their own.
+    /// </response>
     /// <response code="404">
     /// The specified organisation membership could not be found.
     /// </response>
@@ -177,6 +180,12 @@ public class OrganisationController(IOrganisationService organisationService) : 
                             title: "Invalid membership state",
                             statusCode: StatusCodes.Status400BadRequest,
                             detail: $"The organisation membership is not in a state that allows this action. Current state [{x.TransitionResult.CurrentState}]"
+                        ),
+                    cannotDeactivateSelf: _ =>
+                        Problem(
+                            title: "Not authorised",
+                            statusCode: StatusCodes.Status403Forbidden,
+                            detail: "You cannot deactivate yourself."
                         )
                 )
         );
@@ -270,6 +279,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// <response code="200">
     /// The membership role was successfully updated.
     /// </response>
+    /// <response code="403">
+    /// The caller is not authorised to update the membership, or the membership is their own.
+    /// </response>
     /// <response code="404">
     /// The specified organisation membership could not be found.
     /// </response>
@@ -303,6 +315,14 @@ public class OrganisationController(IOrganisationService organisationService) : 
                         $"Could not find a membership with organisation ID = {notFound.OrganisationId} and membership ID = {notFound.MembershipId}."
                     ),
                     OrganisationMembershipUpdateUserRoleError.NotAllowed => Forbid(
+                        "The user is not authorised to perform this action."
+                    ),
+                    OrganisationMembershipUpdateUserRoleError.CannotChangeOwnRole => Problem(
+                        title: "Not authorised",
+                        statusCode: StatusCodes.Status403Forbidden,
+                        detail: "You cannot change your own role."
+                    ),
+                    OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole => Forbid(
                         "The user is not authorised to perform this action."
                     ),
                     _ => throw new UnreachableException(),
