@@ -151,6 +151,34 @@ public class LoginServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.Unauthorised>();
     }
 
+    [Fact]
+    public async Task SignOut_ShouldRevokeTheRefreshToken()
+    {
+        AuthenticationCredentialsDto credentials = await CompleteFullLogin();
+
+        await _harness.Service.SignOut(
+            credentials.RefreshToken,
+            TestContext.Current.CancellationToken
+        );
+
+        var result = await _harness.Service.RefreshAuthenticationToken(
+            new RefreshAuthenticationTokenCommand() { RefreshToken = credentials.RefreshToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task SignOut_WhenRefreshTokenIsInvalid_ShouldCompleteSuccessfully()
+    {
+        Exception? exception = await Record.ExceptionAsync(() =>
+            _harness.Service.SignOut("invalid-token", TestContext.Current.CancellationToken)
+        );
+
+        exception.ShouldBeNull();
+    }
+
     private async Task<InitiateAuthenticationError.Challenge> AttemptLoginAndGetChallenge()
     {
         LoginResult loginResult = await _harness.Service.Login(

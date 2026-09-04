@@ -61,6 +61,17 @@ exports[`Header > renders collapsed by default 1`] = `
           >
             Menu
           </button>
+          <div
+            class="_account_2e1c09"
+          >
+            <a
+              class="btn btn--inverse"
+              data-component="button--inverse--button"
+              href="/auth/sign-in"
+            >
+              Sign in
+            </a>
+          </div>
         </div>
       </div>
       <div
@@ -165,6 +176,17 @@ exports[`Header > renders expanded after the mobile menu button is clicked 1`] =
           >
             Close
           </button>
+          <div
+            class="_account_2e1c09"
+          >
+            <a
+              class="btn btn--inverse"
+              data-component="button--inverse--button"
+              href="/auth/sign-in"
+            >
+              Sign in
+            </a>
+          </div>
         </div>
       </div>
       <div
