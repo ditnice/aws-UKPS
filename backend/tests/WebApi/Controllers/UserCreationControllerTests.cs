@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -174,4 +175,102 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
         );
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task RegisterUser_IsValid_ReturnsDto()
+    {
+        RegisterUserCommandDto request = RegisterUserCommandDto();
+        RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
+
+        _mockService
+            .RegisterUser(request, Arg.Any<CancellationToken>())
+            .Returns(Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(expected));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri("/users/register"),
+            request,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task RegisterUser_FieldsMissing_ReturnsBadRequest()
+    {
+        RegisterUserCommandDto request = RegisterUserCommandDto();
+        _mockService
+            .RegisterUser(Arg.Any<RegisterUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
+                    new RegisterUserError.MissingFields()
+                )
+            );
+        var response = await _client.PostAsJsonAsync(
+            new Uri("/users/register"),
+            request,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_UserExists_ReturnsDto()
+    {
+        RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
+        _mockService
+            .GetUserRegistrationById(1, Arg.Any<CancellationToken>())
+            .Returns(Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(expected));
+
+        var response = await _client.GetAsync(
+            new Uri("/users/registration-requests/1"),
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_UserDoesNotExist_ReturnsNotFound()
+    {
+        _mockService
+            .GetUserRegistrationById(1, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                    new GetUserDetailsError.IdNotFound(1)
+                )
+            );
+        var response = await _client.GetAsync(
+            new Uri("/users/registration-requests/1"),
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    private static RegisterUserCommandDto RegisterUserCommandDto() =>
+        new()
+        {
+            FullName = "Test1",
+            PhoneNumber = "07845796823",
+            WorkEmail = "user@example.com",
+            OrganisationId = 1,
+        };
+
+    private static RegisterUserConfirmationDto RegisterUserConfirmationDto() =>
+        new()
+        {
+            Id = 1,
+            OrganisationName = "Test",
+            FullName = "Test2",
+            PhoneNumber = "07845796823",
+            WorkEmail = "user@example.com",
+        };
 }

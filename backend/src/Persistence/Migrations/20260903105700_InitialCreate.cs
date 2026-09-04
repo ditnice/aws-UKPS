@@ -552,6 +552,39 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "user_registration_requests",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    organisation_id = table.Column<int>(type: "integer", nullable: false),
+                    full_name = table.Column<string>(type: "text", nullable: false),
+                    work_email = table.Column<string>(type: "text", nullable: false),
+                    phone_number = table.Column<string>(type: "text", nullable: false),
+                    rejected_by = table.Column<int>(type: "integer", nullable: true),
+                    rejected_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_user_registration_requests", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_user_registration_requests_app_user_rejected_by",
+                        column: x => x.rejected_by,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_user_registration_requests_organisations_organisation_id",
+                        column: x => x.organisation_id,
+                        principalSchema: "ukps",
+                        principalTable: "organisations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "report_audits",
                 schema: "ukps",
                 columns: table => new
@@ -2134,6 +2167,18 @@ namespace UKPS.Api.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "ix_user_registration_requests_organisation_id",
+                schema: "ukps",
+                table: "user_registration_requests",
+                column: "organisation_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_registration_requests_rejected_by",
+                schema: "ukps",
+                table: "user_registration_requests",
+                column: "rejected_by");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_vaccines_adjuvant_technology_id",
                 schema: "ukps",
                 table: "vaccines_adjuvants",
@@ -2693,6 +2738,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "user_org_memberships",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "user_registration_requests",
                 schema: "ukps");
 
             migrationBuilder.DropTable(

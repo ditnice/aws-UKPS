@@ -14,9 +14,17 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using GetUserDetails = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
+    UKPS.Api.Application.Users.Errors.GetUserDetailsError
+>;
 using OnboardUserResult = UKPS.Api.Application.Common.Result<
     int,
     UKPS.Api.Application.Users.Errors.OnboardUserError
+>;
+using RegisterUserConfirmation = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
+    UKPS.Api.Application.Users.Errors.RegisterUserError
 >;
 
 namespace UKPS.Api.Tests.Application.Users;
@@ -39,6 +47,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
     private readonly Faker<MockUser> _mockUserFaker =
         new MockAmazonCognitoIdentityProvider.MockUserFaker();
+    private readonly RegisterUserCommandDtoFaker _registerUserCommandDtoFaker = new();
 
     public UserAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -214,6 +223,80 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<OnboardUserError.UsernameAlreadyExists>();
     }
 
+    [Fact]
+    public async Task RegisterUser_AllFieldsProvided_ReturnsDto()
+    {
+        var context = _harness.GetClearedContext();
+
+        OrganisationFaker organisationFaker = new();
+        var organisation = organisationFaker.Generate();
+
+        context.Organisations.Add(organisation);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        RegisterUserCommandDto registerUserCommandDto = _registerUserCommandDtoFaker
+            .RuleFor(x => x.OrganisationId, _ => 1)
+            .Generate();
+        RegisterUserConfirmation result = await _harness.Service.RegisterUser(
+            registerUserCommandDto,
+            TestContext.Current.CancellationToken
+        );
+        RegisterUserConfirmationDto user = result.ShouldBeSuccess();
+        user.ShouldBe(
+            new RegisterUserConfirmationDto
+            {
+                Id = user.Id,
+                OrganisationName = user.OrganisationName,
+                FullName = registerUserCommandDto.FullName,
+                WorkEmail = registerUserCommandDto.WorkEmail,
+                PhoneNumber = registerUserCommandDto.PhoneNumber,
+            }
+        );
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_UserExists_ReturnsDto()
+    {
+        OrganisationFaker organisationFaker = new();
+        var organisation = organisationFaker.Generate();
+        Context.Organisations.Add(organisation);
+
+        UserRegistrationRequest request = new UserRegistrationRequestFaker().Generate();
+        Context.UserRegistrationRequests.Add(request);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        GetUserDetails result = await _harness.Service.GetUserRegistrationById(
+            request.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        RegisterUserConfirmationDto user = result.ShouldBeSuccess();
+
+        user.ShouldBe(
+            new RegisterUserConfirmationDto
+            {
+                Id = request.Id,
+                OrganisationName = organisation.OrganisationName,
+                FullName = request.FullName,
+                WorkEmail = request.WorkEmail,
+                PhoneNumber = request.PhoneNumber,
+            }
+        );
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_UserDoesNotExist_ReturnsIdNotFound()
+    {
+        int id = 999;
+
+        GetUserDetails result = await _harness.Service.GetUserRegistrationById(
+            id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<GetUserDetailsError.IdNotFound>();
+    }
+
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
         var harness = new ServiceTestHarness<IUserAdministrationService>(Context)
@@ -250,6 +333,16 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             RuleFor(x => x.FullName, f => f.Name.FullName());
             RuleFor(x => x.ContactNumber, _ => new TelephoneNumberFaker().Generate());
             RuleFor(x => x.NewUserEmail, f => f.Internet.Email());
+        }
+    }
+
+    private sealed class RegisterUserCommandDtoFaker : Faker<RegisterUserCommandDto>
+    {
+        public RegisterUserCommandDtoFaker()
+        {
+            RuleFor(x => x.FullName, f => f.Name.FullName());
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
+            RuleFor(x => x.PhoneNumber, _ => new TelephoneNumberFaker().Generate());
         }
     }
 }

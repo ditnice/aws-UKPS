@@ -163,6 +163,51 @@ internal sealed partial class UserAdministrationService(
         LogSendingUserSignUpRequestEmail(sanitisedGuid);
     }
 
+    public async Task<Result<RegisterUserConfirmationDto, RegisterUserError>> RegisterUser(
+        RegisterUserCommandDto registerUserCommandDto,
+        CancellationToken cancellationToken
+    )
+    {
+        var userRegister = new UserRegistrationRequest()
+        {
+            OrganisationId = registerUserCommandDto.OrganisationId,
+            FullName = registerUserCommandDto.FullName,
+            PhoneNumber = registerUserCommandDto.PhoneNumber,
+            WorkEmail = registerUserCommandDto.WorkEmail,
+        };
+        dbContext.UserRegistrationRequests.Add(userRegister);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var request = await dbContext
+            .UserRegistrationRequests.AsNoTracking()
+            .Include(x => x.Organisation)
+            .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
+
+        var dto = MapToDto(request);
+
+        return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
+    }
+
+    public async Task<
+        Result<RegisterUserConfirmationDto, GetUserDetailsError>
+    > GetUserRegistrationById(int Id, CancellationToken cancellationToken)
+    {
+        var request = await dbContext
+            .UserRegistrationRequests.AsNoTracking()
+            .Include(x => x.Organisation)
+            .Where(x => x.Id == Id)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (request is null)
+        {
+            return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                new GetUserDetailsError.IdNotFound(Id)
+            );
+        }
+
+        var dto = MapToDto(request);
+        return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(dto);
+    }
+
     [LoggerMessage(
         Level = LogLevel.Information,
         Message = "User Onboarding Record Created [Token = {token}...]."
@@ -176,4 +221,18 @@ internal sealed partial class UserAdministrationService(
     private partial void LogSendingUserSignUpRequestEmail(string token);
 
     private static string Sanitise(Guid guid) => guid.ToString().Substring(0, 8);
+
+    private static RegisterUserConfirmationDto MapToDto(
+        UserRegistrationRequest userRegistrationRequest
+    )
+    {
+        return new()
+        {
+            Id = userRegistrationRequest.Id,
+            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
+            FullName = userRegistrationRequest.FullName,
+            WorkEmail = userRegistrationRequest.WorkEmail,
+            PhoneNumber = userRegistrationRequest.PhoneNumber,
+        };
+    }
 }

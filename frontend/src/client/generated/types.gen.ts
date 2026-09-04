@@ -164,6 +164,20 @@ export type OrganisationDetailsDto = {
 };
 
 /**
+ * Represents the ID and name of an organisation.
+ */
+export type OrganisationListDto = {
+    /**
+     * Gets the unique identifier of the organisation.
+     */
+    id: number;
+    /**
+     * Gets the name of the organisation.
+     */
+    organisationName: string;
+};
+
+/**
  * Represents the data transfer object for an organisation membership.
  */
 export type OrganisationMembershipDto = {
@@ -237,6 +251,54 @@ export type ProblemDetails = {
     status?: null | number;
     detail?: null | string;
     instance?: null | string;
+};
+
+/**
+ * Represents the information required to register a new user.
+ */
+export type RegisterUserCommandDto = {
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
+    /**
+     * Gets the name of the organisation the user is requesting access to.
+     */
+    organisationId: number;
+};
+
+/**
+ * Represents the details of a user who has been registered.
+ */
+export type RegisterUserConfirmationDto = {
+    /**
+     * ID for the user.
+     */
+    id: number;
+    /**
+     * Gets the name of the user's organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
 };
 
 /**
@@ -1006,6 +1068,23 @@ export type PostOrganisationsResponses = {
 
 export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
 
+export type GetOrganisationsPublicOptionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/organisations/publicOptions';
+};
+
+export type GetOrganisationsPublicOptionsResponses = {
+    /**
+     * A task that represents the asynchronous operation. The task result contains
+     * the names of all organisations.
+     */
+    200: Array<OrganisationListDto>;
+};
+
+export type GetOrganisationsPublicOptionsResponse = GetOrganisationsPublicOptionsResponses[keyof GetOrganisationsPublicOptionsResponses];
+
 export type GetUsersMeData = {
     body?: never;
     path?: never;
@@ -1185,6 +1264,55 @@ export type PatchUsersByUserIdResponses = {
 };
 
 export type PatchUsersByUserIdResponse = PatchUsersByUserIdResponses[keyof PatchUsersByUserIdResponses];
+
+export type PostUsersRegisterData = {
+    /**
+     * A token used to cancel the operation.
+     */
+    body: RegisterUserCommandDto;
+    path?: never;
+    query?: never;
+    url: '/users/register';
+};
+
+export type PostUsersRegisterErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+};
+
+export type PostUsersRegisterError = PostUsersRegisterErrors[keyof PostUsersRegisterErrors];
+
+export type PostUsersRegisterResponses = {
+    /**
+     * OK
+     */
+    200: RegisterUserConfirmationDto;
+};
+
+export type PostUsersRegisterResponse = PostUsersRegisterResponses[keyof PostUsersRegisterResponses];
+
+export type GetUserRegistrationByIdData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to retrieve.
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/users/registration-requests/{id}';
+};
+
+export type GetUserRegistrationByIdResponses = {
+    /**
+     * The user's details were successfully retrieved.
+     */
+    200: RegisterUserConfirmationDto;
+};
+
+export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];
 
 export type PostUsersOnboardData = {
     /**

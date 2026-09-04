@@ -1298,6 +1298,45 @@
         }
       }
     },
+    "/organisations/publicOptions": {
+      "get": {
+        "tags": [
+          "OrganisationPublic"
+        ],
+        "summary": "Gets the names of all organisations.",
+        "responses": {
+          "200": {
+            "description": "A task that represents the asynchronous operation. The task result contains\nthe names of all organisations.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -1752,6 +1791,120 @@
         }
       }
     },
+    "/users/register": {
+      "post": {
+        "tags": [
+          "UserCreation"
+        ],
+        "summary": "Registers a new user.",
+        "requestBody": {
+          "description": "A token used to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserCommandDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserCommandDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserCommandDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/registration-requests/{id}": {
+      "get": {
+        "tags": [
+          "UserCreation"
+        ],
+        "summary": "Retrieves the details of a user by their unique identifier.",
+        "operationId": "GetUserRegistrationById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the user to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user's details were successfully retrieved.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/onboard": {
       "post": {
         "tags": [
@@ -2120,6 +2273,25 @@
         },
         "description": "Represents the details of an organisation."
       },
+      "OrganisationListDto": {
+        "required": [
+          "organisationName",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the organisation.",
+            "format": "int32"
+          },
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the organisation."
+          }
+        },
+        "description": "Represents the ID and name of an organisation."
+      },
       "OrganisationMembershipDto": {
         "required": [
           "id",
@@ -2250,6 +2422,69 @@
             ]
           }
         }
+      },
+      "RegisterUserCommandDto": {
+        "required": [
+          "fullName",
+          "workEmail",
+          "phoneNumber",
+          "organisationId"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Gets the user's full name."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's work email address."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the user phone number."
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the name of the organisation the user is requesting access to.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the information required to register a new user."
+      },
+      "RegisterUserConfirmationDto": {
+        "required": [
+          "id",
+          "organisationName",
+          "fullName",
+          "workEmail",
+          "phoneNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID for the user.",
+            "format": "int32"
+          },
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the user's organisation."
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Gets the user's full name."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's work email address."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the user phone number."
+          }
+        },
+        "description": "Represents the details of a user who has been registered."
       },
       "RespondToMultiFactorAuthenticationChallengeCommand": {
         "required": [
@@ -2644,6 +2879,9 @@
     },
     {
       "name": "Organisation"
+    },
+    {
+      "name": "OrganisationPublic"
     },
     {
       "name": "User"
