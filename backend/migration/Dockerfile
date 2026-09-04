@@ -36,9 +36,9 @@ FROM --platform=${LAMBDA_PLATFORM} public.ecr.aws/lambda/dotnet:10 AS runtime
 RUN dnf install -y krb5-libs \
     && dnf clean all
 
-COPY --from=rds-ca --chmod=0644 /eu-west-2-bundle.pem ${LAMBDA_TASK_ROOT}/certs/eu-west-2-bundle.pem
+COPY --from=rds-ca --chmod=0644 /eu-west-2-bundle.pem ${LAMBDA_TASK_ROOT}/eu-west-2-bundle.pem
 COPY --from=build /app/publish ${LAMBDA_TASK_ROOT}
 
-ENV Database__RootCertificate=${LAMBDA_TASK_ROOT}/certs/eu-west-2-bundle.pem
+ENV Database__RootCertificate=${LAMBDA_TASK_ROOT}/eu-west-2-bundle.pem
 
 CMD ["MigratorLambda::MigratorLambda.MigratorFunction::FunctionHandler"]
