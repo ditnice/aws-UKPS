@@ -37,6 +37,7 @@ export default async function DeactivateUserPage({ params }: DeactivateUserPageP
         </p>
         <DeactivateUserControls
           organisationId={organisationId}
+          userId={selectedUserId}
           membershipId={user.organisationMembershipId}
         />
       </>

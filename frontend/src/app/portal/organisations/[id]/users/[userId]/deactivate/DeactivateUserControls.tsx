@@ -7,16 +7,23 @@ import { deactivateMembership } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
+import { buildUserActionHref } from '../../../_lib/userActionAlert'
+
 export type DeactivateUserControlsProps = {
   organisationId: number
+  userId: number
   membershipId: number
 }
-const DeactivateUserControls = ({ organisationId, membershipId }: DeactivateUserControlsProps) => {
+const DeactivateUserControls = ({
+  organisationId,
+  userId,
+  membershipId,
+}: DeactivateUserControlsProps) => {
   const router = useRouter()
   const [hasError, setHasError] = useState(false)
   const [loading, setLoading] = useState(false)
   const deactivateUser = async () => {
-    setHasError(true)
+    setHasError(false)
     setLoading(true)
 
     try {
@@ -27,7 +34,7 @@ const DeactivateUserControls = ({ organisationId, membershipId }: DeactivateUser
         setHasError(true)
         return
       }
-      router.push(`/portal/organisations/${organisationId}`)
+      router.push(buildUserActionHref(organisationId, 'deactivated', userId))
     } finally {
       setLoading(false)
     }

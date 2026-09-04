@@ -71,18 +71,12 @@ function renderActions(user: UserListItemDto, organisationId: number) {
             Reject
           </Link>
         )
-      case 'DeactivateMembership':
-        return (
-          <Link href={`/portal/organisations/${organisationId}/users/${user.userId}/deactivate`}>
-            Deactivate
-          </Link>
-        )
       case 'ReactivateMembership':
         return <a>Reactivate</a>
       case 'EditUserRole':
         return (
           <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
-            Edit role
+            Edit
           </Link>
         )
       default:
@@ -184,7 +178,7 @@ export async function OrganisationUsersTable({
                     <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
                     <td>{renderStatus(user.status)}</td>
                     <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user, organisationId, currentUserId)}</td>
+                    <td>{renderActions(user, organisationId)}</td>
                   </tr>
                 ))
               ) : (
