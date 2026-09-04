@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Client } from '@/client/generated/client'
 import { getUserRegistrationById } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { Button } from '@/components/Button/Button'

@@ -35,6 +35,8 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// </item>
     /// </list>
     /// </returns>
+    [ProducesResponseType<RegisterUserConfirmationDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [HttpPost("register")]
     public async Task<ActionResult<RegisterUserConfirmationDto>> RegisterUser(
         [FromBody] RegisterUserCommandDto registerUserCommandDto,

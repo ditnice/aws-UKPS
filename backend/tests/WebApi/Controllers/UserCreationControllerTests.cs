@@ -249,7 +249,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
                 )
             );
         var response = await _client.GetAsync(
-            new Uri("/users/registration-request/1"),
+            new Uri("/users/registration-requests/1"),
             TestContext.Current.CancellationToken
         );
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);

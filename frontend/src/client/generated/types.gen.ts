@@ -1275,11 +1275,18 @@ export type PostUsersRegisterData = {
     url: '/users/register';
 };
 
+export type PostUsersRegisterErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+};
+
+export type PostUsersRegisterError = PostUsersRegisterErrors[keyof PostUsersRegisterErrors];
+
 export type PostUsersRegisterResponses = {
     /**
-     * An ActionResult&lt;TValue&gt; containing the registered user's details when the
-     * operation succeeds. Returns:
-     * * 400 Bad Request if some of the required data is missing.
+     * OK
      */
     200: RegisterUserConfirmationDto;
 };
