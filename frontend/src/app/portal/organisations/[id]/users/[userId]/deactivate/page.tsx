@@ -21,18 +21,26 @@ export default async function DeactivateUserPage({ params }: DeactivateUserPageP
   const placeholderEmail = 'julie.brooks@example.com'
   const placeholderMembershipId = 1
 
+  const renderPageContent = () => {
+    return (
+      <>
+        <p>You are about to about to deactivate {placeholderEmail}</p>
+        <p>
+          A deactivated user will remain on UK PharmaScan but will not receive any communications
+          until they are reactivated.
+        </p>
+        <DeactivateUserControls
+          organisationId={organisationId}
+          membershipId={placeholderMembershipId}
+        />
+      </>
+    )
+  }
+
   return (
     <>
-      <PageHeader heading="Create a password" backLink={<BackLinkBrowser />} />
-      <p>You are about to about to deactivate {placeholderEmail}</p>
-      <p>
-        A deactivated user will remain on UK PharmaScan but will not receive any communications
-        until they are reactivated.
-      </p>
-      <DeactivateUserControls
-        organisationId={organisationId}
-        membershipId={placeholderMembershipId}
-      />
+      <PageHeader heading="Deactivate user" backLink={<BackLinkBrowser />} />
+      {renderPageContent()}
     </>
   )
 }
