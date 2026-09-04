@@ -6,14 +6,17 @@ import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import type { Client } from '@/client/generated/client'
 import { getUsers, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserListItemDto } from '@/client/generated/types.gen'
+import type { GetUsersQuerySortValue, UserListItemDto } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
+import { TableSortDirection, TableSortHeaderLink } from '@/components/Table/TableSortHeader'
 import { Tag } from '@/components/Tag/Tag'
 import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
+import { getNextSortDirection } from '@/lib/search-and-filter/query'
 
 import {
   lastActivePresetDays,
+  organisationUserTableHeaders,
   roleLabels,
   statusLabels,
   statusTagColours,
@@ -119,7 +122,7 @@ export async function OrganisationUsersTable({
   organisationId,
   query,
 }: OrganisationUsersTableProps) {
-  const { page, pageSize, status, role, email, lastActive } = query
+  const { page, pageSize, status, role, email, lastActive, sortBy, sortDirection } = query
 
   const [{ data: me }, { data: users, error: usersError }] = await Promise.all([
     getUsersMe({ client: apiClient }),
@@ -139,6 +142,40 @@ export async function OrganisationUsersTable({
   const currentUserId = me?.userId
 
   const totalCount = users?.totalCount ?? 0
+
+  const createSortHref =
+    (column: GetUsersQuerySortValue) => (direction: Exclude<TableSortDirection, 'none'>) => {
+      const newQuery: UserListQuery = {
+        ...query,
+        sortBy: column,
+        sortDirection: direction == 'ascending' ? 'Ascending' : 'Descending',
+        page: 1,
+      }
+
+      return buildUserListHref(newQuery)
+    }
+
+  const renderHeaders = () => {
+    return organisationUserTableHeaders.map(({ label, sortColumn }) =>
+      sortColumn ? (
+        <TableSortHeaderLink
+          key={label}
+          direction={getNextSortDirection<GetUsersQuerySortValue>({
+            column: sortColumn,
+            sortBy,
+            sortDirection,
+          })}
+          createHref={createSortHref(sortColumn)}
+        >
+          {label}
+        </TableSortHeaderLink>
+      ) : (
+        <th scope="col" key={label}>
+          {label}
+        </th>
+      ),
+    )
+  }
 
   return (
     <>
@@ -160,13 +197,7 @@ export async function OrganisationUsersTable({
           <Table columnWidth="content">
             <caption className="visually-hidden">Organisation Users</caption>
             <thead>
-              <tr>
-                <th scope="col">Email address</th>
-                <th scope="col">Role</th>
-                <th scope="col">Status</th>
-                <th scope="col">Last active</th>
-                <th scope="col">Actions</th>
-              </tr>
+              <tr>{renderHeaders()}</tr>
             </thead>
             <tbody>
               {users.items.length > 0 ? (

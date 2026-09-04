@@ -3,7 +3,11 @@
 import { useState, useSyncExternalStore } from 'react'
 
 import { Table } from '@/components/Table/Table'
-import { TableSortHeader, type TableSortDirection } from '@/components/Table/TableSortHeader'
+import {
+  TableSortHeaderButton,
+  TableSortHeaderLink,
+  type TableSortDirection,
+} from '@/components/Table/TableSortHeader'
 
 import { Example } from '../../_components/Example'
 
@@ -149,24 +153,63 @@ export function Examples() {
           </caption>
           <thead>
             <tr>
-              <TableSortHeader
+              <TableSortHeaderButton
                 direction={directionFor('ref')}
                 onSort={(direction) => setSort({ column: 'ref', direction })}
               >
                 Ref
-              </TableSortHeader>
-              <TableSortHeader
+              </TableSortHeaderButton>
+              <TableSortHeaderButton
                 direction={directionFor('title')}
                 onSort={(direction) => setSort({ column: 'title', direction })}
               >
                 Title
-              </TableSortHeader>
-              <TableSortHeader
+              </TableSortHeaderButton>
+              <TableSortHeaderButton
                 direction={directionFor('date')}
                 onSort={(direction) => setSort({ column: 'date', direction })}
               >
                 Date
-              </TableSortHeader>
+              </TableSortHeaderButton>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.ref}>
+                <td>{row.ref}</td>
+                <td>{row.title}</td>
+                <td>{row.dateLabel}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Example>
+      <Example title="Sortable table with links">
+        <Table columnWidth="content">
+          <caption>
+            Applications{' '}
+            <span className="visually-hidden">(column headers with buttons are sortable).</span>
+          </caption>
+          <thead>
+            <tr>
+              <TableSortHeaderLink
+                direction={directionFor('ref')}
+                createHref={(direction) => `/example?sortColumn=ref&sortDirection=${direction}`}
+              >
+                Ref
+              </TableSortHeaderLink>
+              <TableSortHeaderLink
+                direction={directionFor('title')}
+                createHref={(direction) => `/example?sortColumn=title&sortDirection=${direction}`}
+              >
+                Title
+              </TableSortHeaderLink>
+              <TableSortHeaderLink
+                direction={directionFor('date')}
+                createHref={(direction) => `/example?sortColumn=date&sortDirection=${direction}`}
+              >
+                Date
+              </TableSortHeaderLink>
             </tr>
           </thead>
           <tbody>

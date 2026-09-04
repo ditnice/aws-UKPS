@@ -1,14 +1,14 @@
-'use client'
+import Link from 'next/link'
 
 import styles from './TableSortHeader.module.scss'
 
 import type { ComponentPropsWithoutRef } from 'react'
 
 export type TableSortDirection = 'none' | 'ascending' | 'descending'
+export type ActiveSortDirection = Exclude<TableSortDirection, 'none'>
 
-export type TableSortHeaderProps = Omit<ComponentPropsWithoutRef<'th'>, 'aria-sort'> & {
+export type BaseTableSortHeaderProps = Omit<ComponentPropsWithoutRef<'th'>, 'aria-sort'> & {
   direction: TableSortDirection
-  onSort: (direction: Exclude<TableSortDirection, 'none'>) => void
 }
 
 const indicatorPaths: Record<TableSortDirection, readonly string[]> = {
@@ -20,14 +20,17 @@ const indicatorPaths: Record<TableSortDirection, readonly string[]> = {
   ],
 }
 
-export function TableSortHeader({
+export type TableSortHeaderButtonProps = BaseTableSortHeaderProps & {
+  onSort: (direction: ActiveSortDirection) => void
+}
+export function TableSortHeaderButton({
   children,
   className,
   direction,
-  onSort,
   scope = 'col',
+  onSort,
   ...props
-}: TableSortHeaderProps) {
+}: TableSortHeaderButtonProps) {
   const nextDirection = direction === 'ascending' ? 'descending' : 'ascending'
 
   return (
@@ -36,6 +39,29 @@ export function TableSortHeader({
         {children}
         <SortIndicator direction={direction} />
       </button>
+    </th>
+  )
+}
+
+export type TableSortHeaderLinkProps = BaseTableSortHeaderProps & {
+  createHref: (direction: ActiveSortDirection) => string
+}
+export const TableSortHeaderLink = ({
+  children,
+  className,
+  direction,
+  scope = 'col',
+  createHref,
+  ...props
+}: TableSortHeaderLinkProps) => {
+  const nextDirection = direction === 'ascending' ? 'descending' : 'ascending'
+
+  return (
+    <th {...props} aria-sort={direction} className={className} scope={scope}>
+      <Link scroll={false} className={styles.button} href={createHref(nextDirection)}>
+        {children}
+        <SortIndicator direction={direction} />
+      </Link>
     </th>
   )
 }
