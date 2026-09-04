@@ -7,7 +7,7 @@ export default function RegistrationRequest() {
   return (
     <>
       <PageHeader
-        backLink={<BackLink href="/portal/register">Back</BackLink>}
+        backLink={<BackLink href="/register">Back</BackLink>}
         heading="Provide your details"
       />
 
