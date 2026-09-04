@@ -64,6 +64,17 @@ exports[`ApplicationLayout > renders the application chrome around children 1`] 
             >
               Menu
             </button>
+            <div
+              class="_account_2e1c09"
+            >
+              <a
+                class="btn btn--inverse"
+                data-component="button--inverse--button"
+                href="/auth/sign-in"
+              >
+                Sign in
+              </a>
+            </div>
           </div>
         </div>
         <div

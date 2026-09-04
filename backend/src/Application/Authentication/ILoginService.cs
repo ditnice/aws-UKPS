@@ -72,4 +72,15 @@ public interface ILoginService
         RefreshAuthenticationTokenCommand command,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Ends the current authentication session by revoking the supplied refresh token.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The refresh token for the session that should be revoked.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The token used to cancel the operation.
+    /// </param>
+    Task SignOut(string refreshToken, CancellationToken cancellationToken);
 }

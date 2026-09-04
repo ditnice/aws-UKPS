@@ -34,6 +34,9 @@ public class AuthenticationController : ControllerBase
     private const string CsrfCookieName = "csrf_token";
     private const string CsrfHeaderName = "X-CSRF-Token";
     private const string RefreshCookieName = "refresh_token";
+    private const string AccessCookieName = "access_token";
+    private const string RootCookiePath = "/";
+    private const string AuthCookiePath = "/auth";
 
     private readonly TimeSpan _accessTokenValidity = TimeSpan.FromMinutes(15);
     private readonly TimeSpan _accessTokenRefreshThreshold = TimeSpan.FromMinutes(5);
@@ -42,7 +45,6 @@ public class AuthenticationController : ControllerBase
     private readonly ILoginService _loginService;
     private readonly IIdentityAdministrationService _authorisationAdministrationService;
     private readonly IDateTimeProvider _dateTimeProvider;
-    private readonly LinkGenerator _linkGenerator;
     private readonly ProblemDetails _setupTokenExpiredDetails = new ProblemDetails
     {
         Title = "Setup token has expired.",
@@ -74,18 +76,15 @@ public class AuthenticationController : ControllerBase
     /// such as user onboarding, setup token validation, and password management.
     /// </param>
     /// <param name="dateTimeProvider"></param>
-    /// <param name="linkGenerator"></param>
     public AuthenticationController(
         ILoginService loginService,
         IIdentityAdministrationService authorisationAdministrationService,
-        IDateTimeProvider dateTimeProvider,
-        LinkGenerator linkGenerator
+        IDateTimeProvider dateTimeProvider
     )
     {
         _loginService = loginService;
         _authorisationAdministrationService = authorisationAdministrationService;
         _dateTimeProvider = dateTimeProvider;
-        _linkGenerator = linkGenerator;
     }
 
     /// <summary>
@@ -185,6 +184,41 @@ public class AuthenticationController : ControllerBase
             HandleLoginSuccess,
             HandleLoginError
         );
+    }
+
+    /// <summary>
+    /// Ends the current authentication session and clears authentication cookies.
+    /// </summary>
+    /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// An <see cref="OkResult"/> when sign-out completes, or an unauthorized response when CSRF validation fails.
+    /// </returns>
+    /// <response code="200">The user was signed out and authentication cookies were cleared.</response>
+    /// <response code="401">The CSRF token was missing or invalid.</response>
+    [HttpPost("sign-out")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> SignOut(CancellationToken cancellationToken)
+    {
+        if (!PassesCsrfValidation())
+        {
+            return Unauthorized(
+                new ProblemDetails
+                {
+                    Title = "CSRF validation failed",
+                    Detail =
+                        "The request could not be authenticated because the CSRF token was missing or invalid.",
+                }
+            );
+        }
+
+        await _loginService.SignOut(
+            Request.Cookies[RefreshCookieName] ?? string.Empty,
+            cancellationToken
+        );
+        ClearAuthenticationCookies();
+
+        return Ok();
     }
 
     /// <summary>
@@ -389,11 +423,11 @@ public class AuthenticationController : ControllerBase
     {
         TimeSpan accessTokenLifetime = _accessTokenValidity + _accessTokenRefreshThreshold;
         Response.Cookies.Append(
-            "access_token",
+            AccessCookieName,
             dto.AccessToken,
             new CookieOptions
             {
-                Path = "/",
+                Path = RootCookiePath,
                 HttpOnly = true,
                 Secure = true, // HTTPS only
                 SameSite = SameSiteMode.Strict,
@@ -401,16 +435,12 @@ public class AuthenticationController : ControllerBase
             }
         );
 
-        var authRefreshPath = _linkGenerator.GetPathByAction(
-            action: nameof(RefreshToken),
-            controller: "Authentication"
-        );
         Response.Cookies.Append(
             RefreshCookieName,
             dto.RefreshToken,
             new CookieOptions
             {
-                Path = authRefreshPath,
+                Path = AuthCookiePath,
                 HttpOnly = true,
                 Secure = true, // HTTPS only
                 SameSite = SameSiteMode.Strict,
@@ -424,7 +454,7 @@ public class AuthenticationController : ControllerBase
             csrfToken,
             new CookieOptions
             {
-                Path = "/",
+                Path = RootCookiePath,
                 HttpOnly = false,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
@@ -433,6 +463,31 @@ public class AuthenticationController : ControllerBase
         );
 
         return Ok();
+    }
+
+    private void ClearAuthenticationCookies()
+    {
+        DateTimeOffset expires = _dateTimeProvider.GetOffsetUtcNow().AddDays(-1);
+
+        ExpireCookie(AccessCookieName, RootCookiePath, httpOnly: true, expires);
+        ExpireCookie(RefreshCookieName, AuthCookiePath, httpOnly: true, expires);
+        ExpireCookie(CsrfCookieName, RootCookiePath, httpOnly: false, expires);
+    }
+
+    private void ExpireCookie(string name, string path, bool httpOnly, DateTimeOffset expires)
+    {
+        Response.Cookies.Append(
+            name,
+            string.Empty,
+            new CookieOptions
+            {
+                Path = path,
+                HttpOnly = httpOnly,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = expires,
+            }
+        );
     }
 
     private ActionResult HandleLoginError(InitiateAuthenticationError error)
