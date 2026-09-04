@@ -14,15 +14,23 @@ export type DeactivateUserControlsProps = {
 const DeactivateUserControls = ({ organisationId, membershipId }: DeactivateUserControlsProps) => {
   const router = useRouter()
   const [hasError, setHasError] = useState(false)
+  const [loading, setLoading] = useState(false)
   const deactivateUser = async () => {
     setHasError(true)
-    const result = await deactivateMembership({
-      path: { organisationId, membershipId: membershipId },
-    })
-    if (result.error) {
-      setHasError(true)
+    setLoading(true)
+
+    try {
+      const result = await deactivateMembership({
+        path: { organisationId, membershipId: membershipId },
+      })
+      if (result.error) {
+        setHasError(true)
+        return
+      }
+      router.push(`/portal/organisations/${organisationId}`)
+    } finally {
+      setLoading(false)
     }
-    router.push(`/portal/organisations/${organisationId}`)
   }
   return (
     <>
@@ -36,7 +44,7 @@ const DeactivateUserControls = ({ organisationId, membershipId }: DeactivateUser
           Deactivate User
         </Button>
         <Button data-testid="cancel-button" variant="secondary" onClick={router.back}>
-          Cancel
+          {loading ? <>loading...</> : <>Cancel</>}
         </Button>
       </ButtonGroup>
     </>

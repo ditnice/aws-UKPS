@@ -73,6 +73,7 @@ describe('DeactivateUserControls', () => {
     fireEvent.click(getActionButton())
     await waitFor(() => {
       expect(getActionError()).toBeTruthy()
+      expect(mocks.push).not.toHaveBeenCalled()
     })
   })
 

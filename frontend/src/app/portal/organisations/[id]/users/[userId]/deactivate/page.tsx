@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation'
 
+import { getUserDetailsWithinOrganisation } from '@/client/generated'
 import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import DeactivateUserControls from './DeactivateUserControls'
 
@@ -18,20 +20,24 @@ export default async function DeactivateUserPage({ params }: DeactivateUserPageP
     notFound()
   }
 
-  const placeholderEmail = 'julie.brooks@example.com'
-  const placeholderMembershipId = 1
+  const { data: user, error } = await getUserDetailsWithinOrganisation({
+    path: { organisationId, userId: selectedUserId },
+  })
 
   const renderPageContent = () => {
+    if (!user || error)
+      return <ErrorState>An error occurred when trying to retrieve the user.</ErrorState>
+
     return (
       <>
-        <p>You are about to about to deactivate {placeholderEmail}</p>
+        <p>You are about to about to deactivate {user.workEmail}</p>
         <p>
           A deactivated user will remain on UK PharmaScan but will not receive any communications
           until they are reactivated.
         </p>
         <DeactivateUserControls
           organisationId={organisationId}
-          membershipId={placeholderMembershipId}
+          membershipId={user.organisationMembershipId}
         />
       </>
     )
