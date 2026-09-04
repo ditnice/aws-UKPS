@@ -72,7 +72,12 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         bool expectedAuthorised
     )
     {
-        var userOrgMembership = await SetupUserOrgMembership();
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.UserRole,
+                _ => UserRole.Standard
+            )
+        );
         var command = new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Champion };
         var harness = new ServiceTestHarness<IOrganisationMembershipService>(
             Context
@@ -99,6 +104,134 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         result
             .ShouldBeError()
             .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotAllowed>();
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_ShouldReturnError_WhenNonSuperUserTriesToPromoteToSuper()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.UserRole,
+                _ => UserRole.Standard
+            )
+        );
+        var harness = new ServiceTestHarness<IOrganisationMembershipService>(
+            Context
+        ).UpdateCurrentUser(currentUserInfo =>
+            currentUserInfo with
+            {
+                OrganisationId = userOrgMembership.OrganisationId,
+                UserRole = UserRole.Champion,
+            }
+        );
+
+        var result = await harness.Service.UpdateUserRole(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Super },
+            CancellationToken.None
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole>();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == userOrgMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+        saved.UserRole.ShouldBe(UserRole.Standard);
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_ShouldReturnError_WhenNonSuperUserTriesToChangeASuperUsersRole()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(x => x.UserRole, _ => UserRole.Super)
+        );
+        var harness = new ServiceTestHarness<IOrganisationMembershipService>(
+            Context
+        ).UpdateCurrentUser(currentUserInfo =>
+            currentUserInfo with
+            {
+                OrganisationId = userOrgMembership.OrganisationId,
+                UserRole = UserRole.Champion,
+            }
+        );
+
+        var result = await harness.Service.UpdateUserRole(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            CancellationToken.None
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole>();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        UserOrgMembership saved = await verifyContext.UserOrgMemberships.SingleAsync(
+            m => m.Id == userOrgMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+        saved.UserRole.ShouldBe(UserRole.Super);
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_ShouldSucceed_WhenSuperUserPromotesAnotherUserToSuper()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.UserRole,
+                _ => UserRole.Standard
+            )
+        );
+        var harness = new ServiceTestHarness<IOrganisationMembershipService>(
+            Context
+        ).UpdateCurrentUser(currentUserInfo =>
+            currentUserInfo with
+            {
+                OrganisationId = userOrgMembership.OrganisationId,
+                UserRole = UserRole.Super,
+            }
+        );
+
+        var result = await harness.Service.UpdateUserRole(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Super },
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Super);
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_ShouldSucceed_WhenSuperUserChangesAnotherSuperUsersRole()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(x => x.UserRole, _ => UserRole.Super)
+        );
+        var harness = new ServiceTestHarness<IOrganisationMembershipService>(
+            Context
+        ).UpdateCurrentUser(currentUserInfo =>
+            currentUserInfo with
+            {
+                OrganisationId = userOrgMembership.OrganisationId,
+                UserRole = UserRole.Super,
+            }
+        );
+
+        var result = await harness.Service.UpdateUserRole(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Standard);
     }
 
     [Fact]

@@ -5,6 +5,7 @@ using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using DeactivateUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipDeactivateUserError
@@ -61,6 +62,12 @@ internal sealed class OrganisationMembershipService(
         {
             return UpdateUserRoleResult.Err(
                 new OrganisationMembershipUpdateUserRoleError.CannotChangeOwnRole(membershipId)
+            );
+        }
+        if (NonSuperUserTryingToManageSuperUser(membership, command))
+        {
+            return UpdateUserRoleResult.Err(
+                new OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole(membershipId)
             );
         }
         membership.UserRole = command.UserRole;
@@ -154,6 +161,16 @@ internal sealed class OrganisationMembershipService(
     // the permissions their role would otherwise grant them over the organisation.
     private bool IsCurrentUsersOwnMembership(UserOrgMembership membership) =>
         currentUserInfoService.IsCurrentUser(membership.User!.WorkEmail);
+
+    private bool NonSuperUserTryingToManageSuperUser(
+        UserOrgMembership membership,
+        UpdateOrgMembershipUserRoleCommandDto command
+    )
+    {
+        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+        return currentUser.UserRole != UserRole.Super
+            && (membership.UserRole == UserRole.Super || command.UserRole == UserRole.Super);
+    }
 
     private static OrganisationMembershipDto MapToDto(UserOrgMembership entity)
     {

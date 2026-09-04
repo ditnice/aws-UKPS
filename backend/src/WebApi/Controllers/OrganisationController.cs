@@ -322,6 +322,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
                         statusCode: StatusCodes.Status403Forbidden,
                         detail: "You cannot change your own role."
                     ),
+                    OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole => Forbid(
+                        "The user is not authorised to perform this action."
+                    ),
                     _ => throw new UnreachableException(),
                 }
         );
