@@ -22,6 +22,9 @@ export const errorMessages = {
   phoneFormat: 'Enter a phone number, like 01632 960 001, 07700 900 982 or +44 808 157 0192',
   securityCodeFormat: 'Enter a 6-digit security code',
   passwordFormat: 'Password must be at least 8 characters long',
+
+  anErrorOccurredWhenTryingToRetrieveTheUserMembershipRequest:
+    'An error occurred when trying to retrieve the user membership request',
   passwordTooLong: 'Your password must be 256 characters or less',
   passwordWhitespace: 'Your password cannot contain spaces',
 

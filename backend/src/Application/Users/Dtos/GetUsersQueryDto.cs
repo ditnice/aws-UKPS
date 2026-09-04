@@ -53,4 +53,16 @@ public sealed record GetUsersQueryDto
     /// Gets or initialises the inclusive upper bound of the user's last active timestamp to filter by.
     /// </summary>
     public DateTimeOffset? LastActiveTo { get; init; }
+
+    /// <summary>
+    /// Gets or initialises the field by which users are sorted.
+    /// Defaults to <see cref="GetUsersQuerySortValue.LastActive"/>.
+    /// </summary>
+    public GetUsersQuerySortValue SortBy { get; init; } = GetUsersQuerySortValue.LastActive;
+
+    /// <summary>
+    /// Gets or initialises the direction in which users are sorted.
+    /// Defaults to <see cref="SortDirection.Descending"/>.
+    /// </summary>
+    public SortDirection SortDirection { get; init; } = SortDirection.Descending;
 }
