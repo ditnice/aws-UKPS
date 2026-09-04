@@ -581,6 +581,30 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
+    public async Task UpdateUserRole_CannotManageSuperRole_ReturnsForbidResult()
+    {
+        _organisationMembershipService
+            .UpdateUserRole(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrgMembershipUserRoleCommandDto>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                UpdateUserRoleResult.Err(
+                    new OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole(1)
+                )
+            );
+        ActionResult<OrganisationMembershipDto> result = await _controller.UpdateUserRole(
+            1,
+            2,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
+        result.Result.ShouldBeOfType<ForbidResult>();
+    }
+
+    [Fact]
     public async Task CreateOrganisation_AllFieldsProvided_ReturnsDto()
     {
         CreateOrganisationDto organisation = CreateOrganisationDto();

@@ -11,9 +11,11 @@ internal static class UserOrgMembershipExtensions
         CancellationToken cancellationToken
     )
     {
-        return dbSet.FirstOrDefaultAsync(
-            x => x.OrganisationId == orgId && x.Id == membershipId,
-            cancellationToken
-        );
+        return dbSet
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(
+                x => x.OrganisationId == orgId && x.Id == membershipId,
+                cancellationToken
+            );
     }
 }

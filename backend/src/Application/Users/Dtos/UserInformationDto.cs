@@ -3,10 +3,9 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Application.Users.Dtos;
 
 /// <summary>
-/// Represents information about the currently authenticated user and their
-/// membership within an organisation.
+/// Represents information about a user and their membership within an organisation.
 /// </summary>
-public record CurrentUserInformationDto
+public sealed record UserInformationDto
 {
     /// <summary>
     /// Gets the unique identifier of the user.

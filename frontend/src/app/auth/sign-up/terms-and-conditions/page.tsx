@@ -1,8 +1,6 @@
 import Link from 'next/link'
 
-import { Alert } from '@nice-digital/nds-alert'
-import { Panel } from '@nice-digital/nds-panel'
-
+import { Alert } from '@/components/Alert/Alert'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 

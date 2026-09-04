@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import { CurrentUserInformationDto, getUsersMe } from '@/client/generated'
+import { UserInformationDto, getUsersMe } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import EditDetails from './page'
@@ -44,7 +44,7 @@ vi.mock('./_components/EditDetailsForm', () => ({
 
 const mockedGetUsersMe = vi.mocked(getUsersMe)
 
-const exampleUser: CurrentUserInformationDto = {
+const exampleUser: UserInformationDto = {
   userId: 1,
   fullName: 'John Smith',
   workTelephone: '020 7123 4567',

@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { CurrentUserInformationDto } from '@/client/generated'
-import { fakeCurrentUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
+import { UserInformationDto } from '@/client/generated'
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 
 import { UserDetails } from './UserDetails'
 
@@ -25,7 +25,7 @@ describe('UserDetails', () => {
   })
 
   it("renders the current user's details", () => {
-    const currentUser: CurrentUserInformationDto = fakeCurrentUserInformationDto()
+    const currentUser: UserInformationDto = fakeUserInformationDto()
 
     render(<UserDetails currentUser={currentUser} />)
 
@@ -36,7 +36,7 @@ describe('UserDetails', () => {
   })
 
   it('renders the edit details link', () => {
-    const currentUser = fakeCurrentUserInformationDto()
+    const currentUser = fakeUserInformationDto()
 
     const { container } = render(<UserDetails currentUser={currentUser} />)
 
@@ -47,7 +47,7 @@ describe('UserDetails', () => {
   })
 
   it('renders the return to view and manage records link', () => {
-    const currentUser = fakeCurrentUserInformationDto()
+    const currentUser = fakeUserInformationDto()
 
     const { container } = render(<UserDetails currentUser={currentUser} />)
 

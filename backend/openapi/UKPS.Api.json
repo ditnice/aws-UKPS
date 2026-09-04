@@ -938,7 +938,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "The caller is not authorised to deactivate the membership, or the membership is their own.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1165,7 +1165,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "The caller is not authorised to update the membership, or the membership is their own.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1310,17 +1310,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                  "$ref": "#/components/schemas/UserInformationDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                  "$ref": "#/components/schemas/UserInformationDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CurrentUserInformationDto"
+                  "$ref": "#/components/schemas/UserInformationDto"
                 }
               }
             }
@@ -1475,6 +1475,119 @@
           },
           "404": {
             "description": "Returned if no users are found matching the query parameters.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/organisations/{organisationId}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Retrieves a user's details along with their role within the specified organisation.",
+        "operationId": "GetUserDetailsWithinOrganisation",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The unique identifier of the user to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The unique identifier of the organisation to read the user's membership from. A user may\nbelong to several organisations, so their role is resolved against this organisation.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the user's details and their role within the organisation.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInformationDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInformationDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInformationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Returned if the specified organisation does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Returned if the caller is not authorised to view the organisation's users.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Returned if the user is not a member of the specified organisation.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1667,6 +1780,26 @@
           "required": true
         },
         "responses": {
+          "201": {
+            "description": "The user was successfully onboarded. The response contains the\nidentifier of the newly created user.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardedUserDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardedUserDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardedUserDto"
+                }
+              }
+            }
+          },
           "400": {
             "description": "The request was invalid.",
             "content": {
@@ -1823,57 +1956,6 @@
         },
         "description": "Represents the information required to create a new organisation."
       },
-      "CurrentUserInformationDto": {
-        "required": [
-          "userId",
-          "fullName",
-          "workTelephone",
-          "workEmail",
-          "organisationMembershipId",
-          "organisationId",
-          "organisationName",
-          "userRole"
-        ],
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "integer",
-            "description": "Gets the unique identifier of the user.",
-            "format": "int32"
-          },
-          "fullName": {
-            "type": "string",
-            "description": "Gets the full name of the user."
-          },
-          "workTelephone": {
-            "type": "string",
-            "description": "Gets the user's work telephone number."
-          },
-          "workEmail": {
-            "type": "string",
-            "description": "Gets the user's email address."
-          },
-          "organisationMembershipId": {
-            "type": "integer",
-            "description": "Gets the unique identifier of the user's organisation membership.",
-            "format": "int32"
-          },
-          "organisationId": {
-            "type": "integer",
-            "description": "Gets the unique identifier of the user's organisation.",
-            "format": "int32"
-          },
-          "organisationName": {
-            "type": "string",
-            "description": "Gets the name of the user's organisation."
-          },
-          "userRole": {
-            "description": "Gets the role assigned to the user within the organisation.",
-            "$ref": "#/components/schemas/UserRole"
-          }
-        },
-        "description": "Represents information about the currently authenticated user and their\nmembership within an organisation."
-      },
       "GetUsersQuerySortValue": {
         "enum": [
           "LastActive",
@@ -1922,6 +2004,20 @@
           }
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
+      },
+      "OnboardedUserDto": {
+        "required": [
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the newly onboarded user.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the outcome of onboarding a new user."
       },
       "OnboardUserCommandDto": {
         "required": [
@@ -2323,6 +2419,57 @@
           }
         },
         "description": "Represents the details of a user."
+      },
+      "UserInformationDto": {
+        "required": [
+          "userId",
+          "fullName",
+          "workTelephone",
+          "workEmail",
+          "organisationMembershipId",
+          "organisationId",
+          "organisationName",
+          "userRole"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user.",
+            "format": "int32"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Gets the full name of the user."
+          },
+          "workTelephone": {
+            "type": "string",
+            "description": "Gets the user's work telephone number."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's email address."
+          },
+          "organisationMembershipId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user's organisation membership.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user's organisation.",
+            "format": "int32"
+          },
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the user's organisation."
+          },
+          "userRole": {
+            "description": "Gets the role assigned to the user within the organisation.",
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "description": "Represents information about a user and their membership within an organisation."
       },
       "UserListItemDto": {
         "required": [

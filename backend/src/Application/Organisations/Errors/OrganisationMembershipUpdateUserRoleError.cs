@@ -20,4 +20,19 @@ public abstract record OrganisationMembershipUpdateUserRoleError
     /// <param name="MembershipId">The identifier of the membership.</param>
     public sealed record NotFound(int OrganisationId, int MembershipId)
         : OrganisationMembershipUpdateUserRoleError;
+
+    /// <summary>
+    /// Represents an error that occurs when a user attempts to change their own role.
+    /// </summary>
+    /// <param name="MembershipId">The identifier of the caller's own membership.</param>
+    public sealed record CannotChangeOwnRole(int MembershipId)
+        : OrganisationMembershipUpdateUserRoleError;
+
+    /// <summary>
+    /// Represents an error that occurs when a non-super user attempts to assign or modify the
+    /// super user role.
+    /// </summary>
+    /// <param name="MembershipId">The identifier of the protected membership.</param>
+    public sealed record CannotManageSuperRole(int MembershipId)
+        : OrganisationMembershipUpdateUserRoleError;
 }

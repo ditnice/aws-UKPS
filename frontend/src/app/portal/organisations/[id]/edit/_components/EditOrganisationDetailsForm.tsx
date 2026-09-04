@@ -188,7 +188,7 @@ export function EditOrganisationDetailsForm({
 
       <ButtonGroup>
         <Button buttonType="submit" disabled={isSubmitting} variant="cta">
-          {isSubmitting ? 'Saving...' : 'Save changes'}
+          Save changes
         </Button>
 
         <Button buttonType="button" variant="secondary" onClick={() => router.back()}>

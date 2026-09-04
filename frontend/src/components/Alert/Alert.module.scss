@@ -1,0 +1,17 @@
+@use '@nice-digital/nds-core/scss/spacing';
+@use '@nice-digital/nds-core/scss/utils';
+
+.wrapper {
+  // Alerts often sit at the very top of a page, above PageHeader - the same top
+  // margin as PageHeader (src/components/PageHeader/PageHeader.module.scss)
+  // keeps the two lined up whichever comes first.
+  margin-top: utils.rem(spacing.$large);
+
+  > [data-component^='alert'] {
+    font-weight: normal;
+
+    p {
+      font-weight: normal;
+    }
+  }
+}
