@@ -501,6 +501,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     EmailAddress = "user@example.com",
                     Role = UserRole.Standard,
                     Status = UserOrgStatus.Active,
+                    Actions = [],
                 },
             ],
             TotalCount = 1,
@@ -508,15 +509,24 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             PageSize = 20,
         };
 
-    private static void ShouldBeEquivalentTo<T>(
-        PaginatedResponseDto<T> expected,
-        PaginatedResponseDto<T> actual
+    private static void ShouldBeEquivalentTo(
+        PaginatedResponseDto<UserListItemDto> expected,
+        PaginatedResponseDto<UserListItemDto> actual
     )
     {
         actual.TotalCount.ShouldBe(expected.TotalCount);
         actual.Page.ShouldBe(expected.Page);
         actual.PageSize.ShouldBe(expected.PageSize);
-        actual.Items.ShouldBe(expected.Items);
+        actual.Items.Count.ShouldBe(expected.Items.Count);
+        foreach (var (expectedItem, actualItem) in expected.Items.Zip(actual.Items))
+        {
+            actualItem.UserId.ShouldBe(expectedItem.UserId);
+            actualItem.EmailAddress.ShouldBe(expectedItem.EmailAddress);
+            actualItem.Role.ShouldBe(expectedItem.Role);
+            actualItem.Status.ShouldBe(expectedItem.Status);
+            actualItem.LastActive.ShouldBe(expectedItem.LastActive);
+            actualItem.Actions.ShouldBe(expectedItem.Actions);
+        }
     }
 
     private sealed class GetUsersQueryDtoFaker : Faker<GetUsersQueryDto>

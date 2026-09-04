@@ -6,7 +6,7 @@ import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import type { Client } from '@/client/generated/client'
 import { getUsers, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserListItemDto } from '@/client/generated/types.gen'
+import type { UserListItemDto, UserMembershipActions } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
@@ -52,48 +52,56 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
-function renderActions(
-  user: UserListItemDto,
-  organisationId: number,
-  currentUserId: number | undefined,
-) {
-  // Users cannot change their own role or deactivate themselves
-  if (user.userId === currentUserId) {
-    return 'Not applicable'
+function renderActions(user: UserListItemDto, organisationId: number) {
+  const getActionLinkFromAction = (action: UserMembershipActions): React.ReactNode | null => {
+    switch (action) {
+      case 'ApproveMembership':
+        return (
+          <Link
+            href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
+          >
+            Approve
+          </Link>
+        )
+      case 'RejectMembership':
+        return (
+          <Link
+            href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
+          >
+            Reject
+          </Link>
+        )
+      case 'DeactivateMembership':
+        return (
+          <Link href={`/portal/organisations/${organisationId}/users/${user.userId}/deactivate`}>
+            Deactivate
+          </Link>
+        )
+      case 'ReactivateMembership':
+        return <a>Reactivate</a>
+      case 'EditUserRole':
+        return (
+          <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
+            Edit role
+          </Link>
+        )
+      default:
+        return null
+    }
   }
 
-  switch (user.status) {
-    case 'Active':
-    case 'Inactive':
-      return (
-        <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
-          Edit role
-        </Link>
-      )
-    case 'Deactivated':
-      return <a>Reactivate</a>
-    case 'RequestedAccess':
-      return (
-        <ul className={styles.actionList}>
-          <li>
-            <Link
-              href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
-            >
-              Approve
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
-            >
-              Reject
-            </Link>
-          </li>
-        </ul>
-      )
-    default:
-      return 'Not applicable'
-  }
+  const actionLinks = user.actions
+    .map((x) => ({ node: getActionLinkFromAction(x), key: x }))
+    .filter((x) => x.node)
+  return (
+    <ul className={styles.actionList}>
+      {actionLinks.length ? (
+        actionLinks.map((x) => <li key={x.key}>{x.node}</li>)
+      ) : (
+        <>Not applicable</>
+      )}
+    </ul>
+  )
 }
 
 function getFirstResult(totalCount: number, currentPage: number, pageSize: number): number {

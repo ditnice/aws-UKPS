@@ -103,9 +103,15 @@ internal partial class UserService(
             getUsersQuery.SortBy,
             getUsersQuery.SortDirection
         );
-        List<UserListItemDto> items = await orderedOrganisationMemberships
+        var items = await orderedOrganisationMemberships
+            .AsNoTracking()
+            .Include(x => x.User)
             .Skip((getUsersQuery.Page - 1) * getUsersQuery.PageSize)
             .Take(getUsersQuery.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var currentUserInfo = currentUserInfoService.GetCurrentUserInfo();
+        var projectedItems = items
             .Select(m => new UserListItemDto
             {
                 UserId = m.User!.Id,
@@ -113,13 +119,18 @@ internal partial class UserService(
                 Role = m.UserRole,
                 Status = m.Status,
                 LastActive = m.User.LastActive,
+                Actions = m.GetPermittedActions(
+                        currentUserInfo.CognitoUsername,
+                        currentUserInfo.UserRole
+                    )
+                    .ToArray(),
             })
-            .ToListAsync(cancellationToken);
+            .ToArray();
 
         return GetUsersResult.Ok(
             new PaginatedResponseDto<UserListItemDto>
             {
-                Items = items,
+                Items = projectedItems,
                 TotalCount = totalCount,
                 Page = getUsersQuery.Page,
                 PageSize = getUsersQuery.PageSize,

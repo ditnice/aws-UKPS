@@ -1,3 +1,4 @@
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Users.Dtos;
@@ -31,4 +32,9 @@ public sealed record UserListItemDto
     /// Gets the date and time when the user was last active, if available.
     /// </summary>
     public DateTime? LastActive { get; init; }
+
+    /// <summary>
+    /// Gets the actions that can be performed by the current user.
+    /// </summary>
+    public required IReadOnlyCollection<UserMembershipAction> Actions { get; init; }
 }
