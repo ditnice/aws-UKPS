@@ -46,6 +46,42 @@ COGNITO_CLIENT_ID=ioihsfd49fj09wj3f
 AUTHENTICATION_MODE=DEV
 ```
 
+### End-to-end tests
+
+Run the Playwright tests against a local instance. Playwright starts `pnpm dev` when an
+instance is not already running:
+
+```sh
+pnpm test:e2e
+```
+
+Run the same tests against the deployed dev environment without starting a local server:
+
+```sh
+pnpm test:e2e:dev
+```
+
+Set `PLAYWRIGHT_BASE_URL` to target another deployed environment:
+
+```sh
+PLAYWRIGHT_BASE_URL=https://example.test pnpm test:e2e
+```
+
+Authenticated tests run when `E2E_USER_EMAIL`, `E2E_USER_PASSWORD`, `E2E_TOTP_SECRET`,
+and `E2E_ORGANISATION_ID` are set. Credentials are only submitted to trusted origins.
+The dev environment is trusted by default; set a comma-separated allowlist to trust additional
+environments explicitly:
+
+```sh
+PLAYWRIGHT_BASE_URL=https://staging.example.test \
+PLAYWRIGHT_AUTHENTICATED_ORIGINS=https://dev.ukps.nice.org.uk,https://staging.example.test \
+pnpm test:e2e
+```
+
+Only add environments controlled by the project to `PLAYWRIGHT_AUTHENTICATED_ORIGINS`.
+Local development normally uses `AUTHENTICATION_MODE=DEV`, so authentication redirects and
+authenticated flows run against deployed environments rather than the local server.
+
 #### Docker (Optional)
 
 If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.

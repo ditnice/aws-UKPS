@@ -105,6 +105,7 @@ test-results/
 playwright-report/
 blob-report/
 /playwright/.cache/
+/frontend/tests/e2e/.auth/
 
 # ── Terraform ──────────────────────────────────────────────────────────────────
 
