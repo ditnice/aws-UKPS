@@ -1,5 +1,5 @@
 locals {
-  function_name = "${var.project}-${var.environment}-${var.service_name}-image"
+  function_name = "${var.project}-${var.environment}-${var.service_name}"
 }
 
 resource "aws_lambda_function" "db_migrator" {
