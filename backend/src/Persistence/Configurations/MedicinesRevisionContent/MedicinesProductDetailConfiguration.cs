@@ -15,6 +15,7 @@ internal sealed class MedicinesProductDetailConfiguration
         builder.Property(x => x.Indication).IsRequired();
         builder.Property(x => x.IndicationIsPaediatric);
         builder.Property(x => x.IndicationIsCancer);
+        builder.Property(x => x.IndicationIsRareDisease);
 
         builder
             .HasIndex(x => x.RevisionId)
@@ -31,12 +32,6 @@ internal sealed class MedicinesProductDetailConfiguration
             .HasOne(x => x.BnfChapter)
             .WithMany()
             .HasForeignKey(x => x.BnfChapterId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.TherapeuticArea)
-            .WithMany()
-            .HasForeignKey(x => x.TherapeuticAreaId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder

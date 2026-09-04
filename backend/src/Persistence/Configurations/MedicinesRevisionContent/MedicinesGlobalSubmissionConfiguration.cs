@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UKPS.Api.Persistence.Entities.SharedRevisionContent;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-namespace UKPS.Api.Persistence.Configurations.SharedRevisionContent;
+namespace UKPS.Api.Persistence.Configurations.MedicinesRevisionContent;
 
-internal sealed class RecordGlobalSubmissionConfiguration
-    : IEntityTypeConfiguration<RecordGlobalSubmission>
+internal sealed class MedicinesGlobalSubmissionConfiguration
+    : IEntityTypeConfiguration<MedicinesGlobalSubmission>
 {
-    public void Configure(EntityTypeBuilder<RecordGlobalSubmission> builder)
+    public void Configure(EntityTypeBuilder<MedicinesGlobalSubmission> builder)
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
@@ -15,18 +15,12 @@ internal sealed class RecordGlobalSubmissionConfiguration
         builder
             .HasIndex(x => x.RevisionId)
             .IsUnique()
-            .HasDatabaseName("ix_record_global_submission_revision_id");
+            .HasDatabaseName("ix_medicines_global_submission_revision_id");
 
         builder
             .HasOne(x => x.Revision)
             .WithMany()
             .HasForeignKey(x => x.RevisionId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.GlobalSubmissionEstimatedDate)
-            .WithMany()
-            .HasForeignKey(x => x.GlobalSubmissionEstimatedDateId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder

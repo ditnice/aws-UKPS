@@ -11,6 +11,7 @@ internal sealed class RecordHtaConfiguration : IEntityTypeConfiguration<RecordHt
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.HtaNiceAlignedPathway);
+        builder.Property(x => x.VaccineHtaAssessor);
 
         builder.HasIndex(x => x.RevisionId).IsUnique().HasDatabaseName("ix_record_hta_revision_id");
 

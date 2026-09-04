@@ -11,13 +11,18 @@ internal sealed class VaccinesTechnology
     /// <summary>Free text; conditional on VaccinePlatform = Other.</summary>
     public string? VaccinePlatformOther { get; set; }
 
-    public int AdministrationRouteId { get; set; }
+    /// <summary>Free text; conditional on AdministrationRoutes including the Other option.</summary>
+    public string? AdministrationRouteOther { get; set; }
+
     public YesNoNotYetConfirmed HasAdjuvant { get; set; }
 
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.VaccinePlatform? VaccinePlatform { get; set; }
-    public ReferenceData.VaccineAdministrationRoute? AdministrationRoute { get; set; }
+
+    /// <summary>Multi-select: one or more routes of administration.</summary>
+    public ICollection<VaccinesAdministrationRoute> AdministrationRoutes { get; set; } = [];
+
     public ICollection<VaccinesAntigen> Antigens { get; set; } = [];
     public ICollection<VaccinesAdjuvant> Adjuvants { get; set; } = [];
 }

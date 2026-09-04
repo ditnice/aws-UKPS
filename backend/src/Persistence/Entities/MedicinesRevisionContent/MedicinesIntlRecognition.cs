@@ -1,8 +1,13 @@
 using UKPS.Api.Persistence.Enums;
 
-namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
+namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-internal sealed class RecordIntlRecognition
+/// <summary>
+/// Medicines only — International Recognition Procedure details.
+/// Vaccines capture international regulatory activity as a simple gate plus free
+/// text instead; see VaccinesRevisionContent.VaccinesIntlSubmission.
+/// </summary>
+internal sealed class MedicinesIntlRecognition
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }
@@ -16,6 +21,6 @@ internal sealed class RecordIntlRecognition
     public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.IrpReferenceRegulator? IrpReferenceRegulator { get; set; }
     public ReferenceData.IrpRoute? IrpRoute { get; set; }
-    public RegulatoryDate? IntlSubmissionDate { get; set; }
-    public RegulatoryDate? IntlLicenceDate { get; set; }
+    public SharedRevisionContent.RegulatoryDate? IntlSubmissionDate { get; set; }
+    public SharedRevisionContent.RegulatoryDate? IntlLicenceDate { get; set; }
 }
