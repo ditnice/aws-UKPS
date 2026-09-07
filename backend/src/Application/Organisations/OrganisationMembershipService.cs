@@ -123,7 +123,10 @@ internal sealed class OrganisationMembershipService(
             {
                 CognitoUsername = membership.User!.CognitoUsername,
                 RecipientAddress = membership.User.WorkEmail,
-                Email = new DeactivatedUserNotificationEmail(),
+                Email = new DeactivatedUserNotificationEmail()
+                {
+                    OrganisationName = membership.Organisation!.OrganisationName,
+                },
             },
             cancellationToken
         );

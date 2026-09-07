@@ -4,10 +4,17 @@ namespace UKPS.Api.Application.Organisations;
 
 internal class DeactivatedUserNotificationEmail : IEmail
 {
-    public string Subject => "Your membership has been deactivated.";
+    public string Subject => "UKPS Membership Deactivated";
+    public required string OrganisationName { get; init; }
 
     public string GetHtmlContent()
     {
-        return "<p>Your membership has been deactivated.</p>";
+        var content = $"""
+<p>Hello,</p>
+<p>
+    You're membership account with {OrganisationName} has been deactivated.
+</p>
+""";
+        return content;
     }
 }
