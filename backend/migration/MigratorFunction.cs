@@ -52,7 +52,7 @@ public sealed class MigratorFunction
         string dbConnectionString = DatabaseConnectionStringFactory.GetConnectionString(config);
 
         DbContextOptions<AppDbContext> options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(dbConnectionString)
+            .UseNpgsql(dbConnectionString, x => x.MigrationsAssembly("UKPS.Api"))
             .Options;
 
         await using AppDbContext dbContext = new(options);
