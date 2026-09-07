@@ -47,11 +47,21 @@ const DeactivateUserControls = ({
         </ErrorState>
       )}
       <ButtonGroup>
-        <Button data-testid="action-button" variant="cta" onClick={deactivateUser}>
-          Deactivate User
+        <Button
+          data-testid="action-button"
+          variant="cta"
+          disabled={loading}
+          onClick={deactivateUser}
+        >
+          {loading ? <>loading...</> : <>Deactivate User</>}
         </Button>
-        <Button data-testid="cancel-button" variant="secondary" onClick={router.back}>
-          {loading ? <>loading...</> : <>Cancel</>}
+        <Button
+          data-testid="cancel-button"
+          variant="secondary"
+          disabled={loading}
+          onClick={router.back}
+        >
+          Cancel
         </Button>
       </ButtonGroup>
     </>
