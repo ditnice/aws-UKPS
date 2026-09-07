@@ -63,14 +63,14 @@ export function RegistrationRequestForm() {
       onDynamic: RegistrationRequest,
     },
     onSubmit: async ({ value }) => {
-      RegistrationRequest.parse(value)
+      const validatedValue = RegistrationRequest.parse(value)
 
       const response = await postUsersRegister({
         body: {
-          fullName: value.fullName,
-          workEmail: value.workEmail,
-          phoneNumber: value.phoneNumber,
-          organisationId: value.organisationId,
+          fullName: validatedValue.fullName,
+          workEmail: validatedValue.workEmail,
+          phoneNumber: validatedValue.phoneNumber,
+          organisationId: validatedValue.organisationId,
         },
       })
       if (response.data) {
