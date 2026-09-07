@@ -34,6 +34,9 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// <item>
     /// <description><c>400 Bad Request</c> if some of the required data is missing.</description>
     /// </item>
+    /// <item>
+    /// <description><c>404 Not Found</c> if the specified organisation cannot be found or is not active.</description>
+    /// </item>
     /// </list>
     /// </returns>
     [ProducesResponseType<RegisterUserConfirmationDto>(StatusCodes.Status200OK)]
@@ -53,6 +56,10 @@ public class UserCreationController(IUserAdministrationService userAdministratio
                 {
                     RegisterUserError.MissingFields => BadRequest(
                         "Some of the data required is missing."
+                    ),
+                    RegisterUserError.OrganisationNotFound => Problem(
+                        statusCode: StatusCodes.Status404NotFound,
+                        detail: $"Organisation ID is not found."
                     ),
                     _ => throw new UnreachableException(),
                 }

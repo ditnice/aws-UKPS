@@ -294,6 +294,7 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
                 HeadOfficeEmail = "test1@email.com",
                 HeadOfficeTelephone = "07943162541",
                 HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+                Status = UserOrgStatus.Active,
             },
             new Organisation
             {
@@ -302,6 +303,7 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
                 HeadOfficeEmail = "test2@email.com",
                 HeadOfficeTelephone = "07943162542",
                 HeadOfficeAddress = "11 Downing Street\nLondon\nSW1A 2AA",
+                Status = UserOrgStatus.Active,
             }
         );
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);

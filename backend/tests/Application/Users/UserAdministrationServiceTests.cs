@@ -229,13 +229,15 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         var context = _harness.GetClearedContext();
 
         OrganisationFaker organisationFaker = new();
-        var organisation = organisationFaker.Generate();
+        var organisation = organisationFaker
+            .RuleFor(o => o.Status, _ => UserOrgStatus.Active)
+            .Generate();
 
         context.Organisations.Add(organisation);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         RegisterUserCommandDto registerUserCommandDto = _registerUserCommandDtoFaker
-            .RuleFor(x => x.OrganisationId, _ => 1)
+            .RuleFor(o => o.OrganisationId, _ => organisation.Id)
             .Generate();
         RegisterUserConfirmation result = await _harness.Service.RegisterUser(
             registerUserCommandDto,

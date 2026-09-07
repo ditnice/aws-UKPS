@@ -219,6 +219,28 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
+    public async Task RegisterUser_OrganisationNotFound_ReturnsNotFound()
+    {
+        RegisterUserCommandDto request = RegisterUserCommandDto();
+
+        _mockService
+            .RegisterUser(Arg.Any<RegisterUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
+                    new RegisterUserError.OrganisationNotFound()
+                )
+            );
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri("/users/register"),
+            request,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task GetUserRegistrationById_UserExists_ReturnsDto()
     {
         RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
