@@ -168,23 +168,33 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
-        var userRegister = new UserRegistrationRequest()
+        bool organisationExists = await dbContext.Organisations.AnyAsync(
+            o => o.Id == registerUserCommandDto.OrganisationId,
+            cancellationToken
+        );
+        if (organisationExists)
         {
-            OrganisationId = registerUserCommandDto.OrganisationId,
-            FullName = registerUserCommandDto.FullName,
-            PhoneNumber = registerUserCommandDto.PhoneNumber,
-            WorkEmail = registerUserCommandDto.WorkEmail,
-        };
-        dbContext.UserRegistrationRequests.Add(userRegister);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        var request = await dbContext
-            .UserRegistrationRequests.AsNoTracking()
-            .Include(x => x.Organisation)
-            .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
+            var userRegister = new UserRegistrationRequest
+            {
+                OrganisationId = registerUserCommandDto.OrganisationId,
+                FullName = registerUserCommandDto.FullName,
+                PhoneNumber = registerUserCommandDto.PhoneNumber,
+                WorkEmail = registerUserCommandDto.WorkEmail,
+            };
+            dbContext.UserRegistrationRequests.Add(userRegister);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            var request = await dbContext
+                .UserRegistrationRequests.AsNoTracking()
+                .Include(x => x.Organisation)
+                .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
 
-        var dto = MapToDto(request);
+            var dto = MapToDto(request);
 
-        return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
+            return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
+        }
+        return Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
+            new RegisterUserError.OrganisationNotFound()
+        );
     }
 
     public async Task<

@@ -14,4 +14,9 @@ public abstract record RegisterUserError
     /// Represents an error indicating that one or more required fields are missing.
     /// </summary>
     public sealed record MissingFields() : RegisterUserError;
+
+    /// <summary>
+    /// Represents an error indicating that the organisation passed in is not found in the database.
+    /// </summary>
+    public sealed record OrganisationNotFound() : RegisterUserError;
 }
