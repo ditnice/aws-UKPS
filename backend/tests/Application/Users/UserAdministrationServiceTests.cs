@@ -257,10 +257,6 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetUserRegistrationById_UserExists_ReturnsDto()
     {
-        OrganisationFaker organisationFaker = new();
-        var organisation = organisationFaker.Generate();
-        Context.Organisations.Add(organisation);
-
         UserRegistrationRequest request = new UserRegistrationRequestFaker().Generate();
         Context.UserRegistrationRequests.Add(request);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -276,7 +272,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             new RegisterUserConfirmationDto
             {
                 Id = request.Id,
-                OrganisationName = organisation.OrganisationName,
+                OrganisationName = request.Organisation!.OrganisationName,
                 FullName = request.FullName,
                 WorkEmail = request.WorkEmail,
                 PhoneNumber = request.PhoneNumber,
