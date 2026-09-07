@@ -5,9 +5,9 @@ data "aws_vpc" "vpc" {
   }
 }
 
-data "aws_cloudfront_distribution" "this" {
-  id = var.cloudfront_distribution_id
-}
+# data "aws_cloudfront_distribution" "this" {
+#   id = var.cloudfront_distribution_id
+# }
 
 data "aws_subnets" "alb_subnets" {
   filter {
