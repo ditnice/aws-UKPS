@@ -78,7 +78,7 @@
     "react-dom": "19.2.8",
     "server-only": "0.0.1",
     "sharp": "0.35.4",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
@@ -103,7 +103,7 @@
     "stylelint-order": "^8.1.1",
     "stylelint-scss": "^7.2.0",
     "stylelint-selector-bem-pattern": "^5.0.0",
-    "tsx": "4.23.12",
+    "tsx": "4.23.13",
     "typescript": "5.9.3",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.11"
