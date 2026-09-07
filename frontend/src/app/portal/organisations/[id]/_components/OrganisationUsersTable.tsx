@@ -6,7 +6,7 @@ import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import type { Client } from '@/client/generated/client'
 import { getUsers, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserListItemDto, UserMembershipActions } from '@/client/generated/types.gen'
+import type { UserListItemDto, UserMembershipAction } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
@@ -53,39 +53,39 @@ function renderStatus(status: UserListItemDto['status']) {
 }
 
 function renderActions(user: UserListItemDto, organisationId: number) {
-  const editActivities: UserMembershipActions[] = ['EditUserRole', 'DeactivateMembership']
+  const editActivities: UserMembershipAction[] = ['EditUserRole', 'DeactivateMembership']
+  const links = []
+  if (user.actions.includes('ApproveMembership')) {
+    links.push(
+      <Link
+        href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
+      >
+        Approve
+      </Link>,
+    )
+  }
+  if (user.actions.includes('RejectMembership')) {
+    links.push(
+      <Link
+        href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
+      >
+        Reject
+      </Link>,
+    )
+  }
+  if (user.actions.includes('ReactivateMembership')) {
+    links.push(<a>Reactivate</a>)
+  }
+  if (user.actions.some((x) => editActivities.includes(x))) {
+    links.push(
+      <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
+        Edit
+      </Link>,
+    )
+  }
   return (
     <ul className={styles.actionList}>
-      {user.actions.includes('ApproveMembership') && (
-        <li>
-          <Link
-            href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
-          >
-            Approve
-          </Link>
-        </li>
-      )}
-      {user.actions.includes('RejectMembership') && (
-        <li>
-          <Link
-            href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
-          >
-            Reject
-          </Link>
-        </li>
-      )}
-      {user.actions.includes('ReactivateMembership') && (
-        <li>
-          <a>Reactivate</a>
-        </li>
-      )}
-      {user.actions.some((x) => editActivities.includes(x)) && (
-        <li>
-          <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
-            Edit
-          </Link>
-        </li>
-      )}
+      {links.length ? links.map((x, index) => <li key={index}>{x}</li>) : <>Not applicable</>}
     </ul>
   )
 }
