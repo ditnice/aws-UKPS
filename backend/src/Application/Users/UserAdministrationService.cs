@@ -169,7 +169,7 @@ internal sealed partial class UserAdministrationService(
     )
     {
         bool organisationExists = await dbContext.Organisations.AnyAsync(
-            o => o.Id == registerUserCommandDto.OrganisationId,
+            o => o.Id == registerUserCommandDto.OrganisationId && o.Status == UserOrgStatus.Active,
             cancellationToken
         );
         if (organisationExists)
