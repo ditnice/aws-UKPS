@@ -53,46 +53,38 @@ function renderStatus(status: UserListItemDto['status']) {
 }
 
 function renderActions(user: UserListItemDto, organisationId: number) {
-  const getActionLinkFromAction = (action: UserMembershipActions): React.ReactNode | null => {
-    switch (action) {
-      case 'ApproveMembership':
-        return (
+  const editActivities: UserMembershipActions[] = ['EditUserRole', 'DeactivateMembership']
+  return (
+    <ul className={styles.actionList}>
+      {user.actions.includes('ApproveMembership') && (
+        <li>
           <Link
             href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
           >
             Approve
           </Link>
-        )
-      case 'RejectMembership':
-        return (
+        </li>
+      )}
+      {user.actions.includes('RejectMembership') && (
+        <li>
           <Link
             href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
           >
             Reject
           </Link>
-        )
-      case 'ReactivateMembership':
-        return <a>Reactivate</a>
-      case 'EditUserRole':
-        return (
+        </li>
+      )}
+      {user.actions.includes('ReactivateMembership') && (
+        <li>
+          <a>Reactivate</a>
+        </li>
+      )}
+      {user.actions.some((x) => editActivities.includes(x)) && (
+        <li>
           <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
             Edit
           </Link>
-        )
-      default:
-        return null
-    }
-  }
-
-  const actionLinks = user.actions
-    .map((x) => ({ node: getActionLinkFromAction(x), key: x }))
-    .filter((x) => x.node)
-  return (
-    <ul className={styles.actionList}>
-      {actionLinks.length ? (
-        actionLinks.map((x) => <li key={x.key}>{x.node}</li>)
-      ) : (
-        <>Not applicable</>
+        </li>
       )}
     </ul>
   )

@@ -17,12 +17,15 @@ describe('parseUserAction', () => {
     })
   })
 
-  it('ignores a missing action', () => {
-    expect(parseUserAction({ userId: '4' })).toBeUndefined()
+  it('reads a deactivated user id', () => {
+    expect(parseUserAction({ action: 'deactivated', userId: '4' })).toEqual({
+      action: 'deactivated',
+      userId: 4,
+    })
   })
 
-  it('ignores an action it does not recognise', () => {
-    expect(parseUserAction({ action: 'deactivated', userId: '4' })).toBeUndefined()
+  it('ignores a missing action', () => {
+    expect(parseUserAction({ userId: '4' })).toBeUndefined()
   })
 
   it.each(['', ' ', 'test@test.com', '0', '-3', '1.5'])(

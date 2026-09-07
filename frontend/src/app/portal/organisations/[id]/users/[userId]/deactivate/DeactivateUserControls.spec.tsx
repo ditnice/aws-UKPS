@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   back: vi.fn(),
   deactivateMembership: vi.fn(),
+  buildUserActionHref: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -21,17 +22,24 @@ vi.mock('@/client/generated', () => ({
   deactivateMembership: mocks.deactivateMembership,
 }))
 
+vi.mock('../../../_lib/userActionAlert', () => ({
+  buildUserActionHref: mocks.buildUserActionHref,
+}))
+
 afterEach(cleanup)
 
+const mockHref = 'href'
 beforeEach(() => {
   vi.clearAllMocks()
 
   mocks.deactivateMembership.mockReturnValue({})
+  mocks.buildUserActionHref.mockReturnValue(mockHref)
 })
 
 const defaultProps: DeactivateUserControlsProps = {
   organisationId: 1,
   membershipId: 2,
+  userId: 3,
 }
 const renderComponent = () => {
   render(<DeactivateUserControls {...defaultProps} />)
@@ -61,8 +69,11 @@ describe('DeactivateUserControls', () => {
     renderComponent()
     fireEvent.click(getActionButton())
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledExactlyOnceWith(
-        `/portal/organisations/${defaultProps.organisationId}`,
+      expect(mocks.push).toHaveBeenCalledExactlyOnceWith(mockHref)
+      expect(mocks.buildUserActionHref).toHaveBeenCalledWith(
+        defaultProps.organisationId,
+        'deactivated',
+        defaultProps.userId,
       )
     })
   })
