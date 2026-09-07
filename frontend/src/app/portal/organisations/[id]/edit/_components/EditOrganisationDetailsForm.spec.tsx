@@ -42,10 +42,10 @@ function submit() {
   fireEvent.click(screen.getByRole('button', { name: 'Submit' }))
 }
 
-const organisationNameLabel = 'Enter your organisation name'
-const organisationAddressLabel = 'Enter your organisation address'
-const organisationEmailLabel = 'Enter the head office email address'
-const organisationPhoneNumberLabel = 'Enter the head office phone number'
+const organisationNameLabel = 'Organisation name'
+const organisationAddressLabel = 'Organisation address'
+const organisationEmailLabel = 'Head office email address'
+const organisationPhoneNumberLabel = 'Head office phone number'
 
 describe('EditOrganisationDetailsForm', () => {
   it('renders each field pre-filled with the given organisation details', () => {

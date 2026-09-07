@@ -103,7 +103,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Enter your organisation name"
+                label="Organisation name"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -125,7 +125,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Textarea
-                label="Enter your organisation address"
+                label="Organisation address"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -147,7 +147,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Enter the head office email address"
+                label="Head office email address"
                 name={field.name}
                 type="email"
                 value={field.state.value}
@@ -170,7 +170,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Enter the head office phone number"
+                label="Head office phone number"
                 name={field.name}
                 hint="For international numbers include the country code. For example +1 555-123-4567."
                 type="tel"
