@@ -1,4 +1,3 @@
-using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Users.Dtos;

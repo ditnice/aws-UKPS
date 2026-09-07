@@ -1,4 +1,4 @@
-namespace UKPS.Api.Persistence.Entities.Identity;
+namespace UKPS.Api.Persistence.Enums;
 
 /// <summary>
 /// Defines the actions that can be performed on a user's membership.

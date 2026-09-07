@@ -127,22 +127,18 @@ export async function OrganisationUsersTable({
 }: OrganisationUsersTableProps) {
   const { page, pageSize, status, role, email, lastActive } = query
 
-  const [{ data: me }, { data: users, error: usersError }] = await Promise.all([
-    getUsersMe({ client: apiClient }),
-    getUsers({
-      client: apiClient,
-      query: {
-        OrganisationId: organisationId,
-        Page: page,
-        PageSize: pageSize,
-        Status: status.length ? status : undefined,
-        Role: role.length ? role : undefined,
-        Email: email,
-        LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
-      },
-    }),
-  ])
-  const currentUserId = me?.userId
+  const { data: users, error: usersError } = await getUsers({
+    client: apiClient,
+    query: {
+      OrganisationId: organisationId,
+      Page: page,
+      PageSize: pageSize,
+      Status: status.length ? status : undefined,
+      Role: role.length ? role : undefined,
+      Email: email,
+      LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
+    },
+  })
 
   const totalCount = users?.totalCount ?? 0
 
