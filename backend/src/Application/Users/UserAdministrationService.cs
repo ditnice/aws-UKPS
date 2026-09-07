@@ -213,7 +213,16 @@ internal sealed partial class UserAdministrationService(
                 new GetUserDetailsError.IdNotFound(Id)
             );
         }
-
+        var authorised = organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.SignUpUser,
+            request.OrganisationId
+        );
+        if (!authorised)
+        {
+            return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                new GetUserDetailsError.UserNotAuthorised()
+            );
+        }
         var dto = MapToDto(request);
         return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(dto);
     }

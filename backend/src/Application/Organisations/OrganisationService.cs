@@ -146,7 +146,7 @@ internal sealed class OrganisationService : IOrganisationService
     )
     {
         return await _dbContext
-            .Organisations.Where(o => o.Status != UserOrgStatus.Deactivated)
+            .Organisations.Where(o => o.Status == UserOrgStatus.Active)
             .Select(o => new OrganisationListDto
             {
                 Id = o.Id,

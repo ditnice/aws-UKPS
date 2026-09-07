@@ -10,4 +10,9 @@ public abstract record GetUserDetailsError
     /// </summary>
     /// <param name="Id">The identifier of the organisation that was not found.</param>
     public sealed record IdNotFound(int Id) : GetUserDetailsError;
+
+    /// <summary>
+    /// Represents an error indicating that the user is not authorized.
+    /// </summary>
+    public sealed record UserNotAuthorised() : GetUserDetailsError;
 }

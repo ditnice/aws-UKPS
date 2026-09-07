@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
@@ -78,6 +79,7 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// <response code="404">
     /// No user was found with the supplied identifier.
     /// </response>
+    [Authorize]
     [HttpGet("registration-requests/{id:int}", Name = nameof(GetUserRegistrationById))]
     public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserRegistrationById(
         int id,
@@ -92,6 +94,9 @@ public class UserCreationController(IUserAdministrationService userAdministratio
                 error switch
                 {
                     GetUserDetailsError.IdNotFound => NotFound(),
+                    GetUserDetailsError.UserNotAuthorised => Problem(
+                        statusCode: (int)HttpStatusCode.Forbidden
+                    ),
                     _ => throw new UnreachableException("Unhandled GetUserDetailsError"),
                 }
         );

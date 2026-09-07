@@ -1,6 +1,8 @@
+'use client'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { RegisterUserConfirmationDto } from '@/client/generated'
 import { getUserRegistrationById } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { Button } from '@/components/Button/Button'
@@ -15,26 +17,11 @@ interface Props {
 
 export default async function RequestSubmitted({ params }: Props) {
   const { id } = await params
-  const userId = Number(id)
-
-  if (!Number.isInteger(userId)) {
+  const userJson = sessionStorage.getItem(id)
+  if (!userJson) {
     notFound()
   }
-
-  const apiClient = await createServerApiClient()
-  const { data: user, error } = await getUserRegistrationById({
-    client: apiClient,
-    path: { id: userId },
-  })
-
-  if (error || !user) {
-    return (
-      <section>
-        <PageHeader heading="Unable to load user" />
-        <p role="alert">There was a problem retrieving the organisation. Please try again later.</p>
-      </section>
-    )
-  }
+  const user = JSON.parse(userJson) as RegisterUserConfirmationDto
 
   return (
     <>
