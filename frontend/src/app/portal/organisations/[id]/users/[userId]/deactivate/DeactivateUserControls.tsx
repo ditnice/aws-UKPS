@@ -59,7 +59,7 @@ const DeactivateUserControls = ({
           data-testid="cancel-button"
           variant="secondary"
           disabled={loading}
-          onClick={router.back}
+          onClick={() => router.back()}
         >
           Cancel
         </Button>

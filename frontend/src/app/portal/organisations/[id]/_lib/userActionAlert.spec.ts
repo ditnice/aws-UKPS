@@ -24,6 +24,10 @@ describe('parseUserAction', () => {
     })
   })
 
+  it('ignores an action it does not recognise', () => {
+    expect(parseUserAction({ action: 'never-going-to-be-an-action', userId: '4' })).toBeUndefined()
+  })
+
   it('ignores a missing action', () => {
     expect(parseUserAction({ userId: '4' })).toBeUndefined()
   })
