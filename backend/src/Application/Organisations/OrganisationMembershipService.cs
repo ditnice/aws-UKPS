@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
@@ -24,7 +25,8 @@ namespace UKPS.Api.Application.Organisations;
 internal sealed class OrganisationMembershipService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
-    ICurrentUserInfoService currentUserInfoService
+    ICurrentUserInfoService currentUserInfoService,
+    IEmailService emailService
 ) : IOrganisationMembershipService
 {
     public async Task<UpdateUserRoleResult> UpdateUserRole(
@@ -116,6 +118,16 @@ internal sealed class OrganisationMembershipService(
             );
         }
         await dbContext.SaveChangesAsync(cancellationToken);
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                CognitoUsername = membership.User!.CognitoUsername,
+                RecipientAddress = membership.User.WorkEmail,
+                Email = new DeactivatedUserNotificationEmail(),
+            },
+            cancellationToken
+        );
+
         return DeactivateUserResult.Ok(MapToDto(membership));
     }
 

@@ -22,6 +22,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     private readonly UserFaker _userFaker;
     private readonly UserOrgMembershipFaker _membershipFaker;
     private readonly OrganisationFaker _organisationFaker;
+    private readonly ServiceTestHarness<IOrganisationMembershipService> _harness;
     private readonly IOrganisationMembershipService _service;
 
     public OrganisationMembershipServiceTests(PostgresFixture fixture)
@@ -30,7 +31,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         _userFaker = new UserFaker();
         _membershipFaker = new UserOrgMembershipFaker();
         _organisationFaker = new OrganisationFaker();
-        _service = new ServiceTestHarness<IOrganisationMembershipService>(Context).Service;
+        _harness = new ServiceTestHarness<IOrganisationMembershipService>(Context);
+        _service = _harness.Service;
     }
 
     [Theory]
@@ -288,6 +290,26 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         saved.Status.ShouldBe(UserOrgStatus.Deactivated);
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_ShouldSendNotificationEmail()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
+        var result = await _service.DeactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Emails.Sent.Single().ShouldBeOfType<DeactivatedUserNotificationEmail>();
     }
 
     [Theory]
