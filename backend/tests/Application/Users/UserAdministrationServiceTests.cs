@@ -255,6 +255,19 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task RegisterUser_OrganisationNotFound_ReturnsError()
+    {
+        RegisterUserCommandDto registerUserCommandDto = _registerUserCommandDtoFaker
+            .RuleFor(x => x.OrganisationId, _ => 999)
+            .Generate();
+        RegisterUserConfirmation result = await _harness.Service.RegisterUser(
+            registerUserCommandDto,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<RegisterUserError.OrganisationNotFound>();
+    }
+
+    [Fact]
     public async Task GetUserRegistrationById_UserExists_ReturnsDto()
     {
         UserRegistrationRequest request = new UserRegistrationRequestFaker().Generate();
