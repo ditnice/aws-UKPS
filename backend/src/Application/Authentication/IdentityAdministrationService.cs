@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
@@ -38,6 +37,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly ISetupLinkCreator _setupLinkCreator;
     private readonly IEmailService _emailService;
+    private readonly EmailOptions _configuration;
 
     public IdentityAdministrationService(
         AppDbContext appDbContext,
@@ -45,7 +45,8 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         IOptions<UserOnboardingOptions> options,
         IDateTimeProvider dateTimeProvider,
         ISetupLinkCreator setupLinkCreator,
-        IEmailService emailService
+        IEmailService emailService,
+        IOptions<EmailOptions> configuration
     )
     {
         _appDbContext = appDbContext;
@@ -54,6 +55,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         _dateTimeProvider = dateTimeProvider;
         _setupLinkCreator = setupLinkCreator;
         _emailService = emailService;
+        _configuration = configuration.Value;
     }
 
     public async Task<SetupUserResult> SetupUser(
@@ -234,8 +236,6 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         };
     }
 
-    private const int MaxResendAttempts = 3;
-
     public async Task<ResendSetupTokenResult> ResendSetupToken(
         ResendSetupTokenCommand command,
         CancellationToken cancellationToken
@@ -258,16 +258,17 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             return ResendSetupTokenResult.Err(new ResendSetupTokenError.Consumed());
         }
 
-        if (userRecord.ResendCount >= MaxResendAttempts)
+        if (userRecord.ResendCount >= _configuration.MaxResendSignUpLinkAttempts)
         {
             return ResendSetupTokenResult.Err(new ResendSetupTokenError.TooManyAttempts());
         }
 
+        User user = userRecord.User!;
         UserOnboardingRecord newRecord = await ReplaceOnboardingRecord(
             userRecord,
             cancellationToken
         );
-        await SendSetupLinkEmail(userRecord.User!, newRecord.SetupToken, cancellationToken);
+        await SendSetupLinkEmail(user, newRecord.SetupToken, cancellationToken);
 
         return ResendSetupTokenResult.Ok();
     }
@@ -286,16 +287,9 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             ResendCount = existingRecord.ResendCount + 1,
         };
 
-        await using IDbContextTransaction transaction =
-            await _appDbContext.Database.BeginTransactionAsync(cancellationToken);
-
         _appDbContext.UserOnboardingRecords.Remove(existingRecord);
-        await _appDbContext.SaveChangesAsync(cancellationToken);
-
         _appDbContext.UserOnboardingRecords.Add(newRecord);
         await _appDbContext.SaveChangesAsync(cancellationToken);
-
-        await transaction.CommitAsync(cancellationToken);
 
         return newRecord;
     }
