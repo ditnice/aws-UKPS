@@ -10,9 +10,11 @@ import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
+import { OrganisationActionAlert } from './_components/OrganisationActionAlert'
 import { OrganisationFilters } from './_components/OrganisationFilters'
 import { OrganisationUsersTable } from './_components/OrganisationUsersTable'
 import { UserActionAlert } from './_components/UserActionAlert'
+import { parseOrganisationAction } from './_lib/organisationActionsAlert'
 import { parseUserAction, type UserActionSearchParams } from './_lib/userActionAlert'
 import {
   buildUserListHref,
@@ -30,6 +32,7 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
   const resolvedSearchParams = await searchParams
   const query = parseUserListQuery(resolvedSearchParams)
   const userAction = parseUserAction(resolvedSearchParams)
+  const organisationAction = parseOrganisationAction(resolvedSearchParams)
   const organisationId = Number(id)
 
   if (!Number.isInteger(organisationId)) {
@@ -59,6 +62,9 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
           organisationId={organisationId}
           userAction={userAction}
         />
+      )}
+      {organisationAction && (
+        <OrganisationActionAlert organisationAction={organisationAction.action} />
       )}
 
       <PageHeader
