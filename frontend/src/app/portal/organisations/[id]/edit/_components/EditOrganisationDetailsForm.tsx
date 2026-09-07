@@ -100,7 +100,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Organisation name"
+                label="Enter your organisation name"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -122,7 +122,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Textarea
-                label="Organisation address"
+                label="Enter your organisation address"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -144,7 +144,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Organisation email address"
+                label="Enter the head office email address"
                 name={field.name}
                 type="email"
                 value={field.state.value}
@@ -167,7 +167,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Organisation phone number"
+                label="Enter the head office phone number"
                 name={field.name}
                 hint="For international numbers include the country code. For example +1 555-123-4567."
                 type="tel"
@@ -188,7 +188,7 @@ export function EditOrganisationDetailsForm({
 
       <ButtonGroup>
         <Button buttonType="submit" disabled={isSubmitting} variant="cta">
-          Save changes
+          Submit
         </Button>
 
         <Button buttonType="button" variant="secondary" onClick={() => router.back()}>
