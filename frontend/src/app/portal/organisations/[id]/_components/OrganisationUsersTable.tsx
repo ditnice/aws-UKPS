@@ -54,38 +54,50 @@ function renderStatus(status: UserListItemDto['status']) {
 
 function renderActions(user: UserListItemDto, organisationId: number) {
   const editActivities: UserMembershipAction[] = ['EditUserRole', 'DeactivateMembership']
-  const links = []
+
+  const links: { key: string; label: string; href: string }[] = []
+
   if (user.actions.includes('ApproveMembership')) {
-    links.push(
-      <Link
-        href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
-      >
-        Approve
-      </Link>,
-    )
+    links.push({
+      key: 'approve',
+      label: 'Approve',
+      href: `/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`,
+    })
   }
+
   if (user.actions.includes('RejectMembership')) {
-    links.push(
-      <Link
-        href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
-      >
-        Reject
-      </Link>,
-    )
+    links.push({
+      key: 'reject',
+      label: 'Reject',
+      href: `/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`,
+    })
   }
+
   if (user.actions.includes('ReactivateMembership')) {
-    links.push(<a>Reactivate</a>)
+    links.push({
+      key: 'reactivate',
+      label: 'Reactivate (Not Implemented)',
+      href: '/placeholder',
+    })
   }
+
   if (user.actions.some((x) => editActivities.includes(x))) {
-    links.push(
-      <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
-        Edit
-      </Link>,
-    )
+    links.push({
+      key: 'edit',
+      label: 'Edit',
+      href: `/portal/organisations/${organisationId}/manage-user-access/${user.userId}`,
+    })
   }
+
   return (
     <ul className={styles.actionList}>
-      {links.length ? links.map((x, index) => <li key={index}>{x}</li>) : <>Not applicable</>}
+      {links.length
+        ? links.map((link) => (
+            <li key={link.key}>
+              <Link href={link.href}>{link.label}</Link>
+            </li>
+          ))
+        : 'Not applicable'}
     </ul>
   )
 }
