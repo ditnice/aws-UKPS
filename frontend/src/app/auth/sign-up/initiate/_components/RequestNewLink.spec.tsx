@@ -102,7 +102,7 @@ describe('RequestNewLink', () => {
     expect(getSendButton().disabled).toBe(false)
   })
 
-  it('still shows the check-your-email message if sending fails', async () => {
+  it('shows a generic error message for an unexpected failure status', async () => {
     vi.mocked(postAuthResendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 500 },
@@ -113,7 +113,53 @@ describe('RequestNewLink', () => {
 
     fireEvent.click(getSendButton())
 
-    expect(await screen.findByText('Check your email')).toBeDefined()
+    expect(await screen.findByText('We could not send a new link')).toBeDefined()
+    expect(
+      screen.getByText(/Something went wrong and we could not send you a new link\./),
+    ).toBeDefined()
+    expect(screen.getByText('UKPS support')).toBeDefined()
+    expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
+  })
+
+  it('shows a not-found message telling the user to check their email for a 404 response', async () => {
+    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+      data: undefined,
+      error: { status: 404 },
+      response: new Response(null, { status: 404 }),
+    })
+
+    render(<RequestNewLink setupToken="test-token" />)
+
+    fireEvent.click(getSendButton())
+
+    expect(await screen.findByText('We could not find this sign-up link')).toBeDefined()
+    expect(screen.getByText(/You may have already requested a new link\./)).toBeDefined()
+    expect(screen.getByText('UKPS support')).toBeDefined()
+    expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
+  })
+
+  it('shows a generic error message for a 400 response', async () => {
+    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+      data: undefined,
+      error: { status: 400 },
+      response: new Response(null, { status: 400 }),
+    })
+
+    render(<RequestNewLink setupToken="test-token" />)
+
+    fireEvent.click(getSendButton())
+
+    expect(await screen.findByText('We could not send a new link')).toBeDefined()
+  })
+
+  it('shows a generic error message if the request throws, e.g. a network failure', async () => {
+    vi.mocked(postAuthResendSetupToken).mockRejectedValue(new Error('Network error'))
+
+    render(<RequestNewLink setupToken="test-token" />)
+
+    fireEvent.click(getSendButton())
+
+    expect(await screen.findByText('We could not send a new link')).toBeDefined()
   })
 
   it('allows up to three successful attempts', async () => {

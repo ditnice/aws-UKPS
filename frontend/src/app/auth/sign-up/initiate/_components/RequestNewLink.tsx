@@ -14,7 +14,7 @@ type RequestNewLinkProps = {
   setupToken: string
 }
 
-type Status = 'idle' | 'sent' | 'locked'
+type Status = 'idle' | 'sent' | 'tooManyAttempts' | 'notFound' | 'genericError'
 
 export function RequestNewLink({ setupToken }: RequestNewLinkProps) {
   const [status, setStatus] = useState<Status>('idle')
@@ -41,24 +41,21 @@ export function RequestNewLink({ setupToken }: RequestNewLinkProps) {
     setCoolingDown(true)
     setRemainingSeconds(resendCooldownSeconds)
 
-    const result = await postAuthResendSetupToken({ body: { setupToken } })
+    try {
+      const result = await postAuthResendSetupToken({ body: { setupToken } })
 
-    setStatus(result.response?.status === 403 ? 'locked' : 'sent')
-  }
-
-  if (status === 'locked') {
-    return (
-      <SignUpInitiateError
-        title="Check your email"
-        detail={
-          <>
-            You have reached the maximum number of attempts to request a new link.
-            <br />
-            Contact <Link href="/">UKPS support</Link> for help completing your registration.
-          </>
-        }
-      />
-    )
+      if (!result.error) {
+        setStatus('sent')
+      } else if (result.response?.status === 403) {
+        setStatus('tooManyAttempts')
+      } else if (result.response?.status === 404) {
+        setStatus('notFound')
+      } else {
+        setStatus('genericError')
+      }
+    } catch {
+      setStatus('genericError')
+    }
   }
 
   if (status === 'sent') {
@@ -88,6 +85,53 @@ export function RequestNewLink({ setupToken }: RequestNewLinkProps) {
           Send a new link
         </Button>
       </>
+    )
+  }
+
+  if (status === 'tooManyAttempts') {
+    return (
+      <SignUpInitiateError
+        title="Check your email"
+        detail={
+          <>
+            You have reached the maximum number of attempts to request a new link.
+            <br />
+            Contact <Link href="/">UKPS support</Link> for help completing your registration.
+          </>
+        }
+      />
+    )
+  }
+
+  if (status === 'notFound') {
+    return (
+      <SignUpInitiateError
+        title="We could not find this sign-up link"
+        detail={
+          <>
+            You may have already requested a new link. Check your email for the most recent one,
+            including your spam or junk folder.
+            <br />
+            If you still need help, contact <Link href="/">UKPS support</Link> for help completing
+            your registration.
+          </>
+        }
+      />
+    )
+  }
+
+  if (status === 'genericError') {
+    return (
+      <SignUpInitiateError
+        title="We could not send a new link"
+        detail={
+          <>
+            Something went wrong and we could not send you a new link.
+            <br />
+            Contact <Link href="/">UKPS support</Link> for help completing your registration.
+          </>
+        }
+      />
     )
   }
 
