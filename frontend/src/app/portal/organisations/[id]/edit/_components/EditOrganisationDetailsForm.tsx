@@ -15,6 +15,7 @@ import { Textarea } from '@/components/Textarea/Textarea'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
+import { OrganisationAction } from '../../_lib/organisationActionsAlert'
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
 
 import type { ChangeEvent } from 'react'
@@ -78,7 +79,9 @@ export function EditOrganisationDetailsForm({
         return
       }
 
-      router.push(`/portal/organisations/${organisationId}`)
+      router.push(
+        `/portal/organisations/${organisationId}?action=${'updated-details' satisfies OrganisationAction}`,
+      )
     },
   })
 
