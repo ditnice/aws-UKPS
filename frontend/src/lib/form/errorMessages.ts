@@ -22,15 +22,13 @@ export const errorMessages = {
   securityCodeFormat: 'Enter a 6-digit security code',
   passwordFormat: 'Password must be at least 8 characters long',
 
-  anErrorOccurredWhenTryingToRetrieveTheUserMembershipRequest:
-    'An error occurred when trying to retrieve the user membership request',
   passwordTooLong: 'Your password must be 256 characters or less',
   passwordWhitespace: 'Your password cannot contain spaces',
 
   // Data retrieval
   failedToRetrieveCurrentUser: 'Failed to retrieve the current user.',
   anErrorOccurredWhenTryingToRetrieveTheUserMembershipRequest:
-    "An error occurred when trying to retrieve the user's membership request.",
+    'An error occurred when trying to retrieve the user membership request',
 
   updatingUserDetailsError: 'An error occurred when updating user details.',
 } as const
