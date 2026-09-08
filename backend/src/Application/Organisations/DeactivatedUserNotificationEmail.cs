@@ -9,11 +9,9 @@ internal class DeactivatedUserNotificationEmail : IEmail
 
     public string GetHtmlContent()
     {
+        // TODO URP-534: Write the deactivation notification email.
         var content = $"""
-<p>Hello,</p>
-<p>
-    You're membership account with {OrganisationName} has been deactivated.
-</p>
+**PLACEHOLDER**
 """;
         return content;
     }
