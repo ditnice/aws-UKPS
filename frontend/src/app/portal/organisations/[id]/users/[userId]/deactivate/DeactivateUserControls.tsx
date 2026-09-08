@@ -53,7 +53,7 @@ const DeactivateUserControls = ({
           disabled={loading}
           onClick={deactivateUser}
         >
-          {loading ? <>loading...</> : <>Deactivate User</>}
+          Deactivate User
         </Button>
         <Button
           data-testid="cancel-button"

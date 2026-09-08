@@ -48,7 +48,7 @@ public class AuthenticationController : ControllerBase
         Title = "Setup token has expired.",
         Detail =
             "The setup token has expired and can no longer be used. Request a new setup token and try again.",
-        Status = StatusCodes.Status401Unauthorized,
+        Status = StatusCodes.Status410Gone,
     };
     private readonly ProblemDetails _setupTokenNotFound = new ProblemDetails
     {
@@ -60,7 +60,14 @@ public class AuthenticationController : ControllerBase
     {
         Title = "Setup token has already been used.",
         Detail = "The setup token has already been consumed and cannot be used again.",
-        Status = StatusCodes.Status401Unauthorized,
+        Status = StatusCodes.Status409Conflict,
+    };
+    private readonly ProblemDetails _setupTokenResendLimitReached = new ProblemDetails
+    {
+        Title = "Setup link resend limit reached.",
+        Detail =
+            "You have requested too many new setup links for this account. Contact UKPS support for help.",
+        Status = StatusCodes.Status403Forbidden,
     };
 
     /// <summary>
@@ -240,23 +247,31 @@ public class AuthenticationController : ControllerBase
     /// </param>
     /// <returns>
     /// <see cref="OkResult"/> if the setup token is valid.
-    /// Returns <see cref="UnauthorizedObjectResult"/> if the setup token has expired or has already been consumed.
+    /// Returns an <see cref="ObjectResult"/> with status 410 if the setup token has expired.
+    /// Returns an <see cref="ObjectResult"/> with status 409 if the setup token has already been consumed.
     /// Returns <see cref="NotFoundObjectResult"/> if the specified setup token does not exist.
     /// </returns>
     /// <response code="200">
     /// The setup token is valid and can be used.
     /// </response>
-    /// <response code="401">
-    /// The setup token has expired or has already been consumed.
+    /// <response code="400">
+    /// The <paramref name="setupToken"/> query parameter was missing or was not a valid GUID.
     /// </response>
     /// <response code="404">
     /// The specified setup token does not exist.
     /// </response>
+    /// <response code="409">
+    /// The setup token has already been consumed.
+    /// </response>
+    /// <response code="410">
+    /// The setup token has expired.
+    /// </response>
     [HttpGet("validate-setup-token")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
     public async Task<ActionResult> ValidateSetupToken(
         [Required] Guid setupToken,
         CancellationToken cancellationToken
@@ -269,9 +284,63 @@ public class AuthenticationController : ControllerBase
             Ok,
             err =>
                 err.Match<ActionResult>(
-                    expired: _ => Unauthorized(_setupTokenExpiredDetails),
+                    expired: _ => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
                     doesNotExist: _ => NotFound(_setupTokenNotFound),
-                    consumed: _ => Unauthorized(_setupTokenConsumed)
+                    consumed: _ => Conflict(_setupTokenConsumed)
+                )
+        );
+    }
+
+    /// <summary>
+    /// Reissues an expired setup token and emails a new setup link to the user's
+    /// registered email address.
+    /// </summary>
+    /// <param name="command">
+    /// The command containing the expired setup token to reissue.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token to monitor for cancellation requests.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult"/> indicating whether a new setup link was sent.
+    /// </returns>
+    /// <response code="200">
+    /// A new setup link was generated and emailed to the user's registered email address.
+    /// </response>
+    /// <response code="400">
+    /// The request body was missing or malformed.
+    /// </response>
+    /// <response code="403">
+    /// The setup token has already been resent the maximum number of times.
+    /// </response>
+    /// <response code="404">
+    /// The specified setup token does not exist.
+    /// </response>
+    /// <response code="409">
+    /// The setup token has already been consumed.
+    /// </response>
+    [HttpPost("resend-setup-token")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> ResendSetupToken(
+        [FromBody] ResendSetupTokenCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<ResendSetupTokenError> result =
+            await _authorisationAdministrationService.ResendSetupToken(command, cancellationToken);
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(
+                    doesNotExist: _ => NotFound(_setupTokenNotFound),
+                    consumed: _ => Conflict(_setupTokenConsumed),
+                    tooManyAttempts: _ =>
+                        StatusCode(StatusCodes.Status403Forbidden, _setupTokenResendLimitReached)
                 )
         );
     }
@@ -288,17 +357,22 @@ public class AuthenticationController : ControllerBase
     /// <returns>
     /// An <see cref="ActionResult"/> indicating whether the user setup was completed successfully.
     /// Returns <see cref="StatusCodes.Status200OK"/> when setup completes successfully.
-    /// Returns <see cref="StatusCodes.Status400BadRequest"/> when the supplied password does not
-    /// meet the required standards.
-    /// Returns <see cref="StatusCodes.Status401Unauthorized"/> when the setup token has expired
-    /// or has already been consumed.
+    /// Returns <see cref="StatusCodes.Status400BadRequest"/> when the request body was missing or
+    /// malformed, or the supplied password does not meet the required standards.
+    /// Returns <see cref="StatusCodes.Status401Unauthorized"/> when the underlying identity
+    /// provider rejects the request.
     /// Returns <see cref="StatusCodes.Status404NotFound"/> when the setup token cannot be found.
+    /// Returns <see cref="StatusCodes.Status409Conflict"/> when the setup token has already been
+    /// consumed.
+    /// Returns <see cref="StatusCodes.Status410Gone"/> when the setup token has expired.
     /// </returns>
     [HttpPost("setup-user")]
     [ProducesResponseType<MultiFactorAuthenticationSetupDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
     public async Task<ActionResult> SetupUser(
         [FromBody] SetupUserCommand setupUserCommand,
         CancellationToken cancellationToken
@@ -314,10 +388,10 @@ public class AuthenticationController : ControllerBase
             err =>
             {
                 return err.Match<ActionResult>(
-                    consumed: () => Unauthorized(_setupTokenConsumed),
+                    consumed: () => Conflict(_setupTokenConsumed),
                     invalidPassword: () =>
                         BadRequest("The password does not meet the expected standards."),
-                    expired: () => Unauthorized(_setupTokenExpiredDetails),
+                    expired: () => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
                     doesNotExist: () => NotFound(_setupTokenNotFound),
                     unauthorised: () => Unauthorized()
                 );

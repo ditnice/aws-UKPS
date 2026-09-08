@@ -1,8 +1,12 @@
 export const errorMessages = {
+  // Authentication
+  incorrectMfaCode: 'The code is incorrect. Try again.',
+
   // Required
   organisationNameRequired: 'Enter the organisation name',
   addressRequired: 'Enter organisation address',
   organisationEmailRequired: 'Enter an email address',
+
   //// Setup
   personalFullNameRequired: 'Enter your full name',
   personalEmailRequired: 'Enter your email address',
@@ -11,6 +15,7 @@ export const errorMessages = {
   phoneRequired: 'Enter a phone number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
+
   //// Onboarding
   userNameRequired: "Enter the user's full name",
   userEmailRequired: "Enter the user's work email address",
@@ -22,13 +27,13 @@ export const errorMessages = {
   securityCodeFormat: 'Enter a 6-digit security code',
   passwordFormat: 'Password must be at least 8 characters long',
 
-  anErrorOccurredWhenTryingToRetrieveTheUserMembershipRequest:
-    'An error occurred when trying to retrieve the user membership request',
   passwordTooLong: 'Your password must be 256 characters or less',
   passwordWhitespace: 'Your password cannot contain spaces',
 
   // Data retrieval
   failedToRetrieveCurrentUser: 'Failed to retrieve the current user.',
+  anErrorOccurredWhenTryingToRetrieveTheUserMembershipRequest:
+    'An error occurred when trying to retrieve the user membership request',
 
   updatingUserDetailsError: 'An error occurred when updating user details.',
 } as const

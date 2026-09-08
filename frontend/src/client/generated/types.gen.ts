@@ -240,6 +240,17 @@ export type ProblemDetails = {
 };
 
 /**
+ * Represents the command used to request that a new setup link be sent for an
+ * expired setup token.
+ */
+export type ResendSetupTokenCommand = {
+    /**
+     * Gets the expired setup token to reissue.
+     */
+    setupToken: string;
+};
+
+/**
  * Represents the information required to respond to a multi-factor
  * authentication challenge.
  */
@@ -598,17 +609,21 @@ export type GetAuthValidateSetupTokenData = {
 
 export type GetAuthValidateSetupTokenErrors = {
     /**
-     * Bad Request
+     * The setupToken query parameter was missing or was not a valid GUID.
      */
     400: ProblemDetails;
-    /**
-     * The setup token has expired or has already been consumed.
-     */
-    401: ProblemDetails;
     /**
      * The specified setup token does not exist.
      */
     404: ProblemDetails;
+    /**
+     * The setup token has already been consumed.
+     */
+    409: ProblemDetails;
+    /**
+     * The setup token has expired.
+     */
+    410: ProblemDetails;
 };
 
 export type GetAuthValidateSetupTokenError = GetAuthValidateSetupTokenErrors[keyof GetAuthValidateSetupTokenErrors];
@@ -616,6 +631,44 @@ export type GetAuthValidateSetupTokenError = GetAuthValidateSetupTokenErrors[key
 export type GetAuthValidateSetupTokenResponses = {
     /**
      * The setup token is valid and can be used.
+     */
+    200: unknown;
+};
+
+export type PostAuthResendSetupTokenData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ResendSetupTokenCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/resend-setup-token';
+};
+
+export type PostAuthResendSetupTokenErrors = {
+    /**
+     * The request body was missing or malformed.
+     */
+    400: ProblemDetails;
+    /**
+     * The setup token has already been resent the maximum number of times.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified setup token does not exist.
+     */
+    404: ProblemDetails;
+    /**
+     * The setup token has already been consumed.
+     */
+    409: ProblemDetails;
+};
+
+export type PostAuthResendSetupTokenError = PostAuthResendSetupTokenErrors[keyof PostAuthResendSetupTokenErrors];
+
+export type PostAuthResendSetupTokenResponses = {
+    /**
+     * A new setup link was generated and emailed to the user's registered email address.
      */
     200: unknown;
 };
@@ -643,6 +696,14 @@ export type PostAuthSetupUserErrors = {
      * Not Found
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
+    /**
+     * Gone
+     */
+    410: ProblemDetails;
 };
 
 export type PostAuthSetupUserError = PostAuthSetupUserErrors[keyof PostAuthSetupUserErrors];
