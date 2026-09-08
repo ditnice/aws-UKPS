@@ -94,6 +94,16 @@ export function SignInForm({ returnTo }: SignInFormProps) {
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
+
+        // Browser autofill can set an input's DOM value without firing the input
+        // event React relies on to keep field state in sync, leaving the field
+        // looking filled in while the form still thinks it's empty. Re-sync from
+        // the DOM immediately before validating so a submit right after autofill
+        // (with no manual edit) still picks up the filled-in values.
+        const formData = new FormData(event.currentTarget)
+        form.setFieldValue('email', String(formData.get('email') ?? ''))
+        form.setFieldValue('password', String(formData.get('password') ?? ''))
+
         form.handleSubmit()
       }}
     >

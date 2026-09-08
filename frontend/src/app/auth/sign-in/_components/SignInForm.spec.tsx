@@ -153,6 +153,39 @@ describe('SignInForm', () => {
     })
   })
 
+  it('submits values that were autofilled without firing an input event', async () => {
+    render(<SignInForm />)
+
+    const emailInput = screen.getByLabelText('Email address')
+    const passwordInput = screen.getByLabelText('Password')
+
+    // Browser autofill can set an input's DOM value directly, bypassing the
+    // native input event React relies on to update controlled state. Setting
+    // the value through the native setter (rather than fireEvent.change, which
+    // also dispatches that event) reproduces that gap.
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      'value',
+    )!.set!
+    nativeInputValueSetter.call(emailInput, 'autofilled@example.com')
+    nativeInputValueSetter.call(passwordInput, 'autofilled-password')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(postAuthLogin).toHaveBeenCalledWith({
+        body: {
+          username: 'autofilled@example.com',
+          password: 'autofilled-password',
+        },
+        credentials: 'include',
+      })
+    })
+
+    expect(screen.queryByText('Enter your email address')).toBeNull()
+    expect(screen.queryByText('Enter your password')).toBeNull()
+  })
+
   it('sets and shows an error message if the response is a 401', async () => {
     vi.mocked(postAuthLogin).mockResolvedValue({
       error: {

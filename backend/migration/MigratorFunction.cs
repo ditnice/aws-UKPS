@@ -43,8 +43,8 @@ public sealed class MigratorFunction
             .AddInMemoryCollection(
                 new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
                 {
-                    [$"Database__{nameof(DatabaseOptions.Username)}"] = secret.Username,
-                    [$"Database__{nameof(DatabaseOptions.Password)}"] = secret.Password,
+                    [$"{DatabaseOptions.SectionName}:Username"] = secret.Username,
+                    [$"{DatabaseOptions.SectionName}:Password"] = secret.Password,
                 }
             )
             .Build();
@@ -52,7 +52,7 @@ public sealed class MigratorFunction
         string dbConnectionString = DatabaseConnectionStringFactory.GetConnectionString(config);
 
         DbContextOptions<AppDbContext> options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(dbConnectionString)
+            .UseNpgsql(dbConnectionString, x => x.MigrationsAssembly("UKPS.Api"))
             .Options;
 
         await using AppDbContext dbContext = new(options);

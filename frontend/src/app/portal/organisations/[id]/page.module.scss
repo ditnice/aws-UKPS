@@ -46,10 +46,3 @@
 .actionList li + li {
   margin-top: utils.rem(spacing.$small);
 }
-
-// Alert sits above PageHeader here, at the very top of the page - give it the
-// same top margin as PageHeader (src/components/PageHeader/PageHeader.module.scss)
-// so the two line up when either can be first on the page.
-.invitedAlert {
-  margin-top: utils.rem(spacing.$large);
-}
