@@ -37,8 +37,8 @@ export async function UserActionAlert({
       return (
         <>
           <Alert type="success">
-            <h3>{user ? `${user.workEmail}'s` : 'An'} account has been deactivated</h3>
-            <p>What have sent {user?.workEmail ?? 'the account'} an email notifying them.</p>
+            <h3>{user?.workEmail ?? 'The user'}&apos;s account has been deactivated</h3>
+            <p>We have sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
           </Alert>
         </>
       )
@@ -46,8 +46,8 @@ export async function UserActionAlert({
       return (
         <>
           <Alert type="success">
-            <h3>{user ? `${user.workEmail}'s` : 'An'} account has been reactivated</h3>
-            <p>We have sent {user?.workEmail ?? 'the account'} an email notifying them.</p>
+            <h3>{user?.workEmail ?? 'The user'}&apos;s account has been reactivated</h3>
+            <p>We have sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
           </Alert>
         </>
       )
