@@ -437,7 +437,16 @@ export type UserListItemDto = {
      * Gets the date and time when the user was last active, if available.
      */
     lastActive?: null | string;
+    /**
+     * Gets the actions that can be performed by the current user.
+     */
+    actions: Array<UserMembershipAction>;
 };
+
+/**
+ * Defines the actions that can be performed on a user's membership.
+ */
+export type UserMembershipAction = 'ApproveMembership' | 'RejectMembership' | 'DeactivateMembership' | 'ReactivateMembership' | 'EditUserRole';
 
 /**
  * Represents a request for a user's membership.

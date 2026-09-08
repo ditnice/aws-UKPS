@@ -676,6 +676,94 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetUsers_WhenAStandardUser_NoActionsAreShownAsPermittedOnTheReturnUsers()
+    {
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = UserRole.Standard,
+                OrganisationId = 1,
+            }
+        );
+        var users = await harness.Service.GetUsers(
+            new GetUsersQueryDto(),
+            TestContext.Current.CancellationToken
+        );
+        users.ShouldBeSuccess().Items.ShouldAllBe(x => !x.Actions.Any());
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super)]
+    [InlineData(UserRole.Champion)]
+    public async Task GetUsers_WhenChampionOrSuperUserShouldReturnAllActions(UserRole userRoles)
+    {
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = userRoles,
+                OrganisationId = 1,
+            }
+        );
+        var allActions = Enum.GetValues<UserMembershipAction>();
+        var result = await harness.Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
+        var users = result.ShouldBeSuccess().Items;
+        var actions = users.SelectMany(x => x.Actions).Distinct();
+        var intersection = allActions.Intersect(actions);
+        intersection.Count().ShouldBe(allActions.Length);
+    }
+
+    [Fact]
+    public async Task GetUsers_NoActionsAreShownAsPermittedForTheCurrentUser()
+    {
+        var membership = _faker.PickRandom(ViewableMemberships);
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = membership.User!.CognitoUsername,
+            }
+        );
+        var result = await harness.Service.GetUsers(
+            new GetUsersQueryDto() { Email = membership.User!.WorkEmail },
+            TestContext.Current.CancellationToken
+        );
+        var users = result.ShouldBeSuccess().Items;
+        var foundUser = users.First(x =>
+            string.Equals(
+                x.EmailAddress,
+                membership.User.WorkEmail,
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
+        foundUser.Actions.ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Active, UserMembershipAction.EditUserRole, true)]
+    [InlineData(UserOrgStatus.Inactive, UserMembershipAction.EditUserRole, true)]
+    [InlineData(UserOrgStatus.Active, UserMembershipAction.DeactivateMembership, true)]
+    [InlineData(UserOrgStatus.Active, UserMembershipAction.ReactivateMembership, false)]
+    [InlineData(UserOrgStatus.Deactivated, UserMembershipAction.DeactivateMembership, false)]
+    [InlineData(UserOrgStatus.RequestedAccess, UserMembershipAction.ApproveMembership, true)]
+    [InlineData(UserOrgStatus.RequestedAccess, UserMembershipAction.RejectMembership, true)]
+    [InlineData(UserOrgStatus.Deactivated, UserMembershipAction.ReactivateMembership, true)]
+    public async Task GetUsers_UsersOfGivenState_MayHaveTheGivenAction(
+        UserOrgStatus status,
+        UserMembershipAction action,
+        bool shouldContainAction
+    )
+    {
+        var result = await _harness.Service.GetUsers(
+            new() { Status = [status] },
+            TestContext.Current.CancellationToken
+        );
+        var users = result.ShouldBeSuccess().Items;
+        users.ShouldAllBe(x => x.Actions.Contains(action) == shouldContainAction);
+    }
+
+    [Fact]
     public async Task UpdateUserDetails_ShouldUpdateUserDetails()
     {
         var currentUser = await CreateExistingCurrentUser();

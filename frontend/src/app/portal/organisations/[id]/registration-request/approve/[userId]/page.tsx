@@ -19,7 +19,7 @@ export default async function ApproveUser({ params }: Props) {
     notFound()
   }
 
-  const organisationHref = `/portal/organisations/${organisationId}`
+  const organisationHref = `/portal/organisations/${organisationId}` as const
 
   return (
     <>

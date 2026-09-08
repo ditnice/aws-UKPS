@@ -2661,6 +2661,7 @@
       },
       "UserListItemDto": {
         "required": [
+          "actions",
           "userId",
           "role",
           "status"
@@ -2694,9 +2695,27 @@
             ],
             "description": "Gets the date and time when the user was last active, if available.",
             "format": "date-time"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserMembershipAction"
+            },
+            "description": "Gets the actions that can be performed by the current user."
           }
         },
         "description": "Represents a limited summary of a user."
+      },
+      "UserMembershipAction": {
+        "enum": [
+          "ApproveMembership",
+          "RejectMembership",
+          "DeactivateMembership",
+          "ReactivateMembership",
+          "EditUserRole"
+        ],
+        "type": "string",
+        "description": "Defines the actions that can be performed on a user's membership."
       },
       "UserMembershipRequestDto": {
         "required": [
