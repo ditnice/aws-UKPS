@@ -20,34 +20,40 @@ export default async function DeactivateUserPage({ params }: DeactivateUserPageP
     notFound()
   }
 
-  const { data: user, error } = await getUserDetailsWithinOrganisation({
-    path: { organisationId, userId: selectedUserId },
-  })
-
-  const renderPageContent = () => {
-    if (!user || error)
-      return <ErrorState>An error occurred when trying to retrieve the user.</ErrorState>
-
-    return (
-      <>
-        <p>You are about to about to deactivate {user.workEmail}</p>
-        <p>
-          A deactivated user will remain on UK PharmaScan but will not receive any communications
-          until they are reactivated.
-        </p>
-        <DeactivateUserControls
-          organisationId={organisationId}
-          userId={selectedUserId}
-          membershipId={user.organisationMembershipId}
-        />
-      </>
-    )
-  }
-
   return (
     <>
       <PageHeader heading="Deactivate user" backLink={<BackLinkBrowser />} />
-      {renderPageContent()}
+      <PageContent organisationId={organisationId} userId={selectedUserId} />
+    </>
+  )
+}
+
+const PageContent = async ({
+  organisationId,
+  userId,
+}: {
+  organisationId: number
+  userId: number
+}) => {
+  const { data: user, error } = await getUserDetailsWithinOrganisation({
+    path: { organisationId, userId },
+  })
+
+  if (!user || error)
+    return <ErrorState>An error occurred when trying to retrieve the user.</ErrorState>
+
+  return (
+    <>
+      <p>You are about to about to deactivate {user.workEmail}</p>
+      <p>
+        A deactivated user will remain on UK PharmaScan but will not receive any communications
+        until they are reactivated.
+      </p>
+      <DeactivateUserControls
+        organisationId={organisationId}
+        userId={userId}
+        membershipId={user.organisationMembershipId}
+      />
     </>
   )
 }
