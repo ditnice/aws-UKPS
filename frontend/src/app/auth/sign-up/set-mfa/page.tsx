@@ -128,7 +128,7 @@ export default function SignUpSetMfa() {
           formApi.setErrorMap({
             onSubmit: {
               fields: {
-                securityCode: 'Invalid authentication code.',
+                securityCode: errorMessages.incorrectMfaCode,
               },
             },
           })
