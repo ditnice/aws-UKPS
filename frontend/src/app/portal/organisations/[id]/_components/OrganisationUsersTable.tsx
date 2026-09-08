@@ -5,8 +5,8 @@ import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import type { Client } from '@/client/generated/client'
-import { getUsers } from '@/client/generated/sdk.gen'
-import type { UserListItemDto } from '@/client/generated/types.gen'
+import { getUsers, getUsersMe } from '@/client/generated/sdk.gen'
+import type { UserListItemDto, UserMembershipAction } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
@@ -53,38 +53,53 @@ function renderStatus(status: UserListItemDto['status']) {
 }
 
 function renderActions(user: UserListItemDto, organisationId: number) {
-  switch (user.status) {
-    case 'Active':
-    case 'Inactive':
-      return (
-        <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
-          Edit role
-        </Link>
-      )
-    case 'Deactivated':
-      return <a>Reactivate</a>
-    case 'RequestedAccess':
-      return (
-        <ul className={styles.actionList}>
-          <li>
-            <Link
-              href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
-            >
-              Approve
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
-            >
-              Reject
-            </Link>
-          </li>
-        </ul>
-      )
-    default:
-      return 'Not applicable'
+  const editActivities: UserMembershipAction[] = ['EditUserRole', 'DeactivateMembership']
+
+  const links: { key: string; label: string; href: string }[] = []
+
+  if (user.actions.includes('ApproveMembership')) {
+    links.push({
+      key: 'approve',
+      label: 'Approve',
+      href: `/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`,
+    })
   }
+
+  if (user.actions.includes('RejectMembership')) {
+    links.push({
+      key: 'reject',
+      label: 'Reject',
+      href: `/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`,
+    })
+  }
+
+  if (user.actions.includes('ReactivateMembership')) {
+    links.push({
+      key: 'reactivate',
+      label: 'Reactivate (Not Implemented)',
+      href: '/placeholder',
+    })
+  }
+
+  if (user.actions.some((x) => editActivities.includes(x))) {
+    links.push({
+      key: 'edit',
+      label: 'Edit',
+      href: `/portal/organisations/${organisationId}/manage-user-access/${user.userId}`,
+    })
+  }
+
+  return (
+    <ul className={styles.actionList}>
+      {links.length
+        ? links.map((link) => (
+            <li key={link.key}>
+              <Link href={link.href}>{link.label}</Link>
+            </li>
+          ))
+        : 'Not applicable'}
+    </ul>
+  )
 }
 
 function getFirstResult(totalCount: number, currentPage: number, pageSize: number): number {
@@ -125,7 +140,7 @@ export async function OrganisationUsersTable({
     },
   })
 
-  const totalCount = users ? Number(users.totalCount) : 0
+  const totalCount = users?.totalCount ?? 0
 
   return (
     <>

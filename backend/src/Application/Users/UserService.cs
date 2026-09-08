@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
@@ -11,6 +12,10 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using GetUserInformationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserInformationDto,
+    UKPS.Api.Application.Users.Errors.GetUsersError
+>;
 using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
@@ -31,7 +36,7 @@ internal partial class UserService(
     ILogger<UserService> logger
 ) : IUserService
 {
-    public async Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
+    public async Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
         User? possibleUser = await dbContext
@@ -54,7 +59,7 @@ internal partial class UserService(
                 "Current user did not have the membership as expected."
             );
 
-        return new CurrentUserInformationDto
+        return new UserInformationDto
         {
             UserId = user.Id,
             FullName = user.FullName,
@@ -74,6 +79,7 @@ internal partial class UserService(
     {
         GetUsersError? organisationError = await ValidateOrganisationAsync(
             getUsersQuery.OrganisationId,
+            Operation.Read,
             cancellationToken
         );
         if (organisationError is not null)
@@ -84,7 +90,7 @@ internal partial class UserService(
         var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
             Operation.Read
         );
-        var organisationMemberships = ApplyFilters(
+        IQueryable<UserOrgMembership> organisationMemberships = ApplyFilters(
             dbContext.UserOrgMemberships.AsNoTracking(),
             permittedOrganisationIds,
             getUsersQuery
@@ -92,10 +98,20 @@ internal partial class UserService(
 
         int totalCount = await organisationMemberships.CountAsync(cancellationToken);
 
-        List<UserListItemDto> items = await organisationMemberships
-            .OrderBy(m => m.User!.Id)
+        IQueryable<UserOrgMembership> orderedOrganisationMemberships = Sort(
+            organisationMemberships,
+            getUsersQuery.SortBy,
+            getUsersQuery.SortDirection
+        );
+        var items = await orderedOrganisationMemberships
+            .AsNoTracking()
+            .Include(x => x.User)
             .Skip((getUsersQuery.Page - 1) * getUsersQuery.PageSize)
             .Take(getUsersQuery.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var currentUserInfo = currentUserInfoService.GetCurrentUserInfo();
+        var projectedItems = items
             .Select(m => new UserListItemDto
             {
                 UserId = m.User!.Id,
@@ -103,13 +119,18 @@ internal partial class UserService(
                 Role = m.UserRole,
                 Status = m.Status,
                 LastActive = m.User.LastActive,
+                Actions = m.GetPermittedActions(
+                        currentUserInfo.CognitoUsername,
+                        currentUserInfo.UserRole
+                    )
+                    .ToArray(),
             })
-            .ToListAsync(cancellationToken);
+            .ToArray();
 
         return GetUsersResult.Ok(
             new PaginatedResponseDto<UserListItemDto>
             {
-                Items = items,
+                Items = projectedItems,
                 TotalCount = totalCount,
                 Page = getUsersQuery.Page,
                 PageSize = getUsersQuery.PageSize,
@@ -117,8 +138,78 @@ internal partial class UserService(
         );
     }
 
+    public async Task<GetUserInformationResult> GetUserDetailsWithinOrganisation(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        GetUsersError? organisationError = await ValidateOrganisationAsync(
+            organisationId,
+            Operation.ElevatedRead,
+            cancellationToken
+        );
+        if (organisationError is not null)
+        {
+            return GetUserInformationResult.Err(organisationError);
+        }
+
+        UserInformationDto? user = await dbContext
+            .UserOrgMemberships.AsNoTracking()
+            .Where(m => m.UserId == userId && m.OrganisationId == organisationId)
+            .Where(m => m.Status != UserOrgStatus.Rejected)
+            .Select(m => new UserInformationDto
+            {
+                UserId = m.User!.Id,
+                FullName = m.User.FullName,
+                WorkTelephone = m.User.WorkTelephone ?? string.Empty,
+                WorkEmail = m.User.WorkEmail,
+                OrganisationMembershipId = m.Id,
+                OrganisationId = m.OrganisationId,
+                OrganisationName = m.Organisation!.OrganisationName,
+                UserRole = m.UserRole,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return user is null
+            ? GetUserInformationResult.Err(new GetUsersError.UserNotFound(userId, organisationId))
+            : GetUserInformationResult.Ok(user);
+    }
+
+    private static IQueryable<UserOrgMembership> Sort(
+        IQueryable<UserOrgMembership> value,
+        GetUsersQuerySortValue sortBy,
+        SortDirection sortDirection
+    )
+    {
+        Expression<Func<UserOrgMembership, object?>> sortExpression = sortBy switch
+        {
+            GetUsersQuerySortValue.LastActive => m =>
+                m.User!.LastActive == null ? DateTime.MinValue : m.User.LastActive.Value,
+            GetUsersQuerySortValue.Email => m => m.User!.WorkEmail,
+            GetUsersQuerySortValue.Role => m => m.UserRole,
+            GetUsersQuerySortValue.Status => m => m.Status,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(sortBy),
+                $"Unexpected value: {sortBy}"
+            ),
+        };
+        return sortDirection switch
+        {
+            SortDirection.Ascending => value.OrderBy(sortExpression).ThenBy(x => x.Id),
+            SortDirection.Descending => value
+                .OrderByDescending(sortExpression)
+                .ThenByDescending(x => x.Id),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(sortDirection),
+                $"Unexpected value: {sortDirection}"
+            ),
+        };
+    }
+
     private async Task<GetUsersError?> ValidateOrganisationAsync(
         int? organisationId,
+        Operation operation,
         CancellationToken cancellationToken
     )
     {
@@ -128,7 +219,7 @@ internal partial class UserService(
         }
 
         bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
-            Operation.Read,
+            operation,
             organisationId.Value
         );
         if (!actionPermitted)

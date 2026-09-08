@@ -79,6 +79,28 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
+    public async Task Post_WhenSuccessResult_ShouldReturnTheNewUsersId()
+    {
+        const int newUserId = 42;
+        _mockService
+            .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(UserOnboardingResult.Ok(newUserId));
+        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
+
+        var response = await _client.PostAsJsonAsync(
+            OnboardEndpoint,
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        OnboardedUserDto? body = await response.Content.ReadFromJsonAsync<OnboardedUserDto>(
+            TestContext.Current.CancellationToken
+        );
+        body.ShouldNotBeNull();
+        body.UserId.ShouldBe(newUserId);
+    }
+
+    [Fact]
     public async Task Post_WhenNotAllowedError_ShouldReturnHttpForbid()
     {
         _mockService

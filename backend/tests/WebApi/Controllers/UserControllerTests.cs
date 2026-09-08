@@ -16,6 +16,7 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using SortDirection = UKPS.Api.Application.Users.Dtos.SortDirection;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -63,19 +64,31 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     new UserDetailsDtoFaker().Generate()
                 )
             );
+
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Ok(
+                    new UserInformationDtoFaker().Generate()
+                )
+            );
     }
 
     [Fact]
     public async Task GetCurrentUser_ShouldReturnUserFromTheUserService()
     {
-        CurrentUserInformationDto expectedValue = new CurrentUserInformationDtoFaker().Generate();
+        UserInformationDto expectedValue = new UserInformationDtoFaker().Generate();
         _mockUserService.GetCurrentUser(Arg.Any<CancellationToken>()).Returns(expectedValue);
 
         var url = new Uri($"{UsersUrl}/me", UriKind.Relative);
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var data = await response.Content.ReadFromJsonAsync<CurrentUserInformationDto>(
+        var data = await response.Content.ReadFromJsonAsync<UserInformationDto>(
             TestJsonOptions.Default,
             TestContext.Current.CancellationToken
         );
@@ -157,7 +170,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         {
             _mockUserService.ClearReceivedCalls();
             var query = faker.Generate();
-            var url = AppendQueryParams(UsersUrl, faker.Generate());
+            var url = AppendQueryParams(UsersUrl, query);
             await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
             await _mockUserService
@@ -191,6 +204,109 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsOk_WhenTheUserIsAMember()
+    {
+        UserInformationDto expected = new UserInformationDtoFaker().Generate();
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<UserInformationDto, GetUsersError>.Ok(expected));
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationUrl(expected.UserId, expected.OrganisationId),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<UserInformationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_PassesRouteValuesToService()
+    {
+        _ = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 7, organisationId: 12),
+            TestContext.Current.CancellationToken
+        );
+
+        await _mockUserService
+            .Received(1)
+            .GetUserDetailsWithinOrganisation(7, 12, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsBadRequest_WhenOrganisationDoesNotExist()
+    {
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Err(
+                    new GetUsersError.OrganisationNotFound(1)
+                )
+            );
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 1, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsNotFound_WhenTheUserIsNotAMember()
+    {
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Err(new GetUsersError.UserNotFound(2, 1))
+            );
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 2, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_ReturnsForbidden_WhenNotAllowed()
+    {
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Err(new GetUsersError.NotAllowed(1))
+            );
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 1, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -337,6 +453,9 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         }
     }
 
+    private static Uri UserWithinOrganisationUrl(int userId, int organisationId) =>
+        new($"{UsersUrl}/{userId}/organisations/{organisationId}", UriKind.Relative);
+
     private static Uri AppendQueryParams(string url, GetUsersQueryDto query)
     {
         var queryParams = new List<string>();
@@ -346,6 +465,8 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
         queryParams.Add($"page={query.Page}");
         queryParams.Add($"pageSize={query.PageSize}");
+        queryParams.Add($"sortBy={Uri.EscapeDataString(query.SortBy.ToString())}");
+        queryParams.Add($"sortDirection={Uri.EscapeDataString(query.SortDirection.ToString())}");
 
         foreach (var status in query.Status)
             queryParams.Add($"status={Uri.EscapeDataString(status.ToString())}");
@@ -395,6 +516,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     EmailAddress = "user@example.com",
                     Role = UserRole.Standard,
                     Status = UserOrgStatus.Active,
+                    Actions = [],
                 },
             ],
             TotalCount = 1,
@@ -402,15 +524,24 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             PageSize = 20,
         };
 
-    private static void ShouldBeEquivalentTo<T>(
-        PaginatedResponseDto<T> expected,
-        PaginatedResponseDto<T> actual
+    private static void ShouldBeEquivalentTo(
+        PaginatedResponseDto<UserListItemDto> expected,
+        PaginatedResponseDto<UserListItemDto> actual
     )
     {
         actual.TotalCount.ShouldBe(expected.TotalCount);
         actual.Page.ShouldBe(expected.Page);
         actual.PageSize.ShouldBe(expected.PageSize);
-        actual.Items.ShouldBe(expected.Items);
+        actual.Items.Count.ShouldBe(expected.Items.Count);
+        foreach (var (expectedItem, actualItem) in expected.Items.Zip(actual.Items))
+        {
+            actualItem.UserId.ShouldBe(expectedItem.UserId);
+            actualItem.EmailAddress.ShouldBe(expectedItem.EmailAddress);
+            actualItem.Role.ShouldBe(expectedItem.Role);
+            actualItem.Status.ShouldBe(expectedItem.Status);
+            actualItem.LastActive.ShouldBe(expectedItem.LastActive);
+            actualItem.Actions.ShouldBe(expectedItem.Actions);
+        }
     }
 
     private sealed class GetUsersQueryDtoFaker : Faker<GetUsersQueryDto>
@@ -463,6 +594,25 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     );
                 }
             );
+
+            RuleFor(x => x.SortBy, f => f.PickRandom<GetUsersQuerySortValue>());
+            RuleFor(x => x.SortDirection, f => f.PickRandom<SortDirection>());
+        }
+    }
+
+    private sealed class UserInformationDtoFaker : Faker<UserInformationDto>
+    {
+        public UserInformationDtoFaker()
+        {
+            StrictMode(true);
+            RuleFor(x => x.UserId, f => f.Random.Int(1, 1000));
+            RuleFor(x => x.FullName, f => f.Name.FullName());
+            RuleFor(x => x.WorkTelephone, f => new TelephoneNumberFaker().Generate());
+            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
+            RuleFor(x => x.OrganisationMembershipId, f => f.Random.Int(1, 1000));
+            RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
+            RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
+            RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
         }
     }
 
@@ -479,22 +629,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 f => f.Random.Bool() ? new TelephoneNumberFaker().Generate() : null
             );
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
-        }
-    }
-
-    private sealed class CurrentUserInformationDtoFaker : Faker<CurrentUserInformationDto>
-    {
-        public CurrentUserInformationDtoFaker()
-        {
-            StrictMode(true);
-            RuleFor(x => x.UserId, f => f.Random.Int(1));
-            RuleFor(x => x.FullName, f => f.Name.FullName());
-            RuleFor(x => x.WorkTelephone, f => new TelephoneNumberFaker().Generate());
-            RuleFor(x => x.WorkEmail, f => f.Internet.Email());
-            RuleFor(x => x.OrganisationMembershipId, f => f.Random.Int(1));
-            RuleFor(x => x.OrganisationId, f => f.Random.Int(1));
-            RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
-            RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
         }
     }
 }

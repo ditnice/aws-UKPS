@@ -12,6 +12,7 @@ const ndsWrappers = [
   { dir: 'Textarea', pkg: '@nice-digital/nds-textarea', component: 'Textarea' },
   { dir: 'Tag', pkg: '@nice-digital/nds-tag', component: 'Tag' },
   { dir: 'PageHeader', pkg: '@nice-digital/nds-page-header', component: 'PageHeader' },
+  { dir: 'Alert', pkg: '@nice-digital/nds-alert', component: 'Alert' },
 ]
 
 const restrictedImportPaths = ndsWrappers.map(({ pkg, dir, component }) => ({

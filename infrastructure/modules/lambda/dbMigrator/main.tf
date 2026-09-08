@@ -1,5 +1,5 @@
 locals {
-  function_name = "${var.project}-${var.environment}-${var.service_name}-image"
+  function_name = "${var.project}-${var.environment}-${var.service_name}"
 }
 
 resource "aws_lambda_function" "db_migrator" {
@@ -30,7 +30,7 @@ resource "aws_lambda_function" "db_migrator" {
 
   vpc_config {
     subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.this.id]
+    security_group_ids = [aws_security_group.lambda_sg.id]
   }
 
   environment {
@@ -38,7 +38,6 @@ resource "aws_lambda_function" "db_migrator" {
       Database__Host             = var.db_host
       Database__Port             = tostring(var.db_port)
       Database__Name             = var.db_name
-      Database__RootCertificate  = "/var/task/certs/eu-west-2-bundle.pem"
       Database__MigrateOnStartup = "true"
       Seeding__ReseedOnStartup   = "true"
       Seeding__SuperUsersJson    = var.seeded_super_users_json
