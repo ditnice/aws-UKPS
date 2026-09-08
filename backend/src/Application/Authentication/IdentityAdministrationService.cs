@@ -5,14 +5,18 @@ using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.InternalServices.Communication;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
 >;
+using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
@@ -31,18 +35,27 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     private readonly IIdentityService _identityService;
     private readonly IOptions<UserOnboardingOptions> _options;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly ISetupLinkCreator _setupLinkCreator;
+    private readonly IEmailService _emailService;
+    private readonly EmailOptions _configuration;
 
     public IdentityAdministrationService(
         AppDbContext appDbContext,
         IIdentityService identityService,
         IOptions<UserOnboardingOptions> options,
-        IDateTimeProvider dateTimeProvider
+        IDateTimeProvider dateTimeProvider,
+        ISetupLinkCreator setupLinkCreator,
+        IEmailService emailService,
+        IOptions<EmailOptions> configuration
     )
     {
         _appDbContext = appDbContext;
         _identityService = identityService;
         _options = options;
         _dateTimeProvider = dateTimeProvider;
+        _setupLinkCreator = setupLinkCreator;
+        _emailService = emailService;
+        _configuration = configuration.Value;
     }
 
     public async Task<SetupUserResult> SetupUser(
@@ -221,5 +234,81 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             ),
             _ => SetupTokenValidationResult.Ok(),
         };
+    }
+
+    public async Task<ResendSetupTokenResult> ResendSetupToken(
+        ResendSetupTokenCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        UserOnboardingRecord? userRecord = await _appDbContext
+            .UserOnboardingRecords.Include(x => x.User)
+            .FirstOrDefaultAsync(
+                x => x.SetupToken == command.SetupToken,
+                cancellationToken: cancellationToken
+            );
+
+        if (userRecord is null)
+        {
+            return ResendSetupTokenResult.Err(new ResendSetupTokenError.DoesNotExist());
+        }
+
+        if (userRecord.ConsumedAt is not null)
+        {
+            return ResendSetupTokenResult.Err(new ResendSetupTokenError.Consumed());
+        }
+
+        if (userRecord.ResendCount >= _configuration.MaxResendSignUpLinkAttempts)
+        {
+            return ResendSetupTokenResult.Err(new ResendSetupTokenError.TooManyAttempts());
+        }
+
+        User user = userRecord.User!;
+        UserOnboardingRecord newRecord = await ReplaceOnboardingRecord(
+            userRecord,
+            cancellationToken
+        );
+        await SendSetupLinkEmail(user, newRecord.SetupToken, cancellationToken);
+
+        return ResendSetupTokenResult.Ok();
+    }
+
+    private async Task<UserOnboardingRecord> ReplaceOnboardingRecord(
+        UserOnboardingRecord existingRecord,
+        CancellationToken cancellationToken
+    )
+    {
+        var newRecord = new UserOnboardingRecord()
+        {
+            SetupToken = Guid.CreateVersion7(),
+            CreatedBy = existingRecord.CreatedBy,
+            CreatedAt = _dateTimeProvider.GetUtcNow(),
+            UserId = existingRecord.UserId,
+            ResendCount = existingRecord.ResendCount + 1,
+        };
+
+        _appDbContext.UserOnboardingRecords.Remove(existingRecord);
+        _appDbContext.UserOnboardingRecords.Add(newRecord);
+        await _appDbContext.SaveChangesAsync(cancellationToken);
+
+        return newRecord;
+    }
+
+    private async Task SendSetupLinkEmail(
+        User user,
+        Guid setupToken,
+        CancellationToken cancellationToken
+    )
+    {
+        Uri link = _setupLinkCreator.GetSetupLink(setupToken);
+        await _emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                CognitoUsername = user.CognitoUsername,
+                RecipientAddress = user.WorkEmail,
+                Email = new UserSignUpRequestEmail() { Link = link },
+            },
+            cancellationToken
+        );
     }
 }

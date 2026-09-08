@@ -9,8 +9,10 @@ using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
@@ -18,6 +20,7 @@ using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using UserSetupResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
@@ -36,6 +39,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     private readonly IServiceTestHarness<IIdentityAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
+    private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
 
     private TimeSpan _testExpiryTokenTime = TimeSpan.FromMinutes(15);
     private readonly SetupUserCommand _validSetupUserCommand = new()
@@ -118,6 +122,175 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         validationResult.ShouldBeError().ShouldBeOfType<SetupTokenValidationError.Consumed>();
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenSetupTokenHasExpired_ShouldSucceedAndEmailANewSetupLink()
+    {
+        var testLink = new Uri("https://example.com/setup");
+        _setupLinkCreator.GetSetupLink(Arg.Any<Guid>()).Returns(testLink);
+
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 16);
+        int emailsSentDuringOnboarding = _harness.Emails.Sent.Count;
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = entity.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Emails.Sent.Count.ShouldBe(emailsSentDuringOnboarding + 1);
+        UserSignUpRequestEmail email = _harness
+            .Emails.Sent.Last()
+            .ShouldBeOfType<UserSignUpRequestEmail>();
+        email.Link.ShouldBe(testLink);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenSetupTokenHasExpired_ShouldReplaceItWithANewToken()
+    {
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 16);
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = entity.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        AppDbContext context = _harness.GetClearedContext();
+
+        bool oldTokenStillExists = await context.UserOnboardingRecords.AnyAsync(
+            x => x.SetupToken == entity.SetupToken,
+            TestContext.Current.CancellationToken
+        );
+        oldTokenStillExists.ShouldBeFalse();
+
+        UserOnboardingRecord? newRecord = await context.UserOnboardingRecords.FirstOrDefaultAsync(
+            x => x.UserId == entity.UserId,
+            TestContext.Current.CancellationToken
+        );
+        newRecord.ShouldNotBeNull();
+        newRecord.SetupToken.ShouldNotBe(entity.SetupToken);
+        newRecord.CreatedAt.ShouldBe(_testTime);
+        newRecord.ConsumedAt.ShouldBeNull();
+        newRecord.ResendCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenSetupTokenIsStillValid_ShouldStillSucceed()
+    {
+        var testLink = new Uri("https://example.com/setup");
+        _setupLinkCreator.GetSetupLink(Arg.Any<Guid>()).Returns(testLink);
+
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 5);
+        int emailsSentDuringOnboarding = _harness.Emails.Sent.Count;
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = entity.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+        _harness.Emails.Sent.Count.ShouldBe(emailsSentDuringOnboarding + 1);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenCalledThreeTimes_ShouldSucceedEachTime()
+    {
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 5);
+        Guid currentToken = entity.SetupToken;
+
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+                new ResendSetupTokenCommand() { SetupToken = currentToken },
+                TestContext.Current.CancellationToken
+            );
+            result.ShouldBeSuccess();
+
+            UserOnboardingRecord newRecord =
+                await _harness
+                    .GetClearedContext()
+                    .UserOnboardingRecords.FirstOrDefaultAsync(
+                        x => x.UserId == entity.UserId,
+                        TestContext.Current.CancellationToken
+                    )
+                ?? throw new InvalidOperationException("Expected a replacement record.");
+            newRecord.ResendCount.ShouldBe(attempt);
+            currentToken = newRecord.SetupToken;
+        }
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenCalledAFourthTime_ShouldReturnTooManyAttemptsError()
+    {
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 5);
+        Guid currentToken = entity.SetupToken;
+
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+                new ResendSetupTokenCommand() { SetupToken = currentToken },
+                TestContext.Current.CancellationToken
+            );
+            result.ShouldBeSuccess();
+
+            UserOnboardingRecord newRecord =
+                await _harness
+                    .GetClearedContext()
+                    .UserOnboardingRecords.FirstOrDefaultAsync(
+                        x => x.UserId == entity.UserId,
+                        TestContext.Current.CancellationToken
+                    )
+                ?? throw new InvalidOperationException("Expected a replacement record.");
+            currentToken = newRecord.SetupToken;
+        }
+
+        int emailsSentSoFar = _harness.Emails.Sent.Count;
+
+        ResendSetupTokenResult fourthAttemptResult = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = currentToken },
+            TestContext.Current.CancellationToken
+        );
+
+        fourthAttemptResult.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.TooManyAttempts>();
+        _harness.Emails.Sent.Count.ShouldBe(emailsSentSoFar);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenSetupTokenHasAlreadyBeenConsumed_ShouldReturnConsumedError()
+    {
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(
+            createdMinutesInThePast: 15,
+            consumedMinutesInThePast: 0
+        );
+        int emailsSentDuringOnboarding = _harness.Emails.Sent.Count;
+
+        var futureHarness = _harness.UpdateCurrentTime(_testTime + TimeSpan.FromMinutes(5));
+
+        ResendSetupTokenResult result = await futureHarness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = entity.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.Consumed>();
+        _harness.Emails.Sent.Count.ShouldBe(emailsSentDuringOnboarding);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenNoUserOnboardingRecordExistsInTheDatabase_ReturnsDoesNotExistError()
+    {
+        Guid noneExistentToken = Guid.CreateVersion7();
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = noneExistentToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.DoesNotExist>();
+        _harness.Emails.Sent.ShouldBeEmpty();
     }
 
     [Theory]
@@ -473,6 +646,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
                         }
                     )
                 );
+                services.AddTransient(_ => _setupLinkCreator);
                 return services;
             });
     }
