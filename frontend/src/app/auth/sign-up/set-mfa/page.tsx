@@ -4,7 +4,7 @@ import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
-import { useState, type ChangeEvent } from 'react'
+import { useState, useSyncExternalStore, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
@@ -42,7 +42,13 @@ const signUpSetMfaSchema = z.object({
 
 type SignUpSetMfaFormValues = z.input<typeof signUpSetMfaSchema>
 type SignUpMfaSetup = z.infer<typeof signUpMfaSetupSchema>
-type SetupState = { setup: SignUpMfaSetup; status: 'ready' } | { status: 'error' }
+type SetupState =
+  { setup: SignUpMfaSetup; status: 'ready' } | { status: 'error' } | { status: 'loading' }
+
+const loadingSetupState: SetupState = { status: 'loading' }
+const errorSetupState: SetupState = { status: 'error' }
+let cachedStoredSetup: null | string | undefined
+let cachedSetupState: SetupState | undefined
 
 function loadSignUpMfaSetup(): SetupState {
   let storedSetup: string | null
@@ -50,26 +56,35 @@ function loadSignUpMfaSetup(): SetupState {
   try {
     storedSetup = sessionStorage.getItem(signUpMfaSetupStorageKey)
   } catch {
-    return { status: 'error' }
+    return errorSetupState
   }
 
-  if (!storedSetup) {
-    return { status: 'error' }
-  }
+  if (cachedSetupState && storedSetup === cachedStoredSetup) return cachedSetupState
+  cachedStoredSetup = storedSetup
+
+  if (!storedSetup) return (cachedSetupState = errorSetupState)
 
   try {
     const parsedSetup = signUpMfaSetupSchema.parse(JSON.parse(storedSetup))
     new URL(parsedSetup.otpAuthUri)
 
-    return { setup: parsedSetup, status: 'ready' }
+    return (cachedSetupState = { setup: parsedSetup, status: 'ready' })
   } catch {
-    return { status: 'error' }
+    return (cachedSetupState = errorSetupState)
   }
+}
+
+function subscribeToSetupStorage() {
+  return () => {}
 }
 
 export default function SignUpSetMfa() {
   const router = useRouter()
-  const [setupState, setSetupState] = useState<SetupState>(loadSignUpMfaSetup)
+  const setupState = useSyncExternalStore(
+    subscribeToSetupStorage,
+    loadSignUpMfaSetup,
+    () => loadingSetupState,
+  )
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const form = useForm({
@@ -84,10 +99,7 @@ export default function SignUpSetMfa() {
       onDynamic: signUpSetMfaSchema,
     },
     onSubmit: async ({ value, formApi }) => {
-      if (setupState.status !== 'ready') {
-        setSetupState({ status: 'error' })
-        return
-      }
+      if (setupState.status !== 'ready') return
 
       const { securityCode } = signUpSetMfaSchema.parse(value)
       const { setup } = setupState
@@ -131,6 +143,8 @@ export default function SignUpSetMfa() {
       }
     },
   })
+
+  if (setupState.status === 'loading') return null
 
   if (setupState.status === 'error') {
     return (
