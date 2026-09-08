@@ -26,8 +26,15 @@ import {
   statusTagColours,
   type LastActivePreset,
 } from '../_lib/userLabels'
-import { buildUserListHref, type UserListQuery } from '../_lib/userListQuery'
+import {
+  buildUserListHref,
+  getActiveFilters,
+  getUpdatedQueryWithoutFilter,
+  type UserListQuery,
+} from '../_lib/userListQuery'
 import styles from '../page.module.scss'
+
+import { UserFilterSummary } from './UserFilterSummary'
 
 import type { ComponentProps } from 'react'
 
@@ -109,14 +116,6 @@ function renderActions(user: UserListItemDto, organisationId: number) {
   )
 }
 
-function getFirstResult(totalCount: number, currentPage: number, pageSize: number): number {
-  return totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
-}
-
-function getLastResult(totalCount: number, currentPage: number, pageSize: number): number {
-  return Math.min(currentPage * pageSize, totalCount)
-}
-
 function getTotalPages(totalCount: number, pageSize: number): number {
   return Math.ceil(totalCount / pageSize)
 }
@@ -186,11 +185,7 @@ export async function OrganisationUsersTable({
   return (
     <>
       <div className={styles['table-toolbar']}>
-        <FilterSummary className={styles['users-filter-summary']}>
-          {users
-            ? `Showing results ${getFirstResult(totalCount, page, pageSize)} to ${getLastResult(totalCount, page, pageSize)} of ${totalCount}`
-            : 'Showing results'}
-        </FilterSummary>
+        <UserFilterSummary query={query} users={users} />
         {/* TODO - remove the elementType when the Button wrapper is merged */}
         <Button elementType={Link} href={`/portal/organisations/${organisationId}/onboard-user`}>
           Add a new user

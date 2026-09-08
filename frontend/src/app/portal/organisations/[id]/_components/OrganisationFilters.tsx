@@ -13,6 +13,7 @@ import {
   statusLabels,
   type LastActivePreset,
 } from '../_lib/userLabels'
+import { getNumberOfActiveFilters, UserListQuery } from '../_lib/userListQuery'
 
 import type { ChangeEvent, SubmitEvent } from 'react'
 
@@ -52,10 +53,17 @@ function FilterOptionsGroup<T extends string>({
   )
 }
 
-export function OrganisationFilters() {
+type OrganisationFiltersProps = {
+  query: UserListQuery
+}
+export function OrganisationFilters({ query }: OrganisationFiltersProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const numberOfActiveFilters = getNumberOfActiveFilters(query)
+  const filtersTitle = numberOfActiveFilters
+    ? `Filters (${numberOfActiveFilters} Active)`
+    : 'Filters'
 
   const selectedStatuses = searchParams.getAll('status')
   const selectedRoles = searchParams.getAll('role')
@@ -107,7 +115,7 @@ export function OrganisationFilters() {
   }
 
   return (
-    <FilterPanel heading="Filters" onSubmit={handleFilterSubmit}>
+    <FilterPanel heading={filtersTitle} onSubmit={handleFilterSubmit}>
       <FilterByInput
         label="Filter users"
         name="email"
