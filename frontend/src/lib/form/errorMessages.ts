@@ -15,6 +15,7 @@ export const errorMessages = {
   phoneRequired: 'Enter a phone number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
+  organisationRequired: 'Select an organisation',
 
   //// Onboarding
   userNameRequired: "Enter the user's full name",
