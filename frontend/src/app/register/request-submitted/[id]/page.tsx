@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
-import { notFound, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 import { RegisterUserConfirmationDto } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
@@ -9,14 +10,14 @@ import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryLis
 
 import styles from './page.module.scss'
 
-interface Props {
-  params: Promise<{ id: string }>
-}
-
-export default function RequestSubmitted({}: Props) {
+export default function RequestSubmitted() {
   const { id } = useParams<{ id: string }>()
-  const userJson = sessionStorage.getItem(id)
-  const user = userJson ? (JSON.parse(userJson) as RegisterUserConfirmationDto) : null
+  const [user, setUser] = useState<RegisterUserConfirmationDto | null>(null)
+
+  useEffect(() => {
+    const userJson = sessionStorage.getItem(id)
+    setUser(userJson ? (JSON.parse(userJson) as RegisterUserConfirmationDto) : null)
+  }, [id])
 
   return (
     <>
