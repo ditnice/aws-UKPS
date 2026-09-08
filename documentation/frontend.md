@@ -93,3 +93,7 @@ NO:  my-api/organisation/[orgId]/user/[userId]/requests
 
 YES: my-api/organisations/[orgId]/users/[userId]/requests
 ```
+
+#### Loading States
+
+- We should **NOT** show a loading state for data modification actions (POST, PUT, PATCH) in the browser, and there is no requirement to show a browser-native loading state. This is a requirement specified by GDS.

@@ -37,10 +37,8 @@ export async function UserActionAlert({
       return (
         <>
           <Alert type="success">
-            <h3>{user ? `${user.workEmail}'s` : 'An'} account has been deactivated</h3>
-            <p>
-              A user {user && `with the email ${user.workEmail}`} has been successfully deactivated.
-            </p>
+            <h3>{user?.workEmail ?? 'The user'}'s account has been deactivated</h3>
+            <p>We’ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
           </Alert>
         </>
       )

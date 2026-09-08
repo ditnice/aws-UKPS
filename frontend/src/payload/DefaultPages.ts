@@ -60,7 +60,7 @@ export const defaultPages: SitePage[] = [
       {
         blockType: 'textSection',
         body: 'Home Test',
-        heading: 'Home',
+        heading: 'UK PharmaScan',
         variant: 'homeStandard',
       },
     ],

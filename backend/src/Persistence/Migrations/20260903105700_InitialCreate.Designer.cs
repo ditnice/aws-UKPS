@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260821115845_InitialCreate")]
+    [Migration("20260903105700_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -480,6 +480,54 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasDatabaseName("ix_user_org_membership_user_org_entity");
 
                     b.ToTable("user_org_memberships", "ukps");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserRegistrationRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("full_name");
+
+                    b.Property<int>("OrganisationId")
+                        .HasColumnType("integer")
+                        .HasColumnName("organisation_id");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("phone_number");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("rejected_at");
+
+                    b.Property<int?>("RejectedBy")
+                        .HasColumnType("integer")
+                        .HasColumnName("rejected_by");
+
+                    b.Property<string>("WorkEmail")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("work_email");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_registration_requests");
+
+                    b.HasIndex("OrganisationId")
+                        .HasDatabaseName("ix_user_registration_requests_organisation_id");
+
+                    b.HasIndex("RejectedBy")
+                        .HasDatabaseName("ix_user_registration_requests_rejected_by");
+
+                    b.ToTable("user_registration_requests", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesActiveSubstance", b =>
@@ -2841,6 +2889,26 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("Organisation");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserRegistrationRequest", b =>
+                {
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "Organisation")
+                        .WithMany()
+                        .HasForeignKey("OrganisationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_registration_requests_organisations_organisation_id");
+
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "RejectedByUser")
+                        .WithMany()
+                        .HasForeignKey("RejectedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_user_registration_requests_app_user_rejected_by");
+
+                    b.Navigation("Organisation");
+
+                    b.Navigation("RejectedByUser");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesActiveSubstance", b =>

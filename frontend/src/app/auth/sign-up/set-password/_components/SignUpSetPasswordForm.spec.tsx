@@ -223,14 +223,14 @@ describe('SignUpSetPasswordForm', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('shows a setup link error for a 401 response', async () => {
+  it('shows a setup link error for a 410 response', async () => {
     vi.mocked(postAuthSetupUser).mockResolvedValue({
       data: undefined,
       error: {
         detail: 'The setup token has expired and can no longer be used.',
-        status: 401,
+        status: 410,
       },
-      response: new Response(null, { status: 401 }),
+      response: new Response(null, { status: 410 }),
     })
     renderForm()
 
@@ -239,6 +239,28 @@ describe('SignUpSetPasswordForm', () => {
 
     expect(
       await screen.findByText('The setup token has expired and can no longer be used.'),
+    ).toBeDefined()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('shows a setup link error for a 409 response', async () => {
+    vi.mocked(postAuthSetupUser).mockResolvedValue({
+      data: undefined,
+      error: {
+        detail: 'The setup token has already been consumed and cannot be used again.',
+        status: 409,
+      },
+      response: new Response(null, { status: 409 }),
+    })
+    renderForm()
+
+    enterPassword('fourteen-chars')
+    submitForm()
+
+    expect(
+      await screen.findByText(
+        'The setup token has already been consumed and cannot be used again.',
+      ),
     ).toBeDefined()
     expect(mockPush).not.toHaveBeenCalled()
   })
