@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveData, ApproveErrors, ApproveResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -158,6 +158,11 @@ export const getUsersMe = <ThrowOnError extends boolean = false>(options?: Optio
 export const getUsers = <ThrowOnError extends boolean = false>(options?: Options<GetUsersData, ThrowOnError>): RequestResult<GetUsersResponses, GetUsersErrors, ThrowOnError> => (options?.client ?? client).get<GetUsersResponses, GetUsersErrors, ThrowOnError>({ url: '/users', ...options });
 
 /**
+ * Retrieves a user's details along with their role within the specified organisation.
+ */
+export const getUserDetailsWithinOrganisation = <ThrowOnError extends boolean = false>(options: Options<GetUserDetailsWithinOrganisationData, ThrowOnError>): RequestResult<GetUserDetailsWithinOrganisationResponses, GetUserDetailsWithinOrganisationErrors, ThrowOnError> => (options.client ?? client).get<GetUserDetailsWithinOrganisationResponses, GetUserDetailsWithinOrganisationErrors, ThrowOnError>({ url: '/users/{userId}/organisations/{organisationId}', ...options });
+
+/**
  * Updates the details of the specified user.
  */
 export const patchUsersByUserId = <ThrowOnError extends boolean = false>(options: Options<PatchUsersByUserIdData, ThrowOnError>): RequestResult<PatchUsersByUserIdResponses, PatchUsersByUserIdErrors, ThrowOnError> => (options.client ?? client).patch<PatchUsersByUserIdResponses, PatchUsersByUserIdErrors, ThrowOnError>({
@@ -172,7 +177,7 @@ export const patchUsersByUserId = <ThrowOnError extends boolean = false>(options
 /**
  * Creates a new user account and initiates the onboarding process.
  */
-export const postUsersOnboard = <ThrowOnError extends boolean = false>(options: Options<PostUsersOnboardData, ThrowOnError>): RequestResult<unknown, PostUsersOnboardErrors, ThrowOnError> => (options.client ?? client).post<unknown, PostUsersOnboardErrors, ThrowOnError>({
+export const postUsersOnboard = <ThrowOnError extends boolean = false>(options: Options<PostUsersOnboardData, ThrowOnError>): RequestResult<PostUsersOnboardResponses, PostUsersOnboardErrors, ThrowOnError> => (options.client ?? client).post<PostUsersOnboardResponses, PostUsersOnboardErrors, ThrowOnError>({
     url: '/users/onboard',
     ...options,
     headers: {

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
+import type { OnboardedUserDto } from '@/client/generated/types.gen'
 import { NextLinkMock } from '@/test-utils/nextMocks'
 
 import { OrganisationOnboardUserForm } from './OrganisationOnboardUserForm'
@@ -42,6 +43,14 @@ function fillValidForm() {
   })
   fireEvent.change(screen.getByLabelText('Phone number'), {
     target: { value: '01234567890' },
+  })
+}
+
+function mockSuccessfulOnboardResponse(userId: number) {
+  vi.mocked(postUsersOnboard).mockResolvedValueOnce({
+    data: { userId },
+    error: undefined,
+    response: new Response(null, { status: 201 }),
   })
 }
 
@@ -134,12 +143,8 @@ describe('OrganisationOnboardUserForm', () => {
     })
   })
 
-  it('submits valid values and redirects to the organisation page with the invited email', async () => {
-    vi.mocked(postUsersOnboard).mockResolvedValueOnce({
-      data: undefined,
-      error: undefined,
-      response: new Response(null, { status: 201 }),
-    })
+  it('submits valid values and redirects to the organisation page with the new user id', async () => {
+    mockSuccessfulOnboardResponse(456)
     renderForm()
 
     fillValidForm()
@@ -155,7 +160,36 @@ describe('OrganisationOnboardUserForm', () => {
         },
         credentials: 'include',
       })
-      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123?invited=test%40test.com')
+      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123?action=invited&userId=456')
+    })
+  })
+
+  it('never puts the invited email address in the URL', async () => {
+    mockSuccessfulOnboardResponse(456)
+    renderForm()
+
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+
+    await waitFor(() => expect(mocks.push).toHaveBeenCalled())
+    expect(mocks.push.mock.calls[0][0]).not.toContain('test')
+  })
+
+  it('redirects without an alert when the API does not return the new user id', async () => {
+    vi.mocked(postUsersOnboard).mockResolvedValueOnce({
+      // A success response whose body carries no id: the redirect should still
+      // happen, just without the id the organisation page needs for the alert.
+      data: {} as OnboardedUserDto,
+      error: undefined,
+      response: new Response(null, { status: 201 }),
+    })
+    renderForm()
+
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123')
     })
   })
 

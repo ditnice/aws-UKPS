@@ -1,16 +1,12 @@
 import Link from 'next/link'
 
-import { CurrentUserInformationDto } from '@/client/generated'
+import { UserInformationDto } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 import { errorMessages } from '@/lib/form/errorMessages'
 
-export const UserDetails = ({
-  currentUser,
-}: {
-  currentUser: CurrentUserInformationDto | undefined
-}) => {
+export const UserDetails = ({ currentUser }: { currentUser: UserInformationDto | undefined }) => {
   if (!currentUser)
     return (
       <ErrorState data-testid="failed-user-retrieval">

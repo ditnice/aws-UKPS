@@ -56,6 +56,13 @@ internal abstract class StateMachine<TState, TCommand>
         return CreateTransitionResult(false);
     }
 
+    internal IEnumerable<TCommand> GetPermittedStateChangingCommands()
+    {
+        return _permittedTransitions
+            .Where(x => !x.InitialState.Equals(x.NextState) && x.InitialState.Equals(State))
+            .Select(x => x.Command);
+    }
+
     private TState[] GetPermittedNextState()
     {
         return _permittedTransitions
