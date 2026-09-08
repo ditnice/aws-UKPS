@@ -9,9 +9,20 @@ internal class DeactivatedUserNotificationEmail : IEmail
 
     public string GetHtmlContent()
     {
-        // TODO URP-534: Write the deactivation notification email.
         var content = $"""
-**PLACEHOLDER**
+<p>
+  Hello,<br>
+  This email confirms that your UK PharmaScan account for {OrganisationName} has been deactivated.
+</p>
+
+<p>
+  If you have questions or want to restore access to UK PharmaScan, contact your organisation's champion user.
+</p>
+
+<p>
+  Kind regards,<br>
+  UKPS team
+</p>
 """;
         return content;
     }
