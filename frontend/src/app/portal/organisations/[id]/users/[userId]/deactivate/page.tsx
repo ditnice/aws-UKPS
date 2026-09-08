@@ -44,7 +44,7 @@ const PageContent = async ({
 
   return (
     <>
-      <p>You are about to deactivate {user.workEmail}</p>
+      <p>You are about to deactivate {user.workEmail}.</p>
       <p>
         A deactivated user will remain on UK PharmaScan but will not receive any communications
         until they are reactivated.
