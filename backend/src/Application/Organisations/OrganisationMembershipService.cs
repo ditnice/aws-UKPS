@@ -169,6 +169,18 @@ internal sealed class OrganisationMembershipService(
             );
         }
         await dbContext.SaveChangesAsync(cancellationToken);
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                CognitoUsername = membership.User!.CognitoUsername,
+                RecipientAddress = membership.User.WorkEmail,
+                Email = new ReactivatedUserNotificationEmail()
+                {
+                    OrganisationName = membership.Organisation!.OrganisationName,
+                },
+            },
+            cancellationToken
+        );
         return ReactivateUserResult.Ok(MapToDto(membership));
     }
 

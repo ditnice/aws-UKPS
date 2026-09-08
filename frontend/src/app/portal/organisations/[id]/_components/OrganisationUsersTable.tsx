@@ -83,8 +83,8 @@ function renderActions(user: UserListItemDto, organisationId: number) {
   if (user.actions.includes('ReactivateMembership')) {
     links.push({
       key: 'reactivate',
-      label: 'Reactivate (Not Implemented)',
-      href: '/placeholder',
+      label: 'Reactivate',
+      href: `/portal/organisations/${organisationId}/users/${user.userId}/reactivate`,
     })
   }
 

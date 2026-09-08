@@ -42,6 +42,15 @@ export async function UserActionAlert({
           </Alert>
         </>
       )
+    case 'reactivated':
+      return (
+        <>
+          <Alert type="success">
+            <h3>{user ? `${user.workEmail}'s` : 'An'} account has been reactivated</h3>
+            <p>We have sent {user?.workEmail ?? 'the account'} an email notifying them.</p>
+          </Alert>
+        </>
+      )
     case 'permissions-updated':
       return (
         <Alert type="success">

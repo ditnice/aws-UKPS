@@ -575,6 +575,29 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ReactivateMembership_ShouldSendNotificationEmail()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
+        var result = await _service.ReactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess();
+
+        var email = _harness
+            .Emails.Sent.Single()
+            .ShouldBeOfType<ReactivatedUserNotificationEmail>();
+        email.OrganisationName.ShouldBe(userOrgMembership.Organisation!.OrganisationName);
+    }
+
+    [Fact]
     public async Task UpdateUserRole_ShouldReturnError_WhenTheMembershipBelongsToTheCurrentUser()
     {
         var userOrgMembership = await SetupUserOrgMembership();
