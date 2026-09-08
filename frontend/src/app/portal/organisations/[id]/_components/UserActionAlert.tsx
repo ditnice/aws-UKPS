@@ -21,7 +21,6 @@ export async function UserActionAlert({
     client: apiClient,
     path: { organisationId, userId: userAction.userId },
   })
-
   switch (userAction.action) {
     case 'invited':
       return (
@@ -37,8 +36,8 @@ export async function UserActionAlert({
       return (
         <>
           <Alert type="success">
-            <h3>{user?.workEmail ?? 'The user'}'s account has been deactivated</h3>
-            <p>We’ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
+            <h3>{user?.workEmail ?? 'The user'}&#39;s account has been deactivated</h3>
+            <p>We&#39;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
           </Alert>
         </>
       )

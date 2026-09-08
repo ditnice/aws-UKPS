@@ -3,8 +3,6 @@ import Link from 'next/link'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
-import styles from './page.module.scss'
-
 export default function RegistrationInfo() {
   return (
     <>
@@ -20,16 +18,16 @@ export default function RegistrationInfo() {
       </p>
       <h2>Before you start</h2>
       <p>You&#39;ll need:</p>
-      <ul className={styles.marginBottom}>
+      <ul>
         <li>the name of your organisation registered with UK PharmaScan</li>
         <li>a work email address from your organisation</li>
         <li>an authenticator application on your phone</li>
       </ul>
-      <p className={styles.marginBottom}>
+      <p>
         You must work for, or on behalf of, an organisation registered to use UK PharmaScan. If your
         organisation is not registered, <a href="URL">register your organisation</a>.
       </p>
-      <p className={styles.marginBottom}>It takes around 5 minutes to request access.</p>
+      <p>It takes around 5 minutes to request access.</p>
       <Button elementType={Link} href="/register/provide-details" variant="cta">
         Start now
       </Button>
