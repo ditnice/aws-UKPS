@@ -22,24 +22,40 @@ export async function UserActionAlert({
     path: { organisationId, userId: userAction.userId },
   })
 
-  return userAction.action === 'invited' ? (
-    <Alert type="success">
-      <h3>Invitation sent</h3>
-      <p>
-        We&rsquo;ve sent an email to {user?.workEmail ?? 'the new user'} with instructions to set up
-        an account.
-      </p>
-    </Alert>
-  ) : (
-    <Alert type="success">
-      <h3>Permissions changed</h3>
-      <p>
-        {user?.workEmail ?? "The user's"}{' '}
-        {user
-          ? `is now a ${roleLabels[user.userRole].toLowerCase()}`
-          : 'permissions have been updated'}
-        .
-      </p>
-    </Alert>
-  )
+  switch (userAction.action) {
+    case 'invited':
+      return (
+        <Alert type="success">
+          <h3>Invitation sent</h3>
+          <p>
+            We&rsquo;ve sent an email to {user?.workEmail ?? 'the new user'} with instructions to
+            set up an account.
+          </p>
+        </Alert>
+      )
+    case 'deactivated':
+      return (
+        <>
+          <Alert type="success">
+            <h3>{user ? `${user.workEmail}'s` : 'An'} account has been deactivated</h3>
+            <p>
+              A user {user && `with the email ${user.workEmail}`} has been successfully deactivated.
+            </p>
+          </Alert>
+        </>
+      )
+    case 'permissions-updated':
+      return (
+        <Alert type="success">
+          <h3>Permissions changed</h3>
+          <p>
+            {user?.workEmail ?? "The user's"}{' '}
+            {user
+              ? `is now a ${roleLabels[user.userRole].toLowerCase()}`
+              : 'permissions have been updated'}
+            .
+          </p>
+        </Alert>
+      )
+  }
 }
