@@ -38,7 +38,7 @@ export async function UserActionAlert({
         <>
           <Alert type="success">
             <h3>{user?.workEmail ?? 'The user'}'s account has been deactivated</h3>
-            <p>What have sent {user?.workEmail ?? 'the account'} an email notifying them.</p>
+            <p>We’ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
           </Alert>
         </>
       )
