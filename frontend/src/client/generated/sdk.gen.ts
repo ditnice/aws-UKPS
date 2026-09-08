@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveData, ApproveErrors, ApproveResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PostUsersRegisterData, PostUsersRegisterErrors, PostUsersRegisterResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PostUsersRegisterData, PostUsersRegisterErrors, PostUsersRegisterResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RejectData, RejectErrors, RejectResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -55,6 +55,19 @@ export const postAuthMfa = <ThrowOnError extends boolean = false>(options: Optio
  * Validates whether a user setup token is valid and can be used to complete the user setup process.
  */
 export const getAuthValidateSetupToken = <ThrowOnError extends boolean = false>(options: Options<GetAuthValidateSetupTokenData, ThrowOnError>): RequestResult<GetAuthValidateSetupTokenResponses, GetAuthValidateSetupTokenErrors, ThrowOnError> => (options.client ?? client).get<GetAuthValidateSetupTokenResponses, GetAuthValidateSetupTokenErrors, ThrowOnError>({ url: '/auth/validate-setup-token', ...options });
+
+/**
+ * Reissues an expired setup token and emails a new setup link to the user's
+ * registered email address.
+ */
+export const postAuthResendSetupToken = <ThrowOnError extends boolean = false>(options: Options<PostAuthResendSetupTokenData, ThrowOnError>): RequestResult<PostAuthResendSetupTokenResponses, PostAuthResendSetupTokenErrors, ThrowOnError> => (options.client ?? client).post<PostAuthResendSetupTokenResponses, PostAuthResendSetupTokenErrors, ThrowOnError>({
+    url: '/auth/resend-setup-token',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Completes the setup process for a user account using a valid setup token.

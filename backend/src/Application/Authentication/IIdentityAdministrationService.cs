@@ -1,4 +1,5 @@
 using UKPS.Api.Application.Authentication.Dtos;
+using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
@@ -25,6 +26,20 @@ public interface IIdentityAdministrationService
     /// A result indicating whether the setup token is valid or the reason validation failed.
     /// </returns>
     Task<SetupTokenValidationResult> Validate(Guid setupToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reissues an expired setup token and emails a new setup link to the user's
+    /// registered email address.
+    /// </summary>
+    /// <param name="command">The command containing the expired setup token to reissue.</param>
+    /// <param name="cancellationToken">The token used to cancel the operation.</param>
+    /// <returns>
+    /// A result indicating whether a new setup link was sent or the reason it could not be.
+    /// </returns>
+    Task<ResendSetupTokenResult> ResendSetupToken(
+        ResendSetupTokenCommand command,
+        CancellationToken cancellationToken
+    );
 
     /// <summary>
     /// Completes the user setup process by validating the setup command and creating

@@ -419,6 +419,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("created_by");
 
+                    b.Property<int>("ResendCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("resend_count");
+
                     b.Property<int>("UserId")
                         .HasColumnType("integer")
                         .HasColumnName("user_id");

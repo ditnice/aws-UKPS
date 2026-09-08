@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationProblemDetails, CreateOrganisationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationsPublicOptionsResponse, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdResponse, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersQuerySortValue, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PostUsersRegisterData, PostUsersRegisterErrors, PostUsersRegisterResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserCommandDto, RegisterUserConfirmationDto, RejectData, RejectErrors, RejectResponses, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserMembershipRequestDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationProblemDetails, CreateOrganisationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationsPublicOptionsResponse, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserMembershipRequestData, GetUserMembershipRequestErrors, GetUserMembershipRequestResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdResponse, GetUsersData, GetUsersErrors, GetUsersMeResponse, GetUsersQuerySortValue, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PostUsersRegisterData, PostUsersRegisterErrors, PostUsersRegisterResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserCommandDto, RegisterUserConfirmationDto, RejectData, RejectErrors, RejectResponses, ResendSetupTokenCommand, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, UkpsChallengeType, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserMembershipRequestDto, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -129,6 +129,13 @@ export const fakeRegisterUserConfirmationDto = (options?: Options): RegisterUser
         fullName: f.person.fullName(),
         workEmail: f.internet.email(),
         phoneNumber: f.phone.number()
+    };
+};
+
+export const fakeResendSetupTokenCommand = (options?: Options): ResendSetupTokenCommand => {
+    const f = options?.faker ?? faker;
+    return {
+        setupToken: f.string.uuid()
     };
 };
 
@@ -386,9 +393,25 @@ export const fakeGetAuthValidateSetupTokenResponse200 = (): GetAuthValidateSetup
 
 export const fakeGetAuthValidateSetupTokenResponse400 = (options?: Options): GetAuthValidateSetupTokenErrors[400] => fakeProblemDetails(options);
 
-export const fakeGetAuthValidateSetupTokenResponse401 = (options?: Options): GetAuthValidateSetupTokenErrors[401] => fakeProblemDetails(options);
-
 export const fakeGetAuthValidateSetupTokenResponse404 = (options?: Options): GetAuthValidateSetupTokenErrors[404] => fakeProblemDetails(options);
+
+export const fakeGetAuthValidateSetupTokenResponse409 = (options?: Options): GetAuthValidateSetupTokenErrors[409] => fakeProblemDetails(options);
+
+export const fakeGetAuthValidateSetupTokenResponse410 = (options?: Options): GetAuthValidateSetupTokenErrors[410] => fakeProblemDetails(options);
+
+export const fakePostAuthResendSetupTokenRequest = (options?: Options): Omit<PostAuthResendSetupTokenData, 'url'> => ({
+    body: fakeResendSetupTokenCommand(options)
+});
+
+export const fakePostAuthResendSetupTokenResponse200 = (): PostAuthResendSetupTokenResponses[200] => undefined;
+
+export const fakePostAuthResendSetupTokenResponse400 = (options?: Options): PostAuthResendSetupTokenErrors[400] => fakeProblemDetails(options);
+
+export const fakePostAuthResendSetupTokenResponse403 = (options?: Options): PostAuthResendSetupTokenErrors[403] => fakeProblemDetails(options);
+
+export const fakePostAuthResendSetupTokenResponse404 = (options?: Options): PostAuthResendSetupTokenErrors[404] => fakeProblemDetails(options);
+
+export const fakePostAuthResendSetupTokenResponse409 = (options?: Options): PostAuthResendSetupTokenErrors[409] => fakeProblemDetails(options);
 
 export const fakePostAuthSetupUserRequest = (options?: Options): Omit<PostAuthSetupUserData, 'url'> => ({
     body: fakeSetupUserCommand(options)
@@ -401,6 +424,10 @@ export const fakePostAuthSetupUserResponse400 = (options?: Options): PostAuthSet
 export const fakePostAuthSetupUserResponse401 = (options?: Options): PostAuthSetupUserErrors[401] => fakeProblemDetails(options);
 
 export const fakePostAuthSetupUserResponse404 = (options?: Options): PostAuthSetupUserErrors[404] => fakeProblemDetails(options);
+
+export const fakePostAuthSetupUserResponse409 = (options?: Options): PostAuthSetupUserErrors[409] => fakeProblemDetails(options);
+
+export const fakePostAuthSetupUserResponse410 = (options?: Options): PostAuthSetupUserErrors[410] => fakeProblemDetails(options);
 
 export const fakePostAuthVerifyMfaRequest = (options?: Options): Omit<PostAuthVerifyMfaData, 'url'> => ({
     body: fakeVerifyMultiFactorAuthenticationCommand(options)

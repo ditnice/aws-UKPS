@@ -21,6 +21,7 @@ using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
 >;
+using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
@@ -42,6 +43,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     private const string RespondToMultiFactorAuthenticationChallengeUrl = "/auth/mfa";
     private const string RefreshUrl = "/auth/refresh";
     private const string ValidateSetupTokenUrl = "/auth/validate-setup-token";
+    private const string ResendSetupTokenUrl = "/auth/resend-setup-token";
     private const string SetupUserUrl = "/auth/setup-user";
     private const string VerifyMultiFactorAuthenticationUrl = "/auth/verify-mfa";
 
@@ -67,6 +69,10 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     private readonly SetupUserCommand _defaultSetupUserCommand = new()
     {
         NewPassword = "password",
+        SetupToken = Guid.Parse("48b5becd-f98c-4897-98aa-be37eecb6a68"),
+    };
+    private readonly ResendSetupTokenCommand _defaultResendSetupTokenCommand = new()
+    {
         SetupToken = Guid.Parse("48b5becd-f98c-4897-98aa-be37eecb6a68"),
     };
     private readonly VerifyMultiFactorAuthenticationCommand _defaultVerifyMultiFactorAuthenticationCommand =
@@ -324,7 +330,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task ValidateSetupToken_ShouldReturnUnauthorizedWhenTokenHasExpired()
+    public async Task ValidateSetupToken_ShouldReturnGoneWhenTokenHasExpired()
     {
         _mockedAuthorisationService
             .Validate(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -337,7 +343,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.Gone);
     }
 
     [Fact]
@@ -358,7 +364,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task ValidateSetupToken_ShouldReturnUnauthorizedWhenTokenHasBeenConsumed()
+    public async Task ValidateSetupToken_ShouldReturnConflictWhenTokenHasBeenConsumed()
     {
         _mockedAuthorisationService
             .Validate(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -371,7 +377,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [Fact]
@@ -383,6 +389,70 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_ShouldReturnOkOnSuccess()
+    {
+        _mockedAuthorisationService
+            .ResendSetupToken(Arg.Any<ResendSetupTokenCommand>(), Arg.Any<CancellationToken>())
+            .Returns(ResendSetupTokenResult.Ok());
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(ResendSetupTokenUrl, UriKind.Relative),
+            _defaultResendSetupTokenCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_ShouldReturnNotFoundWhenTokenDoesNotExist()
+    {
+        _mockedAuthorisationService
+            .ResendSetupToken(Arg.Any<ResendSetupTokenCommand>(), Arg.Any<CancellationToken>())
+            .Returns(ResendSetupTokenResult.Err(new ResendSetupTokenError.DoesNotExist()));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(ResendSetupTokenUrl, UriKind.Relative),
+            _defaultResendSetupTokenCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_ShouldReturnConflictWhenTokenHasBeenConsumed()
+    {
+        _mockedAuthorisationService
+            .ResendSetupToken(Arg.Any<ResendSetupTokenCommand>(), Arg.Any<CancellationToken>())
+            .Returns(ResendSetupTokenResult.Err(new ResendSetupTokenError.Consumed()));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(ResendSetupTokenUrl, UriKind.Relative),
+            _defaultResendSetupTokenCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_ShouldReturnForbiddenWhenTooManyAttemptsHaveBeenMade()
+    {
+        _mockedAuthorisationService
+            .ResendSetupToken(Arg.Any<ResendSetupTokenCommand>(), Arg.Any<CancellationToken>())
+            .Returns(ResendSetupTokenResult.Err(new ResendSetupTokenError.TooManyAttempts()));
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(ResendSetupTokenUrl, UriKind.Relative),
+            _defaultResendSetupTokenCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -412,7 +482,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task SetupUser_ShouldReturnUnauthorizedWhenTokenHasBeenConsumed()
+    public async Task SetupUser_ShouldReturnConflictWhenTokenHasBeenConsumed()
     {
         _mockedAuthorisationService
             .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
@@ -424,7 +494,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [Fact]
@@ -444,7 +514,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task SetupUser_ShouldReturnUnauthorizedWhenTokenHasExpired()
+    public async Task SetupUser_ShouldReturnGoneWhenTokenHasExpired()
     {
         _mockedAuthorisationService
             .SetupUser(Arg.Any<SetupUserCommand>(), Arg.Any<CancellationToken>())
@@ -456,7 +526,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.Gone);
     }
 
     [Fact]

@@ -1,0 +1,22 @@
+[2026-09-08T10:16:11.301Z] Error: Error parsing /home/vagrant/Desktop/aws-UKPS/backend/openapi/UKPS.Api.json: missed comma between flow collection entries (2601:31)
+
+ 2598 |         }
+ 2599 |       },
+ 2600 | <<<<<<< HEAD
+ 2601 |       "RegisterUserCommandDto": {
+--------------------------------------^
+ 2602 |         "required": [
+ 2603 |           "fullName",
+Stack:
+ParserError: Error parsing /home/vagrant/Desktop/aws-UKPS/backend/openapi/UKPS.Api.json: missed comma between flow collection entries (2601:31)
+
+ 2598 |         }
+ 2599 |       },
+ 2600 | <<<<<<< HEAD
+ 2601 |       "RegisterUserCommandDto": {
+--------------------------------------^
+ 2602 |         "required": [
+ 2603 |           "fullName",
+    at Object.handler (file:///home/vagrant/Desktop/aws-UKPS/frontend/node_modules/.pnpm/@hey-api+json-schema-ref-parser@1.4.4/node_modules/@hey-api/json-schema-ref-parser/dist/index.mjs:1145:10)
+    at runNextPlugin (file:///home/vagrant/Desktop/aws-UKPS/frontend/node_modules/.pnpm/@hey-api+json-schema-ref-parser@1.4.4/node_modules/@hey-api/json-schema-ref-parser/dist/index.mjs:1209:33)
+    at runNextPlugin (file:///home/vagrant/Desktop/aws-UKPS/frontend/node_modules/.pnpm/@hey-api+json-schema-ref-parser@1.4.4/node_modules/@hey-api/json-schema-ref-parser/dist/index.mjs:1220:5)
