@@ -12,10 +12,10 @@ internal sealed class VaccinesIntlSubmission
     public int RevisionId { get; set; }
 
     /// <summary>
-    /// Has this vaccine been, or is it intended to be, submitted to any
-    /// regulatory authority outside the UK? Yes or No only — no Unknown option.
+    /// Has this vaccine been, or is it intended to be, submitted to any regulatory
+    /// authority outside the UK? Yes / No / Unknown.
     /// </summary>
-    public YesNo? HasIntlSubmission { get; set; }
+    public YesNoUnknown? HasIntlSubmission { get; set; }
 
     /// <summary>
     /// Conditional on HasIntlSubmission = Yes. CiC.

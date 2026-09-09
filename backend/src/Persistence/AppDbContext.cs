@@ -95,7 +95,6 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<PasRegion> PasRegions => Set<PasRegion>();
     public DbSet<VaccineAdministrationRoute> VaccineAdministrationRoutes =>
         Set<VaccineAdministrationRoute>();
-    public DbSet<VaccineDiseaseArea> VaccineDiseaseAreas => Set<VaccineDiseaseArea>();
     public DbSet<VaccineStorageRequirement> VaccineStorageRequirements =>
         Set<VaccineStorageRequirement>();
     public DbSet<VaccinePlatform> VaccinePlatforms => Set<VaccinePlatform>();

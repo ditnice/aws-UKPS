@@ -25,12 +25,6 @@ internal sealed class MedicinesIntlRecognitionConfiguration
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
-            .HasOne(x => x.IrpReferenceRegulator)
-            .WithMany()
-            .HasForeignKey(x => x.IrpReferenceRegulatorId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
             .HasOne(x => x.IrpRoute)
             .WithMany()
             .HasForeignKey(x => x.IrpRouteId)

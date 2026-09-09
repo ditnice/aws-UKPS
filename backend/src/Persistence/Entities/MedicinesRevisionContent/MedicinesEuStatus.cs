@@ -15,7 +15,7 @@ internal sealed class MedicinesEuStatus
     /// <summary>Conditional on EuOrphanStatus = Granted.</summary>
     public int? EuOrphanGrantedDateId { get; set; }
 
-    /// <summary>The ATMP question does not offer DesignationStatus.NoSubmissionIntended.</summary>
+    /// <summary>EU ATMP classification status.</summary>
     public DesignationStatus? EuAtmpClassificationStatus { get; set; }
 
     /// <summary>

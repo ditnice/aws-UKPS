@@ -2,9 +2,7 @@ namespace UKPS.Api.Persistence.Enums;
 
 /// <summary>
 /// Progress of an application for a regulatory designation.
-/// Shared by EU orphan status, EU ATMP classification and MHRA PIM designation —
-/// the three questions offer the same option set, except that the ATMP question
-/// does not offer <see cref="NoSubmissionIntended"/>.
+/// Shared by EU orphan status, EU ATMP classification and MHRA PIM designation.
 /// </summary>
 public enum DesignationStatus
 {

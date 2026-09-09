@@ -20,8 +20,7 @@ internal sealed class MedicinesBudgetImpact
     public string? IndicationSpecificPricingDetails { get; set; }
 
     /// <summary>
-    /// Estimated net budget impact for the UK over the first 3 years of NHS use.
-    /// An annual impact of £40M+ triggers specific NICE planning processes. CiC.
+    /// Estimated net UK budget impact over the first 3 years of NHS use.
     /// </summary>
     public NetUkBudgetImpactBand? NetUkBudgetImpactBand { get; set; }
 

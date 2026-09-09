@@ -282,21 +282,6 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "vaccine_disease_area",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    label = table.Column<string>(type: "text", nullable: false),
-                    is_archived = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_vaccine_disease_area", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "vaccine_platform",
                 schema: "ukps",
                 columns: table => new
@@ -752,7 +737,6 @@ namespace UKPS.Api.Persistence.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    irp_reference_regulator_id = table.Column<int>(type: "integer", nullable: true),
                     irp_route_id = table.Column<int>(type: "integer", nullable: true),
                     intl_conditional_approval_anticipated = table.Column<int>(type: "integer", nullable: true),
                     intl_submission_date_id = table.Column<int>(type: "integer", nullable: true),
@@ -761,13 +745,6 @@ namespace UKPS.Api.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_medicines_intl_recognitions", x => x.id);
-                    table.ForeignKey(
-                        name: "fk_medicines_intl_recognitions_irp_reference_regulators_irp_re",
-                        column: x => x.irp_reference_regulator_id,
-                        principalSchema: "ukps",
-                        principalTable: "irp_reference_regulator",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_medicines_intl_recognitions_irp_routes_irp_route_id",
                         column: x => x.irp_route_id,
@@ -1156,11 +1133,19 @@ namespace UKPS.Api.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     mhra_procedure_type_id = table.Column<int>(type: "integer", nullable: true),
+                    irp_reference_regulator_id = table.Column<int>(type: "integer", nullable: true),
                     procedure_details = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_record_mhra_procedures", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_record_mhra_procedures_irp_reference_regulators_irp_referen",
+                        column: x => x.irp_reference_regulator_id,
+                        principalSchema: "ukps",
+                        principalTable: "irp_reference_regulator",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_record_mhra_procedures_mhra_procedure_types_mhra_procedure_",
                         column: x => x.mhra_procedure_type_id,
@@ -1331,7 +1316,6 @@ namespace UKPS.Api.Persistence.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    disease_area_id = table.Column<int>(type: "integer", nullable: true),
                     disease_target = table.Column<string>(type: "text", nullable: false),
                     age_group = table.Column<string>(type: "text", nullable: false),
                     risk_group = table.Column<string>(type: "text", nullable: true)
@@ -1344,13 +1328,6 @@ namespace UKPS.Api.Persistence.Migrations
                         column: x => x.revision_id,
                         principalSchema: "ukps",
                         principalTable: "record_revisions",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_vaccines_disease_details_vaccine_disease_areas_disease_area",
-                        column: x => x.disease_area_id,
-                        principalSchema: "ukps",
-                        principalTable: "vaccine_disease_area",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1769,12 +1746,6 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "intl_submission_date_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_medicines_intl_recognitions_irp_reference_regulator_id",
-                schema: "ukps",
-                table: "medicines_intl_recognitions",
-                column: "irp_reference_regulator_id");
-
-            migrationBuilder.CreateIndex(
                 name: "ix_medicines_intl_recognitions_irp_route_id",
                 schema: "ukps",
                 table: "medicines_intl_recognitions",
@@ -1981,6 +1952,12 @@ namespace UKPS.Api.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "ix_record_mhra_procedures_irp_reference_regulator_id",
+                schema: "ukps",
+                table: "record_mhra_procedures",
+                column: "irp_reference_regulator_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_record_mhra_procedures_mhra_procedure_type_id",
                 schema: "ukps",
                 table: "record_mhra_procedures",
@@ -2178,12 +2155,6 @@ namespace UKPS.Api.Persistence.Migrations
                 table: "vaccines_disease_details",
                 column: "revision_id",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "ix_vaccines_disease_details_disease_area_id",
-                schema: "ukps",
-                table: "vaccines_disease_details",
-                column: "disease_area_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_vaccines_intl_submission_revision_id",
@@ -2762,10 +2733,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "irp_reference_regulator",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
                 name: "irp_route",
                 schema: "ukps");
 
@@ -2810,6 +2777,10 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
+                name: "irp_reference_regulator",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
                 name: "mhra_procedure_type",
                 schema: "ukps");
 
@@ -2851,10 +2822,6 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "vaccine_platform",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
-                name: "vaccine_disease_area",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
