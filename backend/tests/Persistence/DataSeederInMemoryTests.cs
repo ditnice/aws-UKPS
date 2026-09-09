@@ -51,7 +51,7 @@ public sealed class DataSeederInMemoryTests
         );
         membership.OrganisationId.ShouldBe(1);
         membership.UserRole.ShouldBe(UserRole.Super);
-        membership.Status.ShouldBe(UserOrgStatus.Active);
+        membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
         membership.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Both);
     }
 

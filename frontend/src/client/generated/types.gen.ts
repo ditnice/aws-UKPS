@@ -269,10 +269,6 @@ export type RegisterUserCommandDto = {
      * Gets the user phone number.
      */
     phoneNumber: string;
-    /**
-     * Gets the name of the organisation the user is requesting access to.
-     */
-    organisationId: number;
 };
 
 /**
@@ -482,11 +478,15 @@ export type UserListItemDto = {
     /**
      * Gets the unique identifier of the user.
      */
-    userId: number;
+    userId: null | number;
+    /**
+     * The optional lasted active registration request associated with the user.
+     */
+    registrationRequestId: null | number;
     /**
      * Gets the email address of the user, if available.
      */
-    emailAddress?: null | string;
+    emailAddress: string;
     /**
      * Gets the role of the user within the system.
      */
@@ -498,7 +498,7 @@ export type UserListItemDto = {
     /**
      * Gets the date and time when the user was last active, if available.
      */
-    lastActive?: null | string;
+    lastActive: null | string;
     /**
      * Gets the actions that can be performed by the current user.
      */
@@ -802,117 +802,6 @@ export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerif
 export type PostAuthVerifyMfaResponses = {
     /**
      * The multi-factor authentication setup was successfully verified.
-     */
-    200: unknown;
-};
-
-export type GetUserMembershipRequestData = {
-    body?: never;
-    path: {
-        /**
-         * The unique identifier of the organisation.
-         */
-        organisationId: number;
-        /**
-         * The unique identifier of the user.
-         */
-        userId: number;
-    };
-    query?: never;
-    url: '/organisations/{organisationId}/users/{userId}/membership-requests';
-};
-
-export type GetUserMembershipRequestErrors = {
-    /**
-     * The authenticated user is not allowed to access the requested membership
-     * request.
-     */
-    403: ProblemDetails;
-    /**
-     * The requested user membership request could not be found.
-     */
-    404: ProblemDetails;
-};
-
-export type GetUserMembershipRequestError = GetUserMembershipRequestErrors[keyof GetUserMembershipRequestErrors];
-
-export type GetUserMembershipRequestResponses = {
-    /**
-     * The user membership request was found and returned successfully.
-     */
-    200: UserMembershipRequestDto;
-};
-
-export type GetUserMembershipRequestResponse = GetUserMembershipRequestResponses[keyof GetUserMembershipRequestResponses];
-
-export type ApproveData = {
-    body?: never;
-    path: {
-        /**
-         * The identifier of the organisation containing the membership request.
-         */
-        organisationId: number;
-        /**
-         * The identifier of the user associated with the membership request.
-         */
-        userId: number;
-    };
-    query?: never;
-    url: '/organisations/{organisationId}/users/{userId}/membership-requests/approve';
-};
-
-export type ApproveErrors = {
-    /**
-     * The current user is not allowed to approve the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
-     */
-    404: ProblemDetails;
-};
-
-export type ApproveError = ApproveErrors[keyof ApproveErrors];
-
-export type ApproveResponses = {
-    /**
-     * The membership request was successfully approved.
-     */
-    200: unknown;
-};
-
-export type RejectData = {
-    body?: never;
-    path: {
-        /**
-         * The identifier of the organisation containing the membership request.
-         */
-        organisationId: number;
-        /**
-         * The identifier of the user associated with the membership request.
-         */
-        userId: number;
-    };
-    query?: never;
-    url: '/organisations/{organisationId}/users/{userId}/membership-requests/reject';
-};
-
-export type RejectErrors = {
-    /**
-     * The current user is not allowed to reject the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
-     */
-    404: ProblemDetails;
-};
-
-export type RejectError = RejectErrors[keyof RejectErrors];
-
-export type RejectResponses = {
-    /**
-     * The membership request was successfully rejected.
      */
     200: unknown;
 };
@@ -1335,55 +1224,6 @@ export type PatchUsersByUserIdResponses = {
 
 export type PatchUsersByUserIdResponse = PatchUsersByUserIdResponses[keyof PatchUsersByUserIdResponses];
 
-export type PostUsersRegisterData = {
-    /**
-     * A token used to cancel the operation.
-     */
-    body: RegisterUserCommandDto;
-    path?: never;
-    query?: never;
-    url: '/users/register';
-};
-
-export type PostUsersRegisterErrors = {
-    /**
-     * Bad Request
-     */
-    400: ProblemDetails;
-};
-
-export type PostUsersRegisterError = PostUsersRegisterErrors[keyof PostUsersRegisterErrors];
-
-export type PostUsersRegisterResponses = {
-    /**
-     * OK
-     */
-    200: RegisterUserConfirmationDto;
-};
-
-export type PostUsersRegisterResponse = PostUsersRegisterResponses[keyof PostUsersRegisterResponses];
-
-export type GetUserRegistrationByIdData = {
-    body?: never;
-    path: {
-        /**
-         * The unique identifier of the user to retrieve.
-         */
-        id: number;
-    };
-    query?: never;
-    url: '/users/registration-requests/{id}';
-};
-
-export type GetUserRegistrationByIdResponses = {
-    /**
-     * The user's details were successfully retrieved.
-     */
-    200: RegisterUserConfirmationDto;
-};
-
-export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];
-
 export type PostUsersOnboardData = {
     /**
      * A token that can be used to cancel the operation.
@@ -1420,3 +1260,146 @@ export type PostUsersOnboardResponses = {
 };
 
 export type PostUsersOnboardResponse = PostUsersOnboardResponses[keyof PostUsersOnboardResponses];
+
+export type RegisterUserData = {
+    /**
+     * A token used to cancel the operation.
+     */
+    body: RegisterUserCommandDto;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/membership-requests';
+};
+
+export type RegisterUserErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+};
+
+export type RegisterUserError = RegisterUserErrors[keyof RegisterUserErrors];
+
+export type RegisterUserResponses = {
+    /**
+     * OK
+     */
+    200: RegisterUserConfirmationDto;
+};
+
+export type RegisterUserResponse = RegisterUserResponses[keyof RegisterUserResponses];
+
+export type GetUserRegistrationByIdData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+        /**
+         * The unique identifier of the user to retrieve.
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/membership-requests/{id}';
+};
+
+export type GetUserRegistrationByIdErrors = {
+    /**
+     * Forbidden
+     */
+    403: ProblemDetails;
+    /**
+     * No user was found with the supplied identifier.
+     */
+    404: ProblemDetails;
+};
+
+export type GetUserRegistrationByIdError = GetUserRegistrationByIdErrors[keyof GetUserRegistrationByIdErrors];
+
+export type GetUserRegistrationByIdResponses = {
+    /**
+     * The user's details were successfully retrieved.
+     */
+    200: UserMembershipRequestDto;
+};
+
+export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];
+
+export type ApproveData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+        /**
+         * The identifier for the registration request.
+         */
+        registrationRequestId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve';
+};
+
+export type ApproveErrors = {
+    /**
+     * The current user is not allowed to approve the membership request.
+     */
+    403: ProblemDetails;
+    /**
+     * The membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type ApproveError = ApproveErrors[keyof ApproveErrors];
+
+export type ApproveResponses = {
+    /**
+     * The membership request was successfully approved.
+     */
+    200: unknown;
+};
+
+export type RejectData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+        /**
+         * The identifier for the registration request.
+         */
+        registrationRequestId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject';
+};
+
+export type RejectErrors = {
+    /**
+     * The current user is not allowed to reject the membership request.
+     */
+    403: ProblemDetails;
+    /**
+     * The membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type RejectError = RejectErrors[keyof RejectErrors];
+
+export type RejectResponses = {
+    /**
+     * The membership request was successfully rejected.
+     */
+    200: unknown;
+};

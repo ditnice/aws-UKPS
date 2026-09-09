@@ -506,7 +506,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             );
 
         user.ShouldNotBeNull();
-        user.UserOrgMemberships!.ShouldAllBe(x => x.Status == UserOrgStatus.Active);
+        user.UserOrgMemberships!.ShouldAllBe(x => x.Status == UserOrgMembershipStatus.Active);
     }
 
     [Fact]

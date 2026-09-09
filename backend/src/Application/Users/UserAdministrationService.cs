@@ -104,7 +104,7 @@ internal sealed partial class UserAdministrationService(
         };
         var membership = new UserOrgMembership()
         {
-            Status = UserOrgStatus.AwaitingSetup,
+            Status = UserOrgMembershipStatus.AwaitingSetup,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both, // URP 435 - Decide what initial value should be set.
             UserRole = UserRole.Standard,
             CreatedAt = timeProvider.GetUtcNow(),
@@ -161,40 +161,6 @@ internal sealed partial class UserAdministrationService(
         );
         string sanitisedGuid = Sanitise(user.OnboardingRecord.SetupToken);
         LogSendingUserSignUpRequestEmail(sanitisedGuid);
-    }
-
-    public async Task<Result<RegisterUserConfirmationDto, RegisterUserError>> RegisterUser(
-        RegisterUserCommandDto registerUserCommandDto,
-        CancellationToken cancellationToken
-    )
-    {
-        bool organisationExists = await dbContext.Organisations.AnyAsync(
-            o => o.Id == registerUserCommandDto.OrganisationId && o.Status == UserOrgStatus.Active,
-            cancellationToken
-        );
-        if (organisationExists)
-        {
-            var userRegister = new UserRegistrationRequest
-            {
-                OrganisationId = registerUserCommandDto.OrganisationId,
-                FullName = registerUserCommandDto.FullName,
-                PhoneNumber = registerUserCommandDto.PhoneNumber,
-                WorkEmail = registerUserCommandDto.WorkEmail,
-            };
-            dbContext.UserRegistrationRequests.Add(userRegister);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            var request = await dbContext
-                .UserRegistrationRequests.AsNoTracking()
-                .Include(x => x.Organisation)
-                .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
-
-            var dto = MapToDto(request);
-
-            return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
-        }
-        return Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
-            new RegisterUserError.OrganisationNotFound()
-        );
     }
 
     public async Task<

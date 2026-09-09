@@ -9,7 +9,7 @@ import { z } from 'zod'
 import {
   getOrganisationsPublicOptions,
   OrganisationListDto,
-  postUsersRegister,
+  registerUser,
 } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
@@ -63,12 +63,14 @@ export function RegistrationRequestForm() {
     onSubmit: async ({ value }) => {
       const validatedValue = RegistrationRequest.parse(value)
 
-      const response = await postUsersRegister({
+      const response = await registerUser({
+        path: {
+          organisationId: validatedValue.organisationId,
+        },
         body: {
           fullName: validatedValue.fullName,
           workEmail: validatedValue.workEmail,
           phoneNumber: validatedValue.phoneNumber,
-          organisationId: validatedValue.organisationId,
         },
       })
       if (response.data) {

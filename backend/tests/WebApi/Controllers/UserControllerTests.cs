@@ -513,9 +513,11 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 new UserListItemDto
                 {
                     UserId = 1,
+                    RegistrationRequestId = null,
                     EmailAddress = "user@example.com",
                     Role = UserRole.Standard,
                     Status = UserOrgStatus.Active,
+                    LastActive = null,
                     Actions = [],
                 },
             ],

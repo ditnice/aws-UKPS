@@ -17,7 +17,7 @@ vi.mock('next/navigation', () => ({
   notFound,
 }))
 vi.mock('@/client/generated', () => ({
-  getUserMembershipRequest: mockGetMembership,
+  getUserRegistrationById: mockGetMembership,
 }))
 vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
@@ -38,7 +38,7 @@ const renderComponent = async (overrides?: Partial<UserMembershipRetrievalWrappe
   const children = () => <div data-testid="children"></div>
   const defaults: UserMembershipRetrievalWrapperProps = {
     organisationId: 1,
-    userId: 2,
+    registrationRequestId: 2,
     children,
   }
   const props = { ...defaults, ...overrides }
@@ -64,11 +64,13 @@ describe('UserMembershipRetrievalWrapper', () => {
     expect(content.textContent).toBe(JSON.stringify(testData))
   })
   it('calls the request with the expected arguments', async () => {
-    const expectedPath = { userId: 2, organisationId: 4 }
+    const args = { organisationId: 4, registrationRequestId: 6 }
     await renderComponent({
-      ...expectedPath,
+      ...args,
     })
-    expect(mockGetMembership).toHaveBeenCalledExactlyOnceWith({ path: expectedPath })
+    expect(mockGetMembership).toHaveBeenCalledExactlyOnceWith({
+      path: { organisationId: args.organisationId, id: args.registrationRequestId },
+    })
   })
   it('calls notfound when the response is not found', async () => {
     mockGetMembership.mockResolvedValue({

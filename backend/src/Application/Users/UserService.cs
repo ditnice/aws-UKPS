@@ -90,40 +90,37 @@ internal partial class UserService(
         var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
             Operation.Read
         );
-        IQueryable<UserOrgMembership> organisationMemberships = ApplyFilters(
-            dbContext.UserOrgMemberships.AsNoTracking(),
+        IQueryable<UserInformationTrackingProjection> unionQuery = GetProjectedUserInformation();
+
+        IQueryable<UserInformationTrackingProjection> organisationMemberships = ApplyFilters(
+            unionQuery,
             permittedOrganisationIds,
             getUsersQuery
         );
 
         int totalCount = await organisationMemberships.CountAsync(cancellationToken);
 
-        IQueryable<UserOrgMembership> orderedOrganisationMemberships = Sort(
+        IQueryable<UserInformationTrackingProjection> orderedOrganisationMemberships = Sort(
             organisationMemberships,
             getUsersQuery.SortBy,
             getUsersQuery.SortDirection
         );
         var items = await orderedOrganisationMemberships
             .AsNoTracking()
-            .Include(x => x.User)
             .Skip((getUsersQuery.Page - 1) * getUsersQuery.PageSize)
             .Take(getUsersQuery.PageSize)
             .ToListAsync(cancellationToken);
 
-        var currentUserInfo = currentUserInfoService.GetCurrentUserInfo();
         var projectedItems = items
             .Select(m => new UserListItemDto
             {
-                UserId = m.User!.Id,
-                EmailAddress = m.User.WorkEmail,
+                UserId = m.UserId,
+                RegistrationRequestId = m.RegistrationRequestId,
+                EmailAddress = m.WorkEmail,
                 Role = m.UserRole,
                 Status = m.Status,
-                LastActive = m.User.LastActive,
-                Actions = m.GetPermittedActions(
-                        currentUserInfo.CognitoUsername,
-                        currentUserInfo.UserRole
-                    )
-                    .ToArray(),
+                LastActive = m.LastActive,
+                Actions = GetPermittedActions(m),
             })
             .ToArray();
 
@@ -135,6 +132,89 @@ internal partial class UserService(
                 Page = getUsersQuery.Page,
                 PageSize = getUsersQuery.PageSize,
             }
+        );
+    }
+
+    private IQueryable<UserInformationTrackingProjection> GetProjectedUserInformation()
+    {
+        var userOrgMembershipProjection = dbContext.UserOrgMemberships.Select(x => new
+        {
+            UserId = (int?)x.User!.Id,
+            RegistrationRequestId = (int?)null,
+            x.User.WorkEmail,
+            x.UserRole,
+            Status = (UserOrgStatus)x.Status,
+            MembershipStatus = (UserOrgMembershipStatus?)x.Status,
+            OrganisationId = x.Organisation!.Id,
+            x.User.LastActive,
+        });
+        var userRegistrationRequestsProjections = dbContext.UserRegistrationRequests.Select(x => new
+        {
+            UserId = (int?)null,
+            RegistrationRequestId = (int?)x.Id,
+            x.WorkEmail,
+            UserRole = UserRole.Standard,
+            Status = x.RejectedAt == null ? UserOrgStatus.RequestedAccess : UserOrgStatus.Rejected,
+            MembershipStatus = (UserOrgMembershipStatus?)null,
+            OrganisationId = x.Organisation!.Id,
+            LastActive = (DateTime?)null,
+        });
+
+        // The Join below is necessary as EF core cannot handle CognitoUsername
+        // being on one side of the union but not on the other. Future work to look
+        // if there's a better approach.
+        return userOrgMembershipProjection
+            .Union(userRegistrationRequestsProjections)
+            .GroupJoin(
+                dbContext.Users,
+                x => x.UserId,
+                x => x.Id,
+                (x, matches) => new { x, matches }
+            )
+            .SelectMany(
+                x => x.matches.DefaultIfEmpty(),
+                (a, b) =>
+                    new UserInformationTrackingProjection()
+                    {
+                        UserId = a.x.UserId,
+                        RegistrationRequestId = a.x.RegistrationRequestId,
+                        WorkEmail = a.x.WorkEmail,
+                        UserRole = a.x.UserRole,
+                        Status = a.x.Status,
+                        MembershipStatus = a.x.MembershipStatus,
+                        OrganisationId = a.x.OrganisationId,
+                        LastActive = a.x.LastActive,
+                        CognitoUsername = b == null ? null : b.CognitoUsername,
+                    }
+            );
+    }
+
+    private UserMembershipAction[] GetPermittedActions(UserInformationTrackingProjection m)
+    {
+        var currentUserInfo = currentUserInfoService.GetCurrentUserInfo();
+
+        if (m.CognitoUsername is not null && currentUserInfo.CognitoUsername == m.CognitoUsername)
+        {
+            return [];
+        }
+
+        if (currentUserInfo.UserRole is not (UserRole.Champion or UserRole.Super))
+        {
+            return [];
+        }
+
+        if (m.RegistrationRequestId.HasValue)
+        {
+            return [UserMembershipAction.ApproveMembership, UserMembershipAction.RejectMembership];
+        }
+
+        if (m.MembershipStatus.HasValue)
+        {
+            return UserOrgMembership.GetPermittedActions(m.MembershipStatus.Value).ToArray();
+        }
+
+        throw new InvalidOperationException(
+            "UserInformationTrackingProjection was in an invalid state"
         );
     }
 
@@ -157,7 +237,6 @@ internal partial class UserService(
         UserInformationDto? user = await dbContext
             .UserOrgMemberships.AsNoTracking()
             .Where(m => m.UserId == userId && m.OrganisationId == organisationId)
-            .Where(m => m.Status != UserOrgStatus.Rejected)
             .Select(m => new UserInformationDto
             {
                 UserId = m.User!.Id,
@@ -176,17 +255,17 @@ internal partial class UserService(
             : GetUserInformationResult.Ok(user);
     }
 
-    private static IQueryable<UserOrgMembership> Sort(
-        IQueryable<UserOrgMembership> value,
+    private static IQueryable<UserInformationTrackingProjection> Sort(
+        IQueryable<UserInformationTrackingProjection> value,
         GetUsersQuerySortValue sortBy,
         SortDirection sortDirection
     )
     {
-        Expression<Func<UserOrgMembership, object?>> sortExpression = sortBy switch
+        Expression<Func<UserInformationTrackingProjection, object?>> sortExpression = sortBy switch
         {
             GetUsersQuerySortValue.LastActive => m =>
-                m.User!.LastActive == null ? DateTime.MinValue : m.User.LastActive.Value,
-            GetUsersQuerySortValue.Email => m => m.User!.WorkEmail,
+                m.LastActive == null ? DateTime.MinValue : m.LastActive.Value,
+            GetUsersQuerySortValue.Email => m => m.WorkEmail,
             GetUsersQuerySortValue.Role => m => m.UserRole,
             GetUsersQuerySortValue.Status => m => m.Status,
             _ => throw new ArgumentOutOfRangeException(
@@ -196,10 +275,12 @@ internal partial class UserService(
         };
         return sortDirection switch
         {
-            SortDirection.Ascending => value.OrderBy(sortExpression).ThenBy(x => x.Id),
+            SortDirection.Ascending => value
+                .OrderBy(sortExpression)
+                .ThenBy(x => x.UserId != null ? x.UserId : x.RegistrationRequestId),
             SortDirection.Descending => value
                 .OrderByDescending(sortExpression)
-                .ThenByDescending(x => x.Id),
+                .ThenByDescending(x => x.UserId != null ? x.UserId : x.RegistrationRequestId),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(sortDirection),
                 $"Unexpected value: {sortDirection}"
@@ -237,14 +318,18 @@ internal partial class UserService(
             : new GetUsersError.OrganisationNotFound(organisationId.Value);
     }
 
-    private static IQueryable<UserOrgMembership> ApplyFilters(
-        IQueryable<UserOrgMembership> input,
+    private static IQueryable<UserInformationTrackingProjection> ApplyFilters(
+        IQueryable<UserInformationTrackingProjection> input,
         ValueOrAll<int> permittedOrganisationIds,
         GetUsersQueryDto getUsersQuery
     )
     {
-        IQueryable<UserOrgMembership> organisationMemberships = input
-            .Where(permittedOrganisationIds.Contains<UserOrgMembership>(x => x.OrganisationId))
+        IQueryable<UserInformationTrackingProjection> organisationMemberships = input
+            .Where(
+                permittedOrganisationIds.Contains<UserInformationTrackingProjection>(x =>
+                    x.OrganisationId
+                )
+            )
             .Where(m => m.Status != UserOrgStatus.Rejected);
 
         if (getUsersQuery.OrganisationId.HasValue)
@@ -272,7 +357,7 @@ internal partial class UserService(
         {
             string pattern = $"%{EscapeLikePattern(getUsersQuery.Email)}%";
             organisationMemberships = organisationMemberships.Where(m =>
-                EF.Functions.ILike(m.User!.WorkEmail, pattern, "\\")
+                EF.Functions.ILike(m.WorkEmail, pattern, "\\")
             );
         }
 
@@ -280,7 +365,7 @@ internal partial class UserService(
         {
             DateTime from = getUsersQuery.LastActiveFrom.Value.UtcDateTime;
             organisationMemberships = organisationMemberships.Where(m =>
-                m.User!.LastActive != null && m.User.LastActive >= from
+                m.LastActive != null && m.LastActive >= from
             );
         }
 
@@ -288,7 +373,7 @@ internal partial class UserService(
         {
             DateTime to = getUsersQuery.LastActiveTo.Value.UtcDateTime;
             organisationMemberships = organisationMemberships.Where(m =>
-                m.User!.LastActive != null && m.User.LastActive <= to
+                m.LastActive != null && m.LastActive <= to
             );
         }
 
@@ -406,4 +491,17 @@ internal partial class UserService(
         Message = "An error occur whilst updating user details."
     )]
     private partial void LogUpdatingUserDetailsFailed(Exception ex);
+
+    public record UserInformationTrackingProjection()
+    {
+        public required int? UserId { get; init; }
+        public required int? RegistrationRequestId { get; init; }
+        public required int OrganisationId { get; internal set; }
+        public required UserOrgStatus Status { get; internal set; }
+        public required UserOrgMembershipStatus? MembershipStatus { get; init; }
+        public required UserRole UserRole { get; internal set; }
+        public required string WorkEmail { get; init; }
+        public required DateTime? LastActive { get; init; }
+        public required CognitoUsername? CognitoUsername { get; internal set; }
+    }
 }

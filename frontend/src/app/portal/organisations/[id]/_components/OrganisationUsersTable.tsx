@@ -64,19 +64,19 @@ function renderActions(user: UserListItemDto, organisationId: number) {
 
   const links: { key: string; label: string; href: string }[] = []
 
-  if (user.actions.includes('ApproveMembership')) {
+  if (user.actions.includes('ApproveMembership') && user.registrationRequestId) {
     links.push({
       key: 'approve',
       label: 'Approve',
-      href: `/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`,
+      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestId}/approve`,
     })
   }
 
-  if (user.actions.includes('RejectMembership')) {
+  if (user.actions.includes('RejectMembership') && user.registrationRequestId) {
     links.push({
       key: 'reject',
       label: 'Reject',
-      href: `/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`,
+      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestId}/reject`,
     })
   }
 
