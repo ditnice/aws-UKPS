@@ -31,6 +31,12 @@ internal sealed class MedicinesEuStatusConfiguration : IEntityTypeConfiguration<
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
+            .HasOne(x => x.AtmpRecommendationDate)
+            .WithMany()
+            .HasForeignKey(x => x.AtmpRecommendationDateId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder
             .HasOne(x => x.AtmpClassification)
             .WithMany()
             .HasForeignKey(x => x.AtmpClassificationId)

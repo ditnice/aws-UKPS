@@ -16,7 +16,7 @@ internal sealed class RegulatoryDate
     public bool IsConfidential { get; set; }
 
     /// <summary>Relevant only for uk_licence and intl_licence events.</summary>
-    public bool? ConditionalApprovalAnticipated { get; set; }
+    public YesNoUnknown? ConditionalApprovalAnticipated { get; set; }
 
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }

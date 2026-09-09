@@ -24,11 +24,5 @@ internal sealed class VaccinesDiseaseDetailConfiguration
             .WithMany()
             .HasForeignKey(x => x.RevisionId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.DiseaseArea)
-            .WithMany()
-            .HasForeignKey(x => x.DiseaseAreaId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

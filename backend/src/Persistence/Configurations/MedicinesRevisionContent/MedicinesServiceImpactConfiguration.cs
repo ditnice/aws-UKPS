@@ -11,7 +11,8 @@ internal sealed class MedicinesServiceImpactConfiguration
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.ExistingNhsService);
+        builder.Property(x => x.NhsServiceChangesRequired);
+        builder.Property(x => x.HandlingStorageRequirements);
         builder.Property(x => x.CompassionateAccessAvailable);
 
         builder

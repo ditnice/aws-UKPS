@@ -4,7 +4,6 @@ internal sealed class VaccinesDiseaseDetail
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }
-    public int? DiseaseAreaId { get; set; }
 
     /// <summary>
     /// Free text. The disease or diseases this vaccine prevents.
@@ -26,6 +25,5 @@ internal sealed class VaccinesDiseaseDetail
 
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
-    public ReferenceData.VaccineDiseaseArea? DiseaseArea { get; set; }
     public ICollection<VaccinesPathogen> Pathogens { get; set; } = [];
 }

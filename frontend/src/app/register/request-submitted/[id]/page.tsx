@@ -8,8 +8,6 @@ import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
-import styles from './page.module.scss'
-
 const subscribe = () => () => undefined
 
 export default function RequestSubmitted() {
@@ -32,7 +30,7 @@ export default function RequestSubmitted() {
       {user && (
         <>
           <h2>What you told us</h2>
-          <SummaryList variant="two-column" className={styles.marginBottom}>
+          <SummaryList variant="two-column">
             <SummaryListRow label="Organisation" value={user.organisationName} />
             <SummaryListRow label="Full name" value={user.fullName} />
             <SummaryListRow label="Email address" value={user.workEmail} />

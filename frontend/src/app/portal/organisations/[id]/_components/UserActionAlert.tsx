@@ -21,7 +21,6 @@ export async function UserActionAlert({
     client: apiClient,
     path: { organisationId, userId: userAction.userId },
   })
-
   switch (userAction.action) {
     case 'invited':
       return (

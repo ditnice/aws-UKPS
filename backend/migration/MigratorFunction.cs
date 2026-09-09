@@ -4,6 +4,7 @@ using Amazon.Lambda.Core;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
@@ -22,37 +23,17 @@ public sealed class MigratorFunction
 
         using var cancellationTokenSource = new CancellationTokenSource(context.RemainingTime);
 
-        string secretArn =
-            Environment.GetEnvironmentVariable("DB_SECRET_ARN")
-            ?? throw new InvalidOperationException("DB_SECRET_ARN is not set.");
-
-        context.Logger.LogInformation("Fetching DB credentials from Secrets Manager...");
-
-        using AmazonSecretsManagerClient secretsClient = new();
-        GetSecretValueResponse secretResponse = await secretsClient.GetSecretValueAsync(
-            new GetSecretValueRequest { SecretId = secretArn },
+        IConfiguration config = await BuildConfigurationAsync(
+            context,
             cancellationTokenSource.Token
         );
-
-        DbSecret secret =
-            JsonSerializer.Deserialize<DbSecret>(secretResponse.SecretString)
-            ?? throw new InvalidOperationException("Failed to deserialise DB secret.");
-
-        IConfiguration config = new ConfigurationBuilder()
-            .AddEnvironmentVariables()
-            .AddInMemoryCollection(
-                new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-                {
-                    [$"{DatabaseOptions.SectionName}:Username"] = secret.Username,
-                    [$"{DatabaseOptions.SectionName}:Password"] = secret.Password,
-                }
-            )
-            .Build();
 
         string dbConnectionString = DatabaseConnectionStringFactory.GetConnectionString(config);
 
         DbContextOptions<AppDbContext> options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(dbConnectionString, x => x.MigrationsAssembly("UKPS.Api"))
+            .UseNpgsql(dbConnectionString)
+            .UseSnakeCaseNamingConvention()
+            .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))
             .Options;
 
         await using AppDbContext dbContext = new(options);
@@ -77,6 +58,38 @@ public sealed class MigratorFunction
             await new DatabaseMigrator(dbContext).MigrateAsync(cancellationTokenSource.Token);
             context.Logger.LogInformation("Migrations completed successfully.");
         }
+    }
+
+    private static async Task<IConfiguration> BuildConfigurationAsync(
+        ILambdaContext context,
+        CancellationToken cancellationToken
+    )
+    {
+        string secretArn =
+            Environment.GetEnvironmentVariable("DB_SECRET_ARN")
+            ?? throw new InvalidOperationException("DB_SECRET_ARN is not set.");
+
+        context.Logger.LogInformation("Fetching DB credentials from Secrets Manager...");
+        using AmazonSecretsManagerClient secretsClient = new();
+        GetSecretValueResponse secretResponse = await secretsClient.GetSecretValueAsync(
+            new GetSecretValueRequest { SecretId = secretArn },
+            cancellationToken
+        );
+
+        DbSecret secret =
+            JsonSerializer.Deserialize<DbSecret>(secretResponse.SecretString)
+            ?? throw new InvalidOperationException("Failed to deserialise DB secret.");
+
+        return new ConfigurationBuilder()
+            .AddEnvironmentVariables()
+            .AddInMemoryCollection(
+                new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [$"{DatabaseOptions.SectionName}:Username"] = secret.Username,
+                    [$"{DatabaseOptions.SectionName}:Password"] = secret.Password,
+                }
+            )
+            .Build();
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812")]

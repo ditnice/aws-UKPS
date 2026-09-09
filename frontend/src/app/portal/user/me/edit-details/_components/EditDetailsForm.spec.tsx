@@ -1,8 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { UpdateUserDetailsCommand } from '@/client/generated'
 import { fakeUpdateUserDetailsCommand } from '@/client/generated/@faker-js/faker.gen'
+import { errorMessages } from '@/lib/form/errorMessages'
 
 import { EditDetailsForm, EditDetailsFormProps } from './EditDetailsForm'
 
@@ -10,6 +11,11 @@ const mocks = vi.hoisted(() => ({
   back: vi.fn(),
   push: vi.fn(),
   patchUsersByUserId: vi.fn(),
+  phoneNumberValidationMock: vi.fn(),
+}))
+
+vi.mock('libphonenumber-js/max', () => ({
+  isValidPhoneNumber: mocks.phoneNumberValidationMock,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -32,6 +38,10 @@ mocks.patchUsersByUserId.mockResolvedValue({
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+})
+
+beforeEach(() => {
+  mocks.phoneNumberValidationMock.mockReturnValue(true)
 })
 
 const requiredErrors = [
@@ -59,12 +69,14 @@ function clearForm(value = '') {
   }
 }
 
+const validFormValues = {
+  fullName: 'Test User',
+  workEmail: 'test@example.com',
+  workTelephone: '01234567890',
+}
+
 function fillValidForm() {
-  updateForm({
-    fullName: 'Test User',
-    workEmail: 'test@example.com',
-    workTelephone: '01234567890',
-  })
+  updateForm(validFormValues)
 }
 
 function updateForm(validRequest: UpdateUserDetailsCommand) {
@@ -109,6 +121,20 @@ describe('EditDetailsForm', () => {
     for (const { message } of requiredErrors) {
       expect(screen.queryByText(message)).toBeNull()
     }
+  })
+
+  it('validates the phone number as a valid phone number', async () => {
+    mocks.phoneNumberValidationMock.mockReturnValue(false)
+
+    const examplePhoneNumber = '63846484638'
+    renderForm()
+    updateForm({ ...validFormValues, workTelephone: examplePhoneNumber })
+    clickSubmit()
+
+    await waitFor(async () => {
+      expect(mocks.phoneNumberValidationMock).toHaveBeenCalledWith(examplePhoneNumber, 'GB')
+      expect(await screen.findByText(errorMessages.phoneFormat)).toBeDefined()
+    })
   })
 
   it('shows required errors and associates them with invalid inputs', async () => {
