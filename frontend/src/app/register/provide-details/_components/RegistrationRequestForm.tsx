@@ -17,8 +17,6 @@ import { Select, SelectOption } from '@/components/Select/Select'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import styles from './RegistrationRequestForm.module.scss'
-
 const RegistrationRequest = z.object({
   organisationId: z.number().min(1, errorMessages.organisationRequired),
   fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
@@ -141,7 +139,6 @@ export function RegistrationRequestForm() {
                 type="text"
                 value={field.state.value}
                 width="one-third"
-                className={styles.marginBottom}
               />
             )
           }}
@@ -164,7 +161,6 @@ export function RegistrationRequestForm() {
                 type="email"
                 value={field.state.value}
                 width="one-third"
-                className={styles.marginBottom}
               />
             )
           }}
@@ -189,7 +185,6 @@ export function RegistrationRequestForm() {
                 width="one-third"
                 required
                 value={field.state.value}
-                className={styles.marginBottom}
               />
             )
           }}
