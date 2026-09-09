@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.Users.Dtos;
 
@@ -17,6 +18,7 @@ public record OnboardUserCommandDto
     /// Gets the contact number of the user to onboard.
     /// </summary>
     [Required]
+    [PhoneNumber]
     public required string ContactNumber { get; init; }
 
     /// <summary>
