@@ -1,0 +1,402 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Textarea > applies a max-width for a fixed width 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 11.5em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > applies a width for a fluid width 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="width: 50%;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > forwards other textarea props 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <p
+      class="textarea__hint"
+    >
+      Include all relevant details
+    </p>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      placeholder="Enter a description"
+      rows="8"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > merges width styles with an explicit style prop 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="color: red; width: 100%;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders an unmodified design system textarea by default 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the 2 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 2.75em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the 3 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 3.75em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the 4 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 4.5em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the 5 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 5.5em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the 10 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 11.5em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the 20 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 20.5em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the 30 width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 29.5em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the full width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="width: 100%;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the one-half width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="width: 50%;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the one-quarter width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="width: 25%;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the one-third width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="width: 33.3333%;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the three-quarters width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="width: 75%;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders the two-thirds width variant 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="width: 66.6667%;"
+    />
+  </div>
+</DocumentFragment>
+`;

@@ -26,10 +26,12 @@ No modules.
 | [aws_sns_topic.cognito_alarms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
 | [aws_sns_topic.ecs_alarms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
 | [aws_sns_topic.rds_alarms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
+| [aws_sns_topic.sqs_alarms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
 | [aws_sns_topic_subscription.alb_alarms_email](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_sns_topic_subscription.cognito_alarms_email](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_sns_topic_subscription.ecs_alarms_email](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_sns_topic_subscription.rds_alarms_email](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
+| [aws_sns_topic_subscription.sqs_alarms_email](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 
 ## Inputs
 
@@ -50,4 +52,5 @@ No modules.
 | <a name="output_cognito_alarms_topic_arn"></a> [cognito\_alarms\_topic\_arn](#output\_cognito\_alarms\_topic\_arn) | ARN of the Cognito alarms SNS topic |
 | <a name="output_ecs_alarms_topic_arn"></a> [ecs\_alarms\_topic\_arn](#output\_ecs\_alarms\_topic\_arn) | ARN of the ECS alarms SNS topic |
 | <a name="output_rds_alarms_topic_arn"></a> [rds\_alarms\_topic\_arn](#output\_rds\_alarms\_topic\_arn) | ARN of the RDS alarms SNS topic |
+| <a name="output_sqs_alarms_topic_arn"></a> [sqs\_alarms\_topic\_arn](#output\_sqs\_alarms\_topic\_arn) | ARN of the SQS alarms SNS topic |
 <!-- END_TF_DOCS -->

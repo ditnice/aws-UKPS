@@ -16,7 +16,7 @@ internal sealed class UserFaker : Faker<User>
         RuleFor(x => x.UserType, f => f.PickRandom<UserType>());
         RuleFor(x => x.Title, f => f.PickRandom("Mr", "Mrs", "Ms", "Miss", "Dr", "Prof"));
         RuleFor(x => x.JobTitle, f => f.Name.JobTitle());
-        RuleFor(x => x.WorkTelephone, f => f.Phone.PhoneNumber());
+        RuleFor(x => x.WorkTelephone, _ => new TelephoneNumberFaker().Generate());
         RuleFor(x => x.WorkEmail, (f, u) => f.Internet.Email(u.FullName));
         RuleFor(x => x.CreatedAt, f => f.Date.Past(5).ToUniversalTime());
         RuleFor(

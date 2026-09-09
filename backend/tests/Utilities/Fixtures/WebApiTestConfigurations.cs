@@ -36,11 +36,11 @@ public static class WebApiTestConfigurations
             builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
         }
         builder.UseSetting(
-            $"{SeedingConfiguration.SectionName}:{nameof(SeedingConfiguration.ReseedOnStartup)}",
+            $"{SeedingOptions.SectionName}:{nameof(SeedingOptions.ReseedOnStartup)}",
             $"{reseedOnStartup}"
         );
         builder.UseSetting(
-            $"{DatabaseConfiguration.SectionName}:{nameof(DatabaseConfiguration.MigrateOnStartup)}",
+            $"{DatabaseOptions.SectionName}:{nameof(DatabaseOptions.MigrateOnStartup)}",
             $"{migrateOnStartup}"
         );
     }

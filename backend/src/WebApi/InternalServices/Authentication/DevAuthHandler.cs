@@ -8,13 +8,13 @@ namespace UKPS.Api.WebApi.InternalServices.Authentication;
 internal class DevAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     public const string AuthenticationScheme = "DevScheme";
-    private readonly DevAuthenticationOptions _authOptions;
+    private readonly DevAuthenticationClaims _authOptions;
 
     public DevAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        DevAuthenticationOptions authOptions
+        DevAuthenticationClaims authOptions
     )
         : base(options, logger, encoder)
     {

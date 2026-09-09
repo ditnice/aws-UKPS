@@ -1,13 +1,21 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { OnboardUserCommandDto } from '@/client/generated'
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
+import type { OnboardedUserDto } from '@/client/generated/types.gen'
+import { errorMessages } from '@/lib/form/errorMessages'
 import { NextLinkMock } from '@/test-utils/nextMocks'
 
 import { OrganisationOnboardUserForm } from './OrganisationOnboardUserForm'
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
+  phoneNumberValidationMock: vi.fn(),
+}))
+
+vi.mock('libphonenumber-js/max', () => ({
+  isValidPhoneNumber: mocks.phoneNumberValidationMock,
 }))
 
 vi.mock('@/client/generated/sdk.gen', () => ({
@@ -24,24 +32,51 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
+beforeEach(() => {
+  mocks.phoneNumberValidationMock.mockReturnValue(true)
+})
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
 })
 
+type FormValues = Omit<OnboardUserCommandDto, 'organisationId'>
+const validFormValues: FormValues = {
+  fullName: 'Test User',
+  newUserEmail: 'test@test.com',
+  contactNumber: '01234567890',
+}
+
 function renderForm() {
   render(<OrganisationOnboardUserForm organisationId={123} />)
 }
 
-function fillValidForm() {
+function enterValuesIntoForm(validFormValues: FormValues) {
   fireEvent.change(screen.getByLabelText('Full name'), {
-    target: { value: 'Test User' },
+    target: { value: validFormValues.fullName },
   })
   fireEvent.change(screen.getByLabelText('Work email address'), {
-    target: { value: 'test@test.com' },
+    target: { value: validFormValues.newUserEmail },
   })
   fireEvent.change(screen.getByLabelText('Phone number'), {
-    target: { value: '01234567890' },
+    target: { value: validFormValues.contactNumber },
+  })
+}
+
+function fillValidForm() {
+  enterValuesIntoForm(validFormValues)
+}
+
+function submitForm() {
+  fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+}
+
+function mockSuccessfulOnboardResponse(userId: number) {
+  vi.mocked(postUsersOnboard).mockResolvedValueOnce({
+    data: { userId },
+    error: undefined,
+    response: new Response(null, { status: 201 }),
   })
 }
 
@@ -81,6 +116,20 @@ describe('OrganisationOnboardUserForm', () => {
     expect(await screen.findByText("Enter the user's work email address")).toBeDefined()
     expect(await screen.findByText("Enter the user's phone number")).toBeDefined()
     expect(postUsersOnboard).not.toHaveBeenCalled()
+  })
+
+  it('validates the phone number as a valid phone number', async () => {
+    mocks.phoneNumberValidationMock.mockReturnValue(false)
+
+    const examplePhoneNumber = '63846484638'
+    renderForm()
+    enterValuesIntoForm({ ...validFormValues, contactNumber: examplePhoneNumber })
+    submitForm()
+
+    await waitFor(async () => {
+      expect(mocks.phoneNumberValidationMock).toHaveBeenCalledWith(examplePhoneNumber, 'GB')
+      expect(await screen.findByText(errorMessages.phoneFormat)).toBeDefined()
+    })
   })
 
   it('shows an email format validation error', async () => {
@@ -134,12 +183,8 @@ describe('OrganisationOnboardUserForm', () => {
     })
   })
 
-  it('submits valid values and redirects to the organisation page with the invited email', async () => {
-    vi.mocked(postUsersOnboard).mockResolvedValueOnce({
-      data: undefined,
-      error: undefined,
-      response: new Response(null, { status: 201 }),
-    })
+  it('submits valid values and redirects to the organisation page with the new user id', async () => {
+    mockSuccessfulOnboardResponse(456)
     renderForm()
 
     fillValidForm()
@@ -155,7 +200,36 @@ describe('OrganisationOnboardUserForm', () => {
         },
         credentials: 'include',
       })
-      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123?invited=test%40test.com')
+      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123?action=invited&userId=456')
+    })
+  })
+
+  it('never puts the invited email address in the URL', async () => {
+    mockSuccessfulOnboardResponse(456)
+    renderForm()
+
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+
+    await waitFor(() => expect(mocks.push).toHaveBeenCalled())
+    expect(mocks.push.mock.calls[0][0]).not.toContain('test')
+  })
+
+  it('redirects without an alert when the API does not return the new user id', async () => {
+    vi.mocked(postUsersOnboard).mockResolvedValueOnce({
+      // A success response whose body carries no id: the redirect should still
+      // happen, just without the id the organisation page needs for the alert.
+      data: {} as OnboardedUserDto,
+      error: undefined,
+      response: new Response(null, { status: 201 }),
+    })
+    renderForm()
+
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123')
     })
   })
 

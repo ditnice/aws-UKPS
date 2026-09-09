@@ -1,3 +1,4 @@
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.InternalServices.Identity;
@@ -10,13 +11,30 @@ namespace UKPS.Api.Application.InternalServices.Identity;
 /// </summary>
 internal sealed class MockCurrentUserInfoService : ICurrentUserInfoService
 {
+    private readonly AppDbContext _appDbContext;
+
+    public MockCurrentUserInfoService(AppDbContext appDbContext)
+    {
+        _appDbContext = appDbContext;
+    }
+
     public CurrentUser GetCurrentUserInfo()
     {
+        var sampleUser =
+            _appDbContext
+                .UserOrgMemberships.Where(x => x.UserRole == UserRole.Super)
+                .Where(x => x.OrganisationId == 1)
+                .FirstOrDefault(x => x.IsAuthorised())
+            ?? throw new InvalidOperationException(
+                "A super user was not seeded for organisation 1."
+            );
+
         return new CurrentUser
         {
             OrganisationId = 1,
             UserRole = UserRole.Super,
-            Email = "exampleuser@email.com",
+            Email = sampleUser.User!.WorkEmail,
+            CognitoUsername = sampleUser.User.CognitoUsername,
         };
     }
 }

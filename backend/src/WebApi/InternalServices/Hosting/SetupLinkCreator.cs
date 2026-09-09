@@ -6,9 +6,9 @@ namespace UKPS.Api.WebApi.InternalServices.Hosting;
 
 internal class SetupLinkCreator : ISetupLinkCreator
 {
-    private readonly UserOnboardingConfiguration _configuration;
+    private readonly UserOnboardingOptions _configuration;
 
-    public SetupLinkCreator(IOptions<UserOnboardingConfiguration> configuration)
+    public SetupLinkCreator(IOptions<UserOnboardingOptions> configuration)
     {
         _configuration = configuration.Value;
     }

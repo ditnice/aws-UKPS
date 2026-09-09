@@ -1,0 +1,10 @@
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh; /* modern browsers */
+}
+
+.mainContent {
+  flex-grow: 1;
+}

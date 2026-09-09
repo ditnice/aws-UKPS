@@ -1,7 +1,8 @@
 'use client'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
-import { Textarea } from '@nice-digital/nds-textarea'
+
+import { Textarea } from '@/components/Textarea/Textarea'
 
 import { Example } from '../../_components/Example'
 
@@ -46,6 +47,14 @@ export function Examples() {
           error={true}
           errorMessage="Please describe your request or issue."
         ></Textarea>
+      </Example>
+      <Example title="Example: fluid width">
+        <Textarea label="Full width" name="width-full" width="full" />
+        <Textarea label="Three-quarters width" name="width-three-quarters" width="three-quarters" />
+        <Textarea label="Two-thirds width" name="width-two-thirds" width="two-thirds" />
+        <Textarea label="One-half width" name="width-one-half" width="one-half" />
+        <Textarea label="One-third width" name="width-one-third" width="one-third" />
+        <Textarea label="One-quarter width" name="width-one-quarter" width="one-quarter" />
       </Example>
     </>
   )

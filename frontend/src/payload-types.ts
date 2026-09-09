@@ -89,8 +89,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    header: Header;
+  };
+  globalsSelect: {
+    header: HeaderSelect<false> | HeaderSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -171,16 +175,14 @@ export interface Page {
   id: number;
   title: string;
   /**
-   * URL-safe identifier, e.g. "home" or "about-us"
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
+  generateSlug?: boolean | null;
   slug: string;
   /**
-   * Full path, e.g. "/" or "/about-us/what-is-uk-pharmascan"
+   * Optional — create hierarchical pages, e.g. about-us/history-of-nice. Leave blank for a top-level page.
    */
-  path: string;
-  navigationGroup?: string | null;
-  navigationLabel?: string | null;
-  navigationOrder?: number | null;
+  parent?: (number | null) | Page;
   layout: (
     | {
         heading: string;
@@ -224,6 +226,7 @@ export interface Page {
   )[];
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -349,11 +352,9 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
-  path?: T;
-  navigationGroup?: T;
-  navigationLabel?: T;
-  navigationOrder?: T;
+  parent?: T;
   layout?:
     | T
     | {
@@ -409,6 +410,7 @@ export interface PagesSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -449,6 +451,40 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This is our header navigation
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header".
+ */
+export interface Header {
+  id: number;
+  headerLinks?:
+    | {
+        label: string;
+        destination: number | Page;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header_select".
+ */
+export interface HeaderSelect<T extends boolean = true> {
+  headerLinks?:
+    | T
+    | {
+        label?: T;
+        destination?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

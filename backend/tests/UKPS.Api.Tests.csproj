@@ -16,6 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.SSOOIDC" Version="4.0.100.13" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="coverlet.msbuild" Version="6.0.4" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.11" />
@@ -24,10 +25,11 @@
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="Respawn" Version="7.0.0" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
-    <PackageReference Include="Testcontainers.PostgreSql" Version="4.14.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="xunit.analyzers" Version="1.27.0" PrivateAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="Amazon.Lambda.TestUtilities" Version="*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,5 +38,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\UKPS.Api.csproj" />
+    <ProjectReference Include="..\migration\MigratorLambda.csproj" />
   </ItemGroup>
 </Project>

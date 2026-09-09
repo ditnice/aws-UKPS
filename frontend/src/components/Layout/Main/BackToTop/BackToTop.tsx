@@ -11,9 +11,11 @@ import styles from './BackToTop.module.scss'
 import type { MouseEvent } from 'react'
 
 export function BackToTop() {
-  const [isVisible, setIsVisible] = useState(true)
+  // Default to hidden: this is server-rendered before any measurement is possible,
+  // so starting visible would flash the link on short pages before the effect below
+  // (which only runs after hydration) can hide it again.
+  const [isVisible, setIsVisible] = useState(false)
 
-  // Measure before paint so short pages don't briefly flash the back-to-top link.
   useLayoutEffect(() => {
     function checkVisibility() {
       const footer = document.querySelector('[data-component="footer"]')

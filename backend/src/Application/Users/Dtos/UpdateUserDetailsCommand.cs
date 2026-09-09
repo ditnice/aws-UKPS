@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.Users.Dtos;
 
@@ -24,5 +25,6 @@ public sealed record UpdateUserDetailsCommand
     /// Gets the user's work telephone number.
     /// </summary>
     [Required]
+    [PhoneNumber]
     public required string WorkTelephone { get; init; }
 }

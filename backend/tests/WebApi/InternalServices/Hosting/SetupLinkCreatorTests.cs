@@ -13,7 +13,7 @@ public class SetupLinkCreatorTests
         var setupToken = Guid.Parse("48b5becd-f98c-4897-98aa-be37eecb6a68");
         var creator = new SetupLinkCreator(
             Options.Create(
-                new UserOnboardingConfiguration { SetupLink = new Uri("https://frontend.example") }
+                new UserOnboardingOptions { SetupLink = new Uri("https://frontend.example") }
             )
         );
 

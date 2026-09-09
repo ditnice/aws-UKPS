@@ -35,7 +35,7 @@ public class LoginServiceTests : DatabaseTestBase
             {
                 services.AddSingleton(
                     Options.Create(
-                        new CognitoConfiguration
+                        new CognitoOptions
                         {
                             ClientId = "client-id",
                             Region = "eu-west-2",

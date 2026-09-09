@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -45,7 +46,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
                 builder.UseSetting(
-                    $"{DevAuthenticationConfiguration.SectionName}:{nameof(DevAuthenticationConfiguration.IsEnabled)}",
+                    $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
                     $"{true}"
                 );
             })
@@ -76,6 +77,28 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task Post_WhenSuccessResult_ShouldReturnTheNewUsersId()
+    {
+        const int newUserId = 42;
+        _mockService
+            .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(UserOnboardingResult.Ok(newUserId));
+        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
+
+        var response = await _client.PostAsJsonAsync(
+            OnboardEndpoint,
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        OnboardedUserDto? body = await response.Content.ReadFromJsonAsync<OnboardedUserDto>(
+            TestContext.Current.CancellationToken
+        );
+        body.ShouldNotBeNull();
+        body.UserId.ShouldBe(newUserId);
     }
 
     [Fact]
@@ -124,32 +147,157 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task Post_WhenEmailNotSet_ShouldReturnHttpBadRequest()
+    public async Task Post_WhenValuesNotValid_ShouldReturnHttpBadRequest()
     {
-        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate() with
+        (string Label, Func<OnboardUserCommandDto, OnboardUserCommandDto> Value)[] modifiers =
+        [
+            (
+                nameof(OnboardUserCommandDto.NewUserEmail),
+                x => x with { NewUserEmail = "invalid-email" }
+            ),
+            (
+                nameof(OnboardUserCommandDto.NewUserEmail),
+                x => x with { NewUserEmail = string.Empty }
+            ),
+            (
+                nameof(OnboardUserCommandDto.ContactNumber),
+                x => x with { ContactNumber = "invalid-contact-number" }
+            ),
+        ];
+
+        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
+        foreach (var modifier in modifiers)
         {
-            NewUserEmail = string.Empty,
-        };
+            var modifiedCommand = modifier.Value(command);
+            HttpResponseMessage response = await _client.PostAsJsonAsync(
+                OnboardEndpoint,
+                modifiedCommand,
+                TestContext.Current.CancellationToken
+            );
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+            var errors = await response.Content.ShouldContainValidationErrors();
+            errors.ShouldContainKey(modifier.Label);
+        }
+    }
+
+    [Fact]
+    public async Task RegisterUser_IsValid_ReturnsDto()
+    {
+        RegisterUserCommandDto request = RegisterUserCommandDto();
+        RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
+
+        _mockService
+            .RegisterUser(request, Arg.Any<CancellationToken>())
+            .Returns(Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(expected));
+
         var response = await _client.PostAsJsonAsync(
-            OnboardEndpoint,
-            command,
+            new Uri("/users/register"),
+            request,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task RegisterUser_FieldsMissing_ReturnsBadRequest()
+    {
+        RegisterUserCommandDto request = RegisterUserCommandDto();
+        _mockService
+            .RegisterUser(Arg.Any<RegisterUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
+                    new RegisterUserError.MissingFields()
+                )
+            );
+        var response = await _client.PostAsJsonAsync(
+            new Uri("/users/register"),
+            request,
             TestContext.Current.CancellationToken
         );
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task Post_WhenEmailNotValidaEmail_ShouldReturnHttpBadRequest()
+    public async Task RegisterUser_OrganisationNotFound_ReturnsNotFound()
     {
-        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate() with
-        {
-            NewUserEmail = "invalid-email",
-        };
-        HttpResponseMessage response = await _client.PostAsJsonAsync(
-            OnboardEndpoint,
-            command,
+        RegisterUserCommandDto request = RegisterUserCommandDto();
+
+        _mockService
+            .RegisterUser(Arg.Any<RegisterUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RegisterUserConfirmationDto, RegisterUserError>.Err(
+                    new RegisterUserError.OrganisationNotFound()
+                )
+            );
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri("/users/register"),
+            request,
             TestContext.Current.CancellationToken
         );
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task GetUserRegistrationById_UserExists_ReturnsDto()
+    {
+        RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
+        _mockService
+            .GetUserRegistrationById(1, Arg.Any<CancellationToken>())
+            .Returns(Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(expected));
+
+        var response = await _client.GetAsync(
+            new Uri("/users/registration-requests/1"),
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_UserDoesNotExist_ReturnsNotFound()
+    {
+        _mockService
+            .GetUserRegistrationById(1, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                    new GetUserDetailsError.IdNotFound(1)
+                )
+            );
+        var response = await _client.GetAsync(
+            new Uri("/users/registration-requests/1"),
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    private static RegisterUserCommandDto RegisterUserCommandDto() =>
+        new()
+        {
+            FullName = "Test1",
+            PhoneNumber = "07845796823",
+            WorkEmail = "user@example.com",
+            OrganisationId = 1,
+        };
+
+    private static RegisterUserConfirmationDto RegisterUserConfirmationDto() =>
+        new()
+        {
+            Id = 1,
+            OrganisationName = "Test",
+            FullName = "Test2",
+            PhoneNumber = "07845796823",
+            WorkEmail = "user@example.com",
+        };
 }

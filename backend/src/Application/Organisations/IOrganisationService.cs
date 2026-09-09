@@ -62,4 +62,17 @@ public interface IOrganisationService
         CreateOrganisationDto command,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Gets all organisations.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a
+    /// <see cref="Result{TSuccess, TError}"/> object with the organisation names
+    /// or an error of type <see cref="GetOrganisationByIdError"/>.
+    /// </returns>
+    Task<IReadOnlyCollection<OrganisationListDto>> GetAllOrganisations(
+        CancellationToken cancellationToken
+    );
 }

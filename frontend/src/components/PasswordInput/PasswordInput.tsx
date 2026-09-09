@@ -32,6 +32,7 @@ export type PasswordInputProps = Omit<
 
 export function PasswordInput({
   'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
   autoComplete = 'current-password',
   className,
   error,
@@ -78,6 +79,7 @@ export function PasswordInput({
         <input
           {...rest}
           aria-describedby={describedBy}
+          aria-invalid={error ? true : ariaInvalid}
           autoCapitalize="none"
           autoComplete={autoComplete}
           className={fieldClassName}

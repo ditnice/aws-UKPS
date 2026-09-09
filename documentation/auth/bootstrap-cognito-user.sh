@@ -34,7 +34,10 @@ secret_hash() {
     | openssl base64
 }
 
-AUTH_USERNAME="$EMAIL"
+# Cognito derives the expected SECRET_HASH from the account's real username, which
+# is now the computed COGNITO_USERNAME rather than the email. The auth flow must
+# use that same value for USERNAME and the secret hash.
+AUTH_USERNAME="$COGNITO_USERNAME"
 AUTH_SECRET_HASH="$(secret_hash "$AUTH_USERNAME")"
 
 echo "Creating Cognito user $COGNITO_USERNAME for $EMAIL in user pool $USER_POOL_ID..."

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Bogus;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -28,12 +29,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task AddAwsBearerAuthentication_ShouldRegisterDevAuthentication_WhenDevAuthenticationIsEnabled()
     {
-        var builder = CreateBuilder(
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "true",
-            }
-        );
+        var builder = CreateBuilder(devAuthenticationOptions: true);
 
         builder.AddAwsBearerAuthentication();
 
@@ -46,7 +42,7 @@ public sealed class AwsAuthenticationExtensionsTests
         scheme.ShouldNotBeNull();
         scheme.HandlerType.ShouldBe(typeof(DevAuthHandler));
 
-        var options = provider.GetService<DevAuthenticationOptions>();
+        var options = provider.GetService<DevAuthenticationClaims>();
 
         options.ShouldNotBeNull();
     }
@@ -54,12 +50,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task AddAwsBearerAuthentication_ShouldNotRegisterJwtAuthentication_WhenDevAuthenticationIsEnabled()
     {
-        var builder = CreateBuilder(
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "true",
-            }
-        );
+        var builder = CreateBuilder(devAuthenticationOptions: true);
 
         builder.AddAwsBearerAuthentication();
 
@@ -77,15 +68,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task AddAwsBearerAuthentication_ShouldRegisterStandardAuthentication_WhenDevAuthenticationIsDisabled()
     {
-        var builder = CreateBuilder(
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                [$"{DevAuthenticationConfiguration.SectionName}:IsEnabled"] = "false",
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
-                    "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
-            }
-        );
+        var builder = CreateBuilder();
 
         builder.AddAwsBearerAuthentication();
 
@@ -104,14 +87,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task AddAwsBearerAuthentication_ShouldRegisterStandardAuthentication_WhenDevAuthenticationConfigurationIsMissing()
     {
-        var builder = CreateBuilder(
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
-                    "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
-            }
-        );
+        var builder = CreateBuilder();
 
         builder.AddAwsBearerAuthentication();
 
@@ -133,12 +109,11 @@ public sealed class AwsAuthenticationExtensionsTests
         var userPoolId = "eu-west-2_example";
         var expectedAuthority = new Uri(serviceUrl, userPoolId).AbsoluteUri;
 
-        var builder = CreateBuilder(
-            new Dictionary<string, string?>(StringComparer.Ordinal)
+        var builder = CreateBuilder(x =>
+            x with
             {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] = serviceUrl.AbsoluteUri,
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = userPoolId,
-                [$"{CognitoConfiguration.SectionName}:Region"] = "eu-west-2",
+                ServiceUrlOverride = serviceUrl,
+                UserPoolId = userPoolId,
             }
         );
 
@@ -166,15 +141,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task OnMessageReceived_ShouldReadAccessTokenFromCookie()
     {
-        var builder = CreateBuilder(
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
-                    "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
-                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
-            }
-        );
+        var builder = CreateBuilder();
 
         builder.AddAwsBearerAuthentication();
 
@@ -204,15 +171,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public async Task OnMessageReceived_ShouldSetTokenToNull_WhenAccessTokenCookieIsMissing()
     {
-        var builder = CreateBuilder(
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
-                    "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
-                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
-            }
-        );
+        var builder = CreateBuilder();
 
         builder.AddAwsBearerAuthentication();
 
@@ -242,15 +201,7 @@ public sealed class AwsAuthenticationExtensionsTests
     {
         var tokenValidationHandler = Substitute.For<ITokenValidationHandler>();
 
-        var builder = CreateBuilder(
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                [$"{CognitoConfiguration.SectionName}:ServiceUrl"] =
-                    "https://cognito-idp.eu-west-2.amazonaws.com/",
-                [$"{CognitoConfiguration.SectionName}:UserPoolId"] = "eu-west-2_example",
-                [$"{CognitoConfiguration.SectionName}:Region"] = "region",
-            }
-        );
+        var builder = CreateBuilder();
 
         builder.Services.AddSingleton(tokenValidationHandler);
 
@@ -295,7 +246,7 @@ public sealed class AwsAuthenticationExtensionsTests
     [Fact]
     public void AddAwsBearerAuthentication_ShouldThrow_WhenCognitoConfigurationIsMissing()
     {
-        var builder = CreateBuilder();
+        var builder = CreateBuilder(x => null!);
 
         builder.AddAwsBearerAuthentication();
 
@@ -308,21 +259,67 @@ public sealed class AwsAuthenticationExtensionsTests
         );
 
         exception.Message.ShouldBe(
-            $"Jwt configuration section [{CognitoConfiguration.SectionName}] is missing or invalid."
+            $"Jwt configuration section [{CognitoOptions.SectionName}] is missing or invalid."
         );
     }
 
     private static WebApplicationBuilder CreateBuilder(
-        IDictionary<string, string?>? configuration = null
+        Func<CognitoOptions, CognitoOptions>? cognitoOptionsModifier = null,
+        bool devAuthenticationOptions = false
     )
     {
+        var fakeOptions = new CognitoOptionsFaker().Generate();
+        var options = cognitoOptionsModifier is not null
+            ? cognitoOptionsModifier(fakeOptions)
+            : fakeOptions;
         var builder = WebApplication.CreateBuilder();
 
-        if (configuration is not null)
+        var devAuthConfig = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
-            builder.Configuration.AddInMemoryCollection(configuration);
+            [
+                $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}"
+            ] = devAuthenticationOptions.ToString(),
+        };
+
+        if (options is null)
+        {
+            builder.Configuration.AddInMemoryCollection(devAuthConfig);
+            return builder;
         }
+        builder.Configuration.AddInMemoryCollection(
+            new Dictionary<string, string?>(devAuthConfig, StringComparer.Ordinal)
+            {
+                [$"{CognitoOptions.SectionName}:{nameof(CognitoOptions.ClientId)}"] =
+                    options.ClientId,
+                [$"{CognitoOptions.SectionName}:{nameof(CognitoOptions.ClientSecret)}"] =
+                    options.ClientSecret,
+                [$"{CognitoOptions.SectionName}:{nameof(CognitoOptions.Region)}"] = options.Region,
+                [$"{CognitoOptions.SectionName}:{nameof(CognitoOptions.UserPoolId)}"] =
+                    options.UserPoolId,
+                [$"{CognitoOptions.SectionName}:{nameof(CognitoOptions.ServiceUrlOverride)}"] =
+                    options.ServiceUrlOverride?.AbsoluteUri,
+            }
+        );
 
         return builder;
+    }
+
+    private sealed class CognitoOptionsFaker : Faker<CognitoOptions>
+    {
+        public CognitoOptionsFaker()
+        {
+            RuleFor(x => x.ServiceUrlOverride, f => null);
+            RuleFor(x => x.ClientId, f => f.Random.AlphaNumeric(26));
+            RuleFor(x => x.ClientSecret, f => f.Random.AlphaNumeric(40));
+            RuleFor(
+                x => x.Region,
+                f => f.PickRandom("eu-west-1", "eu-west-2", "eu-central-1", "us-east-1")
+            );
+
+            RuleFor(
+                x => x.UserPoolId,
+                (f, options) => $"{options.Region}_{f.Random.AlphaNumeric(9)}"
+            );
+        }
     }
 }

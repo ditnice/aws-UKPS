@@ -19,7 +19,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
         _writer = writer;
     }
 
-    public Task SeedData(SeedingConfiguration configuration, CancellationToken cancellationToken)
+    public Task SeedData(SeedingOptions configuration, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -27,7 +27,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
         return _writer.Write(payload, cancellationToken);
     }
 
-    internal static SeedingDataPayload BuildPayload(SeedingConfiguration configuration)
+    internal static SeedingDataPayload BuildPayload(SeedingOptions configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 

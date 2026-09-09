@@ -17,3 +17,8 @@ output "cognito_alarms_topic_arn" {
   description = "ARN of the Cognito alarms SNS topic"
   value       = aws_sns_topic.cognito_alarms.arn
 }
+
+output "sqs_alarms_topic_arn" {
+  description = "ARN of the SQS alarms SNS topic"
+  value       = aws_sns_topic.sqs_alarms.arn
+}

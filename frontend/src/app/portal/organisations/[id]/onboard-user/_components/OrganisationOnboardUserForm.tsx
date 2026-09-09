@@ -1,6 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -11,6 +12,8 @@ import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
+
+import { buildUserActionHref } from '../../_lib/userActionAlert'
 
 import styles from './OrganisationOnboardUserForm.module.scss'
 
@@ -23,7 +26,11 @@ const onboardUserSchema = z.object({
     .trim()
     .min(1, errorMessages.userEmailRequired)
     .pipe(z.email(errorMessages.emailFormat)),
-  contactNumber: z.string().trim().min(1, errorMessages.userPhoneNumberRequired),
+  contactNumber: z
+    .string()
+    .trim()
+    .min(1, errorMessages.userPhoneNumberRequired)
+    .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 
 type OnboardUserFormValues = z.input<typeof onboardUserSchema>
@@ -42,7 +49,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
   const [formError, setFormError] = useState<string | null>(null)
   const [emailApiError, setEmailApiError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const cancelHref = `/portal/organisations/${organisationId}`
+  const rootHref = `/portal/organisations/${organisationId}`
 
   const form = useForm({
     defaultValues: {
@@ -90,8 +97,13 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
         }
       }
 
-      // TODO: Look to use a short-lived flash cookie or server-side action state so the email is not visible in the URL
-      router.push(`${cancelHref}?invited=${encodeURIComponent(parsedValue.newUserEmail)}`)
+      const newUserId = response.data?.userId
+
+      router.push(
+        newUserId === undefined
+          ? rootHref
+          : buildUserActionHref(organisationId, 'invited', newUserId),
+      )
     },
   })
 
@@ -190,7 +202,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
         <Button disabled={isSubmitting} type="submit" variant="cta">
           Send invite
         </Button>
-        <Button elementType={Link} href={cancelHref} variant="secondary">
+        <Button elementType={Link} href={rootHref} variant="secondary">
           Cancel
         </Button>
       </ButtonGroup>

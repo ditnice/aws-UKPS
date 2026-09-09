@@ -38,7 +38,7 @@ export default async function EditOrganisationPage({ params }: Props) {
     <>
       <PageHeader
         backLink={<BackLink href={`/portal/organisations/${organisationId}`}>Back</BackLink>}
-        heading="Edit your company's details"
+        heading="Edit your organisation's details"
       ></PageHeader>
 
       <EditOrganisationDetailsForm

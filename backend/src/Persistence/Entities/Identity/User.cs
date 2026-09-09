@@ -35,7 +35,7 @@ internal sealed class User
 
         foreach (var membership in UserOrgMemberships)
         {
-            membership.MarkAsActive();
+            membership.FinaliseSetup();
         }
     }
 

@@ -283,6 +283,44 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
         result.ShouldBeError().ShouldBeOfType<CreateOrganisationError.OrganisationNameConflict>();
     }
 
+    [Fact]
+    public async Task GetAllOrganisation_OrganisationsExist_ReturnsDtos()
+    {
+        Context.Organisations.AddRange(
+            new Organisation
+            {
+                Id = 2,
+                OrganisationName = "Organisation1",
+                HeadOfficeEmail = "test1@email.com",
+                HeadOfficeTelephone = "07943162541",
+                HeadOfficeAddress = "10 Downing Street\nLondon\nSW1A 2AA",
+                Status = UserOrgStatus.Active,
+            },
+            new Organisation
+            {
+                Id = 3,
+                OrganisationName = "Organisation2",
+                HeadOfficeEmail = "test2@email.com",
+                HeadOfficeTelephone = "07943162542",
+                HeadOfficeAddress = "11 Downing Street\nLondon\nSW1A 2AA",
+                Status = UserOrgStatus.Active,
+            }
+        );
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        IReadOnlyCollection<OrganisationListDto> result = await Service.GetAllOrganisations(
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldNotBeNull();
+        result.Count.ShouldBe(2);
+
+        var organisation1 = result.Single(x => x.Id == 2);
+        organisation1.OrganisationName.ShouldBe("Organisation1");
+
+        var organisation2 = result.Single(x => x.Id == 3);
+        organisation2.OrganisationName.ShouldBe("Organisation2");
+    }
+
     private static Organisation CreateOrganisation() =>
         new()
         {
@@ -363,7 +401,7 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
             RuleFor(o => o.OrganisationName, f => f.Company.CompanyName());
             RuleFor(o => o.HeadOfficeAddress, f => f.Address.FullAddress());
             RuleFor(o => o.HeadOfficeEmail, f => f.Internet.Email());
-            RuleFor(o => o.HeadOfficeTelephone, f => f.Phone.PhoneNumber());
+            RuleFor(o => o.HeadOfficeTelephone, _ => new TelephoneNumberFaker().Generate());
         }
     }
 }

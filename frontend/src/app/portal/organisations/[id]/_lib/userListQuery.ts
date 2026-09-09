@@ -1,6 +1,11 @@
-import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
+import type {
+  GetUsersQuerySortValue,
+  SortDirection,
+  UserOrgStatus,
+  UserRole,
+} from '@/client/generated/types.gen'
 import { parsePage, parsePageSize } from '@/lib/search-and-filter/pagination'
-import { parseMulti } from '@/lib/search-and-filter/query'
+import { parseMulti, parseSortDirection } from '@/lib/search-and-filter/query'
 
 import {
   filterableRoles,
@@ -17,6 +22,8 @@ export interface UserListSearchParams {
   role?: string | string[]
   email?: string
   lastActive?: string
+  sortBy?: string
+  sortDirection?: string
 }
 
 // The validated user list state, shared by the page and the table
@@ -27,6 +34,8 @@ export interface UserListQuery {
   role: UserRole[]
   email?: string
   lastActive?: LastActivePreset
+  sortBy?: GetUsersQuerySortValue
+  sortDirection?: SortDirection
 }
 
 function parseEmail(email: string | undefined): string | undefined {
@@ -41,6 +50,13 @@ function parseLastActive(lastActive: string | undefined): LastActivePreset | und
   return isLastActivePreset(lastActive) ? lastActive : undefined
 }
 
+function parseSortBy(sortBy: string | undefined): GetUsersQuerySortValue | undefined {
+  const validSortValues: GetUsersQuerySortValue[] = ['Email', 'Role', 'Status', 'LastActive']
+  return validSortValues.includes(sortBy as GetUsersQuerySortValue)
+    ? (sortBy as GetUsersQuerySortValue)
+    : undefined
+}
+
 export function parseUserListQuery(searchParams: UserListSearchParams): UserListQuery {
   return {
     page: parsePage(searchParams.page),
@@ -49,6 +65,8 @@ export function parseUserListQuery(searchParams: UserListSearchParams): UserList
     role: parseMulti(searchParams.role, filterableRoles),
     email: parseEmail(searchParams.email),
     lastActive: parseLastActive(searchParams.lastActive),
+    sortBy: parseSortBy(searchParams.sortBy) ?? 'LastActive',
+    sortDirection: parseSortDirection(searchParams.sortDirection) ?? 'Descending',
   }
 }
 
@@ -59,6 +77,8 @@ export function buildUserListSearchParams({
   role,
   email,
   lastActive,
+  sortBy,
+  sortDirection,
 }: UserListQuery): URLSearchParams {
   const params = new URLSearchParams()
   params.set('page', String(page))
@@ -70,6 +90,12 @@ export function buildUserListSearchParams({
   }
   if (lastActive) {
     params.set('lastActive', lastActive)
+  }
+  if (sortBy) {
+    params.set('sortBy', sortBy)
+  }
+  if (sortDirection) {
+    params.set('sortDirection', sortDirection)
   }
 
   return params

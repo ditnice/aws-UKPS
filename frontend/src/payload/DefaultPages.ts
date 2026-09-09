@@ -47,11 +47,8 @@ export type SitePageBlock =
   TextSectionLayoutBlock | TabsLayoutBlock | AccordionLayoutBlock | ListLayoutBlock
 
 export type SitePage = {
-  id?: string
+  id?: number
   layout: SitePageBlock[]
-  navigationGroup?: string
-  navigationLabel?: string
-  navigationOrder?: number
   path: string
   slug: string
   title: string
@@ -63,7 +60,7 @@ export const defaultPages: SitePage[] = [
       {
         blockType: 'textSection',
         body: 'Home Test',
-        heading: 'Home',
+        heading: 'UK PharmaScan',
         variant: 'homeStandard',
       },
     ],

@@ -1,15 +1,5 @@
 import type { SitePage, SitePageBlock } from '@/payload/DefaultPages'
-
-type PayloadPageDoc = {
-  id?: string
-  layout?: Array<Record<string, unknown>>
-  navigationGroup?: string
-  navigationLabel?: string
-  navigationOrder?: number
-  path?: string
-  slug?: string
-  title?: string
-}
+import type { Page } from '@/payload-types'
 
 function mapBlock(block: Record<string, unknown>): SitePageBlock | null {
   const blockType = block.blockType
@@ -101,12 +91,8 @@ function mapBlock(block: Record<string, unknown>): SitePageBlock | null {
   return null
 }
 
-export function mapPage(doc: PayloadPageDoc): SitePage | null {
-  if (
-    typeof doc.title !== 'string' ||
-    typeof doc.slug !== 'string' ||
-    typeof doc.path !== 'string'
-  ) {
+export function mapPage(doc: Page, path: string): SitePage | null {
+  if (!(doc.title && doc.slug)) {
     return null
   }
 
@@ -125,10 +111,7 @@ export function mapPage(doc: PayloadPageDoc): SitePage | null {
   return {
     id: doc.id,
     layout,
-    navigationGroup: typeof doc.navigationGroup === 'string' ? doc.navigationGroup : undefined,
-    navigationLabel: typeof doc.navigationLabel === 'string' ? doc.navigationLabel : undefined,
-    navigationOrder: typeof doc.navigationOrder === 'number' ? doc.navigationOrder : undefined,
-    path: doc.path,
+    path,
     slug: doc.slug,
     title: doc.title,
   }

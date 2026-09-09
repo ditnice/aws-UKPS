@@ -1,5 +1,10 @@
+import { fileURLToPath } from 'node:url'
+
+import { includeIgnoreFile } from '@eslint/config-helpers'
 import coreWebVitals from 'eslint-config-next/core-web-vitals'
 import typescript from 'eslint-config-next/typescript'
+
+const gitignorePath = fileURLToPath(new URL('../.gitignore', import.meta.url))
 
 // Local wrappers around NDS components that everything else should import
 // instead of the raw @nice-digital package. Each entry needs a matching
@@ -9,8 +14,10 @@ const ndsWrappers = [
   { dir: 'Table', pkg: '@nice-digital/nds-table', component: 'Table' },
   { dir: 'Button', pkg: '@nice-digital/nds-button', component: 'Button' },
   { dir: 'Input', pkg: '@nice-digital/nds-input', component: 'Input' },
+  { dir: 'Textarea', pkg: '@nice-digital/nds-textarea', component: 'Textarea' },
   { dir: 'Tag', pkg: '@nice-digital/nds-tag', component: 'Tag' },
   { dir: 'PageHeader', pkg: '@nice-digital/nds-page-header', component: 'PageHeader' },
+  { dir: 'Alert', pkg: '@nice-digital/nds-alert', component: 'Alert' },
 ]
 
 const restrictedImportPaths = ndsWrappers.map(({ pkg, dir, component }) => ({
@@ -37,6 +44,7 @@ const ndsWrapperRestrictions = [
 ]
 
 const eslintConfig = [
+  includeIgnoreFile(gitignorePath, { gitignoreResolution: true }),
   ...coreWebVitals,
   ...typescript,
   {

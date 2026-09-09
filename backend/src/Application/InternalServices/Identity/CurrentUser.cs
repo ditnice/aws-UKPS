@@ -1,3 +1,4 @@
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.InternalServices.Identity;
@@ -7,6 +8,11 @@ namespace UKPS.Api.Application.InternalServices.Identity;
 /// </summary>
 public sealed record CurrentUser
 {
+    /// <summary>
+    /// Gets the username of the current user in Amazon Cognito.
+    /// </summary>
+    public required CognitoUsername CognitoUsername { get; init; }
+
     /// <summary>
     /// Gets the identifier of the organisation associated with the current user.
     /// </summary>

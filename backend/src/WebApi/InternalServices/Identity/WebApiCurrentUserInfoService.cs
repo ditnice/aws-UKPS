@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Claims;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.WebApi.InternalServices.Identity;
@@ -49,6 +50,16 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             );
     }
 
+    private static CognitoUsername FindCognitoUsername(ClaimsPrincipal claimsPrincipal)
+    {
+        string usernameValue =
+            claimsPrincipal.FindFirstValue(UkpsClaimTypes.Username)
+            ?? throw new InvalidOperationException(
+                $"Invalid {UkpsClaimTypes.Username} claim value."
+            );
+        return CognitoUsername.Parse(usernameValue);
+    }
+
     public static CurrentUser ParseFromUserPrincipal(ClaimsPrincipal claimsPrincipal)
     {
         return new CurrentUser
@@ -56,6 +67,7 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             OrganisationId = FindOrganisationId(claimsPrincipal),
             UserRole = FindUserRole(claimsPrincipal),
             Email = FindUserEmail(claimsPrincipal),
+            CognitoUsername = FindCognitoUsername(claimsPrincipal),
         };
     }
 }

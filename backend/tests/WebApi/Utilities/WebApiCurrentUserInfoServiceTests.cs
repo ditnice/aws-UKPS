@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.InternalServices.Identity;
 
@@ -16,6 +17,7 @@ public class WebApiCurrentUserInfoServiceTests
         new Claim(UkpsClaimTypes.OrganisationId, $"{0}"),
         new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
         new Claim(UkpsClaimTypes.Email, "example.user@email.com"),
+        new Claim(UkpsClaimTypes.Username, "24a97ae0-d7d2-4c6b-88de-d835b13e8038"),
     ];
 
     [Fact]
@@ -26,15 +28,18 @@ public class WebApiCurrentUserInfoServiceTests
         foreach (var userRole in Enum.GetValues<UserRole>())
         {
             var organisationId = faker.Random.Int(min: 0);
+            var username = faker.Random.Guid().ToString();
             var service = CreateServiceWithOverrides(
                 new Claim(UkpsClaimTypes.OrganisationId, $"{organisationId}"),
-                new Claim(UkpsClaimTypes.UserRole, userRole.ToString())
+                new Claim(UkpsClaimTypes.UserRole, userRole.ToString()),
+                new Claim(UkpsClaimTypes.Username, username)
             );
 
             CurrentUser result = service.GetCurrentUserInfo();
 
             result.OrganisationId.ShouldBe(organisationId);
             result.UserRole.ShouldBe(userRole);
+            result.CognitoUsername.ShouldBe(CognitoUsername.Parse(username));
         }
     }
 
@@ -42,6 +47,7 @@ public class WebApiCurrentUserInfoServiceTests
     [InlineData(UkpsClaimTypes.OrganisationId)]
     [InlineData(UkpsClaimTypes.UserRole)]
     [InlineData(UkpsClaimTypes.Email)]
+    [InlineData(UkpsClaimTypes.Username)]
     public void GetCurrentUserInfo_ShouldThrow_WhenExpectedClaimIsMissing(string missingClaimType)
     {
         var service = CreateServiceWithoutParams(missingClaimType);

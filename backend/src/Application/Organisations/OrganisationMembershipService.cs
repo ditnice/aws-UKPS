@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Communication;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
 using UKPS.Api.Persistence;
@@ -8,6 +10,10 @@ using UKPS.Api.Persistence.Enums;
 using DeactivateUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipDeactivateUserError
+>;
+using ReactivateUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
+    UKPS.Api.Application.Organisations.Errors.OrganisationMembershipReactivateUserError
 >;
 using UpdateUserRoleResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
@@ -18,7 +24,9 @@ namespace UKPS.Api.Application.Organisations;
 
 internal sealed class OrganisationMembershipService(
     AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    ICurrentUserInfoService currentUserInfoService,
+    IEmailService emailService
 ) : IOrganisationMembershipService
 {
     public async Task<UpdateUserRoleResult> UpdateUserRole(
@@ -38,10 +46,12 @@ internal sealed class OrganisationMembershipService(
             var error = new OrganisationMembershipUpdateUserRoleError.NotAllowed(organisationId);
             return UpdateUserRoleResult.Err(error);
         }
-        var membership = await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
-            x => x.OrganisationId == organisationId && x.Id == membershipId,
-            cancellationToken
-        );
+        var membership = await dbContext
+            .UserOrgMemberships.Include(x => x.User)
+            .FirstOrDefaultAsync(
+                x => x.OrganisationId == organisationId && x.Id == membershipId,
+                cancellationToken
+            );
         if (membership is null)
         {
             var error = new OrganisationMembershipUpdateUserRoleError.NotFound(
@@ -49,6 +59,18 @@ internal sealed class OrganisationMembershipService(
                 membershipId
             );
             return UpdateUserRoleResult.Err(error);
+        }
+        if (IsCurrentUsersOwnMembership(membership))
+        {
+            return UpdateUserRoleResult.Err(
+                new OrganisationMembershipUpdateUserRoleError.CannotChangeOwnRole(membershipId)
+            );
+        }
+        if (NonSuperUserTryingToManageSuperUser(membership, command))
+        {
+            return UpdateUserRoleResult.Err(
+                new OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole(membershipId)
+            );
         }
         membership.UserRole = command.UserRole;
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -71,8 +93,9 @@ internal sealed class OrganisationMembershipService(
             var error = new OrganisationMembershipDeactivateUserError.NotAllowed(organisationId);
             return DeactivateUserResult.Err(error);
         }
-        var membership = await dbContext.UserOrgMemberships.FirstOrDefaultAsync(
-            x => x.OrganisationId == organisationId && x.Id == membershipId,
+        var membership = await dbContext.UserOrgMemberships.GetByOrgAndMembershipId(
+            organisationId,
+            membershipId,
             cancellationToken
         );
         if (membership is null)
@@ -81,9 +104,87 @@ internal sealed class OrganisationMembershipService(
                 new OrganisationMembershipDeactivateUserError.NotFound()
             );
         }
-        membership.Status = UserOrgStatus.Inactive;
+        if (IsCurrentUsersOwnMembership(membership))
+        {
+            return DeactivateUserResult.Err(
+                new OrganisationMembershipDeactivateUserError.CannotDeactivateSelf(membershipId)
+            );
+        }
+        var result = membership.TryDeactivate();
+        if (!result.Success)
+        {
+            return DeactivateUserResult.Err(
+                new OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState(result)
+            );
+        }
         await dbContext.SaveChangesAsync(cancellationToken);
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                CognitoUsername = membership.User!.CognitoUsername,
+                RecipientAddress = membership.User.WorkEmail,
+                Email = new DeactivatedUserNotificationEmail()
+                {
+                    OrganisationName = membership.Organisation!.OrganisationName,
+                },
+            },
+            cancellationToken
+        );
+
         return DeactivateUserResult.Ok(MapToDto(membership));
+    }
+
+    public async Task<ReactivateUserResult> ReactivateMembership(
+        int organisationId,
+        int membershipId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (
+            !organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Update,
+                organisationId
+            )
+        )
+        {
+            var error = new OrganisationMembershipReactivateUserError.NotAllowed();
+            return ReactivateUserResult.Err(error);
+        }
+        var membership = await dbContext.UserOrgMemberships.GetByOrgAndMembershipId(
+            organisationId,
+            membershipId,
+            cancellationToken
+        );
+        if (membership is null)
+        {
+            return ReactivateUserResult.Err(
+                new OrganisationMembershipReactivateUserError.NotFound()
+            );
+        }
+        var result = membership.TryReactivate();
+        if (!result.Success)
+        {
+            return ReactivateUserResult.Err(
+                new OrganisationMembershipReactivateUserError.NotAllowedInCurrentState(result)
+            );
+        }
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ReactivateUserResult.Ok(MapToDto(membership));
+    }
+
+    // Users must not be able to change their own role or deactivate themselves, regardless of
+    // the permissions their role would otherwise grant them over the organisation.
+    private bool IsCurrentUsersOwnMembership(UserOrgMembership membership) =>
+        currentUserInfoService.IsCurrentUser(membership.User!.WorkEmail);
+
+    private bool NonSuperUserTryingToManageSuperUser(
+        UserOrgMembership membership,
+        UpdateOrgMembershipUserRoleCommandDto command
+    )
+    {
+        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+        return currentUser.UserRole != UserRole.Super
+            && (membership.UserRole == UserRole.Super || command.UserRole == UserRole.Super);
     }
 
     private static OrganisationMembershipDto MapToDto(UserOrgMembership entity)

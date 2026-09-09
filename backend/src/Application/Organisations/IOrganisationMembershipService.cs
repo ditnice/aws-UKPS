@@ -3,6 +3,10 @@ using DeactivateUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipDeactivateUserError
 >;
+using ReactivateUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
+    UKPS.Api.Application.Organisations.Errors.OrganisationMembershipReactivateUserError
+>;
 using UpdateUserRoleResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Organisations.Dtos.OrganisationMembershipDto,
     UKPS.Api.Application.Organisations.Errors.OrganisationMembershipUpdateUserRoleError
@@ -38,6 +42,22 @@ public interface IOrganisationMembershipService
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the result of the deactivation operation.</returns>
     Task<DeactivateUserResult> DeactivateMembership(
+        int organisationId,
+        int membershipId,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Reactivates a membership within an organisation.
+    /// </summary>
+    /// <param name="organisationId">The unique identifier of the organisation.</param>
+    /// <param name="membershipId">The unique identifier of the membership.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains
+    /// the result of the reactivation operation.
+    /// </returns>
+    Task<ReactivateUserResult> ReactivateMembership(
         int organisationId,
         int membershipId,
         CancellationToken cancellationToken

@@ -7,20 +7,21 @@ import { useState } from 'react'
 import { z } from 'zod'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
-import { Textarea } from '@nice-digital/nds-textarea'
 
 import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { Textarea } from '@/components/Textarea/Textarea'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
+import { OrganisationAction } from '../../_lib/organisationActionsAlert'
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
 
 import type { ChangeEvent } from 'react'
 
 const editOrganisationDetailsSchema = z.object({
-  organisationName: z.string().trim().min(1, errorMessages.companyNameRequired),
+  organisationName: z.string().trim().min(1, errorMessages.organisationNameRequired),
   headOfficeAddress: z.string().trim().min(1, errorMessages.addressRequired),
   headOfficeEmail: z
     .string()
@@ -78,7 +79,9 @@ export function EditOrganisationDetailsForm({
         return
       }
 
-      router.push(`/portal/organisations/${organisationId}`)
+      router.push(
+        `/portal/organisations/${organisationId}?action=${'updated-details' satisfies OrganisationAction}`,
+      )
     },
   })
 
@@ -100,7 +103,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company name"
+                label="Organisation name"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -122,7 +125,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Textarea
-                label="Company address"
+                label="Organisation address"
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -132,6 +135,7 @@ export function EditOrganisationDetailsForm({
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
                 required
+                width="one-half"
               />
             )
           }}
@@ -143,7 +147,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company email address"
+                label="Head office email address"
                 name={field.name}
                 type="email"
                 value={field.state.value}
@@ -166,7 +170,7 @@ export function EditOrganisationDetailsForm({
 
             return (
               <Input
-                label="Company phone number"
+                label="Head office phone number"
                 name={field.name}
                 hint="For international numbers include the country code. For example +1 555-123-4567."
                 type="tel"
@@ -187,7 +191,7 @@ export function EditOrganisationDetailsForm({
 
       <ButtonGroup>
         <Button buttonType="submit" disabled={isSubmitting} variant="cta">
-          {isSubmitting ? 'Saving...' : 'Save changes'}
+          Submit
         </Button>
 
         <Button buttonType="button" variant="secondary" onClick={() => router.back()}>

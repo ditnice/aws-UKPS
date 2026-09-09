@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
-import { Alert } from '@nice-digital/nds-alert'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import { getOrganisationById } from '@/client/generated/sdk.gen'
@@ -11,25 +10,29 @@ import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
+import { OrganisationActionAlert } from './_components/OrganisationActionAlert'
 import { OrganisationFilters } from './_components/OrganisationFilters'
 import { OrganisationUsersTable } from './_components/OrganisationUsersTable'
+import { UserActionAlert } from './_components/UserActionAlert'
+import { parseOrganisationAction } from './_lib/organisationActionsAlert'
+import { parseUserAction, type UserActionSearchParams } from './_lib/userActionAlert'
 import {
   buildUserListHref,
   parseUserListQuery,
   type UserListSearchParams,
 } from './_lib/userListQuery'
-import styles from './page.module.scss'
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<UserListSearchParams & { invited?: string }>
+  searchParams: Promise<UserListSearchParams & UserActionSearchParams>
 }
 
 export default async function OrganisationPage({ params, searchParams }: Props) {
   const { id } = await params
   const resolvedSearchParams = await searchParams
   const query = parseUserListQuery(resolvedSearchParams)
-  const invitedEmail = resolvedSearchParams.invited?.trim()
+  const userAction = parseUserAction(resolvedSearchParams)
+  const organisationAction = parseOrganisationAction(resolvedSearchParams)
   const organisationId = Number(id)
 
   if (!Number.isInteger(organisationId)) {
@@ -53,15 +56,15 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
 
   return (
     <>
-      {invitedEmail && (
-        <div className={styles.invitedAlert}>
-          <Alert type="success">
-            <h3>Invitation sent</h3>
-            <p>
-              We&rsquo;ve sent an email to {invitedEmail} with instructions to set up an account.
-            </p>
-          </Alert>
-        </div>
+      {userAction && (
+        <UserActionAlert
+          apiClient={apiClient}
+          organisationId={organisationId}
+          userAction={userAction}
+        />
+      )}
+      {organisationAction && (
+        <OrganisationActionAlert organisationAction={organisationAction.action} />
       )}
 
       <PageHeader

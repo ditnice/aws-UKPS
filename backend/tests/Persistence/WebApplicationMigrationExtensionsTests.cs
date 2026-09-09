@@ -43,7 +43,7 @@ public sealed class WebApplicationMigrationExtensionsTests
             migrator,
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{DatabaseConfiguration.SectionName}:MigrateOnStartup"] = "false",
+                [$"{DatabaseOptions.SectionName}:MigrateOnStartup"] = "false",
             }
         );
 
@@ -61,7 +61,7 @@ public sealed class WebApplicationMigrationExtensionsTests
             migrator,
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                [$"{DatabaseConfiguration.SectionName}:MigrateOnStartup"] = "true",
+                [$"{DatabaseOptions.SectionName}:MigrateOnStartup"] = "true",
             }
         );
 

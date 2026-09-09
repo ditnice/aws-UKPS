@@ -37,22 +37,22 @@ builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();
 
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 
-builder.Services.Configure<CognitoConfiguration>(
-    builder.Configuration.GetSection(CognitoConfiguration.SectionName)
+builder.Services.Configure<CognitoOptions>(
+    builder.Configuration.GetSection(CognitoOptions.SectionName)
 );
-builder.Services.Configure<DatabaseConfiguration>(
-    builder.Configuration.GetSection(DatabaseConfiguration.SectionName)
+builder.Services.Configure<DatabaseOptions>(
+    builder.Configuration.GetSection(DatabaseOptions.SectionName)
 );
 
 builder
-    .Services.AddOptions<EmailConfiguration>()
-    .Bind(builder.Configuration.GetSection(EmailConfiguration.SectionName))
+    .Services.AddOptions<EmailOptions>()
+    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
 builder
-    .Services.AddOptions<UserOnboardingConfiguration>()
-    .Bind(builder.Configuration.GetSection(UserOnboardingConfiguration.SectionName))
+    .Services.AddOptions<UserOnboardingOptions>()
+    .Bind(builder.Configuration.GetSection(UserOnboardingOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
@@ -146,13 +146,14 @@ var isOpenApiGeneration = Environment.CommandLine.Contains(
 );
 if (!isOpenApiGeneration)
 {
-    await app.MigrateDatabase();
     await app.SeedData();
+    await app.MigrateDatabase();
 }
 
 await app.RunAsync();
 
 static void ConfigureJsonEnums(JsonSerializerOptions options)
 {
+    options.NumberHandling = JsonNumberHandling.Strict;
     options.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 }
