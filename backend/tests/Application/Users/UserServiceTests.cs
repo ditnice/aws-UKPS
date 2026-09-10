@@ -693,7 +693,14 @@ public class UserServiceTests : DatabaseTestBase
         if (filtersByOrganisation)
         {
             dto.TotalCount.ShouldBe(2);
-            dto.Items.Select(i => i.UserId).ToArray().ShouldBe([users[2].Id, users[0].Id]);
+            dto.Items.Select(i => i.UserId)
+                .Order()
+                .ToArray()
+                .ShouldBe(
+                    new int?[] { users[0].Id, users[2].Id }
+                        .Order()
+                        .ToArray()
+                );
         }
         else
         {

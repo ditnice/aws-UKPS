@@ -103,7 +103,9 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetUserRegistrationById_UserExists_ReturnsDto()
     {
-        UserRegistrationRequest request = new UserRegistrationRequestFaker().Generate();
+        UserRegistrationRequest request = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _ => _organisation)
+            .Generate();
         Context.UserRegistrationRequests.Add(request);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
