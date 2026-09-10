@@ -293,6 +293,30 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task DeactivateMembership_WhenAUserIsDeactivatedTwice_AUserShouldOnlyGetOneNotificationEmail()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Active
+            )
+        );
+
+        foreach (var _ in Enumerable.Range(0, 2))
+        {
+            var result = await _service.DeactivateMembership(
+                userOrgMembership.OrganisationId,
+                userOrgMembership.Id,
+                CancellationToken.None
+            );
+
+            result.ShouldBeSuccess();
+        }
+
+        _harness.Emails.Sent.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task DeactivateMembership_ShouldSendNotificationEmail()
     {
         var userOrgMembership = await SetupUserOrgMembership(
@@ -427,6 +451,30 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         );
 
         result.ShouldBeError().ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
+    }
+
+    [Fact]
+    public async Task ReactivateMembership_WhenAUserIsReactivatedTwice_AUserShouldOnlyGetOneNotificationEmail()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgStatus.Deactivated
+            )
+        );
+
+        foreach (var _ in Enumerable.Range(0, 2))
+        {
+            var result = await _service.ReactivateMembership(
+                userOrgMembership.OrganisationId,
+                userOrgMembership.Id,
+                CancellationToken.None
+            );
+
+            result.ShouldBeSuccess();
+        }
+
+        _harness.Emails.Sent.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -580,7 +628,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Active
+                _ => UserOrgStatus.Deactivated
             )
         );
         var result = await _service.ReactivateMembership(
