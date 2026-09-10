@@ -1,3 +1,4 @@
+using System.Net;
 using UKPS.Api.Application.InternalServices.Communication;
 
 namespace UKPS.Api.Application.Organisations;
@@ -9,10 +10,11 @@ internal class DeactivatedUserNotificationEmail : IEmail
 
     public string GetHtmlContent()
     {
+        var htmlEncodedOrgName = WebUtility.HtmlEncode(OrganisationName);
         var content = $"""
 <p>
   Hello,<br>
-  This email confirms that your UK PharmaScan account for {OrganisationName} has been deactivated.
+  This email confirms that your UK PharmaScan account for {htmlEncodedOrgName} has been deactivated.
 </p>
 
 <p>
