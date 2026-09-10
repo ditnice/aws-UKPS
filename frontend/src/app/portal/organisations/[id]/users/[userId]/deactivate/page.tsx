@@ -43,12 +43,7 @@ const PageContent = async ({
   })
 
   if (!user || error) {
-    return (
-      <>
-        <pre>{JSON.stringify({ error, user, organisationId, userId })}</pre>
-        <ErrorState>An error occurred when trying to retrieve the user.</ErrorState>
-      </>
-    )
+    return <ErrorState>An error occurred when trying to retrieve the user.</ErrorState>
   }
 
   return (
