@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 
 import { getUserDetailsWithinOrganisation } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -35,12 +36,20 @@ const PageContent = async ({
   organisationId: number
   userId: number
 }) => {
+  const apiClient = await createServerApiClient()
   const { data: user, error } = await getUserDetailsWithinOrganisation({
     path: { organisationId, userId },
+    client: apiClient,
   })
 
-  if (!user || error)
-    return <ErrorState>An error occurred when trying to retrieve the user.</ErrorState>
+  if (!user || error) {
+    return (
+      <>
+        <pre>{JSON.stringify({ error, user, organisationId, userId })}</pre>
+        <ErrorState>An error occurred when trying to retrieve the user.</ErrorState>
+      </>
+    )
+  }
 
   return (
     <>
