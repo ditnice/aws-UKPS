@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users;
 
 namespace UKPS.Api.Application.InternalServices.Communication;
@@ -8,6 +9,7 @@ namespace UKPS.Api.Application.InternalServices.Communication;
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(UserSignUpRequestEmail), "UserSignUpRequest")]
+[JsonDerivedType(typeof(ReactivatedUserNotificationEmail), "ReactivatedUserNotification")]
 public interface IEmail
 {
     /// <summary>

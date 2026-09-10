@@ -5,7 +5,7 @@ import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import type { Client } from '@/client/generated/client'
-import { getUsers, getUsersMe } from '@/client/generated/sdk.gen'
+import { getUsers } from '@/client/generated/sdk.gen'
 import type {
   UserListItemDto,
   UserMembershipAction,

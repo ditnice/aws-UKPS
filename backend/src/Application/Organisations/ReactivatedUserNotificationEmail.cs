@@ -16,7 +16,7 @@ internal class ReactivatedUserNotificationEmail : IEmail
 </p>
 
 <p>
-  If you have questions or want to restore access to UK PharmaScan, contact your organisation's champion user.
+  If you have questions contact your organisation's champion user.
 </p>
 
 <p>

@@ -49,7 +49,7 @@ const getActionButton = () => screen.getByTestId('action-button')
 const getCancelButton = () => screen.getByTestId('cancel-button')
 const getActionError = () => screen.queryByTestId('action-error')
 
-describe('DeactivateUserControls', () => {
+describe('ReactivateUserControls', () => {
   it('error is not rendered by default', () => {
     expect(getActionError()).toBeFalsy()
   })
