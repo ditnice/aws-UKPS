@@ -157,6 +157,26 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetUsers_WhenThereIsARejectedMembershipRequest_ShouldNotShowThatRequest()
+    {
+        var organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var faker = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _ => organisation)
+            .RuleFor(x => x.RejectedAt, f => DateTime.SpecifyKind(f.Date.Past(), DateTimeKind.Utc))
+            .RuleFor(x => x.RejectedByUser, _ => _userFaker.Generate());
+        await AddEntity(faker.Generate(), TestContext.Current.CancellationToken);
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto() { OrganisationId = organisation.Id },
+            TestContext.Current.CancellationToken
+        );
+        var data = result.ShouldBeSuccess();
+        data.Items.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task GetUsers_ReturnsUserWaitingForAccessToBeGranted()
     {
         GetUsersResult result = await Service.GetUsers(

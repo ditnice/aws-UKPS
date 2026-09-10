@@ -148,7 +148,12 @@ internal partial class UserService(
             OrganisationId = x.Organisation!.Id,
             x.User.LastActive,
         });
-        var userRegistrationRequestsProjections = dbContext.UserRegistrationRequests.Select(x => new
+        var filteredValues = dbContext.UserRegistrationRequests.Where(x => x.RejectedAt == null);
+        var mostRecentValues = filteredValues.Where(x =>
+            x.CreatedAt
+            == filteredValues.Where(y => y.WorkEmail == x.WorkEmail).Max(y => y.CreatedAt)
+        );
+        var userRegistrationRequestsProjections = mostRecentValues.Select(x => new
         {
             UserId = (int?)null,
             RegistrationRequestId = (int?)x.Id,
