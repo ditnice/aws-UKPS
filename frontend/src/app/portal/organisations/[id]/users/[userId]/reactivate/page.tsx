@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 
 import { getUserDetailsWithinOrganisation } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -35,7 +36,9 @@ const PageContent = async ({
   organisationId: number
   userId: number
 }) => {
+  const client = await createServerApiClient()
   const { data: user, error } = await getUserDetailsWithinOrganisation({
+    client,
     path: { organisationId, userId },
   })
 
