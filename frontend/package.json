@@ -78,14 +78,14 @@
     "graphql": "^16.14.0",
     "jose": "^6.2.10",
     "libphonenumber-js": "1.13.12",
-    "next": "16.3.3",
+    "next": "16.3.4",
     "payload": "3.88.0",
     "qrcode.react": "^4.2.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "0.0.1",
     "sharp": "0.35.4",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -99,7 +99,7 @@
     "@types/react-dom": "19.2.5",
     "@vitejs/plugin-react": "4.7.0",
     "eslint": "^9.39.4",
-    "eslint-config-next": "16.3.3",
+    "eslint-config-next": "16.3.4",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import": "^2.32.0",
     "fallow": "2.104.0",
@@ -113,7 +113,7 @@
     "stylelint-order": "^8.1.1",
     "stylelint-scss": "^7.2.0",
     "stylelint-selector-bem-pattern": "^5.0.0",
-    "tsx": "4.23.12",
+    "tsx": "4.23.13",
     "typescript": "5.9.3",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.11"
