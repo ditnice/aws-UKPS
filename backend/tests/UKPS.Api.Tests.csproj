@@ -29,7 +29,6 @@
     <PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="xunit.analyzers" Version="1.27.0" PrivateAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
-    <PackageReference Include="Amazon.Lambda.TestUtilities" Version="*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,6 +37,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\UKPS.Api.csproj" />
-    <ProjectReference Include="..\migration\MigratorLambda.csproj" />
   </ItemGroup>
 </Project>
