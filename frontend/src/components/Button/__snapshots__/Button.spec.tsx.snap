@@ -3,7 +3,7 @@
 exports[`Button > passes design-system variants through 1`] = `
 <DocumentFragment>
   <button
-    class="btn btn--cta"
+    class="btn btn--cta _customButton_ee73f7"
     data-component="button--cta--button"
     type="button"
   >
@@ -15,7 +15,7 @@ exports[`Button > passes design-system variants through 1`] = `
 exports[`Button > renders a design-system button by default 1`] = `
 <DocumentFragment>
   <button
-    class="btn"
+    class="btn _customButton_ee73f7"
     data-component="button--primary--button"
     type="button"
   >
@@ -27,7 +27,7 @@ exports[`Button > renders a design-system button by default 1`] = `
 exports[`Button > renders the link variant as a semantic button 1`] = `
 <DocumentFragment>
   <button
-    class="btn _linkButton_ee73f7 custom-class"
+    class="btn _customButton_ee73f7 _linkButton_ee73f7 custom-class"
     data-component="button--primary--button"
     type="button"
   >
@@ -42,14 +42,14 @@ exports[`ButtonGroup > renders multiple buttons in a group 1`] = `
     class="_buttonGroup_ee73f7 custom-class"
   >
     <button
-      class="btn"
+      class="btn _customButton_ee73f7"
       data-component="button--primary--button"
       type="button"
     >
       Continue
     </button>
     <button
-      class="btn btn--secondary"
+      class="btn btn--secondary _customButton_ee73f7"
       data-component="button--secondary--button"
       type="button"
     >
