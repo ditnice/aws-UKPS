@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
@@ -12,82 +14,129 @@ namespace UKPS.Api.WebApi.Controllers;
 /// </summary>
 [Authorize]
 [ApiController]
-[Route("organisations/{organisationId:int}/users/{userId:int}/membership-requests")]
-public class MembershipRequestController : ControllerBase
+[Route("organisations/{organisationId:int}/membership-requests")]
+public class UserRegistrationController : ControllerBase
 {
-    private readonly IMembershipRequestService _membershipRequestService;
+    private readonly IUserRegistrationService _membershipRequestService;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MembershipRequestController"/> class.
+    /// Initializes a new instance of the <see cref="UserRegistrationController"/> class.
     /// </summary>
     /// <param name="membershipRequestService">
     /// The service used to approve and reject membership requests.
     /// </param>
-    public MembershipRequestController(IMembershipRequestService membershipRequestService)
+    public UserRegistrationController(IUserRegistrationService membershipRequestService)
     {
         _membershipRequestService = membershipRequestService;
     }
 
     /// <summary>
-    /// Gets the membership request for a user within an organisation.
+    /// Registers a new user.
     /// </summary>
     /// <param name="organisationId">
-    /// The unique identifier of the organisation.
+    /// The identifier of the organisation containing the membership request.
     /// </param>
-    /// <param name="userId">
-    /// The unique identifier of the user.
+    /// <param name="registerUserCommandDto">
+    /// The details required to register the user.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancel the request.
+    /// A token used to cancel the operation.
     /// </param>
     /// <returns>
-    /// A <see cref="UserMembershipRequestDto"/> representing the user's membership
-    /// request.
+    /// An <see cref="ActionResult{TValue}"/> containing the registered user's details when the
+    /// operation succeeds. Returns:
+    /// <list type="bullet">
+    /// <item>
+    /// <description><c>400 Bad Request</c> if some of the required data is missing.</description>
+    /// </item>
+    /// <item>
+    /// <description><c>404 Not Found</c> if the specified organisation cannot be found or is not active.</description>
+    /// </item>
+    /// </list>
     /// </returns>
-    /// <response code="200">
-    /// The user membership request was found and returned successfully.
-    /// </response>
-    /// <response code="403">
-    /// The authenticated user is not allowed to access the requested membership
-    /// request.
-    /// </response>
-    /// <response code="404">
-    /// The requested user membership request could not be found.
-    /// </response>
-    [HttpGet(Name = nameof(GetUserMembershipRequest))]
-    [ProducesResponseType<UserMembershipRequestDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserMembershipRequestDto>> GetUserMembershipRequest(
+    [AllowAnonymous]
+    [ProducesResponseType<RegisterUserConfirmationDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [HttpPost(Name = "RegisterUser")]
+    public async Task<ActionResult<RegisterUserConfirmationDto>> RegisterUser(
         int organisationId,
-        int userId,
+        [FromBody] RegisterUserCommandDto registerUserCommandDto,
         CancellationToken cancellationToken
     )
     {
-        GetUserMembershipRequestResult result =
-            await _membershipRequestService.GetUserMembershipRequest(
+        Result<RegisterUserConfirmationDto, RegisterUserError> result =
+            await _membershipRequestService.RegisterUser(
                 organisationId,
-                userId,
+                registerUserCommandDto,
                 cancellationToken
             );
-
-        return result.Match(
+        return result.Match<ActionResult<RegisterUserConfirmationDto>>(
             x => Ok(x),
-            err =>
-                err.Match<ActionResult<UserMembershipRequestDto>>(
-                    notFound: _ =>
-                        Problem(
-                            title: "User membership request not found",
-                            detail: "The requested user membership request could not be found.",
-                            statusCode: StatusCodes.Status404NotFound
-                        ),
-                    notAllowed: _ =>
-                        Problem(
-                            title: "User membership request access denied",
-                            detail: "You are not allowed to access the requested user membership request.",
-                            statusCode: StatusCodes.Status403Forbidden
-                        )
-                )
+            x =>
+                x switch
+                {
+                    RegisterUserError.MissingFields => BadRequest(
+                        "Some of the data required is missing."
+                    ),
+                    RegisterUserError.OrganisationNotFound => Problem(
+                        statusCode: StatusCodes.Status404NotFound,
+                        detail: $"Organisation ID is not found."
+                    ),
+                    _ => throw new UnreachableException(),
+                }
+        );
+    }
+
+    /// <summary>
+    /// Retrieves the details of a user by their unique identifier.
+    /// </summary>
+    /// <param name="organisationId">
+    /// The identifier of the organisation containing the membership request.
+    /// </param>
+    /// <param name="id">
+    /// The unique identifier of the user to retrieve.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult{T}"/> containing the user's details.
+    /// Returns <see cref="OkObjectResult"/> if the user was found,
+    /// or <see cref="NotFoundResult"/> if no user exists with the supplied identifier.
+    /// </returns>
+    /// <response code="200">
+    /// The user's details were successfully retrieved.
+    /// </response>
+    /// <response code="404">
+    /// No user was found with the supplied identifier.
+    /// </response>
+    [ProducesResponseType<RegisterUserConfirmationDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [HttpGet("{id:int}", Name = nameof(GetUserRegistrationById))]
+    public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserRegistrationById(
+        int organisationId,
+        int id,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await _membershipRequestService.GetUserRegistrationById(
+            organisationId,
+            id,
+            cancellationToken
+        );
+
+        return result.Match<ActionResult<RegisterUserConfirmationDto>>(
+            user => Ok(user),
+            error =>
+                error switch
+                {
+                    GetUserDetailsError.IdNotFound => NotFound(),
+                    GetUserDetailsError.UserNotAuthorised => Problem(
+                        statusCode: (int)HttpStatusCode.Forbidden
+                    ),
+                    _ => throw new UnreachableException("Unhandled GetUserDetailsError"),
+                }
         );
     }
 
@@ -97,8 +146,8 @@ public class MembershipRequestController : ControllerBase
     /// <param name="organisationId">
     /// The identifier of the organisation containing the membership request.
     /// </param>
-    /// <param name="userId">
-    /// The identifier of the user associated with the membership request.
+    /// <param name="registrationRequestId">
+    /// The identifier for the registration request.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.
@@ -115,19 +164,19 @@ public class MembershipRequestController : ControllerBase
     /// <response code="404">
     /// The membership request could not be found.
     /// </response>
-    [HttpPatch("approve", Name = nameof(Approve))]
+    [HttpPatch("{registrationRequestId}/approve", Name = nameof(Approve))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Approve(
         int organisationId,
-        int userId,
+        int registrationRequestId,
         CancellationToken cancellationToken
     )
     {
         var result = await _membershipRequestService.ApproveRequest(
             organisationId,
-            userId,
+            registrationRequestId,
             cancellationToken
         );
 
@@ -140,8 +189,8 @@ public class MembershipRequestController : ControllerBase
     /// <param name="organisationId">
     /// The identifier of the organisation containing the membership request.
     /// </param>
-    /// <param name="userId">
-    /// The identifier of the user associated with the membership request.
+    /// <param name="registrationRequestId">
+    /// The identifier for the registration request.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.
@@ -158,19 +207,19 @@ public class MembershipRequestController : ControllerBase
     /// <response code="404">
     /// The membership request could not be found.
     /// </response>
-    [HttpPatch("reject", Name = nameof(Reject))]
+    [HttpPatch("{registrationRequestId}/reject", Name = nameof(Reject))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Reject(
         int organisationId,
-        int userId,
+        int registrationRequestId,
         CancellationToken cancellationToken
     )
     {
         var result = await _membershipRequestService.RejectRequest(
             organisationId,
-            userId,
+            registrationRequestId,
             cancellationToken
         );
 

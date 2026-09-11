@@ -122,7 +122,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
             User = user,
             OrganisationId = 1,
             UserRole = UserRole.Super,
-            Status = UserOrgStatus.Active,
+            Status = UserOrgMembershipStatus.Active,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
             CreatedAt = user.CreatedAt,
         };

@@ -13,7 +13,8 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
     private readonly OrganisationFaker _organisationFaker = new OrganisationFaker();
     private readonly UserFaker _userFaker = new UserFaker();
     private readonly UserOrgMembershipFaker _membershipFaker = new UserOrgMembershipFaker();
-    private readonly UserOrgStatus[] _statuses = Enum.GetValues<UserOrgStatus>();
+    private readonly UserOrgMembershipStatus[] _statuses =
+        Enum.GetValues<UserOrgMembershipStatus>();
     private readonly RecordFaker _recordFaker = new RecordFaker();
 
     public SeedingDataPayloadFaker()

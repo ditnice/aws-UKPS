@@ -27,10 +27,4 @@ public sealed record RegisterUserCommandDto
     [Required]
     [PhoneNumber]
     public required string PhoneNumber { get; init; }
-
-    /// <summary>
-    /// Gets the name of the organisation the user is requesting access to.
-    /// </summary>
-    [Required]
-    public required int OrganisationId { get; init; }
 }

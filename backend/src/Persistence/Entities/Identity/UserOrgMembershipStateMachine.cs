@@ -3,52 +3,43 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal sealed class UserOrgMembershipStateMachine
-    : StateMachine<UserOrgStatus, UserOrgMembershipStateMachine.Command>
+    : StateMachine<UserOrgMembershipStatus, UserOrgMembershipStateMachine.Command>
 {
-    public UserOrgMembershipStateMachine(UserOrgStatus initialState)
+    public UserOrgMembershipStateMachine(UserOrgMembershipStatus initialState)
         : base(initialState)
     {
         ForState(
-            UserOrgStatus.RequestedAccess,
+            UserOrgMembershipStatus.AwaitingSetup,
             x =>
             {
-                x.On(Command.AccessGranted, UserOrgStatus.AwaitingSetup);
-                x.On(Command.RequestRejected, UserOrgStatus.Rejected);
+                x.On(Command.FinaliseSetup, UserOrgMembershipStatus.Active);
             }
         );
 
         ForState(
-            UserOrgStatus.AwaitingSetup,
+            UserOrgMembershipStatus.Active,
             x =>
             {
-                x.On(Command.FinaliseSetup, UserOrgStatus.Active);
-            }
-        );
-
-        ForState(
-            UserOrgStatus.Active,
-            x =>
-            {
-                x.On(Command.MarkedAsInactive, UserOrgStatus.Inactive);
-                x.On(Command.Deactivate, UserOrgStatus.Deactivated);
+                x.On(Command.MarkedAsInactive, UserOrgMembershipStatus.Inactive);
+                x.On(Command.Deactivate, UserOrgMembershipStatus.Deactivated);
                 x.Ignore(Command.Reactivate);
             }
         );
 
         ForState(
-            UserOrgStatus.Inactive,
+            UserOrgMembershipStatus.Inactive,
             x =>
             {
-                x.On(Command.Deactivate, UserOrgStatus.Deactivated);
-                x.On(Command.MarkedAsActive, UserOrgStatus.Active);
+                x.On(Command.Deactivate, UserOrgMembershipStatus.Deactivated);
+                x.On(Command.MarkedAsActive, UserOrgMembershipStatus.Active);
             }
         );
 
         ForState(
-            UserOrgStatus.Deactivated,
+            UserOrgMembershipStatus.Deactivated,
             x =>
             {
-                x.On(Command.Reactivate, UserOrgStatus.Active);
+                x.On(Command.Reactivate, UserOrgMembershipStatus.Active);
                 x.Ignore(Command.Deactivate);
             }
         );

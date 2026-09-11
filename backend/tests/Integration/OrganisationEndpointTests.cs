@@ -234,7 +234,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
         UserOrgMembership membership = await SeedMembership(
             overrideMembershipFaker: new UserOrgMembershipFaker().RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Active
+                _ => UserOrgMembershipStatus.Active
             )
         );
         var uri = new Uri(
@@ -262,7 +262,7 @@ public class OrganisationEndpointTests : DatabaseTestBase
             m => m.Id == membership.Id,
             TestContext.Current.CancellationToken
         );
-        saved.Status.ShouldBe(UserOrgStatus.Deactivated);
+        saved.Status.ShouldBe(UserOrgMembershipStatus.Deactivated);
     }
 
     [Fact]
