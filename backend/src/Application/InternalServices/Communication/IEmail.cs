@@ -9,6 +9,7 @@ namespace UKPS.Api.Application.InternalServices.Communication;
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(UserSignUpRequestEmail), "UserSignUpRequest")]
+[JsonDerivedType(typeof(ReactivatedUserNotificationEmail), "ReactivatedUserNotification")]
 [JsonDerivedType(typeof(DeactivatedUserNotificationEmail), "DeactivatedUserNotification")]
 public interface IEmail
 {

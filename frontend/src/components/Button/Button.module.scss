@@ -11,6 +11,10 @@
   }
 }
 
+.customButton {
+  margin-top: 2rem;
+}
+
 // This component renders the NDS `Button` (@nice-digital/nds-button), which
 // always applies its own `.btn` class alongside `.linkButton` below, to make
 // a button look like a plain text link. The `!important` flags below are

@@ -90,8 +90,8 @@ function renderActions(user: UserListItemDto, organisationId: number) {
   if (user.actions.includes('ReactivateMembership')) {
     links.push({
       key: 'reactivate',
-      label: 'Reactivate (Not Implemented)',
-      href: '/placeholder',
+      label: 'Reactivate',
+      href: `/portal/organisations/${organisationId}/users/${user.userId}/reactivate`,
     })
   }
 
@@ -143,6 +143,8 @@ export async function OrganisationUsersTable({
       Role: role.length ? role : undefined,
       Email: email,
       LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
+      SortBy: sortBy,
+      SortDirection: sortDirection,
     },
   })
 

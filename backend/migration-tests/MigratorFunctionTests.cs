@@ -1,19 +1,9 @@
 using Amazon.Lambda.TestUtilities;
 using MigratorLambda;
 
-namespace UKPS.Api.Tests.Migration;
+namespace MigratorLambda.Tests;
 
-/// <summary>
-///
-/// Manual test for the migrator lambda.
-///
-/// Prerequisites:
-/// - Docker running a local Postgres instance
-/// - AWS SSO configured
-///
-/// To run: remove the Skip attribute and enter env vars.
-/// </summary>
-public sealed class MigratorFunctionTests
+public class MigratorFunctionTests
 {
     [Fact(Skip = "Intended for manual testing only")]
     public async Task FunctionHandler_RunsMigrationsAgainstRealDb()

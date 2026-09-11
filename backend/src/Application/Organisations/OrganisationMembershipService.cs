@@ -118,18 +118,22 @@ internal sealed class OrganisationMembershipService(
             );
         }
         await dbContext.SaveChangesAsync(cancellationToken);
-        await emailService.SendEmail(
-            new SendEmailCommand()
-            {
-                CognitoUsername = membership.User!.CognitoUsername,
-                RecipientAddress = membership.User.WorkEmail,
-                Email = new DeactivatedUserNotificationEmail()
+
+        if (result.HasChanged)
+        {
+            await emailService.SendEmail(
+                new SendEmailCommand()
                 {
-                    OrganisationName = membership.Organisation!.OrganisationName,
+                    CognitoUsername = membership.User!.CognitoUsername,
+                    RecipientAddress = membership.User.WorkEmail,
+                    Email = new DeactivatedUserNotificationEmail()
+                    {
+                        OrganisationName = membership.Organisation!.OrganisationName,
+                    },
                 },
-            },
-            cancellationToken
-        );
+                cancellationToken
+            );
+        }
 
         return DeactivateUserResult.Ok(MapToDto(membership));
     }
@@ -169,6 +173,22 @@ internal sealed class OrganisationMembershipService(
             );
         }
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (result.HasChanged)
+        {
+            await emailService.SendEmail(
+                new SendEmailCommand()
+                {
+                    CognitoUsername = membership.User!.CognitoUsername,
+                    RecipientAddress = membership.User.WorkEmail,
+                    Email = new ReactivatedUserNotificationEmail()
+                    {
+                        OrganisationName = membership.Organisation!.OrganisationName,
+                    },
+                },
+                cancellationToken
+            );
+        }
         return ReactivateUserResult.Ok(MapToDto(membership));
     }
 

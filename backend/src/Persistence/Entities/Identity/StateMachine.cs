@@ -43,6 +43,7 @@ internal abstract class StateMachine<TState, TCommand>
 
     internal StateMachineTransitionResult<TState> TrySendCommand(TCommand command)
     {
+        var previousState = State;
         var foundTransition = _permittedTransitions
             .Select(x =>
                 x.InitialState.Equals(State) && x.Command.Equals(command) ? x : (Transition?)null
@@ -51,9 +52,9 @@ internal abstract class StateMachine<TState, TCommand>
         if (foundTransition.HasValue)
         {
             State = foundTransition.Value.NextState;
-            return CreateTransitionResult(true);
+            return CreateTransitionResult(true, previousState);
         }
-        return CreateTransitionResult(false);
+        return CreateTransitionResult(false, previousState);
     }
 
     internal IEnumerable<TCommand> GetPermittedStateChangingCommands()
@@ -71,10 +72,14 @@ internal abstract class StateMachine<TState, TCommand>
             .ToArray();
     }
 
-    private StateMachineTransitionResult<TState> CreateTransitionResult(bool result)
+    private StateMachineTransitionResult<TState> CreateTransitionResult(
+        bool result,
+        TState previousState
+    )
     {
         return new()
         {
+            PreviousState = previousState,
             CurrentState = State,
             PermittedNextState = GetPermittedNextState(),
             Success = result,
