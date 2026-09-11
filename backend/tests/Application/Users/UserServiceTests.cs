@@ -265,6 +265,55 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetUsers_WhenThereAreTwoMembershipRequestsForTwoDifferenceOrganisations_ShouldShowBothMembershipRequests()
+    {
+        var email = "example@email.com";
+        var userMembershipRequests = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _ => _organisationFaker.Generate())
+            .RuleFor(x => x.WorkEmail, _ => email)
+            .Generate(2);
+        await AddEntities(userMembershipRequests, TestContext.Current.CancellationToken);
+
+        foreach (var item in userMembershipRequests)
+        {
+            GetUsersResult result = await Service.GetUsers(
+                new GetUsersQueryDto() { OrganisationId = item.OrganisationId },
+                TestContext.Current.CancellationToken
+            );
+            PaginatedResponseDto<UserListItemDto> data = result.ShouldBeSuccess();
+            data.Items.ShouldHaveSingleItem().RegistrationRequestId.ShouldBe(item.Id);
+        }
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenLatestMembershipRequestIsRejected_ShouldReturnNoUsersRelatedToThatMembershipRequest()
+    {
+        var email = "example@email.com";
+        var referenceDateTime = new DateTime(2023, 4, 4, 12, 45, 0, DateTimeKind.Utc);
+        var organisation = _organisationFaker.Generate();
+        var userMembershipRequestsFaker = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.WorkEmail, _ => email)
+            .RuleFor(x => x.Organisation, _ => organisation);
+        var membershipRequestA = userMembershipRequestsFaker
+            .RuleFor(x => x.CreatedAt, referenceDateTime.AddHours(-2))
+            .Generate();
+        var membershipRequestB = userMembershipRequestsFaker
+            .RuleFor(x => x.CreatedAt, referenceDateTime.AddHours(-1))
+            .RuleFor(x => x.RejectedAt, _ => referenceDateTime.AddHours(-0.5))
+            .RuleFor(x => x.RejectedByUser, _ => _userFaker.Generate())
+            .Generate();
+        await AddEntities(
+            [membershipRequestA, membershipRequestB],
+            TestContext.Current.CancellationToken
+        );
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto() { OrganisationId = organisation.Id },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess().Items.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task GetUsers_WhenSortParametersSet_ShouldSortBySpecifiedField()
     {
         var getterLookup = new Dictionary<GetUsersQuerySortValue, Func<UserListItemDto, object?>>()

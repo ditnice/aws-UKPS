@@ -148,12 +148,16 @@ internal partial class UserService(
             OrganisationId = x.Organisation!.Id,
             x.User.LastActive,
         });
-        var filteredValues = dbContext.UserRegistrationRequests.Where(x => x.RejectedAt == null);
-        var mostRecentValues = filteredValues.Where(x =>
+        var mostRecentValues = dbContext.UserRegistrationRequests.Where(x =>
             x.CreatedAt
-            == filteredValues.Where(y => y.WorkEmail == x.WorkEmail).Max(y => y.CreatedAt)
+            == dbContext
+                .UserRegistrationRequests.Where(y =>
+                    y.WorkEmail == x.WorkEmail && y.OrganisationId == x.OrganisationId
+                )
+                .Max(y => y.CreatedAt)
         );
-        var userRegistrationRequestsProjections = mostRecentValues.Select(x => new
+        var activeMostRecentValues = mostRecentValues.Where(x => x.RejectedAt == null);
+        var userRegistrationRequestsProjections = activeMostRecentValues.Select(x => new
         {
             UserId = (int?)null,
             RegistrationRequestId = (int?)x.Id,
