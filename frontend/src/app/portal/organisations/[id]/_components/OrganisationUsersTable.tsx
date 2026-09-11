@@ -144,6 +144,8 @@ export async function OrganisationUsersTable({
       Role: role.length ? role : undefined,
       Email: email,
       LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
+      SortBy: sortBy,
+      SortDirection: sortDirection,
     },
   })
 
