@@ -1,13 +1,13 @@
 import { notFound } from 'next/navigation'
 
-import { getUserRegistrationById, UserMembershipRequestDto } from '@/client/generated'
+import { getUserRegistrationById, RegisterUserConfirmationDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 export type UserMembershipRetrievalWrapperProps = {
   organisationId: number
   registrationRequestId: number
-  children: (request: UserMembershipRequestDto) => React.ReactNode
+  children: (request: RegisterUserConfirmationDto) => React.ReactNode
 }
 const UserMembershipRetrievalWrapper = async ({
   organisationId,

@@ -2,7 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
-import { UserMembershipRequestDto } from '@/client/generated'
+import { RegisterUserConfirmationDto } from '@/client/generated'
 
 import UserMembershipRetrievalWrapper, {
   UserMembershipRetrievalWrapperProps,
@@ -23,7 +23,10 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-const testData: UserMembershipRequestDto = { id: 3, workEmail: 'example@email.com' }
+const testData: RegisterUserConfirmationDto = {
+  id: 3,
+  workEmail: 'example@email.com',
+} as RegisterUserConfirmationDto
 
 afterEach(cleanup)
 

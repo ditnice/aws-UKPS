@@ -511,20 +511,6 @@ export type UserListItemDto = {
 export type UserMembershipAction = 'ApproveMembership' | 'RejectMembership' | 'DeactivateMembership' | 'ReactivateMembership' | 'EditUserRole';
 
 /**
- * Represents a request for a user's membership.
- */
-export type UserMembershipRequestDto = {
-    /**
-     * Gets the unique identifier of the membership request.
-     */
-    id: number;
-    /**
-     * The email associated with the email address.
-     */
-    workEmail: string;
-};
-
-/**
  * Represents the status of a user's association with an organisation.
  */
 export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Rejected' | 'Inactive' | 'Deactivated';
@@ -1327,7 +1313,7 @@ export type GetUserRegistrationByIdResponses = {
     /**
      * The user's details were successfully retrieved.
      */
-    200: UserMembershipRequestDto;
+    200: RegisterUserConfirmationDto;
 };
 
 export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];

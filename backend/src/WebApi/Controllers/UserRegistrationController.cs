@@ -110,7 +110,7 @@ public class UserRegistrationController : ControllerBase
     /// <response code="404">
     /// No user was found with the supplied identifier.
     /// </response>
-    [ProducesResponseType<UserMembershipRequestDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<RegisterUserConfirmationDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [HttpGet("{id:int}", Name = nameof(GetUserRegistrationById))]

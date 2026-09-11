@@ -1950,17 +1950,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserMembershipRequestDto"
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserMembershipRequestDto"
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserMembershipRequestDto"
+                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
                 }
               }
             }
@@ -2926,25 +2926,6 @@
         ],
         "type": "string",
         "description": "Defines the actions that can be performed on a user's membership."
-      },
-      "UserMembershipRequestDto": {
-        "required": [
-          "id",
-          "workEmail"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "description": "Gets the unique identifier of the membership request.",
-            "format": "int32"
-          },
-          "workEmail": {
-            "type": "string",
-            "description": "The email associated with the email address."
-          }
-        },
-        "description": "Represents a request for a user's membership."
       },
       "UserOrgStatus": {
         "enum": [
