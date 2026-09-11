@@ -10,7 +10,10 @@ import { parseMulti, parseSortDirection } from '@/lib/search-and-filter/query'
 import {
   filterableRoles,
   filterableStatuses,
+  lastActiveLabels,
   lastActivePresets,
+  roleLabels,
+  statusLabels,
   type LastActivePreset,
 } from './userLabels'
 
@@ -68,6 +71,64 @@ export function parseUserListQuery(searchParams: UserListSearchParams): UserList
     sortBy: parseSortBy(searchParams.sortBy) ?? 'LastActive',
     sortDirection: parseSortDirection(searchParams.sortDirection) ?? 'Descending',
   }
+}
+
+type Filter = (
+  | {
+      key: 'email'
+      value: string
+    }
+  | {
+      key: 'status'
+      value: UserOrgStatus
+    }
+  | {
+      key: 'role'
+      value: UserRole
+    }
+  | {
+      key: 'last-active'
+      value: LastActivePreset
+    }
+) & { label: string }
+export const getActiveFilters = (query: UserListQuery): Filter[] => {
+  return [
+    ...query.status.map((s) => ({ key: 'status', value: s, label: statusLabels[s] }) as const),
+    ...query.role.map((r) => ({ key: 'role', value: r, label: roleLabels[r] }) as const),
+    ...(query.email ? [{ key: 'email', value: query.email, label: query.email } as const] : []),
+    ...(query.lastActive
+      ? [
+          {
+            key: 'last-active',
+            value: query.lastActive,
+            label: lastActiveLabels[query.lastActive],
+          } as const,
+        ]
+      : []),
+  ]
+}
+
+export const getUpdatedQueryWithoutFilter = (
+  query: UserListQuery,
+  filter: Filter,
+): UserListQuery => {
+  const activeFilters = getActiveFilters(query)
+  const remainingFilters = activeFilters.filter(
+    (x) => x.key !== filter.key || x.value !== filter.value,
+  )
+  return buildQueryFromFilters(remainingFilters, query)
+}
+
+const buildQueryFromFilters = (filters: Filter[], initialQuery: UserListQuery): UserListQuery => ({
+  ...initialQuery,
+  status: filters.filter((filter) => filter.key === 'status').map((filter) => filter.value),
+  role: filters.filter((filter) => filter.key === 'role').map((filter) => filter.value),
+  email: filters.find((filter) => filter.key === 'email')?.value,
+  lastActive: filters.find((filter) => filter.key === 'last-active')?.value,
+})
+
+export const getNumberOfActiveFilters = (query: UserListQuery): number => {
+  return getActiveFilters(query).length
 }
 
 export function buildUserListSearchParams({

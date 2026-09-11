@@ -1,6 +1,8 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
+import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import { getOrganisationById } from '@/client/generated/sdk.gen'
@@ -9,6 +11,7 @@ import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
+import { Tag } from '@/components/Tag/Tag'
 
 import { OrganisationActionAlert } from './_components/OrganisationActionAlert'
 import { OrganisationFilters } from './_components/OrganisationFilters'
@@ -18,7 +21,9 @@ import { parseOrganisationAction } from './_lib/organisationActionsAlert'
 import { parseUserAction, type UserActionSearchParams } from './_lib/userActionAlert'
 import {
   buildUserListHref,
+  getActiveFilters,
   parseUserListQuery,
+  UserListQuery,
   type UserListSearchParams,
 } from './_lib/userListQuery'
 
@@ -31,6 +36,7 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
   const { id } = await params
   const resolvedSearchParams = await searchParams
   const query = parseUserListQuery(resolvedSearchParams)
+  const activeFilters = getActiveFilters(query)
   const userAction = parseUserAction(resolvedSearchParams)
   const organisationAction = parseOrganisationAction(resolvedSearchParams)
   const organisationId = Number(id)
@@ -88,7 +94,7 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
       <h2>Search and filter</h2>
       <Grid gutter="loose">
         <GridItem cols={12} md={4} lg={3} elementType="section" aria-label="Filter results">
-          <OrganisationFilters />
+          <OrganisationFilters query={query} />
         </GridItem>
         <GridItem cols={12} md={8} lg={9} elementType="section" aria-labelledby="filter-summary">
           <Suspense fallback={<p>Loading users...</p>} key={buildUserListHref(query)}>
