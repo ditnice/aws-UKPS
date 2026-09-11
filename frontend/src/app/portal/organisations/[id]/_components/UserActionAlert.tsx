@@ -27,8 +27,8 @@ export async function UserActionAlert({
         <Alert type="success">
           <h3>Invitation sent</h3>
           <p>
-            We have sent an email to {user?.workEmail ?? 'the new user'} with instructions to set up
-            an account.
+            We&rsquo;ve sent an email to {user?.workEmail ?? 'the new user'} with instructions to
+            set up an account.
           </p>
         </Alert>
       )
@@ -37,7 +37,7 @@ export async function UserActionAlert({
         <>
           <Alert type="success">
             <h3>{user?.workEmail ?? 'The user'}&apos;s account has been deactivated</h3>
-            <p>We have sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
+            <p>We&#39;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
           </Alert>
         </>
       )
