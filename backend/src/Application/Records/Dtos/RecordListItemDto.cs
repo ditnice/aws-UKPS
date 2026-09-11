@@ -35,5 +35,5 @@ public sealed record RecordListItemDto
     /// <summary>
     /// Gets the date the record was last reviewed, when available.
     /// </summary>
-    public DateTimeOffset? ReviewedAt { get; init; }
+    public DateTime? ReviewedAt { get; init; }
 }
