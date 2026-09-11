@@ -1,9 +1,5 @@
 @use '@nice-digital/design-system/scss/base';
 
-button {
-  margin-top: 2rem;
-}
-
 p {
   margin-bottom: 2rem;
 }
@@ -14,11 +10,6 @@ h2 {
 
 input {
   margin-bottom: 2rem;
-}
-
-a:has(> button) {
-  display: inline-block;
-  margin-top: 1rem;
 }
 
 dl {

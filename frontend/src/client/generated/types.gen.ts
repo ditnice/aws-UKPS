@@ -48,6 +48,11 @@ export type CreateOrganisationDto = {
 };
 
 /**
+ * Specifies the fields by which records can be sorted.
+ */
+export type GetRecordsQuerySortValue = 'NextUpdateDue' | 'Id' | 'DevelopmentName' | 'RecordStatus';
+
+/**
  * Specifies the fields by which users can be sorted when querying users.
  */
 export type GetUsersQuerySortValue = 'LastActive' | 'Email' | 'Role' | 'Status';
@@ -219,6 +224,28 @@ export type OrganisationType = 'PharmaCompany' | 'HorizonScanning' | 'Strategic'
 /**
  * Represents a paginated response containing a collection of items and pagination metadata.
  */
+export type PaginatedResponseDtoOfRecordListItemDto = {
+    /**
+     * Gets the collection of items in the current page.
+     */
+    items: Array<RecordListItemDto>;
+    /**
+     * Gets the total number of items across all pages.
+     */
+    totalCount: number;
+    /**
+     * Gets the current page number (1-based index).
+     */
+    page: number;
+    /**
+     * Gets the number of items per page.
+     */
+    pageSize: number;
+};
+
+/**
+ * Represents a paginated response containing a collection of items and pagination metadata.
+ */
 export type PaginatedResponseDtoOfUserListItemDto = {
     /**
      * Gets the collection of items in the current page.
@@ -252,6 +279,46 @@ export type ProblemDetails = {
     detail?: null | string;
     instance?: null | string;
 };
+
+/**
+ * Represents the record summary returned by the record list endpoint.
+ */
+export type RecordListItemDto = {
+    /**
+     * Gets the record identifier.
+     */
+    id: number;
+    /**
+     * Gets the record type.
+     */
+    recordType: RecordType;
+    /**
+     * Gets the record status.
+     */
+    recordStatus: RecordStatus;
+    /**
+     * Gets the human-readable record title.
+     */
+    title: string;
+    /**
+     * Gets the NICE technology appraisal or other display identifier, when available.
+     */
+    niceTaDevelopmentId?: null | string;
+    /**
+     * Gets the date the record was last reviewed, when available.
+     */
+    reviewedAt?: null | string;
+};
+
+/**
+ * Represents the status of a record in the system.
+ */
+export type RecordStatus = 'Unpublished' | 'Active' | 'OnHold' | 'Archived';
+
+/**
+ * Represents the type of a record, such as Medicine or Vaccine.
+ */
+export type RecordType = 'Medicine' | 'Vaccine';
 
 /**
  * Represents the information required to register a new user.
@@ -1029,6 +1096,64 @@ export type GetOrganisationsPublicOptionsResponses = {
 };
 
 export type GetOrganisationsPublicOptionsResponse = GetOrganisationsPublicOptionsResponses[keyof GetOrganisationsPublicOptionsResponses];
+
+export type GetRecordsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Gets or initialises the multi-field search term.
+         */
+        Search?: string;
+        /**
+         * Gets or initialises the record types to include.
+         */
+        RecordType?: Array<RecordType>;
+        /**
+         * Gets or initialises the record statuses to include.
+         */
+        RecordStatus?: Array<RecordStatus>;
+        /**
+         * Gets or initialises the 1-based page number.
+         */
+        Page?: number;
+        /**
+         * Gets or initialises the number of records per page.
+         */
+        PageSize?: number;
+        /**
+         * Gets or initialises the field by which records are sorted.
+         */
+        SortBy?: GetRecordsQuerySortValue;
+        /**
+         * Gets or initialises the sort direction.
+         */
+        SortDirection?: SortDirection;
+    };
+    url: '/records';
+};
+
+export type GetRecordsErrors = {
+    /**
+     * The query parameters are invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * The caller is not authorised to view the requested records.
+     */
+    403: ProblemDetails;
+};
+
+export type GetRecordsError = GetRecordsErrors[keyof GetRecordsErrors];
+
+export type GetRecordsResponses = {
+    /**
+     * Returns the matching records.
+     */
+    200: PaginatedResponseDtoOfRecordListItemDto;
+};
+
+export type GetRecordsResponse = GetRecordsResponses[keyof GetRecordsResponses];
 
 export type GetUsersMeData = {
     body?: never;

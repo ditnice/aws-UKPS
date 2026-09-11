@@ -1266,6 +1266,147 @@
         }
       }
     },
+    "/records": {
+      "get": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Retrieves a paginated list of records using the supplied filters and sort order.",
+        "operationId": "GetRecords",
+        "parameters": [
+          {
+            "name": "Search",
+            "in": "query",
+            "description": "Gets or initialises the multi-field search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "RecordType",
+            "in": "query",
+            "description": "Gets or initialises the record types to include.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RecordType"
+              }
+            }
+          },
+          {
+            "name": "RecordStatus",
+            "in": "query",
+            "description": "Gets or initialises the record statuses to include.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RecordStatus"
+              }
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "Gets or initialises the 1-based page number.",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Gets or initialises the number of records per page.",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "description": "Gets or initialises the field by which records are sorted.",
+            "schema": {
+              "$ref": "#/components/schemas/GetRecordsQuerySortValue"
+            }
+          },
+          {
+            "name": "SortDirection",
+            "in": "query",
+            "description": "Gets or initialises the sort direction.",
+            "schema": {
+              "$ref": "#/components/schemas/SortDirection"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the matching records.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseDtoOfRecordListItemDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseDtoOfRecordListItemDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseDtoOfRecordListItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The query parameters are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to view the requested records.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -2253,6 +2394,16 @@
         },
         "description": "Represents the information required to create a new organisation."
       },
+      "GetRecordsQuerySortValue": {
+        "enum": [
+          "NextUpdateDue",
+          "Id",
+          "DevelopmentName",
+          "RecordStatus"
+        ],
+        "type": "string",
+        "description": "Specifies the fields by which records can be sorted."
+      },
       "GetUsersQuerySortValue": {
         "enum": [
           "LastActive",
@@ -2493,6 +2644,40 @@
         "type": "string",
         "description": "Represents the different types of organisations within the system."
       },
+      "PaginatedResponseDtoOfRecordListItemDto": {
+        "required": [
+          "items",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordListItemDto"
+            },
+            "description": "Gets the collection of items in the current page."
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Gets the total number of items across all pages.",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Gets the current page number (1-based index).",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Gets the number of items per page.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents a paginated response containing a collection of items and pagination metadata."
+      },
       "PaginatedResponseDtoOfUserListItemDto": {
         "required": [
           "items",
@@ -2566,6 +2751,68 @@
             ]
           }
         }
+      },
+      "RecordListItemDto": {
+        "required": [
+          "id",
+          "recordType",
+          "recordStatus",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Gets the record identifier.",
+            "format": "int32"
+          },
+          "recordType": {
+            "description": "Gets the record type.",
+            "$ref": "#/components/schemas/RecordType"
+          },
+          "recordStatus": {
+            "description": "Gets the record status.",
+            "$ref": "#/components/schemas/RecordStatus"
+          },
+          "title": {
+            "type": "string",
+            "description": "Gets the human-readable record title."
+          },
+          "niceTaDevelopmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the NICE technology appraisal or other display identifier, when available."
+          },
+          "reviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date the record was last reviewed, when available.",
+            "format": "date-time"
+          }
+        },
+        "description": "Represents the record summary returned by the record list endpoint."
+      },
+      "RecordStatus": {
+        "enum": [
+          "Unpublished",
+          "Active",
+          "OnHold",
+          "Archived"
+        ],
+        "type": "string",
+        "description": "Represents the status of a record in the system."
+      },
+      "RecordType": {
+        "enum": [
+          "Medicine",
+          "Vaccine"
+        ],
+        "type": "string",
+        "description": "Represents the type of a record, such as Medicine or Vaccine."
       },
       "RegisterUserCommandDto": {
         "required": [
@@ -3042,6 +3289,9 @@
     },
     {
       "name": "OrganisationPublic"
+    },
+    {
+      "name": "Record"
     },
     {
       "name": "User"

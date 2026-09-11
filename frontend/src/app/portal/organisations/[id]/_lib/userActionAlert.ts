@@ -1,4 +1,4 @@
-export const userActions = ['invited', 'permissions-updated', 'deactivated'] as const
+export const userActions = ['invited', 'permissions-updated', 'deactivated', 'reactivated'] as const
 
 export type UserAction = (typeof userActions)[number]
 
