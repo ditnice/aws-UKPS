@@ -1,17 +1,11 @@
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
-using UKPS.Api.Application.InternalServices.Identity;
-using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.InternalServices.UserOnboarding;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
-using UKPS.Api.Persistence;
-using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
-using UKPS.Api.Persistence.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using OnboardingUserResult = UKPS.Api.Application.Common.Result<
     int,
@@ -22,12 +16,9 @@ namespace UKPS.Api.Application.Users;
 
 internal sealed partial class UserAdministrationService(
     IOrganisationAuthoriser organisationAuthoriser,
-    IIdentityService administerIdentityService,
-    ICurrentUserInfoService currentUserInfoService,
     IEmailService emailService,
     ISetupLinkCreator setupLinkCreator,
-    AppDbContext dbContext,
-    IDateTimeProvider timeProvider,
+    UserOnboardingService userOnboardingService,
     ILogger<UserAdministrationService> logger
 ) : IUserAdministrationService
 {
@@ -44,10 +35,8 @@ internal sealed partial class UserAdministrationService(
         {
             return OnboardingUserResult.Err(new OnboardUserError.NotAllowed());
         }
-        Result<User, OnboardUserError> createUserResult = await CreateNewUserOnboardingRecord(
-            command,
-            cancellationToken
-        );
+        Result<User, OnboardUserError> createUserResult =
+            await userOnboardingService.InitialiseNewUserSetup(command, cancellationToken);
         return await createUserResult.Match(
             onOk: async result =>
             {
@@ -56,91 +45,6 @@ internal sealed partial class UserAdministrationService(
             },
             onErr: err => Task.FromResult(OnboardingUserResult.Err(err))
         );
-    }
-
-    private async Task<Result<User, OnboardUserError>> CreateNewUserOnboardingRecord(
-        OnboardUserCommandDto command,
-        CancellationToken cancellationToken
-    )
-    {
-        Task<Result<User, OnboardUserError>> HandleIdentityUserCreationFailed(
-            CreateNewUserError error
-        )
-        {
-            return error switch
-            {
-                CreateNewUserError.UsernameAlreadyExists => Task.FromResult(
-                    Result<User, OnboardUserError>.Err(new OnboardUserError.UsernameAlreadyExists())
-                ),
-                _ => throw new InvalidOperationException(
-                    $"An unexpected error occurred when creating a new user [{error}]"
-                ),
-            };
-        }
-
-        CognitoUsername userIdentityId = CognitoUsername.GenerateNew();
-        var result = await administerIdentityService.CreateNewUser(
-            userIdentityId,
-            command.NewUserEmail,
-            cancellationToken
-        );
-        return await result.Match(
-            onOk: () => CreateANewUserInDatabase(userIdentityId, command, cancellationToken),
-            onErr: HandleIdentityUserCreationFailed
-        );
-    }
-
-    private async Task<Result<User, OnboardUserError>> CreateANewUserInDatabase(
-        CognitoUsername cognitoUsername,
-        OnboardUserCommandDto command,
-        CancellationToken cancellationToken
-    )
-    {
-        var userOnboardingRecord = new UserOnboardingRecord()
-        {
-            SetupToken = Guid.CreateVersion7(),
-            CreatedBy = currentUserInfoService.GetCurrentUserInfo().Email,
-            CreatedAt = timeProvider.GetUtcNow(),
-        };
-        var membership = new UserOrgMembership()
-        {
-            Status = UserOrgMembershipStatus.AwaitingSetup,
-            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both, // URP 435 - Decide what initial value should be set.
-            UserRole = UserRole.Standard,
-            CreatedAt = timeProvider.GetUtcNow(),
-            OrganisationId = command.OrganisationId,
-        };
-        var user = new User()
-        {
-            CognitoUsername = cognitoUsername,
-            FullName = command.FullName,
-            WorkEmail = command.NewUserEmail,
-            WorkTelephone = command.ContactNumber,
-            OnboardingRecord = userOnboardingRecord,
-            CreatedAt = timeProvider.GetUtcNow(),
-            UserOrgMemberships = [membership],
-        };
-        dbContext.Add(user);
-
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException updateException)
-            when (updateException.InnerException is PostgresException postgresException
-                && string.Equals(
-                    postgresException.ConstraintName,
-                    ConstraintNames.UserMembershipRequiresOrganisation,
-                    StringComparison.Ordinal
-                )
-            )
-        {
-            return Result<User, OnboardUserError>.Err(new OnboardUserError.InvalidOrganisation());
-        }
-
-        string sanitisedGuid = Sanitise(userOnboardingRecord.SetupToken);
-        LogNewUserOnboardingRecordCreated(sanitisedGuid);
-        return Result<User, OnboardUserError>.Ok(user);
     }
 
     private async Task SendUserSignUpRequestedEmail(User user, CancellationToken cancellationToken)
@@ -153,7 +57,7 @@ internal sealed partial class UserAdministrationService(
         await emailService.SendEmail(
             new SendEmailCommand()
             {
-                CognitoUsername = user.CognitoUsername,
+                PersonIdentifier = user.CognitoUsername,
                 RecipientAddress = user.WorkEmail,
                 Email = new UserSignUpRequestEmail() { Link = link },
             },
@@ -163,42 +67,6 @@ internal sealed partial class UserAdministrationService(
         LogSendingUserSignUpRequestEmail(sanitisedGuid);
     }
 
-    public async Task<
-        Result<RegisterUserConfirmationDto, GetUserDetailsError>
-    > GetUserRegistrationById(int Id, CancellationToken cancellationToken)
-    {
-        var request = await dbContext
-            .UserRegistrationRequests.AsNoTracking()
-            .Include(x => x.Organisation)
-            .Where(x => x.Id == Id)
-            .SingleOrDefaultAsync(cancellationToken);
-
-        if (request is null)
-        {
-            return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
-                new GetUserDetailsError.IdNotFound(Id)
-            );
-        }
-        var authorised = organisationAuthoriser.CanPerformOperationOnOrganisation(
-            Operation.SignUpUser,
-            request.OrganisationId
-        );
-        if (!authorised)
-        {
-            return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
-                new GetUserDetailsError.UserNotAuthorised()
-            );
-        }
-        var dto = MapToDto(request);
-        return Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(dto);
-    }
-
-    [LoggerMessage(
-        Level = LogLevel.Information,
-        Message = "User Onboarding Record Created [Token = {token}...]."
-    )]
-    private partial void LogNewUserOnboardingRecordCreated(string token);
-
     [LoggerMessage(
         Level = LogLevel.Information,
         Message = "User onboarding email sent [Token = {token}...]."
@@ -206,18 +74,4 @@ internal sealed partial class UserAdministrationService(
     private partial void LogSendingUserSignUpRequestEmail(string token);
 
     private static string Sanitise(Guid guid) => guid.ToString().Substring(0, 8);
-
-    private static RegisterUserConfirmationDto MapToDto(
-        UserRegistrationRequest userRegistrationRequest
-    )
-    {
-        return new()
-        {
-            Id = userRegistrationRequest.Id,
-            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
-            FullName = userRegistrationRequest.FullName,
-            WorkEmail = userRegistrationRequest.WorkEmail,
-            PhoneNumber = userRegistrationRequest.PhoneNumber,
-        };
-    }
 }

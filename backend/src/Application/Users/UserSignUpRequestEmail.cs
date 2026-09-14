@@ -6,9 +6,8 @@ internal class UserSignUpRequestEmail : IEmail
 {
     public string Subject => "UKPS Sign Up Request";
     public required Uri Link { get; init; }
-    public string HelpdeskEmail { get; init; } = "**Placeholder**";
 
-    public string GetHtmlContent()
+    public string GetHtmlContent(EmailContextData contextData)
     {
         var content = $"""
 <p>Hello,</p>
@@ -25,7 +24,7 @@ internal class UserSignUpRequestEmail : IEmail
     <a href="{Link}">Activate your account</a>
 </p>
 <p>
-    Should you experience any problems activating your account then please contact the UK PharmaScan helpdesk by emailing <a href="mailto:{HelpdeskEmail}">{HelpdeskEmail}</a>.
+    Should you experience any problems activating your account then please contact the UK PharmaScan helpdesk by emailing {contextData.HelpDeskEmailLink}.
 </p>
 """;
         return content;

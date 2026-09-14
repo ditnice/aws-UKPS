@@ -57,7 +57,7 @@ public class EmailServiceTests
     [Fact]
     public async Task SendEmail_ShouldSendAnEmailViaSes()
     {
-        var htmlContent = _validEmailCommand.Email.GetHtmlContent();
+        var htmlContent = _validEmailCommand.Email.GetHtmlContent(new EmailContextData());
         await _sut.SendEmail(_validEmailCommand, TestContext.Current.CancellationToken);
         await _processor.ProcessEmailQueue(TestContext.Current.CancellationToken);
 
@@ -115,7 +115,7 @@ public class EmailServiceTests
         {
             StrictMode(true);
             RuleFor(
-                x => x.CognitoUsername,
+                x => x.PersonIdentifier,
                 f => new CognitoUsername() { Value = f.Random.Guid().ToString() }
             );
             RuleFor(x => x.RecipientAddress, f => f.Internet.Email());

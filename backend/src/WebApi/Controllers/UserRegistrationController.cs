@@ -180,7 +180,44 @@ public class UserRegistrationController : ControllerBase
             cancellationToken
         );
 
-        return HandleResult(result);
+        return result.Match<ActionResult>(
+            Ok,
+            err =>
+            {
+                return err.Match(
+                    notAllowed: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Membership request update not allowed",
+                            detail: "You are not allowed to approve this membership request."
+                        ),
+                    requestNotFound: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Membership request not found",
+                            detail: "The requested membership request could not be found."
+                        ),
+                    registrationRejected: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status400BadRequest,
+                            title: "Membership request has been rejected",
+                            detail: "The requested membership request has already been rejected and cannot be approved."
+                        ),
+                    userAlreadyExists: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status400BadRequest,
+                            title: "User already exists",
+                            detail: "A user with the details associated with this membership request already exists."
+                        ),
+                    invalidOrganisation: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status400BadRequest,
+                            title: "Invalid organisation",
+                            detail: "The organisation associated with this membership request is invalid or does not exist."
+                        )
+                );
+            }
+        );
     }
 
     /// <summary>
@@ -223,30 +260,31 @@ public class UserRegistrationController : ControllerBase
             cancellationToken
         );
 
-        return HandleResult(result);
-    }
-
-    private ActionResult HandleResult<T>(Result<T> result)
-        where T : IMembershipRequestUpdateError
-    {
-        ActionResult HandleError(IMembershipRequestUpdateError error)
-        {
-            return error.Match(
-                notAllowed: _ =>
-                    Problem(
-                        statusCode: StatusCodes.Status403Forbidden,
-                        title: "Membership request update not allowed",
-                        detail: "You are not allowed to update this membership request."
-                    ),
-                requestNotFound: _ =>
-                    Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Membership request not found",
-                        detail: "The requested membership request could not be found."
-                    )
-            );
-        }
-
-        return result.Match(Ok, err => HandleError(err));
+        return result.Match<ActionResult>(
+            Ok,
+            err =>
+            {
+                return err.Match(
+                    notAllowed: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Membership request update not allowed",
+                            detail: "You are not allowed to reject this membership request."
+                        ),
+                    requestNotFound: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Membership request not found",
+                            detail: "The requested membership request could not be found."
+                        ),
+                    registrationApproved: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status400BadRequest,
+                            title: "Membership request approved",
+                            detail: "The requested membership request has already been approved so could not be rejected."
+                        )
+                );
+            }
+        );
     }
 }

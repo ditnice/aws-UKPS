@@ -24,6 +24,8 @@ internal sealed class User
     public ICollection<UserAudit> UserAudits { get; set; } = [];
     private readonly List<IUserDomainEvent> _events = new List<IUserDomainEvent>();
 
+    private User() { }
+
     internal void FinaliseSetup()
     {
         if (UserOrgMemberships is null)
@@ -56,6 +58,35 @@ internal sealed class User
             WorkEmail = workEmail;
         }
         UpdatedAt = dateTime;
+    }
+
+    public static User CreateInitialisedUser(CreateInitialisedUserCommand command)
+    {
+        var userOnboardingRecord = new UserOnboardingRecord()
+        {
+            SetupToken = Guid.CreateVersion7(),
+            CreatedBy = command.CurrentUserEmail,
+            CreatedAt = command.Now,
+        };
+        var membership = new UserOrgMembership()
+        {
+            Status = UserOrgMembershipStatus.AwaitingSetup,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both, // URP 435 - Decide what initial value should be set.
+            UserRole = UserRole.Standard,
+            CreatedAt = command.Now,
+            OrganisationId = command.OrganisationId,
+        };
+        return new User()
+        {
+            CognitoUsername = command.CognitoUsername,
+            FullName = command.FullName,
+            WorkEmail = command.WorkEmail,
+            WorkTelephone = command.WorkTelephone,
+            OnboardingRecord = userOnboardingRecord,
+            UserType = command.UserType ?? UserType.PharmaUser,
+            CreatedAt = command.Now,
+            UserOrgMemberships = [membership],
+        };
     }
 
     internal record EmailUpdatedEvent : IUserDomainEvent

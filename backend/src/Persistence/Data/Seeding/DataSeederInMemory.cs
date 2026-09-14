@@ -102,30 +102,27 @@ internal sealed class DataSeederInMemory : IDataSeeder
         }
 
         User user = CreateConfiguredSuperUser(configuredUser);
-        users.Add(user);
-        memberships.Add(CreateSuperUserMembership(user));
+        user.FinaliseSetup();
+        foreach (var membership in user.UserOrgMemberships!)
+        {
+            membership.UserRole = UserRole.Super;
+        }
     }
 
     private static User CreateConfiguredSuperUser(SeedSuperUser configuredUser) =>
-        new()
-        {
-            CognitoUsername = CognitoUsername.Parse(configuredUser.CognitoUsername),
-            FullName = configuredUser.FullName,
-            WorkEmail = configuredUser.Email,
-            UserType = UserType.ItAdmin,
-            CreatedAt = DateTime.UtcNow,
-        };
-
-    private static UserOrgMembership CreateSuperUserMembership(User user) =>
-        new()
-        {
-            User = user,
-            OrganisationId = 1,
-            UserRole = UserRole.Super,
-            Status = UserOrgMembershipStatus.Active,
-            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
-            CreatedAt = user.CreatedAt,
-        };
+        User.CreateInitialisedUser(
+            new()
+            {
+                CurrentUserEmail = "seeding-script",
+                CognitoUsername = CognitoUsername.Parse(configuredUser.CognitoUsername),
+                FullName = configuredUser.FullName,
+                WorkEmail = configuredUser.Email,
+                WorkTelephone = "13245678",
+                UserType = UserType.ItAdmin,
+                Now = DateTime.UtcNow,
+                OrganisationId = 1,
+            }
+        );
 
     private static SeedSuperUser[] ParseConfiguredUsers(string superUsersJson)
     {

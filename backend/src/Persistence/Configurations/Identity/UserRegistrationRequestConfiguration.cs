@@ -25,5 +25,11 @@ internal sealed class UserRegistrationRequestConfiguration
             .WithMany()
             .HasForeignKey(x => x.RejectedBy)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne(x => x.ApprovedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.ApprovedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

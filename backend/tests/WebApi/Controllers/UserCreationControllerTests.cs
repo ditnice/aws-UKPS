@@ -131,6 +131,21 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
+    public async Task Post_WhenUserEmailAlreadyExist_ShouldReturnConflict()
+    {
+        _mockService
+            .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
+            .Returns(UserOnboardingResult.Err(new OnboardUserError.UserEmailAlreadyExists()));
+        OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
+        var response = await _client.PostAsJsonAsync(
+            OnboardEndpoint,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task Post_WhenInvalidOrganisation_ShouldReturnBadRequest()
     {
         _mockService

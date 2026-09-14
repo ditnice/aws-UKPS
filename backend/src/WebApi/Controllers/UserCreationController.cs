@@ -59,7 +59,7 @@ public class UserCreationController(IUserAdministrationService userAdministratio
             command,
             cancellationToken
         );
-        return result.Match<ActionResult<OnboardedUserDto>>(
+        return result.Match(
             userId =>
                 Created(
                     new Uri($"/users/{userId}/organisations/{command.OrganisationId}"),
@@ -76,6 +76,12 @@ public class UserCreationController(IUserAdministrationService userAdministratio
                             title: "Forbidden",
                             detail: "You do not have permission to perform this action.",
                             statusCode: StatusCodes.Status403Forbidden
+                        ),
+                    userAlreadyExists: _ =>
+                        Problem(
+                            title: "User already exists",
+                            detail: "A user with the specified email address already exists.",
+                            statusCode: StatusCodes.Status409Conflict
                         )
                 )
         );

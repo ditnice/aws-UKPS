@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UKPS.Api.Persistence;
@@ -12,9 +13,11 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260911121946_AddingApprovalMetaDataToTheUserMembershipRequest")]
+    partial class AddingApprovalMetaDataToTheUserMembershipRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2900,7 +2903,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "ApprovedByUser")
                         .WithMany()
                         .HasForeignKey("ApprovedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_user_registration_requests_users_approved_by_user_id");
 
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "Organisation")

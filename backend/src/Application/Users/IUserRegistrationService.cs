@@ -52,7 +52,7 @@ public interface IUserRegistrationService
     /// A result containing the user's details if the operation was successful,
     /// or the reason the operation failed.
     /// </returns>
-    Task<Result<RegisterUserConfirmationDto, GetUserDetailsError>> GetUserRegistrationById(
+    Task<GetUserRegistrationByIdResult> GetUserRegistrationById(
         int organisationId,
         int id,
         CancellationToken cancellationToken
