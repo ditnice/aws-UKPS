@@ -252,6 +252,7 @@ internal class UserRegistrationService : IUserRegistrationService
         CancellationToken cancellationToken
     )
     {
+        // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
         Uri link = _setupLinkCreator.GetSetupLink(targetUser.OnboardingRecord!.SetupToken);
         await _emailService.SendEmail(
             new()
