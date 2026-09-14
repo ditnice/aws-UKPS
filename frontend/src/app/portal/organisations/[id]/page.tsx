@@ -5,7 +5,7 @@ import { Suspense } from 'react'
 import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
-import { getOrganisationById } from '@/client/generated/sdk.gen'
+import { getOrganisationById, getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
@@ -46,16 +46,39 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
   }
 
   const apiClient = await createServerApiClient()
-  const { data: organisation, error } = await getOrganisationById({
+  const currentUserPromise = getUsersMe({ client: apiClient })
+  const organisationPromise = getOrganisationById({
     client: apiClient,
     path: { id: organisationId },
   })
+  const [{ data: currentUser, error: currentUserError }, { data: organisation, error }] =
+    await Promise.all([currentUserPromise, organisationPromise])
 
   if (error || !organisation) {
     return (
       <section>
         <PageHeader heading="Unable to load organisation" />
         <p role="alert">There was a problem retrieving the organisation. Please try again later.</p>
+      </section>
+    )
+  }
+
+  if (currentUserError || !currentUser) {
+    return (
+      <section>
+        <PageHeader heading="Unable to load current user" />
+        <p role="alert">There was a problem retrieving the current user. Please try again later.</p>
+      </section>
+    )
+  }
+
+  if (currentUser.userRole == 'Standard') {
+    return (
+      <section>
+        <PageHeader heading="User is not permitted to view this page" />
+        <p role="alert">
+          The current user is not permitted to view this page. Please contact your champion user.
+        </p>
       </section>
     )
   }
