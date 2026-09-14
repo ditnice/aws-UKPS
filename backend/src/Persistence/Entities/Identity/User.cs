@@ -24,8 +24,6 @@ internal sealed class User
     public ICollection<UserAudit> UserAudits { get; set; } = [];
     private readonly List<IUserDomainEvent> _events = new List<IUserDomainEvent>();
 
-    private User() { }
-
     internal void FinaliseSetup()
     {
         if (UserOrgMemberships is null)

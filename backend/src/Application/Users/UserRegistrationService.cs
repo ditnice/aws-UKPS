@@ -126,23 +126,20 @@ internal class UserRegistrationService : IUserRegistrationService
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(
             cancellationToken
         );
-        var registrationRequest = await _dbContext.UserRegistrationRequests.FirstOrDefaultAsync(
-            x => x.OrganisationId == organisationId && x.Id == registrationRequestId,
-            cancellationToken
-        );
+        UserRegistrationRequest? registrationRequest =
+            await _dbContext.UserRegistrationRequests.FirstOrDefaultAsync(
+                x => x.OrganisationId == organisationId && x.Id == registrationRequestId,
+                cancellationToken
+            );
         if (registrationRequest is null)
         {
             return Result<ApproveRequestError>.Err(new ApproveRequestError.RequestNotFound());
         }
 
-        Result<ApproveRequestError>? validStateResult = registrationRequest.GetState() switch
-        {
-            UserRegistrationRequest.State.Approved => Result<ApproveRequestError>.Ok(),
-            UserRegistrationRequest.State.Rejected => Result<ApproveRequestError>.Err(
-                new ApproveRequestError.RegistrationRejected()
-            ),
-            _ => null,
-        };
+        Result<ApproveRequestError>? validStateResult = CheckRegistrationUpdateResult(
+            registrationRequest
+        );
+
         if (validStateResult is not null)
         {
             return validStateResult.Value;
@@ -150,7 +147,15 @@ internal class UserRegistrationService : IUserRegistrationService
 
         var currentUser = await GetCurrentUser(cancellationToken);
         registrationRequest.Approve(currentUser, _dateTimeProvider.GetUtcNow());
-        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<ApproveRequestError>.Err(new ApproveRequestError.ConcurrencyError());
+        }
 
         var result = await _userOnboardingService.InitialiseNewUserSetup(
             new OnboardUserCommandDto()
@@ -206,7 +211,15 @@ internal class UserRegistrationService : IUserRegistrationService
 
         var currentUser = await GetCurrentUser(cancellationToken);
         registrationRequest.Reject(currentUser, _dateTimeProvider.GetUtcNow());
-        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<RejectRequestError>.Err(new RejectRequestError.ConcurrencyError());
+        }
         await _emailService.SendEmail(
             new()
             {
@@ -217,6 +230,20 @@ internal class UserRegistrationService : IUserRegistrationService
             cancellationToken
         );
         return Result<RejectRequestError>.Ok();
+    }
+
+    private static Result<ApproveRequestError>? CheckRegistrationUpdateResult(
+        UserRegistrationRequest registrationRequest
+    )
+    {
+        return registrationRequest.GetState() switch
+        {
+            UserRegistrationRequest.State.Approved => Result<ApproveRequestError>.Ok(),
+            UserRegistrationRequest.State.Rejected => Result<ApproveRequestError>.Err(
+                new ApproveRequestError.RegistrationRejected()
+            ),
+            _ => null,
+        };
     }
 
     private async Task<Result<ApproveRequestError>> HandleOnboardingSuccess(

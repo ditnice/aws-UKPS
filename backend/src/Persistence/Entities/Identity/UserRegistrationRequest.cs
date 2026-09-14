@@ -18,6 +18,8 @@ internal sealed class UserRegistrationRequest
     public User? RejectedByUser { get; private set; }
     public User? ApprovedByUser { get; private set; }
 
+    public uint Version { get; set; }
+
     internal void Approve(User currentUser, DateTime dateTime)
     {
         ValidateThatStateIsCurrentlyPending();

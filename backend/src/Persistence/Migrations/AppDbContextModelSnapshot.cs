@@ -526,6 +526,12 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rejected_by");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<string>("WorkEmail")
                         .IsRequired()
                         .HasColumnType("text")
@@ -543,7 +549,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasIndex("RejectedBy")
                         .HasDatabaseName("ix_user_registration_requests_rejected_by");
 
-                    b.ToTable("user_registration_requests", "ukps");
+                    b.ToTable("user_registration_requests", "ukps", t =>
+                        {
+                            t.HasCheckConstraint("ck_membership_request_approved_at_rejected_at", "approved_at IS NULL OR rejected_at IS NULL");
+                        });
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesActiveSubstance", b =>

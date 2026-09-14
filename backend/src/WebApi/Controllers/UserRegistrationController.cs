@@ -214,6 +214,12 @@ public class UserRegistrationController : ControllerBase
                             statusCode: StatusCodes.Status400BadRequest,
                             title: "Invalid organisation",
                             detail: "The organisation associated with this membership request is invalid or does not exist."
+                        ),
+                    concurrencyError: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Membership request update conflict",
+                            detail: "The membership request could not be approved because it was updated by another operation. Please try again."
                         )
                 );
             }
@@ -282,6 +288,12 @@ public class UserRegistrationController : ControllerBase
                             statusCode: StatusCodes.Status400BadRequest,
                             title: "Membership request approved",
                             detail: "The requested membership request has already been approved so could not be rejected."
+                        ),
+                    concurrencyError: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Membership request update conflict",
+                            detail: "The membership request could not be rejected because it was updated by another operation. Please try again."
                         )
                 );
             }

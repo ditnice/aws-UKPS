@@ -35,12 +35,19 @@ public abstract record ApproveRequestError
     /// </summary>
     public sealed record RequestNotFound : ApproveRequestError;
 
+    /// <summary>
+    /// Represents an error indicating that the membership request could not be
+    /// approved because the operation conflicted with another update.
+    /// </summary>
+    public sealed record ConcurrencyError : ApproveRequestError;
+
     internal TResult Match<TResult>(
         Func<NotAllowed, TResult> notAllowed,
         Func<RequestNotFound, TResult> requestNotFound,
         Func<RegistrationRejected, TResult> registrationRejected,
         Func<UserAlreadyExists, TResult> userAlreadyExists,
-        Func<InvalidOrganisation, TResult> invalidOrganisation
+        Func<InvalidOrganisation, TResult> invalidOrganisation,
+        Func<ConcurrencyError, TResult> concurrencyError
     )
     {
         return this switch
@@ -50,6 +57,7 @@ public abstract record ApproveRequestError
             RegistrationRejected e => registrationRejected(e),
             UserAlreadyExists e => userAlreadyExists(e),
             InvalidOrganisation e => invalidOrganisation(e),
+            ConcurrencyError e => concurrencyError(e),
             _ => throw new InvalidOperationException(
                 $"Unknown {nameof(ApproveRequestError)} type: {GetType().Name}"
             ),

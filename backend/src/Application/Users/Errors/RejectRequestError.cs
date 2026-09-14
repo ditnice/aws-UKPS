@@ -23,10 +23,17 @@ public abstract record RejectRequestError
     /// </summary>
     public record RequestNotFound : RejectRequestError;
 
+    /// <summary>
+    /// Represents an error indicating that the membership request could not be
+    /// rejected because the operation conflicted with another update.
+    /// </summary>
+    public sealed record ConcurrencyError : RejectRequestError;
+
     internal TResult Match<TResult>(
         Func<NotAllowed, TResult> notAllowed,
         Func<RequestNotFound, TResult> requestNotFound,
-        Func<RegistrationApproved, TResult> registrationApproved
+        Func<RegistrationApproved, TResult> registrationApproved,
+        Func<ConcurrencyError, TResult> concurrencyError
     )
     {
         return this switch
@@ -34,6 +41,7 @@ public abstract record RejectRequestError
             NotAllowed e => notAllowed(e),
             RequestNotFound e => requestNotFound(e),
             RegistrationApproved e => registrationApproved(e),
+            ConcurrencyError e => concurrencyError(e),
             _ => throw new InvalidOperationException(
                 $"Unknown {nameof(RejectRequestError)} type: {GetType().Name}"
             ),
