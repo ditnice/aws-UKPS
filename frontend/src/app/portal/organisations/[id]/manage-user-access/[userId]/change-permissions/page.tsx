@@ -55,7 +55,7 @@ export default async function ChangeUserPermissions({ params }: Props) {
         <>
           <p>
             You are about to make {user.workEmail} a{' '}
-            {user.userRole == 'Standard' ? 'champion' : 'standard'} user.
+            {user.userRole === 'Standard' ? 'champion' : 'standard'} user.
           </p>
           <p>
             If you change this user’s role, they will{' '}
