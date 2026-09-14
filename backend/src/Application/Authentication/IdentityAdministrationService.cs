@@ -310,7 +310,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         await _emailService.SendEmail(
             new SendEmailCommand()
             {
-                CognitoUsername = user.CognitoUsername,
+                PersonIdentifier = user.CognitoUsername,
                 RecipientAddress = user.WorkEmail,
                 Email = new UserSignUpRequestEmail() { Link = link },
             },

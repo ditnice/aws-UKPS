@@ -8,7 +8,7 @@ internal class ReactivatedUserNotificationEmail : IEmail
     public string Subject => "UKPS Membership Reactivated";
     public required string OrganisationName { get; init; }
 
-    public string GetHtmlContent()
+    public string GetHtmlContent(EmailContextData contextData)
     {
         var htmlEncodedOrgName = WebUtility.HtmlEncode(OrganisationName);
         var content = $"""

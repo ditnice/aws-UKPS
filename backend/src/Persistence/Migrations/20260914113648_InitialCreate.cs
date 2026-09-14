@@ -533,12 +533,17 @@ namespace UKPS.Api.Persistence.Migrations
                     full_name = table.Column<string>(type: "text", nullable: false),
                     work_email = table.Column<string>(type: "text", nullable: false),
                     phone_number = table.Column<string>(type: "text", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     rejected_by = table.Column<int>(type: "integer", nullable: true),
-                    rejected_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
+                    approved_by_user_id = table.Column<int>(type: "integer", nullable: true),
+                    rejected_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
+                    approved_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_user_registration_requests", x => x.id);
+                    table.CheckConstraint("ck_membership_request_approved_at_rejected_at", "approved_at IS NULL OR rejected_at IS NULL");
                     table.ForeignKey(
                         name: "fk_user_registration_requests_app_user_rejected_by",
                         column: x => x.rejected_by,
@@ -551,6 +556,13 @@ namespace UKPS.Api.Persistence.Migrations
                         column: x => x.organisation_id,
                         principalSchema: "ukps",
                         principalTable: "organisations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_user_registration_requests_users_approved_by_user_id",
+                        column: x => x.approved_by_user_id,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -2151,6 +2163,12 @@ namespace UKPS.Api.Persistence.Migrations
                 table: "user_org_memberships",
                 columns: new[] { "user_id", "organisation_id", "allowed_pharmaceutical_entity" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_registration_requests_approved_by_user_id",
+                schema: "ukps",
+                table: "user_registration_requests",
+                column: "approved_by_user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_registration_requests_organisation_id",

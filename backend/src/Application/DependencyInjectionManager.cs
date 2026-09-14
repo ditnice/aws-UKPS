@@ -6,6 +6,7 @@ using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.InternalServices.UserOnboarding;
 using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users;
 
@@ -23,6 +24,7 @@ internal static class DependencyInjectionManager
         // TODO URP 405: Implement the IEmailService
         services.TryAddScoped(static _ => Substitute.For<IEmailService>());
 
+        services.TryAddScoped<UserOnboardingService>();
         services.TryAddScoped<ILoginService, LoginService>();
         services.TryAddScoped<IDateTimeProvider, SystemDateTimeProvider>();
         services.TryAddScoped<IOrganisationAuthoriser, OrganisationAuthoriser>();

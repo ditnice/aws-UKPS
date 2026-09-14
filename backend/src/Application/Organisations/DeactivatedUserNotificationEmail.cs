@@ -8,7 +8,7 @@ internal class DeactivatedUserNotificationEmail : IEmail
     public string Subject => "UKPS Membership Deactivated";
     public required string OrganisationName { get; init; }
 
-    public string GetHtmlContent()
+    public string GetHtmlContent(EmailContextData contextData)
     {
         var htmlEncodedOrgName = WebUtility.HtmlEncode(OrganisationName);
         var content = $"""

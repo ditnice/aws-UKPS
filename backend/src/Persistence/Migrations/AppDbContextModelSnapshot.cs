@@ -492,6 +492,14 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("approved_at");
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("approved_by_user_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -518,6 +526,12 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rejected_by");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<string>("WorkEmail")
                         .IsRequired()
                         .HasColumnType("text")
@@ -526,13 +540,19 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_user_registration_requests");
 
+                    b.HasIndex("ApprovedByUserId")
+                        .HasDatabaseName("ix_user_registration_requests_approved_by_user_id");
+
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_user_registration_requests_organisation_id");
 
                     b.HasIndex("RejectedBy")
                         .HasDatabaseName("ix_user_registration_requests_rejected_by");
 
-                    b.ToTable("user_registration_requests", "ukps");
+                    b.ToTable("user_registration_requests", "ukps", t =>
+                        {
+                            t.HasCheckConstraint("ck_membership_request_approved_at_rejected_at", "approved_at IS NULL OR rejected_at IS NULL");
+                        });
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesActiveSubstance", b =>
@@ -2886,6 +2906,12 @@ namespace UKPS.Api.Persistence.Migrations
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserRegistrationRequest", b =>
                 {
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_user_registration_requests_users_approved_by_user_id");
+
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "Organisation")
                         .WithMany()
                         .HasForeignKey("OrganisationId")
@@ -2898,6 +2924,8 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasForeignKey("RejectedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_user_registration_requests_app_user_rejected_by");
+
+                    b.Navigation("ApprovedByUser");
 
                     b.Navigation("Organisation");
 
