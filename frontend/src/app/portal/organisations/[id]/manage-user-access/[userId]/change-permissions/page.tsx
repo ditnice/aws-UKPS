@@ -48,14 +48,15 @@ export default async function ChangeUserPermissions({ params }: Props) {
   return (
     <>
       <PageHeader backLink={backLink} heading="Change user permissions" />
-      <p>
-        {user.workEmail} is a {user.userRole.toLowerCase()} user.
-      </p>
 
       {user.userRole === 'Super' ? (
         <p>This user’s role cannot be changed from here.</p>
       ) : (
         <>
+          <p>
+            You are about to make {user.workEmail} a{' '}
+            {user.userRole == 'Standard' ? 'champion' : 'standard'} user.
+          </p>
           <p>
             If you change this user’s role, they will{' '}
             {user.userRole === 'Standard'
