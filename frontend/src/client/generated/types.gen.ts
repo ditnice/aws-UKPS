@@ -452,6 +452,8 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
     userRole: UserRole;
 };
 
+export type UpdateStatus = 'Overdue' | 'NotOverdue';
+
 /**
  * Represents the details to update for an existing user.
  */
@@ -1129,6 +1131,11 @@ export type GetRecordsData = {
          * Gets or initialises the sort direction.
          */
         SortDirection?: SortDirection;
+        /**
+         * Gets or initialises the update status filter. When set, only records that are
+         * overdue or not overdue for review will be returned.
+         */
+        UpdateStatus?: UpdateStatus;
     };
     url: '/records';
 };
@@ -1139,9 +1146,9 @@ export type GetRecordsErrors = {
      */
     400: ProblemDetails;
     /**
-     * The caller is not authorised to view the requested records.
+     * Not Found
      */
-    403: ProblemDetails;
+    404: ProblemDetails;
 };
 
 export type GetRecordsError = GetRecordsErrors[keyof GetRecordsErrors];
