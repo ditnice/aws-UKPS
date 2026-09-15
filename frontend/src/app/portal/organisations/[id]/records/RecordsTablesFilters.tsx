@@ -8,16 +8,10 @@ import { RecordStatus } from '@/client/generated'
 
 import { FilterOptionsGroup } from '../_components/OrganisationFilters'
 
+import { recordStatusLabels } from './labels'
 import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 import type { SubmitEvent } from 'react'
-
-const recordStatusLabels: Record<RecordStatus, string> = {
-  Unpublished: 'Unpublished',
-  Active: 'Active',
-  OnHold: 'On Hold',
-  Archived: 'Archived',
-}
 
 function addOrRemoveItem<T>(items: T[] | undefined, item: T, isSelected: boolean): T[] {
   if (isSelected) {
@@ -70,7 +64,7 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
           })
         }
       />
-      <div>Update status</div>
+      <div>Update status (TODO)</div>
     </FilterPanel>
   )
 }

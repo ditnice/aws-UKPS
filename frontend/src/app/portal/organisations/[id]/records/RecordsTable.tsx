@@ -2,6 +2,7 @@ import { fakePaginatedResponseDtoOfRecordListItemDto } from '@/client/generated/
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Table } from '@/components/Table/Table'
 
+import { recordStatusLabels } from './labels'
 import { RecordsQuery } from './recordsQuery'
 
 const mockGetRecords = (input: { query: RecordsQuery }) => {
@@ -43,7 +44,7 @@ const RecordsTable = async ({ query }: RecordsTableProps) => {
             <td>{x.niceTaDevelopmentId}</td>
             <td>TODO</td>
             <td>TODO</td>
-            <td>{x.recordStatus}</td>
+            <td>{recordStatusLabels[x.recordStatus]}</td>
             <td>TODO</td>
             <td>TODO</td>
           </tr>
