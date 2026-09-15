@@ -1,11 +1,11 @@
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 import { getUserDetailsWithinOrganisation } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
-import { Button, ButtonGroup } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+
+import { ManageUserAccessActions } from './_components/ManageUserAccessActions'
 
 interface Props {
   params: Promise<{ id: string; userId: string }>
@@ -21,6 +21,7 @@ export default async function ManageUserAccess({ params }: Props) {
   }
 
   const apiClient = await createServerApiClient()
+
   const { data: user, response } = await getUserDetailsWithinOrganisation({
     client: apiClient,
     path: { userId: selectedUserId, organisationId },
@@ -29,7 +30,6 @@ export default async function ManageUserAccess({ params }: Props) {
   if (response?.status === 404) {
     notFound()
   }
-
   const backLink = <BackLink href={`/portal/organisations/${organisationId}`}>Back</BackLink>
 
   if (!user) {
@@ -47,34 +47,11 @@ export default async function ManageUserAccess({ params }: Props) {
       <p>
         {user.workEmail} is a {user.userRole.toLowerCase()} user.
       </p>
-      <p>Choose what you want to do:</p>
-      <ul>
-        <li>Change permissions - change what the user can do.</li>
-        <li>
-          Deactivate user - temporarily stop the user&#39;s access. You can reactivate them later.
-        </li>
-        <li>Remove user - permanently remove the user&#39;s access.</li>
-      </ul>
-
-      <ButtonGroup>
-        {user.userRole !== 'Super' && (
-          <Button
-            elementType={Link}
-            href={`/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`}
-            variant="cta"
-          >
-            Change permissions
-          </Button>
-        )}
-        <Button
-          elementType={Link}
-          variant="secondary"
-          href={`/portal/organisations/${organisationId}/users/${user.userId}/deactivate`}
-        >
-          Deactivate user
-        </Button>
-        <Button variant="secondary">Remove user</Button>
-      </ButtonGroup>
+      <ManageUserAccessActions
+        organisationId={organisationId}
+        selectedUserId={selectedUserId}
+        userRole={user.userRole}
+      />
     </>
   )
 }
