@@ -16,80 +16,57 @@ interface Props {
 
 export function ManageUserAccessActions({ organisationId, selectedUserId, userRole }: Props) {
   const [selectedAction, setSelectedAction] = useState('')
+  const continueHref =
+    selectedAction === 'Change user permissions'
+      ? `/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`
+      : selectedAction === 'Deactivate user'
+        ? `/portal/organisations/${organisationId}/users/${selectedUserId}/deactivate`
+        : selectedAction === 'Remove user'
+          ? `/portal/organisations/${organisationId}/users/${selectedUserId}/remove`
+          : selectedAction === 'Manage user details and sign in method'
+            ? `/portal/organisations/${organisationId}/users/${selectedUserId}/manage-details`
+            : '#'
   return (
     <>
       <FormGroup name="manage user's access">
-        <Radio
-          label="Change user permissions"
-          value="Change user permissions"
-          hint="Change what the user can do"
-          name="action"
-          onChange={() => setSelectedAction('Change user permissions')}
-        />
-        <Radio
-          label="Deactivate user"
-          value="Deactivate user"
-          hint="Temporarily remove the user's access to the system"
-          name="action"
-          onChange={() => setSelectedAction('Deactivate user')}
-        />
+        <div>
+          <Radio
+            label="Change user permissions"
+            value="Change user permissions"
+            hint="Change what the user can do"
+            name="action"
+            onChange={() => setSelectedAction('Change user permissions')}
+          />
+          <Radio
+            label="Deactivate user"
+            value="Deactivate user"
+            hint="Temporarily remove the user's access to the system"
+            name="action"
+            onChange={() => setSelectedAction('Deactivate user')}
+          />
 
-        <Radio // only if super so add in validation
-          label="Remove user"
-          value="Remove user"
-          hint="Permanently remove the user's access to the system"
-          name="action"
-          onChange={() => setSelectedAction('Remove user')}
-        />
+          {userRole === 'Super' ? (
+            <Radio
+              label="Remove user  - not implemented yet"
+              value="Remove user"
+              hint="Permanently remove the user's access to the system"
+              name="action"
+              onChange={() => setSelectedAction('Remove user')}
+            />
+          ) : null}
 
-        <Radio
-          label="Manage user details and sign in method"
-          value="Manage user details and sign in method"
-          hint="Update user details or sign in method"
-          name="action"
-          onChange={() => setSelectedAction('Manage user details and sign in method')}
-        />
+          <Radio
+            label="Manage user details and sign in method  - not implemented yet"
+            value="Manage user details and sign in method"
+            hint="Update user details or sign in method"
+            name="action"
+            onChange={() => setSelectedAction('Manage user details and sign in method')}
+          />
+        </div>
       </FormGroup>
-
-      {selectedAction === 'Change user permissions' && (
-        <Button
-          elementType={Link}
-          variant="cta"
-          href={`/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`}
-        >
-          Continue
-        </Button>
-      )}
-
-      {selectedAction === 'Deactivate user' && (
-        <Button
-          elementType={Link}
-          variant="cta"
-          href={`/portal/organisations/${organisationId}/users/${selectedUserId}/deactivate`}
-        >
-          Continue
-        </Button>
-      )}
-
-      {selectedAction === 'Remove user' && (
-        <Button
-          elementType={Link}
-          variant="cta"
-          href={`/portal/organisations/${organisationId}/users/${selectedUserId}/remove`}
-        >
-          Continue
-        </Button>
-      )}
-
-      {selectedAction === 'Manage user details and sign in method' && (
-        <Button
-          elementType={Link}
-          variant="cta"
-          href={`/portal/organisations/${organisationId}/users/${selectedUserId}/manage-details`}
-        >
-          Continue
-        </Button>
-      )}
+      <Button elementType={Link} variant="cta" href={continueHref} aria-disabled={!selectedAction}>
+        Continue
+      </Button>
     </>
   )
 }
