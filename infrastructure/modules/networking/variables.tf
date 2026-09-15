@@ -8,12 +8,12 @@ variable "environment" {
   }
 }
 
-# variable "cloudfront_distribution_id" {
-#   description = "ID of the existing CloudFront distribution to look up"
-#   type        = string
+variable "cloudfront_distribution_id" {
+  description = "ID of the existing CloudFront distribution to look up"
+  type        = string
 
-#   validation {
-#     condition     = can(regex("^E[A-Z0-9]+$", var.cloudfront_distribution_id))
-#     error_message = "CloudFront distribution ID must look like an AWS CloudFront distribution ID, for example E123ABC456DEF."
-#   }
-# }
+  validation {
+    condition     = can(regex("^E[A-Z0-9]+$", var.cloudfront_distribution_id))
+    error_message = "CloudFront distribution ID must look like an AWS CloudFront distribution ID, for example E123ABC456DEF."
+  }
+}

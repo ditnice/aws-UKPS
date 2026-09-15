@@ -11,54 +11,54 @@ resource "aws_route53_zone" "base_domain" {
   })
 }
 
-# resource "aws_route53_record" "a" {
-#   for_each = var.fqdns
+resource "aws_route53_record" "a" {
+  for_each = var.fqdns
 
-#   zone_id = aws_route53_zone.base_domain.zone_id
-#   name    = each.value
-#   type    = "A"
+  zone_id = aws_route53_zone.base_domain.zone_id
+  name    = each.value
+  type    = "A"
 
-#   alias {
-#     name                   = var.cloudfront_distribution_domain_name
-#     zone_id                = var.cloudfront_distribution_hosted_zone_id
-#     evaluate_target_health = false
-#   }
+  alias {
+    name                   = var.cloudfront_distribution_domain_name
+    zone_id                = var.cloudfront_distribution_hosted_zone_id
+    evaluate_target_health = false
+  }
 
-#   lifecycle {
-#     precondition {
-#       condition     = var.cloudfront_distribution_status == "Deployed"
-#       error_message = "CloudFront distribution must be Deployed before Route53 records are applied."
-#     }
+  lifecycle {
+    precondition {
+      condition     = var.cloudfront_distribution_status == "Deployed"
+      error_message = "CloudFront distribution must be Deployed before Route53 records are applied."
+    }
 
-#     precondition {
-#       condition     = contains(var.cloudfront_distribution_aliases, each.value)
-#       error_message = "CloudFront distribution must include every Route53 FQDN as an alternate domain name."
-#     }
-#   }
-# }
+    precondition {
+      condition     = contains(var.cloudfront_distribution_aliases, each.value)
+      error_message = "CloudFront distribution must include every Route53 FQDN as an alternate domain name."
+    }
+  }
+}
 
-# resource "aws_route53_record" "aaaa" {
-#   for_each = var.fqdns
+resource "aws_route53_record" "aaaa" {
+  for_each = var.fqdns
 
-#   zone_id = aws_route53_zone.base_domain.zone_id
-#   name    = each.value
-#   type    = "AAAA"
+  zone_id = aws_route53_zone.base_domain.zone_id
+  name    = each.value
+  type    = "AAAA"
 
-#   alias {
-#     name                   = var.cloudfront_distribution_domain_name
-#     zone_id                = var.cloudfront_distribution_hosted_zone_id
-#     evaluate_target_health = false
-#   }
+  alias {
+    name                   = var.cloudfront_distribution_domain_name
+    zone_id                = var.cloudfront_distribution_hosted_zone_id
+    evaluate_target_health = false
+  }
 
-#   lifecycle {
-#     precondition {
-#       condition     = var.cloudfront_distribution_status == "Deployed"
-#       error_message = "CloudFront distribution must be Deployed before Route53 records are applied."
-#     }
+  lifecycle {
+    precondition {
+      condition     = var.cloudfront_distribution_status == "Deployed"
+      error_message = "CloudFront distribution must be Deployed before Route53 records are applied."
+    }
 
-#     precondition {
-#       condition     = contains(var.cloudfront_distribution_aliases, each.value)
-#       error_message = "CloudFront distribution must include every Route53 FQDN as an alternate domain name."
-#     }
-#   }
-# }
+    precondition {
+      condition     = contains(var.cloudfront_distribution_aliases, each.value)
+      error_message = "CloudFront distribution must include every Route53 FQDN as an alternate domain name."
+    }
+  }
+}
