@@ -1,22 +1,10 @@
 import Link from 'next/link'
 
-import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
-import { FilterSummary } from '@nice-digital/nds-filters'
-import { Grid, GridItem } from '@nice-digital/nds-grid'
-
 import type { Client } from '@/client/generated/client'
 import { getUsers } from '@/client/generated/sdk.gen'
-import type {
-  UserListItemDto,
-  UserMembershipAction,
-  GetUsersQuerySortValue,
-} from '@/client/generated/types.gen'
+import type { UserListItemDto, UserMembershipAction } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
-import { Table } from '@/components/Table/Table'
-import { TableSortDirection, TableSortHeaderLink } from '@/components/Table/TableSortHeader'
 import { Tag } from '@/components/Tag/Tag'
-import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
-import { getNextSortDirection } from '@/lib/search-and-filter/query'
 
 import {
   lastActivePresetDays,
@@ -26,32 +14,16 @@ import {
   statusTagColours,
   type LastActivePreset,
 } from '../_lib/userLabels'
-import {
-  buildUserListHref,
-  buildUserListSearchParams,
-  getActiveFilters,
-  getUpdatedQueryWithoutFilter,
-  type UserListQuery,
-} from '../_lib/userListQuery'
+import { buildUserListSearchParams, type UserListQuery } from '../_lib/userListQuery'
 import styles from '../page.module.scss'
 
-import { ApplicationTable, ApplicationTableWithPagination } from './ApplicationTable'
+import { ApplicationTableWithPagination } from './ApplicationTable'
 import { UserFilterSummary } from './UserFilterSummary'
-
-import type { ComponentProps } from 'react'
 
 interface OrganisationUsersTableProps {
   apiClient: Client
   organisationId: number
   query: UserListQuery
-}
-
-function PaginationLink({ children, ...props }: ComponentProps<typeof Link>) {
-  return (
-    <Link {...props} scroll={false}>
-      {children}
-    </Link>
-  )
 }
 
 function formatDate(date: string | null | undefined): string {
@@ -118,10 +90,6 @@ function renderActions(user: UserListItemDto, organisationId: number) {
   )
 }
 
-function getTotalPages(totalCount: number, pageSize: number): number {
-  return Math.ceil(totalCount / pageSize)
-}
-
 function getLastActiveFromDate(preset: LastActivePreset): string {
   const days = lastActivePresetDays[preset]
 
@@ -149,42 +117,6 @@ export async function OrganisationUsersTable({
       SortDirection: sortDirection,
     },
   })
-
-  const totalCount = users?.totalCount ?? 0
-
-  const createSortHref =
-    (column: GetUsersQuerySortValue) => (direction: Exclude<TableSortDirection, 'none'>) => {
-      const newQuery: UserListQuery = {
-        ...query,
-        sortBy: column,
-        sortDirection: direction == 'ascending' ? 'Ascending' : 'Descending',
-        page: 1,
-      }
-
-      return buildUserListHref(newQuery)
-    }
-
-  const renderHeaders = () => {
-    return organisationUserTableHeaders.map(({ label, sortColumn }) =>
-      sortColumn ? (
-        <TableSortHeaderLink
-          key={label}
-          direction={getNextSortDirection<GetUsersQuerySortValue>({
-            column: sortColumn,
-            sortBy,
-            sortDirection,
-          })}
-          createHref={createSortHref(sortColumn)}
-        >
-          {label}
-        </TableSortHeaderLink>
-      ) : (
-        <th scope="col" key={label}>
-          {label}
-        </th>
-      ),
-    )
-  }
 
   return (
     <>
