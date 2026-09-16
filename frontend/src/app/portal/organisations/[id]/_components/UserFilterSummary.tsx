@@ -9,7 +9,7 @@ import {
   UserListQuery,
 } from '../_lib/userListQuery'
 
-import { PaginatedResultFilterSummary } from './PaginatedResultFilterSummary'
+import { PaginatedResultsAndFilterSummary } from './PaginatedResultsAndFilterSummary'
 
 type UserFilterSummaryProps = {
   query: UserListQuery
@@ -17,7 +17,7 @@ type UserFilterSummaryProps = {
 }
 export const UserFilterSummary = ({ query, users }: UserFilterSummaryProps) => {
   return (
-    <PaginatedResultFilterSummary
+    <PaginatedResultsAndFilterSummary
       query={query}
       result={users}
       getActiveFilters={getActiveFilters}

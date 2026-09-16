@@ -2,7 +2,7 @@
 
 import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
 
-import { PaginatedResultFilterSummary } from '../_components/PaginatedResultFilterSummary'
+import { PaginatedResultsAndFilterSummary } from '../_components/PaginatedResultsAndFilterSummary'
 
 import {
   buildQueryFromFilters,
@@ -17,7 +17,7 @@ type RecordsQueryResultsSummaryProps = {
 }
 export const RecordsQueryResultsSummary = ({ query, data }: RecordsQueryResultsSummaryProps) => {
   return (
-    <PaginatedResultFilterSummary
+    <PaginatedResultsAndFilterSummary
       query={query}
       result={data}
       getActiveFilters={getActiveFilters}
