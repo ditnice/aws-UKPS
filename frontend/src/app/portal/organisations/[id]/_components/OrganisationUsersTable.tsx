@@ -198,85 +198,29 @@ export async function OrganisationUsersTable({
       {usersError || !users ? (
         <p role="alert">There was a problem retrieving the users. Please try again later.</p>
       ) : (
-        <>
-          <ApplicationTableWithPagination
-            result={users}
-            getItemKey={(x) => x.userId}
-            headers={organisationUserTableHeaders}
-            captionName={'Organisation Users'}
-            query={query}
-            queryToSearchParams={buildUserListSearchParams}
-            fallbackText="No users found for this organisation."
-            getData={(key, data) => {
-              switch (key) {
-                case 'actions':
-                  return <>{renderActions(data, organisationId)}</>
-                case 'email':
-                  return <>{data.emailAddress ?? 'N/A'}</>
-                case 'lastActive':
-                  return <>{formatDate(data.lastActive)}</>
-                case 'role':
-                  return <>{data.role ? roleLabels[data.role] : 'N/A'}</>
-                case 'status':
-                  return <>{renderStatus(data.status)}</>
-              }
-            }}
-          />
-          <Table columnWidth="content">
-            <caption className="visually-hidden">Organisation Users</caption>
-            <thead>
-              <tr>{renderHeaders()}</tr>
-            </thead>
-            <tbody>
-              {users.items.length > 0 ? (
-                users.items.map((user) => (
-                  <tr key={user.userId}>
-                    <td>{user.emailAddress ?? 'N/A'}</td>
-                    <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
-                    <td>{renderStatus(user.status)}</td>
-                    <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user, organisationId)}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5}>No users found for this organisation.</td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-
-          <Grid verticalAlignment="middle">
-            <GridItem cols={12} sm={6}>
-              <EnhancedPagination
-                currentPage={page}
-                elementType={PaginationLink}
-                mapPageNumberToHref={(pageNumber) =>
-                  buildUserListHref({ ...query, page: pageNumber })
-                }
-                totalPages={getTotalPages(totalCount, pageSize)}
-              />
-            </GridItem>
-            <GridItem cols={12} sm={6} className="text-right">
-              <p className={styles.resultsPerPageHeading}>Results per page</p>
-              <ol className={`list list--piped ${styles.resultsPerPageList}`}>
-                {pageSizeOptions.map((count) => (
-                  <li key={count}>
-                    {pageSize === count ? (
-                      count
-                    ) : (
-                      <PaginationLink
-                        href={buildUserListHref({ ...query, page: 1, pageSize: count })}
-                      >
-                        {count}
-                      </PaginationLink>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </GridItem>
-          </Grid>
-        </>
+        <ApplicationTableWithPagination
+          result={users}
+          getItemKey={(x) => x.userId}
+          headers={organisationUserTableHeaders}
+          captionName={'Organisation Users'}
+          query={query}
+          queryToSearchParams={buildUserListSearchParams}
+          fallbackText="No users found for this organisation."
+          getData={(key, data) => {
+            switch (key) {
+              case 'actions':
+                return <>{renderActions(data, organisationId)}</>
+              case 'email':
+                return <>{data.emailAddress ?? 'N/A'}</>
+              case 'lastActive':
+                return <>{formatDate(data.lastActive)}</>
+              case 'role':
+                return <>{data.role ? roleLabels[data.role] : 'N/A'}</>
+              case 'status':
+                return <>{renderStatus(data.status)}</>
+            }
+          }}
+        />
       )}
     </>
   )

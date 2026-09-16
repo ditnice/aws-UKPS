@@ -5,11 +5,13 @@ import { getNextSortDirection } from '@/lib/search-and-filter/query'
 
 import { ApplicationTablePagination } from './ApplicationTablePagination'
 
+type SortingQuery<TSortValue> = { sortBy?: TSortValue; sortDirection?: SortDirection }
+
 type BaseApplicationTableProps<
   TItem,
   TSortValue,
   TKey extends string,
-  TQuery extends { sortBy?: TSortValue; sortDirection?: SortDirection },
+  TQuery extends SortingQuery<TSortValue>,
 > = {
   headers: { key: TKey; label: string; sortColumn: TSortValue }[]
   captionName: string
@@ -24,7 +26,7 @@ type ApplicationTableWithPaginationProps<
   TItem,
   TSortValue,
   TKey extends string,
-  TQuery extends { sortBy?: TSortValue; sortDirection?: SortDirection },
+  TQuery extends SortingQuery<TSortValue>,
 > = BaseApplicationTableProps<TItem, TSortValue, TKey, TQuery> & {
   result: {
     items: Array<TItem>
@@ -37,7 +39,7 @@ export const ApplicationTableWithPagination = <
   TItem,
   TSortValue,
   TKey extends string,
-  TQuery extends { sortBy?: TSortValue; sortDirection?: SortDirection },
+  TQuery extends SortingQuery<TSortValue>,
 >(
   props: ApplicationTableWithPaginationProps<TItem, TSortValue, TKey, TQuery>,
 ) => {
@@ -54,15 +56,8 @@ type ApplicationTableProps<
   TSortValue,
   TKey extends string,
   TQuery extends { sortBy?: TSortValue; sortDirection?: SortDirection },
-> = {
+> = BaseApplicationTableProps<TItem, TSortValue, TKey, TQuery> & {
   items: TItem[]
-  headers: { key: TKey; label: string; sortColumn: TSortValue }[]
-  captionName: string
-  query: TQuery
-  getData: (key: TKey, item: TItem) => React.ReactElement
-  queryToSearchParams: (query: TQuery) => URLSearchParams
-  getItemKey: (item: TItem) => number | string | null
-  fallbackText: string
 }
 
 export const ApplicationTable = <
