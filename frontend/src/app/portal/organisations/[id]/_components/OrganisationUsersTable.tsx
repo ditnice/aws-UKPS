@@ -28,12 +28,14 @@ import {
 } from '../_lib/userLabels'
 import {
   buildUserListHref,
+  buildUserListSearchParams,
   getActiveFilters,
   getUpdatedQueryWithoutFilter,
   type UserListQuery,
 } from '../_lib/userListQuery'
 import styles from '../page.module.scss'
 
+import { ApplicationTable, ApplicationTableWithPagination } from './ApplicationTable'
 import { UserFilterSummary } from './UserFilterSummary'
 
 import type { ComponentProps } from 'react'
@@ -197,6 +199,29 @@ export async function OrganisationUsersTable({
         <p role="alert">There was a problem retrieving the users. Please try again later.</p>
       ) : (
         <>
+          <ApplicationTableWithPagination
+            result={users}
+            getItemKey={(x) => x.userId}
+            headers={organisationUserTableHeaders}
+            captionName={'Organisation Users'}
+            query={query}
+            queryToSearchParams={buildUserListSearchParams}
+            fallbackText="No users found for this organisation."
+            getData={(key, data) => {
+              switch (key) {
+                case 'actions':
+                  return <>{renderActions(data, organisationId)}</>
+                case 'email':
+                  return <>{data.emailAddress ?? 'N/A'}</>
+                case 'lastActive':
+                  return <>{formatDate(data.lastActive)}</>
+                case 'role':
+                  return <>{data.role ? roleLabels[data.role] : 'N/A'}</>
+                case 'status':
+                  return <>{renderStatus(data.status)}</>
+              }
+            }}
+          />
           <Table columnWidth="content">
             <caption className="visually-hidden">Organisation Users</caption>
             <thead>
