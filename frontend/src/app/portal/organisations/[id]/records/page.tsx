@@ -6,7 +6,9 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import OrganisationPageWrapper from '../_components/OrganisationPageWrapper'
 
+import { RecordsFetch } from './RecordsFetch'
 import { OrganisationRecordsSearchParams, parseQueryFromSearchParams } from './recordsQuery'
+import { RecordsQueryResultsSummary } from './RecordsQueryResultsSummary'
 import RecordsTable from './RecordsTable'
 import RecordsTablesFilters from './RecordsTablesFilters'
 
@@ -27,7 +29,16 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
           <TableAndFiltersGrid
             title="Search and filter records"
             filters={<RecordsTablesFilters query={query} />}
-            table={<RecordsTable query={query} />}
+            table={
+              <RecordsFetch query={query}>
+                {(data) => (
+                  <>
+                    <RecordsQueryResultsSummary query={query} data={data} />
+                    <RecordsTable data={data} />
+                  </>
+                )}
+              </RecordsFetch>
+            }
           />
         </>
       )}

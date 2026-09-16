@@ -1,30 +1,12 @@
-import { fakePaginatedResponseDtoOfRecordListItemDto } from '@/client/generated/@faker-js/faker.gen'
-import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
 import { Table } from '@/components/Table/Table'
 
 import { recordStatusLabels } from './labels'
-import { RecordsQuery } from './recordsQuery'
-
-const mockGetRecords = (input: { query: RecordsQuery }) => {
-  return {
-    data: fakePaginatedResponseDtoOfRecordListItemDto(),
-    error: undefined,
-  }
-}
 
 type RecordsTableProps = {
-  query: RecordsQuery
+  data: PaginatedResponseDtoOfRecordListItemDto
 }
-const RecordsTable = async ({ query }: RecordsTableProps) => {
-  // TODO: Replace with getRecords when it is implemented.
-  const { data: records, error } = await mockGetRecords({ query })
-
-  if (!records || error) {
-    return (
-      <ErrorState>There was a problem retrieving the records. Please try again later.</ErrorState>
-    )
-  }
-
+const RecordsTable = async ({ data: records }: RecordsTableProps) => {
   return (
     <Table>
       <caption className="visually-hidden">Organisation Records</caption>

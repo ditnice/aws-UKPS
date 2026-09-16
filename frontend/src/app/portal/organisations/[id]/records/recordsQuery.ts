@@ -7,6 +7,38 @@ import {
 import { parsePage, parsePageSize } from '@/lib/search-and-filter/pagination'
 import { parseMulti } from '@/lib/search-and-filter/query'
 
+import { recordStatusLabels } from './labels'
+
+type Filter = (
+  | { key: 'search'; value: string }
+  | {
+      key: 'record-status'
+      value: RecordStatus
+    }
+) & { label: string }
+export const getActiveFilters = (query: RecordsQuery): Filter[] => {
+  return [
+    ...(query.Search ? [{ key: 'search', value: query.Search, label: query.Search } as const] : []),
+    ...(query.RecordStatus?.map(
+      (s) =>
+        ({
+          key: 'record-status',
+          value: s,
+          label: recordStatusLabels[s],
+        }) as const,
+    ) ?? []),
+  ]
+}
+
+export const buildQueryFromFilters = (
+  filters: Filter[],
+  initialQuery: RecordsQuery,
+): RecordsQuery => ({
+  ...initialQuery,
+  Search: filters.find((f) => f.key === 'search')?.value,
+  RecordStatus: filters.filter((f) => f.key === 'record-status').map((x) => x.value),
+})
+
 export type OrganisationRecordsSearchParams = {
   search?: string
   recordType?: string | string[]
