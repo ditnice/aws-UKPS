@@ -13,6 +13,7 @@ vi.mock('next/headers', () => ({ cookies: mocks.cookies, headers: mocks.headers 
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }))
 vi.mock('server-only', () => ({}))
 vi.mock('./generated/client', () => ({ createClient: mocks.createClient }))
+vi.mock('./generated', () => ({ AuthorisationFailCode: {} as const }))
 
 type ClientWithFetch = { fetch: typeof fetch }
 
@@ -33,10 +34,11 @@ describe('createServerApiClient', () => {
     )
     mocks.cookies.mockResolvedValue({ get: getCookie })
     mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal/organisations/1?page=2') })
-    const client = { request: vi.fn() }
+    const request = vi.fn()
+    const client = { request }
     mocks.createClient.mockReturnValue(client)
 
-    await expect(createServerApiClient()).resolves.toBe(client)
+    expect((await createServerApiClient()).request).toBe(request)
     expect(getCookie).toHaveBeenCalledOnce()
     expect(getCookie).toHaveBeenCalledWith('access_token')
     expect(mocks.createClient).toHaveBeenCalledWith({

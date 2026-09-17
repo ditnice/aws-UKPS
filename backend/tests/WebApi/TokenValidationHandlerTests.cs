@@ -139,9 +139,18 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
             // Assert
             context.Result.ShouldNotBeNull();
             context.Result.Failure.ShouldNotBeNull();
-            context.Result.Failure.Message.ShouldBe(
-                "No authorised membership for the user could be found."
-            );
+            if (testUser.UserOrgMemberships!.Single().Status == UserOrgMembershipStatus.Deactivated)
+            {
+                context.Result.Failure.Message.ShouldBe(
+                    AuthenticationFailCode.MembershipDeactivated.ToString()
+                );
+            }
+            else
+            {
+                context.Result.Failure.Message.ShouldBe(
+                    AuthenticationFailCode.MembershipNotInValidState.ToString()
+                );
+            }
         }
     }
 
@@ -230,7 +239,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.Message.ShouldBe(
-            "No user exists in the database with the given identity ID"
+            AuthenticationFailCode.NoDbUserExistsWithUsername.ToString()
         );
     }
 
@@ -248,7 +257,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.ShouldNotBeNull();
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.Message.ShouldBe(
-            "A valid selected organisation cookie is required."
+            AuthenticationFailCode.SelectedOrganisationRequired.ToString()
         );
     }
 
@@ -270,7 +279,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.ShouldNotBeNull();
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.Message.ShouldBe(
-            "A valid selected organisation cookie is required."
+            AuthenticationFailCode.SelectedOrganisationRequired.ToString()
         );
     }
 
@@ -292,7 +301,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.ShouldNotBeNull();
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.Message.ShouldBe(
-            "The selected organisation is not associated with the user."
+            AuthenticationFailCode.SelectedOrganisationIsNotValid.ToString()
         );
     }
 
