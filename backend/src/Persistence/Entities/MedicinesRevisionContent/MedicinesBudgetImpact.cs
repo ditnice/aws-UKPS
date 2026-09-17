@@ -24,7 +24,9 @@ internal sealed class MedicinesBudgetImpact
     /// </summary>
     public NetUkBudgetImpactBand? NetUkBudgetImpactBand { get; set; }
 
+    /// <summary>Multi-select. Conditional on PasSchemePlanned = Yes.</summary>
+    public PasRegion? PasRegions { get; set; }
+
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
-    public ICollection<MedicinesPasRegion> PasRegions { get; set; } = [];
 }
