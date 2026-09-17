@@ -85,7 +85,9 @@ describe('ChangeUserPermissions', () => {
 
     render(await ChangeUserPermissions({ params }))
 
-    expect(screen.getByText(`${user.workEmail} is a standard user.`)).toBeDefined()
+    expect(
+      screen.getByText(`You are about to make ${user.workEmail} a champion user.`),
+    ).toBeDefined()
     expect(
       screen.getByText(
         'If you change this user’s role, they will gain access to additional capabilities in UK PharmaScan, including:',
@@ -98,7 +100,9 @@ describe('ChangeUserPermissions', () => {
 
     render(await ChangeUserPermissions({ params }))
 
-    expect(screen.getByText(`${user.workEmail} is a champion user.`)).toBeDefined()
+    expect(
+      screen.getByText(`You are about to make ${user.workEmail} a standard user.`),
+    ).toBeDefined()
     expect(
       screen.getByText(
         'If you change this user’s role, they will lose access to the following capabilities in UK PharmaScan:',
