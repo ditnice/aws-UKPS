@@ -29,12 +29,12 @@ output "backend_host_name" {
 }
 
 output "base_domain_name_servers" {
-  description = "Route53 authoritative name servers for the base domain"
+  description = "Route53 authoritative name servers for the dev hosted zone"
   value       = module.route53.base_domain_name_servers
 }
 
 output "base_domain_zone_id" {
-  description = "Route53 hosted zone ID for the base domain"
+  description = "Route53 hosted zone ID for the dev hosted zone"
   value       = module.route53.base_domain_zone_id
 }
 

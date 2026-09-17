@@ -19,7 +19,7 @@ variable "environment" {
 }
 
 variable "base_domain_name" {
-  description = "Base DNS domain for the hosted zone"
+  description = "Parent DNS domain used to build the environment hosted-zone name"
   type        = string
 
   validation {
@@ -38,8 +38,8 @@ variable "fqdns" {
   }
 
   validation {
-    condition     = alltrue([for fqdn in var.fqdns : fqdn == var.base_domain_name || endswith(fqdn, ".${var.base_domain_name}")])
-    error_message = "Every FQDN must be the base domain or a subdomain of the base domain."
+    condition     = alltrue([for fqdn in var.fqdns : fqdn == "${var.environment}.${var.base_domain_name}" || endswith(fqdn, ".${var.environment}.${var.base_domain_name}")])
+    error_message = "Every FQDN must be the environment hosted-zone name or one of its subdomains."
   }
 }
 
