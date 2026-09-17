@@ -31,7 +31,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain for the hosted zone | `string` | n/a | yes |
+| <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Parent DNS domain used to build the environment hosted-zone name | `string` | n/a | yes |
 | <a name="input_cloudfront_distribution_aliases"></a> [cloudfront\_distribution\_aliases](#input\_cloudfront\_distribution\_aliases) | Alternate domain names configured on the CloudFront distribution | `set(string)` | n/a | yes |
 | <a name="input_cloudfront_distribution_domain_name"></a> [cloudfront\_distribution\_domain\_name](#input\_cloudfront\_distribution\_domain\_name) | Domain name of the CloudFront distribution used as the alias target | `string` | n/a | yes |
 | <a name="input_cloudfront_distribution_hosted_zone_id"></a> [cloudfront\_distribution\_hosted\_zone\_id](#input\_cloudfront\_distribution\_hosted\_zone\_id) | Route53 hosted zone ID for the CloudFront distribution alias target | `string` | n/a | yes |
@@ -47,7 +47,7 @@ No modules.
 | ---- | ----------- |
 | <a name="output_a_record_fqdns"></a> [a\_record\_fqdns](#output\_a\_record\_fqdns) | FQDNs of the Route53 A records |
 | <a name="output_aaaa_record_fqdns"></a> [aaaa\_record\_fqdns](#output\_aaaa\_record\_fqdns) | FQDNs of the Route53 AAAA records |
-| <a name="output_base_domain_name_servers"></a> [base\_domain\_name\_servers](#output\_base\_domain\_name\_servers) | Route53 authoritative name servers for the base domain |
-| <a name="output_base_domain_zone_id"></a> [base\_domain\_zone\_id](#output\_base\_domain\_zone\_id) | Route53 hosted zone ID for the base domain |
+| <a name="output_base_domain_name_servers"></a> [base\_domain\_name\_servers](#output\_base\_domain\_name\_servers) | Route53 authoritative name servers for the environment hosted zone |
+| <a name="output_base_domain_zone_id"></a> [base\_domain\_zone\_id](#output\_base\_domain\_zone\_id) | Route53 hosted zone ID for the environment hosted zone |
 | <a name="output_fqdns"></a> [fqdns](#output\_fqdns) | Fully qualified domain names created in Route53 |
 <!-- END_TF_DOCS -->

@@ -25,10 +25,17 @@ internal sealed partial class SesEmailService : IEmailService
     {
         LogEmailProcessStart(command.PersonIdentifier, command.Email.Subject);
 
+        List<string> toAddresses = [command.RecipientAddress];
+
+        if (_configuration.TestingEmailAddress is not null)
+        {
+            toAddresses.Add(_configuration.TestingEmailAddress);
+        }
+
         var request = new SendEmailRequest
         {
             FromEmailAddress = _configuration.FromAddress,
-            Destination = new Destination { ToAddresses = [command.RecipientAddress] },
+            Destination = new Destination { ToAddresses = toAddresses },
             Content = new EmailContent
             {
                 Simple = new Message
