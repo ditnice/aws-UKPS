@@ -1,10 +1,8 @@
-# Architecture Decision Records
-
-## ADR-001: Stale setup token after a sign-up link resend
+# ADR-001: Stale setup token after a sign-up link resend
 
 **Status:** Accepted
 
-### Context
+## Context
 
 `/auth/sign-up/initiate?setupToken=...` lets a user with an expired setup
 link request a new one (`POST /auth/resend-setup-token`). On success, the
@@ -32,7 +30,7 @@ immediately realised this was a security issue and defeats the purpose of using
 email as MFA, since the user could in theory find the returned token in dev tools.
 
 
-### Decision
+## Decision
 
 For now, we accept the rough edge: a same-tab resend against a
 since-rotated token fails, and `RequestNewLink.tsx` shows a dedicated
@@ -43,7 +41,7 @@ resend-attempt cap (`EmailOptions.MaxResendSignUpLinkAttempts`, currently
 server-side on `UserOnboardingRecord.ResendCount` and carried forward
 across rotations.
 
-### Consequences
+## Consequences
 
 - A user who resends more than once without reopening their inbox has to
   leave the page and follow the email to make further progress. This is a
@@ -53,7 +51,7 @@ across rotations.
 - No change was needed to the backend or to `/auth/sign-up/initiate/page.tsx`;
   the handling is scoped entirely to `RequestNewLink.tsx`.
 
-### Future consideration
+## Future consideration
 
 Instead of returning the new *token*, the resend endpoint could return the
 new `UserOnboardingRecord`'s row id (a value with no standalone power to

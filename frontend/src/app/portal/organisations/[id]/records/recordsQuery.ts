@@ -9,6 +9,14 @@ import { parseMulti, parseSortDirection } from '@/lib/search-and-filter/query'
 
 import { recordStatusLabels } from './labels'
 
+type Filter = (
+  | { key: 'search'; value: string }
+  | {
+      key: 'record-status'
+      value: RecordStatus
+    }
+) & { label: string }
+
 export type OrganisationRecordsSearchParams = {
   search?: string
   recordType?: string | string[]
@@ -28,14 +36,6 @@ export type RecordsQuery = {
   sortBy?: GetRecordsQuerySortValue
   sortDirection?: SortDirection
 }
-
-type Filter = (
-  | { key: 'search'; value: string }
-  | {
-      key: 'record-status'
-      value: RecordStatus
-    }
-) & { label: string }
 
 export const getActiveFilters = (query: RecordsQuery): Filter[] => {
   return [
