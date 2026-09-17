@@ -51,7 +51,7 @@ export function ChangePermissionsForm({
           return
         }
 
-        router.push(buildUserActionHref(organisationId, 'permissions-updated', userId))
+        router.push(buildUserActionHref(organisationId, { action: 'permissions-updated', userId }))
       }}
     >
       {formError && <p role="alert">{formError}</p>}

@@ -1,24 +1,26 @@
-import type { Client } from '@/client/generated/client'
-import { getUserDetailsWithinOrganisation } from '@/client/generated/sdk.gen'
+'server-only'
+
+import {
+  getUserDetailsWithinOrganisation,
+  getUserRegistrationById,
+} from '@/client/generated/sdk.gen'
+import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
 
 import { roleLabels } from '../_lib/userLabels'
 
-import type { UserActionResult } from '../_lib/userActionAlert'
+import type { RegisteredUserResult, RequestResult, UserActionResult } from '../_lib/userActionAlert'
 
-interface UserActionAlertProps {
-  apiClient: Client
+type RegisteredUserActionProps = {
   organisationId: number
-  userAction: UserActionResult
+  userAction: RegisteredUserResult
 }
-
-export async function UserActionAlert({
-  apiClient,
+const renderRegisteredUserAction = async ({
   organisationId,
   userAction,
-}: UserActionAlertProps) {
+}: RegisteredUserActionProps) => {
   const { data: user } = await getUserDetailsWithinOrganisation({
-    client: apiClient,
+    client: await createServerApiClient(),
     path: { organisationId, userId: userAction.userId },
   })
   switch (userAction.action) {
@@ -64,4 +66,47 @@ export async function UserActionAlert({
         </Alert>
       )
   }
+}
+
+type UserRequestActionProps = {
+  organisationId: number
+  userAction: RequestResult
+}
+const renderUserRequestAction = async ({ organisationId, userAction }: UserRequestActionProps) => {
+  const { data: request } = await getUserRegistrationById({
+    client: await createServerApiClient(),
+    path: { organisationId, id: userAction.userRequestId },
+  })
+  switch (userAction.action) {
+    case 'approved-request':
+      return (
+        <Alert type="success">
+          <h3>Approval Email Sent</h3>
+          <p>
+            We&rsquo;ve sent an email to {request?.workEmail ?? 'the new user'} notifying them that
+            their request has been approved and instructions to set up an account.
+          </p>
+        </Alert>
+      )
+    case 'rejected-request':
+      return (
+        <Alert type="success">
+          <h3>Rejection Email Sent</h3>
+          <p>
+            We&rsquo;ve sent an email to {request?.workEmail ?? 'the user'} notifying them that
+            their request has been rejected.
+          </p>
+        </Alert>
+      )
+  }
+}
+
+interface UserActionAlertProps {
+  organisationId: number
+  userAction: UserActionResult
+}
+export function UserActionAlert({ organisationId, userAction }: UserActionAlertProps) {
+  return userAction.type === 'user'
+    ? renderRegisteredUserAction({ organisationId: organisationId, userAction: userAction })
+    : renderUserRequestAction({ organisationId, userAction })
 }
