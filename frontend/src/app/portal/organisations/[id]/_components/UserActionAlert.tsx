@@ -1,5 +1,3 @@
-'server-only'
-
 import {
   getUserDetailsWithinOrganisation,
   getUserRegistrationById,
