@@ -341,10 +341,27 @@
         },
         "responses": {
           "200": {
-            "description": "A new setup link was generated and emailed to the user's registered email address."
+            "description": "A new setup link was generated and emailed to the user's registered email address.\nThe response body contains the correlation id for the new setup token.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendSetupTokenResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendSetupTokenResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendSetupTokenResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "The request body was missing or malformed.",
+            "description": "The request body was missing or malformed, or did not supply exactly one of\na setup token or a correlation id.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -384,7 +401,7 @@
             }
           },
           "404": {
-            "description": "The specified setup token does not exist.",
+            "description": "The specified setup token or correlation id does not exist.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2872,18 +2889,40 @@
         "description": "Represents the details of a user who has been registered."
       },
       "ResendSetupTokenCommand": {
-        "required": [
-          "setupToken"
-        ],
         "type": "object",
         "properties": {
           "setupToken": {
-            "type": "string",
-            "description": "Gets the expired setup token to reissue.",
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the expired setup token to reissue. Supplied on the first resend\nrequest for a tab, when only the token embedded in the page is known.\nExactly one of SetupToken or CorrelationId must be supplied.",
+            "format": "uuid"
+          },
+          "correlationId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the correlation id returned by a previous resend, used to identify\nthe record on a subsequent resend from the same tab without needing a\ncurrently-valid setup token. Exactly one of SetupToken or CorrelationId\nmust be supplied.",
             "format": "uuid"
           }
         },
         "description": "Represents the command used to request that a new setup link be sent for an\nexpired setup token."
+      },
+      "ResendSetupTokenResponse": {
+        "required": [
+          "correlationId"
+        ],
+        "type": "object",
+        "properties": {
+          "correlationId": {
+            "type": "string",
+            "description": "Gets the correlation id for the newly issued setup token, to be supplied\non any subsequent resend request from the same tab instead of the\n(now stale) setup token.",
+            "format": "uuid"
+          }
+        },
+        "description": "Represents the outcome of a successful setup token resend."
       },
       "RespondToMultiFactorAuthenticationChallengeCommand": {
         "required": [
