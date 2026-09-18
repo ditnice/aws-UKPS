@@ -16,6 +16,7 @@ internal sealed class MedicinesProductDetailConfiguration
         builder.Property(x => x.IndicationIsPaediatric);
         builder.Property(x => x.IndicationIsCancer);
         builder.Property(x => x.IndicationIsRareDisease);
+        builder.Property(x => x.MedicineTechnologyStatus);
 
         builder
             .HasIndex(x => x.RevisionId)
