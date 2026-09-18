@@ -132,7 +132,7 @@ internal partial class RecordService(AppDbContext dbContext) : IRecordService
 
         if (!string.IsNullOrWhiteSpace(getRecordsQuery.Search))
         {
-            string pattern = $"%{EscapeLikePattern(getRecordsQuery.Search)}%";
+            string pattern = $"%{Helpers.EscapeLikePattern(getRecordsQuery.Search)}%";
             bool isNumeric = int.TryParse(
                 getRecordsQuery.Search.Trim(),
                 System.Globalization.CultureInfo.InvariantCulture,
@@ -184,12 +184,6 @@ internal partial class RecordService(AppDbContext dbContext) : IRecordService
             ),
         };
     }
-
-    private static string EscapeLikePattern(string value) =>
-        value
-            .Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("%", "\\%", StringComparison.Ordinal)
-            .Replace("_", "\\_", StringComparison.Ordinal);
 
     public record RecordInformationTrackingProjection
     {
