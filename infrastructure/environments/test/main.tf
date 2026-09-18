@@ -1,1 +1,415 @@
-provider "aws" {}
+locals {
+  project      = "ukps"
+  environment  = "test"
+  service_name = "ukps-service"
+}
+
+module "networking" {
+  source = "../../modules/networking"
+
+  environment                = local.environment
+  cloudfront_distribution_id = var.cloudfront_distribution_id
+}
+
+module "kms_frontend" {
+  source = "../../modules/kms"
+
+  project      = local.project
+  environment  = local.environment
+  region       = var.region
+  service_name = "frontend"
+}
+
+module "kms_backend" {
+  source = "../../modules/kms"
+
+  project      = local.project
+  environment  = local.environment
+  region       = var.region
+  service_name = "backend"
+  additional_cloudwatch_log_group_names = [
+    "/aws/vendedlogs/cognito/${local.project}/${local.environment}/${local.service_name}",
+  ]
+}
+
+# SNS
+module "sns" {
+  source = "../../modules/sns"
+
+  project              = local.project
+  environment          = local.environment
+  service_name         = local.service_name
+  sns_kms_arn          = module.kms_frontend.app_key_arn
+  security_sns_kms_arn = module.kms_backend.app_key_arn
+  sns_alarm_emails     = var.sns_alarm_emails
+}
+
+module "alb" {
+  source = "../../modules/alb"
+
+  project          = local.project
+  environment      = local.environment
+  vpc_id           = module.networking.vpc_id
+  base_domain_name = var.base_domain_name
+
+  target_groups = {
+    frontend = {
+      port = var.frontend_container_port
+    }
+    backend = {
+      port = var.backend_container_port
+    }
+  }
+}
+
+module "route53" {
+  source = "../../modules/route53"
+
+  project                                = local.project
+  environment                            = local.environment
+  base_domain_name                       = var.base_domain_name
+  fqdns                                  = [module.alb.frontend_host_name, module.alb.backend_host_name]
+  cloudfront_distribution_aliases        = module.networking.cloudfront_distribution_aliases
+  cloudfront_distribution_domain_name    = module.networking.cloudfront_distribution_domain_name
+  cloudfront_distribution_hosted_zone_id = module.networking.cloudfront_distribution_hosted_zone_id
+  cloudfront_distribution_status         = module.networking.cloudfront_distribution_status
+}
+
+module "ses" {
+  source = "../../modules/ses"
+
+  project        = local.project
+  environment    = local.environment
+  service_name   = local.service_name
+  domain_name    = module.alb.frontend_host_name
+  hosted_zone_id = module.route53.base_domain_zone_id
+}
+
+module "cognito" {
+  source = "../../modules/cognito"
+
+  project                    = local.project
+  environment                = local.environment
+  service_name               = local.service_name
+  kms_key_arn                = module.kms_backend.app_key_arn
+  ses_identity_arn           = module.ses.identity_arn
+  ses_configuration_set_name = module.ses.configuration_set_name
+  email_from_address         = module.ses.from_email_address
+  email_reply_to_address     = module.ses.from_email_address
+  security_alarm_topic_arn   = module.sns.cognito_alarms_topic_arn
+  cloudwatch_log_retention   = var.ecs_log_retention
+}
+
+
+# ECS - Frontend
+module "ecs_frontend" {
+  source = "../../modules/ecs"
+
+  project                      = local.project
+  environment                  = local.environment
+  service_name                 = "${local.service_name}-frontend"
+  ecs_capacity_providers       = var.ecs_capacity_providers
+  ecs_capacity_provider        = var.ecs_capacity_provider
+  ecs_cpu_allocation           = var.ecs_frontend_cpu_allocation
+  ecs_memory_allocation        = var.ecs_frontend_memory_allocation
+  cloudwatch_kms_arn           = module.kms_frontend.app_key_arn
+  cloudwatch_log_retention     = var.ecs_log_retention
+  vpc_id                       = module.networking.vpc_id
+  private_subnet_ids           = module.networking.app_subnet_ids
+  container_port               = var.frontend_container_port
+  ecr_repository_url           = var.frontend_image_repository_url
+  image_tag                    = var.image_tag
+  target_group_arn             = module.alb.frontend_target_group_arn
+  alb_security_group_id        = one(module.alb.alb_security_group_ids)
+  ecs_egress_cidr_blocks       = [module.networking.vpc_cidr]
+  ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
+  container_environment = {
+    BACKEND_API_BASE_URL   = "https://${module.alb.backend_host_name}"
+    COGNITO_CLIENT_ID      = module.cognito.app_client_id
+    COGNITO_ISSUER         = module.cognito.user_pool_issuer
+    DATABASE_HOST          = module.aurora_frontend.cluster_endpoint
+    DATABASE_NAME          = module.aurora_frontend.database_name
+    DATABASE_PORT          = tostring(module.aurora_frontend.port)
+    FRONTEND_PUBLIC_ORIGIN = "https://${module.alb.frontend_host_name}"
+  }
+  container_secrets = {
+    DATABASE_PASSWORD = "${module.aurora_frontend.master_user_secret_arn}:password::"
+    DATABASE_USERNAME = "${module.aurora_frontend.master_user_secret_arn}:username::"
+    PAYLOAD_SECRET    = aws_secretsmanager_secret.frontend_payload_secret.arn
+  }
+
+  attach_execution_role_policy = true
+  execution_role_policy_json   = data.aws_iam_policy_document.frontend_secrets.json
+
+  depends_on = [aws_secretsmanager_secret_version.frontend_payload_secret]
+}
+
+# ECS - Frontend Alerts
+module "frontend_ecs_alerts" {
+  source = "../../modules/cloudwatch/ecs-alerts"
+
+  project            = local.project
+  environment        = local.environment
+  service_name       = "${local.service_name}-frontend"
+  sns_topic_arn      = module.sns.ecs_alarms_topic_arn
+  load_balancer_id   = module.alb.alb_arn_suffix
+  target_group_id    = module.alb.frontend_target_group_arn_suffix
+  log_group_name     = module.ecs_frontend.cloudwatch_log_group_name
+  desired_task_count = module.ecs_frontend.ecs_desired_count
+  cluster_name       = module.ecs_frontend.cluster_name
+  ecs_service_name   = module.ecs_frontend.service_name
+  log_pattern_alarms = {
+    error-logs = {
+      pattern           = "\"ERROR\""
+      alarm_description = "Frontend ECS logs contain ERROR entries"
+    }
+    exception-logs = {
+      pattern           = "\"Exception\""
+      alarm_description = "Frontend ECS logs contain Exception entries"
+    }
+    http-5xx = {
+      pattern             = "{ $.statusCode >= 500 }"
+      threshold           = 5
+      evaluation_periods  = 2
+      datapoints_to_alarm = 2
+      period              = 60
+      statistic           = "Sum"
+      alarm_description   = "Frontend ECS logs contain repeated HTTP 5XX responses"
+    }
+  }
+}
+
+
+# SQS - Email Backend
+module "sqs_email_backend" {
+  source = "../../modules/sqs"
+
+  project      = local.project
+  environment  = local.environment
+  service_name = "email-backend"
+  fifo         = false
+
+  tags = {
+    Name        = "${local.project}-${local.environment}-${local.service_name}-email-backend"
+    Environment = local.environment
+    Project     = local.project
+  }
+}
+
+# SQS - Email Backend Alerts
+module "sqs_email_backend_alerts" {
+  source = "../../modules/cloudwatch/sqs-alerts"
+
+  project       = local.project
+  environment   = local.environment
+  service_name  = "email-backend"
+  sns_topic_arn = module.sns.sqs_alarms_topic_arn
+  queue_name    = module.sqs_email_backend.queue_name
+  dlq_name      = module.sqs_email_backend.dlq_name
+}
+
+# ECS - Backend
+module "ecs_backend" {
+  source = "../../modules/ecs"
+
+  project                  = local.project
+  environment              = local.environment
+  service_name             = "${local.service_name}-backend"
+  ecs_capacity_providers   = var.ecs_capacity_providers
+  ecs_capacity_provider    = var.ecs_capacity_provider
+  ecs_cpu_allocation       = var.ecs_backend_cpu_allocation
+  ecs_memory_allocation    = var.ecs_backend_memory_allocation
+  cloudwatch_kms_arn       = module.kms_backend.app_key_arn
+  cloudwatch_log_retention = var.ecs_log_retention
+  vpc_id                   = module.networking.vpc_id
+  private_subnet_ids       = module.networking.app_subnet_ids
+  container_port           = var.backend_container_port
+  ecr_repository_url       = var.backend_image_repository_url
+  image_tag                = var.image_tag
+  target_group_arn         = module.alb.backend_target_group_arn
+  alb_security_group_id    = one(module.alb.alb_security_group_ids)
+  ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
+  # Cognito has no PrivateLink endpoint. Confirm that app subnet routes provide
+  # NAT or controlled egress before deploying this service.
+  ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
+  container_environment = {
+    AWS__Region                 = var.region
+    Cognito__Region             = var.region
+    Cognito__UserPoolId         = module.cognito.user_pool_id
+    Cognito__ClientId           = module.cognito.app_client_id
+    Cognito__Authority          = module.cognito.user_pool_issuer
+    Database__Host              = module.aurora_backend.cluster_endpoint
+    Database__MigrateOnStartup  = "false"
+    Database__Name              = module.aurora_backend.database_name
+    Database__Port              = tostring(module.aurora_backend.port)
+    Email__Region               = var.region
+    Email__BaseDomain           = module.alb.frontend_host_name
+    Email__FromAddress          = module.ses.from_email_address
+    Email__ReplyToAddress       = module.ses.from_email_address
+    Email__ConfigurationSetName = module.ses.configuration_set_name
+    Email__QueueUrl             = module.sqs_email_backend.queue_url
+    Seeding__ReseedOnStartup    = "true"
+    Seeding__SuperUsersJson     = jsonencode(var.seeded_super_users)
+    UserOnboarding__SetupLink   = "https://${module.alb.frontend_host_name}"
+  }
+  container_secrets = {
+    Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
+    Database__Username    = "${module.aurora_backend.master_user_secret_arn}:username::"
+    Database__Password    = "${module.aurora_backend.master_user_secret_arn}:password::"
+  }
+  attach_execution_role_policy = true
+  execution_role_policy_json   = data.aws_iam_policy_document.backend_cognito_secret.json
+  attach_task_role_policy      = true
+  task_role_policy_json        = data.aws_iam_policy_document.backend_cognito.json
+}
+
+# ECS - Backend Alerts
+module "backend_ecs_alerts" {
+  source = "../../modules/cloudwatch/ecs-alerts"
+
+  project            = local.project
+  environment        = local.environment
+  service_name       = "${local.service_name}-backend"
+  sns_topic_arn      = module.sns.ecs_alarms_topic_arn
+  load_balancer_id   = module.alb.alb_arn_suffix
+  target_group_id    = module.alb.backend_target_group_arn_suffix
+  log_group_name     = module.ecs_backend.cloudwatch_log_group_name
+  desired_task_count = module.ecs_backend.ecs_desired_count
+  cluster_name       = module.ecs_backend.cluster_name
+  ecs_service_name   = module.ecs_backend.service_name
+  log_pattern_alarms = {
+    error-logs = {
+      pattern           = "\"ERROR\""
+      alarm_description = "Backend ECS logs contain ERROR entries"
+    }
+    exception-logs = {
+      pattern           = "\"Exception\""
+      alarm_description = "Backend ECS logs contain Exception entries"
+    }
+    http-5xx = {
+      pattern             = "{ $.statusCode >= 500 }"
+      threshold           = 5
+      evaluation_periods  = 2
+      datapoints_to_alarm = 2
+      period              = 60
+      statistic           = "Sum"
+      alarm_description   = "Backend ECS logs contain repeated HTTP 5XX responses"
+    }
+  }
+}
+
+resource "aws_db_subnet_group" "aurora" {
+  name       = "${local.project}-${local.environment}-aurora-subnet-group"
+  subnet_ids = module.networking.data_subnet_ids
+
+  tags = {
+    Name        = "${local.project}-${local.environment}-aurora-subnet-group"
+    Environment = local.environment
+    Project     = local.project
+  }
+}
+
+# Aurora - Frontend
+module "aurora_frontend" {
+  source = "../../modules/aurora"
+
+  project                      = local.project
+  environment                  = local.environment
+  service_name                 = "${local.service_name}-frontend"
+  vpc_id                       = module.networking.vpc_id
+  vpc_cidr                     = module.networking.vpc_cidr
+  db_subnet_group_name         = aws_db_subnet_group.aurora.name
+  db_name                      = var.frontend_db_name
+  engine_version               = var.aurora_engine_version
+  master_username              = var.frontend_db_master_username
+  aurora_postgres_identifier   = "${local.project}-${local.environment}-${local.service_name}-frontend"
+  allowed_security_group_ids   = [module.ecs_frontend.security_group_id]
+  kms_key_id                   = module.kms_frontend.data_key_arn
+  apply_immediately            = var.aurora_apply_immediately
+  allow_major_version_upgrade  = var.aurora_allow_major_version_upgrade
+  enable_http_endpoint         = var.aurora_enable_http_endpoint
+  preferred_backup_window      = var.aurora_preferred_backup_window
+  preferred_maintenance_window = var.aurora_preferred_maintenance_window
+  skip_final_snapshot          = var.aurora_skip_final_snapshot
+  final_snapshot_identifier    = "${var.aurora_final_snapshot_identifier}-frontend"
+}
+
+# Aurora - Frontend Alerts
+module "frontend_aurora_alerts" {
+  source = "../../modules/cloudwatch/rds-alerts"
+
+  db_cluster_identifier = module.aurora_frontend.cluster_identifier
+  db_instance_id        = module.aurora_frontend.instance_id
+  sns_topic_arn         = module.sns.rds_alarms_topic_arn
+  connection_threshold  = var.connection_threshold
+}
+
+# Aurora - Backend
+module "aurora_backend" {
+  source = "../../modules/aurora"
+
+  project                      = local.project
+  environment                  = local.environment
+  service_name                 = "${local.service_name}-backend"
+  vpc_id                       = module.networking.vpc_id
+  vpc_cidr                     = module.networking.vpc_cidr
+  db_subnet_group_name         = aws_db_subnet_group.aurora.name
+  db_name                      = var.backend_db_name
+  engine_version               = var.aurora_engine_version
+  master_username              = var.backend_db_master_username
+  aurora_postgres_identifier   = "${local.project}-${local.environment}-${local.service_name}-backend"
+  allowed_security_group_ids   = [module.ecs_backend.security_group_id, module.db_migrator_lambda.security_group_id]
+  kms_key_id                   = module.kms_backend.data_key_arn
+  apply_immediately            = var.aurora_apply_immediately
+  allow_major_version_upgrade  = var.aurora_allow_major_version_upgrade
+  enable_http_endpoint         = var.aurora_enable_http_endpoint
+  preferred_backup_window      = var.aurora_preferred_backup_window
+  preferred_maintenance_window = var.aurora_preferred_maintenance_window
+  skip_final_snapshot          = var.aurora_skip_final_snapshot
+  final_snapshot_identifier    = "${var.aurora_final_snapshot_identifier}-backend"
+}
+
+# Aurora - Backend Alerts
+module "backend_aurora_alerts" {
+  source = "../../modules/cloudwatch/rds-alerts"
+
+  db_cluster_identifier = module.aurora_backend.cluster_identifier
+  db_instance_id        = module.aurora_backend.instance_id
+  sns_topic_arn         = module.sns.rds_alarms_topic_arn
+  connection_threshold  = var.connection_threshold
+}
+
+# Lambda - DB Migrator
+module "db_migrator_lambda" {
+  source = "../../modules/lambda/dbMigrator"
+
+  project      = local.project
+  environment  = local.environment
+  service_name = "db-migrator"
+
+  image_repository_url = var.migrator_image_repository_url
+  image_tag            = var.image_tag
+
+  vpc_id     = module.networking.vpc_id
+  subnet_ids = module.networking.app_subnet_ids
+
+  db_secret_arn        = module.aurora_backend.master_user_secret_arn
+  db_security_group_id = module.aurora_backend.security_group_id
+  db_host              = module.aurora_backend.cluster_endpoint
+  db_port              = module.aurora_backend.port
+  db_name              = module.aurora_backend.database_name
+
+  kms_key_id         = module.kms_backend.app_key_arn
+  cloudwatch_kms_arn = module.kms_backend.app_key_arn
+  region             = var.region
+
+  seeded_super_users_json = jsonencode(var.seeded_super_users)
+
+  log_retention_days = var.ecs_log_retention
+
+  tags = {
+    Environment = local.environment
+    Project     = local.project
+    ManagedBy   = "terraform"
+  }
+}
