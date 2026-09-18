@@ -16,12 +16,4 @@ public abstract record GetRecordsError
     /// </summary>
     /// <param name="OrganisationId">The identifier of the organisation that was not found.</param>
     public sealed record OrganisationNotFound(int OrganisationId) : GetRecordsError;
-
-    /// <summary>
-    /// Represents an error indicating that the specified record is not a member of the
-    /// specified organisation.
-    /// </summary>
-    /// <param name="RecordId">The identifier of the record that was not found.</param>
-    /// <param name="OrganisationId">The identifier of the organisation that was searched.</param>
-    public sealed record RecordNotFound(int RecordId, int OrganisationId) : GetRecordsError;
 }
