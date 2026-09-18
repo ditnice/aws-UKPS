@@ -100,6 +100,27 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
+    public async Task GetOrganisations_ShouldReturnOrganisations()
+    {
+        IReadOnlyCollection<OrganisationListDto> expected =
+        [
+            new OrganisationListDto { Id = 1, OrganisationName = "Organisation1" },
+            new OrganisationListDto { Id = 2, OrganisationName = "Organisation2" },
+        ];
+
+        _organisationServiceMock
+            .GetOrganisations(Arg.Any<OrganisationsQuery>(), Arg.Any<CancellationToken>())
+            .Returns(expected);
+        var result = await SendGetOrganisationsQuery();
+
+        result.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await result.Content.ReadFromJsonAsync<
+            IReadOnlyCollection<OrganisationListDto>
+        >(TestContext.Current.CancellationToken);
+        content.ShouldBe(expected);
+    }
+
+    [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsOk()
     {
         OrganisationDetailsDto expected = new()
@@ -639,6 +660,14 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
             .Received(1)
             .CreateOrganisation(organisation, TestContext.Current.CancellationToken);
         result.Result.ShouldBeOfType<ConflictObjectResult>();
+    }
+
+    private Task<HttpResponseMessage> SendGetOrganisationsQuery()
+    {
+        return _client.GetAsync(
+            new Uri("/organisations", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
     }
 
     private async Task<HttpResponseMessage> RunReactivateRequest(

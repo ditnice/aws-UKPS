@@ -19,6 +19,7 @@ internal sealed class UserOrgMembership
     public User? User { get; set; }
     public int OrganisationId { get; set; }
     public Organisation? Organisation { get; set; }
+    public bool IsSelectedAsCurrentOrganisation { get; set; }
 
     private UserOrgMembershipStateMachine _statusManager = new UserOrgMembershipStateMachine(
         UserOrgMembershipStatus.AwaitingSetup

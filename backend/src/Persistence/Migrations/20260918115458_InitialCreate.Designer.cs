@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260914113648_InitialCreate")]
+    [Migration("20260918115458_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -22,7 +22,7 @@ namespace UKPS.Api.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("ukps")
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -457,6 +457,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("IsSelectedAsCurrentOrganisation")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_selected_as_current_organisation");
+
                     b.Property<int>("OrganisationId")
                         .HasColumnType("integer")
                         .HasColumnName("organisation_id");
@@ -478,6 +482,11 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_user_org_membership_organisation_id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_org_membership_current_org_per_user")
+                        .HasFilter("\"is_selected_as_current_organisation\" = TRUE");
 
                     b.HasIndex("UserId", "OrganisationId", "AllowedPharmaceuticalEntity")
                         .IsUnique()

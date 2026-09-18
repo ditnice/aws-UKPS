@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Persistence.Entities.Identity;
@@ -24,18 +25,73 @@ internal sealed class User
     public ICollection<UserAudit> UserAudits { get; set; } = [];
     private readonly List<IUserDomainEvent> _events = new List<IUserDomainEvent>();
 
-    internal void FinaliseSetup()
+    internal int? FindCurrentOrganisationId()
     {
         if (UserOrgMemberships is null)
         {
             throw new InvalidOperationException(
-                "Cannot finalise user setup because the user's organisation memberships have not been loaded."
+                "Cannot get current user because the user's organisation memberships have not been loaded."
             );
         }
+
+        UserOrgMembership? membership =
+            UserOrgMemberships.Count == 1
+                ? UserOrgMemberships.Single()
+                : UserOrgMemberships.FirstOrDefault(x => x.IsSelectedAsCurrentOrganisation);
+
+        if (membership is null)
+        {
+            return null;
+        }
+
+        return membership.OrganisationId;
+    }
+
+    internal void FinaliseSetup()
+    {
+        GuardAgainstUserMembershipsNotLoaded();
 
         foreach (var membership in UserOrgMemberships)
         {
             membership.FinaliseSetup();
+        }
+    }
+
+    internal bool TryUpdateCurrentOrganisation(int organisationId)
+    {
+        GuardAgainstUserMembershipsNotLoaded();
+
+        bool currentOrganisationAlreadySet = UserOrgMemberships.Any(x =>
+            x.IsSelectedAsCurrentOrganisation
+        );
+        if (currentOrganisationAlreadySet)
+        {
+            throw new InvalidOperationException(
+                "Current organisation is already set. Call ResetCurrentOrganisation first in a separate database operation."
+            );
+        }
+
+        var foundMembership = UserOrgMemberships.FirstOrDefault(x =>
+            x.OrganisationId == organisationId
+        );
+
+        if (foundMembership is null)
+        {
+            return false;
+        }
+
+        foundMembership.IsSelectedAsCurrentOrganisation = true;
+
+        return true;
+    }
+
+    internal void ResetCurrentOrganisation()
+    {
+        GuardAgainstUserMembershipsNotLoaded();
+
+        foreach (var membership in UserOrgMemberships)
+        {
+            membership.IsSelectedAsCurrentOrganisation = false;
         }
     }
 
@@ -85,6 +141,17 @@ internal sealed class User
             CreatedAt = command.Now,
             UserOrgMemberships = [membership],
         };
+    }
+
+    [MemberNotNull(nameof(UserOrgMemberships))]
+    private void GuardAgainstUserMembershipsNotLoaded()
+    {
+        if (UserOrgMemberships is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot perform operation because the user's organisation memberships have not been loaded."
+            );
+        }
     }
 
     internal record EmailUpdatedEvent : IUserDomainEvent

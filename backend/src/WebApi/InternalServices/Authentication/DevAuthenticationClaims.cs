@@ -20,4 +20,19 @@ internal class DevAuthenticationClaims
         new Claim(UkpsClaimTypes.Username, DefaultUserCognitoUsername.Value),
     ];
     public ICollection<Claim> Claims { get; } = DefaultClaims.ToList();
+
+    internal DevAuthenticationClaims UpdateClaim(Claim claim)
+    {
+        var existingClaim = Claims.FirstOrDefault(existingClaim =>
+            string.Equals(existingClaim.Type, claim.Type, StringComparison.Ordinal)
+        );
+
+        if (existingClaim is not null)
+        {
+            Claims.Remove(existingClaim);
+        }
+
+        Claims.Add(claim);
+        return this;
+    }
 }

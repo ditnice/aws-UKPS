@@ -8,6 +8,7 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
@@ -34,6 +35,57 @@ public class OrganisationServiceTests(PostgresFixture fixture) : DatabaseTestBas
     private IOrganisationService Service => ServiceTestHarness.Service;
 
     internal readonly OrganisationFaker _organisationFaker = new();
+
+    [Fact]
+    public async Task GetOrganisations_WhenSuperUser_ShouldReturnAllOrganisations()
+    {
+        var entities = await AddEntities(
+            _organisationFaker.RuleFor(x => x.Status, UserOrgStatus.Active).Generate(5),
+            TestContext.Current.CancellationToken
+        );
+        var result = await ServiceTestHarness.Service.GetOrganisations(
+            new OrganisationsQuery(),
+            TestContext.Current.CancellationToken
+        );
+
+        var entityIds = entities.Select(x => x.Id);
+        var resultIds = result.Select(x => x.Id);
+
+        resultIds.ShouldBe(entityIds, ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task GetOrganisations_WhenNotSuperUser_ShouldOnlyReturnOrganisationUserIsPermittedToSee()
+    {
+        var organisations = await AddEntities(
+            _organisationFaker.Generate(5),
+            TestContext.Current.CancellationToken
+        );
+        var userOrgMembershipFaker = new UserOrgMembershipFaker();
+        var user = new UserFaker()
+            .RuleFor(
+                x => x.UserOrgMemberships,
+                (f, _) =>
+                {
+                    return f.PickRandom(organisations, 2)
+                        .Select(o =>
+                            userOrgMembershipFaker.RuleFor(x => x.Organisation, _ => o).Generate()
+                        )
+                        .ToArray();
+                }
+            )
+            .Generate();
+        await AddEntity(user, TestContext.Current.CancellationToken);
+        ServiceTestHarness.UpdateCurrentUser(user);
+
+        var result = await ServiceTestHarness.Service.GetOrganisations(
+            new OrganisationsQuery(),
+            TestContext.Current.CancellationToken
+        );
+        result
+            .Select(x => x.Id)
+            .ShouldOnlyContain(user.UserOrgMemberships!.Select(x => x.OrganisationId));
+    }
 
     [Fact]
     public async Task GetOrganisationById_OrganisationExists_ReturnsDto()
