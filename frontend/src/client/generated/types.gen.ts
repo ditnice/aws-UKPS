@@ -4,6 +4,17 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export const AuthenticationFailCode = {
+    NO_DB_USER_EXISTS_WITH_USERNAME: 'NoDbUserExistsWithUsername',
+    NO_MEMBERSHIPS_FOR_USER: 'NoMembershipsForUser',
+    SELECTED_ORGANISATION_REQUIRED: 'SelectedOrganisationRequired',
+    SELECTED_ORGANISATION_IS_NOT_VALID: 'SelectedOrganisationIsNotValid',
+    MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
+    MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState'
+} as const;
+
+export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];
+
 /**
  * Represents problem details returned when authentication fails or
  * additional authentication is required.
@@ -14,6 +25,7 @@ export type AuthenticationProblemDetails = {
     status?: null | number;
     detail?: null | string;
     instance?: null | string;
+    code?: null | AuthenticationFailCode;
     challengeType?: null | UkpsChallengeType;
     /**
      * Gets the session identifier associated with the authentication challenge.
@@ -823,6 +835,10 @@ export type GetAuthValidateSetupTokenErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * The specified setup token does not exist.
      */
     404: ProblemDetails;
@@ -860,6 +876,10 @@ export type PostAuthResendSetupTokenErrors = {
      * The request body was missing or malformed.
      */
     400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * The setup token has already been resent the maximum number of times.
      */
@@ -901,7 +921,7 @@ export type PostAuthSetupUserErrors = {
     /**
      * Unauthorized
      */
-    401: ProblemDetails;
+    401: AuthenticationProblemDetails;
     /**
      * Not Found
      */
@@ -943,6 +963,10 @@ export type PostAuthVerifyMfaErrors = {
      * verification could not be completed.
      */
     400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
 };
 
 export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerifyMfaErrors];
@@ -967,6 +991,10 @@ export type GetOrganisationByIdData = {
 };
 
 export type GetOrganisationByIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * No organisation exists with the specified identifier.
      */
@@ -1005,6 +1033,10 @@ export type UpdateOrganisationDetailsErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * No organisation exists with the specified identifier.
      */
     404: ProblemDetails;
@@ -1042,6 +1074,10 @@ export type DeactivateMembershipErrors = {
      * Bad Request
      */
     400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * The caller is not authorised to deactivate the membership, or the membership is their own.
      */
@@ -1085,6 +1121,10 @@ export type ReactivateMembershipErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * Forbidden
      */
     403: ProblemDetails;
@@ -1126,6 +1166,10 @@ export type UpdateUserRoleData = {
 
 export type UpdateUserRoleErrors = {
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * The caller is not authorised to update the membership, or the membership is their own.
      */
     403: ProblemDetails;
@@ -1159,6 +1203,10 @@ export type PostOrganisationsErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * Conflict
      */
     409: ProblemDetails;
@@ -1182,10 +1230,18 @@ export type GetOrganisationsPublicOptionsData = {
     url: '/organisations/publicOptions';
 };
 
+export type GetOrganisationsPublicOptionsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type GetOrganisationsPublicOptionsError = GetOrganisationsPublicOptionsErrors[keyof GetOrganisationsPublicOptionsErrors];
+
 export type GetOrganisationsPublicOptionsResponses = {
     /**
-     * A task that represents the asynchronous operation. The task result contains
-     * the names of all organisations.
+     * OK
      */
     200: Array<OrganisationListDto>;
 };
@@ -1234,6 +1290,10 @@ export type GetRecordsErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * The caller is not authorised to view the requested records.
      */
     403: ProblemDetails;
@@ -1256,6 +1316,15 @@ export type GetUsersMeData = {
     query?: never;
     url: '/users/me';
 };
+
+export type GetUsersMeErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type GetUsersMeError = GetUsersMeErrors[keyof GetUsersMeErrors];
 
 export type GetUsersMeResponses = {
     /**
@@ -1326,6 +1395,10 @@ export type GetUsersErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * Returned if no users are found matching the query parameters.
      */
     404: ProblemDetails;
@@ -1364,6 +1437,10 @@ export type GetUserDetailsWithinOrganisationErrors = {
      * Returned if the specified organisation does not exist.
      */
     400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * Returned if the caller is not authorised to view the organisation's users.
      */
@@ -1406,6 +1483,10 @@ export type PatchUsersByUserIdErrors = {
      */
     400: ValidationProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * The caller is not authorised to update the specified user's details.
      */
     403: ProblemDetails;
@@ -1445,6 +1526,10 @@ export type PostUsersOnboardErrors = {
      * The request was invalid.
      */
     400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * The current user does not have permission to onboard users.
      */
@@ -1487,6 +1572,10 @@ export type RegisterUserErrors = {
      * Bad Request
      */
     400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
 };
 
 export type RegisterUserError = RegisterUserErrors[keyof RegisterUserErrors];
@@ -1517,6 +1606,10 @@ export type GetUserRegistrationByIdData = {
 };
 
 export type GetUserRegistrationByIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * Forbidden
      */
@@ -1556,6 +1649,10 @@ export type ApproveData = {
 
 export type ApproveErrors = {
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * The current user is not allowed to approve the membership request.
      */
     403: ProblemDetails;
@@ -1591,6 +1688,10 @@ export type RejectData = {
 };
 
 export type RejectErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * The current user is not allowed to reject the membership request.
      */
