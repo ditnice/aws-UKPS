@@ -19,7 +19,7 @@ namespace UKPS.Api.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("ukps")
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -410,6 +410,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("consumed_at");
 
+                    b.Property<Guid?>("CorrelationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("correlation_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -429,6 +433,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
+
+                    b.HasIndex("CorrelationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_onboarding_records_correlation_id");
 
                     b.HasIndex("UserId")
                         .IsUnique()

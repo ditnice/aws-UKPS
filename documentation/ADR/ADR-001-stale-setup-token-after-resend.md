@@ -1,6 +1,6 @@
 # ADR-001: Stale setup token after a sign-up link resend
 
-**Status:** Accepted
+**Status:** Resolved — see [Resolution](#resolution)
 
 ## Context
 
@@ -43,6 +43,8 @@ across rotations.
 
 ## Consequences
 
+(superseded — see [Resolution](#resolution))
+
 - A user who resends more than once without reopening their inbox has to
   leave the page and follow the email to make further progress. This is a
   usability wrinkle, not a dead end — the 404 state gives clear next steps
@@ -51,7 +53,7 @@ across rotations.
 - No change was needed to the backend or to `/auth/sign-up/initiate/page.tsx`;
   the handling is scoped entirely to `RequestNewLink.tsx`.
 
-## Future consideration
+### Future consideration
 
 Instead of returning the new *token*, the resend endpoint could return the
 new `UserOnboardingRecord`'s row id (a value with no standalone power to
@@ -64,3 +66,20 @@ This would let the same-tab-resend case keep working seamlessly, while
 preserving the property that only the emailed link itself can advance the
 user through `validate-setup-token` / `setup-user`. Not implemented here;
 flagged for whoever picks this up next.
+
+## Resolution
+
+The future consideration below has been implemented. `UserOnboardingRecord`
+now carries a `CorrelationId` (a `Guid`, generated the same way as
+`SetupToken`) in addition to its `SetupToken` primary key. `POST
+/auth/resend-setup-token` accepts either field (exactly one) and, on
+success, returns the new record's `CorrelationId` in the response body.
+
+`RequestNewLink.tsx` holds this in local component state: the first resend
+click still sends the `setupToken` embedded in the page (the only thing it
+has), but every click after a successful resend sends the `correlationId`
+returned by the previous call instead. This lets same-tab repeated clicking
+chain correctly through rotations without ever 404ing, while
+`validate-setup-token` and `setup-user` are unchanged and still key
+exclusively off the real `SetupToken` — only the emailed link itself can
+advance the user through those endpoints.
