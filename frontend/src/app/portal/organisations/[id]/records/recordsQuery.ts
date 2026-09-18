@@ -5,7 +5,7 @@ import {
   SortDirection,
 } from '@/client/generated'
 import { parsePage, parsePageSize } from '@/lib/search-and-filter/pagination'
-import { parseMulti } from '@/lib/search-and-filter/query'
+import { parseMulti, parseSortDirection } from '@/lib/search-and-filter/query'
 
 import { recordStatusLabels } from './labels'
 
@@ -16,10 +16,31 @@ type Filter = (
       value: RecordStatus
     }
 ) & { label: string }
+
+export type OrganisationRecordsSearchParams = {
+  search?: string
+  recordType?: string | string[]
+  recordStatus?: string | string[]
+  page?: string
+  pageSize?: string
+  sortBy?: string
+  sortDirection?: string
+}
+
+export type RecordsQuery = {
+  search?: string
+  recordType?: Array<RecordType>
+  recordStatus?: Array<RecordStatus>
+  page?: number
+  pageSize?: number
+  sortBy?: GetRecordsQuerySortValue
+  sortDirection?: SortDirection
+}
+
 export const getActiveFilters = (query: RecordsQuery): Filter[] => {
   return [
-    ...(query.Search ? [{ key: 'search', value: query.Search, label: query.Search } as const] : []),
-    ...(query.RecordStatus?.map(
+    ...(query.search ? [{ key: 'search', value: query.search, label: query.search } as const] : []),
+    ...(query.recordStatus?.map(
       (s) =>
         ({
           key: 'record-status',
@@ -35,39 +56,25 @@ export const buildQueryFromFilters = (
   initialQuery: RecordsQuery,
 ): RecordsQuery => ({
   ...initialQuery,
-  Search: filters.find((f) => f.key === 'search')?.value,
-  RecordStatus: filters.filter((f) => f.key === 'record-status').map((x) => x.value),
+  search: filters.find((f) => f.key === 'search')?.value,
+  recordStatus: filters.filter((f) => f.key === 'record-status').map((x) => x.value),
 })
-
-export type OrganisationRecordsSearchParams = {
-  search?: string
-  recordType?: string | string[]
-  recordStatus?: string | string[]
-  page?: string
-  pageSize?: string
-  sortBy?: string
-  sortDirection?: string
-}
-
-export type RecordsQuery = {
-  Search?: string
-  RecordType?: Array<RecordType>
-  RecordStatus?: Array<RecordStatus>
-  Page?: number
-  PageSize?: number
-  SortBy?: GetRecordsQuerySortValue
-  SortDirection?: SortDirection
-}
 
 export const parseQueryFromSearchParams = (
   searchParams: OrganisationRecordsSearchParams,
 ): RecordsQuery => {
   return {
-    Search: searchParams.search,
-    RecordStatus: parseMulti(searchParams.recordStatus, Object.values(RecordStatus)),
-    RecordType: parseMulti(searchParams.recordType, Object.values(RecordType)),
-    Page: parsePage(searchParams.page),
-    PageSize: parsePageSize(searchParams.pageSize),
+    search: searchParams.search,
+    recordStatus: parseMulti(searchParams.recordStatus, Object.values(RecordStatus)),
+    recordType: parseMulti(searchParams.recordType, Object.values(RecordType)),
+    page: parsePage(searchParams.page),
+    pageSize: parsePageSize(searchParams.pageSize),
+    sortBy: Object.values(GetRecordsQuerySortValue).includes(
+      searchParams.sortBy as GetRecordsQuerySortValue,
+    )
+      ? (searchParams.sortBy as GetRecordsQuerySortValue)
+      : undefined,
+    sortDirection: parseSortDirection(searchParams.sortDirection),
   }
 }
 
