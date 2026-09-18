@@ -35,7 +35,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     {
         _orgFaker = new OrganisationFaker();
         _membershipFaker = new UserOrgMembershipFaker()
-            .RuleFor(x => x.Status, _ => Api.Persistence.Enums.UserOrgStatus.Active)
+            .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
             .RuleFor(x => x.Organisation, _ => _orgFaker.Generate());
         _userFaker = new UserFaker().RuleFor(
             x => x.UserOrgMemberships,
@@ -113,8 +113,8 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     [Fact]
     public async Task Handle_ShouldFail_WhenUserDoesNotHaveAuthorisedMembership()
     {
-        var invalidStatuses = Enum.GetValues<UserOrgStatus>()
-            .Except([UserOrgStatus.Active, UserOrgStatus.Inactive]);
+        var invalidStatuses = Enum.GetValues<UserOrgMembershipStatus>()
+            .Except([UserOrgMembershipStatus.Active, UserOrgMembershipStatus.Inactive]);
         Faker<UserOrgMembership> invalidMembershipFaker = _membershipFaker.RuleFor(
             x => x.Status,
             f => f.PickRandom(invalidStatuses)

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { errorMessages } from '@/lib/form/errorMessages'
 
 import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
 
@@ -212,7 +213,7 @@ describe('SignUpSetMfa', () => {
     enterSecurityCode('123456')
     submitForm()
 
-    expect(await screen.findByText('Invalid authentication code.')).toBeDefined()
+    expect(await screen.findByText(errorMessages.incorrectMfaCode)).toBeDefined()
     expect(mockPush).not.toHaveBeenCalled()
   })
 

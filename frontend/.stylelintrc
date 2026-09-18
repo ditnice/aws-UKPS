@@ -36,5 +36,11 @@
     },
     "scss/double-slash-comment-empty-line-before": null
   },
-  "ignoreFiles": [".next/**", "node_modules/**", "src/app/[(]payload[)]/**"]
+  "ignoreFiles": [
+    ".next/**",
+    "node_modules/**",
+    "playwright-report/**",
+    "src/app/[(]payload[)]/**",
+    "test-results/**"
+  ]
 }

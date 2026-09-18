@@ -1,6 +1,7 @@
 using Bogus;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 
@@ -12,7 +13,9 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
     private readonly OrganisationFaker _organisationFaker = new OrganisationFaker();
     private readonly UserFaker _userFaker = new UserFaker();
     private readonly UserOrgMembershipFaker _membershipFaker = new UserOrgMembershipFaker();
-    private readonly UserOrgStatus[] _statuses = Enum.GetValues<UserOrgStatus>();
+    private readonly UserOrgMembershipStatus[] _statuses =
+        Enum.GetValues<UserOrgMembershipStatus>();
+    private readonly RecordFaker _recordFaker = new RecordFaker();
 
     public SeedingDataPayloadFaker()
     {
@@ -27,6 +30,7 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
             }
         );
         RuleFor(x => x.Memberships, (f, o) => FakeMemberships(o));
+        RuleFor(x => x.Records, (f, o) => FakeRecords(o));
     }
 
     private UserOrgMembership[] FakeMemberships(SeedingDataPayload o)
@@ -76,5 +80,20 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
             .RuleFor(x => x.UserRole, _ => UserRole.Super);
 
         return otherMemberships.Append(mockUserMembership.Generate()).ToArray();
+    }
+
+    private Record[] FakeRecords(SeedingDataPayload o)
+    {
+        Record[] records = _recordFaker.Generate(20).ToArray();
+        Organisation[] organisations = o.Organisations.ToArray();
+        return records
+            .Select(
+                (record, index) =>
+                {
+                    record.Organisation = organisations[index % organisations.Length];
+                    return record;
+                }
+            )
+            .ToArray();
     }
 }

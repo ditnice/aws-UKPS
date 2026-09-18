@@ -21,25 +21,47 @@ export async function UserActionAlert({
     client: apiClient,
     path: { organisationId, userId: userAction.userId },
   })
-
-  return userAction.action === 'invited' ? (
-    <Alert type="success">
-      <h3>Invitation sent</h3>
-      <p>
-        We&rsquo;ve sent an email to {user?.workEmail ?? 'the new user'} with instructions to set up
-        an account.
-      </p>
-    </Alert>
-  ) : (
-    <Alert type="success">
-      <h3>Permissions changed</h3>
-      <p>
-        {user?.workEmail ?? "The user's"}{' '}
-        {user
-          ? `is now a ${roleLabels[user.userRole].toLowerCase()}`
-          : 'permissions have been updated'}
-        .
-      </p>
-    </Alert>
-  )
+  switch (userAction.action) {
+    case 'invited':
+      return (
+        <Alert type="success">
+          <h3>Invitation sent</h3>
+          <p>
+            We&rsquo;ve sent an email to {user?.workEmail ?? 'the new user'} with instructions to
+            set up an account.
+          </p>
+        </Alert>
+      )
+    case 'deactivated':
+      return (
+        <>
+          <Alert type="success">
+            <h3>{user?.workEmail ?? 'The user'}&apos;s account has been deactivated</h3>
+            <p>We&#39;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
+          </Alert>
+        </>
+      )
+    case 'reactivated':
+      return (
+        <>
+          <Alert type="success">
+            <h3>{user?.workEmail ?? 'The user'}&apos;s account has been reactivated</h3>
+            <p>We&rsquo;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
+          </Alert>
+        </>
+      )
+    case 'permissions-updated':
+      return (
+        <Alert type="success">
+          <h3>Permissions changed</h3>
+          <p>
+            {user?.workEmail ?? "The user's"}{' '}
+            {user
+              ? `is now a ${roleLabels[user.userRole].toLowerCase()}`
+              : 'permissions have been updated'}
+            .
+          </p>
+        </Alert>
+      )
+  }
 }

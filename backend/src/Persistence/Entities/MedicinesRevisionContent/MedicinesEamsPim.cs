@@ -7,7 +7,7 @@ internal sealed class MedicinesEamsPim
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }
-    public PimDesignationStatus? PimDesignationStatus { get; set; }
+    public DesignationStatus? PimDesignationStatus { get; set; }
 
     /// <summary>Conditional on PimDesignationStatus = Granted.</summary>
     public YesNoUnknown? WillSubmitToEams { get; set; }

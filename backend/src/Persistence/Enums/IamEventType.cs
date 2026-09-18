@@ -21,14 +21,14 @@ public enum IamEventType
     RoleChanged = 2,
 
     /// <summary>
-    /// Indicates that the entity has been disabled.
-    /// </summary>
-    Disabled = 3,
-
-    /// <summary>
     /// Indicates that the entity has been enabled.
     /// </summary>
-    Enabled = 4,
+    Enabled = 3,
+
+    /// <summary>
+    /// Indicates that the entity has been disabled.
+    /// </summary>
+    Disabled = 4,
 
     /// <summary>
     /// Indicates that the entity has been created.
@@ -36,22 +36,27 @@ public enum IamEventType
     Created = 5,
 
     /// <summary>
+    /// Indicates that the entity has been deleted.
+    /// </summary>
+    Deleted = 6,
+
+    /// <summary>
     /// Indicates that additional information has been requested.
     /// </summary>
-    InformationRequested = 6,
+    InformationRequested = 7,
 
     /// <summary>
     /// Indicates that terms have been requested.
     /// </summary>
-    TermsRequested = 7,
+    TermsRequested = 8,
 
     /// <summary>
     /// Indicates that terms have been signed.
     /// </summary>
-    TermsSigned = 8,
+    TermsSigned = 9,
 
     /// <summary>
     /// Indicates that terms have expired.
     /// </summary>
-    TermsExpired = 9,
+    TermsExpired = 10,
 }

@@ -9,7 +9,7 @@ export default defineConfig({
       runtimeConfigPath: './src/client/hey-api',
     },
     '@hey-api/sdk',
-    '@hey-api/typescript',
+    { name: '@hey-api/typescript', enums: 'javascript' },
     { name: '@faker-js/faker', locale: 'en_GB' },
   ],
 })

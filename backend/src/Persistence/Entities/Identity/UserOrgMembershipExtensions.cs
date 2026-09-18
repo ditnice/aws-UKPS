@@ -13,6 +13,7 @@ internal static class UserOrgMembershipExtensions
     {
         return dbSet
             .Include(x => x.User)
+            .Include(x => x.Organisation)
             .FirstOrDefaultAsync(
                 x => x.OrganisationId == orgId && x.Id == membershipId,
                 cancellationToken

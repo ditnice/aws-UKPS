@@ -94,8 +94,8 @@
 | <a name="output_backend_ecs_cluster_name"></a> [backend\_ecs\_cluster\_name](#output\_backend\_ecs\_cluster\_name) | Dev ECS cluster name |
 | <a name="output_backend_host_name"></a> [backend\_host\_name](#output\_backend\_host\_name) | Backend hostname routed by the dev ALB listener |
 | <a name="output_backend_target_group_arn"></a> [backend\_target\_group\_arn](#output\_backend\_target\_group\_arn) | Backend ALB target group ARN |
-| <a name="output_base_domain_name_servers"></a> [base\_domain\_name\_servers](#output\_base\_domain\_name\_servers) | Route53 authoritative name servers for the base domain |
-| <a name="output_base_domain_zone_id"></a> [base\_domain\_zone\_id](#output\_base\_domain\_zone\_id) | Route53 hosted zone ID for the base domain |
+| <a name="output_base_domain_name_servers"></a> [base\_domain\_name\_servers](#output\_base\_domain\_name\_servers) | Route53 authoritative name servers for the dev hosted zone |
+| <a name="output_base_domain_zone_id"></a> [base\_domain\_zone\_id](#output\_base\_domain\_zone\_id) | Route53 hosted zone ID for the dev hosted zone |
 | <a name="output_cloudfront_distribution_aliases"></a> [cloudfront\_distribution\_aliases](#output\_cloudfront\_distribution\_aliases) | Alternate domain names configured on the CloudFront distribution |
 | <a name="output_cloudfront_distribution_domain_name"></a> [cloudfront\_distribution\_domain\_name](#output\_cloudfront\_distribution\_domain\_name) | Domain name of the CloudFront distribution |
 | <a name="output_cloudfront_distribution_status"></a> [cloudfront\_distribution\_status](#output\_cloudfront\_distribution\_status) | Deployment status of the CloudFront distribution |

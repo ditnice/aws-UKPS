@@ -21,6 +21,8 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<UserOnboardingRecord> UserOnboardingRecords => Set<UserOnboardingRecord>();
     public DbSet<UserOrgMembership> UserOrgMemberships => Set<UserOrgMembership>();
     public DbSet<UserAudit> UserAudits => Set<UserAudit>();
+    public DbSet<UserRegistrationRequest> UserRegistrationRequests =>
+        Set<UserRegistrationRequest>();
 
     // ── Record Core Workflow ─────────────────────────────────────────────────
     public DbSet<Record> Records => Set<Record>();
@@ -35,10 +37,7 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<RegulatoryDate> RegulatoryDates => Set<RegulatoryDate>();
     public DbSet<RecordMhraProcedure> RecordMhraProcedures => Set<RecordMhraProcedure>();
     public DbSet<RecordMhraDate> RecordMhraDates => Set<RecordMhraDate>();
-    public DbSet<RecordIntlRecognition> RecordIntlRecognitions => Set<RecordIntlRecognition>();
-    public DbSet<RecordGlobalSubmission> RecordGlobalSubmissions => Set<RecordGlobalSubmission>();
     public DbSet<RecordHta> RecordHtas => Set<RecordHta>();
-    public DbSet<RecordHtaBody> RecordHtaBodies => Set<RecordHtaBody>();
     public DbSet<RecordClinicalTrial> RecordClinicalTrials => Set<RecordClinicalTrial>();
     public DbSet<OtherClinicalTrialNumber> OtherClinicalTrialNumbers =>
         Set<OtherClinicalTrialNumber>();
@@ -61,6 +60,13 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<MedicinesServiceImpact> MedicinesServiceImpacts => Set<MedicinesServiceImpact>();
     public DbSet<MedicinesBudgetImpact> MedicinesBudgetImpacts => Set<MedicinesBudgetImpact>();
     public DbSet<MedicinesPasRegion> MedicinesPasRegions => Set<MedicinesPasRegion>();
+    public DbSet<MedicinesHtaBody> MedicinesHtaBodies => Set<MedicinesHtaBody>();
+    public DbSet<MedicinesProductDetailTherapeuticArea> MedicinesProductDetailTherapeuticAreas =>
+        Set<MedicinesProductDetailTherapeuticArea>();
+    public DbSet<MedicinesIntlRecognition> MedicinesIntlRecognitions =>
+        Set<MedicinesIntlRecognition>();
+    public DbSet<MedicinesGlobalSubmission> MedicinesGlobalSubmissions =>
+        Set<MedicinesGlobalSubmission>();
 
     // ── Vaccines Revision Content ────────────────────────────────────────────
     public DbSet<VaccinesProductDetail> VaccinesProductDetails => Set<VaccinesProductDetail>();
@@ -71,9 +77,11 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<VaccinesTechnology> VaccinesTechnologies => Set<VaccinesTechnology>();
     public DbSet<VaccinesAntigen> VaccinesAntigens => Set<VaccinesAntigen>();
     public DbSet<VaccinesAdjuvant> VaccinesAdjuvants => Set<VaccinesAdjuvant>();
+    public DbSet<VaccinesAdministrationRoute> VaccinesAdministrationRoutes =>
+        Set<VaccinesAdministrationRoute>();
     public DbSet<VaccinesServiceReadiness> VaccinesServiceReadinesses =>
         Set<VaccinesServiceReadiness>();
-    public DbSet<VaccinesPopulation> VaccinesPopulations => Set<VaccinesPopulation>();
+    public DbSet<VaccinesIntlSubmission> VaccinesIntlSubmissions => Set<VaccinesIntlSubmission>();
 
     // ── Reference Data ───────────────────────────────────────────────────────
     public DbSet<FormulationType> FormulationTypes => Set<FormulationType>();
@@ -83,14 +91,12 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<IrpReferenceRegulator> IrpReferenceRegulators => Set<IrpReferenceRegulator>();
     public DbSet<IrpRoute> IrpRoutes => Set<IrpRoute>();
     public DbSet<AtmpClassification> AtmpClassifications => Set<AtmpClassification>();
-    public DbSet<GenomicSampleType> GenomicSampleTypes => Set<GenomicSampleType>();
     public DbSet<PatientPathwayPoint> PatientPathwayPoints => Set<PatientPathwayPoint>();
     public DbSet<UkPatientPopulationRange> UkPatientPopulationRanges =>
         Set<UkPatientPopulationRange>();
     public DbSet<PasRegion> PasRegions => Set<PasRegion>();
     public DbSet<VaccineAdministrationRoute> VaccineAdministrationRoutes =>
         Set<VaccineAdministrationRoute>();
-    public DbSet<VaccineDiseaseArea> VaccineDiseaseAreas => Set<VaccineDiseaseArea>();
     public DbSet<VaccineStorageRequirement> VaccineStorageRequirements =>
         Set<VaccineStorageRequirement>();
     public DbSet<VaccinePlatform> VaccinePlatforms => Set<VaccinePlatform>();

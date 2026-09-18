@@ -1,5 +1,10 @@
+import { fileURLToPath } from 'node:url'
+
+import { includeIgnoreFile } from '@eslint/config-helpers'
 import coreWebVitals from 'eslint-config-next/core-web-vitals'
 import typescript from 'eslint-config-next/typescript'
+
+const gitignorePath = fileURLToPath(new URL('../.gitignore', import.meta.url))
 
 // Local wrappers around NDS components that everything else should import
 // instead of the raw @nice-digital package. Each entry needs a matching
@@ -39,6 +44,7 @@ const ndsWrapperRestrictions = [
 ]
 
 const eslintConfig = [
+  includeIgnoreFile(gitignorePath, { gitignoreResolution: true }),
   ...coreWebVitals,
   ...typescript,
   {

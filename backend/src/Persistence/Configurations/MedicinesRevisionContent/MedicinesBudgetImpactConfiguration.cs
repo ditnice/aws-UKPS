@@ -11,8 +11,9 @@ internal sealed class MedicinesBudgetImpactConfiguration
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
+        builder.Property(x => x.PasSchemePlanned);
         builder.Property(x => x.IndicationSpecificPricingPlanned);
-        builder.Property(x => x.NetUkBudgetImpactOver5M);
+        builder.Property(x => x.NetUkBudgetImpactBand);
 
         builder
             .HasIndex(x => x.RevisionId)

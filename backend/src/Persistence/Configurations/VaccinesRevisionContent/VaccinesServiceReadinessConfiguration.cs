@@ -11,7 +11,7 @@ internal sealed class VaccinesServiceReadinessConfiguration
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.RequiresReconstitution);
+        builder.Property(x => x.DosingSchedule).IsRequired();
 
         builder
             .HasIndex(x => x.RevisionId)

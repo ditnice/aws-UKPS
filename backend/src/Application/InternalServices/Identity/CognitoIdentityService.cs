@@ -297,6 +297,12 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                     };
             });
         }
+        catch (EnableSoftwareTokenMFAException)
+        {
+            return InitiatedAuthenticationResult.Err(
+                new InitiateAuthenticationError.Unauthorised()
+            );
+        }
         catch (CodeMismatchException)
         {
             return InitiatedAuthenticationResult.Err(

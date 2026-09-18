@@ -66,21 +66,46 @@ describe('SignUpInitiate', () => {
     )
   })
 
-  it('renders backend content for an expired or consumed setup token', async () => {
+  it('renders a dedicated expired-link message and a resend action for an expired setup token', async () => {
     vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
       data: undefined,
       error: {
         detail: 'The setup token has expired and can no longer be used.',
-        status: 401,
+        status: 410,
         title: 'Setup token has expired.',
       },
-      response: new Response(null, { status: 401 }),
+      response: new Response(null, { status: 410 }),
     })
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-    expect(screen.getByText('Setup token has expired.')).toBeDefined()
-    expect(screen.getByText('The setup token has expired and can no longer be used.')).toBeDefined()
+    expect(screen.getByText('This link has expired')).toBeDefined()
+    expect(
+      screen.getByText(
+        'Request a new link to continue setting up your account. A new link will be sent to your registered email address.',
+      ),
+    ).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Send a new link' })).toBeDefined()
+    expect(redirect).not.toHaveBeenCalled()
+  })
+
+  it('renders backend content for a consumed setup token', async () => {
+    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+      data: undefined,
+      error: {
+        detail: 'The setup token has already been consumed and cannot be used again.',
+        status: 409,
+        title: 'Setup token has already been used.',
+      },
+      response: new Response(null, { status: 409 }),
+    })
+
+    render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
+
+    expect(screen.getByText('Setup token has already been used.')).toBeDefined()
+    expect(
+      screen.getByText('The setup token has already been consumed and cannot be used again.'),
+    ).toBeDefined()
     expect(redirect).not.toHaveBeenCalled()
   })
 

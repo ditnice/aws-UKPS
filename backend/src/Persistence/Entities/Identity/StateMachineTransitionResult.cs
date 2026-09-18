@@ -20,7 +20,17 @@ public sealed record StateMachineTransitionResult<TState>
     public required TState CurrentState { get; init; }
 
     /// <summary>
+    /// Gets the state of the state machine before the transition attempt.
+    /// </summary>
+    public required TState PreviousState { get; init; }
+
+    /// <summary>
     /// Gets the states that can be transitioned to from the current state.
     /// </summary>
     public required IReadOnlyCollection<TState> PermittedNextState { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the state machine changed state as a result of the transition attempt.
+    /// </summary>
+    public bool HasChanged => !CurrentState.Equals(PreviousState);
 }

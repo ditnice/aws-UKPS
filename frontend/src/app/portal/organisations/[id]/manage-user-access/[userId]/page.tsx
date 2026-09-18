@@ -66,7 +66,13 @@ export default async function ManageUserAccess({ params }: Props) {
             Change permissions
           </Button>
         )}
-        <Button variant="secondary">Deactivate user</Button>
+        <Button
+          elementType={Link}
+          variant="secondary"
+          href={`/portal/organisations/${organisationId}/users/${user.userId}/deactivate`}
+        >
+          Deactivate user
+        </Button>
         <Button variant="secondary">Remove user</Button>
       </ButtonGroup>
     </>

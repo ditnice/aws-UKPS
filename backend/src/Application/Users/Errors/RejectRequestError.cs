@@ -3,19 +3,48 @@ namespace UKPS.Api.Application.Users.Errors;
 /// <summary>
 /// Represents an error that can occur when rejecting a membership request.
 /// </summary>
-public abstract record RejectRequestError : IMembershipRequestUpdateError
+public abstract record RejectRequestError
 {
+    /// <summary>
+    /// Represents an error indicating that the membership request has already
+    /// been approved and therefore cannot be rejected.
+    /// </summary>
+    public sealed record RegistrationApproved : RejectRequestError;
+
     /// <summary>
     /// Represents an error indicating that the membership request cannot be
     /// updated because the operation is not allowed.
     /// </summary>
-    public record NotAllowed : RejectRequestError, IMembershipRequestUpdateError.INotAllowed;
+    public record NotAllowed : RejectRequestError;
 
     /// <summary>
     /// Represents an error indicating that the membership request could not
     /// be found.
     /// </summary>
-    public record RequestNotFound
-        : RejectRequestError,
-            IMembershipRequestUpdateError.IRequestNotFound;
+    public record RequestNotFound : RejectRequestError;
+
+    /// <summary>
+    /// Represents an error indicating that the membership request could not be
+    /// rejected because the operation conflicted with another update.
+    /// </summary>
+    public sealed record ConcurrencyError : RejectRequestError;
+
+    internal TResult Match<TResult>(
+        Func<NotAllowed, TResult> notAllowed,
+        Func<RequestNotFound, TResult> requestNotFound,
+        Func<RegistrationApproved, TResult> registrationApproved,
+        Func<ConcurrencyError, TResult> concurrencyError
+    )
+    {
+        return this switch
+        {
+            NotAllowed e => notAllowed(e),
+            RequestNotFound e => requestNotFound(e),
+            RegistrationApproved e => registrationApproved(e),
+            ConcurrencyError e => concurrencyError(e),
+            _ => throw new InvalidOperationException(
+                $"Unknown {nameof(RejectRequestError)} type: {GetType().Name}"
+            ),
+        };
+    }
 }

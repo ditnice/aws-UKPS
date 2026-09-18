@@ -15,6 +15,7 @@ public sealed class DataSeederInMemoryTests
         payload.Organisations.Count.ShouldBe(5);
         payload.Users.Count.ShouldBe(80);
         payload.Memberships.Count.ShouldBe(81); //Additional membership for dev user
+        payload.Records.Count.ShouldBe(20);
     }
 
     [Fact]
@@ -50,7 +51,7 @@ public sealed class DataSeederInMemoryTests
         );
         membership.OrganisationId.ShouldBe(1);
         membership.UserRole.ShouldBe(UserRole.Super);
-        membership.Status.ShouldBe(UserOrgStatus.Active);
+        membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
         membership.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Both);
     }
 

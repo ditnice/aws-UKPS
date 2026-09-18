@@ -5,22 +5,36 @@ import { FilterSummary } from '@nice-digital/nds-filters'
 import { Grid, GridItem } from '@nice-digital/nds-grid'
 
 import type { Client } from '@/client/generated/client'
-import { getUsers, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserListItemDto } from '@/client/generated/types.gen'
+import { getUsers } from '@/client/generated/sdk.gen'
+import type {
+  UserListItemDto,
+  UserMembershipAction,
+  GetUsersQuerySortValue,
+} from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
 import { Table } from '@/components/Table/Table'
+import { TableSortDirection, TableSortHeaderLink } from '@/components/Table/TableSortHeader'
 import { Tag } from '@/components/Tag/Tag'
 import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
+import { getNextSortDirection } from '@/lib/search-and-filter/query'
 
 import {
   lastActivePresetDays,
+  organisationUserTableHeaders,
   roleLabels,
   statusLabels,
   statusTagColours,
   type LastActivePreset,
 } from '../_lib/userLabels'
-import { buildUserListHref, type UserListQuery } from '../_lib/userListQuery'
+import {
+  buildUserListHref,
+  getActiveFilters,
+  getUpdatedQueryWithoutFilter,
+  type UserListQuery,
+} from '../_lib/userListQuery'
 import styles from '../page.module.scss'
+
+import { UserFilterSummary } from './UserFilterSummary'
 
 import type { ComponentProps } from 'react'
 
@@ -52,56 +66,54 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
-function renderActions(
-  user: UserListItemDto,
-  organisationId: number,
-  currentUserId: number | undefined,
-) {
-  // Users cannot change their own role or deactivate themselves
-  if (user.userId === currentUserId) {
-    return 'Not applicable'
+function renderActions(user: UserListItemDto, organisationId: number) {
+  const editActivities: UserMembershipAction[] = ['EditUserRole', 'DeactivateMembership']
+
+  const links: { key: string; label: string; href: string }[] = []
+
+  if (user.actions.includes('ApproveMembership') && user.registrationRequestId) {
+    links.push({
+      key: 'approve',
+      label: 'Approve',
+      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestId}/approve`,
+    })
   }
 
-  switch (user.status) {
-    case 'Active':
-    case 'Inactive':
-      return (
-        <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
-          Edit role
-        </Link>
-      )
-    case 'Deactivated':
-      return <a>Reactivate</a>
-    case 'RequestedAccess':
-      return (
-        <ul className={styles.actionList}>
-          <li>
-            <Link
-              href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
-            >
-              Approve
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
-            >
-              Reject
-            </Link>
-          </li>
-        </ul>
-      )
-    default:
-      return 'Not applicable'
+  if (user.actions.includes('RejectMembership') && user.registrationRequestId) {
+    links.push({
+      key: 'reject',
+      label: 'Reject',
+      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestId}/reject`,
+    })
   }
-}
 
-function getFirstResult(totalCount: number, currentPage: number, pageSize: number): number {
-  return totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
-}
+  if (user.actions.includes('ReactivateMembership')) {
+    links.push({
+      key: 'reactivate',
+      label: 'Reactivate',
+      href: `/portal/organisations/${organisationId}/users/${user.userId}/reactivate`,
+    })
+  }
 
-function getLastResult(totalCount: number, currentPage: number, pageSize: number): number {
-  return Math.min(currentPage * pageSize, totalCount)
+  if (user.actions.some((x) => editActivities.includes(x))) {
+    links.push({
+      key: 'edit',
+      label: 'Edit',
+      href: `/portal/organisations/${organisationId}/manage-user-access/${user.userId}`,
+    })
+  }
+
+  return (
+    <ul className={styles.actionList}>
+      {links.length
+        ? links.map((link) => (
+            <li key={link.key}>
+              <Link href={link.href}>{link.label}</Link>
+            </li>
+          ))
+        : 'Not applicable'}
+    </ul>
+  )
 }
 
 function getTotalPages(totalCount: number, pageSize: number): number {
@@ -119,35 +131,63 @@ export async function OrganisationUsersTable({
   organisationId,
   query,
 }: OrganisationUsersTableProps) {
-  const { page, pageSize, status, role, email, lastActive } = query
+  const { page, pageSize, status, role, email, lastActive, sortBy, sortDirection } = query
 
-  const [{ data: me }, { data: users, error: usersError }] = await Promise.all([
-    getUsersMe({ client: apiClient }),
-    getUsers({
-      client: apiClient,
-      query: {
-        OrganisationId: organisationId,
-        Page: page,
-        PageSize: pageSize,
-        Status: status.length ? status : undefined,
-        Role: role.length ? role : undefined,
-        Email: email,
-        LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
-      },
-    }),
-  ])
-  const currentUserId = me?.userId
+  const { data: users, error: usersError } = await getUsers({
+    client: apiClient,
+    query: {
+      OrganisationId: organisationId,
+      Page: page,
+      PageSize: pageSize,
+      Status: status.length ? status : undefined,
+      Role: role.length ? role : undefined,
+      Email: email,
+      LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
+      SortBy: sortBy,
+      SortDirection: sortDirection,
+    },
+  })
 
   const totalCount = users?.totalCount ?? 0
+
+  const createSortHref =
+    (column: GetUsersQuerySortValue) => (direction: Exclude<TableSortDirection, 'none'>) => {
+      const newQuery: UserListQuery = {
+        ...query,
+        sortBy: column,
+        sortDirection: direction == 'ascending' ? 'Ascending' : 'Descending',
+        page: 1,
+      }
+
+      return buildUserListHref(newQuery)
+    }
+
+  const renderHeaders = () => {
+    return organisationUserTableHeaders.map(({ label, sortColumn }) =>
+      sortColumn ? (
+        <TableSortHeaderLink
+          key={label}
+          direction={getNextSortDirection<GetUsersQuerySortValue>({
+            column: sortColumn,
+            sortBy,
+            sortDirection,
+          })}
+          createHref={createSortHref(sortColumn)}
+        >
+          {label}
+        </TableSortHeaderLink>
+      ) : (
+        <th scope="col" key={label}>
+          {label}
+        </th>
+      ),
+    )
+  }
 
   return (
     <>
       <div className={styles['table-toolbar']}>
-        <FilterSummary className={styles['users-filter-summary']}>
-          {users
-            ? `Showing results ${getFirstResult(totalCount, page, pageSize)} to ${getLastResult(totalCount, page, pageSize)} of ${totalCount}`
-            : 'Showing results'}
-        </FilterSummary>
+        <UserFilterSummary query={query} users={users} />
         {/* TODO - remove the elementType when the Button wrapper is merged */}
         <Button elementType={Link} href={`/portal/organisations/${organisationId}/onboard-user`}>
           Add a new user
@@ -160,13 +200,7 @@ export async function OrganisationUsersTable({
           <Table columnWidth="content">
             <caption className="visually-hidden">Organisation Users</caption>
             <thead>
-              <tr>
-                <th scope="col">Email address</th>
-                <th scope="col">Role</th>
-                <th scope="col">Status</th>
-                <th scope="col">Last active</th>
-                <th scope="col">Actions</th>
-              </tr>
+              <tr>{renderHeaders()}</tr>
             </thead>
             <tbody>
               {users.items.length > 0 ? (
@@ -176,7 +210,7 @@ export async function OrganisationUsersTable({
                     <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
                     <td>{renderStatus(user.status)}</td>
                     <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user, organisationId, currentUserId)}</td>
+                    <td>{renderActions(user, organisationId)}</td>
                   </tr>
                 ))
               ) : (

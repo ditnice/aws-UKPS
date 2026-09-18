@@ -20,8 +20,9 @@ public class UserEndpointTests : DatabaseTestBase
     private readonly Faker _faker = new Faker();
     private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
     private readonly IReadOnlyCollection<User> _seededUsers;
-    private IEnumerable<User> ViewableUsers =>
-        _seededUsers.Where(x => x.UserOrgMemberships!.Any(x => x.Status != UserOrgStatus.Rejected));
+    private readonly List<UserRegistrationRequest> _userRegistrationRequests;
+
+    private IEnumerable<User> ViewableUsers => _seededUsers;
 
     public UserEndpointTests(PostgresFixture fixture)
         : base(fixture)
@@ -46,12 +47,16 @@ public class UserEndpointTests : DatabaseTestBase
             }
         );
         _seededUsers = userFaker.Generate(50);
+        _userRegistrationRequests = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, f => f.PickRandom(organisations))
+            .Generate(20);
     }
 
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
         await AddEntities(_seededUsers, TestContext.Current.CancellationToken);
+        await AddEntities(_userRegistrationRequests, TestContext.Current.CancellationToken);
     }
 
     [Fact]

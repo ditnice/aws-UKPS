@@ -12,7 +12,6 @@ internal sealed class VaccinesCompanyInfoConfiguration
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.IsOriginatorCompany);
-        builder.Property(x => x.HasBeenAcquired);
         builder.Property(x => x.HasGrantFunding);
 
         builder

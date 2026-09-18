@@ -1,10 +1,10 @@
 output "base_domain_name_servers" {
-  description = "Route53 authoritative name servers for the base domain"
+  description = "Route53 authoritative name servers for the environment hosted zone"
   value       = aws_route53_zone.base_domain.name_servers
 }
 
 output "base_domain_zone_id" {
-  description = "Route53 hosted zone ID for the base domain"
+  description = "Route53 hosted zone ID for the environment hosted zone"
   value       = aws_route53_zone.base_domain.zone_id
 }
 

@@ -414,27 +414,42 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task UpdateUserDetails_WhenCommandIsInvalid_ShouldReturnBadRequestResponse()
     {
-        Func<UpdateUserDetailsCommand, UpdateUserDetailsCommand>[] modifers =
+        (
+            string Label,
+            Func<UpdateUserDetailsCommand, UpdateUserDetailsCommand> Value
+        )[] modifiers =
         [
-            x => x with { FullName = string.Empty },
-            x => x with { FullName = null! },
-            x => x with { WorkEmail = string.Empty },
-            x => x with { WorkEmail = null! },
-            x => x with { WorkEmail = "not a valid email" },
-            x => x with { WorkTelephone = string.Empty },
-            x => x with { WorkTelephone = null! },
+            (nameof(UpdateUserDetailsCommand.FullName), x => x with { FullName = string.Empty }),
+            (nameof(UpdateUserDetailsCommand.FullName), x => x with { FullName = null! }),
+            (nameof(UpdateUserDetailsCommand.WorkEmail), x => x with { WorkEmail = string.Empty }),
+            (nameof(UpdateUserDetailsCommand.WorkEmail), x => x with { WorkEmail = null! }),
+            (
+                nameof(UpdateUserDetailsCommand.WorkEmail),
+                x => x with { WorkEmail = "not a valid email" }
+            ),
+            (
+                nameof(UpdateUserDetailsCommand.WorkTelephone),
+                x => x with { WorkTelephone = string.Empty }
+            ),
+            (nameof(UpdateUserDetailsCommand.WorkTelephone), x => x with { WorkTelephone = null! }),
+            (
+                nameof(UpdateUserDetailsCommand.WorkTelephone),
+                x => x with { WorkTelephone = "invalid-telephone-number" }
+            ),
         ];
 
-        foreach (var mod in modifers)
+        foreach (var mod in modifiers)
         {
             var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
             var response = await _client.PatchAsJsonAsync(
                 url,
-                mod(_updateUserDetailsCommandFaker.Generate()),
+                mod.Value(_updateUserDetailsCommandFaker.Generate()),
                 TestContext.Current.CancellationToken
             );
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            var errors = await response.Content.ShouldContainValidationErrors();
+            errors.ShouldContainKey(mod.Label);
         }
     }
 
@@ -498,9 +513,12 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 new UserListItemDto
                 {
                     UserId = 1,
+                    RegistrationRequestId = null,
                     EmailAddress = "user@example.com",
                     Role = UserRole.Standard,
                     Status = UserOrgStatus.Active,
+                    LastActive = null,
+                    Actions = [],
                 },
             ],
             TotalCount = 1,
@@ -508,15 +526,24 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             PageSize = 20,
         };
 
-    private static void ShouldBeEquivalentTo<T>(
-        PaginatedResponseDto<T> expected,
-        PaginatedResponseDto<T> actual
+    private static void ShouldBeEquivalentTo(
+        PaginatedResponseDto<UserListItemDto> expected,
+        PaginatedResponseDto<UserListItemDto> actual
     )
     {
         actual.TotalCount.ShouldBe(expected.TotalCount);
         actual.Page.ShouldBe(expected.Page);
         actual.PageSize.ShouldBe(expected.PageSize);
-        actual.Items.ShouldBe(expected.Items);
+        actual.Items.Count.ShouldBe(expected.Items.Count);
+        foreach (var (expectedItem, actualItem) in expected.Items.Zip(actual.Items))
+        {
+            actualItem.UserId.ShouldBe(expectedItem.UserId);
+            actualItem.EmailAddress.ShouldBe(expectedItem.EmailAddress);
+            actualItem.Role.ShouldBe(expectedItem.Role);
+            actualItem.Status.ShouldBe(expectedItem.Status);
+            actualItem.LastActive.ShouldBe(expectedItem.LastActive);
+            actualItem.Actions.ShouldBe(expectedItem.Actions);
+        }
     }
 
     private sealed class GetUsersQueryDtoFaker : Faker<GetUsersQueryDto>
