@@ -53,7 +53,7 @@ export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps)
       const response = await patchUsersByUserId({ path: { userId }, body: data })
 
       if (response.response?.ok) {
-        router.push('/portal/user/me')
+        router.push('/portal/user/me?updated=true')
         return
       }
 
