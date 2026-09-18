@@ -1,6 +1,8 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Enums;
@@ -11,14 +13,27 @@ using GetRecordsResult = UKPS.Api.Application.Common.Result<
 
 namespace UKPS.Api.Application.Records;
 
-internal partial class RecordService(AppDbContext dbContext) : IRecordService
+internal partial class RecordService(
+    AppDbContext dbContext,
+    IDateTimeProvider timeProvider,
+    IOrganisationAuthoriser organisationAuthoriser
+) : IRecordService
 {
+    private readonly IDateTimeProvider _timeProvider = timeProvider;
+
+    private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
+
     public async Task<GetRecordsResult> GetRecords(
         GetRecordsQueryDto getRecordsQuery,
         CancellationToken cancellationToken
     )
     {
-        IQueryable<RecordInformationTrackingProjection> query = GetProjectedRecordInformation();
+        var permittedOrganisationIds = _organisationAuthoriser.GetAuthorisedOrganisations(
+            Operation.Read
+        );
+
+        IQueryable<RecordInformationTrackingProjection> query = GetProjectedRecordInformation()
+            .Where(m => permittedOrganisationIds.Contains(m.OrganisationId));
 
         IQueryable<RecordInformationTrackingProjection> filteredRecords = ApplyFilters(
             query,
@@ -33,13 +48,12 @@ internal partial class RecordService(AppDbContext dbContext) : IRecordService
             getRecordsQuery.SortDirection
         );
 
-        var Items = await orderedRecords
-            .AsNoTracking()
+        var items = await orderedRecords
             .Skip((getRecordsQuery.Page - 1) * getRecordsQuery.PageSize)
             .Take(getRecordsQuery.PageSize)
             .ToListAsync(cancellationToken);
 
-        var projectedItems = Items
+        var projectedItems = items
             .Select(m => new RecordListItemDto
             {
                 Id = m.Id,
@@ -101,7 +115,7 @@ internal partial class RecordService(AppDbContext dbContext) : IRecordService
             );
     }
 
-    private static IQueryable<RecordInformationTrackingProjection> ApplyFilters(
+    private IQueryable<RecordInformationTrackingProjection> ApplyFilters(
         IQueryable<RecordInformationTrackingProjection> input,
         GetRecordsQueryDto getRecordsQuery
     )
@@ -118,13 +132,15 @@ internal partial class RecordService(AppDbContext dbContext) : IRecordService
 
         if (getRecordsQuery.UpdateStatus.HasValue)
         {
+            var now = _timeProvider.GetUtcNow();
+
             input = getRecordsQuery.UpdateStatus.Value switch
             {
                 UpdateStatus.Overdue => input.Where(m =>
-                    m.NextUpdateDue != null && m.NextUpdateDue < DateTime.UtcNow
+                    m.NextUpdateDue != null && m.NextUpdateDue < now
                 ),
                 UpdateStatus.NotOverdue => input.Where(m =>
-                    m.NextUpdateDue == null || m.NextUpdateDue >= DateTime.UtcNow
+                    m.NextUpdateDue == null || m.NextUpdateDue >= now
                 ),
                 _ => input,
             };
@@ -133,11 +149,6 @@ internal partial class RecordService(AppDbContext dbContext) : IRecordService
         if (!string.IsNullOrWhiteSpace(getRecordsQuery.Search))
         {
             string pattern = $"%{Helpers.EscapeLikePattern(getRecordsQuery.Search)}%";
-            bool isNumeric = int.TryParse(
-                getRecordsQuery.Search.Trim(),
-                System.Globalization.CultureInfo.InvariantCulture,
-                out int searchId
-            );
 
             input = input.Where(m =>
                 (m.Title != null && EF.Functions.ILike(m.Title, pattern, "\\"))
@@ -145,7 +156,6 @@ internal partial class RecordService(AppDbContext dbContext) : IRecordService
                     m.NiceTaDevelopmentId != null
                     && EF.Functions.ILike(m.NiceTaDevelopmentId, pattern, "\\")
                 )
-                || (isNumeric && m.Id == searchId)
             );
         }
 

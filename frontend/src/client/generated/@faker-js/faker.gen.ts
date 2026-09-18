@@ -598,8 +598,6 @@ export const fakeGetRecordsResponse200 = (options?: Options): GetRecordsResponse
 
 export const fakeGetRecordsResponse400 = (options?: Options): GetRecordsErrors[400] => fakeProblemDetails(options);
 
-export const fakeGetRecordsResponse404 = (options?: Options): GetRecordsErrors[404] => fakeProblemDetails(options);
-
 export const fakeGetUsersMeResponse = (options?: Options): GetUsersMeResponse => fakeUserInformationDto(options);
 
 export const fakeGetUsersRequest = (options?: Options): Omit<GetUsersData, 'url'> => {

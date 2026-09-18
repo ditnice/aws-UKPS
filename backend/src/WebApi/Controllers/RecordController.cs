@@ -28,7 +28,6 @@ public class RecordController(IRecordService recordService) : ControllerBase
     [HttpGet(Name = nameof(GetRecords))]
     [ProducesResponseType<PaginatedResponseDto<RecordListItemDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PaginatedResponseDto<RecordListItemDto>>> GetRecords(
         [FromQuery] GetRecordsQueryDto? getRecordQuery,
         CancellationToken cancellationToken

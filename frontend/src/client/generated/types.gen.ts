@@ -504,7 +504,9 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
     userRole: UserRole;
 };
 
-export type UpdateStatus = 'Overdue' | 'NotOverdue';
+export const UpdateStatus = { OVERDUE: 'Overdue', NOT_OVERDUE: 'NotOverdue' } as const;
+
+export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
 
 /**
  * Represents the details to update for an existing user.
@@ -1240,10 +1242,6 @@ export type GetRecordsErrors = {
      * The query parameters are invalid.
      */
     400: ProblemDetails;
-    /**
-     * Not Found
-     */
-    404: ProblemDetails;
 };
 
 export type GetRecordsError = GetRecordsErrors[keyof GetRecordsErrors];
