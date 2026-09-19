@@ -1341,6 +1341,14 @@
             "schema": {
               "$ref": "#/components/schemas/SortDirection"
             }
+          },
+          {
+            "name": "UpdateStatus",
+            "in": "query",
+            "description": "Gets or initialises the update status filter. When set, only records that are\noverdue or not overdue for review will be returned.",
+            "schema": {
+              "$ref": "#/components/schemas/UpdateStatus"
+            }
           }
         ],
         "responses": {
@@ -1366,26 +1374,6 @@
           },
           "400": {
             "description": "The query parameters are invalid.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller is not authorised to view the requested records.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2983,6 +2971,14 @@
           }
         },
         "description": "Represents a Data Transfer Object (DTO) for updating the user role\nin an organisation membership."
+      },
+      "UpdateStatus": {
+        "enum": [
+          "Overdue",
+          "NotOverdue",
+          null
+        ],
+        "type": "string"
       },
       "UpdateUserDetailsCommand": {
         "required": [
