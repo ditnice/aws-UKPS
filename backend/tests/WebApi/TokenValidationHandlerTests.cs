@@ -93,9 +93,13 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         );
 
         var selectedMembership = _userWithMultipleMemberships.UserOrgMemberships!.ElementAt(1);
-        context.HttpContext.Request.Cookies = CreateCookieCollection(
-            ("selected_organisation", $"{selectedMembership.OrganisationId}")
+
+        var user = await Context.Users.FindAsync(
+            [_userWithMultipleMemberships.Id],
+            TestContext.Current.CancellationToken
         );
+        user!.TryUpdateCurrentOrganisation(selectedMembership.OrganisationId).ShouldBeTrue();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await _handler.Handle(context, CancellationToken.None);
 
@@ -247,53 +251,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
 
         context.Result.ShouldNotBeNull();
         context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe(
-            "A valid selected organisation cookie is required."
-        );
-    }
-
-    [Fact]
-    public async Task Handle_ShouldFail_WhenSelectedOrganisationCookieIsNotAnInteger()
-    {
-        var context = CreateTokenValidatedContext(
-            tokenUse: "access",
-            clientId: ClientId,
-            username: _userWithMultipleMemberships.CognitoUsername
-        );
-
-        context.HttpContext.Request.Cookies = CreateCookieCollection(
-            ("selected_organisation", "not-an-integer")
-        );
-
-        await _handler.Handle(context, CancellationToken.None);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe(
-            "A valid selected organisation cookie is required."
-        );
-    }
-
-    [Fact]
-    public async Task Handle_ShouldFail_WhenSelectedOrganisationDoesNotBelongToUser()
-    {
-        var context = CreateTokenValidatedContext(
-            tokenUse: "access",
-            clientId: ClientId,
-            username: _userWithMultipleMemberships.CognitoUsername
-        );
-
-        context.HttpContext.Request.Cookies = CreateCookieCollection(
-            ("selected_organisation", "999")
-        );
-
-        await _handler.Handle(context, CancellationToken.None);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe(
-            "The selected organisation is not associated with the user."
-        );
+        context.Result.Failure.Message.ShouldBe("A valid current organisation is required.");
     }
 
     [Fact]

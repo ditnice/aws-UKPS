@@ -85,7 +85,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SaveChangesAsync_Test()
+    public async Task SaveChangesAsync_WhenAMembershipTestIsApprovedAndRejected_ShouldThrowDbUpdateException()
     {
         Faker<UserRegistrationRequest> faker = new UserRegistrationRequestFaker()
             .RuleFor(x => x.Organisation, new OrganisationFaker().Generate())
@@ -101,6 +101,28 @@ public class DatabaseConstraintTests : DatabaseTestBase
             exception.InnerException.ShouldBeOfType<PostgresException>();
         postgresException.ConstraintName.ShouldBe(
             ConstraintNames.MembershipRequestsShouldNotBeApprovedAndRejected
+        );
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_WhenUserHasMultipleUserOrgMembershipsMarkedAsSelected_ShouldThrowDbUpdateException()
+    {
+        var user = new UserFaker().Generate();
+        var organisationFaker = new OrganisationFaker();
+        Faker<UserOrgMembership> faker = new UserOrgMembershipFaker()
+            .RuleFor(x => x.User, _ => user)
+            .RuleFor(x => x.Organisation, _ => organisationFaker.Generate())
+            .RuleFor(x => x.IsSelectedAsCurrentOrganisation, _ => true);
+
+        Context.AddRange(faker.Generate(2));
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        PostgresException postgresException =
+            exception.InnerException.ShouldBeOfType<PostgresException>();
+        postgresException.ConstraintName.ShouldBe(
+            ConstraintNames.UsersCannotHaveMultipleSelectedCurrentOrganisations
         );
     }
 

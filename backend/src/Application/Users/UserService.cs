@@ -32,6 +32,7 @@ internal partial class UserService(
     IOrganisationAuthoriser organisationAuthoriser,
     IDateTimeProvider timeProvider,
     IIdentityService identityService,
+    CurrentDbUserEntityService currentDbUserEntityService,
     ICurrentUserInfoService currentUserInfoService,
     ILogger<UserService> logger
 ) : IUserService
@@ -39,19 +40,11 @@ internal partial class UserService(
     public async Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
-        User? possibleUser = await dbContext
-            .Users.Include(x => x.UserOrgMemberships)!
-                .ThenInclude(x => x.Organisation)
-            .FirstOrDefaultAsync(
-                x => x.CognitoUsername == currentUser.CognitoUsername,
-                cancellationToken
-            );
-        User user =
-            possibleUser
-            ?? throw new InvalidOperationException(
-                "Could not find current user by email in the database as expected."
-            );
-        var membership =
+        User user = await currentDbUserEntityService.GetCurrentUser(
+            cancellationToken,
+            x => x.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation)
+        );
+        UserOrgMembership membership =
             user.UserOrgMemberships!.FirstOrDefault(x =>
                 x.OrganisationId == currentUser.OrganisationId
             )
@@ -70,6 +63,47 @@ internal partial class UserService(
             OrganisationName = membership.Organisation.OrganisationName,
             UserRole = currentUser.UserRole,
         };
+    }
+
+    public async Task<UpdateCurrentOrganisationResult> UpdateCurrentOrganisation(
+        UpdateCurrentOrganisationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            cancellationToken
+        );
+
+        try
+        {
+            User user = await currentDbUserEntityService.GetCurrentUser(
+                cancellationToken,
+                q => q.Include(x => x.UserOrgMemberships)
+            );
+
+            // Needs to be done in two separate operations to
+            // ensure that the operations are applied in that order.
+
+            user.ResetCurrentOrganisation();
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            bool success = user.TryUpdateCurrentOrganisation(command.OrganisationId);
+            if (!success)
+            {
+                return UpdateCurrentOrganisationResult.Err(
+                    new UpdateCurrentOrganisationError.ProvidedOrganisationWasNotValid()
+                );
+            }
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+            return UpdateCurrentOrganisationResult.Ok();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
     public async Task<GetUsersResult> GetUsers(

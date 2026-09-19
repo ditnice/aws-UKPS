@@ -19,6 +19,29 @@ namespace UKPS.Api.WebApi.Controllers;
 public class OrganisationController(IOrganisationService organisationService) : ControllerBase
 {
     /// <summary>
+    /// Retrieves all organisations available to the current user.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A collection of <see cref="OrganisationListDto"/> objects representing the available organisations.
+    /// </returns>
+    /// <response code="200">
+    /// The organisations were returned successfully.
+    /// </response>
+    [ProducesResponseType<IReadOnlyCollection<OrganisationListDto>>(StatusCodes.Status200OK)]
+    [HttpGet(Name = nameof(GetOrganisations))]
+    public async Task<ActionResult<IReadOnlyCollection<OrganisationListDto>>> GetOrganisations(
+        CancellationToken cancellationToken
+    )
+    {
+        IReadOnlyCollection<OrganisationListDto> organisations =
+            await organisationService.GetOrganisations(new OrganisationsQuery(), cancellationToken);
+        return Ok(organisations);
+    }
+
+    /// <summary>
     /// Retrieves an organisation by its unique identifier.
     /// </summary>
     /// <param name="id">The identifier of the organisation to retrieve.</param>

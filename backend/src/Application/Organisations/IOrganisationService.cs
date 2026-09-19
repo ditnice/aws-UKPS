@@ -64,6 +64,20 @@ public interface IOrganisationService
     );
 
     /// <summary>
+    /// Retrieves a filtered or paginated list of organisations based on the supplied query.
+    /// </summary>
+    /// <param name="query">The query criteria used to filter organisations.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a
+    /// collection of organisation list entries matching the provided query.
+    /// </returns>
+    Task<IReadOnlyCollection<OrganisationListDto>> GetOrganisations(
+        OrganisationsQuery query,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Gets all organisations.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>

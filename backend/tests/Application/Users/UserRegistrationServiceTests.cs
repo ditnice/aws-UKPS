@@ -1,7 +1,6 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
-using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -69,7 +68,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
 
         _harness = new ServiceTestHarness<IUserRegistrationService>(Context)
             .UpdateCurrentTime(_currentTime)
-            .UpdateCurrentUser(ModifyForUser(_defaultUser));
+            .UpdateCurrentUser(_defaultUser);
     }
 
     public override async ValueTask InitializeAsync()
@@ -201,7 +200,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     {
         var request = await CreateRegistrationRequest();
         var result = await _harness
-            .UpdateCurrentUser(ModifyForUser(_mockUserLookup[UserRole.Standard]))
+            .UpdateCurrentUser(_mockUserLookup[UserRole.Standard])
             .Service.ApproveRequest(
                 _organisation.Id,
                 request.Id,
@@ -213,7 +212,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task ApproveRequest_WhenAChampionUser_ShouldOnlyBeAbleToApproveRequestsForMyOrganisation()
     {
-        var harness = _harness.UpdateCurrentUser(ModifyForUser(_mockUserLookup[UserRole.Champion]));
+        var harness = _harness.UpdateCurrentUser(_mockUserLookup[UserRole.Champion]);
 
         async Task RunTestForMyOrganisation()
         {
@@ -396,7 +395,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     {
         var request = await CreateRegistrationRequest();
         var result = await _harness
-            .UpdateCurrentUser(ModifyForUser(_mockUserLookup[UserRole.Standard]))
+            .UpdateCurrentUser(_mockUserLookup[UserRole.Standard])
             .Service.RejectRequest(
                 _organisation.Id,
                 request.Id,
@@ -408,7 +407,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task RejectRequest_WhenAChampionUser_ShouldOnlyBeAbleToRejectRequestsForMyOrganisation()
     {
-        var harness = _harness.UpdateCurrentUser(ModifyForUser(_mockUserLookup[UserRole.Champion]));
+        var harness = _harness.UpdateCurrentUser(_mockUserLookup[UserRole.Champion]);
 
         async Task RunTestForMyOrganisation()
         {
@@ -438,17 +437,6 @@ public class UserRegistrationServiceTests : DatabaseTestBase
 
         await RunTestForMyOrganisation();
         await RunTestForOtherOrganisation();
-    }
-
-    private static Func<CurrentUser, CurrentUser> ModifyForUser(User user)
-    {
-        return x =>
-            x with
-            {
-                CognitoUsername = user.CognitoUsername,
-                UserRole = user.UserOrgMemberships!.First().UserRole,
-                Email = user.WorkEmail,
-            };
     }
 
     private async Task<RegistrationContext> CreateRegistrationRequest(

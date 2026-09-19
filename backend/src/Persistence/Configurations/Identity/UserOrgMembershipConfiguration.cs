@@ -15,6 +15,9 @@ internal sealed class UserOrgMembershipConfiguration : IEntityTypeConfiguration<
         // PharmaceuticalEntity is a [Flags] integer
         builder.Property(x => x.AllowedPharmaceuticalEntity).HasConversion<int>();
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+        builder
+            .Property(x => x.IsSelectedAsCurrentOrganisation)
+            .HasColumnName("is_selected_as_current_organisation");
 
         builder
             .HasIndex(x => new
@@ -25,6 +28,12 @@ internal sealed class UserOrgMembershipConfiguration : IEntityTypeConfiguration<
             })
             .IsUnique()
             .HasDatabaseName("ix_user_org_membership_user_org_entity");
+
+        builder
+            .HasIndex(x => x.UserId)
+            .HasFilter("\"is_selected_as_current_organisation\" = TRUE")
+            .IsUnique()
+            .HasDatabaseName("ux_user_org_membership_current_org_per_user");
 
         builder
             .HasIndex(x => x.OrganisationId)

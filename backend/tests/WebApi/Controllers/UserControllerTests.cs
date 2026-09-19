@@ -76,6 +76,13 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     new UserInformationDtoFaker().Generate()
                 )
             );
+
+        _mockUserService
+            .UpdateCurrentOrganisation(
+                Arg.Any<UpdateCurrentOrganisationCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<UpdateCurrentOrganisationError>.Ok());
     }
 
     [Fact]
@@ -453,6 +460,55 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         }
     }
 
+    [Fact]
+    public async Task UpdateCurrentOrganisation_ShouldCallTheServiceWithProvidedArguments()
+    {
+        var testOrgId = 40;
+        var response = await MakeUpdateCurrentOrganisation(x =>
+            x with
+            {
+                OrganisationId = testOrgId,
+            }
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        await _mockUserService
+            .Received(1)
+            .UpdateCurrentOrganisation(
+                new UpdateCurrentOrganisationCommand() { OrganisationId = testOrgId },
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task UpdateCurrentOrganisation_WhenBadRequestError_SHouldReturnBadRequestResponse()
+    {
+        _mockUserService
+            .UpdateCurrentOrganisation(
+                Arg.Any<UpdateCurrentOrganisationCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<UpdateCurrentOrganisationError>.Err(
+                    new UpdateCurrentOrganisationError.ProvidedOrganisationWasNotValid()
+                )
+            );
+        var response = await MakeUpdateCurrentOrganisation();
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    private async Task<HttpResponseMessage> MakeUpdateCurrentOrganisation(
+        Func<UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationCommand>? modifier = null
+    )
+    {
+        var defaultCommand = new UpdateCurrentOrganisationCommandFaker().Generate();
+        var command = modifier is not null ? modifier(defaultCommand) : defaultCommand;
+        return await _client.PatchAsJsonAsync(
+            new Uri($"{UsersUrl}/me/current-organisation", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
+    }
+
     private static Uri UserWithinOrganisationUrl(int userId, int organisationId) =>
         new($"{UsersUrl}/{userId}/organisations/{organisationId}", UriKind.Relative);
 
@@ -631,6 +687,15 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 f => f.Random.Bool() ? new TelephoneNumberFaker().Generate() : null
             );
             RuleFor(x => x.WorkEmail, f => f.Internet.Email());
+        }
+    }
+
+    private sealed class UpdateCurrentOrganisationCommandFaker
+        : Faker<UpdateCurrentOrganisationCommand>
+    {
+        public UpdateCurrentOrganisationCommandFaker()
+        {
+            RuleFor(x => x.OrganisationId, f => f.Random.Int(1));
         }
     }
 }
