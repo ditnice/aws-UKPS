@@ -34,6 +34,9 @@ internal sealed class MedicinesProductDetail
     public int? FormulationTypeId { get; set; }
     public string? Presentation { get; set; }
 
+    /// <summary>Multi-select technology status types for this record.</summary>
+    public MedicineTechnologyStatus? MedicineTechnologyStatus { get; set; }
+
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ReferenceData.BnfChapter? BnfChapter { get; set; }
@@ -46,5 +49,4 @@ internal sealed class MedicinesProductDetail
     public ICollection<MedicinesProductDetailTherapeuticArea> TherapeuticAreas { get; set; } = [];
 
     public ICollection<MedicinesActiveSubstance> ActiveSubstances { get; set; } = [];
-    public ICollection<MedicinesRecordStatus> RecordStatuses { get; set; } = [];
 }
