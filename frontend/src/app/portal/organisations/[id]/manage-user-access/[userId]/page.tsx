@@ -5,7 +5,7 @@ import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
-import { ManageUserAccessActions } from './_components/ManageUserAccessActions'
+import ManageUserAccessActions from './_components/ManageUserAccessActions'
 
 interface Props {
   params: Promise<{ id: string; userId: string }>

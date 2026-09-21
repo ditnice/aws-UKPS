@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import router from 'next/router'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
@@ -15,14 +14,15 @@ interface Props {
   currentUserRole: string
 }
 
-export function ManageUserAccessActions({
+export default function ManageUserAccessActions({
   organisationId,
   selectedUserId,
   currentUserRole,
 }: Props) {
+  const router = useRouter()
   const [selectedAction, setSelectedAction] = useState('')
   const [radioError, setRadioError] = useState(false)
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!selectedAction) {
