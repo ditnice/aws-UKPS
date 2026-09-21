@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import router from 'next/router'
 import { useState } from 'react'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
@@ -26,7 +27,9 @@ export function ManageUserAccessActions({
 
     if (!selectedAction) {
       setRadioError(true)
+      return
     }
+    router.push(continueHref)
   }
   const continueHref =
     selectedAction === 'Change user permissions'
@@ -45,7 +48,6 @@ export function ManageUserAccessActions({
       value="Change user permissions"
       hint="Change what the user can do"
       name="action"
-      error={radioError ? 'Select an option - No answer provided' : undefined}
       onChange={() => {
         setSelectedAction('Change user permissions')
         setRadioError(false)
@@ -92,11 +94,16 @@ export function ManageUserAccessActions({
     />,
   ]
   return (
-    <>
-      <FormGroup name="manage user's access">{radios}</FormGroup>
-      <Button elementType={Link} variant="cta" href={continueHref}>
+    <form onSubmit={handleSubmit}>
+      <FormGroup
+        name="manage user's access"
+        groupError={radioError ? 'Select an option - No answer provided' : undefined}
+      >
+        {radios}
+      </FormGroup>
+      <Button type="submit" variant="cta" href={continueHref}>
         Continue
       </Button>
-    </>
+    </form>
   )
 }
