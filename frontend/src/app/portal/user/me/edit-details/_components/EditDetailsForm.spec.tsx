@@ -250,7 +250,7 @@ describe('EditDetailsForm', () => {
     fillValidForm()
     clickSubmit()
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledWith('/portal/user/me')
+      expect(mocks.push).toHaveBeenCalledWith('/portal/user/me?updated=true')
     })
   })
 

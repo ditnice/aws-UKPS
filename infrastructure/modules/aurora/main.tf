@@ -81,12 +81,6 @@ resource "aws_rds_cluster_parameter_group" "aurora_postgres" {
     value        = "1000"
   }
 
-  parameter {
-    apply_method = "immediate"
-    name         = "rds.force_ssl"
-    value        = "1"
-  }
-
   tags = merge(var.tags, {
     Name        = "${var.project}-${var.environment}-${var.service_name}-aurora-postgres"
     Environment = var.environment
