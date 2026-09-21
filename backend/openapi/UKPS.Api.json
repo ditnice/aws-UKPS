@@ -1562,6 +1562,117 @@
         }
       }
     },
+    "/records": {
+      "post": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Creates a new record.",
+        "operationId": "CreateRecord",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecordCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecordCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Returns the created record.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRecordDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRecordDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body is invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to create the requested record.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -2731,6 +2842,70 @@
           }
         },
         "description": "Represents the information required to create a new organisation."
+      },
+      "CreateRecordCommand": {
+        "required": [
+          "organisationId",
+          "developmentNames",
+          "genericNames",
+          "recordTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the identifier of the organisation for which the record will be created.",
+            "format": "int32"
+          },
+          "developmentNames": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the development names associated with the record."
+          },
+          "brandedName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the optional branded name associated with the record."
+          },
+          "genericNames": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the generic names associated with the record."
+          },
+          "recordTitle": {
+            "type": "string",
+            "description": "Gets the title of the record."
+          }
+        },
+        "description": "Contains the details required to create a new record."
+      },
+      "CreateRecordDto": {
+        "required": [
+          "recordId",
+          "revisionId"
+        ],
+        "type": "object",
+        "properties": {
+          "recordId": {
+            "type": "integer",
+            "description": "Gets the identifier of the newly created record.",
+            "format": "int32"
+          },
+          "revisionId": {
+            "type": "integer",
+            "description": "Gets the identifier of the initial revision created for the record.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the result of creating a record."
       },
       "GetRecordsQuerySortValue": {
         "enum": [

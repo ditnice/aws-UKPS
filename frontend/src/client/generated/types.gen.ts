@@ -60,6 +60,46 @@ export type CreateOrganisationDto = {
 };
 
 /**
+ * Contains the details required to create a new record.
+ */
+export type CreateRecordCommand = {
+    /**
+     * Gets the identifier of the organisation for which the record will be created.
+     */
+    organisationId: number;
+    /**
+     * Gets the development names associated with the record.
+     */
+    developmentNames: Array<string>;
+    /**
+     * Gets the optional branded name associated with the record.
+     */
+    brandedName?: null | string;
+    /**
+     * Gets the generic names associated with the record.
+     */
+    genericNames: Array<string>;
+    /**
+     * Gets the title of the record.
+     */
+    recordTitle: string;
+};
+
+/**
+ * Represents the result of creating a record.
+ */
+export type CreateRecordDto = {
+    /**
+     * Gets the identifier of the newly created record.
+     */
+    recordId: number;
+    /**
+     * Gets the identifier of the initial revision created for the record.
+     */
+    revisionId: number;
+};
+
+/**
  * Specifies the fields by which records can be sorted.
  */
 export const GetRecordsQuerySortValue = {
@@ -1324,6 +1364,39 @@ export type GetOrganisationRecordsResponses = {
 };
 
 export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
+
+export type CreateRecordData = {
+    body: CreateRecordCommand;
+    path?: never;
+    query?: never;
+    url: '/records';
+};
+
+export type CreateRecordErrors = {
+    /**
+     * The request body is invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to create the requested record.
+     */
+    403: ProblemDetails;
+};
+
+export type CreateRecordError = CreateRecordErrors[keyof CreateRecordErrors];
+
+export type CreateRecordResponses = {
+    /**
+     * Returns the created record.
+     */
+    200: CreateRecordDto;
+};
+
+export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
 
 export type GetUsersMeData = {
     body?: never;
