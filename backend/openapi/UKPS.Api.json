@@ -1266,14 +1266,24 @@
         }
       }
     },
-    "/records": {
+    "/records/organisations/{organisationId}": {
       "get": {
         "tags": [
           "Record"
         ],
-        "summary": "Retrieves a paginated list of records using the supplied filters and sort order.",
-        "operationId": "GetRecords",
+        "summary": "Retrieves a paginated list of records belonging to the user's organisation.",
+        "operationId": "GetOrganisationRecords",
         "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The unique identifier of the organisation.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
           {
             "name": "Search",
             "in": "query",
@@ -2766,12 +2776,12 @@
             "type": "string",
             "description": "Gets the human-readable record title."
           },
-          "niceTaDevelopmentId": {
+          "developmentName": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Gets the NICE technology appraisal or other display identifier, when available."
+            "description": "Gets the development name of the active substance, when available."
           },
           "reviewedAt": {
             "type": [

@@ -17,18 +17,19 @@ namespace UKPS.Api.WebApi.Controllers;
 public class RecordController(IRecordService recordService) : ControllerBase
 {
     /// <summary>
-    /// Retrieves a paginated list of records using the supplied filters and sort order.
+    /// Retrieves a paginated list of records belonging to the user's organisation.
     /// </summary>
+    /// <param name="organisationId">The unique identifier of the organisation.</param>
     /// <param name="getRecordQuery">The search, filter, pagination, and sort parameters.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A paginated list of record summaries.</returns>
     /// <response code="200">Returns the matching records.</response>
     /// <response code="400">The query parameters are invalid.</response>
-    /// <response code="403">The caller is not authorised to view the requested records.</response>
-    [HttpGet(Name = nameof(GetRecords))]
+    [HttpGet("organisations/{organisationId:int}", Name = nameof(GetOrganisationRecords))]
     [ProducesResponseType<PaginatedResponseDto<RecordListItemDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedResponseDto<RecordListItemDto>>> GetRecords(
+    public async Task<ActionResult<PaginatedResponseDto<RecordListItemDto>>> GetOrganisationRecords(
+        [FromRoute] int organisationId,
         [FromQuery] GetRecordsQueryDto? getRecordQuery,
         CancellationToken cancellationToken
     )
@@ -38,7 +39,11 @@ public class RecordController(IRecordService recordService) : ControllerBase
             return BadRequest();
         }
 
-        var result = await recordService.GetRecords(getRecordQuery, cancellationToken);
+        var result = await recordService.GetOrganisationRecords(
+            organisationId,
+            getRecordQuery,
+            cancellationToken
+        );
 
         return result.Match<ActionResult<PaginatedResponseDto<RecordListItemDto>>>(
             items => Ok(items),

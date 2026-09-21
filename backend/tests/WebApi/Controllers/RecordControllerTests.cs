@@ -19,7 +19,9 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private const string RecordsUrl = "/records";
+    private const int OrganisationId = 1;
+    private const string RecordsUrl = "/records/organisations";
+
     private readonly IRecordService _mockRecordService = Substitute.For<IRecordService>();
     private readonly HttpClient _client;
 
@@ -45,7 +47,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .CreateClient();
 
         _mockRecordService
-            .GetRecords(Arg.Any<GetRecordsQueryDto>(), Arg.Any<CancellationToken>())
+            .GetOrganisationRecords(
+                Arg.Any<int>(),
+                Arg.Any<GetRecordsQueryDto>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(
                 Result<PaginatedResponseDto<RecordListItemDto>, GetRecordsError>.Ok(
                     CreatePaginatedResponse()
@@ -58,10 +64,14 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     {
         PaginatedResponseDto<RecordListItemDto> expected = CreatePaginatedResponse();
         _mockRecordService
-            .GetRecords(Arg.Any<GetRecordsQueryDto>(), Arg.Any<CancellationToken>())
+            .GetOrganisationRecords(
+                Arg.Any<int>(),
+                Arg.Any<GetRecordsQueryDto>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Result<PaginatedResponseDto<RecordListItemDto>, GetRecordsError>.Ok(expected));
 
-        var url = AppendQueryParams(RecordsUrl, CreateQuery());
+        var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", CreateQuery());
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -78,14 +88,18 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecords_ReturnsBadRequest_WhenOrganisationNotFound()
     {
         _mockRecordService
-            .GetRecords(Arg.Any<GetRecordsQueryDto>(), Arg.Any<CancellationToken>())
+            .GetOrganisationRecords(
+                Arg.Any<int>(),
+                Arg.Any<GetRecordsQueryDto>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(
                 Result<PaginatedResponseDto<RecordListItemDto>, GetRecordsError>.Err(
                     new GetRecordsError.OrganisationNotFound(1)
                 )
             );
 
-        var url = AppendQueryParams(RecordsUrl, CreateQuery());
+        var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", CreateQuery());
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -99,14 +113,18 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecords_ReturnsForbidden_WhenNotAllowed()
     {
         _mockRecordService
-            .GetRecords(Arg.Any<GetRecordsQueryDto>(), Arg.Any<CancellationToken>())
+            .GetOrganisationRecords(
+                Arg.Any<int>(),
+                Arg.Any<GetRecordsQueryDto>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(
                 Result<PaginatedResponseDto<RecordListItemDto>, GetRecordsError>.Err(
                     new GetRecordsError.NotAllowed(1)
                 )
             );
 
-        var url = AppendQueryParams(RecordsUrl, CreateQuery());
+        var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", CreateQuery());
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -116,7 +134,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecords_PassesQueryValuesToService()
     {
         _mockRecordService
-            .GetRecords(Arg.Any<GetRecordsQueryDto>(), Arg.Any<CancellationToken>())
+            .GetOrganisationRecords(
+                Arg.Any<int>(),
+                Arg.Any<GetRecordsQueryDto>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(
                 Result<PaginatedResponseDto<RecordListItemDto>, GetRecordsError>.Ok(
                     CreatePaginatedResponse()
@@ -128,12 +150,13 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         {
             _mockRecordService.ClearReceivedCalls();
             var query = faker.Generate();
-            var url = AppendQueryParams(RecordsUrl, query);
+            var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", query);
             await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
             await _mockRecordService
                 .Received(1)
-                .GetRecords(
+                .GetOrganisationRecords(
+                    Arg.Any<int>(),
                     Arg.Do<GetRecordsQueryDto>(x => x.ShouldBeEquivalentTo(query)),
                     Arg.Any<CancellationToken>()
                 );
@@ -146,7 +169,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecords_ReturnsBadRequest_WhenPageIsLessThanOne(int page)
     {
         var query = CreateQuery() with { Page = page };
-        var url = AppendQueryParams(RecordsUrl, query);
+        var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", query);
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -158,7 +181,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecords_ReturnsBadRequest_WhenPageSizeIsOutsideAllowedRange(int pageSize)
     {
         var query = CreateQuery() with { PageSize = pageSize };
-        var url = AppendQueryParams(RecordsUrl, query);
+        var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", query);
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -215,7 +238,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                     RecordType = RecordType.Medicine,
                     RecordStatus = RecordStatus.Active,
                     Title = "Test Record",
-                    NiceTaDevelopmentId = null,
+                    DevelopmentName = null,
                     ReviewedAt = null,
                 },
             ],
@@ -239,7 +262,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             actualItem.RecordType.ShouldBe(expectedItem.RecordType);
             actualItem.RecordStatus.ShouldBe(expectedItem.RecordStatus);
             actualItem.Title.ShouldBe(expectedItem.Title);
-            actualItem.NiceTaDevelopmentId.ShouldBe(expectedItem.NiceTaDevelopmentId);
+            actualItem.DevelopmentName.ShouldBe(expectedItem.DevelopmentName);
             actualItem.ReviewedAt.ShouldBe(expectedItem.ReviewedAt);
         }
     }

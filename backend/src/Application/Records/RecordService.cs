@@ -4,6 +4,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Enums;
 using GetRecordsResult = UKPS.Api.Application.Common.Result<
@@ -23,17 +24,27 @@ internal partial class RecordService(
 
     private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
 
-    public async Task<GetRecordsResult> GetRecords(
+    private const int PublishedRecordUpdateDueMonths = 3;
+
+    public async Task<GetRecordsResult> GetOrganisationRecords(
+        int organisationId,
         GetRecordsQueryDto getRecordsQuery,
         CancellationToken cancellationToken
     )
     {
-        var permittedOrganisationIds = _organisationAuthoriser.GetAuthorisedOrganisations(
-            Operation.Read
+        GetRecordsError? organisationError = await ValidateOrganisationAsync(
+            organisationId,
+            Operation.Read,
+            cancellationToken
         );
 
+        if (organisationError is not null)
+        {
+            return GetRecordsResult.Err(organisationError);
+        }
+
         IQueryable<RecordInformationTrackingProjection> query = GetProjectedRecordInformation()
-            .Where(m => permittedOrganisationIds.Contains(m.OrganisationId));
+            .Where(x => x.OrganisationId == organisationId);
 
         IQueryable<RecordInformationTrackingProjection> filteredRecords = ApplyFilters(
             query,
@@ -60,7 +71,7 @@ internal partial class RecordService(
                 RecordType = m.RecordType,
                 RecordStatus = m.RecordStatus,
                 Title = m.Title ?? string.Empty,
-                NiceTaDevelopmentId = m.NiceTaDevelopmentId,
+                DevelopmentName = m.DevelopmentName,
                 ReviewedAt = m.ReviewedAt,
             })
             .ToArray();
@@ -76,6 +87,30 @@ internal partial class RecordService(
         );
     }
 
+    private async Task<GetRecordsError?> ValidateOrganisationAsync(
+        int organisationId,
+        Operation operation,
+        CancellationToken cancellationToken
+    )
+    {
+        bool actionPermitted = _organisationAuthoriser.CanPerformOperationOnOrganisation(
+            operation,
+            organisationId
+        );
+
+        if (!actionPermitted)
+        {
+            return new GetRecordsError.NotAllowed(organisationId);
+        }
+
+        bool organisationExists = await dbContext.Organisations.AnyAsync(
+            o => o.Id == organisationId,
+            cancellationToken
+        );
+
+        return organisationExists ? null : new GetRecordsError.OrganisationNotFound(organisationId);
+    }
+
     private IQueryable<RecordInformationTrackingProjection> GetProjectedRecordInformation()
     {
         var recordProjection = dbContext.Records.Select(x => new
@@ -88,7 +123,7 @@ internal partial class RecordService(
             x.CurrentDraftRevisionId,
             NextUpdateDue = x.ReviewedAt == null
                 ? (DateTime?)null
-                : x.ReviewedAt.Value.AddMonths(3),
+                : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths),
         });
 
         return recordProjection
@@ -98,9 +133,26 @@ internal partial class RecordService(
                 y => y.RevisionId,
                 (x, details) => new { x, details }
             )
+            .SelectMany(x => x.details.DefaultIfEmpty(), (a, b) => new { a.x, productDetail = b })
+            .GroupJoin(
+                dbContext
+                    .MedicinesActiveSubstances.Where(s =>
+                        s.NameType == SubstanceNameType.DevelopmentName
+                    )
+                    .OrderBy(s => s.DisplayOrder),
+                x => x.productDetail != null ? x.productDetail.Id : (int?)null,
+                s => s.MedicinesProductDetailId,
+                (x, substances) =>
+                    new
+                    {
+                        x.x,
+                        x.productDetail,
+                        substances,
+                    }
+            )
             .SelectMany(
-                x => x.details.DefaultIfEmpty(),
-                (a, b) =>
+                x => x.substances.DefaultIfEmpty(),
+                (a, substance) =>
                     new RecordInformationTrackingProjection
                     {
                         Id = a.x.Id,
@@ -108,8 +160,8 @@ internal partial class RecordService(
                         RecordType = a.x.RecordType,
                         RecordStatus = a.x.RecordStatus,
                         ReviewedAt = a.x.ReviewedAt,
-                        Title = b != null ? b.RecordTitle : null,
-                        NiceTaDevelopmentId = b != null ? b.NiceTaDevelopmentId : null,
+                        Title = a.productDetail != null ? a.productDetail.RecordTitle : null,
+                        DevelopmentName = substance != null ? substance.Name : null,
                         NextUpdateDue = a.x.NextUpdateDue,
                     }
             );
@@ -146,15 +198,17 @@ internal partial class RecordService(
             };
         }
 
-        if (!string.IsNullOrWhiteSpace(getRecordsQuery.Search))
+        string? search = getRecordsQuery.Search;
+
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            string pattern = $"%{Helpers.EscapeLikePattern(getRecordsQuery.Search)}%";
+            string pattern = $"%{Helpers.EscapeLikePattern(search.Trim())}%";
 
             input = input.Where(m =>
                 (m.Title != null && EF.Functions.ILike(m.Title, pattern, "\\"))
                 || (
-                    m.NiceTaDevelopmentId != null
-                    && EF.Functions.ILike(m.NiceTaDevelopmentId, pattern, "\\")
+                    m.DevelopmentName != null
+                    && EF.Functions.ILike(m.DevelopmentName, pattern, "\\")
                 )
             );
         }
@@ -174,7 +228,7 @@ internal partial class RecordService(
                 GetRecordsQuerySortValue.NextUpdateDue => m =>
                     m.NextUpdateDue == null ? DateTime.MaxValue : m.NextUpdateDue.Value,
                 GetRecordsQuerySortValue.Id => m => m.Id,
-                GetRecordsQuerySortValue.DevelopmentName => m => m.NiceTaDevelopmentId,
+                GetRecordsQuerySortValue.DevelopmentName => m => m.DevelopmentName,
                 GetRecordsQuerySortValue.RecordStatus => m => m.RecordStatus,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(sortBy),
@@ -203,7 +257,7 @@ internal partial class RecordService(
         public RecordStatus RecordStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
         public string? Title { get; init; }
-        public string? NiceTaDevelopmentId { get; init; }
+        public string? DevelopmentName { get; init; }
         public DateTime? NextUpdateDue { get; init; }
     }
 }

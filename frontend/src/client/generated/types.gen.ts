@@ -331,9 +331,9 @@ export type RecordListItemDto = {
      */
     title: string;
     /**
-     * Gets the NICE technology appraisal or other display identifier, when available.
+     * Gets the development name of the active substance, when available.
      */
-    niceTaDevelopmentId?: null | string;
+    developmentName?: null | string;
     /**
      * Gets the date the record was last reviewed, when available.
      */
@@ -1196,9 +1196,14 @@ export type GetOrganisationsPublicOptionsResponses = {
 
 export type GetOrganisationsPublicOptionsResponse = GetOrganisationsPublicOptionsResponses[keyof GetOrganisationsPublicOptionsResponses];
 
-export type GetRecordsData = {
+export type GetOrganisationRecordsData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * The unique identifier of the organisation.
+         */
+        organisationId: number;
+    };
     query?: {
         /**
          * Gets or initialises the multi-field search term.
@@ -1234,26 +1239,26 @@ export type GetRecordsData = {
          */
         UpdateStatus?: UpdateStatus;
     };
-    url: '/records';
+    url: '/records/organisations/{organisationId}';
 };
 
-export type GetRecordsErrors = {
+export type GetOrganisationRecordsErrors = {
     /**
      * The query parameters are invalid.
      */
     400: ProblemDetails;
 };
 
-export type GetRecordsError = GetRecordsErrors[keyof GetRecordsErrors];
+export type GetOrganisationRecordsError = GetOrganisationRecordsErrors[keyof GetOrganisationRecordsErrors];
 
-export type GetRecordsResponses = {
+export type GetOrganisationRecordsResponses = {
     /**
      * Returns the matching records.
      */
     200: PaginatedResponseDtoOfRecordListItemDto;
 };
 
-export type GetRecordsResponse = GetRecordsResponses[keyof GetRecordsResponses];
+export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
 
 export type GetUsersMeData = {
     body?: never;
