@@ -78,14 +78,14 @@
     "graphql": "^16.14.0",
     "jose": "^6.2.12",
     "libphonenumber-js": "1.13.13",
-    "next": "16.3.4",
+    "next": "16.3.5",
     "payload": "3.89.0",
     "qrcode.react": "^4.2.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
     "sharp": "0.35.4",
-    "zod": "^4.6.2"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -99,7 +99,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "4.7.0",
     "eslint": "^9.39.4",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.3.5",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import": "^2.32.0",
     "fallow": "2.104.0",
