@@ -8,7 +8,7 @@ internal sealed class Record
     public int Id { get; set; }
     public int OrganisationId { get; set; }
     public RecordType RecordType { get; set; }
-    public RecordStatus RecordStatus { get; private set; }
+    public RecordStatus RecordStatus { get; set; }
 
     /// <summary>
     /// Immutable after insert. Timestamp of initial row creation / first draft.
@@ -33,21 +33,59 @@ internal sealed class Record
     // Navigation
     public Identity.Organisation? Organisation { get; set; }
     public Identity.User? CreatedByUser { get; set; }
+<<<<<<< HEAD
     public ICollection<RecordRevision> Revisions { get; set; } = [];
     public ICollection<RecordStatusHistory> StatusHistory { get; set; } = [];
     public ICollection<RecordEvent> Events { get; set; } = [];
+=======
+    public RecordRevision? PublishedRevision { get; set; }
+    public RecordRevision? CurrentDraftRevision { get; set; }
+    public ICollection<RecordRevision>? Revisions { get; set; }
+    public ICollection<RecordStatusHistory>? StatusHistory { get; set; }
+    public ICollection<RecordEvent>? Events { get; set; }
+>>>>>>> 403324b8 (UKPS-547 - Fixed issue with initial events and did some tidying up.)
 
-    public void UpdateStatus(RecordStatus newRecordStatus, User user, DateTime dateTime)
+    internal static (Record record, RecordRevision recordRevision) CreateInitial(
+        Organisation organisation,
+        DateTime time,
+        User currentUser
+    )
     {
-        StatusHistory.Add(
-            new RecordStatusHistory()
+        Record record = new Record()
+        {
+            OrganisationId = organisation.Id,
+            CreatedAt = time,
+            CreatedByUser = currentUser,
+            RecordStatus = RecordStatus.Unpublished,
+            StatusHistory =
+            [
+                new RecordStatusHistory()
+                {
+                    FromStatus = null,
+                    ToStatus = RecordStatus.Unpublished,
+                    UpdatedAt = time,
+                    UpdatedByUser = currentUser,
+                },
+            ],
+            Events = [],
+        };
+        RecordRevision revision = new RecordRevision()
+        {
+            CreatedAt = time,
+            CreatedByUser = currentUser,
+            WorkflowStatus = WorkflowStatus.Draft,
+            Record = record,
+        };
+        record.Events.Add(
+            new RecordEvent()
             {
-                FromStatus = RecordStatus,
-                ToStatus = newRecordStatus,
-                UpdatedByUser = user,
-                UpdatedAt = dateTime,
+                Revision = revision,
+                EventType = RecordEventType.RecordCreated,
+                PerformedAt = time,
+                PerformedByUser = currentUser,
             }
         );
-        RecordStatus = newRecordStatus;
+
+        return (record, revision);
     }
 }

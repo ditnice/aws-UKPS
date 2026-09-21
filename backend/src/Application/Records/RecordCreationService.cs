@@ -57,29 +57,11 @@ internal class RecordCreationService : IRecordCreationService
         DateTime time = _dateTimeProvider.GetUtcNow();
         User currentUser = await GetCurrentUser(cancellationToken);
 
-        RecordRevision revision = new RecordRevision()
-        {
-            CreatedAt = time,
-            CreatedByUser = currentUser,
-            WorkflowStatus = WorkflowStatus.Draft,
-            Record = new Record()
-            {
-                OrganisationId = command.OrganisationId,
-                CreatedAt = time,
-                CreatedByUser = currentUser,
-            },
-        };
-
-        revision.Record.UpdateStatus(RecordStatus.Unpublished, currentUser, time);
-
-        RecordEvent recordEvent = new RecordEvent()
-        {
-            Record = revision.Record,
-            Revision = revision,
-            EventType = RecordEventType.RecordCreated,
-            PerformedAt = time,
-            PerformedByUser = currentUser,
-        };
+        (Record record, RecordRevision revision) = Record.CreateInitial(
+            organisation,
+            time,
+            currentUser
+        );
         MedicinesProductDetail medicinesProductDetail = new MedicinesProductDetail()
         {
             RecordTitle = command.RecordTitle,
@@ -87,10 +69,11 @@ internal class RecordCreationService : IRecordCreationService
             ActiveSubstances = CreateActiveSubstancesArray(command),
             Revision = revision,
         };
-        _dbContext.AddRange(medicinesProductDetail, recordEvent);
+
+        await _dbContext.AddAsync(medicinesProductDetail, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return CreateRecordResult.Ok(
-            new CreateRecordDto() { RecordId = revision.RecordId, RevisionId = revision.Id }
+            new CreateRecordDto() { RecordId = record.Id, RevisionId = revision.Id }
         );
     }
 
