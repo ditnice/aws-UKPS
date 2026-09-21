@@ -1,3 +1,4 @@
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Persistence.Entities.RecordWorkflow;
@@ -7,7 +8,7 @@ internal sealed class Record
     public int Id { get; set; }
     public int OrganisationId { get; set; }
     public RecordType RecordType { get; set; }
-    public RecordStatus RecordStatus { get; set; }
+    public RecordStatus RecordStatus { get; private set; }
 
     /// <summary>
     /// Immutable after insert. Timestamp of initial row creation / first draft.
@@ -35,4 +36,18 @@ internal sealed class Record
     public ICollection<RecordRevision> Revisions { get; set; } = [];
     public ICollection<RecordStatusHistory> StatusHistory { get; set; } = [];
     public ICollection<RecordEvent> Events { get; set; } = [];
+
+    public void UpdateStatus(RecordStatus newRecordStatus, User user, DateTime dateTime)
+    {
+        StatusHistory.Add(
+            new RecordStatusHistory()
+            {
+                FromStatus = RecordStatus,
+                ToStatus = newRecordStatus,
+                UpdatedByUser = user,
+                UpdatedAt = dateTime,
+            }
+        );
+        RecordStatus = newRecordStatus;
+    }
 }

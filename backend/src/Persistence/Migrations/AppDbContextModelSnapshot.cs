@@ -1065,7 +1065,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("formulation_type_id");
 
                     b.Property<string>("Indication")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("indication");
 

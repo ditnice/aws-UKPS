@@ -350,7 +350,6 @@ namespace UKPS.Api.Persistence.Migrations
                 columns: table => new
                 {
                     setup_token = table.Column<Guid>(type: "uuid", nullable: false),
-                    correlation_id = table.Column<Guid>(type: "uuid", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     created_by = table.Column<string>(type: "text", nullable: false),
                     consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -1045,9 +1044,9 @@ namespace UKPS.Api.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     vaccine_hta_assessor = table.Column<int>(type: "integer", nullable: true),
+                    hta_nice_aligned_pathway = table.Column<int>(type: "integer", nullable: true),
                     medicine_hta_submission_intended = table.Column<int>(type: "integer", nullable: true),
                     medicine_hta_bodies = table.Column<int>(type: "integer", nullable: true),
-                    hta_nice_aligned_pathway = table.Column<int>(type: "integer", nullable: true),
                     hta_additional_details = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -2186,13 +2185,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "user_audits",
                 column: "updated_by");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_user_onboarding_records_correlation_id",
-                schema: "ukps",
-                table: "user_onboarding_records",
-                column: "correlation_id",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_onboarding_records_user_id",

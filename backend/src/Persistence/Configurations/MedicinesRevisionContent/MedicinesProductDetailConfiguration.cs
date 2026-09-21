@@ -12,7 +12,6 @@ internal sealed class MedicinesProductDetailConfiguration
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RecordTitle).IsRequired();
-        builder.Property(x => x.Indication).IsRequired();
         builder.Property(x => x.IndicationIsPaediatric);
         builder.Property(x => x.IndicationIsCancer);
         builder.Property(x => x.IndicationIsRareDisease);
