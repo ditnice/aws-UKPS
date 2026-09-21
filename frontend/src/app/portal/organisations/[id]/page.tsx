@@ -1,7 +1,6 @@
-import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
-import { getOrganisationById, getUsersMe } from '@/client/generated/sdk.gen'
+import { getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'

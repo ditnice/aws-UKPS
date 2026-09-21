@@ -330,6 +330,47 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ResendSetupToken_WhenIdentifiedByCorrelationId_ShouldSucceedAndEmailANewSetupLink()
+    {
+        _setupLinkCreator
+            .GetSetupLink(Arg.Any<Guid>())
+            .Returns(callInfo => new Uri($"https://example.com/setup/{callInfo.Arg<Guid>()}"));
+
+        // A freshly-onboarded record has no CorrelationId yet - it's only
+        // populated once a record has been through its first resend - so we
+        // resend once by SetupToken first to obtain one to resend by.
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 16);
+        ResendSetupTokenResult firstResendResult = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = entity.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+        Guid firstCorrelationId = firstResendResult.ShouldBeSuccess();
+        int emailsSentSoFar = _harness.Emails.Sent.Count;
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { CorrelationId = firstCorrelationId },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+        _harness.Emails.Sent.Count.ShouldBe(emailsSentSoFar + 1);
+
+        UserOnboardingRecord newRecord =
+            await _harness
+                .GetClearedContext()
+                .UserOnboardingRecords.FirstOrDefaultAsync(
+                    x => x.UserId == entity.UserId,
+                    TestContext.Current.CancellationToken
+                )
+            ?? throw new InvalidOperationException("Expected a replacement record.");
+
+        UserSignUpRequestEmail email = _harness
+            .Emails.Sent.Last()
+            .ShouldBeOfType<UserSignUpRequestEmail>();
+        email.Link.ShouldBe(new Uri($"https://example.com/setup/{newRecord.SetupToken}"));
+    }
+
+    [Fact]
     public async Task ResendSetupToken_WhenCorrelationIdDoesNotExist_ReturnsDoesNotExistError()
     {
         Guid nonExistentCorrelationId = Guid.CreateVersion7();
@@ -351,7 +392,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.InvalidRequest>();
+        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.InvalidTokenCombination>();
         _harness.Emails.Sent.ShouldBeEmpty();
     }
 
@@ -370,7 +411,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.InvalidRequest>();
+        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.InvalidTokenCombination>();
         _harness.Emails.Sent.Count.ShouldBe(emailsSentDuringOnboarding);
     }
 

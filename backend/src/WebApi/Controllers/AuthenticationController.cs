@@ -349,7 +349,7 @@ public class AuthenticationController : ControllerBase
                     consumed: _ => Conflict(_setupTokenConsumed),
                     tooManyAttempts: _ =>
                         StatusCode(StatusCodes.Status403Forbidden, _setupTokenResendLimitReached),
-                    invalidRequest: _ => BadRequest(_resendSetupTokenInvalidRequest)
+                    invalidTokenCombination: _ => BadRequest(_resendSetupTokenInvalidRequest)
                 )
         );
     }

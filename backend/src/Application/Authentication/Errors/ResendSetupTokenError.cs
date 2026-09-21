@@ -26,13 +26,13 @@ public abstract record ResendSetupTokenError
     /// Indicates that the request did not supply exactly one of a setup token or a
     /// correlation id.
     /// </summary>
-    public sealed record InvalidRequest : ResendSetupTokenError;
+    public sealed record InvalidTokenCombination : ResendSetupTokenError;
 
     internal TResult Match<TResult>(
         Func<DoesNotExist, TResult> doesNotExist,
         Func<Consumed, TResult> consumed,
         Func<TooManyAttempts, TResult> tooManyAttempts,
-        Func<InvalidRequest, TResult> invalidRequest
+        Func<InvalidTokenCombination, TResult> invalidTokenCombination
     )
     {
         return this switch
@@ -40,7 +40,7 @@ public abstract record ResendSetupTokenError
             DoesNotExist x => doesNotExist(x),
             Consumed x => consumed(x),
             TooManyAttempts x => tooManyAttempts(x),
-            InvalidRequest x => invalidRequest(x),
+            InvalidTokenCombination x => invalidTokenCombination(x),
             _ => throw new UnreachableException("Unknown resend setup token error."),
         };
     }

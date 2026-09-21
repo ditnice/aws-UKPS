@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react'
 import { postAuthResendSetupToken } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 
+import styles from '../page.module.scss'
+
 import { SignUpInitiateError } from './SignUpInitiateError'
 
 import type { ReactNode } from 'react'
 
 const resendCooldownSeconds = 60
-const supportEmail = 'QA@UKPS.com'
+const supportEmail = process.env.NEXT_PUBLIC_QA_SUPPORT_EMAIL
 
 type RequestNewLinkProps = {
   setupToken: string
@@ -18,7 +20,7 @@ type RequestNewLinkProps = {
 
 type Status = 'idle' | 'sent' | 'tooManyAttempts' | 'notFound' | 'genericError'
 
-type ErrorContent = {
+type PageContent = {
   detail: ReactNode
   title: string
 }
@@ -30,7 +32,11 @@ const contactSupport = (
   </>
 )
 
-function getErrorContent(status: Status, remainingSeconds: number): ErrorContent {
+function getPageContent(
+  status: Status,
+  remainingSeconds: number,
+  countdownRole: 'timer' | 'alert',
+): PageContent {
   switch (status) {
     case 'idle':
       return {
@@ -43,15 +49,19 @@ function getErrorContent(status: Status, remainingSeconds: number): ErrorContent
         title: 'Check your email',
         detail: (
           <>
-            We&apos;ve sent a new link to your email address. It may take a few minutes to arrive.
-            <br />
-            <br />
-            If you cannot find the email, check your spam or junk folder. If you still do not
-            receive it, you can request another link in{' '}
-            <strong>
-              {remainingSeconds} second{remainingSeconds === 1 ? '' : 's'}
-            </strong>
-            .
+            <p>
+              We&apos;ve sent a new link to your email address. It may take a few minutes to arrive.
+            </p>
+            <p>
+              If you cannot find the email, check your spam or junk folder. If you still do not
+              receive it, you can request another link in{' '}
+              <span role={countdownRole} aria-atomic="true">
+                <strong>
+                  {remainingSeconds} second{remainingSeconds === 1 ? '' : 's'}
+                </strong>
+              </span>
+              .
+            </p>
           </>
         ),
       }
@@ -60,9 +70,7 @@ function getErrorContent(status: Status, remainingSeconds: number): ErrorContent
         title: 'Contact the support team',
         detail: (
           <>
-            You have reached the maximum number of attempts to request a new link.
-            <br />
-            <br />
+            <p>You have reached the maximum number of attempts to request a new link.</p>
             {contactSupport}
           </>
         ),
@@ -78,9 +86,12 @@ export function RequestNewLink({ setupToken }: RequestNewLinkProps) {
   const [coolingDown, setCoolingDown] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState(resendCooldownSeconds)
   const [correlationId, setCorrelationId] = useState<string | null>(null)
+  const [countdownRole, setCountdownRole] = useState<'timer' | 'alert'>('timer')
 
   useEffect(() => {
     if (!coolingDown) return
+
+    let alertRevertTimeout: ReturnType<typeof setTimeout> | undefined
 
     const interval = setInterval(() => {
       setRemainingSeconds((seconds) => {
@@ -88,11 +99,24 @@ export function RequestNewLink({ setupToken }: RequestNewLinkProps) {
           setCoolingDown(false)
           return resendCooldownSeconds
         }
-        return seconds - 1
+
+        const nextSeconds = seconds - 1
+        if (nextSeconds === 10) {
+          // Briefly switch the countdown to an assertive alert at the 10-second
+          // mark so screen reader users get one heads-up, instead of an
+          // announcement every second.
+          setCountdownRole('alert')
+          alertRevertTimeout = setTimeout(() => setCountdownRole('timer'), 1000)
+        }
+
+        return nextSeconds
       })
     }, 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      clearTimeout(alertRevertTimeout)
+    }
   }, [coolingDown])
 
   async function handleClick() {
@@ -123,15 +147,17 @@ export function RequestNewLink({ setupToken }: RequestNewLinkProps) {
 
   return (
     <>
-      <SignUpInitiateError {...getErrorContent(status, remainingSeconds)} />
+      <SignUpInitiateError {...getPageContent(status, remainingSeconds, countdownRole)} />
       {showResendButton && (
-        <Button
-          disabled={coolingDown}
-          onClick={handleClick}
-          variant={coolingDown ? 'secondary' : 'cta'}
-        >
-          Send a new link
-        </Button>
+        <div className={styles.actions}>
+          <Button
+            disabled={coolingDown}
+            onClick={handleClick}
+            variant={coolingDown ? 'secondary' : 'cta'}
+          >
+            Send a new link
+          </Button>
+        </div>
       )}
     </>
   )

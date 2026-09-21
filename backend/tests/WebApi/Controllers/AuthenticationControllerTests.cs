@@ -421,7 +421,9 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     {
         _mockedAuthorisationService
             .ResendSetupToken(Arg.Any<ResendSetupTokenCommand>(), Arg.Any<CancellationToken>())
-            .Returns(ResendSetupTokenResult.Err(new ResendSetupTokenError.InvalidRequest()));
+            .Returns(
+                ResendSetupTokenResult.Err(new ResendSetupTokenError.InvalidTokenCombination())
+            );
 
         var response = await _client.PostAsJsonAsync(
             new Uri(ResendSetupTokenUrl, UriKind.Relative),

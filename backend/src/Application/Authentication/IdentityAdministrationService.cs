@@ -255,7 +255,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
 
         if (hasSetupToken == hasCorrelationId)
         {
-            return ResendSetupTokenResult.Err(new ResendSetupTokenError.InvalidRequest());
+            return ResendSetupTokenResult.Err(new ResendSetupTokenError.InvalidTokenCombination());
         }
 
         IQueryable<UserOnboardingRecord> onboardingRecords =
