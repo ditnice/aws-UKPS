@@ -1,11 +1,11 @@
 namespace UKPS.Api.Persistence.Enums;
 
 /// <summary>
-/// PAS (Patient Access Scheme) regions selected for a medicine record.
-/// Multi-select — see MedicinesBudgetImpact.PasRegions.
+/// Patient Access Scheme regions selected for a medicine record.
+/// Multi-select — see MedicinesBudgetImpact.PatientAccessSchemeRegions.
 /// </summary>
 [Flags]
-public enum PasRegion
+public enum PatientAccessSchemeRegion
 {
     /// <summary>England.</summary>
     England = 1,

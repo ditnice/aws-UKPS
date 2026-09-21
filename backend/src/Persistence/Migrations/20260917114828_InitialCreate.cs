@@ -731,11 +731,11 @@ namespace UKPS.Api.Persistence.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    pas_scheme_planned = table.Column<int>(type: "integer", nullable: true),
+                    patient_access_scheme_planned = table.Column<int>(type: "integer", nullable: true),
                     indication_specific_pricing_planned = table.Column<int>(type: "integer", nullable: true),
                     indication_specific_pricing_details = table.Column<string>(type: "text", nullable: true),
                     net_uk_budget_impact_band = table.Column<int>(type: "integer", nullable: true),
-                    pas_regions = table.Column<int>(type: "integer", nullable: true)
+                    patient_access_scheme_regions = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {

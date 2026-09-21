@@ -614,13 +614,13 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("net_uk_budget_impact_band");
 
-                    b.Property<int?>("PasRegions")
+                    b.Property<int?>("PatientAccessSchemePlanned")
                         .HasColumnType("integer")
-                        .HasColumnName("pas_regions");
+                        .HasColumnName("patient_access_scheme_planned");
 
-                    b.Property<int?>("PasSchemePlanned")
+                    b.Property<int?>("PatientAccessSchemeRegions")
                         .HasColumnType("integer")
-                        .HasColumnName("pas_scheme_planned");
+                        .HasColumnName("patient_access_scheme_regions");
 
                     b.Property<int>("RevisionId")
                         .HasColumnType("integer")
