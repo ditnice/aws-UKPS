@@ -131,6 +131,7 @@ internal static class AwsAuthenticationExtensions
                 : null,
         };
 
+        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
         await ctx.Response.WriteAsJsonAsync(problemDetails);
     }
 }
