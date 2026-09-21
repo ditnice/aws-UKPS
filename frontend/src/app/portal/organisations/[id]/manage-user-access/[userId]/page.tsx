@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 
-import { getUserDetailsWithinOrganisation } from '@/client/generated/sdk.gen'
+import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -27,6 +27,14 @@ export default async function ManageUserAccess({ params }: Props) {
     path: { userId: selectedUserId, organisationId },
   })
 
+  const { data: currentUser } = await getUsersMe({
+    client: apiClient,
+  })
+
+  if (!currentUser) {
+    notFound()
+  }
+
   if (response?.status === 404) {
     notFound()
   }
@@ -50,7 +58,7 @@ export default async function ManageUserAccess({ params }: Props) {
       <ManageUserAccessActions
         organisationId={organisationId}
         selectedUserId={selectedUserId}
-        userRole={user.userRole}
+        currentUserRole={currentUser.userRole}
       />
     </>
   )

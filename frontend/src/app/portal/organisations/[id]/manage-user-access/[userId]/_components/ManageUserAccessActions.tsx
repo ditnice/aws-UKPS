@@ -11,11 +11,23 @@ import { Button } from '@/components/Button/Button'
 interface Props {
   organisationId: number
   selectedUserId: number
-  userRole: string
+  currentUserRole: string
 }
 
-export function ManageUserAccessActions({ organisationId, selectedUserId, userRole }: Props) {
+export function ManageUserAccessActions({
+  organisationId,
+  selectedUserId,
+  currentUserRole,
+}: Props) {
   const [selectedAction, setSelectedAction] = useState('')
+  const [radioError, setRadioError] = useState(false)
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+
+    if (!selectedAction) {
+      setRadioError(true)
+    }
+  }
   const continueHref =
     selectedAction === 'Change user permissions'
       ? `/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`
@@ -26,45 +38,63 @@ export function ManageUserAccessActions({ organisationId, selectedUserId, userRo
           : selectedAction === 'Manage user details and sign in method'
             ? `/portal/organisations/${organisationId}/users/${selectedUserId}/manage-details`
             : '#'
+  const radios = [
+    <Radio
+      key="change-permissions"
+      label="Change user permissions"
+      value="Change user permissions"
+      hint="Change what the user can do"
+      name="action"
+      error={radioError ? 'Select an option - No answer provided' : undefined}
+      onChange={() => {
+        setSelectedAction('Change user permissions')
+        setRadioError(false)
+      }}
+    />,
+
+    <Radio
+      key="deactivate"
+      label="Deactivate user"
+      value="Deactivate user"
+      hint="Temporarily remove the user's access to the system"
+      name="action"
+      onChange={() => {
+        setSelectedAction('Deactivate user')
+        setRadioError(false)
+      }}
+    />,
+    currentUserRole === 'Super'
+      ? [
+          <Radio
+            key="remove"
+            label="Remove user - not implemented yet"
+            value="Remove user"
+            hint="Permanently remove the user's access to the system"
+            name="action"
+            onChange={() => {
+              setSelectedAction('Remove user')
+              setRadioError(false)
+            }}
+          />,
+        ]
+      : [],
+
+    <Radio
+      key="manage"
+      label="Manage user details and sign in method  - not implemented yet"
+      value="Manage user details and sign in method"
+      hint="Update user details or sign in method"
+      name="action"
+      onChange={() => {
+        setSelectedAction('Manage user details and sign in method')
+        setRadioError(false)
+      }}
+    />,
+  ]
   return (
     <>
-      <FormGroup name="manage user's access">
-        <div>
-          <Radio
-            label="Change user permissions"
-            value="Change user permissions"
-            hint="Change what the user can do"
-            name="action"
-            onChange={() => setSelectedAction('Change user permissions')}
-          />
-          <Radio
-            label="Deactivate user"
-            value="Deactivate user"
-            hint="Temporarily remove the user's access to the system"
-            name="action"
-            onChange={() => setSelectedAction('Deactivate user')}
-          />
-
-          {userRole === 'Super' ? (
-            <Radio
-              label="Remove user  - not implemented yet"
-              value="Remove user"
-              hint="Permanently remove the user's access to the system"
-              name="action"
-              onChange={() => setSelectedAction('Remove user')}
-            />
-          ) : null}
-
-          <Radio
-            label="Manage user details and sign in method  - not implemented yet"
-            value="Manage user details and sign in method"
-            hint="Update user details or sign in method"
-            name="action"
-            onChange={() => setSelectedAction('Manage user details and sign in method')}
-          />
-        </div>
-      </FormGroup>
-      <Button elementType={Link} variant="cta" href={continueHref} aria-disabled={!selectedAction}>
+      <FormGroup name="manage user's access">{radios}</FormGroup>
+      <Button elementType={Link} variant="cta" href={continueHref}>
         Continue
       </Button>
     </>
