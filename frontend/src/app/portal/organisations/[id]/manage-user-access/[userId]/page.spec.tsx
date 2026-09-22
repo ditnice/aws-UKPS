@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserInformationDto } from '@/client/generated/types.gen'
+import type { UserInformationDto, UserRole } from '@/client/generated/types.gen'
 
 import ManageUserAccess from './page'
 
@@ -27,7 +27,7 @@ vi.mock('next/navigation', () => ({
     push: mocks.push,
   }),
 }))
-
+const userRole = 'Standard' as UserRole
 const user: UserInformationDto = {
   userId: 4,
   fullName: 'Julie Brooks',
@@ -36,14 +36,14 @@ const user: UserInformationDto = {
   organisationMembershipId: 9,
   organisationId: 2,
   organisationName: 'Example Pharma',
-  userRole: 'Standard',
+  userRole: userRole,
 }
-
+const currentUserRole = 'Super' as UserRole
 const currentUser = {
   userId: 10,
   fullName: 'Current User',
   workEmail: 'current.user@example.com',
-  userRole: 'Super',
+  userRole: currentUserRole,
 }
 
 function mockUserResponse(overrides: Partial<UserInformationDto> = {}) {
