@@ -60,6 +60,7 @@ No modules.
 | <a name="input_ecs_memory_allocation"></a> [ecs\_memory\_allocation](#input\_ecs\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The environment to deploy to (e.g. dev, test, staging, etc.) | `string` | n/a | yes |
 | <a name="input_execution_role_policy_json"></a> [execution\_role\_policy\_json](#input\_execution\_role\_policy\_json) | Optional IAM policy JSON attached to the ECS task execution role before the service starts | `string` | `null` | no |
+| <a name="input_health_check_grace_period_seconds"></a> [health\_check\_grace\_period\_seconds](#input\_health\_check\_grace\_period\_seconds) | Time to ignore failing load balancer health checks after an ECS task starts | `number` | `0` | no |
 | <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Container image tag | `string` | n/a | yes |
 | <a name="input_private_subnet_ids"></a> [private\_subnet\_ids](#input\_private\_subnet\_ids) | A list of VPC subnet IDs | `list(string)` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
