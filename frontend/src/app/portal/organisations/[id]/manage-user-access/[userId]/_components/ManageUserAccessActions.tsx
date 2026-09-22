@@ -47,10 +47,10 @@ export default function ManageUserAccessActions({
         return '#'
     }
   }
-  const continueHref = getContinueHref(selectedAction)
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
+    const continueHref = getContinueHref(selectedAction)
     if (!selectedAction) {
       setRadioError(true)
       return
@@ -118,7 +118,7 @@ export default function ManageUserAccessActions({
       >
         {radios}
       </FormGroup>
-      <Button type="submit" variant="cta" href={continueHref}>
+      <Button type="submit" variant="cta">
         Continue
       </Button>
     </form>
