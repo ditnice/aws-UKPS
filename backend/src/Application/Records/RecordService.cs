@@ -6,6 +6,8 @@ using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
+using UKPS.Api.Persistence.Entities.VaccinesRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using GetRecordsResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Records.Dtos.RecordListItemDto>,
@@ -113,58 +115,9 @@ internal partial class RecordService(
 
     private IQueryable<RecordInformationTrackingProjection> GetProjectedRecordInformation()
     {
-        var recordProjection = dbContext.Records.Select(x => new
-        {
-            x.Id,
-            x.OrganisationId,
-            x.RecordType,
-            x.RecordStatus,
-            x.ReviewedAt,
-            x.CurrentDraftRevisionId,
-            NextUpdateDue = x.ReviewedAt == null
-                ? (DateTime?)null
-                : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths),
-        });
-
-        return recordProjection
-            .GroupJoin(
-                dbContext.MedicinesProductDetails,
-                x => x.CurrentDraftRevisionId,
-                y => y.RevisionId,
-                (x, details) => new { x, details }
-            )
-            .SelectMany(x => x.details.DefaultIfEmpty(), (a, b) => new { a.x, productDetail = b })
-            .GroupJoin(
-                dbContext
-                    .MedicinesActiveSubstances.Where(s =>
-                        s.NameType == SubstanceNameType.DevelopmentName
-                    )
-                    .OrderBy(s => s.DisplayOrder),
-                x => x.productDetail != null ? x.productDetail.Id : (int?)null,
-                s => s.MedicinesProductDetailId,
-                (x, substances) =>
-                    new
-                    {
-                        x.x,
-                        x.productDetail,
-                        substances,
-                    }
-            )
-            .SelectMany(
-                x => x.substances.DefaultIfEmpty(),
-                (a, substance) =>
-                    new RecordInformationTrackingProjection
-                    {
-                        Id = a.x.Id,
-                        OrganisationId = a.x.OrganisationId,
-                        RecordType = a.x.RecordType,
-                        RecordStatus = a.x.RecordStatus,
-                        ReviewedAt = a.x.ReviewedAt,
-                        Title = a.productDetail != null ? a.productDetail.RecordTitle : null,
-                        DevelopmentName = substance != null ? substance.Name : null,
-                        NextUpdateDue = a.x.NextUpdateDue,
-                    }
-            );
+        return JoinSubstances(
+            JoinVaccinesProductDetails(JoinMedicinesProductDetails(GetBaseRecordProjection()))
+        );
     }
 
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(
@@ -260,4 +213,110 @@ internal partial class RecordService(
         public string? DevelopmentName { get; init; }
         public DateTime? NextUpdateDue { get; init; }
     }
+
+    private record BaseRecordProjection
+    {
+        public int Id { get; init; }
+        public int OrganisationId { get; init; }
+        public RecordType RecordType { get; init; }
+        public RecordStatus RecordStatus { get; init; }
+        public DateTime? ReviewedAt { get; init; }
+        public int? CurrentDraftRevisionId { get; init; }
+        public DateTime? NextUpdateDue { get; init; }
+    }
+
+    private record JoinedProductDetailProjection
+    {
+        public BaseRecordProjection Record { get; init; } = null!;
+        public MedicinesProductDetail? MedicinesDetail { get; init; }
+        public VaccinesProductDetail? VaccinesDetail { get; init; }
+    }
+
+    private IQueryable<BaseRecordProjection> GetBaseRecordProjection() =>
+        dbContext.Records.Select(x => new BaseRecordProjection
+        {
+            Id = x.Id,
+            OrganisationId = x.OrganisationId,
+            RecordType = x.RecordType,
+            RecordStatus = x.RecordStatus,
+            ReviewedAt = x.ReviewedAt,
+            CurrentDraftRevisionId = x.CurrentDraftRevisionId,
+            NextUpdateDue =
+                x.ReviewedAt == null
+                    ? null
+                    : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths),
+        });
+
+    private IQueryable<JoinedProductDetailProjection> JoinMedicinesProductDetails(
+        IQueryable<BaseRecordProjection> input
+    ) =>
+        input
+            .GroupJoin(
+                dbContext.MedicinesProductDetails,
+                x => x.CurrentDraftRevisionId,
+                y => y.RevisionId,
+                (x, details) => new { x, details }
+            )
+            .SelectMany(
+                x => x.details.DefaultIfEmpty(),
+                (a, b) => new JoinedProductDetailProjection { Record = a.x, MedicinesDetail = b }
+            );
+
+    private IQueryable<JoinedProductDetailProjection> JoinVaccinesProductDetails(
+        IQueryable<JoinedProductDetailProjection> input
+    ) =>
+        input
+            .GroupJoin(
+                dbContext.VaccinesProductDetails,
+                x => x.Record.CurrentDraftRevisionId,
+                y => y.RevisionId,
+                (x, details) => new { x, details }
+            )
+            .SelectMany(
+                x => x.details.DefaultIfEmpty(),
+                (a, b) =>
+                    new JoinedProductDetailProjection
+                    {
+                        Record = a.x.Record,
+                        MedicinesDetail = a.x.MedicinesDetail,
+                        VaccinesDetail = b,
+                    }
+            );
+
+    private IQueryable<RecordInformationTrackingProjection> JoinSubstances(
+        IQueryable<JoinedProductDetailProjection> input
+    ) =>
+        input
+            .GroupJoin(
+                dbContext
+                    .MedicinesActiveSubstances.Where(s =>
+                        s.NameType == SubstanceNameType.DevelopmentName
+                    )
+                    .OrderBy(s => s.DisplayOrder)
+                    .Take(1),
+                x => x.MedicinesDetail != null ? x.MedicinesDetail.Id : (int?)null,
+                s => s.MedicinesProductDetailId,
+                (x, substances) => new { x, substances }
+            )
+            .SelectMany(
+                x => x.substances.DefaultIfEmpty(),
+                (a, substance) =>
+                    new RecordInformationTrackingProjection
+                    {
+                        Id = a.x.Record.Id,
+                        OrganisationId = a.x.Record.OrganisationId,
+                        RecordType = a.x.Record.RecordType,
+                        RecordStatus = a.x.Record.RecordStatus,
+                        ReviewedAt = a.x.Record.ReviewedAt,
+                        NextUpdateDue = a.x.Record.NextUpdateDue,
+                        Title =
+                            a.x.MedicinesDetail != null ? a.x.MedicinesDetail.RecordTitle
+                            : a.x.VaccinesDetail != null ? a.x.VaccinesDetail.RecordTitle
+                            : null,
+                        DevelopmentName =
+                            substance != null ? substance.Name
+                            : a.x.VaccinesDetail != null ? a.x.VaccinesDetail.CompanyCode
+                            : null,
+                    }
+            );
 }

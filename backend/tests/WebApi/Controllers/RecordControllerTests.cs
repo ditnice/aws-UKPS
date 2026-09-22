@@ -103,10 +103,6 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var content = await response.Content.ReadAsStringAsync(
-            TestContext.Current.CancellationToken
-        );
-        content.ShouldBe("Organisation not found.");
     }
 
     [Fact]

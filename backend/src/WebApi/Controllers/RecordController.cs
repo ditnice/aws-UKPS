@@ -50,7 +50,11 @@ public class RecordController(IRecordService recordService) : ControllerBase
             error =>
                 error switch
                 {
-                    GetRecordsError.OrganisationNotFound => BadRequest("Organisation not found."),
+                    GetRecordsError.OrganisationNotFound => Problem(
+                        statusCode: StatusCodes.Status400BadRequest,
+                        title: "Bad Request",
+                        detail: "Organisation not found."
+                    ),
                     GetRecordsError.NotAllowed => Problem(
                         statusCode: StatusCodes.Status403Forbidden,
                         title: "Forbidden",
