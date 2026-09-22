@@ -33,17 +33,9 @@ internal sealed class Record
     // Navigation
     public Identity.Organisation? Organisation { get; set; }
     public Identity.User? CreatedByUser { get; set; }
-<<<<<<< HEAD
     public ICollection<RecordRevision> Revisions { get; set; } = [];
     public ICollection<RecordStatusHistory> StatusHistory { get; set; } = [];
     public ICollection<RecordEvent> Events { get; set; } = [];
-=======
-    public RecordRevision? PublishedRevision { get; set; }
-    public RecordRevision? CurrentDraftRevision { get; set; }
-    public ICollection<RecordRevision>? Revisions { get; set; }
-    public ICollection<RecordStatusHistory>? StatusHistory { get; set; }
-    public ICollection<RecordEvent>? Events { get; set; }
->>>>>>> 403324b8 (UKPS-547 - Fixed issue with initial events and did some tidying up.)
 
     internal static (Record record, RecordRevision recordRevision) CreateInitial(
         Organisation organisation,
@@ -67,7 +59,6 @@ internal sealed class Record
                     UpdatedByUser = currentUser,
                 },
             ],
-            Events = [],
         };
         RecordRevision revision = new RecordRevision()
         {
