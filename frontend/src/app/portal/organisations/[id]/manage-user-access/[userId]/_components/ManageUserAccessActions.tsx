@@ -14,14 +14,40 @@ interface Props {
   currentUserRole: string
 }
 
+type Actions =
+  | 'Change user permissions'
+  | 'Deactivate user'
+  | 'Remove user'
+  | 'Manage user details and sign in method'
+
 export default function ManageUserAccessActions({
   organisationId,
   selectedUserId,
   currentUserRole,
 }: Props) {
   const router = useRouter()
-  const [selectedAction, setSelectedAction] = useState('')
+  const [selectedAction, setSelectedAction] = useState<Actions | undefined>()
   const [radioError, setRadioError] = useState(false)
+
+  const getContinueHref = (selectedAction: Actions | undefined) => {
+    switch (selectedAction) {
+      case 'Change user permissions':
+        return `/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`
+
+      case 'Deactivate user':
+        return `/portal/organisations/${organisationId}/users/${selectedUserId}/deactivate`
+
+      case 'Remove user':
+        return `/portal/organisations/${organisationId}/users/${selectedUserId}/remove`
+
+      case 'Manage user details and sign in method':
+        return `/portal/organisations/${organisationId}/users/${selectedUserId}/manage-details`
+
+      default:
+        return '#'
+    }
+  }
+  const continueHref = getContinueHref(selectedAction)
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -31,16 +57,7 @@ export default function ManageUserAccessActions({
     }
     router.push(continueHref)
   }
-  const continueHref =
-    selectedAction === 'Change user permissions'
-      ? `/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/change-permissions`
-      : selectedAction === 'Deactivate user'
-        ? `/portal/organisations/${organisationId}/users/${selectedUserId}/deactivate`
-        : selectedAction === 'Remove user'
-          ? `/portal/organisations/${organisationId}/users/${selectedUserId}/remove`
-          : selectedAction === 'Manage user details and sign in method'
-            ? `/portal/organisations/${organisationId}/users/${selectedUserId}/manage-details`
-            : '#'
+
   const radios = [
     <Radio
       key="change-permissions"
