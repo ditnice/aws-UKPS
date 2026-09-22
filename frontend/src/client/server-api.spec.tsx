@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { config } from 'process'
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createServerApiClient } from './server-api'
 
@@ -21,6 +23,12 @@ async function createTestClient(): Promise<ClientWithFetch> {
   return (await createServerApiClient()) as unknown as ClientWithFetch
 }
 
+const defaultClient = { interceptors: { error: { use: vi.fn() } } }
+beforeEach(() => {
+  // mocks.createClient.mockImplementation((config) => ({ ...defaultClient, ...config }))
+  mocks.createClient.mockImplementation((config) => ({ ...config, ...defaultClient }))
+})
+
 afterEach(() => {
   vi.clearAllMocks()
   vi.unstubAllEnvs()
@@ -35,7 +43,7 @@ describe('createServerApiClient', () => {
     mocks.cookies.mockResolvedValue({ get: getCookie })
     mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal/organisations/1?page=2') })
     const request = vi.fn()
-    const client = { request }
+    const client = { ...defaultClient, request }
     mocks.createClient.mockReturnValue(client)
 
     expect((await createServerApiClient()).request).toBe(request)
@@ -53,7 +61,7 @@ describe('createServerApiClient', () => {
     vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
     mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
     mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal/organisations/1?page=2') })
-    mocks.createClient.mockImplementation((config) => config)
+    // mocks.createClient.mockImplementation((config) => config)
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }))
     vi.stubGlobal('fetch', fetchMock)
 
@@ -69,7 +77,6 @@ describe('createServerApiClient', () => {
     vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
     mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
     mocks.headers.mockResolvedValue({ get: vi.fn(() => null) })
-    mocks.createClient.mockImplementation((config) => config)
     vi.stubGlobal(
       'fetch',
       vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 })),
@@ -85,7 +92,6 @@ describe('createServerApiClient', () => {
     vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
     mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
     mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal') })
-    mocks.createClient.mockImplementation((config) => config)
     vi.stubGlobal(
       'fetch',
       vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 })),
@@ -102,7 +108,6 @@ describe('createServerApiClient', () => {
     vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
     mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
     mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal') })
-    mocks.createClient.mockImplementation((config) => config)
     const successResponse = new Response('{}', { status: 200 })
     vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(successResponse))
 
