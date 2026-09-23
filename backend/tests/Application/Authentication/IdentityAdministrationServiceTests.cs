@@ -20,7 +20,10 @@ using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError>;
+using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<
+    System.Guid,
+    UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError
+>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using UserSetupResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
@@ -291,6 +294,125 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
 
         result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.DoesNotExist>();
         _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenIdentifiedByCorrelationId_ShouldSucceedAndReplaceItWithANewToken()
+    {
+        // A freshly-onboarded record has no CorrelationId yet - it's only
+        // populated once a record has been through its first resend - so we
+        // resend once by SetupToken first to obtain one to resend by.
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 16);
+        ResendSetupTokenResult firstResendResult = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = entity.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+        Guid firstCorrelationId = firstResendResult.ShouldBeSuccess();
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { CorrelationId = firstCorrelationId },
+            TestContext.Current.CancellationToken
+        );
+
+        Guid secondCorrelationId = result.ShouldBeSuccess();
+        secondCorrelationId.ShouldNotBe(firstCorrelationId);
+
+        UserOnboardingRecord? newRecord = await _harness
+            .GetClearedContext()
+            .UserOnboardingRecords.FirstOrDefaultAsync(
+                x => x.UserId == entity.UserId,
+                TestContext.Current.CancellationToken
+            );
+        newRecord.ShouldNotBeNull();
+        newRecord.CorrelationId.ShouldBe(secondCorrelationId);
+        newRecord.SetupToken.ShouldNotBe(entity.SetupToken);
+        newRecord.ResendCount.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenIdentifiedByCorrelationId_ShouldSucceedAndEmailANewSetupLink()
+    {
+        _setupLinkCreator
+            .GetSetupLink(Arg.Any<Guid>())
+            .Returns(callInfo => new Uri($"https://example.com/setup/{callInfo.Arg<Guid>()}"));
+
+        // A freshly-onboarded record has no CorrelationId yet - it's only
+        // populated once a record has been through its first resend - so we
+        // resend once by SetupToken first to obtain one to resend by.
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 16);
+        ResendSetupTokenResult firstResendResult = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = entity.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+        Guid firstCorrelationId = firstResendResult.ShouldBeSuccess();
+        int emailsSentSoFar = _harness.Emails.Sent.Count;
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { CorrelationId = firstCorrelationId },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+        _harness.Emails.Sent.Count.ShouldBe(emailsSentSoFar + 1);
+
+        UserOnboardingRecord newRecord =
+            await _harness
+                .GetClearedContext()
+                .UserOnboardingRecords.FirstOrDefaultAsync(
+                    x => x.UserId == entity.UserId,
+                    TestContext.Current.CancellationToken
+                )
+            ?? throw new InvalidOperationException("Expected a replacement record.");
+
+        UserSignUpRequestEmail email = _harness
+            .Emails.Sent.Last()
+            .ShouldBeOfType<UserSignUpRequestEmail>();
+        email.Link.ShouldBe(new Uri($"https://example.com/setup/{newRecord.SetupToken}"));
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenCorrelationIdDoesNotExist_ReturnsDoesNotExistError()
+    {
+        Guid nonExistentCorrelationId = Guid.CreateVersion7();
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { CorrelationId = nonExistentCorrelationId },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.DoesNotExist>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenNeitherSetupTokenNorCorrelationIdIsSupplied_ReturnsInvalidRequestError()
+    {
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand(),
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.InvalidTokenCombination>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenBothSetupTokenAndCorrelationIdAreSupplied_ReturnsInvalidRequestError()
+    {
+        UserOnboardingRecord entity = await CreateUserOnboardingRecord(createdMinutesInThePast: 5);
+        int emailsSentDuringOnboarding = _harness.Emails.Sent.Count;
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand()
+            {
+                SetupToken = entity.SetupToken,
+                CorrelationId = Guid.CreateVersion7(),
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.InvalidTokenCombination>();
+        _harness.Emails.Sent.Count.ShouldBe(emailsSentDuringOnboarding);
     }
 
     [Theory]

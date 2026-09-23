@@ -124,13 +124,14 @@ module "ecs_frontend" {
   ecs_egress_cidr_blocks       = [module.networking.vpc_cidr]
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
   container_environment = {
-    BACKEND_API_BASE_URL   = "https://${module.alb.backend_host_name}"
-    COGNITO_CLIENT_ID      = module.cognito.app_client_id
-    COGNITO_ISSUER         = module.cognito.user_pool_issuer
-    DATABASE_HOST          = module.aurora_frontend.cluster_endpoint
-    DATABASE_NAME          = module.aurora_frontend.database_name
-    DATABASE_PORT          = tostring(module.aurora_frontend.port)
-    FRONTEND_PUBLIC_ORIGIN = "https://${module.alb.frontend_host_name}"
+    BACKEND_API_BASE_URL         = "https://${module.alb.backend_host_name}"
+    COGNITO_CLIENT_ID            = module.cognito.app_client_id
+    COGNITO_ISSUER               = module.cognito.user_pool_issuer
+    DATABASE_HOST                = module.aurora_frontend.cluster_endpoint
+    DATABASE_NAME                = module.aurora_frontend.database_name
+    DATABASE_PORT                = tostring(module.aurora_frontend.port)
+    FRONTEND_PUBLIC_ORIGIN       = "https://${module.alb.frontend_host_name}"
+    NEXT_PUBLIC_QA_SUPPORT_EMAIL = var.qa_support_email
   }
   container_secrets = {
     DATABASE_PASSWORD = "${module.aurora_frontend.master_user_secret_arn}:password::"

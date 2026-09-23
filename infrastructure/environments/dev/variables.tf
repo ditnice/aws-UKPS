@@ -71,6 +71,16 @@ variable "frontend_image_repository_url" {
   }
 }
 
+variable "qa_support_email" {
+  description = "Contact QA support team email address"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.qa_support_email))
+    error_message = "QA support email must be a valid email address."
+  }
+}
+
 variable "backend_image_repository_url" {
   description = "Container image repository URL for the backend service, without an image tag or digest"
   type        = string
