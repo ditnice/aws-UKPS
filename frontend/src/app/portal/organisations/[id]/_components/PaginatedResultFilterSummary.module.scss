@@ -1,0 +1,8 @@
+// The design system sizes the count to 50% of the (previously full-width)
+// FilterSummary; as a flex item here it should just take its own content
+// width. The wrapper class scopes this override to this specific
+// FilterSummary instance, not every one inside a `.table-toolbar`.
+.users-filter-summary [class~='filter-summary__count'] {
+  float: none;
+  width: auto;
+}

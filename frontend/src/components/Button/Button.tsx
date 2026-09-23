@@ -31,19 +31,12 @@ export function Button({
       <NdsButton
         {...props}
         buttonType={buttonType}
-        className={clsx(styles.customButton, styles.linkButton, className)}
+        className={clsx(styles.linkButton, className)}
       />
     )
   }
 
-  return (
-    <NdsButton
-      {...props}
-      buttonType={buttonType}
-      className={clsx(styles.customButton, className)}
-      variant={variant}
-    />
-  )
+  return <NdsButton {...props} buttonType={buttonType} className={className} variant={variant} />
 }
 
 export function ButtonGroup({ children, className, ...props }: ButtonGroupProps) {

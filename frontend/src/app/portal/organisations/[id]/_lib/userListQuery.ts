@@ -119,7 +119,10 @@ export const getUpdatedQueryWithoutFilter = (
   return buildQueryFromFilters(remainingFilters, query)
 }
 
-const buildQueryFromFilters = (filters: Filter[], initialQuery: UserListQuery): UserListQuery => ({
+export const buildQueryFromFilters = (
+  filters: Filter[],
+  initialQuery: UserListQuery,
+): UserListQuery => ({
   ...initialQuery,
   status: filters.filter((filter) => filter.key === 'status').map((filter) => filter.value),
   role: filters.filter((filter) => filter.key === 'role').map((filter) => filter.value),

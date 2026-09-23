@@ -9,9 +9,9 @@ repos:
         args: ['--allow-missing-credentials']
       - id: detect-private-key
       - id: end-of-file-fixer
-        exclude: ^(backend/openapi/UKPS\.Api\.json|frontend/src/payload-types\.ts)$
+        exclude: ^(backend/openapi/UKPS\.Api\.json|frontend/src/payload-types\.ts|frontend/src/migrations/.*)$
       - id: trailing-whitespace
-        exclude: \.snap$
+        exclude: (\.snap$|^frontend/src/migrations/.*)
       - id: check-yaml
 
   # Terraform

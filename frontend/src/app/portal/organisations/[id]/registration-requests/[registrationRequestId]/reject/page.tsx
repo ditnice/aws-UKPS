@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
+import { buildUserActionHref } from '../../../_lib/userActionAlert'
 import ModifyUserMembershipRequestControls from '../ModifyUserMembershipRequestControls'
 import UserMembershipRetrievalWrapper from '../UserMembershipRetrievalWrapper'
 
@@ -38,7 +39,10 @@ export default async function RejectUser({ params }: Props) {
               action="Reject"
               organisationId={organisationId}
               registrationRequestId={parsedRegistrationRequestId}
-              successLink={`${organisationHref}`}
+              successLink={buildUserActionHref(organisationId, {
+                action: 'rejected-request',
+                userRequestId: parsedRegistrationRequestId,
+              })}
               backLink={organisationHref}
             />
           </>

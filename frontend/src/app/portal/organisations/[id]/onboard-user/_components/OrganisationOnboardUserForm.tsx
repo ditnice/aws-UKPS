@@ -102,7 +102,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
       router.push(
         newUserId === undefined
           ? rootHref
-          : buildUserActionHref(organisationId, 'invited', newUserId),
+          : buildUserActionHref(organisationId, { action: 'invited', userId: newUserId }),
       )
     },
   })

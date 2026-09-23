@@ -70,11 +70,10 @@ describe('ReactivateUserControls', () => {
     fireEvent.click(getActionButton())
     await waitFor(() => {
       expect(mocks.push).toHaveBeenCalledExactlyOnceWith(mockHref)
-      expect(mocks.buildUserActionHref).toHaveBeenCalledWith(
-        defaultProps.organisationId,
-        'reactivated',
-        defaultProps.userId,
-      )
+      expect(mocks.buildUserActionHref).toHaveBeenCalledWith(defaultProps.organisationId, {
+        action: 'reactivated',
+        userId: defaultProps.userId,
+      })
     })
   })
   it('shows an error state on error', async () => {

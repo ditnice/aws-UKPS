@@ -1,8 +1,16 @@
 import type { GetUsersQuerySortValue, UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import type { TagColour } from '@/components/Tag/Tag'
 
+const organisationUserTableHeaderKeys = [
+  'email',
+  'role',
+  'status',
+  'lastActive',
+  'actions',
+] as const
+export type OrganisationUserTableHeaderKey = (typeof organisationUserTableHeaderKeys)[number]
 export type OrganisationUserTableHeader = {
-  key: string
+  key: OrganisationUserTableHeaderKey
   label: string
   sortColumn: GetUsersQuerySortValue | null
 }

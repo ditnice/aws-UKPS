@@ -91,7 +91,6 @@ internal partial class UserService(
             Operation.Read
         );
         IQueryable<UserInformationTrackingProjection> unionQuery = GetProjectedUserInformation();
-
         IQueryable<UserInformationTrackingProjection> organisationMemberships = ApplyFilters(
             unionQuery,
             permittedOrganisationIds,
@@ -135,6 +134,43 @@ internal partial class UserService(
         );
     }
 
+    public async Task<GetUserInformationResult> GetUserDetailsWithinOrganisation(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        GetUsersError? organisationError = await ValidateOrganisationAsync(
+            organisationId,
+            Operation.ElevatedRead,
+            cancellationToken
+        );
+        if (organisationError is not null)
+        {
+            return GetUserInformationResult.Err(organisationError);
+        }
+
+        UserInformationDto? user = await dbContext
+            .UserOrgMemberships.AsNoTracking()
+            .Where(m => m.UserId == userId && m.OrganisationId == organisationId)
+            .Select(m => new UserInformationDto
+            {
+                UserId = m.User!.Id,
+                FullName = m.User.FullName,
+                WorkTelephone = m.User.WorkTelephone ?? string.Empty,
+                WorkEmail = m.User.WorkEmail,
+                OrganisationMembershipId = m.Id,
+                OrganisationId = m.OrganisationId,
+                OrganisationName = m.Organisation!.OrganisationName,
+                UserRole = m.UserRole,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return user is null
+            ? GetUserInformationResult.Err(new GetUsersError.UserNotFound(userId, organisationId))
+            : GetUserInformationResult.Ok(user);
+    }
+
     private IQueryable<UserInformationTrackingProjection> GetProjectedUserInformation()
     {
         var userOrgMembershipProjection = dbContext.UserOrgMemberships.Select(x => new
@@ -148,15 +184,9 @@ internal partial class UserService(
             OrganisationId = x.Organisation!.Id,
             x.User.LastActive,
         });
-        var mostRecentValues = dbContext.UserRegistrationRequests.Where(x =>
-            x.CreatedAt
-            == dbContext
-                .UserRegistrationRequests.Where(y =>
-                    y.WorkEmail == x.WorkEmail && y.OrganisationId == x.OrganisationId
-                )
-                .Max(y => y.CreatedAt)
-        );
-        var activeMostRecentValues = mostRecentValues.Where(x => x.RejectedAt == null);
+
+        IQueryable<UserRegistrationRequest> activeMostRecentValues =
+            GetMostRecentActiveRegistrationRequests();
         var userRegistrationRequestsProjections = activeMostRecentValues.Select(x => new
         {
             UserId = (int?)null,
@@ -198,6 +228,23 @@ internal partial class UserService(
             );
     }
 
+    private IQueryable<UserRegistrationRequest> GetMostRecentActiveRegistrationRequests()
+    {
+        IQueryable<UserRegistrationRequest> mostRecentValues =
+            dbContext.UserRegistrationRequests.Where(x =>
+                x.CreatedAt
+                == dbContext
+                    .UserRegistrationRequests.Where(y =>
+                        y.WorkEmail == x.WorkEmail && y.OrganisationId == x.OrganisationId
+                    )
+                    .Max(y => y.CreatedAt)
+            );
+        IQueryable<UserRegistrationRequest> activeMostRecentValues = mostRecentValues.Where(x =>
+            x.RejectedAt == null && x.ApprovedAt == null
+        );
+        return activeMostRecentValues;
+    }
+
     private UserMembershipAction[] GetPermittedActions(UserInformationTrackingProjection m)
     {
         var currentUserInfo = currentUserInfoService.GetCurrentUserInfo();
@@ -225,43 +272,6 @@ internal partial class UserService(
         throw new InvalidOperationException(
             "UserInformationTrackingProjection was in an invalid state"
         );
-    }
-
-    public async Task<GetUserInformationResult> GetUserDetailsWithinOrganisation(
-        int userId,
-        int organisationId,
-        CancellationToken cancellationToken
-    )
-    {
-        GetUsersError? organisationError = await ValidateOrganisationAsync(
-            organisationId,
-            Operation.ElevatedRead,
-            cancellationToken
-        );
-        if (organisationError is not null)
-        {
-            return GetUserInformationResult.Err(organisationError);
-        }
-
-        UserInformationDto? user = await dbContext
-            .UserOrgMemberships.AsNoTracking()
-            .Where(m => m.UserId == userId && m.OrganisationId == organisationId)
-            .Select(m => new UserInformationDto
-            {
-                UserId = m.User!.Id,
-                FullName = m.User.FullName,
-                WorkTelephone = m.User.WorkTelephone ?? string.Empty,
-                WorkEmail = m.User.WorkEmail,
-                OrganisationMembershipId = m.Id,
-                OrganisationId = m.OrganisationId,
-                OrganisationName = m.Organisation!.OrganisationName,
-                UserRole = m.UserRole,
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        return user is null
-            ? GetUserInformationResult.Err(new GetUsersError.UserNotFound(userId, organisationId))
-            : GetUserInformationResult.Ok(user);
     }
 
     private static IQueryable<UserInformationTrackingProjection> Sort(

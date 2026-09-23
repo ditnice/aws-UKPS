@@ -5,26 +5,108 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10, < 2.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11, < 2.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.7 |
 
 ## Providers
 
-No providers.
+| Name | Version |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_alb"></a> [alb](#module\_alb) | ../../modules/alb | n/a |
+| <a name="module_aurora_backend"></a> [aurora\_backend](#module\_aurora\_backend) | ../../modules/aurora | n/a |
+| <a name="module_aurora_frontend"></a> [aurora\_frontend](#module\_aurora\_frontend) | ../../modules/aurora | n/a |
+| <a name="module_backend_aurora_alerts"></a> [backend\_aurora\_alerts](#module\_backend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
+| <a name="module_backend_ecs_alerts"></a> [backend\_ecs\_alerts](#module\_backend\_ecs\_alerts) | ../../modules/cloudwatch/ecs-alerts | n/a |
+| <a name="module_cognito"></a> [cognito](#module\_cognito) | ../../modules/cognito | n/a |
+| <a name="module_db_migrator_lambda"></a> [db\_migrator\_lambda](#module\_db\_migrator\_lambda) | ../../modules/lambda/dbMigrator | n/a |
+| <a name="module_ecs_backend"></a> [ecs\_backend](#module\_ecs\_backend) | ../../modules/ecs | n/a |
+| <a name="module_ecs_frontend"></a> [ecs\_frontend](#module\_ecs\_frontend) | ../../modules/ecs | n/a |
+| <a name="module_frontend_aurora_alerts"></a> [frontend\_aurora\_alerts](#module\_frontend\_aurora\_alerts) | ../../modules/cloudwatch/rds-alerts | n/a |
+| <a name="module_frontend_ecs_alerts"></a> [frontend\_ecs\_alerts](#module\_frontend\_ecs\_alerts) | ../../modules/cloudwatch/ecs-alerts | n/a |
+| <a name="module_kms_backend"></a> [kms\_backend](#module\_kms\_backend) | ../../modules/kms | n/a |
+| <a name="module_kms_frontend"></a> [kms\_frontend](#module\_kms\_frontend) | ../../modules/kms | n/a |
+| <a name="module_networking"></a> [networking](#module\_networking) | ../../modules/networking | n/a |
+| <a name="module_route53"></a> [route53](#module\_route53) | ../../modules/route53 | n/a |
+| <a name="module_ses"></a> [ses](#module\_ses) | ../../modules/ses | n/a |
+| <a name="module_sns"></a> [sns](#module\_sns) | ../../modules/sns | n/a |
+| <a name="module_sqs_email_backend"></a> [sqs\_email\_backend](#module\_sqs\_email\_backend) | ../../modules/sqs | n/a |
+| <a name="module_sqs_email_backend_alerts"></a> [sqs\_email\_backend\_alerts](#module\_sqs\_email\_backend\_alerts) | ../../modules/cloudwatch/sqs-alerts | n/a |
 
 ## Resources
 
-No resources.
+| Name | Type |
+| ---- | ---- |
+| [aws_db_subnet_group.aurora](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group) | resource |
+| [aws_secretsmanager_secret.frontend_payload_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
+| [aws_secretsmanager_secret_version.frontend_payload_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
+| [aws_iam_policy_document.backend_cognito](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.backend_cognito_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.frontend_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
-No inputs.
+| Name | Description | Type | Default | Required |
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_aurora_allow_major_version_upgrade"></a> [aurora\_allow\_major\_version\_upgrade](#input\_aurora\_allow\_major\_version\_upgrade) | Whether major engine version upgrades are allowed | `bool` | `false` | no |
+| <a name="input_aurora_apply_immediately"></a> [aurora\_apply\_immediately](#input\_aurora\_apply\_immediately) | Whether Aurora changes are applied immediately instead of during the maintenance window | `bool` | `true` | no |
+| <a name="input_aurora_enable_http_endpoint"></a> [aurora\_enable\_http\_endpoint](#input\_aurora\_enable\_http\_endpoint) | Whether the RDS Data API HTTP endpoint is enabled | `bool` | `true` | no |
+| <a name="input_aurora_engine_version"></a> [aurora\_engine\_version](#input\_aurora\_engine\_version) | SQL Engine version | `string` | `"17.9"` | no |
+| <a name="input_aurora_final_snapshot_identifier"></a> [aurora\_final\_snapshot\_identifier](#input\_aurora\_final\_snapshot\_identifier) | Identifier for the final snapshot when skip\_final\_snapshot is false | `string` | `"ukps-test-aurora-final-snapshot"` | no |
+| <a name="input_aurora_preferred_backup_window"></a> [aurora\_preferred\_backup\_window](#input\_aurora\_preferred\_backup\_window) | Daily time range during which automated backups are created | `string` | `"02:00-03:00"` | no |
+| <a name="input_aurora_preferred_maintenance_window"></a> [aurora\_preferred\_maintenance\_window](#input\_aurora\_preferred\_maintenance\_window) | Weekly time range during which system maintenance can occur | `string` | `"sun:03:00-sun:04:00"` | no |
+| <a name="input_aurora_skip_final_snapshot"></a> [aurora\_skip\_final\_snapshot](#input\_aurora\_skip\_final\_snapshot) | Whether to skip creating a final snapshot when the Aurora cluster is destroyed | `bool` | `true` | no |
+| <a name="input_backend_container_port"></a> [backend\_container\_port](#input\_backend\_container\_port) | Port on which the target container listens | `number` | `8080` | no |
+| <a name="input_backend_db_master_username"></a> [backend\_db\_master\_username](#input\_backend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
+| <a name="input_backend_db_name"></a> [backend\_db\_name](#input\_backend\_db\_name) | Name of the backend database | `string` | `"ukpstest_backend"` | no |
+| <a name="input_backend_image_repository_url"></a> [backend\_image\_repository\_url](#input\_backend\_image\_repository\_url) | Container image repository URL for the backend service, without an image tag or digest | `string` | n/a | yes |
+| <a name="input_base_domain_name"></a> [base\_domain\_name](#input\_base\_domain\_name) | Base DNS domain used to build workload hostnames | `string` | `"ukps.nice.org.uk"` | no |
+| <a name="input_cloudfront_distribution_id"></a> [cloudfront\_distribution\_id](#input\_cloudfront\_distribution\_id) | ID of the existing CloudFront distribution used by the Route53 alias records | `string` | n/a | yes |
+| <a name="input_connection_threshold"></a> [connection\_threshold](#input\_connection\_threshold) | Threshold for the number of database connections to trigger an alarm | `number` | `100` | no |
+| <a name="input_ecs_backend_cpu_allocation"></a> [ecs\_backend\_cpu\_allocation](#input\_ecs\_backend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
+| <a name="input_ecs_backend_memory_allocation"></a> [ecs\_backend\_memory\_allocation](#input\_ecs\_backend\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |
+| <a name="input_ecs_capacity_provider"></a> [ecs\_capacity\_provider](#input\_ecs\_capacity\_provider) | The capacity provider to use for the ECS cluster | `string` | `"FARGATE"` | no |
+| <a name="input_ecs_capacity_providers"></a> [ecs\_capacity\_providers](#input\_ecs\_capacity\_providers) | A list of capacity providers to use for the ECS cluster | `list(string)` | <pre>[<br/>  "FARGATE"<br/>]</pre> | no |
+| <a name="input_ecs_frontend_cpu_allocation"></a> [ecs\_frontend\_cpu\_allocation](#input\_ecs\_frontend\_cpu\_allocation) | The amount of CPU to allocate to the ECS task | `number` | `256` | no |
+| <a name="input_ecs_frontend_memory_allocation"></a> [ecs\_frontend\_memory\_allocation](#input\_ecs\_frontend\_memory\_allocation) | The amount of memory to allocate to the ECS task | `number` | `512` | no |
+| <a name="input_ecs_log_retention"></a> [ecs\_log\_retention](#input\_ecs\_log\_retention) | The number of days to retain the logs in CloudWatch | `number` | `365` | no |
+| <a name="input_frontend_container_port"></a> [frontend\_container\_port](#input\_frontend\_container\_port) | Port on which the target container listens | `number` | `3000` | no |
+| <a name="input_frontend_db_master_username"></a> [frontend\_db\_master\_username](#input\_frontend\_db\_master\_username) | Master username for the Aurora cluster | `string` | `"ukpsadmin"` | no |
+| <a name="input_frontend_db_name"></a> [frontend\_db\_name](#input\_frontend\_db\_name) | Name of the frontend database | `string` | `"ukpstest_frontend"` | no |
+| <a name="input_frontend_image_repository_url"></a> [frontend\_image\_repository\_url](#input\_frontend\_image\_repository\_url) | Container image repository URL for the frontend service, without an image tag or digest | `string` | n/a | yes |
+| <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Container image tag for the frontend and backend services and the migrator Lambda | `string` | n/a | yes |
+| <a name="input_migrator_image_repository_url"></a> [migrator\_image\_repository\_url](#input\_migrator\_image\_repository\_url) | Container image repository URL for the backend database migration Lambda, without an image tag or digest | `string` | n/a | yes |
+| <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
+| <a name="input_seeded_super_users"></a> [seeded\_super\_users](#input\_seeded\_super\_users) | Super users added to seeded backend data for organisation ID 1 | <pre>list(object({<br/>    fullName        = string<br/>    email           = string<br/>    cognitoUsername = string<br/>  }))</pre> | `[]` | no |
+| <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | <pre>list(object({<br/>    name  = string<br/>    email = string<br/>  }))</pre> | n/a | yes |
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+| ---- | ----------- |
+| <a name="output_backend_aurora_endpoint"></a> [backend\_aurora\_endpoint](#output\_backend\_aurora\_endpoint) | Test Aurora writer endpoint |
+| <a name="output_backend_ecs_cluster_name"></a> [backend\_ecs\_cluster\_name](#output\_backend\_ecs\_cluster\_name) | Test ECS cluster name |
+| <a name="output_backend_host_name"></a> [backend\_host\_name](#output\_backend\_host\_name) | Backend hostname routed by the test ALB listener |
+| <a name="output_backend_target_group_arn"></a> [backend\_target\_group\_arn](#output\_backend\_target\_group\_arn) | Backend ALB target group ARN |
+| <a name="output_base_domain_name_servers"></a> [base\_domain\_name\_servers](#output\_base\_domain\_name\_servers) | Route53 authoritative name servers for the base domain |
+| <a name="output_base_domain_zone_id"></a> [base\_domain\_zone\_id](#output\_base\_domain\_zone\_id) | Route53 hosted zone ID for the base domain |
+| <a name="output_cloudfront_distribution_aliases"></a> [cloudfront\_distribution\_aliases](#output\_cloudfront\_distribution\_aliases) | Alternate domain names configured on the CloudFront distribution |
+| <a name="output_cloudfront_distribution_domain_name"></a> [cloudfront\_distribution\_domain\_name](#output\_cloudfront\_distribution\_domain\_name) | Domain name of the CloudFront distribution |
+| <a name="output_cloudfront_distribution_status"></a> [cloudfront\_distribution\_status](#output\_cloudfront\_distribution\_status) | Deployment status of the CloudFront distribution |
+| <a name="output_cognito_app_client_id"></a> [cognito\_app\_client\_id](#output\_cognito\_app\_client\_id) | ID of the test Cognito backend app client |
+| <a name="output_cognito_user_pool_arn"></a> [cognito\_user\_pool\_arn](#output\_cognito\_user\_pool\_arn) | ARN of the test Cognito user pool |
+| <a name="output_cognito_user_pool_id"></a> [cognito\_user\_pool\_id](#output\_cognito\_user\_pool\_id) | ID of the test Cognito user pool |
+| <a name="output_cognito_user_pool_issuer"></a> [cognito\_user\_pool\_issuer](#output\_cognito\_user\_pool\_issuer) | OIDC issuer URL of the test Cognito user pool |
+| <a name="output_frontend_aurora_endpoint"></a> [frontend\_aurora\_endpoint](#output\_frontend\_aurora\_endpoint) | Test Aurora writer endpoint |
+| <a name="output_frontend_ecs_cluster_name"></a> [frontend\_ecs\_cluster\_name](#output\_frontend\_ecs\_cluster\_name) | Test ECS cluster name |
+| <a name="output_frontend_host_name"></a> [frontend\_host\_name](#output\_frontend\_host\_name) | Frontend hostname routed by the test ALB listener |
+| <a name="output_frontend_target_group_arn"></a> [frontend\_target\_group\_arn](#output\_frontend\_target\_group\_arn) | Frontend ALB target group ARN |
+| <a name="output_route53_a_record_fqdns"></a> [route53\_a\_record\_fqdns](#output\_route53\_a\_record\_fqdns) | FQDNs of the Route53 A records |
+| <a name="output_route53_aaaa_record_fqdns"></a> [route53\_aaaa\_record\_fqdns](#output\_route53\_aaaa\_record\_fqdns) | FQDNs of the Route53 AAAA records |
 <!-- END_TF_DOCS -->

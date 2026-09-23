@@ -1,3 +1,4 @@
+using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Shouldly;
@@ -80,6 +81,26 @@ public class DatabaseConstraintTests : DatabaseTestBase
             exception.InnerException.ShouldBeOfType<PostgresException>();
         postgresException.ConstraintName.ShouldBe(
             ConstraintNames.UserMembershipRequiresOrganisation
+        );
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_Test()
+    {
+        Faker<UserRegistrationRequest> faker = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, new OrganisationFaker().Generate())
+            .RuleFor(x => x.RejectedAt, f => DateTime.SpecifyKind(f.Date.Past(), DateTimeKind.Utc))
+            .RuleFor(x => x.ApprovedAt, f => DateTime.SpecifyKind(f.Date.Past(), DateTimeKind.Utc));
+        UserRegistrationRequest entity = faker.Generate();
+        Context.Add(entity);
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        PostgresException postgresException =
+            exception.InnerException.ShouldBeOfType<PostgresException>();
+        postgresException.ConstraintName.ShouldBe(
+            ConstraintNames.MembershipRequestsShouldNotBeApprovedAndRejected
         );
     }
 

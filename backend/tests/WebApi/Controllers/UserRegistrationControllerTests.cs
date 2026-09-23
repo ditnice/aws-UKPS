@@ -207,6 +207,28 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     }
 
     [Fact]
+    public async Task ApproveRequest_OnBadRequestResult_ReturnsBadRequest()
+    {
+        ApproveRequestError[] badRequestResults =
+        [
+            new ApproveRequestError.InvalidOrganisation(),
+            new ApproveRequestError.UserAlreadyExists(),
+            new ApproveRequestError.RegistrationRejected(),
+        ];
+        foreach (var result in badRequestResults)
+        {
+            _mock
+                .ApproveRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                .Returns(Result<ApproveRequestError>.Err(result));
+            HttpResponseMessage response = await SendApproveRequest(
+                ExistingOrganisationId,
+                ExistingRegistrationRequestId
+            );
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        }
+    }
+
+    [Fact]
     public async Task RejectRequest_OnValidRequest_ReturnsOk()
     {
         HttpResponseMessage response = await SendRejectRequest(
@@ -247,6 +269,19 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
             ExistingRegistrationRequestId
         );
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task RejectRequest_RegistrationAlreadyApproved_ReturnsBadRequest()
+    {
+        _mock
+            .RejectRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Result<RejectRequestError>.Err(new RejectRequestError.RegistrationApproved()));
+        HttpResponseMessage response = await SendRejectRequest(
+            ExistingOrganisationId,
+            ExistingRegistrationRequestId
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     private async Task<HttpResponseMessage> SendRegisterUserRequest(

@@ -50,12 +50,32 @@ export type CreateOrganisationDto = {
 /**
  * Specifies the fields by which records can be sorted.
  */
-export type GetRecordsQuerySortValue = 'NextUpdateDue' | 'Id' | 'DevelopmentName' | 'RecordStatus';
+export const GetRecordsQuerySortValue = {
+    NEXT_UPDATE_DUE: 'NextUpdateDue',
+    ID: 'Id',
+    DEVELOPMENT_NAME: 'DevelopmentName',
+    RECORD_STATUS: 'RecordStatus'
+} as const;
+
+/**
+ * Specifies the fields by which records can be sorted.
+ */
+export type GetRecordsQuerySortValue = typeof GetRecordsQuerySortValue[keyof typeof GetRecordsQuerySortValue];
 
 /**
  * Specifies the fields by which users can be sorted when querying users.
  */
-export type GetUsersQuerySortValue = 'LastActive' | 'Email' | 'Role' | 'Status';
+export const GetUsersQuerySortValue = {
+    LAST_ACTIVE: 'LastActive',
+    EMAIL: 'Email',
+    ROLE: 'Role',
+    STATUS: 'Status'
+} as const;
+
+/**
+ * Specifies the fields by which users can be sorted when querying users.
+ */
+export type GetUsersQuerySortValue = typeof GetUsersQuerySortValue[keyof typeof GetUsersQuerySortValue];
 
 /**
  * Represents the credentials provided by a user when attempting to authenticate.
@@ -219,7 +239,17 @@ export type OrganisationMembershipDto = {
 /**
  * Represents the different types of organisations within the system.
  */
-export type OrganisationType = 'PharmaCompany' | 'HorizonScanning' | 'Strategic' | 'Internal';
+export const OrganisationType = {
+    PHARMA_COMPANY: 'PharmaCompany',
+    HORIZON_SCANNING: 'HorizonScanning',
+    STRATEGIC: 'Strategic',
+    INTERNAL: 'Internal'
+} as const;
+
+/**
+ * Represents the different types of organisations within the system.
+ */
+export type OrganisationType = typeof OrganisationType[keyof typeof OrganisationType];
 
 /**
  * Represents a paginated response containing a collection of items and pagination metadata.
@@ -313,12 +343,27 @@ export type RecordListItemDto = {
 /**
  * Represents the status of a record in the system.
  */
-export type RecordStatus = 'Unpublished' | 'Active' | 'OnHold' | 'Archived';
+export const RecordStatus = {
+    UNPUBLISHED: 'Unpublished',
+    ACTIVE: 'Active',
+    ON_HOLD: 'OnHold',
+    ARCHIVED: 'Archived'
+} as const;
+
+/**
+ * Represents the status of a record in the system.
+ */
+export type RecordStatus = typeof RecordStatus[keyof typeof RecordStatus];
 
 /**
  * Represents the type of a record, such as Medicine or Vaccine.
  */
-export type RecordType = 'Medicine' | 'Vaccine';
+export const RecordType = { MEDICINE: 'Medicine', VACCINE: 'Vaccine' } as const;
+
+/**
+ * Represents the type of a record, such as Medicine or Vaccine.
+ */
+export type RecordType = typeof RecordType[keyof typeof RecordType];
 
 /**
  * Represents the information required to register a new user.
@@ -414,9 +459,16 @@ export type SetupUserCommand = {
 /**
  * Specifies the direction in which query results are sorted.
  */
-export type SortDirection = 'Ascending' | 'Descending';
+export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' } as const;
 
-export type UkpsChallengeType = 'MultiFactorAuthenticationRequired' | 'MultiFactorAuthenticationSetupRequired';
+/**
+ * Specifies the direction in which query results are sorted.
+ */
+export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
+
+export const UkpsChallengeType = { MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'MultiFactorAuthenticationRequired', MULTI_FACTOR_AUTHENTICATION_SETUP_REQUIRED: 'MultiFactorAuthenticationSetupRequired' } as const;
+
+export type UkpsChallengeType = typeof UkpsChallengeType[keyof typeof UkpsChallengeType];
 
 /**
  * Represents the data transfer object for updating organisation details.
@@ -575,22 +627,65 @@ export type UserListItemDto = {
 /**
  * Defines the actions that can be performed on a user's membership.
  */
-export type UserMembershipAction = 'ApproveMembership' | 'RejectMembership' | 'DeactivateMembership' | 'ReactivateMembership' | 'EditUserRole';
+export const UserMembershipAction = {
+    APPROVE_MEMBERSHIP: 'ApproveMembership',
+    REJECT_MEMBERSHIP: 'RejectMembership',
+    DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
+    REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
+    EDIT_USER_ROLE: 'EditUserRole'
+} as const;
+
+/**
+ * Defines the actions that can be performed on a user's membership.
+ */
+export type UserMembershipAction = typeof UserMembershipAction[keyof typeof UserMembershipAction];
 
 /**
  * Represents the status of a user's association with an organisation.
  */
-export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Rejected' | 'Inactive' | 'Deactivated';
+export const UserOrgStatus = {
+    REQUESTED_ACCESS: 'RequestedAccess',
+    AWAITING_SETUP: 'AwaitingSetup',
+    ACTIVE: 'Active',
+    REJECTED: 'Rejected',
+    INACTIVE: 'Inactive',
+    DEACTIVATED: 'Deactivated'
+} as const;
+
+/**
+ * Represents the status of a user's association with an organisation.
+ */
+export type UserOrgStatus = typeof UserOrgStatus[keyof typeof UserOrgStatus];
 
 /**
  * Represents the different roles a user can have within the system.
  */
-export type UserRole = 'Standard' | 'Champion' | 'Super';
+export const UserRole = {
+    STANDARD: 'Standard',
+    CHAMPION: 'Champion',
+    SUPER: 'Super'
+} as const;
+
+/**
+ * Represents the different roles a user can have within the system.
+ */
+export type UserRole = typeof UserRole[keyof typeof UserRole];
 
 /**
  * Represents the different types of users in the system.
  */
-export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUser' | 'ItAdmin';
+export const UserType = {
+    PHARMA_USER: 'PharmaUser',
+    HORIZON_SCANNER: 'HorizonScanner',
+    STRATEGIC_USER: 'StrategicUser',
+    QA_USER: 'QaUser',
+    IT_ADMIN: 'ItAdmin'
+} as const;
+
+/**
+ * Represents the different types of users in the system.
+ */
+export type UserType = typeof UserType[keyof typeof UserType];
 
 export type ValidationProblemDetails = {
     type?: null | string;

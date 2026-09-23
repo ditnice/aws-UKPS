@@ -1,22 +1,10 @@
 import Link from 'next/link'
 
-import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
-import { FilterSummary } from '@nice-digital/nds-filters'
-import { Grid, GridItem } from '@nice-digital/nds-grid'
-
 import type { Client } from '@/client/generated/client'
 import { getUsers } from '@/client/generated/sdk.gen'
-import type {
-  UserListItemDto,
-  UserMembershipAction,
-  GetUsersQuerySortValue,
-} from '@/client/generated/types.gen'
+import type { UserListItemDto, UserMembershipAction } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
-import { Table } from '@/components/Table/Table'
-import { TableSortDirection, TableSortHeaderLink } from '@/components/Table/TableSortHeader'
 import { Tag } from '@/components/Tag/Tag'
-import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
-import { getNextSortDirection } from '@/lib/search-and-filter/query'
 
 import {
   lastActivePresetDays,
@@ -26,30 +14,16 @@ import {
   statusTagColours,
   type LastActivePreset,
 } from '../_lib/userLabels'
-import {
-  buildUserListHref,
-  getActiveFilters,
-  getUpdatedQueryWithoutFilter,
-  type UserListQuery,
-} from '../_lib/userListQuery'
+import { buildUserListSearchParams, type UserListQuery } from '../_lib/userListQuery'
 import styles from '../page.module.scss'
 
+import { ApplicationTableWithPagination } from './ApplicationTable'
 import { UserFilterSummary } from './UserFilterSummary'
-
-import type { ComponentProps } from 'react'
 
 interface OrganisationUsersTableProps {
   apiClient: Client
   organisationId: number
   query: UserListQuery
-}
-
-function PaginationLink({ children, ...props }: ComponentProps<typeof Link>) {
-  return (
-    <Link {...props} scroll={false}>
-      {children}
-    </Link>
-  )
 }
 
 function formatDate(date: string | null | undefined): string {
@@ -116,10 +90,6 @@ function renderActions(user: UserListItemDto, organisationId: number) {
   )
 }
 
-function getTotalPages(totalCount: number, pageSize: number): number {
-  return Math.ceil(totalCount / pageSize)
-}
-
 function getLastActiveFromDate(preset: LastActivePreset): string {
   const days = lastActivePresetDays[preset]
 
@@ -148,42 +118,6 @@ export async function OrganisationUsersTable({
     },
   })
 
-  const totalCount = users?.totalCount ?? 0
-
-  const createSortHref =
-    (column: GetUsersQuerySortValue) => (direction: Exclude<TableSortDirection, 'none'>) => {
-      const newQuery: UserListQuery = {
-        ...query,
-        sortBy: column,
-        sortDirection: direction == 'ascending' ? 'Ascending' : 'Descending',
-        page: 1,
-      }
-
-      return buildUserListHref(newQuery)
-    }
-
-  const renderHeaders = () => {
-    return organisationUserTableHeaders.map(({ label, sortColumn }) =>
-      sortColumn ? (
-        <TableSortHeaderLink
-          key={label}
-          direction={getNextSortDirection<GetUsersQuerySortValue>({
-            column: sortColumn,
-            sortBy,
-            sortDirection,
-          })}
-          createHref={createSortHref(sortColumn)}
-        >
-          {label}
-        </TableSortHeaderLink>
-      ) : (
-        <th scope="col" key={label}>
-          {label}
-        </th>
-      ),
-    )
-  }
-
   return (
     <>
       <div className={styles['table-toolbar']}>
@@ -196,62 +130,29 @@ export async function OrganisationUsersTable({
       {usersError || !users ? (
         <p role="alert">There was a problem retrieving the users. Please try again later.</p>
       ) : (
-        <>
-          <Table columnWidth="content">
-            <caption className="visually-hidden">Organisation Users</caption>
-            <thead>
-              <tr>{renderHeaders()}</tr>
-            </thead>
-            <tbody>
-              {users.items.length > 0 ? (
-                users.items.map((user) => (
-                  <tr key={user.userId}>
-                    <td>{user.emailAddress ?? 'N/A'}</td>
-                    <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
-                    <td>{renderStatus(user.status)}</td>
-                    <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user, organisationId)}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5}>No users found for this organisation.</td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-
-          <Grid verticalAlignment="middle">
-            <GridItem cols={12} sm={6}>
-              <EnhancedPagination
-                currentPage={page}
-                elementType={PaginationLink}
-                mapPageNumberToHref={(pageNumber) =>
-                  buildUserListHref({ ...query, page: pageNumber })
-                }
-                totalPages={getTotalPages(totalCount, pageSize)}
-              />
-            </GridItem>
-            <GridItem cols={12} sm={6} className="text-right">
-              <p className={styles.resultsPerPageHeading}>Results per page</p>
-              <ol className={`list list--piped ${styles.resultsPerPageList}`}>
-                {pageSizeOptions.map((count) => (
-                  <li key={count}>
-                    {pageSize === count ? (
-                      count
-                    ) : (
-                      <PaginationLink
-                        href={buildUserListHref({ ...query, page: 1, pageSize: count })}
-                      >
-                        {count}
-                      </PaginationLink>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </GridItem>
-          </Grid>
-        </>
+        <ApplicationTableWithPagination
+          result={users}
+          getItemKey={(x) => x.userId}
+          headers={organisationUserTableHeaders}
+          captionName={'Organisation Users'}
+          query={query}
+          queryToSearchParams={buildUserListSearchParams}
+          fallbackText="No users found for this organisation."
+          getData={(key, data) => {
+            switch (key) {
+              case 'actions':
+                return <>{renderActions(data, organisationId)}</>
+              case 'email':
+                return <>{data.emailAddress ?? 'N/A'}</>
+              case 'lastActive':
+                return <>{formatDate(data.lastActive)}</>
+              case 'role':
+                return <>{data.role ? roleLabels[data.role] : 'N/A'}</>
+              case 'status':
+                return <>{renderStatus(data.status)}</>
+            }
+          }}
+        />
       )}
     </>
   )

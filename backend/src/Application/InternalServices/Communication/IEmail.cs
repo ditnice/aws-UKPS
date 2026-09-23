@@ -11,6 +11,14 @@ namespace UKPS.Api.Application.InternalServices.Communication;
 [JsonDerivedType(typeof(UserSignUpRequestEmail), "UserSignUpRequest")]
 [JsonDerivedType(typeof(ReactivatedUserNotificationEmail), "ReactivatedUserNotification")]
 [JsonDerivedType(typeof(DeactivatedUserNotificationEmail), "DeactivatedUserNotification")]
+[JsonDerivedType(
+    typeof(UserMembershipRequestApprovedNotificationEmail),
+    "UserMembershipRequestApprovedNotification"
+)]
+[JsonDerivedType(
+    typeof(UserMembershipRequestRejectedNotificationEmail),
+    "UserMembershipRequestRejectedNotification"
+)]
 public interface IEmail
 {
     /// <summary>
@@ -21,5 +29,5 @@ public interface IEmail
     /// <summary>
     /// Gets the body content of the email message in HTML.
     /// </summary>
-    string GetHtmlContent();
+    string GetHtmlContent(EmailContextData contextData);
 }

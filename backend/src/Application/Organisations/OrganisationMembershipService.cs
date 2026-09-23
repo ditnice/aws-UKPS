@@ -126,7 +126,7 @@ internal sealed class OrganisationMembershipService(
             await emailService.SendEmail(
                 new SendEmailCommand()
                 {
-                    CognitoUsername = membership.User!.CognitoUsername,
+                    PersonIdentifier = membership.User!.CognitoUsername,
                     RecipientAddress = membership.User.WorkEmail,
                     Email = new DeactivatedUserNotificationEmail()
                     {
@@ -183,7 +183,7 @@ internal sealed class OrganisationMembershipService(
             await emailService.SendEmail(
                 new SendEmailCommand()
                 {
-                    CognitoUsername = membership.User!.CognitoUsername,
+                    PersonIdentifier = membership.User!.CognitoUsername,
                     RecipientAddress = membership.User.WorkEmail,
                     Email = new ReactivatedUserNotificationEmail()
                     {

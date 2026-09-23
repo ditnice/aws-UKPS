@@ -29,7 +29,7 @@ interface FilterOptionsGroupProps<T extends string> {
   onChanged: (option: T, isSelected: boolean) => void
 }
 
-function FilterOptionsGroup<T extends string>({
+export function FilterOptionsGroup<T extends string>({
   heading,
   id,
   options,

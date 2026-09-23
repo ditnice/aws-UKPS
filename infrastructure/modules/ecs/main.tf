@@ -65,11 +65,12 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
 }
 
 resource "aws_ecs_service" "ecs_service" {
-  name                   = "${var.project}-${var.environment}-${var.service_name}-service"
-  cluster                = aws_ecs_cluster.cluster.id
-  task_definition        = aws_ecs_task_definition.ecs_task_def.arn
-  desired_count          = 1
-  enable_execute_command = true
+  name                              = "${var.project}-${var.environment}-${var.service_name}-service"
+  cluster                           = aws_ecs_cluster.cluster.id
+  task_definition                   = aws_ecs_task_definition.ecs_task_def.arn
+  desired_count                     = 1
+  enable_execute_command            = true
+  health_check_grace_period_seconds = var.health_check_grace_period_seconds
 
   network_configuration {
     subnets          = var.private_subnet_ids

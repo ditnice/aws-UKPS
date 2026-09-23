@@ -133,6 +133,17 @@ variable "container_port" {
   }
 }
 
+variable "health_check_grace_period_seconds" {
+  description = "Time to ignore failing load balancer health checks after an ECS task starts"
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.health_check_grace_period_seconds >= 0 && var.health_check_grace_period_seconds <= 2147483647
+    error_message = "Health check grace period must be between 0 and 2147483647 seconds."
+  }
+}
+
 variable "ecr_repository_url" {
   description = "ECR repository URL"
   type        = string

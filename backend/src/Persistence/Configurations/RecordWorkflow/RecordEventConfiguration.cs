@@ -48,12 +48,6 @@ internal sealed class RecordEventConfiguration : IEntityTypeConfiguration<Record
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
-            .HasOne(x => x.QaReviewItem)
-            .WithMany()
-            .HasForeignKey(x => x.QaReviewItemId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
             .HasOne(x => x.PerformedByUser)
             .WithMany()
             .HasForeignKey(x => x.PerformedBy)
