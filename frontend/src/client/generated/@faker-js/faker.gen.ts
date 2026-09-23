@@ -53,7 +53,7 @@ export const fakeCreateRecordCommand = (options?: Options): CreateRecordCommand 
         developmentNames: f.helpers.multiple(() => f.string.sample(), { count: { min: 1, max: 100 } }),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { brandedName: f.datatype.boolean() ? f.string.sample() : null },
         genericNames: f.helpers.multiple(() => f.string.sample(), { count: { min: 1, max: 100 } }),
-        recordTitle: f.string.sample()
+        recordTitle: f.string.alpha({ length: { min: 0, max: 100 } })
     };
 };
 

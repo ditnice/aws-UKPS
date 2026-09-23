@@ -2881,6 +2881,7 @@
             "description": "Gets the generic names associated with the record."
           },
           "recordTitle": {
+            "maxLength": 100,
             "type": "string",
             "description": "Gets the title of the record."
           }
