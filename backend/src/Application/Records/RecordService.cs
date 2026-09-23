@@ -244,7 +244,7 @@ internal partial class RecordService(
             NextUpdateDue =
                 x.ReviewedAt == null
                     ? null
-                    : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths),
+                    : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths), // TODO rules around this need to be reviewed, requires wider-team discussion
         });
 
     private IQueryable<JoinedProductDetailProjection> JoinMedicinesProductDetails(
