@@ -8,6 +8,7 @@ import ChangeUserPermissions from './page'
 
 vi.mock('@/client/generated/sdk.gen', () => ({
   getUserDetailsWithinOrganisation: vi.fn(),
+  getUsersMe: vi.fn(),
 }))
 
 vi.mock('@/client/server-api', () => ({

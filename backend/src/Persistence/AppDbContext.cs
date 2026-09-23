@@ -28,7 +28,6 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<Record> Records => Set<Record>();
     public DbSet<RecordRevision> RecordRevisions => Set<RecordRevision>();
     public DbSet<QaReview> QaReviews => Set<QaReview>();
-    public DbSet<QaReviewItem> QaReviewItems => Set<QaReviewItem>();
     public DbSet<RecordStatusHistory> RecordStatusHistories => Set<RecordStatusHistory>();
     public DbSet<RecordEvent> RecordEvents => Set<RecordEvent>();
     public DbSet<RecordEventFieldChange> RecordEventFieldChanges => Set<RecordEventFieldChange>();
@@ -46,7 +45,6 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<MedicinesProductDetail> MedicinesProductDetails => Set<MedicinesProductDetail>();
     public DbSet<MedicinesActiveSubstance> MedicinesActiveSubstances =>
         Set<MedicinesActiveSubstance>();
-    public DbSet<MedicinesRecordStatus> MedicinesRecordStatuses => Set<MedicinesRecordStatus>();
     public DbSet<MedicinesCompanyInfo> MedicinesCompanyInfos => Set<MedicinesCompanyInfo>();
     public DbSet<MedicinesDetail> MedicinesDetails => Set<MedicinesDetail>();
     public DbSet<MedicinesEamsPim> MedicinesEamsPims => Set<MedicinesEamsPim>();
@@ -59,8 +57,6 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
         Set<MedicinesTreatmentDetail>();
     public DbSet<MedicinesServiceImpact> MedicinesServiceImpacts => Set<MedicinesServiceImpact>();
     public DbSet<MedicinesBudgetImpact> MedicinesBudgetImpacts => Set<MedicinesBudgetImpact>();
-    public DbSet<MedicinesPasRegion> MedicinesPasRegions => Set<MedicinesPasRegion>();
-    public DbSet<MedicinesHtaBody> MedicinesHtaBodies => Set<MedicinesHtaBody>();
     public DbSet<MedicinesProductDetailTherapeuticArea> MedicinesProductDetailTherapeuticAreas =>
         Set<MedicinesProductDetailTherapeuticArea>();
     public DbSet<MedicinesIntlRecognition> MedicinesIntlRecognitions =>
@@ -85,8 +81,6 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
 
     // ── Reference Data ───────────────────────────────────────────────────────
     public DbSet<FormulationType> FormulationTypes => Set<FormulationType>();
-    public DbSet<MedicineTechnologyStatus> MedicineTechnologyStatuses =>
-        Set<MedicineTechnologyStatus>();
     public DbSet<MhraProcedureType> MhraProcedureTypes => Set<MhraProcedureType>();
     public DbSet<IrpReferenceRegulator> IrpReferenceRegulators => Set<IrpReferenceRegulator>();
     public DbSet<IrpRoute> IrpRoutes => Set<IrpRoute>();
@@ -94,7 +88,6 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<PatientPathwayPoint> PatientPathwayPoints => Set<PatientPathwayPoint>();
     public DbSet<UkPatientPopulationRange> UkPatientPopulationRanges =>
         Set<UkPatientPopulationRange>();
-    public DbSet<PasRegion> PasRegions => Set<PasRegion>();
     public DbSet<VaccineAdministrationRoute> VaccineAdministrationRoutes =>
         Set<VaccineAdministrationRoute>();
     public DbSet<VaccineStorageRequirement> VaccineStorageRequirements =>

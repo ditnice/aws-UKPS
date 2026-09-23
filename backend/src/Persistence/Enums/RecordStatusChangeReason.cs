@@ -26,7 +26,19 @@ public enum RecordStatusChangeReason
     AwaitingExternalClarification = 3,
 
     /// <summary>
+    /// Indicates that a suspended trial has resumed. Only valid when moving
+    /// from on_hold back to active.
+    /// </summary>
+    TrialResumed = 4,
+
+    /// <summary>
+    /// Indicates that withdrawn or clarification-pending plans have been
+    /// refiled. Only valid when moving from on_hold back to active.
+    /// </summary>
+    PlansRefiled = 5,
+
+    /// <summary>
     /// Indicates that the reason for the status change is other than the predefined reasons.
     /// </summary>
-    Other = 4,
+    Other = 6,
 }

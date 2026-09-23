@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260918115458_InitialCreate")]
+    [Migration("20260923145517_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -413,6 +413,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("consumed_at");
 
+                    b.Property<Guid?>("CorrelationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("correlation_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -432,6 +436,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
+
+                    b.HasIndex("CorrelationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_onboarding_records_correlation_id");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -623,9 +631,13 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("net_uk_budget_impact_band");
 
-                    b.Property<int?>("PasSchemePlanned")
+                    b.Property<int?>("PatientAccessSchemePlanned")
                         .HasColumnType("integer")
-                        .HasColumnName("pas_scheme_planned");
+                        .HasColumnName("patient_access_scheme_planned");
+
+                    b.Property<int?>("PatientAccessSchemeRegions")
+                        .HasColumnType("integer")
+                        .HasColumnName("patient_access_scheme_regions");
 
                     b.Property<int>("RevisionId")
                         .HasColumnType("integer")
@@ -862,22 +874,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.ToTable("medicines_global_submissions", "ukps");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesHtaBody", b =>
-                {
-                    b.Property<int>("RecordHtaId")
-                        .HasColumnType("integer")
-                        .HasColumnName("record_hta_id");
-
-                    b.Property<int>("Assessor")
-                        .HasColumnType("integer")
-                        .HasColumnName("assessor");
-
-                    b.HasKey("RecordHtaId", "Assessor")
-                        .HasName("pk_medicines_hta_bodies");
-
-                    b.ToTable("medicines_hta_bodies", "ukps");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesIntlRecognition", b =>
                 {
                     b.Property<int>("Id")
@@ -1020,25 +1016,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.ToTable("medicines_laboratory_testings", "ukps");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesPasRegion", b =>
-                {
-                    b.Property<int>("MedicinesBudgetImpactId")
-                        .HasColumnType("integer")
-                        .HasColumnName("medicines_budget_impact_id");
-
-                    b.Property<int>("PasRegionId")
-                        .HasColumnType("integer")
-                        .HasColumnName("pas_region_id");
-
-                    b.HasKey("MedicinesBudgetImpactId", "PasRegionId")
-                        .HasName("pk_medicines_pas_regions");
-
-                    b.HasIndex("PasRegionId")
-                        .HasDatabaseName("ix_medicines_pas_regions_pas_region_id");
-
-                    b.ToTable("medicines_pas_regions", "ukps");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesPatientIdentification", b =>
                 {
                     b.Property<int>("Id")
@@ -1116,6 +1093,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("indication_is_rare_disease");
 
+                    b.Property<int?>("MedicineTechnologyStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("medicine_technology_status");
+
                     b.Property<string>("NiceTaDevelopmentId")
                         .HasColumnType("text")
                         .HasColumnName("nice_ta_development_id");
@@ -1166,25 +1147,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasDatabaseName("ix_medicines_product_detail_therapeutic_areas_therapeutic_area");
 
                     b.ToTable("medicines_product_detail_therapeutic_areas", "ukps");
-                });
-
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesRecordStatus", b =>
-                {
-                    b.Property<int>("MedicinesProductDetailId")
-                        .HasColumnType("integer")
-                        .HasColumnName("medicines_product_detail_id");
-
-                    b.Property<int>("MedicineStatusTypeId")
-                        .HasColumnType("integer")
-                        .HasColumnName("medicine_status_type_id");
-
-                    b.HasKey("MedicinesProductDetailId", "MedicineStatusTypeId")
-                        .HasName("pk_medicines_record_statuses");
-
-                    b.HasIndex("MedicineStatusTypeId")
-                        .HasDatabaseName("ix_medicines_record_statuses_medicine_status_type_id");
-
-                    b.ToTable("medicines_record_statuses", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesServiceImpact", b =>
@@ -1294,19 +1256,15 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("MajorRevisionSubmissionRoundNo")
-                        .HasColumnType("integer")
-                        .HasColumnName("major_revision_submission_round_no");
-
                     b.Property<string>("Note")
                         .HasColumnType("text")
                         .HasColumnName("note");
 
-                    b.Property<int>("Outcome")
+                    b.Property<int?>("Outcome")
                         .HasColumnType("integer")
                         .HasColumnName("outcome");
 
-                    b.Property<DateTime>("ReviewedAt")
+                    b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("reviewed_at");
 
@@ -1330,56 +1288,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.ToTable("qa_reviews", "ukps");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.QaReviewItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("FieldPath")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("field_path");
-
-                    b.Property<int>("IssueType")
-                        .HasColumnType("integer")
-                        .HasColumnName("issue_type");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text")
-                        .HasColumnName("note");
-
-                    b.Property<int>("QaReviewId")
-                        .HasColumnType("integer")
-                        .HasColumnName("qa_review_id");
-
-                    b.Property<int>("ResolutionStatus")
-                        .HasColumnType("integer")
-                        .HasColumnName("resolution_status");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("resolved_at");
-
-                    b.Property<int?>("ResolvedBy")
-                        .HasColumnType("integer")
-                        .HasColumnName("resolved_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_qa_review_items");
-
-                    b.HasIndex("QaReviewId")
-                        .HasDatabaseName("ix_qa_review_item_qa_review_id");
-
-                    b.HasIndex("ResolvedBy")
-                        .HasDatabaseName("ix_qa_review_items_resolved_by");
-
-                    b.ToTable("qa_review_items", "ukps");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.Record", b =>
                 {
                     b.Property<int>("Id")
@@ -1397,17 +1305,9 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("created_by");
 
-                    b.Property<int?>("CurrentDraftRevisionId")
-                        .HasColumnType("integer")
-                        .HasColumnName("current_draft_revision_id");
-
                     b.Property<int>("OrganisationId")
                         .HasColumnType("integer")
                         .HasColumnName("organisation_id");
-
-                    b.Property<int?>("PublishedRevisionId")
-                        .HasColumnType("integer")
-                        .HasColumnName("published_revision_id");
 
                     b.Property<int>("RecordStatus")
                         .HasColumnType("integer")
@@ -1427,14 +1327,8 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasIndex("CreatedBy")
                         .HasDatabaseName("ix_records_created_by");
 
-                    b.HasIndex("CurrentDraftRevisionId")
-                        .HasDatabaseName("ix_records_current_draft_revision_id");
-
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_record_organisation_id");
-
-                    b.HasIndex("PublishedRevisionId")
-                        .HasDatabaseName("ix_records_published_revision_id");
 
                     b.HasIndex("RecordType", "RecordStatus", "ReviewedAt")
                         .HasDatabaseName("ix_record_type_status_reviewed_at");
@@ -1471,10 +1365,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("qa_review_id");
 
-                    b.Property<int?>("QaReviewItemId")
-                        .HasColumnType("integer")
-                        .HasColumnName("qa_review_item_id");
-
                     b.Property<int>("RecordId")
                         .HasColumnType("integer")
                         .HasColumnName("record_id");
@@ -1506,9 +1396,6 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasIndex("QaReviewId")
                         .HasDatabaseName("ix_record_events_qa_review_id");
-
-                    b.HasIndex("QaReviewItemId")
-                        .HasDatabaseName("ix_record_events_qa_review_item_id");
 
                     b.HasIndex("RevisionId")
                         .HasDatabaseName("ix_record_event_revision_id");
@@ -1575,14 +1462,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("created_by");
 
-                    b.Property<int>("MajorVersion")
-                        .HasColumnType("integer")
-                        .HasColumnName("major_version");
-
-                    b.Property<int>("MinorVersion")
-                        .HasColumnType("integer")
-                        .HasColumnName("minor_version");
-
                     b.Property<int>("RecordId")
                         .HasColumnType("integer")
                         .HasColumnName("record_id");
@@ -1629,10 +1508,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasIndex("RecordId", "RevisionNo")
                         .IsUnique()
                         .HasDatabaseName("ix_record_revision_record_id_revision_no");
-
-                    b.HasIndex("RecordId", "MajorVersion", "MinorVersion")
-                        .IsUnique()
-                        .HasDatabaseName("ix_record_revision_record_id_major_minor");
 
                     b.ToTable("record_revisions", "ukps");
                 });
@@ -1822,30 +1697,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.ToTable("irp_route", "ukps");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.ReferenceData.MedicineTechnologyStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_archived");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("label");
-
-                    b.HasKey("Id")
-                        .HasName("pk_medicine_technology_status");
-
-                    b.ToTable("medicine_technology_status", "ukps");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.ReferenceData.MhraProcedureType", b =>
                 {
                     b.Property<int>("Id")
@@ -1872,30 +1723,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasName("pk_mhra_procedure_type");
 
                     b.ToTable("mhra_procedure_type", "ukps");
-                });
-
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.ReferenceData.PasRegion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_archived");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("label");
-
-                    b.HasKey("Id")
-                        .HasName("pk_pas_region");
-
-                    b.ToTable("pas_region", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.ReferenceData.PatientPathwayPoint", b =>
@@ -2281,6 +2108,14 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int?>("HtaNiceAlignedPathway")
                         .HasColumnType("integer")
                         .HasColumnName("hta_nice_aligned_pathway");
+
+                    b.Property<int?>("MedicineHtaBodies")
+                        .HasColumnType("integer")
+                        .HasColumnName("medicine_hta_bodies");
+
+                    b.Property<int?>("MedicineHtaSubmissionIntended")
+                        .HasColumnType("integer")
+                        .HasColumnName("medicine_hta_submission_intended");
 
                     b.Property<int>("RevisionId")
                         .HasColumnType("integer")
@@ -3076,18 +2911,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("Revision");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesHtaBody", b =>
-                {
-                    b.HasOne("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordHta", "RecordHta")
-                        .WithMany("HtaBodies")
-                        .HasForeignKey("RecordHtaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_medicines_hta_bodies_record_htas_record_hta_id");
-
-                    b.Navigation("RecordHta");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesIntlRecognition", b =>
                 {
                     b.HasOne("UKPS.Api.Persistence.Entities.SharedRevisionContent.RegulatoryDate", "IntlLicenceDate")
@@ -3142,27 +2965,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("PatientPathwayPoint");
 
                     b.Navigation("Revision");
-                });
-
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesPasRegion", b =>
-                {
-                    b.HasOne("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesBudgetImpact", "MedicinesBudgetImpact")
-                        .WithMany("PasRegions")
-                        .HasForeignKey("MedicinesBudgetImpactId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_medicines_pas_regions_medicines_budget_impacts_medicines_bu");
-
-                    b.HasOne("UKPS.Api.Persistence.Entities.ReferenceData.PasRegion", "PasRegion")
-                        .WithMany()
-                        .HasForeignKey("PasRegionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_medicines_pas_regions_pas_regions_pas_region_id");
-
-                    b.Navigation("MedicinesBudgetImpact");
-
-                    b.Navigation("PasRegion");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesPatientIdentification", b =>
@@ -3226,27 +3028,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("TherapeuticArea");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesRecordStatus", b =>
-                {
-                    b.HasOne("UKPS.Api.Persistence.Entities.ReferenceData.MedicineTechnologyStatus", "MedicineStatusType")
-                        .WithMany()
-                        .HasForeignKey("MedicineStatusTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_medicines_record_statuses_medicine_technology_statuses_medi");
-
-                    b.HasOne("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesProductDetail", "MedicinesProductDetail")
-                        .WithMany("RecordStatuses")
-                        .HasForeignKey("MedicinesProductDetailId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_medicines_record_statuses_medicines_product_details_medicin");
-
-                    b.Navigation("MedicineStatusType");
-
-                    b.Navigation("MedicinesProductDetail");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesServiceImpact", b =>
                 {
                     b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", "Revision")
@@ -3299,26 +3080,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("Revision");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.QaReviewItem", b =>
-                {
-                    b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.QaReview", "QaReview")
-                        .WithMany("QaReviewItems")
-                        .HasForeignKey("QaReviewId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_qa_review_items_qa_reviews_qa_review_id");
-
-                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "ResolvedByUser")
-                        .WithMany()
-                        .HasForeignKey("ResolvedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_qa_review_items_app_user_resolved_by");
-
-                    b.Navigation("QaReview");
-
-                    b.Navigation("ResolvedByUser");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.Record", b =>
                 {
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "CreatedByUser")
@@ -3327,12 +3088,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_records_app_user_created_by");
 
-                    b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", "CurrentDraftRevision")
-                        .WithMany()
-                        .HasForeignKey("CurrentDraftRevisionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_records_record_revisions_current_draft_revision_id");
-
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "Organisation")
                         .WithMany()
                         .HasForeignKey("OrganisationId")
@@ -3340,19 +3095,9 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_records_organisations_organisation_id");
 
-                    b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", "PublishedRevision")
-                        .WithMany()
-                        .HasForeignKey("PublishedRevisionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_records_record_revisions_published_revision_id");
-
                     b.Navigation("CreatedByUser");
 
-                    b.Navigation("CurrentDraftRevision");
-
                     b.Navigation("Organisation");
-
-                    b.Navigation("PublishedRevision");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordEvent", b =>
@@ -3368,12 +3113,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasForeignKey("QaReviewId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_record_events_qa_reviews_qa_review_id");
-
-                    b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.QaReviewItem", "QaReviewItem")
-                        .WithMany()
-                        .HasForeignKey("QaReviewItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_events_qa_review_items_qa_review_item_id");
 
                     b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.Record", "Record")
                         .WithMany("Events")
@@ -3391,8 +3130,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("PerformedByUser");
 
                     b.Navigation("QaReview");
-
-                    b.Navigation("QaReviewItem");
 
                     b.Navigation("Record");
 
@@ -3846,23 +3583,11 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("UserOrgMemberships");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesBudgetImpact", b =>
-                {
-                    b.Navigation("PasRegions");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesProductDetail", b =>
                 {
                     b.Navigation("ActiveSubstances");
 
-                    b.Navigation("RecordStatuses");
-
                     b.Navigation("TherapeuticAreas");
-                });
-
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.QaReview", b =>
-                {
-                    b.Navigation("QaReviewItems");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.Record", b =>
@@ -3906,11 +3631,6 @@ namespace UKPS.Api.Persistence.Migrations
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrial", b =>
                 {
                     b.Navigation("OtherClinicalTrialNumbers");
-                });
-
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordHta", b =>
-                {
-                    b.Navigation("HtaBodies");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.VaccinesRevisionContent.VaccinesDiseaseDetail", b =>
