@@ -63,7 +63,7 @@ export default function ManageUserAccessActions({
       key="change-permissions"
       label="Change user permissions"
       value="Change user permissions"
-      hint="Change what the user can do"
+      hint="Change the user role to either champion user or standard user"
       name="action"
       onChange={() => {
         setSelectedAction('Change user permissions')
