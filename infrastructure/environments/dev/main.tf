@@ -250,7 +250,7 @@ module "ecs_backend" {
     Email__ConfigurationSetName = module.ses.configuration_set_name
     Email__QueueUrl             = module.sqs_email_backend.queue_url
     Seeding__ReseedOnStartup    = "true"
-    Seeding__SuperUsersJson     = jsonencode(var.seeded_super_users)
+    Seeding__SeedUsersJson      = jsonencode(var.seeded_users)
     UserOnboarding__SetupLink   = "https://${module.alb.frontend_host_name}"
   }
   container_secrets = {
@@ -404,7 +404,7 @@ module "db_migrator_lambda" {
   cloudwatch_kms_arn = module.kms_backend.app_key_arn
   region             = var.region
 
-  seeded_super_users_json = jsonencode(var.seeded_super_users)
+  seeded_users_json = jsonencode(var.seeded_users)
 
   log_retention_days = var.ecs_log_retention
 

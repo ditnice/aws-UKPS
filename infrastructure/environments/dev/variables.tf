@@ -207,38 +207,44 @@ variable "sns_alarm_emails" {
   sensitive = true
 }
 
-variable "seeded_super_users" {
-  description = "Super users added to seeded backend data for organisation ID 1"
+variable "seeded_users" {
+  description = "Users added to seeded backend data for organisation ID 1, each with a role of Standard, Champion or Super"
   type = list(object({
     fullName        = string
     email           = string
     cognitoUsername = string
+    role            = string
   }))
   default  = []
   nullable = false
 
   validation {
-    condition     = alltrue([for user in var.seeded_super_users : length(trimspace(user.fullName)) > 0])
-    error_message = "Seeded super users must include a non-empty fullName."
+    condition     = alltrue([for user in var.seeded_users : length(trimspace(user.fullName)) > 0])
+    error_message = "Seeded users must include a non-empty fullName."
   }
 
   validation {
-    condition     = alltrue([for user in var.seeded_super_users : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", user.email))])
-    error_message = "Seeded super users must include valid email addresses."
+    condition     = alltrue([for user in var.seeded_users : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", user.email))])
+    error_message = "Seeded users must include valid email addresses."
   }
 
   validation {
-    condition     = alltrue([for user in var.seeded_super_users : length(trimspace(user.cognitoUsername)) > 0 && length(user.cognitoUsername) <= 39])
-    error_message = "Seeded super users must include cognitoUsername values of 39 characters or fewer."
+    condition     = alltrue([for user in var.seeded_users : length(trimspace(user.cognitoUsername)) > 0 && length(user.cognitoUsername) <= 39])
+    error_message = "Seeded users must include cognitoUsername values of 39 characters or fewer."
   }
 
   validation {
-    condition     = length(distinct([for user in var.seeded_super_users : lower(user.email)])) == length(var.seeded_super_users)
-    error_message = "Seeded super user emails must be unique."
+    condition     = length(distinct([for user in var.seeded_users : lower(user.email)])) == length(var.seeded_users)
+    error_message = "Seeded user emails must be unique."
   }
 
   validation {
-    condition     = length(distinct([for user in var.seeded_super_users : user.cognitoUsername])) == length(var.seeded_super_users)
-    error_message = "Seeded super user cognitoUsernames must be unique."
+    condition     = length(distinct([for user in var.seeded_users : user.cognitoUsername])) == length(var.seeded_users)
+    error_message = "Seeded user cognitoUsernames must be unique."
+  }
+
+  validation {
+    condition     = alltrue([for user in var.seeded_users : contains(["Standard", "Champion", "Super"], user.role)])
+    error_message = "Seeded users must include a role of Standard, Champion or Super."
   }
 }

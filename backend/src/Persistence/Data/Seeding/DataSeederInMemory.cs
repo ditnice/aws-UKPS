@@ -33,20 +33,20 @@ internal sealed class DataSeederInMemory : IDataSeeder
 
         Faker<SeedingDataPayload> faker = new SeedingDataPayloadFaker().UseSeed(0);
         SeedingDataPayload payload = faker.Generate();
-        return AddConfiguredSuperUsers(payload, configuration.SuperUsersJson);
+        return AddConfiguredUsers(payload, configuration.SeedUsersJson);
     }
 
-    private static SeedingDataPayload AddConfiguredSuperUsers(
+    private static SeedingDataPayload AddConfiguredUsers(
         SeedingDataPayload payload,
-        string? superUsersJson
+        string? seedUsersJson
     )
     {
-        if (string.IsNullOrWhiteSpace(superUsersJson))
+        if (string.IsNullOrWhiteSpace(seedUsersJson))
         {
             return payload;
         }
 
-        SeedSuperUser[] configuredUsers = ParseConfiguredUsers(superUsersJson);
+        SeedUser[] configuredUsers = ParseConfiguredUsers(seedUsersJson);
         if (configuredUsers.Length == 0)
         {
             return payload;
@@ -58,7 +58,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
         if (organisations.Count == 0)
         {
             throw new InvalidOperationException(
-                "Configured seed super users require seeded organisation ID 1."
+                "Configured seed users require seeded organisation ID 1."
             );
         }
 
@@ -67,9 +67,9 @@ internal sealed class DataSeederInMemory : IDataSeeder
         List<User> users = payload.Users.ToList();
         List<UserOrgMembership> memberships = payload.Memberships.ToList();
 
-        foreach (SeedSuperUser configuredUser in configuredUsers)
+        foreach (SeedUser configuredUser in configuredUsers)
         {
-            UpsertConfiguredSuperUser(users, memberships, configuredUser);
+            UpsertConfiguredUser(users, memberships, configuredUser);
         }
 
         return payload with
@@ -80,10 +80,10 @@ internal sealed class DataSeederInMemory : IDataSeeder
         };
     }
 
-    private static void UpsertConfiguredSuperUser(
+    private static void UpsertConfiguredUser(
         List<User> users,
         List<UserOrgMembership> memberships,
-        SeedSuperUser configuredUser
+        SeedUser configuredUser
     )
     {
         User[] matchingUsers = users.Where(u => MatchesConfiguredUser(u, configuredUser)).ToArray();
@@ -91,7 +91,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
         if (matchingUsers.Length > 1)
         {
             throw new InvalidOperationException(
-                $"Seed super user '{configuredUser.Email}' matches multiple generated users."
+                $"Seed user '{configuredUser.Email}' matches multiple generated users."
             );
         }
 
@@ -101,51 +101,53 @@ internal sealed class DataSeederInMemory : IDataSeeder
             memberships.RemoveAll(m => ReferenceEquals(m.User, matchingUser));
         }
 
-        User user = CreateConfiguredSuperUser(configuredUser);
+        UserRole role = Enum.Parse<UserRole>(configuredUser.Role, ignoreCase: true);
+        User user = CreateConfiguredUser(configuredUser, role);
         users.Add(user);
-        memberships.Add(CreateSuperUserMembership(user));
+        memberships.Add(CreateMembership(user, role));
     }
 
-    private static User CreateConfiguredSuperUser(SeedSuperUser configuredUser) =>
+    private static User CreateConfiguredUser(SeedUser configuredUser, UserRole role) =>
         new()
         {
             CognitoUsername = CognitoUsername.Parse(configuredUser.CognitoUsername),
             FullName = configuredUser.FullName,
             WorkEmail = configuredUser.Email,
-            UserType = UserType.ItAdmin,
+            UserType = role == UserRole.Super ? UserType.ItAdmin : UserType.PharmaUser,
             CreatedAt = DateTime.UtcNow,
         };
 
-    private static UserOrgMembership CreateSuperUserMembership(User user) =>
+    private static UserOrgMembership CreateMembership(User user, UserRole role) =>
         new()
         {
             User = user,
             OrganisationId = 1,
-            UserRole = UserRole.Super,
+            UserRole = role,
             Status = UserOrgMembershipStatus.Active,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
             CreatedAt = user.CreatedAt,
         };
 
-    private static SeedSuperUser[] ParseConfiguredUsers(string superUsersJson)
+    private static bool IsValidRole(string? role) =>
+        Enum.GetNames<UserRole>().Contains(role, StringComparer.OrdinalIgnoreCase);
+
+    private static SeedUser[] ParseConfiguredUsers(string seedUsersJson)
     {
         try
         {
-            return JsonSerializer.Deserialize<SeedSuperUser[]>(
-                    superUsersJson,
-                    _jsonSerializerOptions
-                ) ?? [];
+            return JsonSerializer.Deserialize<SeedUser[]>(seedUsersJson, _jsonSerializerOptions)
+                ?? [];
         }
         catch (JsonException exception)
         {
             throw new InvalidOperationException(
-                "Seeding super users must be a valid JSON array.",
+                "Seeding users must be a valid JSON array.",
                 exception
             );
         }
     }
 
-    private static void ValidateConfiguredUsers(IReadOnlyCollection<SeedSuperUser> configuredUsers)
+    private static void ValidateConfiguredUsers(IReadOnlyCollection<SeedUser> configuredUsers)
     {
         string[] duplicateEmails = configuredUsers
             .GroupBy(u => u.Email, StringComparer.OrdinalIgnoreCase)
@@ -156,7 +158,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
         if (duplicateEmails.Length > 0)
         {
             throw new InvalidOperationException(
-                $"Seeding super users contains duplicate emails: {string.Join(", ", duplicateEmails)}."
+                $"Seeding users contains duplicate emails: {string.Join(", ", duplicateEmails)}."
             );
         }
 
@@ -169,42 +171,52 @@ internal sealed class DataSeederInMemory : IDataSeeder
         if (duplicateIdentityIds.Length > 0)
         {
             throw new InvalidOperationException(
-                $"Seeding super users contains duplicate identity IDs: {string.Join(", ", duplicateIdentityIds)}."
+                $"Seeding users contains duplicate identity IDs: {string.Join(", ", duplicateIdentityIds)}."
             );
         }
 
-        foreach (SeedSuperUser configuredUser in configuredUsers)
+        foreach (SeedUser configuredUser in configuredUsers)
         {
-            if (string.IsNullOrWhiteSpace(configuredUser.FullName))
-            {
-                throw new InvalidOperationException(
-                    "Seeding super users must include a non-empty fullName."
-                );
-            }
-
-            if (
-                string.IsNullOrWhiteSpace(configuredUser.Email)
-                || !configuredUser.Email.Contains('@', StringComparison.Ordinal)
-            )
-            {
-                throw new InvalidOperationException(
-                    $"Seeding super user '{configuredUser.FullName}' must include a valid email."
-                );
-            }
-
-            if (
-                string.IsNullOrWhiteSpace(configuredUser.CognitoUsername)
-                || configuredUser.CognitoUsername.Length > 39
-            )
-            {
-                throw new InvalidOperationException(
-                    $"Seeding super user '{configuredUser.Email}' must include an cognitoUsername of 39 characters or fewer."
-                );
-            }
+            ValidateConfiguredUser(configuredUser);
         }
     }
 
-    private static bool MatchesConfiguredUser(User user, SeedSuperUser configuredUser) =>
+    private static void ValidateConfiguredUser(SeedUser configuredUser)
+    {
+        if (string.IsNullOrWhiteSpace(configuredUser.FullName))
+        {
+            throw new InvalidOperationException("Seeding users must include a non-empty fullName.");
+        }
+
+        if (
+            string.IsNullOrWhiteSpace(configuredUser.Email)
+            || !configuredUser.Email.Contains('@', StringComparison.Ordinal)
+        )
+        {
+            throw new InvalidOperationException(
+                $"Seeding user '{configuredUser.FullName}' must include a valid email."
+            );
+        }
+
+        if (
+            string.IsNullOrWhiteSpace(configuredUser.CognitoUsername)
+            || configuredUser.CognitoUsername.Length > 39
+        )
+        {
+            throw new InvalidOperationException(
+                $"Seeding user '{configuredUser.Email}' must include an cognitoUsername of 39 characters or fewer."
+            );
+        }
+
+        if (!IsValidRole(configuredUser.Role))
+        {
+            throw new InvalidOperationException(
+                $"Seeding user '{configuredUser.Email}' must include a valid role (Standard, Champion, or Super)."
+            );
+        }
+    }
+
+    private static bool MatchesConfiguredUser(User user, SeedUser configuredUser) =>
         string.Equals(user.WorkEmail, configuredUser.Email, StringComparison.OrdinalIgnoreCase)
         || string.Equals(
             user.CognitoUsername.Value,
@@ -212,10 +224,11 @@ internal sealed class DataSeederInMemory : IDataSeeder
             StringComparison.Ordinal
         );
 
-    internal sealed record SeedSuperUser
+    internal sealed record SeedUser
     {
         public required string FullName { get; init; }
         public required string Email { get; init; }
         public required string CognitoUsername { get; init; }
+        public required string Role { get; init; }
     }
 }

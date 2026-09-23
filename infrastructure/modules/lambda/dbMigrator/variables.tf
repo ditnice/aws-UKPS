@@ -130,14 +130,14 @@ variable "region" {
   }
 }
 
-variable "seeded_super_users_json" {
-  description = "JSON-encoded list of super users to seed. Matches Seeding__SuperUsersJson on the backend ECS service."
+variable "seeded_users_json" {
+  description = "JSON-encoded list of users (with roles) to seed. Matches Seeding__SeedUsersJson on the backend ECS service."
   type        = string
   default     = "[]"
 
   validation {
-    condition     = can(jsondecode(var.seeded_super_users_json))
-    error_message = "Seeded super users must be valid JSON."
+    condition     = can(jsondecode(var.seeded_users_json))
+    error_message = "Seeded users must be valid JSON."
   }
 }
 
