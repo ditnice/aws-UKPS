@@ -143,21 +143,6 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "medicine_technology_status",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    label = table.Column<string>(type: "text", nullable: false),
-                    is_archived = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicine_technology_status", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "mhra_procedure_type",
                 schema: "ukps",
                 columns: table => new
@@ -194,21 +179,6 @@ namespace UKPS.Api.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_organisations", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "pas_region",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    label = table.Column<string>(type: "text", nullable: false),
-                    is_archived = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_pas_region", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -461,6 +431,39 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "records",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    organisation_id = table.Column<int>(type: "integer", nullable: false),
+                    record_type = table.Column<int>(type: "integer", nullable: false),
+                    record_status = table.Column<int>(type: "integer", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    created_by = table.Column<int>(type: "integer", nullable: true),
+                    reviewed_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_records", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_records_app_user_created_by",
+                        column: x => x.created_by,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_records_organisations_organisation_id",
+                        column: x => x.organisation_id,
+                        principalSchema: "ukps",
+                        principalTable: "organisations",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "terms_acceptances",
                 schema: "ukps",
                 columns: table => new
@@ -603,20 +606,122 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "medicines_active_substances",
+                name: "record_revisions",
                 schema: "ukps",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    medicines_product_detail_id = table.Column<int>(type: "integer", nullable: false),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    name_type = table.Column<int>(type: "integer", nullable: false),
-                    display_order = table.Column<int>(type: "integer", nullable: true)
+                    record_id = table.Column<int>(type: "integer", nullable: false),
+                    based_on_revision_id = table.Column<int>(type: "integer", nullable: true),
+                    revision_no = table.Column<int>(type: "integer", nullable: false),
+                    workflow_status = table.Column<int>(type: "integer", nullable: false),
+                    created_by = table.Column<int>(type: "integer", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    updated_by = table.Column<int>(type: "integer", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
+                    submitted_by = table.Column<int>(type: "integer", nullable: true),
+                    submitted_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_medicines_active_substances", x => x.id);
+                    table.PrimaryKey("pk_record_revisions", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_record_revisions_app_user_created_by",
+                        column: x => x.created_by,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_revisions_app_user_submitted_by",
+                        column: x => x.submitted_by,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_revisions_app_user_updated_by",
+                        column: x => x.updated_by,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_revisions_record_revisions_based_on_revision_id",
+                        column: x => x.based_on_revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_revisions_records_record_id",
+                        column: x => x.record_id,
+                        principalSchema: "ukps",
+                        principalTable: "records",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "record_status_histories",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    record_id = table.Column<int>(type: "integer", nullable: false),
+                    from_status = table.Column<int>(type: "integer", nullable: true),
+                    to_status = table.Column<int>(type: "integer", nullable: false),
+                    reason = table.Column<int>(type: "integer", nullable: true),
+                    note = table.Column<string>(type: "text", nullable: true),
+                    updated_by = table.Column<int>(type: "integer", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_record_status_histories", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_record_status_histories_app_user_updated_by",
+                        column: x => x.updated_by,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_status_histories_records_record_id",
+                        column: x => x.record_id,
+                        principalSchema: "ukps",
+                        principalTable: "records",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "record_watchlists",
+                schema: "ukps",
+                columns: table => new
+                {
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    record_id = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_record_watchlists", x => new { x.user_id, x.record_id });
+                    table.ForeignKey(
+                        name: "fk_record_watchlists_records_record_id",
+                        column: x => x.record_id,
+                        principalSchema: "ukps",
+                        principalTable: "records",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_watchlists_users_user_id",
+                        column: x => x.user_id,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -627,39 +732,20 @@ namespace UKPS.Api.Persistence.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    pas_scheme_planned = table.Column<int>(type: "integer", nullable: true),
+                    patient_access_scheme_planned = table.Column<int>(type: "integer", nullable: true),
                     indication_specific_pricing_planned = table.Column<int>(type: "integer", nullable: true),
                     indication_specific_pricing_details = table.Column<string>(type: "text", nullable: true),
-                    net_uk_budget_impact_band = table.Column<int>(type: "integer", nullable: true)
+                    net_uk_budget_impact_band = table.Column<int>(type: "integer", nullable: true),
+                    patient_access_scheme_regions = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_medicines_budget_impacts", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "medicines_pas_regions",
-                schema: "ukps",
-                columns: table => new
-                {
-                    medicines_budget_impact_id = table.Column<int>(type: "integer", nullable: false),
-                    pas_region_id = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicines_pas_regions", x => new { x.medicines_budget_impact_id, x.pas_region_id });
                     table.ForeignKey(
-                        name: "fk_medicines_pas_regions_medicines_budget_impacts_medicines_bu",
-                        column: x => x.medicines_budget_impact_id,
+                        name: "fk_medicines_budget_impacts_record_revisions_revision_id",
+                        column: x => x.revision_id,
                         principalSchema: "ukps",
-                        principalTable: "medicines_budget_impacts",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_medicines_pas_regions_pas_regions_pas_region_id",
-                        column: x => x.pas_region_id,
-                        principalSchema: "ukps",
-                        principalTable: "pas_region",
+                        principalTable: "record_revisions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -680,6 +766,13 @@ namespace UKPS.Api.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_medicines_company_infos", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_medicines_company_infos_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -699,104 +792,11 @@ namespace UKPS.Api.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_medicines_details", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "medicines_eams_pims",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    revision_id = table.Column<int>(type: "integer", nullable: false),
-                    pim_designation_status = table.Column<int>(type: "integer", nullable: true),
-                    will_submit_to_eams = table.Column<int>(type: "integer", nullable: true),
-                    eams_opinion_decision = table.Column<int>(type: "integer", nullable: true),
-                    eams_submission_date_id = table.Column<int>(type: "integer", nullable: true),
-                    eams_opinion_date_id = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicines_eams_pims", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "medicines_eu_statuses",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    revision_id = table.Column<int>(type: "integer", nullable: false),
-                    eu_orphan_status = table.Column<int>(type: "integer", nullable: true),
-                    eu_orphan_status_number = table.Column<string>(type: "text", nullable: true),
-                    eu_orphan_granted_date_id = table.Column<int>(type: "integer", nullable: true),
-                    eu_atmp_classification_status = table.Column<int>(type: "integer", nullable: true),
-                    atmp_recommendation_date_id = table.Column<int>(type: "integer", nullable: true),
-                    atmp_classification_id = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicines_eu_statuses", x => x.id);
                     table.ForeignKey(
-                        name: "fk_medicines_eu_statuses_atmp_classifications_atmp_classificat",
-                        column: x => x.atmp_classification_id,
+                        name: "fk_medicines_details_record_revisions_revision_id",
+                        column: x => x.revision_id,
                         principalSchema: "ukps",
-                        principalTable: "atmp_classification",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "medicines_global_submissions",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    revision_id = table.Column<int>(type: "integer", nullable: false),
-                    global_first_submission_region = table.Column<string>(type: "text", nullable: true),
-                    global_submission_actual_date_id = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicines_global_submissions", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "medicines_hta_bodies",
-                schema: "ukps",
-                columns: table => new
-                {
-                    record_hta_id = table.Column<int>(type: "integer", nullable: false),
-                    assessor = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicines_hta_bodies", x => new { x.record_hta_id, x.assessor });
-                });
-
-            migrationBuilder.CreateTable(
-                name: "medicines_intl_recognitions",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    revision_id = table.Column<int>(type: "integer", nullable: false),
-                    irp_route_id = table.Column<int>(type: "integer", nullable: true),
-                    intl_conditional_approval_anticipated = table.Column<int>(type: "integer", nullable: true),
-                    intl_submission_date_id = table.Column<int>(type: "integer", nullable: true),
-                    intl_licence_date_id = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicines_intl_recognitions", x => x.id);
-                    table.ForeignKey(
-                        name: "fk_medicines_intl_recognitions_irp_routes_irp_route_id",
-                        column: x => x.irp_route_id,
-                        principalSchema: "ukps",
-                        principalTable: "irp_route",
+                        principalTable: "record_revisions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -837,6 +837,13 @@ namespace UKPS.Api.Persistence.Migrations
                         principalTable: "patient_pathway_point",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_laboratory_testings_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -855,24 +862,11 @@ namespace UKPS.Api.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_medicines_patient_identifications", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "medicines_product_detail_therapeutic_areas",
-                schema: "ukps",
-                columns: table => new
-                {
-                    medicines_product_detail_id = table.Column<int>(type: "integer", nullable: false),
-                    therapeutic_area_id = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicines_product_detail_therapeutic_areas", x => new { x.medicines_product_detail_id, x.therapeutic_area_id });
                     table.ForeignKey(
-                        name: "fk_medicines_product_detail_therapeutic_areas_therapeutic_area",
-                        column: x => x.therapeutic_area_id,
+                        name: "fk_medicines_patient_identifications_record_revisions_revision",
+                        column: x => x.revision_id,
                         principalSchema: "ukps",
-                        principalTable: "therapeutic_areas",
+                        principalTable: "record_revisions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -894,7 +888,8 @@ namespace UKPS.Api.Persistence.Migrations
                     nice_ta_development_id = table.Column<string>(type: "text", nullable: true),
                     bnf_chapter_id = table.Column<int>(type: "integer", nullable: true),
                     formulation_type_id = table.Column<int>(type: "integer", nullable: true),
-                    presentation = table.Column<string>(type: "text", nullable: true)
+                    presentation = table.Column<string>(type: "text", nullable: true),
+                    medicine_technology_status = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -913,31 +908,11 @@ namespace UKPS.Api.Persistence.Migrations
                         principalTable: "formulation_type",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "medicines_record_statuses",
-                schema: "ukps",
-                columns: table => new
-                {
-                    medicines_product_detail_id = table.Column<int>(type: "integer", nullable: false),
-                    medicine_status_type_id = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_medicines_record_statuses", x => new { x.medicines_product_detail_id, x.medicine_status_type_id });
                     table.ForeignKey(
-                        name: "fk_medicines_record_statuses_medicine_technology_statuses_medi",
-                        column: x => x.medicine_status_type_id,
+                        name: "fk_medicines_product_details_record_revisions_revision_id",
+                        column: x => x.revision_id,
                         principalSchema: "ukps",
-                        principalTable: "medicine_technology_status",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_medicines_record_statuses_medicines_product_details_medicin",
-                        column: x => x.medicines_product_detail_id,
-                        principalSchema: "ukps",
-                        principalTable: "medicines_product_details",
+                        principalTable: "record_revisions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -965,6 +940,13 @@ namespace UKPS.Api.Persistence.Migrations
                 {
                     table.PrimaryKey("pk_medicines_service_impacts", x => x.id);
                     table.ForeignKey(
+                        name: "fk_medicines_service_impacts_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "fk_medicines_service_impacts_uk_patient_population_ranges_uk_p",
                         column: x => x.uk_patient_population_range_id,
                         principalSchema: "ukps",
@@ -987,47 +969,11 @@ namespace UKPS.Api.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_medicines_treatment_details", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "other_clinical_trial_numbers",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    clinical_trial_id = table.Column<int>(type: "integer", nullable: false),
-                    other_registry_number = table.Column<string>(type: "text", nullable: false),
-                    display_order = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_other_clinical_trial_numbers", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "qa_review_items",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    qa_review_id = table.Column<int>(type: "integer", nullable: false),
-                    field_path = table.Column<string>(type: "text", nullable: false),
-                    issue_type = table.Column<int>(type: "integer", nullable: false),
-                    note = table.Column<string>(type: "text", nullable: true),
-                    resolution_status = table.Column<int>(type: "integer", nullable: false),
-                    resolved_by = table.Column<int>(type: "integer", nullable: true),
-                    resolved_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_qa_review_items", x => x.id);
                     table.ForeignKey(
-                        name: "fk_qa_review_items_app_user_resolved_by",
-                        column: x => x.resolved_by,
+                        name: "fk_medicines_treatment_details_record_revisions_revision_id",
+                        column: x => x.revision_id,
                         principalSchema: "ukps",
-                        principalTable: "app_user",
+                        principalTable: "record_revisions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1040,11 +986,10 @@ namespace UKPS.Api.Persistence.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    major_revision_submission_round_no = table.Column<int>(type: "integer", nullable: false),
-                    outcome = table.Column<int>(type: "integer", nullable: false),
+                    outcome = table.Column<int>(type: "integer", nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
                     reviewed_by = table.Column<int>(type: "integer", nullable: true),
-                    reviewed_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
+                    reviewed_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1054,6 +999,13 @@ namespace UKPS.Api.Persistence.Migrations
                         column: x => x.reviewed_by,
                         principalSchema: "ukps",
                         principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_qa_reviews_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1075,64 +1027,11 @@ namespace UKPS.Api.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_record_clinical_trials", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "record_event_field_changes",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    record_event_id = table.Column<int>(type: "integer", nullable: false),
-                    field_path = table.Column<string>(type: "text", nullable: false),
-                    old_value = table.Column<string>(type: "text", nullable: true),
-                    new_value = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_record_event_field_changes", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "record_events",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    record_id = table.Column<int>(type: "integer", nullable: false),
-                    revision_id = table.Column<int>(type: "integer", nullable: true),
-                    qa_review_id = table.Column<int>(type: "integer", nullable: true),
-                    qa_review_item_id = table.Column<int>(type: "integer", nullable: true),
-                    event_type = table.Column<int>(type: "integer", nullable: false),
-                    performed_by = table.Column<int>(type: "integer", nullable: true),
-                    performed_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
-                    note = table.Column<string>(type: "text", nullable: true),
-                    payload = table.Column<string>(type: "jsonb", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_record_events", x => x.id);
                     table.ForeignKey(
-                        name: "fk_record_events_app_user_performed_by",
-                        column: x => x.performed_by,
+                        name: "fk_record_clinical_trials_record_revisions_revision_id",
+                        column: x => x.revision_id,
                         principalSchema: "ukps",
-                        principalTable: "app_user",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_record_events_qa_review_items_qa_review_item_id",
-                        column: x => x.qa_review_item_id,
-                        principalSchema: "ukps",
-                        principalTable: "qa_review_items",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_record_events_qa_reviews_qa_review_id",
-                        column: x => x.qa_review_id,
-                        principalSchema: "ukps",
-                        principalTable: "qa_reviews",
+                        principalTable: "record_revisions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1146,29 +1045,21 @@ namespace UKPS.Api.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     vaccine_hta_assessor = table.Column<int>(type: "integer", nullable: true),
+                    medicine_hta_submission_intended = table.Column<int>(type: "integer", nullable: true),
+                    medicine_hta_bodies = table.Column<int>(type: "integer", nullable: true),
                     hta_nice_aligned_pathway = table.Column<int>(type: "integer", nullable: true),
                     hta_additional_details = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_record_htas", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "record_mhra_dates",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    revision_id = table.Column<int>(type: "integer", nullable: false),
-                    uk_submission_date_id = table.Column<int>(type: "integer", nullable: true),
-                    uk_licence_date_id = table.Column<int>(type: "integer", nullable: true),
-                    uk_launch_date_id = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_record_mhra_dates", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_record_htas_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1200,104 +1091,9 @@ namespace UKPS.Api.Persistence.Migrations
                         principalTable: "mhra_procedure_type",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "record_revisions",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    record_id = table.Column<int>(type: "integer", nullable: false),
-                    based_on_revision_id = table.Column<int>(type: "integer", nullable: true),
-                    revision_no = table.Column<int>(type: "integer", nullable: false),
-                    major_version = table.Column<int>(type: "integer", nullable: false),
-                    minor_version = table.Column<int>(type: "integer", nullable: false),
-                    workflow_status = table.Column<int>(type: "integer", nullable: false),
-                    created_by = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
-                    updated_by = table.Column<int>(type: "integer", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
-                    submitted_by = table.Column<int>(type: "integer", nullable: true),
-                    submitted_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_record_revisions", x => x.id);
                     table.ForeignKey(
-                        name: "fk_record_revisions_app_user_created_by",
-                        column: x => x.created_by,
-                        principalSchema: "ukps",
-                        principalTable: "app_user",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_record_revisions_app_user_submitted_by",
-                        column: x => x.submitted_by,
-                        principalSchema: "ukps",
-                        principalTable: "app_user",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_record_revisions_app_user_updated_by",
-                        column: x => x.updated_by,
-                        principalSchema: "ukps",
-                        principalTable: "app_user",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_record_revisions_record_revisions_based_on_revision_id",
-                        column: x => x.based_on_revision_id,
-                        principalSchema: "ukps",
-                        principalTable: "record_revisions",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "records",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    organisation_id = table.Column<int>(type: "integer", nullable: false),
-                    record_type = table.Column<int>(type: "integer", nullable: false),
-                    record_status = table.Column<int>(type: "integer", nullable: false),
-                    published_revision_id = table.Column<int>(type: "integer", nullable: true),
-                    current_draft_revision_id = table.Column<int>(type: "integer", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
-                    created_by = table.Column<int>(type: "integer", nullable: true),
-                    reviewed_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_records", x => x.id);
-                    table.ForeignKey(
-                        name: "fk_records_app_user_created_by",
-                        column: x => x.created_by,
-                        principalSchema: "ukps",
-                        principalTable: "app_user",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_records_organisations_organisation_id",
-                        column: x => x.organisation_id,
-                        principalSchema: "ukps",
-                        principalTable: "organisations",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_records_record_revisions_current_draft_revision_id",
-                        column: x => x.current_draft_revision_id,
-                        principalSchema: "ukps",
-                        principalTable: "record_revisions",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_records_record_revisions_published_revision_id",
-                        column: x => x.published_revision_id,
+                        name: "fk_record_mhra_procedures_record_revisions_revision_id",
+                        column: x => x.revision_id,
                         principalSchema: "ukps",
                         principalTable: "record_revisions",
                         principalColumn: "id",
@@ -1491,32 +1287,98 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "record_status_histories",
+                name: "medicines_active_substances",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    medicines_product_detail_id = table.Column<int>(type: "integer", nullable: false),
+                    name = table.Column<string>(type: "text", nullable: false),
+                    name_type = table.Column<int>(type: "integer", nullable: false),
+                    display_order = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_medicines_active_substances", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_medicines_active_substances_medicines_product_details_medic",
+                        column: x => x.medicines_product_detail_id,
+                        principalSchema: "ukps",
+                        principalTable: "medicines_product_details",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "medicines_product_detail_therapeutic_areas",
+                schema: "ukps",
+                columns: table => new
+                {
+                    medicines_product_detail_id = table.Column<int>(type: "integer", nullable: false),
+                    therapeutic_area_id = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_medicines_product_detail_therapeutic_areas", x => new { x.medicines_product_detail_id, x.therapeutic_area_id });
+                    table.ForeignKey(
+                        name: "fk_medicines_product_detail_therapeutic_areas_medicines_produc",
+                        column: x => x.medicines_product_detail_id,
+                        principalSchema: "ukps",
+                        principalTable: "medicines_product_details",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_product_detail_therapeutic_areas_therapeutic_area",
+                        column: x => x.therapeutic_area_id,
+                        principalSchema: "ukps",
+                        principalTable: "therapeutic_areas",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "record_events",
                 schema: "ukps",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     record_id = table.Column<int>(type: "integer", nullable: false),
-                    from_status = table.Column<int>(type: "integer", nullable: true),
-                    to_status = table.Column<int>(type: "integer", nullable: false),
-                    reason = table.Column<int>(type: "integer", nullable: true),
+                    revision_id = table.Column<int>(type: "integer", nullable: true),
+                    qa_review_id = table.Column<int>(type: "integer", nullable: true),
+                    event_type = table.Column<int>(type: "integer", nullable: false),
+                    performed_by = table.Column<int>(type: "integer", nullable: true),
+                    performed_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
                     note = table.Column<string>(type: "text", nullable: true),
-                    updated_by = table.Column<int>(type: "integer", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
+                    payload = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_record_status_histories", x => x.id);
+                    table.PrimaryKey("pk_record_events", x => x.id);
                     table.ForeignKey(
-                        name: "fk_record_status_histories_app_user_updated_by",
-                        column: x => x.updated_by,
+                        name: "fk_record_events_app_user_performed_by",
+                        column: x => x.performed_by,
                         principalSchema: "ukps",
                         principalTable: "app_user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "fk_record_status_histories_records_record_id",
+                        name: "fk_record_events_qa_reviews_qa_review_id",
+                        column: x => x.qa_review_id,
+                        principalSchema: "ukps",
+                        principalTable: "qa_reviews",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_events_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_events_records_record_id",
                         column: x => x.record_id,
                         principalSchema: "ukps",
                         principalTable: "records",
@@ -1525,28 +1387,233 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "record_watchlists",
+                name: "other_clinical_trial_numbers",
                 schema: "ukps",
                 columns: table => new
                 {
-                    user_id = table.Column<int>(type: "integer", nullable: false),
-                    record_id = table.Column<int>(type: "integer", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    clinical_trial_id = table.Column<int>(type: "integer", nullable: false),
+                    other_registry_number = table.Column<string>(type: "text", nullable: false),
+                    display_order = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_record_watchlists", x => new { x.user_id, x.record_id });
+                    table.PrimaryKey("pk_other_clinical_trial_numbers", x => x.id);
                     table.ForeignKey(
-                        name: "fk_record_watchlists_records_record_id",
-                        column: x => x.record_id,
+                        name: "fk_other_clinical_trial_numbers_record_clinical_trials_clinica",
+                        column: x => x.clinical_trial_id,
                         principalSchema: "ukps",
-                        principalTable: "records",
+                        principalTable: "record_clinical_trials",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "medicines_eams_pims",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    revision_id = table.Column<int>(type: "integer", nullable: false),
+                    pim_designation_status = table.Column<int>(type: "integer", nullable: true),
+                    will_submit_to_eams = table.Column<int>(type: "integer", nullable: true),
+                    eams_opinion_decision = table.Column<int>(type: "integer", nullable: true),
+                    eams_submission_date_id = table.Column<int>(type: "integer", nullable: true),
+                    eams_opinion_date_id = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_medicines_eams_pims", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_medicines_eams_pims_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "fk_record_watchlists_users_user_id",
-                        column: x => x.user_id,
+                        name: "fk_medicines_eams_pims_regulatory_dates_eams_opinion_date_id",
+                        column: x => x.eams_opinion_date_id,
                         principalSchema: "ukps",
-                        principalTable: "app_user",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_eams_pims_regulatory_dates_eams_submission_date_id",
+                        column: x => x.eams_submission_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "medicines_eu_statuses",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    revision_id = table.Column<int>(type: "integer", nullable: false),
+                    eu_orphan_status = table.Column<int>(type: "integer", nullable: true),
+                    eu_orphan_status_number = table.Column<string>(type: "text", nullable: true),
+                    eu_orphan_granted_date_id = table.Column<int>(type: "integer", nullable: true),
+                    eu_atmp_classification_status = table.Column<int>(type: "integer", nullable: true),
+                    atmp_recommendation_date_id = table.Column<int>(type: "integer", nullable: true),
+                    atmp_classification_id = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_medicines_eu_statuses", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_medicines_eu_statuses_atmp_classifications_atmp_classificat",
+                        column: x => x.atmp_classification_id,
+                        principalSchema: "ukps",
+                        principalTable: "atmp_classification",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_eu_statuses_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_eu_statuses_regulatory_dates_atmp_recommendation_",
+                        column: x => x.atmp_recommendation_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_eu_statuses_regulatory_dates_eu_orphan_granted_da",
+                        column: x => x.eu_orphan_granted_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "medicines_global_submissions",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    revision_id = table.Column<int>(type: "integer", nullable: false),
+                    global_first_submission_region = table.Column<string>(type: "text", nullable: true),
+                    global_submission_actual_date_id = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_medicines_global_submissions", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_medicines_global_submissions_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_global_submissions_regulatory_dates_global_submis",
+                        column: x => x.global_submission_actual_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "medicines_intl_recognitions",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    revision_id = table.Column<int>(type: "integer", nullable: false),
+                    irp_route_id = table.Column<int>(type: "integer", nullable: true),
+                    intl_conditional_approval_anticipated = table.Column<int>(type: "integer", nullable: true),
+                    intl_submission_date_id = table.Column<int>(type: "integer", nullable: true),
+                    intl_licence_date_id = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_medicines_intl_recognitions", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_medicines_intl_recognitions_irp_routes_irp_route_id",
+                        column: x => x.irp_route_id,
+                        principalSchema: "ukps",
+                        principalTable: "irp_route",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_intl_recognitions_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_intl_recognitions_regulatory_dates_intl_licence_d",
+                        column: x => x.intl_licence_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_medicines_intl_recognitions_regulatory_dates_intl_submissio",
+                        column: x => x.intl_submission_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "record_mhra_dates",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    revision_id = table.Column<int>(type: "integer", nullable: false),
+                    uk_submission_date_id = table.Column<int>(type: "integer", nullable: true),
+                    uk_licence_date_id = table.Column<int>(type: "integer", nullable: true),
+                    uk_launch_date_id = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_record_mhra_dates", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_record_mhra_dates_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_mhra_dates_regulatory_dates_uk_launch_date_id",
+                        column: x => x.uk_launch_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_mhra_dates_regulatory_dates_uk_licence_date_id",
+                        column: x => x.uk_licence_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_mhra_dates_regulatory_dates_uk_submission_date_id",
+                        column: x => x.uk_submission_date_id,
+                        principalSchema: "ukps",
+                        principalTable: "regulatory_dates",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1666,6 +1733,30 @@ namespace UKPS.Api.Persistence.Migrations
                         column: x => x.vaccines_technology_id,
                         principalSchema: "ukps",
                         principalTable: "vaccines_technologies",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "record_event_field_changes",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    record_event_id = table.Column<int>(type: "integer", nullable: false),
+                    field_path = table.Column<string>(type: "text", nullable: false),
+                    old_value = table.Column<string>(type: "text", nullable: true),
+                    new_value = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_record_event_field_changes", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_record_event_field_changes_record_events_record_event_id",
+                        column: x => x.record_event_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_events",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1812,12 +1903,6 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "patient_pathway_point_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_medicines_pas_regions_pas_region_id",
-                schema: "ukps",
-                table: "medicines_pas_regions",
-                column: "pas_region_id");
-
-            migrationBuilder.CreateIndex(
                 name: "ix_medicines_patient_identification_revision_id",
                 schema: "ukps",
                 table: "medicines_patient_identifications",
@@ -1848,12 +1933,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "medicines_product_details",
                 column: "formulation_type_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_medicines_record_statuses_medicine_status_type_id",
-                schema: "ukps",
-                table: "medicines_record_statuses",
-                column: "medicine_status_type_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_medicines_service_impact_revision_id",
@@ -1892,18 +1971,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "other_clinical_trial_numbers",
                 column: "clinical_trial_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_qa_review_item_qa_review_id",
-                schema: "ukps",
-                table: "qa_review_items",
-                column: "qa_review_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_qa_review_items_resolved_by",
-                schema: "ukps",
-                table: "qa_review_items",
-                column: "resolved_by");
 
             migrationBuilder.CreateIndex(
                 name: "ix_qa_review_revision_id",
@@ -1952,12 +2019,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "record_events",
                 column: "qa_review_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_record_events_qa_review_item_id",
-                schema: "ukps",
-                table: "record_events",
-                column: "qa_review_item_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_record_hta_revision_id",
@@ -2009,13 +2070,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "record_mhra_procedures",
                 column: "mhra_procedure_type_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_record_revision_record_id_major_minor",
-                schema: "ukps",
-                table: "record_revisions",
-                columns: new[] { "record_id", "major_version", "minor_version" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_record_revision_record_id_revision_no",
@@ -2083,18 +2137,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "records",
                 column: "created_by");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_records_current_draft_revision_id",
-                schema: "ukps",
-                table: "records",
-                column: "current_draft_revision_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_records_published_revision_id",
-                schema: "ukps",
-                table: "records",
-                column: "published_revision_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_regulatory_date_revision_event_precision",
@@ -2273,387 +2315,21 @@ namespace UKPS.Api.Persistence.Migrations
                 table: "vaccines_technologies",
                 column: "revision_id",
                 unique: true);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_active_substances_medicines_product_details_medic",
-                schema: "ukps",
-                table: "medicines_active_substances",
-                column: "medicines_product_detail_id",
-                principalSchema: "ukps",
-                principalTable: "medicines_product_details",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_budget_impacts_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_budget_impacts",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_company_infos_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_company_infos",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_details_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_details",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_eams_pims_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_eams_pims",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_eams_pims_regulatory_dates_eams_opinion_date_id",
-                schema: "ukps",
-                table: "medicines_eams_pims",
-                column: "eams_opinion_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_eams_pims_regulatory_dates_eams_submission_date_id",
-                schema: "ukps",
-                table: "medicines_eams_pims",
-                column: "eams_submission_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_eu_statuses_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_eu_statuses",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_eu_statuses_regulatory_dates_atmp_recommendation_",
-                schema: "ukps",
-                table: "medicines_eu_statuses",
-                column: "atmp_recommendation_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_eu_statuses_regulatory_dates_eu_orphan_granted_da",
-                schema: "ukps",
-                table: "medicines_eu_statuses",
-                column: "eu_orphan_granted_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_global_submissions_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_global_submissions",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_global_submissions_regulatory_dates_global_submis",
-                schema: "ukps",
-                table: "medicines_global_submissions",
-                column: "global_submission_actual_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_hta_bodies_record_htas_record_hta_id",
-                schema: "ukps",
-                table: "medicines_hta_bodies",
-                column: "record_hta_id",
-                principalSchema: "ukps",
-                principalTable: "record_htas",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_intl_recognitions_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_intl_recognitions",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_intl_recognitions_regulatory_dates_intl_licence_d",
-                schema: "ukps",
-                table: "medicines_intl_recognitions",
-                column: "intl_licence_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_intl_recognitions_regulatory_dates_intl_submissio",
-                schema: "ukps",
-                table: "medicines_intl_recognitions",
-                column: "intl_submission_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_laboratory_testings_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_laboratory_testings",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_patient_identifications_record_revisions_revision",
-                schema: "ukps",
-                table: "medicines_patient_identifications",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_product_detail_therapeutic_areas_medicines_produc",
-                schema: "ukps",
-                table: "medicines_product_detail_therapeutic_areas",
-                column: "medicines_product_detail_id",
-                principalSchema: "ukps",
-                principalTable: "medicines_product_details",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_product_details_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_product_details",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_service_impacts_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_service_impacts",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_medicines_treatment_details_record_revisions_revision_id",
-                schema: "ukps",
-                table: "medicines_treatment_details",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_other_clinical_trial_numbers_record_clinical_trials_clinica",
-                schema: "ukps",
-                table: "other_clinical_trial_numbers",
-                column: "clinical_trial_id",
-                principalSchema: "ukps",
-                principalTable: "record_clinical_trials",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_qa_review_items_qa_reviews_qa_review_id",
-                schema: "ukps",
-                table: "qa_review_items",
-                column: "qa_review_id",
-                principalSchema: "ukps",
-                principalTable: "qa_reviews",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_qa_reviews_record_revisions_revision_id",
-                schema: "ukps",
-                table: "qa_reviews",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_clinical_trials_record_revisions_revision_id",
-                schema: "ukps",
-                table: "record_clinical_trials",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_event_field_changes_record_events_record_event_id",
-                schema: "ukps",
-                table: "record_event_field_changes",
-                column: "record_event_id",
-                principalSchema: "ukps",
-                principalTable: "record_events",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_events_record_revisions_revision_id",
-                schema: "ukps",
-                table: "record_events",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_events_records_record_id",
-                schema: "ukps",
-                table: "record_events",
-                column: "record_id",
-                principalSchema: "ukps",
-                principalTable: "records",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_htas_record_revisions_revision_id",
-                schema: "ukps",
-                table: "record_htas",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_mhra_dates_record_revisions_revision_id",
-                schema: "ukps",
-                table: "record_mhra_dates",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_mhra_dates_regulatory_dates_uk_launch_date_id",
-                schema: "ukps",
-                table: "record_mhra_dates",
-                column: "uk_launch_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_mhra_dates_regulatory_dates_uk_licence_date_id",
-                schema: "ukps",
-                table: "record_mhra_dates",
-                column: "uk_licence_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_mhra_dates_regulatory_dates_uk_submission_date_id",
-                schema: "ukps",
-                table: "record_mhra_dates",
-                column: "uk_submission_date_id",
-                principalSchema: "ukps",
-                principalTable: "regulatory_dates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_mhra_procedures_record_revisions_revision_id",
-                schema: "ukps",
-                table: "record_mhra_procedures",
-                column: "revision_id",
-                principalSchema: "ukps",
-                principalTable: "record_revisions",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_record_revisions_records_record_id",
-                schema: "ukps",
-                table: "record_revisions",
-                column: "record_id",
-                principalSchema: "ukps",
-                principalTable: "records",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "fk_records_record_revisions_current_draft_revision_id",
-                schema: "ukps",
-                table: "records");
-
-            migrationBuilder.DropForeignKey(
-                name: "fk_records_record_revisions_published_revision_id",
-                schema: "ukps",
-                table: "records");
-
             migrationBuilder.DropTable(
                 name: "email_audits",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
                 name: "medicines_active_substances",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "medicines_budget_impacts",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
@@ -2677,10 +2353,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "medicines_hta_bodies",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
                 name: "medicines_intl_recognitions",
                 schema: "ukps");
 
@@ -2689,19 +2361,11 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "medicines_pas_regions",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
                 name: "medicines_patient_identifications",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
                 name: "medicines_product_detail_therapeutic_areas",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
-                name: "medicines_record_statuses",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
@@ -2722,6 +2386,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "record_event_field_changes",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "record_htas",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
@@ -2805,10 +2473,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "record_htas",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
                 name: "irp_route",
                 schema: "ukps");
 
@@ -2817,23 +2481,11 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "medicines_budget_impacts",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
-                name: "pas_region",
+                name: "medicines_product_details",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
                 name: "therapeutic_areas",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
-                name: "medicine_technology_status",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
-                name: "medicines_product_details",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
@@ -2893,15 +2545,11 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "qa_review_items",
+                name: "qa_reviews",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
                 name: "vaccine_platform",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
-                name: "qa_reviews",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
