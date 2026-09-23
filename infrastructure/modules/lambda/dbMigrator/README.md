@@ -53,7 +53,7 @@ No modules.
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region, used to scope the KMS ViaService condition. | `string` | n/a | yes |
 | <a name="input_reserved_concurrent_executions"></a> [reserved\_concurrent\_executions](#input\_reserved\_concurrent\_executions) | Reserved concurrent executions for the Lambda. | `number` | `1` | no |
-| <a name="input_seeded_super_users_json"></a> [seeded\_super\_users\_json](#input\_seeded\_super\_users\_json) | JSON-encoded list of super users to seed. Matches Seeding\_\_SuperUsersJson on the backend ECS service. | `string` | `"[]"` | no |
+| <a name="input_seeded_users_json"></a> [seeded\_users\_json](#input\_seeded\_users\_json) | JSON-encoded list of users (with roles) to seed. Matches Seeding\_\_SeedUsersJson on the backend ECS service. | `string` | `"[]"` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Logical service name used in resource names | `string` | n/a | yes |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Subnet IDs to place the Lambda in. Use app subnets to match the backend ECS service. | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional tags to apply to resources. | `map(string)` | `{}` | no |

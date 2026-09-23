@@ -1,38 +1,40 @@
 import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
-import { Table } from '@/components/Table/Table'
 
-import { recordStatusLabels } from './labels'
+import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
+
+import { organisationRecordsTableHeaders, recordStatusLabels } from './labels'
+import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 type RecordsTableProps = {
   data: PaginatedResponseDtoOfRecordListItemDto
+  query: RecordsQuery
 }
-const RecordsTable = async ({ data: records }: RecordsTableProps) => {
+const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
   return (
-    <Table>
-      <caption className="visually-hidden">Organisation Records</caption>
-      <thead>
-        <tr>
-          <th scope="col">ID</th>
-          <th scope="col">Development name</th>
-          <th scope="col">Records title</th>
-          <th scope="col">Record Status</th>
-          <th scope="col">Next update</th>
-          <th scope="col">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {records.items.map((x) => (
-          <tr key={x.id}>
-            <td>{x.niceTaDevelopmentId}</td>
-            <td>TODO</td>
-            <td>TODO</td>
-            <td>{recordStatusLabels[x.recordStatus]}</td>
-            <td>TODO</td>
-            <td>TODO</td>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
+    <>
+      <ApplicationTableWithPagination
+        captionName="Organisation Records"
+        result={records}
+        getItemKey={(x) => x.id}
+        headers={organisationRecordsTableHeaders}
+        query={query}
+        queryToSearchParams={convertQueryToSearchParams}
+        fallbackText="No records found for this organisation"
+        getData={(key, data) => {
+          switch (key) {
+            case 'id':
+              return <>{data.niceTaDevelopmentId}</>
+            case 'record-status':
+              return <>{recordStatusLabels[data.recordStatus]}</>
+            case 'development-name':
+            case 'next-update':
+            case 'records-title':
+            case 'actions':
+              return <>TODO</>
+          }
+        }}
+      />
+    </>
   )
 }
 

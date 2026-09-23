@@ -34,7 +34,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
                 {(data) => (
                   <>
                     <RecordsQueryResultsSummary query={query} data={data} />
-                    <RecordsTable data={data} />
+                    <RecordsTable data={data} query={query} />
                   </>
                 )}
               </RecordsFetch>

@@ -9,9 +9,9 @@ internal sealed class MedicinesBudgetImpact
 
     /// <summary>
     /// Is a Patient Access Scheme or alternative discount arrangement planned
-    /// for this indication? Gates the PasRegions selection. CiC.
+    /// for this indication? Gates the PatientAccessSchemeRegions selection. CiC.
     /// </summary>
-    public YesNoUnknown? PasSchemePlanned { get; set; }
+    public YesNoUnknown? PatientAccessSchemePlanned { get; set; }
 
     /// <summary>CiC — Commercially in Confidence.</summary>
     public YesNoUnknown? IndicationSpecificPricingPlanned { get; set; }
@@ -24,7 +24,9 @@ internal sealed class MedicinesBudgetImpact
     /// </summary>
     public NetUkBudgetImpactBand? NetUkBudgetImpactBand { get; set; }
 
+    /// <summary>Multi-select. Conditional on PatientAccessSchemePlanned = Yes.</summary>
+    public PatientAccessSchemeRegion? PatientAccessSchemeRegions { get; set; }
+
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
-    public ICollection<MedicinesPasRegion> PasRegions { get; set; } = [];
 }

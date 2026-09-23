@@ -11,67 +11,34 @@ public enum RecordEventType
     RecordCreated = 0,
 
     /// <summary>
-    /// Indicates that the status of a record has changed.
+    /// Indicates that a new revision has been created, either as the
+    /// record's first draft or branched from an earlier revision.
     /// </summary>
-    RecordStatusChanged = 1,
+    RevisionCreated = 1,
 
     /// <summary>
-    /// Indicates that a draft has been created.
+    /// Indicates that a revision has been submitted for QA review.
     /// </summary>
-    DraftCreated = 2,
+    SubmittedToQa = 2,
 
     /// <summary>
-    /// Indicates that a draft has been saved.
+    /// Indicates that a revision has been rejected by QA.
     /// </summary>
-    DraftSaved = 3,
+    RevisionRejected = 3,
 
     /// <summary>
-    /// Indicates that a draft has been submitted.
+    /// Indicates that a revision has been published, either following QA
+    /// approval or, for vaccine records, immediately on submission.
     /// </summary>
-    DraftSubmitted = 4,
-
-    /// <summary>
-    /// Indicates that a draft has been superseded.
-    /// </summary>
-    DraftSuperseded = 5,
-
-    /// <summary>
-    /// Indicates that a QA review has been created.
-    /// </summary>
-    QaReviewCreated = 6,
-
-    /// <summary>
-    /// Indicates that a QA review has been completed.
-    /// </summary>
-    QaReviewCompleted = 7,
-
-    /// <summary>
-    /// Indicates that a QA issue has been added.
-    /// </summary>
-    QaIssueAdded = 8,
-
-    /// <summary>
-    /// Indicates that a QA issue has been resolved.
-    /// </summary>
-    QaIssueResolved = 9,
-
-    /// <summary>
-    /// Indicates that a QA issue has been reopened.
-    /// </summary>
-    QaIssueReopened = 10,
-
-    /// <summary>
-    /// Indicates that a revision has been rejected.
-    /// </summary>
-    RevisionRejected = 11,
-
-    /// <summary>
-    /// Indicates that a revision has been published.
-    /// </summary>
-    RevisionPublished = 12,
+    RecordPublished = 4,
 
     /// <summary>
     /// Indicates that a record has been reviewed with no changes.
     /// </summary>
-    RecordReviewedNoChange = 13,
+    RecordReviewedNoChange = 5,
+
+    /// <summary>
+    /// Indicates that the status of a record has changed.
+    /// </summary>
+    RecordStatusChanged = 6,
 }

@@ -34,7 +34,7 @@ const DeactivateUserControls = ({
         setHasError(true)
         return
       }
-      router.push(buildUserActionHref(organisationId, 'deactivated', userId))
+      router.push(buildUserActionHref(organisationId, { action: 'deactivated', userId }))
     } finally {
       setLoading(false)
     }

@@ -1,11 +1,15 @@
+locals {
+  hosted_zone_name = "${var.environment}.${var.base_domain_name}"
+}
+
 resource "aws_route53_zone" "base_domain" {
   # checkov:skip=CKV2_AWS_38: DNSSEC signing is not enabled on the nice.org.uk domain.
   # checkov:skip=CKV2_AWS_39: Route53 query logging requires CloudWatch log stream creation in us-east-1, which this role is not permitted to create.
-  name    = var.base_domain_name
-  comment = "Env subdomain for ${var.environment}. Delegated from nice.org.uk"
+  name    = local.hosted_zone_name
+  comment = "Hosted zone for the ${var.environment} environment"
 
   tags = merge(var.tags, {
-    Name        = var.base_domain_name
+    Name        = local.hosted_zone_name
     Environment = var.environment
     Project     = var.project
   })
