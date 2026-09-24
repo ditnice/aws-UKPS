@@ -1,10 +1,10 @@
-using System.Net.Http.Headers;
-using Amazon.CognitoIdentityProvider.Model.Internal.MarshallTransformations;
 using Bogus;
 using Shouldly;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
+using UKPS.Api.Persistence.Entities.VaccinesRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
@@ -25,10 +25,16 @@ public class RecordServiceTests : DatabaseTestBase
     private IServiceTestHarness<IRecordService> _harness = null!;
     private IRecordService Service => _harness.Service;
     private readonly DateTime _currentDateTime = new(2003, 4, 12, 12, 12, 44, DateTimeKind.Utc);
-    private List<Record> _seededRecords = [];
+    private IReadOnlyCollection<Record> _seededMedicineRecords = null!;
+    private Record[] _seededVaccineRecords = null!;
+    private IReadOnlyCollection<MedicinesProductDetail> _medicineProductDetailsData = null!;
+    private IReadOnlyCollection<VaccinesProductDetail> _vaccineProductDetailsData = null!;
     private int _organisationId;
     private List<Record> OrganisationRecords =>
-        _seededRecords.Where(x => x.OrganisationId == _organisationId).ToList();
+        _seededMedicineRecords
+            .Concat(_seededVaccineRecords)
+            .Where(x => x.OrganisationId == _organisationId)
+            .ToList();
 
     public RecordServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -45,28 +51,59 @@ public class RecordServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        _seededRecords = _recordFaker
+        var userFaker = new UserFaker();
+        var records = _recordFaker
             .RuleFor(x => x.OrganisationId, f => f.PickRandom(organisations).Id)
             .RuleFor(x => x.ReviewedAt, f => f.Date.Past(2, _currentDateTime))
+            .RuleFor(x => x.CreatedByUser, _ => userFaker.Generate())
             .Generate(30);
 
-        var testUser = new UserFaker().Generate();
-        await AddEntity(testUser, TestContext.Current.CancellationToken);
-        var testFaker = new Faker();
-        var RevisionFaker = RecordRevisionFaker.Create()
-            .RuleFor(x => x.Record, _ => testFaker.PickRandom(_seededRecords))
-            .RuleFor(y => y.CreatedBy, _ => testUser.Id);
-        var faker = MedicinesProductDetailFaker.Create().RuleFor(x => x.Revision, _ => RevisionFaker.Generate());
+        var faker = new Faker();
+        var revisionFaker = new RecordRevisionFaker().RuleFor(
+            y => y.CreatedByUser,
+            _ => userFaker.Generate()
+        );
 
-        var data = faker.Generate(50);
+        var medicalRecordRevisionFaker = revisionFaker.RuleFor(
+            x => x.Record,
+            _ => faker.PickRandom(records.Where(x => x.RecordType == RecordType.Medicine))
+        );
 
-        _organisationId = _seededRecords
+        var vaccineRecordRevisionFaker = revisionFaker.RuleFor(
+            x => x.Record,
+            _ => faker.PickRandom(records.Where(x => x.RecordType == RecordType.Vaccine))
+        );
+
+        var medicineProductDetailsFaker = new MedicinesProductDetailFaker().RuleFor(
+            x => x.Revision,
+            _ => medicalRecordRevisionFaker.Generate()
+        );
+
+        var vaccineProductDetailsFaker = new VaccinesProductDetailFaker().RuleFor(
+            x => x.Revision,
+            _ => vaccineRecordRevisionFaker.Generate()
+        );
+
+        _medicineProductDetailsData = medicineProductDetailsFaker.Generate(50);
+        _vaccineProductDetailsData = vaccineProductDetailsFaker.Generate(50);
+
+        _organisationId = records
             .GroupBy(x => x.OrganisationId)
             .OrderByDescending(x => x.Count())
             .First()
             .Key;
 
-        await AddEntities(data, TestContext.Current.CancellationToken);
+        await AddEntities(_medicineProductDetailsData, TestContext.Current.CancellationToken);
+        await AddEntities(_vaccineProductDetailsData, TestContext.Current.CancellationToken);
+
+        _seededMedicineRecords = _medicineProductDetailsData
+            .Select(x => x.Revision!.Record!)
+            .DistinctBy(x => x.Id)
+            .ToArray();
+        _seededVaccineRecords = _vaccineProductDetailsData
+            .Select(x => x.Revision!.Record!)
+            .DistinctBy(x => x.Id)
+            .ToArray();
 
         _harness = new ServiceTestHarness<IRecordService>(Context)
             .UpdateCurrentTime(_currentDateTime)
@@ -92,6 +129,20 @@ public class RecordServiceTests : DatabaseTestBase
 
         dto.Items.ShouldNotBeEmpty();
         dto.TotalCount.ShouldBe(OrganisationRecords.Count);
+    }
+
+    [Fact]
+    public async Task GetRecords_DevelopmentNameShouldBeSet()
+    {
+        GetRecordsResult result = await Service.GetOrganisationRecords(
+            _organisationId,
+            new GetRecordsQueryDto(),
+            TestContext.Current.CancellationToken
+        );
+
+        var dto = result.ShouldBeSuccess();
+
+        dto.Items.Select(x => x.DevelopmentName).ShouldAllBe(x => !string.IsNullOrEmpty(x));
     }
 
     [Fact]
@@ -208,6 +259,7 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
+        dto.Items.ShouldNotBeEmpty();
         dto.Items.ShouldAllBe(x => statuses.Contains(x.RecordStatus));
     }
 
@@ -237,12 +289,13 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
+        dto.Items.ShouldNotBeEmpty();
         dto.Items.Select(x =>
                 x.ReviewedAt.HasValue ? x.ReviewedAt.Value.AddMonths(3) : (DateTime?)null
             )
             .Where(x => x.HasValue)
             .Select(x => x!.Value)
-            .ShouldBeInOrder(Shouldly.SortDirection.Ascending);
+            .ShouldBeInOrder(SortDirection.Ascending);
     }
 
     [Fact]
@@ -259,10 +312,12 @@ public class RecordServiceTests : DatabaseTestBase
         foreach (Record record in OrganisationRecords)
         {
             RecordListItemDto item = dto.Items.Single(x => x.Id == record.Id);
+            string developmentName = GetExpectedDevelopmentName(record);
 
             item.Id.ShouldBe(record.Id);
             item.RecordType.ShouldBe(record.RecordType);
             item.RecordStatus.ShouldBe(record.RecordStatus);
+            item.DevelopmentName.ShouldBe(developmentName);
 
             if (record.ReviewedAt.HasValue)
             {
@@ -277,6 +332,27 @@ public class RecordServiceTests : DatabaseTestBase
                 item.ReviewedAt.ShouldBeNull();
             }
         }
+    }
+
+    private string GetExpectedDevelopmentName(Record record)
+    {
+        var relevantRevision = record.Revisions.OrderBy(x => x.RevisionNo).Last();
+        if (record.RecordType == RecordType.Medicine)
+        {
+            var medicalData = _medicineProductDetailsData.First(x =>
+                x.RevisionId == relevantRevision.Id
+            );
+            return medicalData
+                .ActiveSubstances.Where(x => x.NameType == SubstanceNameType.DevelopmentName)
+                .OrderBy(x => x.DisplayOrder)
+                .First()
+                .Name;
+        }
+
+        var vaccinesProductDetail = _vaccineProductDetailsData.First(x =>
+            x.RevisionId == relevantRevision.Id
+        );
+        return vaccinesProductDetail.CompanyCode;
     }
 
     [Fact]
