@@ -856,10 +856,6 @@ export type GetAuthValidateSetupTokenErrors = {
      */
     400: ProblemDetails;
     /**
-     * Unauthorized
-     */
-    401: AuthenticationProblemDetails;
-    /**
      * The specified setup token does not exist.
      */
     404: ProblemDetails;
@@ -898,10 +894,6 @@ export type PostAuthResendSetupTokenErrors = {
      * a setup token or a correlation id.
      */
     400: ProblemDetails;
-    /**
-     * Unauthorized
-     */
-    401: AuthenticationProblemDetails;
     /**
      * The setup token has already been resent the maximum number of times.
      */
@@ -946,7 +938,7 @@ export type PostAuthSetupUserErrors = {
     /**
      * Unauthorized
      */
-    401: AuthenticationProblemDetails;
+    401: ProblemDetails;
     /**
      * Not Found
      */
@@ -988,10 +980,6 @@ export type PostAuthVerifyMfaErrors = {
      * verification could not be completed.
      */
     400: ProblemDetails;
-    /**
-     * Unauthorized
-     */
-    401: AuthenticationProblemDetails;
 };
 
 export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerifyMfaErrors];
@@ -1255,18 +1243,10 @@ export type GetOrganisationsPublicOptionsData = {
     url: '/organisations/publicOptions';
 };
 
-export type GetOrganisationsPublicOptionsErrors = {
-    /**
-     * Unauthorized
-     */
-    401: AuthenticationProblemDetails;
-};
-
-export type GetOrganisationsPublicOptionsError = GetOrganisationsPublicOptionsErrors[keyof GetOrganisationsPublicOptionsErrors];
-
 export type GetOrganisationsPublicOptionsResponses = {
     /**
-     * OK
+     * A task that represents the asynchronous operation. The task result contains
+     * the names of all organisations.
      */
     200: Array<OrganisationListDto>;
 };
@@ -1597,10 +1577,6 @@ export type RegisterUserErrors = {
      * Bad Request
      */
     400: ProblemDetails;
-    /**
-     * Unauthorized
-     */
-    401: AuthenticationProblemDetails;
 };
 
 export type RegisterUserError = RegisterUserErrors[keyof RegisterUserErrors];

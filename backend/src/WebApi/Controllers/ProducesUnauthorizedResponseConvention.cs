@@ -1,6 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
@@ -13,7 +13,14 @@ internal sealed class ProducesUnauthorizedResponseConvention : IApplicationModel
         {
             foreach (var action in controller.Actions)
             {
-                if (action.Filters.Any(f => f is IAllowAnonymousFilter))
+                var allowsAnonymous =
+                    controller.Attributes.OfType<IAllowAnonymous>().Any()
+                    || action.Attributes.OfType<IAllowAnonymous>().Any();
+                var requiresAuthorization =
+                    controller.Attributes.OfType<IAuthorizeData>().Any()
+                    || action.Attributes.OfType<IAuthorizeData>().Any();
+
+                if (allowsAnonymous || !requiresAuthorization)
                 {
                     continue;
                 }
