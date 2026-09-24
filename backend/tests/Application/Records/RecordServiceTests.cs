@@ -1,3 +1,5 @@
+using System.Net.Http.Headers;
+using Amazon.CognitoIdentityProvider.Model.Internal.MarshallTransformations;
 using Bogus;
 using Shouldly;
 using UKPS.Api.Application.Records;
@@ -48,13 +50,23 @@ public class RecordServiceTests : DatabaseTestBase
             .RuleFor(x => x.ReviewedAt, f => f.Date.Past(2, _currentDateTime))
             .Generate(30);
 
+        var testUser = new UserFaker().Generate();
+        await AddEntity(testUser, TestContext.Current.CancellationToken);
+        var testFaker = new Faker();
+        var RevisionFaker = RecordRevisionFaker.Create()
+            .RuleFor(x => x.Record, _ => testFaker.PickRandom(_seededRecords))
+            .RuleFor(y => y.CreatedBy, _ => testUser.Id);
+        var faker = MedicinesProductDetailFaker.Create().RuleFor(x => x.Revision, _ => RevisionFaker.Generate());
+
+        var data = faker.Generate(50);
+
         _organisationId = _seededRecords
             .GroupBy(x => x.OrganisationId)
             .OrderByDescending(x => x.Count())
             .First()
             .Key;
 
-        await AddEntities(_seededRecords, TestContext.Current.CancellationToken);
+        await AddEntities(data, TestContext.Current.CancellationToken);
 
         _harness = new ServiceTestHarness<IRecordService>(Context)
             .UpdateCurrentTime(_currentDateTime)
