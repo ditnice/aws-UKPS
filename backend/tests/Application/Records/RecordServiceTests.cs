@@ -68,23 +68,21 @@ public class RecordServiceTests : DatabaseTestBase
             x => x.Record,
             _ => faker.PickRandom(records.Where(x => x.RecordType == RecordType.Medicine))
         );
+        var medicineProductDetailsFaker = new MedicinesProductDetailFaker().RuleFor(
+            x => x.Revision,
+            _ => medicalRecordRevisionFaker.Generate()
+
+        );
+        _medicineProductDetailsData = medicineProductDetailsFaker.Generate(50);
 
         var vaccineRecordRevisionFaker = revisionFaker.RuleFor(
             x => x.Record,
             _ => faker.PickRandom(records.Where(x => x.RecordType == RecordType.Vaccine))
         );
-
-        var medicineProductDetailsFaker = new MedicinesProductDetailFaker().RuleFor(
-            x => x.Revision,
-            _ => medicalRecordRevisionFaker.Generate()
-        );
-
         var vaccineProductDetailsFaker = new VaccinesProductDetailFaker().RuleFor(
             x => x.Revision,
             _ => vaccineRecordRevisionFaker.Generate()
         );
-
-        _medicineProductDetailsData = medicineProductDetailsFaker.Generate(50);
         _vaccineProductDetailsData = vaccineProductDetailsFaker.Generate(50);
 
         _organisationId = records
@@ -93,8 +91,8 @@ public class RecordServiceTests : DatabaseTestBase
             .First()
             .Key;
 
-        await AddEntities(_medicineProductDetailsData, TestContext.Current.CancellationToken);
         await AddEntities(_vaccineProductDetailsData, TestContext.Current.CancellationToken);
+        await AddEntities(_medicineProductDetailsData, TestContext.Current.CancellationToken);
 
         _seededMedicineRecords = _medicineProductDetailsData
             .Select(x => x.Revision!.Record!)
@@ -104,6 +102,14 @@ public class RecordServiceTests : DatabaseTestBase
             .Select(x => x.Revision!.Record!)
             .DistinctBy(x => x.Id)
             .ToArray();
+
+
+        foreach(var record in _seededVaccineRecords.Concat(_seededMedicineRecords))
+        {
+            record.CurrentDraftRevisionId = record.Revisions.OrderBy(x => x.RevisionNo).Last().Id;
+        }
+
+        await Context.SaveChangesAsync();
 
         _harness = new ServiceTestHarness<IRecordService>(Context)
             .UpdateCurrentTime(_currentDateTime)
