@@ -1,4 +1,12 @@
 @use '@nice-digital/design-system/scss/base';
+@use '@/styles/spacing';
+@use '@/styles/utils';
+
+// Keep focused and anchor-scrolled elements clear of the sticky BackToTop bar
+// (WCAG 2.4.11). Matches $back-to-top-height in BackToTop.module.scss.
+html {
+  scroll-padding-bottom: utils.rem(spacing.$medium * 3);
+}
 
 // Override the NDS 66ch readable-width constraint so content can use its full container width.
 h1,
