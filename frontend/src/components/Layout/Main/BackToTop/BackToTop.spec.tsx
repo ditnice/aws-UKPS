@@ -89,19 +89,13 @@ describe('BackToTop', () => {
     expect(isHidden(container.firstElementChild as Element)).toBe(false)
   })
 
-  it('is visually hidden, but still reachable by keyboard, before the user has scrolled', () => {
-    setScrollY(0)
-
-    const { container } = render(<BackToTop />)
-
-    expect(isHidden(container.firstElementChild as Element)).toBe(true)
-    expect(screen.getByRole('link', { name: 'Back to top' })).toBeTruthy()
-  })
-
-  it('shows as soon as the user starts scrolling, and hides again at the top', () => {
+  it('is hidden but keyboard reachable until the user scrolls, and hides again at the top', () => {
     setScrollY(0)
     const { container } = render(<BackToTop />)
     const backToTop = container.firstElementChild as Element
+
+    expect(isHidden(backToTop)).toBe(true)
+    expect(screen.getByRole('link', { name: 'Back to top' })).toBeTruthy()
 
     setScrollY(1)
     fireEvent.scroll(window)
