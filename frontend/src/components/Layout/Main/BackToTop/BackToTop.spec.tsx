@@ -31,12 +31,18 @@ function setHeights({
   }
 }
 
+function setScrollY(scrollY: number) {
+  Object.defineProperty(window, 'scrollY', { configurable: true, value: scrollY })
+}
+
 function isHidden(element: Element) {
   return element.className.split(' ').includes(styles.hidden)
 }
 
 beforeEach(() => {
   setHeights({ scrollHeight: 2000, innerHeight: 800 })
+  // Scrolled, so the overflow tests below are not affected by the scroll check.
+  setScrollY(1000)
 })
 
 afterEach(() => {
@@ -81,6 +87,23 @@ describe('BackToTop', () => {
     const { container } = render(<BackToTop />)
 
     expect(isHidden(container.firstElementChild as Element)).toBe(false)
+  })
+
+  it('is hidden but keyboard reachable until the user scrolls, and hides again at the top', () => {
+    setScrollY(0)
+    const { container } = render(<BackToTop />)
+    const backToTop = container.firstElementChild as Element
+
+    expect(isHidden(backToTop)).toBe(true)
+    expect(screen.getByRole('link', { name: 'Back to top' })).toBeTruthy()
+
+    setScrollY(1)
+    fireEvent.scroll(window)
+    expect(isHidden(backToTop)).toBe(false)
+
+    setScrollY(0)
+    fireEvent.scroll(window)
+    expect(isHidden(backToTop)).toBe(true)
   })
 
   it('is visually hidden, but still reachable by keyboard, when content does not fill the viewport', () => {
