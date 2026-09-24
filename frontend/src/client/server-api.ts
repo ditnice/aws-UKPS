@@ -1,4 +1,3 @@
-import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { cookies, headers } from 'next/headers'
 import { redirect, unstable_rethrow } from 'next/navigation'
 import 'server-only'
@@ -8,7 +7,7 @@ import { buildSignInHref } from '@/lib/auth/routing'
 import { AuthenticationFailCode } from './generated'
 import { createClient } from './generated/client'
 
-import type { Client, RequestOptions, RequestResult } from './generated/client'
+import type { Client } from './generated/client'
 
 const fallbackReturnTo = '/portal'
 
