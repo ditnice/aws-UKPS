@@ -72,7 +72,7 @@ internal sealed class User
         }
 
         var foundMembership = UserOrgMemberships.FirstOrDefault(x =>
-            x.OrganisationId == organisationId
+            x.OrganisationId == organisationId && x.IsAuthorised()
         );
 
         if (foundMembership is null)
