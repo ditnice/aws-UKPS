@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getOrganisationById, OrganisationDetailsDto, ProblemDetails } from '@/client/generated'
+import { getOrganisationById, OrganisationDetailsDto } from '@/client/generated'
 import { fakeOrganisationDetailsDto } from '@/client/generated/@faker-js/faker.gen'
 import { createServerApiClient } from '@/client/server-api'
 
