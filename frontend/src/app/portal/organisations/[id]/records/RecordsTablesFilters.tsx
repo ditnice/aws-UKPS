@@ -4,11 +4,11 @@ import { usePathname, useRouter } from 'next/navigation'
 
 import { FilterByInput, FilterPanel } from '@nice-digital/nds-filters'
 
-import { RecordStatus } from '@/client/generated'
+import { RecordStatus, UpdateStatus } from '@/client/generated'
 
 import { FilterOptionsGroup } from '../_components/OrganisationFilters'
 
-import { recordStatusLabels } from './labels'
+import { recordStatusLabels, updateStatusLabels } from './labels'
 import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 import type { SubmitEvent } from 'react'
@@ -50,7 +50,7 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
         }}
       ></FilterByInput>
       <FilterOptionsGroup
-        heading="Record Status"
+        heading="Record status"
         id="record-status-filter"
         options={Object.values(RecordStatus)}
         labels={recordStatusLabels}
@@ -64,7 +64,19 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
           })
         }
       />
-      <div>Update status (TODO)</div>
+      <FilterOptionsGroup
+        heading="Update status"
+        id="update-status-filter"
+        options={Object.values(UpdateStatus)}
+        labels={updateStatusLabels}
+        isSelected={(updateStatus: UpdateStatus) => query.updateStatus == updateStatus}
+        onChanged={(updateStatus, isSelected) =>
+          handleUpdatedQuery({
+            ...query,
+            updateStatus: isSelected ? updateStatus : undefined,
+          })
+        }
+      />
     </FilterPanel>
   )
 }
