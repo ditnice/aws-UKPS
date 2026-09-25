@@ -1,0 +1,335 @@
+diff --git a/backend/openapi/UKPS.Api.json b/backend/openapi/UKPS.Api.json
+index 41207872..fd9b9074 100644
+--- a/backend/openapi/UKPS.Api.json
++++ b/backend/openapi/UKPS.Api.json
+@@ -1405,6 +1405,95 @@
+             }
+           }
+         }
++      },
++      "post": {
++        "tags": [
++          "Record"
++        ],
++        "summary": "Creates a new record.",
++        "operationId": "CreateRecord",
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/CreateRecordCommand"
++              }
++            },
++            "text/json": {
++              "schema": {
++                "$ref": "#/components/schemas/CreateRecordCommand"
++              }
++            },
++            "application/*+json": {
++              "schema": {
++                "$ref": "#/components/schemas/CreateRecordCommand"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "201": {
++            "description": "Created",
++            "content": {
++              "text/plain": {
++                "schema": {
++                  "$ref": "#/components/schemas/CreateRecordDto"
++                }
++              },
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/CreateRecordDto"
++                }
++              },
++              "text/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/CreateRecordDto"
++                }
++              }
++            }
++          },
++          "400": {
++            "description": "The request body is invalid.",
++            "content": {
++              "text/plain": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemDetails"
++                }
++              },
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemDetails"
++                }
++              },
++              "text/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemDetails"
++                }
++              }
++            }
++          },
++          "403": {
++            "description": "The caller is not authorised to create the requested record.",
++            "content": {
++              "text/plain": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemDetails"
++                }
++              },
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemDetails"
++                }
++              },
++              "text/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemDetails"
++                }
++              }
++            }
++          }
++        }
+       }
+     },
+     "/users/me": {
+@@ -2394,6 +2483,70 @@
+         },
+         "description": "Represents the information required to create a new organisation."
+       },
++      "CreateRecordCommand": {
++        "required": [
++          "organisationId",
++          "developmentNames",
++          "genericNames",
++          "recordTitle"
++        ],
++        "type": "object",
++        "properties": {
++          "organisationId": {
++            "type": "integer",
++            "description": "Gets the identifier of the organisation for which the record will be created.",
++            "format": "int32"
++          },
++          "developmentNames": {
++            "minItems": 1,
++            "type": "array",
++            "items": {
++              "type": "string"
++            },
++            "description": "Gets the development names associated with the record."
++          },
++          "brandedName": {
++            "type": [
++              "null",
++              "string"
++            ],
++            "description": "Gets the optional branded name associated with the record."
++          },
++          "genericNames": {
++            "minItems": 1,
++            "type": "array",
++            "items": {
++              "type": "string"
++            },
++            "description": "Gets the generic names associated with the record."
++          },
++          "recordTitle": {
++            "type": "string",
++            "description": "Gets the title of the record."
++          }
++        },
++        "description": "Contains the details required to create a new record."
++      },
++      "CreateRecordDto": {
++        "required": [
++          "recordId",
++          "revisionId"
++        ],
++        "type": "object",
++        "properties": {
++          "recordId": {
++            "type": "integer",
++            "description": "Gets the identifier of the newly created record.",
++            "format": "int32"
++          },
++          "revisionId": {
++            "type": "integer",
++            "description": "Gets the identifier of the initial revision created for the record.",
++            "format": "int32"
++          }
++        },
++        "description": "Represents the result of creating a record."
++      },
+       "GetRecordsQuerySortValue": {
+         "enum": [
+           "NextUpdateDue",
+diff --git a/backend/src/Application/Common/Result.cs b/backend/src/Application/Common/Result.cs
+index 3816a718..b4e49539 100644
+--- a/backend/src/Application/Common/Result.cs
++++ b/backend/src/Application/Common/Result.cs
+@@ -1,5 +1,6 @@
+ using System.Diagnostics.CodeAnalysis;
+ using System.Runtime.InteropServices;
++using Microsoft.AspNetCore.Mvc;
+
+ namespace UKPS.Api.Application.Common;
+
+diff --git a/backend/src/Application/Records/Errors/CreateRecordError.cs b/backend/src/Application/Records/Errors/CreateRecordError.cs
+index a426cd15..7c2ae009 100644
+--- a/backend/src/Application/Records/Errors/CreateRecordError.cs
++++ b/backend/src/Application/Records/Errors/CreateRecordError.cs
+@@ -15,4 +15,19 @@ public abstract record CreateRecordError
+     /// Indicates that the specified organisation does not exist.
+     /// </summary>
+     public sealed record OrganisationDoesNotExist : CreateRecordError;
++
++    internal TResult Match<TResult>(
++        Func<NotAuthorised, TResult> notAuthorised,
++        Func<OrganisationDoesNotExist, TResult> organisationDoesNotExist
++    )
++    {
++        return this switch
++        {
++            NotAuthorised notAuthorisedError => notAuthorised(notAuthorisedError),
++            OrganisationDoesNotExist organisationDoesNotExistError => organisationDoesNotExist(
++                organisationDoesNotExistError
++            ),
++            _ => throw new NotSupportedException(),
++        };
++    }
+ }
+diff --git a/backend/src/WebApi/Controllers/RecordController.cs b/backend/src/WebApi/Controllers/RecordController.cs
+index 9a06c2a1..491dddac 100644
+--- a/backend/src/WebApi/Controllers/RecordController.cs
++++ b/backend/src/WebApi/Controllers/RecordController.cs
+@@ -1,6 +1,7 @@
+ using Microsoft.AspNetCore.Authorization;
+ using Microsoft.AspNetCore.Mvc;
+ using UKPS.Api.Application.Common;
++using UKPS.Api.Application.Records;
+ using UKPS.Api.Application.Records.Dtos;
+
+ namespace UKPS.Api.WebApi.Controllers;
+@@ -13,6 +14,17 @@ namespace UKPS.Api.WebApi.Controllers;
+ [Route("records")]
+ public class RecordController : ControllerBase
+ {
++    private readonly IRecordCreationService _recordCreationService;
++
++    /// <summary>
++    /// Initializes a new instance of the <see cref="RecordController"/> class.
++    /// </summary>
++    /// <param name="recordCreationService">The service used to create records.</param>
++    public RecordController(IRecordCreationService recordCreationService)
++    {
++        _recordCreationService = recordCreationService;
++    }
++
+     /// <summary>
+     /// Retrieves a paginated list of records using the supplied filters and sort order.
+     /// </summary>
+@@ -33,4 +45,44 @@ public class RecordController : ControllerBase
+     {
+         return StatusCode(StatusCodes.Status501NotImplemented);
+     }
++
++    /// <summary>
++    /// Creates a new record.
++    /// </summary>
++    /// <returns>The created record.</returns>
++    /// <response code="200">Returns the created record.</response>
++    /// <response code="400">The request body is invalid.</response>
++    /// <response code="403">The caller is not authorised to create the requested record.</response>
++    [HttpPost(Name = nameof(CreateRecord))]
++    [ProducesResponseType<CreateRecordDto>(StatusCodes.Status201Created)]
++    [ProducesResponseType(StatusCodes.Status400BadRequest)]
++    [ProducesResponseType(StatusCodes.Status403Forbidden)]
++    public async Task<ActionResult<CreateRecordDto>> CreateRecord(
++        CreateRecordCommand command,
++        CancellationToken cancellationToken
++    )
++    {
++        CreateRecordResult result = await _recordCreationService.CreateRecord(
++            command,
++            cancellationToken
++        );
++        return result.Match(
++            x => Ok(x),
++            err =>
++                err.Match<ActionResult<CreateRecordDto>>(
++                    notAuthorised: _ =>
++                        Problem(
++                            statusCode: StatusCodes.Status403Forbidden,
++                            title: "Forbidden",
++                            detail: "You are not authorised to create a record for this organisation."
++                        ),
++                    organisationDoesNotExist: _ =>
++                        Problem(
++                            statusCode: StatusCodes.Status400BadRequest,
++                            title: "Organisation not found",
++                            detail: "The specified organisation does not exist or is invalid."
++                        )
++                )
++        );
++    }
+ }
+diff --git a/backend/tests/Application/Records/RecordCreationServiceTests.cs b/backend/tests/Application/Records/RecordCreationServiceTests.cs
+index 3a47aac4..e9f43792 100644
+--- a/backend/tests/Application/Records/RecordCreationServiceTests.cs
++++ b/backend/tests/Application/Records/RecordCreationServiceTests.cs
+@@ -1,3 +1,7 @@
++global using CreateRecordResult = UKPS.Api.Application.Common.Result<
++    UKPS.Api.Application.Records.Dtos.CreateRecordDto,
++    UKPS.Api.Application.Records.Errors.CreateRecordError
++>;
+ using Bogus;
+ using Microsoft.EntityFrameworkCore;
+ using Shouldly;
+@@ -11,10 +15,6 @@ using UKPS.Api.Persistence.Enums;
+ using UKPS.Api.Tests.Utilities.AssertionHelpers;
+ using UKPS.Api.Tests.Utilities.Fixtures;
+ using UKPS.Api.Tests.Utilities.Harnesses;
+-using CreateRecordResult = UKPS.Api.Application.Common.Result<
+-    UKPS.Api.Application.Records.Dtos.CreateRecordDto,
+-    UKPS.Api.Application.Records.Errors.CreateRecordError
+->;
+
+ namespace UKPS.Api.Tests.Application.Records;
+
+@@ -194,30 +194,4 @@ public class RecordCreationServiceTests : DatabaseTestBase
+         CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
+         result.ShouldBeError().ShouldBeOfType<CreateRecordError.NotAuthorised>();
+     }
+-
+-    private sealed class CreateRecordCommandFaker : Faker<CreateRecordCommand>
+-    {
+-        public CreateRecordCommandFaker()
+-        {
+-            RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
+-            RuleFor(
+-                x => x.DevelopmentNames,
+-                f =>
+-                    Enumerable
+-                        .Range(0, f.Random.Int(1, 3))
+-                        .Select(_ => f.Commerce.ProductName())
+-                        .ToArray()
+-            );
+-            RuleFor(x => x.BrandedName, f => f.Commerce.ProductName());
+-            RuleFor(
+-                x => x.GenericNames,
+-                f =>
+-                    Enumerable
+-                        .Range(0, f.Random.Int(1, 3))
+-                        .Select(_ => f.Commerce.ProductName())
+-                        .ToArray()
+-            );
+-            RuleFor(x => x.RecordTitle, f => f.Lorem.Sentence());
+-        }
+-    }
+ }

@@ -41,6 +41,6 @@ public record CreateRecordCommand
     /// <summary>
     /// Gets the title of the record.
     /// </summary>
-    [Required]
+    [Required(AllowEmptyStrings = false)]
     public required string RecordTitle { get; init; }
 }
