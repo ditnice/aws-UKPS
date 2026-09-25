@@ -46,6 +46,7 @@ internal sealed class Record
         Record record = new Record()
         {
             OrganisationId = organisation.Id,
+            RecordType = RecordType.Medicine,
             CreatedAt = time,
             CreatedByUser = currentUser,
             RecordStatus = RecordStatus.Unpublished,
@@ -62,6 +63,7 @@ internal sealed class Record
         };
         RecordRevision revision = new RecordRevision()
         {
+            RevisionNo = 1,
             CreatedAt = time,
             CreatedByUser = currentUser,
             WorkflowStatus = WorkflowStatus.Draft,
