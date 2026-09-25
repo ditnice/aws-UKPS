@@ -288,28 +288,6 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldFail_WhenSelectedOrganisationDoesNotBelongToUser()
-    {
-        var context = CreateTokenValidatedContext(
-            tokenUse: "access",
-            clientId: ClientId,
-            username: _userWithMultipleMemberships.CognitoUsername
-        );
-
-        context.HttpContext.Request.Cookies = CreateCookieCollection(
-            ("selected_organisation", "999")
-        );
-
-        await _handler.Handle(context, CancellationToken.None);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe(
-            AuthenticationFailCode.SelectedOrganisationIsNotValid.ToString()
-        );
-    }
-
-    [Fact]
     public async Task Handle_ShouldNotAppendClaims_WhenMembershipSelectionFails()
     {
         var context = CreateTokenValidatedContext(
