@@ -20,7 +20,7 @@ vi.mock('@/client/generated', () => ({
   updateCurrentOrganisation: vi.fn(),
 }))
 
-const getLink = () => {
+const getManageButton = () => {
   return screen.getByTestId('action-link')
 }
 
@@ -31,12 +31,6 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('ManageOrganisationLink', () => {
-  it('renders a link to the organisation records', () => {
-    render(<ManageOrganisationLink organisationId={123} />)
-
-    expect(getLink().getAttribute('href')).toBe('/portal/organisations/123/records')
-  })
-
   it('updates the current organisation and navigates to the records when successful', async () => {
     vi.mocked(updateCurrentOrganisation).mockResolvedValue({
       data: undefined,
@@ -45,7 +39,7 @@ describe('ManageOrganisationLink', () => {
 
     render(<ManageOrganisationLink organisationId={123} />)
 
-    fireEvent.click(getLink())
+    fireEvent.click(getManageButton())
 
     expect(updateCurrentOrganisation).toHaveBeenCalledWith({
       body: {
@@ -66,7 +60,7 @@ describe('ManageOrganisationLink', () => {
 
     render(<ManageOrganisationLink organisationId={123} />)
 
-    fireEvent.click(getLink())
+    fireEvent.click(getManageButton())
 
     expect(updateCurrentOrganisation).toHaveBeenCalledWith({
       body: {

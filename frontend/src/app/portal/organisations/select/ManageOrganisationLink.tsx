@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { updateCurrentOrganisation } from '@/client/generated'
+import { Button } from '@/components/Button/Button'
 
 type ManageOrganisationLinkProps = {
   organisationId: number
@@ -24,9 +25,9 @@ const ManageOrganisationLink = ({ organisationId }: ManageOrganisationLinkProps)
   }
 
   return (
-    <Link data-testid="action-link" href={href} onClick={handleClick}>
+    <Button data-testid="action-link" variant="link" onClick={handleClick}>
       Manage
-    </Link>
+    </Button>
   )
 }
 
