@@ -1,4 +1,5 @@
 import { getOrganisations } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Table } from '@/components/Table/Table'
@@ -10,7 +11,9 @@ const SelectOrganisationPage = async ({
 }: {
   searchParams: Promise<{ error: string }>
 }) => {
-  const { data: organisations, error } = await getOrganisations()
+  const { data: organisations, error } = await getOrganisations({
+    client: await createServerApiClient(),
+  })
   const { error: organisationSelectionError } = await searchParams
 
   if (!organisations || error) {

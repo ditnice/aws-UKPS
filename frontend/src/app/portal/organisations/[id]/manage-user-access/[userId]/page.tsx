@@ -1,4 +1,4 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
