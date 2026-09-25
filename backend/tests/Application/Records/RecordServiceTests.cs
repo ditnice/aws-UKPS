@@ -71,7 +71,6 @@ public class RecordServiceTests : DatabaseTestBase
         var medicineProductDetailsFaker = new MedicinesProductDetailFaker().RuleFor(
             x => x.Revision,
             _ => medicalRecordRevisionFaker.Generate()
-
         );
         _medicineProductDetailsData = medicineProductDetailsFaker.Generate(50);
 
@@ -103,8 +102,7 @@ public class RecordServiceTests : DatabaseTestBase
             .DistinctBy(x => x.Id)
             .ToArray();
 
-
-        foreach(var record in _seededVaccineRecords.Concat(_seededMedicineRecords))
+        foreach (var record in _seededVaccineRecords.Concat(_seededMedicineRecords))
         {
             record.CurrentDraftRevisionId = record.Revisions.OrderBy(x => x.RevisionNo).Last().Id;
         }
