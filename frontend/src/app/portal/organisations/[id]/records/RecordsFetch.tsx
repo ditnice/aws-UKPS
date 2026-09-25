@@ -1,5 +1,5 @@
 import { PaginatedResponseDtoOfRecordListItemDto, getOrganisationRecords } from '@/client/generated'
-import { fakePaginatedResponseDtoOfRecordListItemDto } from '@/client/generated/@faker-js/faker.gen'
+import { createServerApiClient } from '@/client/server-api'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import { RecordsQuery } from './recordsQuery'
@@ -11,6 +11,7 @@ export type RecordsFetchProps = {
 }
 export const RecordsFetch = async ({ organisationId, query, children }: RecordsFetchProps) => {
   const { data: records, error } = await getOrganisationRecords({
+    client: await createServerApiClient(),
     path: { organisationId },
     query: {
       Search: query.search,
