@@ -93,9 +93,13 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         );
 
         var selectedMembership = _userWithMultipleMemberships.UserOrgMemberships!.ElementAt(1);
-        context.HttpContext.Request.Cookies = CreateCookieCollection(
-            ("selected_organisation", $"{selectedMembership.OrganisationId}")
+
+        var user = await Context.Users.FindAsync(
+            [_userWithMultipleMemberships.Id],
+            TestContext.Current.CancellationToken
         );
+        user!.TryUpdateCurrentOrganisation(selectedMembership.OrganisationId).ShouldBeTrue();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await _handler.Handle(context, CancellationToken.None);
 
@@ -280,28 +284,6 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.Message.ShouldBe(
             AuthenticationFailCode.SelectedOrganisationRequired.ToString()
-        );
-    }
-
-    [Fact]
-    public async Task Handle_ShouldFail_WhenSelectedOrganisationDoesNotBelongToUser()
-    {
-        var context = CreateTokenValidatedContext(
-            tokenUse: "access",
-            clientId: ClientId,
-            username: _userWithMultipleMemberships.CognitoUsername
-        );
-
-        context.HttpContext.Request.Cookies = CreateCookieCollection(
-            ("selected_organisation", "999")
-        );
-
-        await _handler.Handle(context, CancellationToken.None);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe(
-            AuthenticationFailCode.SelectedOrganisationIsNotValid.ToString()
         );
     }
 

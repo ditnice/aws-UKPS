@@ -141,17 +141,33 @@ internal sealed class OrganisationService : IOrganisationService
         return Result<OrganisationDetailsDto, CreateOrganisationError>.Ok(MapToDto(organisation));
     }
 
-    public async Task<IReadOnlyCollection<OrganisationListDto>> GetAllOrganisations(
+    public Task<IReadOnlyCollection<OrganisationListDto>> GetAllOrganisations(
         CancellationToken cancellationToken
     )
     {
+        return GetOrganisations(
+            new OrganisationsQuery() { IncludeNoneAuthorised = true },
+            cancellationToken
+        );
+    }
+
+    public async Task<IReadOnlyCollection<OrganisationListDto>> GetOrganisations(
+        OrganisationsQuery query,
+        CancellationToken cancellationToken
+    )
+    {
+        var permittedOrganisationIds = query.IncludeNoneAuthorised
+            ? ValueOrAll<int>.All
+            : _organisationAuthoriser.GetAuthorisedOrganisations(Operation.Read);
         return await _dbContext
             .Organisations.Where(o => o.Status == UserOrgStatus.Active)
+            .Where(permittedOrganisationIds.Contains<Organisation>(x => x.Id))
             .Select(o => new OrganisationListDto
             {
                 Id = o.Id,
                 OrganisationName = o.OrganisationName,
             })
+            .OrderBy(x => x.OrganisationName)
             .ToListAsync(cancellationToken);
     }
 }

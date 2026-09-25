@@ -26,6 +26,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped(static _ => Substitute.For<IEmailService>());
 
         services.TryAddScoped<UserOnboardingService>();
+        services.TryAddScoped<CurrentDbUserEntityService>();
         services.TryAddScoped<ILoginService, LoginService>();
         services.TryAddScoped<IDateTimeProvider, SystemDateTimeProvider>();
         services.TryAddScoped<IOrganisationAuthoriser, OrganisationAuthoriser>();

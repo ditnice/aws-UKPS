@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -87,21 +86,17 @@ internal class TokenValidationHandler : ITokenValidationHandler
             return GuardMembershipIsActive(validMemberships.Single(), context);
         }
 
-        var selectedOrganisationId = context.HttpContext.Request.Cookies["selected_organisation"];
+        var selectedOrganisationId = user.FindCurrentOrganisationId();
 
-        if (
-            !int.TryParse(
-                selectedOrganisationId,
-                CultureInfo.InvariantCulture,
-                out var organisationId
-            )
-        )
+        if (selectedOrganisationId is null)
         {
             context.Fail(AuthenticationFailCode.SelectedOrganisationRequired.ToString());
             return null;
         }
 
-        var membership = validMemberships.SingleOrDefault(x => x.OrganisationId == organisationId);
+        var membership = validMemberships.SingleOrDefault(x =>
+            x.OrganisationId == selectedOrganisationId
+        );
 
         if (membership is null)
         {

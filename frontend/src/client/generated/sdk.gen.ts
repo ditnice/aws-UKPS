@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveData, ApproveErrors, ApproveResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsData, GetOrganisationsErrors, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetOrganisationsResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -95,6 +95,23 @@ export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
+ * Retrieves all organisations available to the current user.
+ */
+export const getOrganisations = <ThrowOnError extends boolean = false>(options?: Options<GetOrganisationsData, ThrowOnError>): RequestResult<GetOrganisationsResponses, GetOrganisationsErrors, ThrowOnError> => (options?.client ?? client).get<GetOrganisationsResponses, GetOrganisationsErrors, ThrowOnError>({ url: '/organisations', ...options });
+
+/**
+ * Creates a new organisation.
+ */
+export const postOrganisations = <ThrowOnError extends boolean = false>(options: Options<PostOrganisationsData, ThrowOnError>): RequestResult<PostOrganisationsResponses, PostOrganisationsErrors, ThrowOnError> => (options.client ?? client).post<PostOrganisationsResponses, PostOrganisationsErrors, ThrowOnError>({
+    url: '/organisations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Retrieves an organisation by its unique identifier.
  */
 export const getOrganisationById = <ThrowOnError extends boolean = false>(options: Options<GetOrganisationByIdData, ThrowOnError>): RequestResult<GetOrganisationByIdResponses, GetOrganisationByIdErrors, ThrowOnError> => (options.client ?? client).get<GetOrganisationByIdResponses, GetOrganisationByIdErrors, ThrowOnError>({ url: '/organisations/{id}', ...options });
@@ -134,18 +151,6 @@ export const updateUserRole = <ThrowOnError extends boolean = false>(options: Op
 });
 
 /**
- * Creates a new organisation.
- */
-export const postOrganisations = <ThrowOnError extends boolean = false>(options: Options<PostOrganisationsData, ThrowOnError>): RequestResult<PostOrganisationsResponses, PostOrganisationsErrors, ThrowOnError> => (options.client ?? client).post<PostOrganisationsResponses, PostOrganisationsErrors, ThrowOnError>({
-    url: '/organisations',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * Gets the names of all organisations.
  */
 export const getOrganisationsPublicOptions = <ThrowOnError extends boolean = false>(options?: Options<GetOrganisationsPublicOptionsData, ThrowOnError>): RequestResult<GetOrganisationsPublicOptionsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetOrganisationsPublicOptionsResponses, unknown, ThrowOnError>({ url: '/organisations/publicOptions', ...options });
@@ -159,6 +164,18 @@ export const getOrganisationRecords = <ThrowOnError extends boolean = false>(opt
  * Gets the information for the currently authenticated user.
  */
 export const getUsersMe = <ThrowOnError extends boolean = false>(options?: Options<GetUsersMeData, ThrowOnError>): RequestResult<GetUsersMeResponses, GetUsersMeErrors, ThrowOnError> => (options?.client ?? client).get<GetUsersMeResponses, GetUsersMeErrors, ThrowOnError>({ url: '/users/me', ...options });
+
+/**
+ * Updates the current user's selected organisation.
+ */
+export const updateCurrentOrganisation = <ThrowOnError extends boolean = false>(options: Options<UpdateCurrentOrganisationData, ThrowOnError>): RequestResult<UpdateCurrentOrganisationResponses, UpdateCurrentOrganisationErrors, ThrowOnError> => (options.client ?? client).patch<UpdateCurrentOrganisationResponses, UpdateCurrentOrganisationErrors, ThrowOnError>({
+    url: '/users/me/current-organisation',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Retrieves a paginated list of users based on the specified query parameters.
