@@ -343,9 +343,9 @@ export type RecordListItemDto = {
      */
     title: string;
     /**
-     * Gets the NICE technology appraisal or other display identifier, when available.
+     * Gets the development name of the active substance, when available.
      */
-    niceTaDevelopmentId?: null | string;
+    developmentName?: null | string;
     /**
      * Gets the date the record was last reviewed, when available.
      */
@@ -536,6 +536,10 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
      */
     userRole: UserRole;
 };
+
+export const UpdateStatus = { OVERDUE: 'Overdue', NOT_OVERDUE: 'NotOverdue' } as const;
+
+export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
 
 /**
  * Represents the details to update for an existing user.
@@ -1253,9 +1257,14 @@ export type GetOrganisationsPublicOptionsResponses = {
 
 export type GetOrganisationsPublicOptionsResponse = GetOrganisationsPublicOptionsResponses[keyof GetOrganisationsPublicOptionsResponses];
 
-export type GetRecordsData = {
+export type GetOrganisationRecordsData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * The unique identifier of the organisation.
+         */
+        organisationId: number;
+    };
     query?: {
         /**
          * Gets or initialises the multi-field search term.
@@ -1285,11 +1294,16 @@ export type GetRecordsData = {
          * Gets or initialises the sort direction.
          */
         SortDirection?: SortDirection;
+        /**
+         * Gets or initialises the update status filter. When set, only records that are
+         * overdue or not overdue for review will be returned.
+         */
+        UpdateStatus?: UpdateStatus;
     };
-    url: '/records';
+    url: '/records/organisations/{organisationId}';
 };
 
-export type GetRecordsErrors = {
+export type GetOrganisationRecordsErrors = {
     /**
      * The query parameters are invalid.
      */
@@ -1298,22 +1312,18 @@ export type GetRecordsErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
-    /**
-     * The caller is not authorised to view the requested records.
-     */
-    403: ProblemDetails;
 };
 
-export type GetRecordsError = GetRecordsErrors[keyof GetRecordsErrors];
+export type GetOrganisationRecordsError = GetOrganisationRecordsErrors[keyof GetOrganisationRecordsErrors];
 
-export type GetRecordsResponses = {
+export type GetOrganisationRecordsResponses = {
     /**
      * Returns the matching records.
      */
     200: PaginatedResponseDtoOfRecordListItemDto;
 };
 
-export type GetRecordsResponse = GetRecordsResponses[keyof GetRecordsResponses];
+export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
 
 export type GetUsersMeData = {
     body?: never;

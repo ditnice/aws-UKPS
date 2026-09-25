@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using UKPS.Api.Application.Users.Dtos;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Records.Dtos;
@@ -45,4 +45,10 @@ public sealed record GetRecordsQueryDto
     /// Gets or initialises the sort direction.
     /// </summary>
     public SortDirection SortDirection { get; init; } = SortDirection.Ascending;
+
+    /// <summary>
+    /// Gets or initialises the update status filter. When set, only records that are
+    /// overdue or not overdue for review will be returned.
+    /// </summary>
+    public UpdateStatus? UpdateStatus { get; init; }
 }
