@@ -6,6 +6,8 @@ import { updateCurrentOrganisation } from '@/client/generated'
 
 import ManageOrganisationLink from './ManageOrganisationLink'
 
+const organisationName = 'organisation-name'
+
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
 }))
@@ -37,7 +39,7 @@ describe('ManageOrganisationLink', () => {
       error: undefined,
     })
 
-    render(<ManageOrganisationLink organisationId={123} />)
+    render(<ManageOrganisationLink organisationId={123} organisationName={organisationName} />)
 
     fireEvent.click(getManageButton())
 
@@ -58,7 +60,7 @@ describe('ManageOrganisationLink', () => {
       error: { title: 'error' },
     })
 
-    render(<ManageOrganisationLink organisationId={123} />)
+    render(<ManageOrganisationLink organisationId={123} organisationName={organisationName} />)
 
     fireEvent.click(getManageButton())
 
