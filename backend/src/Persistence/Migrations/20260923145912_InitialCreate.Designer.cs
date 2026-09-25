@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260923132831_InitialCreate")]
+    [Migration("20260923145912_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1068,7 +1068,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("formulation_type_id");
 
                     b.Property<string>("Indication")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("indication");
 

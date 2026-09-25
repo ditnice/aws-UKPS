@@ -881,7 +881,7 @@ namespace UKPS.Api.Persistence.Migrations
                     revision_id = table.Column<int>(type: "integer", nullable: false),
                     record_title = table.Column<string>(type: "text", nullable: false),
                     branded_name = table.Column<string>(type: "text", nullable: true),
-                    indication = table.Column<string>(type: "text", nullable: false),
+                    indication = table.Column<string>(type: "text", nullable: true),
                     indication_is_paediatric = table.Column<int>(type: "integer", nullable: true),
                     indication_is_cancer = table.Column<int>(type: "integer", nullable: true),
                     indication_is_rare_disease = table.Column<int>(type: "integer", nullable: true),

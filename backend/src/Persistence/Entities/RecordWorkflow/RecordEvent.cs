@@ -13,7 +13,7 @@ internal sealed class RecordEvent
     /// <summary>Populated for QA-related events.</summary>
     public int? QaReviewId { get; set; }
 
-    public RecordEventType EventType { get; set; }
+    public required RecordEventType EventType { get; set; }
 
     /// <summary>Null for system-triggered events.</summary>
     public int? PerformedBy { get; set; }
