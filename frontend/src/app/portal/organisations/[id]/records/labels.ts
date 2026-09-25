@@ -1,10 +1,15 @@
-import { GetRecordsQuerySortValue, RecordStatus } from '@/client/generated'
+import { GetRecordsQuerySortValue, RecordStatus, UpdateStatus } from '@/client/generated'
 
 export const recordStatusLabels: Record<RecordStatus, string> = {
   Unpublished: 'Unpublished',
   Active: 'Active',
   OnHold: 'On Hold',
   Archived: 'Archived',
+}
+
+export const updateStatusLabels: Record<UpdateStatus, string> = {
+  Overdue: 'Overdue',
+  NotOverdue: 'Not overdue',
 }
 
 const recordsTableHeaderKeys = [
