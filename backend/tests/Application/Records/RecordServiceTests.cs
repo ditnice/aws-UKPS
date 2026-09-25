@@ -56,7 +56,7 @@ public class RecordServiceTests : DatabaseTestBase
             .RuleFor(x => x.OrganisationId, f => f.PickRandom(organisations).Id)
             .RuleFor(x => x.ReviewedAt, f => f.Date.Past(2, _currentDateTime))
             .RuleFor(x => x.CreatedByUser, _ => userFaker.Generate())
-            .Generate(30);
+            .Generate(60);
 
         var faker = new Faker();
         var revisionFaker = new RecordRevisionFaker().RuleFor(
