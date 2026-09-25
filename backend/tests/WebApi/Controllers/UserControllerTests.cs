@@ -16,7 +16,7 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
-using SortDirection = UKPS.Api.Application.Users.Dtos.SortDirection;
+using SortDirection = UKPS.Api.Application.Common.SortDirection;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 

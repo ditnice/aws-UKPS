@@ -408,7 +408,7 @@ internal partial class UserService(
 
         if (!string.IsNullOrWhiteSpace(getUsersQuery.Email))
         {
-            string pattern = $"%{EscapeLikePattern(getUsersQuery.Email)}%";
+            string pattern = $"%{Helpers.EscapeLikePattern(getUsersQuery.Email)}%";
             organisationMemberships = organisationMemberships.Where(m =>
                 EF.Functions.ILike(m.WorkEmail, pattern, "\\")
             );
@@ -532,12 +532,6 @@ internal partial class UserService(
             WorkEmail = user.WorkEmail,
         };
     }
-
-    private static string EscapeLikePattern(string value) =>
-        value
-            .Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("%", "\\%", StringComparison.Ordinal)
-            .Replace("_", "\\_", StringComparison.Ordinal);
 
     [LoggerMessage(
         Level = LogLevel.Error,

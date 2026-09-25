@@ -1461,14 +1461,24 @@
         }
       }
     },
-    "/records": {
+    "/records/organisations/{organisationId}": {
       "get": {
         "tags": [
           "Record"
         ],
-        "summary": "Retrieves a paginated list of records using the supplied filters and sort order.",
-        "operationId": "GetRecords",
+        "summary": "Retrieves a paginated list of records belonging to the user's organisation.",
+        "operationId": "GetOrganisationRecords",
         "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The unique identifier of the organisation.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
           {
             "name": "Search",
             "in": "query",
@@ -1536,6 +1546,14 @@
             "schema": {
               "$ref": "#/components/schemas/SortDirection"
             }
+          },
+          {
+            "name": "UpdateStatus",
+            "in": "query",
+            "description": "Gets or initialises the update status filter. When set, only records that are\noverdue or not overdue for review will be returned.",
+            "schema": {
+              "$ref": "#/components/schemas/UpdateStatus"
+            }
           }
         ],
         "responses": {
@@ -1561,26 +1579,6 @@
           },
           "400": {
             "description": "The query parameters are invalid.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller is not authorised to view the requested records.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3251,12 +3249,12 @@
             "type": "string",
             "description": "Gets the human-readable record title."
           },
-          "niceTaDevelopmentId": {
+          "developmentName": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Gets the NICE technology appraisal or other display identifier, when available."
+            "description": "Gets the development name of the active substance, when available."
           },
           "reviewedAt": {
             "type": [
@@ -3492,6 +3490,14 @@
           }
         },
         "description": "Represents a Data Transfer Object (DTO) for updating the user role\nin an organisation membership."
+      },
+      "UpdateStatus": {
+        "enum": [
+          "Overdue",
+          "NotOverdue",
+          null
+        ],
+        "type": "string"
       },
       "UpdateUserDetailsCommand": {
         "required": [

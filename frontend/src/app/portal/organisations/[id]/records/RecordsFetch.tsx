@@ -1,23 +1,28 @@
-import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
-import { fakePaginatedResponseDtoOfRecordListItemDto } from '@/client/generated/@faker-js/faker.gen'
+import { PaginatedResponseDtoOfRecordListItemDto, getOrganisationRecords } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import { RecordsQuery } from './recordsQuery'
 
-const mockGetRecords = (input: { query: RecordsQuery }) => {
-  return {
-    data: fakePaginatedResponseDtoOfRecordListItemDto(),
-    error: undefined,
-  }
-}
-
 export type RecordsFetchProps = {
+  organisationId: number
   query: RecordsQuery
   children: (data: PaginatedResponseDtoOfRecordListItemDto) => React.ReactElement
 }
-export const RecordsFetch = async ({ query, children }: RecordsFetchProps) => {
-  // TODO: Replace with getRecords when it is implemented.
-  const { data: records, error } = await mockGetRecords({ query })
+export const RecordsFetch = async ({ organisationId, query, children }: RecordsFetchProps) => {
+  const { data: records, error } = await getOrganisationRecords({
+    client: await createServerApiClient(),
+    path: { organisationId },
+    query: {
+      Search: query.search,
+      RecordType: query.recordType,
+      RecordStatus: query.recordStatus,
+      Page: query.page,
+      PageSize: query.pageSize,
+      SortBy: query.sortBy,
+      SortDirection: query.sortDirection,
+    },
+  })
 
   if (!records || error) {
     return (
