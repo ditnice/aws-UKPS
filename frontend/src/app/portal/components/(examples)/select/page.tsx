@@ -10,8 +10,6 @@ export const metadata = {
   title: component.label,
 }
 
-export const dynamic = 'force-dynamic'
-
 export default function SelectPage() {
   return (
     <ComponentPage marker="custom" title={component.label}>

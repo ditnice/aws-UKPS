@@ -6,6 +6,8 @@ import { Table } from '@/components/Table/Table'
 
 import ManageOrganisationLink from './ManageOrganisationLink'
 
+export const dynamic = 'force-dynamic'
+
 const SelectOrganisationPage = async ({
   searchParams,
 }: {
