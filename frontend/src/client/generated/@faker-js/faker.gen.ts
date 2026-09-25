@@ -636,8 +636,6 @@ export const fakeGetOrganisationRecordsResponse400 = (options?: Options): GetOrg
 
 export const fakeGetOrganisationRecordsResponse401 = (options?: Options): GetOrganisationRecordsErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeGetOrganisationRecordsResponse403 = (options?: Options): GetOrganisationRecordsErrors[403] => fakeProblemDetails(options);
-
 export const fakeGetUsersMeResponse200 = (options?: Options): GetUsersMeResponses[200] => fakeUserInformationDto(options);
 
 export const fakeGetUsersMeResponse401 = (options?: Options): GetUsersMeErrors[401] => fakeAuthenticationProblemDetails(options);

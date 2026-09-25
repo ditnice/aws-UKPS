@@ -1312,10 +1312,6 @@ export type GetOrganisationRecordsErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
-    /**
-     * The caller is not authorised to view the requested records.
-     */
-    403: ProblemDetails;
 };
 
 export type GetOrganisationRecordsError = GetOrganisationRecordsErrors[keyof GetOrganisationRecordsErrors];
