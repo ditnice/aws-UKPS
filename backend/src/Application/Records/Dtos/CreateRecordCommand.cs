@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.Records.Dtos;
 
@@ -21,6 +22,7 @@ public record CreateRecordCommand
     /// </remarks>
     [Required]
     [MinLength(1)]
+    [DistinctStrings(StringComparison.Ordinal)]
     public required IReadOnlyCollection<string> DevelopmentNames { get; init; }
 
     /// <summary>
@@ -36,11 +38,13 @@ public record CreateRecordCommand
     /// </remarks>
     [Required]
     [MinLength(1)]
+    [DistinctStrings(StringComparison.Ordinal)]
     public required IReadOnlyCollection<string> GenericNames { get; init; }
 
     /// <summary>
     /// Gets the title of the record.
     /// </summary>
     [Required(AllowEmptyStrings = false)]
+    [MaxLength(100)]
     public required string RecordTitle { get; init; }
 }

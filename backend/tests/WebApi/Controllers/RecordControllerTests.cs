@@ -258,10 +258,13 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         [
             x => x with { DevelopmentNames = [] },
             x => x with { DevelopmentNames = null! },
+            x => x with { DevelopmentNames = ["not-distinct", "not-distinct"] },
             x => x with { GenericNames = [] },
             x => x with { GenericNames = null! },
+            x => x with { GenericNames = ["not-distinct", "not-distinct"] },
             x => x with { RecordTitle = "" },
             x => x with { RecordTitle = null! },
+            x => x with { RecordTitle = new string('e', 101) },
         ];
 
         foreach (var modifier in modifiers)
