@@ -11,10 +11,16 @@ export type RecordsFetchProps = {
 }
 export const RecordsFetch = async ({ organisationId, query, children }: RecordsFetchProps) => {
   const { data: records, error } = await getOrganisationRecords({
-    path: { organisationId }, query: {
-      Search: query.search, RecordType: query.recordType, RecordStatus: query.recordStatus, Page: query.page
-      , PageSize: query.pageSize, SortBy: query.sortBy, SortDirection: query.sortDirection
-    }
+    path: { organisationId },
+    query: {
+      Search: query.search,
+      RecordType: query.recordType,
+      RecordStatus: query.recordStatus,
+      Page: query.page,
+      PageSize: query.pageSize,
+      SortBy: query.sortBy,
+      SortDirection: query.sortDirection,
+    },
   })
 
   if (!records || error) {
