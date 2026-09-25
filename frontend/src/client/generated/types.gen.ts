@@ -415,9 +415,30 @@ export type RegisterUserConfirmationDto = {
  */
 export type ResendSetupTokenCommand = {
     /**
-     * Gets the expired setup token to reissue.
+     * Gets the expired setup token to reissue. Supplied on the first resend
+     * request for a tab, when only the token embedded in the page is known.
+     * Exactly one of SetupToken or CorrelationId must be supplied.
      */
-    setupToken: string;
+    setupToken?: null | string;
+    /**
+     * Gets the correlation id returned by a previous resend, used to identify
+     * the record on a subsequent resend from the same tab without needing a
+     * currently-valid setup token. Exactly one of SetupToken or CorrelationId
+     * must be supplied.
+     */
+    correlationId?: null | string;
+};
+
+/**
+ * Represents the outcome of a successful setup token resend.
+ */
+export type ResendSetupTokenResponse = {
+    /**
+     * Gets the correlation id for the newly issued setup token, to be supplied
+     * on any subsequent resend request from the same tab instead of the
+     * (now stale) setup token.
+     */
+    correlationId: string;
 };
 
 /**
@@ -861,7 +882,8 @@ export type PostAuthResendSetupTokenData = {
 
 export type PostAuthResendSetupTokenErrors = {
     /**
-     * The request body was missing or malformed.
+     * The request body was missing or malformed, or did not supply exactly one of
+     * a setup token or a correlation id.
      */
     400: ProblemDetails;
     /**
@@ -869,7 +891,7 @@ export type PostAuthResendSetupTokenErrors = {
      */
     403: ProblemDetails;
     /**
-     * The specified setup token does not exist.
+     * The specified setup token or correlation id does not exist.
      */
     404: ProblemDetails;
     /**
@@ -883,9 +905,12 @@ export type PostAuthResendSetupTokenError = PostAuthResendSetupTokenErrors[keyof
 export type PostAuthResendSetupTokenResponses = {
     /**
      * A new setup link was generated and emailed to the user's registered email address.
+     * The response body contains the correlation id for the new setup token.
      */
-    200: unknown;
+    200: ResendSetupTokenResponse;
 };
+
+export type PostAuthResendSetupTokenResponse = PostAuthResendSetupTokenResponses[keyof PostAuthResendSetupTokenResponses];
 
 export type PostAuthSetupUserData = {
     /**

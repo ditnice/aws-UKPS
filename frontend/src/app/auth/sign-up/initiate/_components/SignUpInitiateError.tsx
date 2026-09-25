@@ -14,7 +14,7 @@ export function SignUpInitiateError({
   return (
     <>
       <PageHeader heading={title}></PageHeader>
-      <p>{detail}</p>
+      <div role="status">{detail}</div>
     </>
   )
 }

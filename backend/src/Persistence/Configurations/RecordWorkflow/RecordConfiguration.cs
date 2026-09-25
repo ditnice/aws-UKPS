@@ -41,19 +41,5 @@ internal sealed class RecordConfiguration : IEntityTypeConfiguration<Record>
             .WithMany()
             .HasForeignKey(x => x.CreatedBy)
             .OnDelete(DeleteBehavior.Restrict);
-
-        // Both revision FKs are nullable to allow Record to be inserted before
-        // the first RecordRevision row is created. Restrict prevents cascade cycles.
-        builder
-            .HasOne(x => x.PublishedRevision)
-            .WithMany()
-            .HasForeignKey(x => x.PublishedRevisionId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.CurrentDraftRevision)
-            .WithMany()
-            .HasForeignKey(x => x.CurrentDraftRevisionId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
+import { buildUserActionHref } from '../../../_lib/userActionAlert'
 import ModifyUserMembershipRequestControls from '../ModifyUserMembershipRequestControls'
 import UserMembershipRetrievalWrapper from '../UserMembershipRetrievalWrapper'
 
@@ -40,7 +41,10 @@ export default async function ApproveUser({ params }: Props) {
               action="Approve"
               organisationId={organisationId}
               registrationRequestId={parsedRegistrationRequestId}
-              successLink={`${organisationHref}?invited=${encodeURIComponent(request.workEmail)}`}
+              successLink={buildUserActionHref(organisationId, {
+                action: 'approved-request',
+                userRequestId: parsedRegistrationRequestId,
+              })}
               backLink={organisationHref}
             />
           </>

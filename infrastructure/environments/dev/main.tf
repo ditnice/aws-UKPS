@@ -105,32 +105,34 @@ module "cognito" {
 module "ecs_frontend" {
   source = "../../modules/ecs"
 
-  project                      = local.project
-  environment                  = local.environment
-  service_name                 = "${local.service_name}-frontend"
-  ecs_capacity_providers       = var.ecs_capacity_providers
-  ecs_capacity_provider        = var.ecs_capacity_provider
-  ecs_cpu_allocation           = var.ecs_frontend_cpu_allocation
-  ecs_memory_allocation        = var.ecs_frontend_memory_allocation
-  cloudwatch_kms_arn           = module.kms_frontend.app_key_arn
-  cloudwatch_log_retention     = var.ecs_log_retention
-  vpc_id                       = module.networking.vpc_id
-  private_subnet_ids           = module.networking.app_subnet_ids
-  container_port               = var.frontend_container_port
-  ecr_repository_url           = var.frontend_image_repository_url
-  image_tag                    = var.image_tag
-  target_group_arn             = module.alb.frontend_target_group_arn
-  alb_security_group_id        = one(module.alb.alb_security_group_ids)
-  ecs_egress_cidr_blocks       = [module.networking.vpc_cidr]
-  ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
+  project                           = local.project
+  environment                       = local.environment
+  service_name                      = "${local.service_name}-frontend"
+  ecs_capacity_providers            = var.ecs_capacity_providers
+  ecs_capacity_provider             = var.ecs_capacity_provider
+  ecs_cpu_allocation                = var.ecs_frontend_cpu_allocation
+  ecs_memory_allocation             = var.ecs_frontend_memory_allocation
+  cloudwatch_kms_arn                = module.kms_frontend.app_key_arn
+  cloudwatch_log_retention          = var.ecs_log_retention
+  vpc_id                            = module.networking.vpc_id
+  private_subnet_ids                = module.networking.app_subnet_ids
+  container_port                    = var.frontend_container_port
+  health_check_grace_period_seconds = 300
+  ecr_repository_url                = var.frontend_image_repository_url
+  image_tag                         = var.image_tag
+  target_group_arn                  = module.alb.frontend_target_group_arn
+  alb_security_group_id             = one(module.alb.alb_security_group_ids)
+  ecs_egress_cidr_blocks            = [module.networking.vpc_cidr]
+  ecs_https_egress_cidr_blocks      = ["0.0.0.0/0"]
   container_environment = {
-    BACKEND_API_BASE_URL   = "https://${module.alb.backend_host_name}"
-    COGNITO_CLIENT_ID      = module.cognito.app_client_id
-    COGNITO_ISSUER         = module.cognito.user_pool_issuer
-    DATABASE_HOST          = module.aurora_frontend.cluster_endpoint
-    DATABASE_NAME          = module.aurora_frontend.database_name
-    DATABASE_PORT          = tostring(module.aurora_frontend.port)
-    FRONTEND_PUBLIC_ORIGIN = "https://${module.alb.frontend_host_name}"
+    BACKEND_API_BASE_URL         = "https://${module.alb.backend_host_name}"
+    COGNITO_CLIENT_ID            = module.cognito.app_client_id
+    COGNITO_ISSUER               = module.cognito.user_pool_issuer
+    DATABASE_HOST                = module.aurora_frontend.cluster_endpoint
+    DATABASE_NAME                = module.aurora_frontend.database_name
+    DATABASE_PORT                = tostring(module.aurora_frontend.port)
+    FRONTEND_PUBLIC_ORIGIN       = "https://${module.alb.frontend_host_name}"
+    NEXT_PUBLIC_QA_SUPPORT_EMAIL = var.qa_support_email
   }
   container_secrets = {
     DATABASE_PASSWORD = "${module.aurora_frontend.master_user_secret_arn}:password::"
@@ -249,7 +251,7 @@ module "ecs_backend" {
     Email__ConfigurationSetName = module.ses.configuration_set_name
     Email__QueueUrl             = module.sqs_email_backend.queue_url
     Seeding__ReseedOnStartup    = "true"
-    Seeding__SuperUsersJson     = jsonencode(var.seeded_super_users)
+    Seeding__SeedUsersJson      = jsonencode(var.seeded_users)
     UserOnboarding__SetupLink   = "https://${module.alb.frontend_host_name}"
   }
   container_secrets = {
@@ -403,7 +405,7 @@ module "db_migrator_lambda" {
   cloudwatch_kms_arn = module.kms_backend.app_key_arn
   region             = var.region
 
-  seeded_super_users_json = jsonencode(var.seeded_super_users)
+  seeded_users_json = jsonencode(var.seeded_users)
 
   log_retention_days = var.ecs_log_retention
 

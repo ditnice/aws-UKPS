@@ -34,7 +34,7 @@ const ReactivateUserControls = ({
         setHasError(true)
         return
       }
-      router.push(buildUserActionHref(organisationId, 'reactivated', userId))
+      router.push(buildUserActionHref(organisationId, { action: 'reactivated', userId }))
     } finally {
       setLoading(false)
     }

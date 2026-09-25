@@ -16,7 +16,10 @@ using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
 >;
-using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError>;
+using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<
+    System.Guid,
+    UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError
+>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
@@ -247,11 +250,24 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord = await _appDbContext
-            .UserOnboardingRecords.Include(x => x.User)
-            .FirstOrDefaultAsync(
+        bool hasSetupToken = command.SetupToken is not null;
+        bool hasCorrelationId = command.CorrelationId is not null;
+
+        if (hasSetupToken == hasCorrelationId)
+        {
+            return ResendSetupTokenResult.Err(new ResendSetupTokenError.InvalidTokenCombination());
+        }
+
+        IQueryable<UserOnboardingRecord> onboardingRecords =
+            _appDbContext.UserOnboardingRecords.Include(x => x.User);
+        UserOnboardingRecord? userRecord = hasCorrelationId
+            ? await onboardingRecords.FirstOrDefaultAsync(
+                x => x.CorrelationId == command.CorrelationId,
+                cancellationToken
+            )
+            : await onboardingRecords.FirstOrDefaultAsync(
                 x => x.SetupToken == command.SetupToken,
-                cancellationToken: cancellationToken
+                cancellationToken
             );
 
         if (userRecord is null)
@@ -276,7 +292,12 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         );
         await SendSetupLinkEmail(user, newRecord.SetupToken, cancellationToken);
 
-        return ResendSetupTokenResult.Ok();
+        return ResendSetupTokenResult.Ok(
+            newRecord.CorrelationId
+                ?? throw new UnreachableException(
+                    "ReplaceOnboardingRecord always assigns a CorrelationId to the new record."
+                )
+        );
     }
 
     private async Task<UserOnboardingRecord> ReplaceOnboardingRecord(
@@ -287,6 +308,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         var newRecord = new UserOnboardingRecord()
         {
             SetupToken = Guid.CreateVersion7(),
+            CorrelationId = Guid.CreateVersion7(),
             CreatedBy = existingRecord.CreatedBy,
             CreatedAt = _dateTimeProvider.GetUtcNow(),
             UserId = existingRecord.UserId,

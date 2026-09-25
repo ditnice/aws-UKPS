@@ -24,9 +24,4 @@ public enum WorkflowStatus
     /// The workflow has been reviewed and rejected.
     /// </summary>
     Rejected = 3,
-
-    /// <summary>
-    /// The workflow has been superseded by a newer version.
-    /// </summary>
-    Superseded = 4,
 }
