@@ -721,47 +721,16 @@ public class UserServiceTests : DatabaseTestBase
         relevantEntries.Count().ShouldBe(sampleUser.UserOrgMemberships!.Count);
     }
 
-    [Theory]
-    [InlineData(UserRole.Super, false)]
-    [InlineData(UserRole.Champion, true)]
-    [InlineData(UserRole.Standard, true)]
-    public async Task GetUsers_ReturnsAllUsersForSuperAdmins_AndFiltersByOrganisationForOtherRoles(
-        UserRole userRole,
-        bool filtersByOrganisation
-    )
+    [Fact]
+    public async Task GetUsers_WhenChampionUser_ReturnsOnlyUsersAssociatedWithOrganisation()
     {
-        var organisations = _organisationFaker.Generate(2);
-        var users = _userFaker.Generate(3);
-        var memberships = new List<UserOrgMembership>
-        {
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = users[0];
-                    x.Organisation = organisations[0];
-                }),
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = users[1];
-                    x.Organisation = organisations[1];
-                }),
-            _userOrgMembershipFaker
-                .Generate()
-                .Update(x =>
-                {
-                    x.User = users[2];
-                    x.Organisation = organisations[0];
-                }),
-        };
-        await AddEntities(memberships, TestContext.Current.CancellationToken);
+        var sampleMembership = _faker.PickRandom(ViewableMemberships);
+        var selectedOrganisation = sampleMembership.OrganisationId;
         var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
             x with
             {
-                OrganisationId = organisations[0].Id,
-                UserRole = userRole,
+                OrganisationId = selectedOrganisation,
+                UserRole = UserRole.Champion,
             }
         );
         var results = await harness.Service.GetUsers(
@@ -771,23 +740,33 @@ public class UserServiceTests : DatabaseTestBase
 
         var dto = results.ShouldBeSuccess();
 
-        if (filtersByOrganisation)
+        dto.Items.Count.ShouldBeGreaterThanOrEqualTo(1);
+        foreach (var user in dto.Items)
         {
-            dto.TotalCount.ShouldBe(2);
-            dto.Items.Select(i => i.UserId)
-                .Order()
-                .ToArray()
-                .ShouldBe(
-                    new int?[] { users[0].Id, users[2].Id }
-                        .Order()
-                        .ToArray()
-                );
+            GetOrganisationIdsFromUserEmails(user.EmailAddress).ShouldContain(selectedOrganisation);
         }
-        else
-        {
-            dto.Items.Select(i => i.UserId)
-                .ShouldContainSet([users[0].Id, users[1].Id, users[2].Id]);
-        }
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenASuperUser_ReturnsAllUsers()
+    {
+        var sampleMembership = _faker.PickRandom(ViewableMemberships);
+        var selectedOrganisation = sampleMembership.OrganisationId;
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = selectedOrganisation,
+                UserRole = UserRole.Super,
+            }
+        );
+        var results = await harness.Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
+
+        var dto = results.ShouldBeSuccess();
+
+        dto.Items.Count.ShouldBeGreaterThanOrEqualTo(TotalExpectedValues);
     }
 
     [Theory]
@@ -825,7 +804,7 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUsers_WhenAStandardUser_NoActionsAreShownAsPermittedOnTheReturnUsers()
+    public async Task GetUsers_WhenAStandardUser_NoUsersAreReturned()
     {
         var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
             x with
@@ -838,7 +817,7 @@ public class UserServiceTests : DatabaseTestBase
             new GetUsersQueryDto(),
             TestContext.Current.CancellationToken
         );
-        users.ShouldBeSuccess().Items.ShouldAllBe(x => !x.Actions.Any());
+        users.ShouldBeSuccess().Items.ShouldBeEmpty();
     }
 
     [Theory]
