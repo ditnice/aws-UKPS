@@ -12,7 +12,6 @@ import { SignUpInitiateError } from './SignUpInitiateError'
 import type { ReactNode } from 'react'
 
 const resendCooldownSeconds = 60
-const supportEmail = process.env.NEXT_PUBLIC_QA_SUPPORT_EMAIL
 
 type RequestNewLinkProps = {
   setupToken: string
@@ -25,18 +24,21 @@ type PageContent = {
   title: string
 }
 
-const contactSupport = (
-  <>
-    Please contact the UKPS support team for assistance{' '}
-    <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
-  </>
-)
-
 function getPageContent(
   status: Status,
   remainingSeconds: number,
   countdownRole: 'timer' | 'alert',
 ): PageContent {
+  const supportEmail = process.env.NEXT_PUBLIC_QA_SUPPORT_EMAIL
+  const contactSupport = (
+    <>
+      Please contact the UKPS support team for assistance{' '}
+      <a href={`mailto:${supportEmail}`} data-testid="support-email-link">
+        {supportEmail}
+      </a>
+      .
+    </>
+  )
   switch (status) {
     case 'idle':
       return {

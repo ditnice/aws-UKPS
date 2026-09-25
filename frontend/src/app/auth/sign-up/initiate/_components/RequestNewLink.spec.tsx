@@ -9,18 +9,28 @@ vi.mock('@/client/generated', () => ({
   postAuthResendSetupToken: vi.fn(),
 }))
 
+const exampleSupportEmail = 'QA@UKPS.com'
+const originalEnv = process.env
+
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   vi.mocked(postAuthResendSetupToken).mockResolvedValue({
     data: { correlationId: 'correlation-id-1' },
     error: undefined,
   })
+  process.env = {
+    ...originalEnv,
+    NEXT_PUBLIC_QA_SUPPORT_EMAIL: exampleSupportEmail,
+  }
 })
 
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
   vi.useRealTimers()
+  afterEach(() => {
+    process.env = originalEnv
+  })
 })
 
 function getSendButton() {
@@ -28,7 +38,7 @@ function getSendButton() {
 }
 
 function getSupportEmailLink() {
-  return screen.getByRole('link', { name: 'QA@UKPS.com' }) as HTMLAnchorElement
+  return screen.getByTestId('support-email-link') as HTMLAnchorElement
 }
 
 async function clickSend() {
