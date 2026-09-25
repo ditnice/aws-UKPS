@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { updateCurrentOrganisation } from '@/client/generated'
@@ -8,9 +7,13 @@ import { Button } from '@/components/Button/Button'
 
 type ManageOrganisationLinkProps = {
   organisationId: number
+  organisationName: string
 }
 
-const ManageOrganisationLink = ({ organisationId }: ManageOrganisationLinkProps) => {
+const ManageOrganisationLink = ({
+  organisationId,
+  organisationName,
+}: ManageOrganisationLinkProps) => {
   const router = useRouter()
   const href = `/portal/organisations/${organisationId}/records`
 
@@ -25,7 +28,12 @@ const ManageOrganisationLink = ({ organisationId }: ManageOrganisationLinkProps)
   }
 
   return (
-    <Button data-testid="action-link" variant="link" onClick={handleClick}>
+    <Button
+      data-testid="action-link"
+      variant="link"
+      onClick={handleClick}
+      aria-label={`Manage Organisation - ${organisationName}`}
+    >
       Manage
     </Button>
   )

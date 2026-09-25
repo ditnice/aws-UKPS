@@ -48,7 +48,10 @@ const SelectOrganisationPage = async ({
             <tr key={x.id}>
               <td>{x.organisationName}</td>
               <td>
-                <ManageOrganisationLink organisationId={x.id} />
+                <ManageOrganisationLink
+                  organisationId={x.id}
+                  organisationName={x.organisationName}
+                />
               </td>
             </tr>
           ))}
