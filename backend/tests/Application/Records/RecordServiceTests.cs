@@ -102,11 +102,6 @@ public class RecordServiceTests : DatabaseTestBase
             .DistinctBy(x => x.Id)
             .ToArray();
 
-        foreach (var record in _seededVaccineRecords.Concat(_seededMedicineRecords))
-        {
-            record.CurrentDraftRevisionId = record.Revisions.OrderBy(x => x.RevisionNo).Last().Id;
-        }
-
         await Context.SaveChangesAsync();
 
         _harness = new ServiceTestHarness<IRecordService>(Context)
