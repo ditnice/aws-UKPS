@@ -335,7 +335,7 @@ public class RecordServiceTests : DatabaseTestBase
 
     private string GetExpectedDevelopmentName(Record record)
     {
-        var relevantRevision = record.Revisions.OrderBy(x => x.RevisionNo).Last();
+        var relevantRevision = record.Revisions.OrderBy(x => x.CreatedAt).Last();
         if (record.RecordType == RecordType.Medicine)
         {
             var medicalData = _medicineProductDetailsData.First(x =>

@@ -232,7 +232,7 @@ internal partial class RecordService(
             RecordType = x.RecordType,
             RecordStatus = x.RecordStatus,
             ReviewedAt = x.ReviewedAt,
-            CurrentDraftRevisionId = x.Revisions.OrderBy(y => y.RevisionNo).Last().Id,
+            CurrentDraftRevisionId = x.Revisions.OrderBy(y => y.CreatedAt).Last().Id,
             NextUpdateDue =
                 x.ReviewedAt == null
                     ? null

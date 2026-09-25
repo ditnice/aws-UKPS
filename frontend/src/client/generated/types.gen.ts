@@ -33,6 +33,14 @@ export type AuthenticationProblemDetails = {
     authenticationSession?: null | string;
 };
 
+export const BiomarkerType = {
+    UNKNOWN: 'Unknown',
+    NON_GENOMIC_BIOMARKER: 'NonGenomicBiomarker',
+    GENOMIC_BIOMARKER: 'GenomicBiomarker'
+} as const;
+
+export type BiomarkerType = typeof BiomarkerType[keyof typeof BiomarkerType];
+
 /**
  * Represents the information required to create a new organisation.
  */
@@ -58,6 +66,52 @@ export type CreateOrganisationDto = {
      */
     headOfficeTelephone: string;
 };
+
+/**
+ * Represents the level of precision for a date.
+ */
+export const DatePrecision = {
+    ESTIMATED_QUARTER: 'EstimatedQuarter',
+    ESTIMATED_MONTH: 'EstimatedMonth',
+    ACTUAL_DATE: 'ActualDate'
+} as const;
+
+/**
+ * Represents the level of precision for a date.
+ */
+export type DatePrecision = typeof DatePrecision[keyof typeof DatePrecision];
+
+export const DesignationStatus = {
+    GRANTED: 'Granted',
+    NOT_GRANTED: 'NotGranted',
+    DECISION_TO_SUBMIT_ONGOING: 'DecisionToSubmitOngoing',
+    APPLICATION_SUBMITTED_DECISION_PENDING: 'ApplicationSubmittedDecisionPending',
+    NO_SUBMISSION_INTENDED: 'NoSubmissionIntended'
+} as const;
+
+export type DesignationStatus = typeof DesignationStatus[keyof typeof DesignationStatus];
+
+export const EamsOpinionDecision = { NEGATIVE: 'Negative', POSITIVE: 'Positive' } as const;
+
+export type EamsOpinionDecision = typeof EamsOpinionDecision[keyof typeof EamsOpinionDecision];
+
+export const GenomicTestMandatoryStatus = {
+    UNKNOWN: 'Unknown',
+    RECOMMENDED_NOT_REQUIRED: 'RecommendedNotRequired',
+    MANDATORY_ALTERNATIVES_MAY_EXIST: 'MandatoryAlternativesMayExist',
+    MANDATORY_NO_ALTERNATIVES: 'MandatoryNoAlternatives'
+} as const;
+
+export type GenomicTestMandatoryStatus = typeof GenomicTestMandatoryStatus[keyof typeof GenomicTestMandatoryStatus];
+
+export const GenomicTestNgtdRelationship = {
+    UNKNOWN: 'Unknown',
+    NEW_TEST: 'NewTest',
+    EXISTING_TEST_NEW_INDICATION: 'ExistingTestNewIndication',
+    EXISTING_TEST_SAME_INDICATION: 'ExistingTestSameIndication'
+} as const;
+
+export type GenomicTestNgtdRelationship = typeof GenomicTestNgtdRelationship[keyof typeof GenomicTestNgtdRelationship];
 
 /**
  * Specifies the fields by which records can be sorted.
@@ -89,6 +143,15 @@ export const GetUsersQuerySortValue = {
  */
 export type GetUsersQuerySortValue = typeof GetUsersQuerySortValue[keyof typeof GetUsersQuerySortValue];
 
+export const IndicationPaediatricStatus = {
+    UNKNOWN: 'Unknown',
+    EXCLUSIVELY_CHILDREN: 'ExclusivelyChildren',
+    EXCLUSIVELY_ADULTS: 'ExclusivelyAdults',
+    BOTH_CHILDREN_AND_ADULTS: 'BothChildrenAndAdults'
+} as const;
+
+export type IndicationPaediatricStatus = typeof IndicationPaediatricStatus[keyof typeof IndicationPaediatricStatus];
+
 /**
  * Represents the credentials provided by a user when attempting to authenticate.
  */
@@ -104,6 +167,325 @@ export type LoginRequest = {
 };
 
 /**
+ * Bodies a medicine may be submitted to for health technology assessment.
+ * Multi-select — see RecordHta.MedicineHtaBodies. Only populated when
+ * RecordHta.MedicineHtaSubmissionIntended is Yes.
+ */
+export const MedicineHtaAssessor = {
+    NICE: 'Nice',
+    SMC: 'Smc',
+    AWMSG: 'Awmsg'
+} as const;
+
+/**
+ * Bodies a medicine may be submitted to for health technology assessment.
+ * Multi-select — see RecordHta.MedicineHtaBodies. Only populated when
+ * RecordHta.MedicineHtaSubmissionIntended is Yes.
+ */
+export type MedicineHtaAssessor = typeof MedicineHtaAssessor[keyof typeof MedicineHtaAssessor];
+
+/**
+ * Represents an active substance name for a medicine.
+ */
+export type MedicinesActiveSubstanceDto = {
+    /**
+     * Gets the substance name.
+     */
+    name: string;
+    /**
+     * Gets the type of the substance name.
+     */
+    nameType: SubstanceNameType;
+};
+
+/**
+ * Represents the budget impact section of a medicine record.
+ */
+export type MedicinesBudgetImpactDto = {
+    patientAccessSchemePlanned?: null | YesNoUnknown;
+    indicationSpecificPricingPlanned?: null | YesNoUnknown;
+    /**
+     * Gets details of the indication-specific pricing.
+     */
+    indicationSpecificPricingDetails?: null | string;
+    netUkBudgetImpactBand?: null | NetUkBudgetImpactBand;
+    /**
+     * Gets the patient access scheme regions, or `null` if unanswered.
+     */
+    patientAccessSchemeRegions?: null | Array<PatientAccessSchemeRegion>;
+};
+
+/**
+ * Represents the company information section of a medicine record.
+ */
+export type MedicinesCompanyInfoDto = {
+    isOriginatorCompany?: null | YesNoUnknown;
+    /**
+     * Gets the originator company name.
+     */
+    originatorCompanyName?: null | string;
+    isCoMarketed?: null | YesNoUnknown;
+    /**
+     * Gets the co-marketing company name.
+     */
+    coMarketingCompanyName?: null | string;
+};
+
+/**
+ * Represents the medicine detail section of a medicine record.
+ */
+export type MedicinesDetailDto = {
+    /**
+     * Gets the mode of action.
+     */
+    modeOfAction?: null | string;
+    /**
+     * Gets the proposed dose regimen.
+     */
+    proposedDoseRegimen?: null | string;
+    isPersonalisedMedicine?: null | YesNoUnknown;
+    isRepurposedMedicine?: null | YesNoUnknown;
+    /**
+     * Gets details of the repurposed medicine.
+     */
+    repurposedMedicineDetails?: null | string;
+};
+
+/**
+ * Represents the Early Access to Medicines Scheme and Promising Innovative Medicine section of a
+ * medicine record.
+ */
+export type MedicinesEamsPimDto = {
+    pimDesignationStatus?: null | DesignationStatus;
+    willSubmitToEams?: null | YesNoUnknown;
+    eamsOpinionDecision?: null | EamsOpinionDecision;
+    eamsSubmissionDate?: null | RegulatoryDateDto;
+    eamsOpinionDate?: null | RegulatoryDateDto;
+};
+
+/**
+ * Represents the EU status section of a medicine record.
+ */
+export type MedicinesEuStatusDto = {
+    euOrphanStatus?: null | DesignationStatus;
+    /**
+     * Gets the EU orphan designation number.
+     */
+    euOrphanStatusNumber?: null | string;
+    euOrphanGrantedDate?: null | RegulatoryDateDto;
+    euAtmpClassificationStatus?: null | DesignationStatus;
+    atmpRecommendationDate?: null | RegulatoryDateDto;
+    atmpClassification?: null | ReferenceDataDto;
+};
+
+/**
+ * Represents the global submission section of a medicine record.
+ */
+export type MedicinesGlobalSubmissionDto = {
+    /**
+     * Gets the region of the first global submission.
+     */
+    globalFirstSubmissionRegion?: null | string;
+    globalSubmissionActualDate?: null | RegulatoryDateDto;
+};
+
+/**
+ * Represents the international recognition section of a medicine record.
+ */
+export type MedicinesIntlRecognitionDto = {
+    irpRoute?: null | ReferenceDataDto;
+    intlConditionalApprovalAnticipated?: null | YesNoUnknown;
+    intlSubmissionDate?: null | RegulatoryDateDto;
+    intlLicenceDate?: null | RegulatoryDateDto;
+};
+
+/**
+ * Represents the laboratory testing section of a medicine record.
+ */
+export type MedicinesLaboratoryTestingDto = {
+    diagnosticTestRequired?: null | YesNoUnknown;
+    biomarkerType?: null | BiomarkerType;
+    /**
+     * Gets the description of a non-genomic biomarker.
+     */
+    nonGenomicBiomarkerDescription?: null | string;
+    /**
+     * Gets the genomic target.
+     */
+    genomicTarget?: null | string;
+    genomicTestNgtdRelationship?: null | GenomicTestNgtdRelationship;
+    /**
+     * Gets the genomic sample type.
+     */
+    genomicSampleType?: null | string;
+    /**
+     * Gets the genomic test turnaround time details.
+     */
+    genomicTurnaroundTimeDetails?: null | string;
+    patientPathwayPoint?: null | ReferenceDataDto;
+    /**
+     * Gets the pathway point when not covered by the listed options.
+     */
+    genomicTestPathwayPointOther?: null | string;
+    /**
+     * Gets the genomic alterations.
+     */
+    genomicAlterations?: null | string;
+    /**
+     * Gets the genomic test used in trials.
+     */
+    genomicTestUsedInTrials?: null | string;
+    /**
+     * Gets the genomic test specificity and sensitivity.
+     */
+    genomicTestSpecificitySensitivity?: null | string;
+    /**
+     * Gets additional notes on the genomic test.
+     */
+    genomicTestNotes?: null | string;
+    genomicTestMandatoryStatus?: null | GenomicTestMandatoryStatus;
+    /**
+     * Gets additional genomic factors.
+     */
+    additionalGenomicFactors?: null | string;
+    /**
+     * Gets details of monitoring tests.
+     */
+    monitoringTestsDetails?: null | string;
+    /**
+     * Gets details of safety tests.
+     */
+    safetyTestsDetails?: null | string;
+};
+
+/**
+ * Represents the patient identification section of a medicine record.
+ */
+export type MedicinesPatientIdentificationDto = {
+    screeningRequired?: null | YesNoUnknown;
+    /**
+     * Gets details of the screening required.
+     */
+    screeningDetails?: null | string;
+    urgentIdentificationRequired?: null | YesNoUnknown;
+    /**
+     * Gets details of the urgent identification required.
+     */
+    urgentIdentificationDetails?: null | string;
+};
+
+/**
+ * Represents the product detail section of a medicine record.
+ */
+export type MedicinesProductDetailDto = {
+    /**
+     * Gets the short human-readable label identifying the record.
+     */
+    recordTitle: string;
+    /**
+     * Gets the branded name.
+     */
+    brandedName?: null | string;
+    /**
+     * Gets the indication.
+     */
+    indication: string;
+    indicationIsPaediatric?: null | IndicationPaediatricStatus;
+    indicationIsCancer?: null | YesNoUnknown;
+    indicationIsRareDisease?: null | YesNoUnknown;
+    /**
+     * Gets the NICE technology appraisal development identifier.
+     */
+    niceTaDevelopmentId?: null | string;
+    bnfChapter?: null | ReferenceDataDto;
+    formulationType?: null | ReferenceDataDto;
+    /**
+     * Gets the presentation.
+     */
+    presentation?: null | string;
+    /**
+     * Gets the selected technology statuses, or `null` if unanswered.
+     */
+    medicineTechnologyStatus?: null | Array<MedicineTechnologyStatus>;
+    /**
+     * Gets the therapeutic areas, in display order.
+     */
+    therapeuticAreas: Array<ReferenceDataDto>;
+    /**
+     * Gets the active substance names, in display order.
+     */
+    activeSubstances: Array<MedicinesActiveSubstanceDto>;
+};
+
+/**
+ * Represents the NHS service impact section of a medicine record.
+ */
+export type MedicinesServiceImpactDto = {
+    nhsServiceChangesRequired?: null | NhsServiceChangesRequired;
+    /**
+     * Gets details of the NHS service changes.
+     */
+    nhsServiceChangesDetails?: null | string;
+    handlingStorageRequirements?: null | YesNoUnknown;
+    /**
+     * Gets details of the handling or storage requirements.
+     */
+    handlingStorageDetails?: null | string;
+    /**
+     * Gets the estimated uptake.
+     */
+    estimatedUptake?: null | string;
+    ukPatientPopulationRange?: null | ReferenceDataDto;
+    /**
+     * Gets notes on the UK patient population.
+     */
+    ukPatientPopulationNotes?: null | string;
+    /**
+     * Gets the estimated eligible patient population.
+     */
+    estimatedEligiblePatientPopulation?: null | string;
+    compassionateAccessAvailable?: null | YesNoUnknown;
+    /**
+     * Gets details of compassionate access.
+     */
+    compassionateAccessDetails?: null | string;
+};
+
+/**
+ * Represents the treatment detail section of a medicine record.
+ */
+export type MedicinesTreatmentDetailDto = {
+    /**
+     * Gets the proposed place in therapy.
+     */
+    proposedPlaceInTherapy: string;
+    /**
+     * Gets the estimated duration of treatment.
+     */
+    estimatedDurationOfTreatment?: null | string;
+};
+
+/**
+ * Technology status types selected for a medicine record. Multi-select —
+ * see MedicinesProductDetail.MedicineTechnologyStatus.
+ */
+export const MedicineTechnologyStatus = {
+    BIOSIMILAR: 'Biosimilar',
+    NEW_CHEMICAL_OR_BIOLOGICAL_ENTITY: 'NewChemicalOrBiologicalEntity',
+    NEW_DOSING_REGIMEN: 'NewDosingRegimen',
+    NEW_FORMULATION: 'NewFormulation',
+    NEW_INDICATION: 'NewIndication',
+    NEW_PRESENTATION: 'NewPresentation',
+    SPC_AMENDMENT_WITHOUT_INDICATION_CHANGE: 'SpcAmendmentWithoutIndicationChange'
+} as const;
+
+/**
+ * Technology status types selected for a medicine record. Multi-select —
+ * see MedicinesProductDetail.MedicineTechnologyStatus.
+ */
+export type MedicineTechnologyStatus = typeof MedicineTechnologyStatus[keyof typeof MedicineTechnologyStatus];
+
+/**
  * Represents the details required for a user to complete multi-factor authentication setup.
  */
 export type MultiFactorAuthenticationSetupDto = {
@@ -117,6 +499,24 @@ export type MultiFactorAuthenticationSetupDto = {
      */
     authenticationSession: string;
 };
+
+export const NetUkBudgetImpactBand = {
+    UNKNOWN: 'Unknown',
+    LESS_THAN5M: 'LessThan5M',
+    BETWEEN5M_AND40M: 'Between5MAnd40M',
+    FORTY_M_OR_MORE: 'FortyMOrMore'
+} as const;
+
+export type NetUkBudgetImpactBand = typeof NetUkBudgetImpactBand[keyof typeof NetUkBudgetImpactBand];
+
+export const NhsServiceChangesRequired = {
+    UNKNOWN: 'Unknown',
+    NO_CHANGES: 'NoChanges',
+    SOME_CHANGE: 'SomeChange',
+    COMPLETE_TRANSFORMATION: 'CompleteTransformation'
+} as const;
+
+export type NhsServiceChangesRequired = typeof NhsServiceChangesRequired[keyof typeof NhsServiceChangesRequired];
 
 /**
  * Represents the outcome of onboarding a new user.
@@ -308,11 +708,39 @@ export type PaginatedResponseDtoOfUserListItemDto = {
 };
 
 /**
+ * Patient Access Scheme regions selected for a medicine record.
+ * Multi-select — see MedicinesBudgetImpact.PatientAccessSchemeRegions.
+ */
+export const PatientAccessSchemeRegion = {
+    ENGLAND: 'England',
+    WALES: 'Wales',
+    SCOTLAND: 'Scotland',
+    NORTHERN_IRELAND: 'NorthernIreland'
+} as const;
+
+/**
+ * Patient Access Scheme regions selected for a medicine record.
+ * Multi-select — see MedicinesBudgetImpact.PatientAccessSchemeRegions.
+ */
+export type PatientAccessSchemeRegion = typeof PatientAccessSchemeRegion[keyof typeof PatientAccessSchemeRegion];
+
+/**
  * Flags enum stored as integer. Only Organisation uses Both;
  * UserOrgMembership and TermsAcceptance use Medicines or Vaccines only.
  * Represents the types of pharmaceutical entities.
  */
-export type PharmaceuticalEntity = string;
+export const PharmaceuticalEntity = {
+    MEDICINES: 'Medicines',
+    VACCINES: 'Vaccines',
+    BOTH: 'Both'
+} as const;
+
+/**
+ * Flags enum stored as integer. Only Organisation uses Both;
+ * UserOrgMembership and TermsAcceptance use Medicines or Vaccines only.
+ * Represents the types of pharmaceutical entities.
+ */
+export type PharmaceuticalEntity = typeof PharmaceuticalEntity[keyof typeof PharmaceuticalEntity];
 
 export type ProblemDetails = {
     type?: null | string;
@@ -320,6 +748,129 @@ export type ProblemDetails = {
     status?: null | number;
     detail?: null | string;
     instance?: null | string;
+};
+
+/**
+ * Represents the data held on the latest published revision of a record. The
+ * `recordType` property identifies the concrete type.
+ */
+export type PublishedRecordDto = ({
+    recordType: 'Medicine';
+} & PublishedRecordDtoPublishedMedicineRecordDto) | ({
+    recordType: 'Vaccine';
+} & PublishedRecordDtoPublishedVaccineRecordDto);
+
+/**
+ * Represents the data held on the latest published revision of a medicine record.
+ */
+export type PublishedRecordDtoPublishedMedicineRecordDto = {
+    recordType?: 'Medicine';
+    medicinesProductDetail?: null | MedicinesProductDetailDto;
+    medicinesDetail?: null | MedicinesDetailDto;
+    medicinesCompanyInfo?: null | MedicinesCompanyInfoDto;
+    medicinesTreatmentDetail?: null | MedicinesTreatmentDetailDto;
+    medicinesPatientIdentification?: null | MedicinesPatientIdentificationDto;
+    medicinesLaboratoryTesting?: null | MedicinesLaboratoryTestingDto;
+    medicinesServiceImpact?: null | MedicinesServiceImpactDto;
+    medicinesBudgetImpact?: null | MedicinesBudgetImpactDto;
+    medicinesEamsPim?: null | MedicinesEamsPimDto;
+    medicinesEuStatus?: null | MedicinesEuStatusDto;
+    medicinesGlobalSubmission?: null | MedicinesGlobalSubmissionDto;
+    medicinesIntlRecognition?: null | MedicinesIntlRecognitionDto;
+    /**
+     * Gets the clinical trials.
+     */
+    recordClinicalTrials: Array<RecordClinicalTrialDto>;
+    recordHta?: null | RecordHtaDto;
+    recordMhraDate?: null | RecordMhraDateDto;
+    recordMhraProcedure?: null | RecordMhraProcedureDto;
+    /**
+     * Gets the record identifier.
+     */
+    recordId: number;
+    /**
+     * Gets the identifier of the organisation that owns the record.
+     */
+    organisationId: number;
+    /**
+     * Gets the record status.
+     */
+    recordStatus: RecordStatus;
+    /**
+     * Gets the date the record was last reviewed, when available.
+     */
+    reviewedAt?: null | string;
+    /**
+     * Gets the identifier of the published revision.
+     */
+    revisionId: number;
+};
+
+/**
+ * Represents the data held on the latest published revision of a vaccine record.
+ */
+export type PublishedRecordDtoPublishedVaccineRecordDto = {
+    recordType?: 'Vaccine';
+    /**
+     * Gets the record identifier.
+     */
+    recordId: number;
+    /**
+     * Gets the identifier of the organisation that owns the record.
+     */
+    organisationId: number;
+    /**
+     * Gets the record status.
+     */
+    recordStatus: RecordStatus;
+    /**
+     * Gets the date the record was last reviewed, when available.
+     */
+    reviewedAt?: null | string;
+    /**
+     * Gets the identifier of the published revision.
+     */
+    revisionId: number;
+};
+
+/**
+ * Represents a clinical trial on a record.
+ */
+export type RecordClinicalTrialDto = {
+    /**
+     * Gets the study name.
+     */
+    studyName: string;
+    /**
+     * Gets the ClinicalTrials.gov number.
+     */
+    clinicalTrialsGovNumber: string;
+    /**
+     * Gets the brief description.
+     */
+    briefDescription?: null | string;
+    recruitingInUk?: null | YesNoUnknown;
+    trialPhase?: null | TrialPhase;
+    /**
+     * Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order.
+     */
+    otherClinicalTrialNumbers: Array<string>;
+};
+
+/**
+ * Represents the health technology assessment section of a record.
+ */
+export type RecordHtaDto = {
+    medicineHtaSubmissionIntended?: null | YesNoUnknown;
+    /**
+     * Gets the HTA bodies the medicine will be submitted to, or `null` if unanswered.
+     */
+    medicineHtaBodies?: null | Array<MedicineHtaAssessor>;
+    htaNiceAlignedPathway?: null | YesNoUnknown;
+    /**
+     * Gets additional HTA details.
+     */
+    htaAdditionalDetails?: null | string;
 };
 
 /**
@@ -353,6 +904,27 @@ export type RecordListItemDto = {
 };
 
 /**
+ * Represents the MHRA dates section of a record.
+ */
+export type RecordMhraDateDto = {
+    ukSubmissionDate?: null | RegulatoryDateDto;
+    ukLicenceDate?: null | RegulatoryDateDto;
+    ukLaunchDate?: null | RegulatoryDateDto;
+};
+
+/**
+ * Represents the MHRA procedure section of a record.
+ */
+export type RecordMhraProcedureDto = {
+    mhraProcedureType?: null | ReferenceDataDto;
+    irpReferenceRegulator?: null | ReferenceDataDto;
+    /**
+     * Gets the procedure details.
+     */
+    procedureDetails?: null | string;
+};
+
+/**
  * Represents the status of a record in the system.
  */
 export const RecordStatus = {
@@ -376,6 +948,20 @@ export const RecordType = { MEDICINE: 'Medicine', VACCINE: 'Vaccine' } as const;
  * Represents the type of a record, such as Medicine or Vaccine.
  */
 export type RecordType = typeof RecordType[keyof typeof RecordType];
+
+/**
+ * Represents a selected reference data value.
+ */
+export type ReferenceDataDto = {
+    /**
+     * Gets the reference data identifier.
+     */
+    id: number;
+    /**
+     * Gets the display label.
+     */
+    label: string;
+};
 
 /**
  * Represents the information required to register a new user.
@@ -419,6 +1005,25 @@ export type RegisterUserConfirmationDto = {
      * Gets the user phone number.
      */
     phoneNumber: string;
+};
+
+/**
+ * Represents a regulatory milestone date.
+ */
+export type RegulatoryDateDto = {
+    /**
+     * Gets the date. Quarter and month precision dates are stored as the first day of the period.
+     */
+    dateValue: string;
+    /**
+     * Gets the precision of the date.
+     */
+    datePrecision: DatePrecision;
+    /**
+     * Gets a value indicating whether the date is confidential.
+     */
+    isConfidential: boolean;
+    conditionalApprovalAnticipated?: null | YesNoUnknown;
 };
 
 /**
@@ -498,6 +1103,28 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
  * Specifies the direction in which query results are sorted.
  */
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
+
+/**
+ * Represents the type of substance name used in the system.
+ */
+export const SubstanceNameType = { GENERIC_NAME: 'GenericName', DEVELOPMENT_NAME: 'DevelopmentName' } as const;
+
+/**
+ * Represents the type of substance name used in the system.
+ */
+export type SubstanceNameType = typeof SubstanceNameType[keyof typeof SubstanceNameType];
+
+export const TrialPhase = {
+    PRECLINICAL: 'Preclinical',
+    PHASE_I: 'PhaseI',
+    PHASE_I_AND_II: 'PhaseIAndII',
+    PHASE_II: 'PhaseII',
+    PHASE_III: 'PhaseIII',
+    PHASE_III_AND_IV: 'PhaseIIIAndIV',
+    PHASE_IV: 'PhaseIV'
+} as const;
+
+export type TrialPhase = typeof TrialPhase[keyof typeof TrialPhase];
 
 export const UkpsChallengeType = { MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'MultiFactorAuthenticationRequired', MULTI_FACTOR_AUTHENTICATION_SETUP_REQUIRED: 'MultiFactorAuthenticationSetupRequired' } as const;
 
@@ -753,6 +1380,14 @@ export type VerifyMultiFactorAuthenticationCommand = {
      */
     authenticationSession: string;
 };
+
+export const YesNoUnknown = {
+    UNKNOWN: 'Unknown',
+    NO: 'No',
+    YES: 'Yes'
+} as const;
+
+export type YesNoUnknown = typeof YesNoUnknown[keyof typeof YesNoUnknown];
 
 export type PostAuthLoginData = {
     /**
@@ -1324,6 +1959,54 @@ export type GetOrganisationRecordsResponses = {
 };
 
 export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
+
+export type GetPublishedRecordData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the record to retrieve.
+         */
+        id: number;
+    };
+    query: {
+        /**
+         * The expected type of the record.
+         */
+        recordType: RecordType;
+    };
+    url: '/records/{id}';
+};
+
+export type GetPublishedRecordErrors = {
+    /**
+     * The record type is missing or invalid.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to view the record.
+     */
+    403: ProblemDetails;
+    /**
+     * No record of the requested type exists with the specified identifier, or it has no
+     * published data.
+     */
+    404: ProblemDetails;
+};
+
+export type GetPublishedRecordError = GetPublishedRecordErrors[keyof GetPublishedRecordErrors];
+
+export type GetPublishedRecordResponses = {
+    /**
+     * Returns the published record data.
+     */
+    200: PublishedRecordDto;
+};
+
+export type GetPublishedRecordResponse = GetPublishedRecordResponses[keyof GetPublishedRecordResponses];
 
 export type GetUsersMeData = {
     body?: never;
