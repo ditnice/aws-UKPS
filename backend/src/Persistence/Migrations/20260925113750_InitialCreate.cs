@@ -614,7 +614,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     record_id = table.Column<int>(type: "integer", nullable: false),
                     based_on_revision_id = table.Column<int>(type: "integer", nullable: true),
-                    revision_no = table.Column<int>(type: "integer", nullable: false),
                     workflow_status = table.Column<int>(type: "integer", nullable: false),
                     created_by = table.Column<int>(type: "integer", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
@@ -2072,13 +2071,6 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "mhra_procedure_type_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_record_revision_record_id_revision_no",
-                schema: "ukps",
-                table: "record_revisions",
-                columns: new[] { "record_id", "revision_no" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "ix_record_revisions_based_on_revision_id",
                 schema: "ukps",
                 table: "record_revisions",
@@ -2089,6 +2081,12 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "record_revisions",
                 column: "created_by");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_record_revisions_record_id",
+                schema: "ukps",
+                table: "record_revisions",
+                column: "record_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_record_revisions_submitted_by",

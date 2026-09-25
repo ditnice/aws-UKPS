@@ -1562,6 +1562,138 @@
         }
       }
     },
+    "/records/{id}": {
+      "get": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Retrieves the data held on the latest published revision of an active or on hold record.",
+        "operationId": "GetPublishedRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The identifier of the record to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "recordType",
+            "in": "query",
+            "description": "The expected type of the record.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/RecordType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the published record data.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishedRecordDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishedRecordDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishedRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The record type is missing or invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to view the record.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record of the requested type exists with the specified identifier, or it has no\npublished data.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -2697,6 +2829,15 @@
         },
         "description": "Represents problem details returned when authentication fails or\nadditional authentication is required."
       },
+      "BiomarkerType": {
+        "enum": [
+          "Unknown",
+          "NonGenomicBiomarker",
+          "GenomicBiomarker",
+          null
+        ],
+        "type": "string"
+      },
       "CreateOrganisationDto": {
         "required": [
           "organisationName",
@@ -2732,6 +2873,54 @@
         },
         "description": "Represents the information required to create a new organisation."
       },
+      "DatePrecision": {
+        "enum": [
+          "EstimatedQuarter",
+          "EstimatedMonth",
+          "ActualDate"
+        ],
+        "type": "string",
+        "description": "Represents the level of precision for a date."
+      },
+      "DesignationStatus": {
+        "enum": [
+          "Granted",
+          "NotGranted",
+          "DecisionToSubmitOngoing",
+          "ApplicationSubmittedDecisionPending",
+          "NoSubmissionIntended",
+          null
+        ],
+        "type": "string"
+      },
+      "EamsOpinionDecision": {
+        "enum": [
+          "Negative",
+          "Positive",
+          null
+        ],
+        "type": "string"
+      },
+      "GenomicTestMandatoryStatus": {
+        "enum": [
+          "Unknown",
+          "RecommendedNotRequired",
+          "MandatoryAlternativesMayExist",
+          "MandatoryNoAlternatives",
+          null
+        ],
+        "type": "string"
+      },
+      "GenomicTestNgtdRelationship": {
+        "enum": [
+          "Unknown",
+          "NewTest",
+          "ExistingTestNewIndication",
+          "ExistingTestSameIndication",
+          null
+        ],
+        "type": "string"
+      },
       "GetRecordsQuerySortValue": {
         "enum": [
           "NextUpdateDue",
@@ -2751,6 +2940,16 @@
         ],
         "type": "string",
         "description": "Specifies the fields by which users can be sorted when querying users."
+      },
+      "IndicationPaediatricStatus": {
+        "enum": [
+          "Unknown",
+          "ExclusivelyChildren",
+          "ExclusivelyAdults",
+          "BothChildrenAndAdults",
+          null
+        ],
+        "type": "string"
       },
       "LoginRequest": {
         "required": [
@@ -2772,6 +2971,815 @@
         },
         "description": "Represents the credentials provided by a user when attempting to authenticate."
       },
+      "MedicineHtaAssessor": {
+        "enum": [
+          "Nice",
+          "Smc",
+          "Awmsg"
+        ],
+        "type": "string",
+        "description": "Bodies a medicine may be submitted to for health technology assessment.\nMulti-select — see RecordHta.MedicineHtaBodies. Only populated when\nRecordHta.MedicineHtaSubmissionIntended is Yes."
+      },
+      "MedicinesActiveSubstanceDto": {
+        "required": [
+          "name",
+          "nameType"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Gets the substance name."
+          },
+          "nameType": {
+            "description": "Gets the type of the substance name.",
+            "$ref": "#/components/schemas/SubstanceNameType"
+          }
+        },
+        "description": "Represents an active substance name for a medicine."
+      },
+      "MedicinesBudgetImpactDto": {
+        "type": "object",
+        "properties": {
+          "patientAccessSchemePlanned": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether a patient access scheme is planned.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "indicationSpecificPricingPlanned": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether indication-specific pricing is planned.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "indicationSpecificPricingDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of the indication-specific pricing."
+          },
+          "netUkBudgetImpactBand": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the net UK budget impact band.",
+                "$ref": "#/components/schemas/NetUkBudgetImpactBand"
+              }
+            ]
+          },
+          "patientAccessSchemeRegions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PatientAccessSchemeRegion"
+            },
+            "description": "Gets the patient access scheme regions, or `null` if unanswered."
+          }
+        },
+        "description": "Represents the budget impact section of a medicine record."
+      },
+      "MedicinesCompanyInfoDto": {
+        "type": "object",
+        "properties": {
+          "isOriginatorCompany": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the submitting company is the originator.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "originatorCompanyName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the originator company name."
+          },
+          "isCoMarketed": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the product is co-marketed.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "coMarketingCompanyName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the co-marketing company name."
+          }
+        },
+        "description": "Represents the company information section of a medicine record."
+      },
+      "MedicinesDetailDto": {
+        "type": "object",
+        "properties": {
+          "modeOfAction": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the mode of action."
+          },
+          "proposedDoseRegimen": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the proposed dose regimen."
+          },
+          "isPersonalisedMedicine": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether this is a personalised medicine.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "isRepurposedMedicine": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether this is a repurposed medicine.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "repurposedMedicineDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of the repurposed medicine."
+          }
+        },
+        "description": "Represents the medicine detail section of a medicine record."
+      },
+      "MedicinesEamsPimDto": {
+        "type": "object",
+        "properties": {
+          "pimDesignationStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the Promising Innovative Medicine designation status.",
+                "$ref": "#/components/schemas/DesignationStatus"
+              }
+            ]
+          },
+          "willSubmitToEams": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the product will be submitted to EAMS.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "eamsOpinionDecision": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the EAMS opinion decision.",
+                "$ref": "#/components/schemas/EamsOpinionDecision"
+              }
+            ]
+          },
+          "eamsSubmissionDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the EAMS submission date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          },
+          "eamsOpinionDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the EAMS opinion date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          }
+        },
+        "description": "Represents the Early Access to Medicines Scheme and Promising Innovative Medicine section of a\nmedicine record."
+      },
+      "MedicinesEuStatusDto": {
+        "type": "object",
+        "properties": {
+          "euOrphanStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the EU orphan designation status.",
+                "$ref": "#/components/schemas/DesignationStatus"
+              }
+            ]
+          },
+          "euOrphanStatusNumber": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the EU orphan designation number."
+          },
+          "euOrphanGrantedDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the date EU orphan status was granted.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          },
+          "euAtmpClassificationStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the EU advanced therapy medicinal product classification status.",
+                "$ref": "#/components/schemas/DesignationStatus"
+              }
+            ]
+          },
+          "atmpRecommendationDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the ATMP classification recommendation date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          },
+          "atmpClassification": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the ATMP classification.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          }
+        },
+        "description": "Represents the EU status section of a medicine record."
+      },
+      "MedicinesGlobalSubmissionDto": {
+        "type": "object",
+        "properties": {
+          "globalFirstSubmissionRegion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the region of the first global submission."
+          },
+          "globalSubmissionActualDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the date of the first global submission.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          }
+        },
+        "description": "Represents the global submission section of a medicine record."
+      },
+      "MedicinesIntlRecognitionDto": {
+        "type": "object",
+        "properties": {
+          "irpRoute": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the International Recognition Procedure route.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "intlConditionalApprovalAnticipated": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether international conditional approval is anticipated.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "intlSubmissionDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the international submission date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          },
+          "intlLicenceDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the international licence date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          }
+        },
+        "description": "Represents the international recognition section of a medicine record."
+      },
+      "MedicinesLaboratoryTestingDto": {
+        "type": "object",
+        "properties": {
+          "diagnosticTestRequired": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether a diagnostic test is required.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "biomarkerType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the biomarker type.",
+                "$ref": "#/components/schemas/BiomarkerType"
+              }
+            ]
+          },
+          "nonGenomicBiomarkerDescription": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the description of a non-genomic biomarker."
+          },
+          "genomicTarget": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the genomic target."
+          },
+          "genomicTestNgtdRelationship": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the relationship of the genomic test to the National Genomic Test Directory.",
+                "$ref": "#/components/schemas/GenomicTestNgtdRelationship"
+              }
+            ]
+          },
+          "genomicSampleType": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the genomic sample type."
+          },
+          "genomicTurnaroundTimeDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the genomic test turnaround time details."
+          },
+          "patientPathwayPoint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the point in the patient pathway at which the test is performed.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "genomicTestPathwayPointOther": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the pathway point when not covered by the listed options."
+          },
+          "genomicAlterations": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the genomic alterations."
+          },
+          "genomicTestUsedInTrials": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the genomic test used in trials."
+          },
+          "genomicTestSpecificitySensitivity": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the genomic test specificity and sensitivity."
+          },
+          "genomicTestNotes": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets additional notes on the genomic test."
+          },
+          "genomicTestMandatoryStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the genomic test is mandatory.",
+                "$ref": "#/components/schemas/GenomicTestMandatoryStatus"
+              }
+            ]
+          },
+          "additionalGenomicFactors": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets additional genomic factors."
+          },
+          "monitoringTestsDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of monitoring tests."
+          },
+          "safetyTestsDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of safety tests."
+          }
+        },
+        "description": "Represents the laboratory testing section of a medicine record."
+      },
+      "MedicinesPatientIdentificationDto": {
+        "type": "object",
+        "properties": {
+          "screeningRequired": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether screening is required.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "screeningDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of the screening required."
+          },
+          "urgentIdentificationRequired": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether urgent patient identification is required.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "urgentIdentificationDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of the urgent identification required."
+          }
+        },
+        "description": "Represents the patient identification section of a medicine record."
+      },
+      "MedicinesProductDetailDto": {
+        "required": [
+          "recordTitle",
+          "indication",
+          "therapeuticAreas",
+          "activeSubstances"
+        ],
+        "type": "object",
+        "properties": {
+          "recordTitle": {
+            "type": "string",
+            "description": "Gets the short human-readable label identifying the record."
+          },
+          "brandedName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the branded name."
+          },
+          "indication": {
+            "type": "string",
+            "description": "Gets the indication."
+          },
+          "indicationIsPaediatric": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the indication is paediatric.",
+                "$ref": "#/components/schemas/IndicationPaediatricStatus"
+              }
+            ]
+          },
+          "indicationIsCancer": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the indication is cancer.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "indicationIsRareDisease": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the product is intended to treat a rare disease.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "niceTaDevelopmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the NICE technology appraisal development identifier."
+          },
+          "bnfChapter": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the BNF chapter.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "formulationType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the formulation type.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "presentation": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the presentation."
+          },
+          "medicineTechnologyStatus": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MedicineTechnologyStatus"
+            },
+            "description": "Gets the selected technology statuses, or `null` if unanswered."
+          },
+          "therapeuticAreas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReferenceDataDto"
+            },
+            "description": "Gets the therapeutic areas, in display order."
+          },
+          "activeSubstances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MedicinesActiveSubstanceDto"
+            },
+            "description": "Gets the active substance names, in display order."
+          }
+        },
+        "description": "Represents the product detail section of a medicine record."
+      },
+      "MedicinesServiceImpactDto": {
+        "type": "object",
+        "properties": {
+          "nhsServiceChangesRequired": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether NHS service changes are required.",
+                "$ref": "#/components/schemas/NhsServiceChangesRequired"
+              }
+            ]
+          },
+          "nhsServiceChangesDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of the NHS service changes."
+          },
+          "handlingStorageRequirements": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether there are handling or storage requirements.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "handlingStorageDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of the handling or storage requirements."
+          },
+          "estimatedUptake": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the estimated uptake."
+          },
+          "ukPatientPopulationRange": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the UK patient population range.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "ukPatientPopulationNotes": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets notes on the UK patient population."
+          },
+          "estimatedEligiblePatientPopulation": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the estimated eligible patient population."
+          },
+          "compassionateAccessAvailable": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether compassionate access is available.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "compassionateAccessDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of compassionate access."
+          }
+        },
+        "description": "Represents the NHS service impact section of a medicine record."
+      },
+      "MedicinesTreatmentDetailDto": {
+        "required": [
+          "proposedPlaceInTherapy"
+        ],
+        "type": "object",
+        "properties": {
+          "proposedPlaceInTherapy": {
+            "type": "string",
+            "description": "Gets the proposed place in therapy."
+          },
+          "estimatedDurationOfTreatment": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the estimated duration of treatment."
+          }
+        },
+        "description": "Represents the treatment detail section of a medicine record."
+      },
+      "MedicineTechnologyStatus": {
+        "enum": [
+          "Biosimilar",
+          "NewChemicalOrBiologicalEntity",
+          "NewDosingRegimen",
+          "NewFormulation",
+          "NewIndication",
+          "NewPresentation",
+          "SpcAmendmentWithoutIndicationChange"
+        ],
+        "type": "string",
+        "description": "Technology status types selected for a medicine record. Multi-select —\nsee MedicinesProductDetail.MedicineTechnologyStatus."
+      },
       "MultiFactorAuthenticationSetupDto": {
         "required": [
           "otpAuthUri",
@@ -2790,6 +3798,26 @@
           }
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
+      },
+      "NetUkBudgetImpactBand": {
+        "enum": [
+          "Unknown",
+          "LessThan5M",
+          "Between5MAnd40M",
+          "FortyMOrMore",
+          null
+        ],
+        "type": "string"
+      },
+      "NhsServiceChangesRequired": {
+        "enum": [
+          "Unknown",
+          "NoChanges",
+          "SomeChange",
+          "CompleteTransformation",
+          null
+        ],
+        "type": "string"
       },
       "OnboardedUserDto": {
         "required": [
@@ -3050,7 +4078,22 @@
         },
         "description": "Represents a paginated response containing a collection of items and pagination metadata."
       },
+      "PatientAccessSchemeRegion": {
+        "enum": [
+          "England",
+          "Wales",
+          "Scotland",
+          "NorthernIreland"
+        ],
+        "type": "string",
+        "description": "Patient Access Scheme regions selected for a medicine record.\nMulti-select — see MedicinesBudgetImpact.PatientAccessSchemeRegions."
+      },
       "PharmaceuticalEntity": {
+        "enum": [
+          "Medicines",
+          "Vaccines",
+          "Both"
+        ],
         "type": "string",
         "description": "Flags enum stored as integer. Only Organisation uses Both;\nUserOrgMembership and TermsAcceptance use Medicines or Vaccines only.\nRepresents the types of pharmaceutical entities."
       },
@@ -3089,6 +4132,389 @@
             ]
           }
         }
+      },
+      "PublishedRecordDto": {
+        "required": [
+          "recordType"
+        ],
+        "type": "object",
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/PublishedRecordDtoPublishedMedicineRecordDto"
+          },
+          {
+            "$ref": "#/components/schemas/PublishedRecordDtoPublishedVaccineRecordDto"
+          }
+        ],
+        "description": "Represents the data held on the latest published revision of a record. The\n`recordType` property identifies the concrete type.",
+        "discriminator": {
+          "propertyName": "recordType",
+          "mapping": {
+            "Medicine": "#/components/schemas/PublishedRecordDtoPublishedMedicineRecordDto",
+            "Vaccine": "#/components/schemas/PublishedRecordDtoPublishedVaccineRecordDto"
+          }
+        }
+      },
+      "PublishedRecordDtoPublishedMedicineRecordDto": {
+        "required": [
+          "recordClinicalTrials",
+          "recordId",
+          "organisationId",
+          "recordStatus",
+          "revisionId"
+        ],
+        "properties": {
+          "recordType": {
+            "enum": [
+              "Medicine"
+            ],
+            "type": "string"
+          },
+          "medicinesProductDetail": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the product detail section.",
+                "$ref": "#/components/schemas/MedicinesProductDetailDto"
+              }
+            ]
+          },
+          "medicinesDetail": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the medicine detail section.",
+                "$ref": "#/components/schemas/MedicinesDetailDto"
+              }
+            ]
+          },
+          "medicinesCompanyInfo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the company information section.",
+                "$ref": "#/components/schemas/MedicinesCompanyInfoDto"
+              }
+            ]
+          },
+          "medicinesTreatmentDetail": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the treatment detail section.",
+                "$ref": "#/components/schemas/MedicinesTreatmentDetailDto"
+              }
+            ]
+          },
+          "medicinesPatientIdentification": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the patient identification section.",
+                "$ref": "#/components/schemas/MedicinesPatientIdentificationDto"
+              }
+            ]
+          },
+          "medicinesLaboratoryTesting": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the laboratory testing section.",
+                "$ref": "#/components/schemas/MedicinesLaboratoryTestingDto"
+              }
+            ]
+          },
+          "medicinesServiceImpact": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the NHS service impact section.",
+                "$ref": "#/components/schemas/MedicinesServiceImpactDto"
+              }
+            ]
+          },
+          "medicinesBudgetImpact": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the budget impact section.",
+                "$ref": "#/components/schemas/MedicinesBudgetImpactDto"
+              }
+            ]
+          },
+          "medicinesEamsPim": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the EAMS and PIM section.",
+                "$ref": "#/components/schemas/MedicinesEamsPimDto"
+              }
+            ]
+          },
+          "medicinesEuStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the EU status section.",
+                "$ref": "#/components/schemas/MedicinesEuStatusDto"
+              }
+            ]
+          },
+          "medicinesGlobalSubmission": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the global submission section.",
+                "$ref": "#/components/schemas/MedicinesGlobalSubmissionDto"
+              }
+            ]
+          },
+          "medicinesIntlRecognition": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the international recognition section.",
+                "$ref": "#/components/schemas/MedicinesIntlRecognitionDto"
+              }
+            ]
+          },
+          "recordClinicalTrials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordClinicalTrialDto"
+            },
+            "description": "Gets the clinical trials."
+          },
+          "recordHta": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the health technology assessment section.",
+                "$ref": "#/components/schemas/RecordHtaDto"
+              }
+            ]
+          },
+          "recordMhraDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the MHRA dates section.",
+                "$ref": "#/components/schemas/RecordMhraDateDto"
+              }
+            ]
+          },
+          "recordMhraProcedure": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the MHRA procedure section.",
+                "$ref": "#/components/schemas/RecordMhraProcedureDto"
+              }
+            ]
+          },
+          "recordId": {
+            "type": "integer",
+            "description": "Gets the record identifier.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the identifier of the organisation that owns the record.",
+            "format": "int32"
+          },
+          "recordStatus": {
+            "description": "Gets the record status.",
+            "$ref": "#/components/schemas/RecordStatus"
+          },
+          "reviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date the record was last reviewed, when available.",
+            "format": "date-time"
+          },
+          "revisionId": {
+            "type": "integer",
+            "description": "Gets the identifier of the published revision.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the data held on the latest published revision of a medicine record."
+      },
+      "PublishedRecordDtoPublishedVaccineRecordDto": {
+        "required": [
+          "recordId",
+          "organisationId",
+          "recordStatus",
+          "revisionId"
+        ],
+        "properties": {
+          "recordType": {
+            "enum": [
+              "Vaccine"
+            ],
+            "type": "string"
+          },
+          "recordId": {
+            "type": "integer",
+            "description": "Gets the record identifier.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the identifier of the organisation that owns the record.",
+            "format": "int32"
+          },
+          "recordStatus": {
+            "description": "Gets the record status.",
+            "$ref": "#/components/schemas/RecordStatus"
+          },
+          "reviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date the record was last reviewed, when available.",
+            "format": "date-time"
+          },
+          "revisionId": {
+            "type": "integer",
+            "description": "Gets the identifier of the published revision.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the data held on the latest published revision of a vaccine record."
+      },
+      "RecordClinicalTrialDto": {
+        "required": [
+          "studyName",
+          "clinicalTrialsGovNumber",
+          "otherClinicalTrialNumbers"
+        ],
+        "type": "object",
+        "properties": {
+          "studyName": {
+            "type": "string",
+            "description": "Gets the study name."
+          },
+          "clinicalTrialsGovNumber": {
+            "type": "string",
+            "description": "Gets the ClinicalTrials.gov number."
+          },
+          "briefDescription": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the brief description."
+          },
+          "recruitingInUk": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the trial is recruiting in the UK.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "trialPhase": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the trial phase.",
+                "$ref": "#/components/schemas/TrialPhase"
+              }
+            ]
+          },
+          "otherClinicalTrialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order."
+          }
+        },
+        "description": "Represents a clinical trial on a record."
+      },
+      "RecordHtaDto": {
+        "type": "object",
+        "properties": {
+          "medicineHtaSubmissionIntended": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether a medicine HTA submission is intended.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "medicineHtaBodies": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MedicineHtaAssessor"
+            },
+            "description": "Gets the HTA bodies the medicine will be submitted to, or `null` if unanswered."
+          },
+          "htaNiceAlignedPathway": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the NICE aligned pathway applies.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "htaAdditionalDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets additional HTA details."
+          }
+        },
+        "description": "Represents the health technology assessment section of a record."
       },
       "RecordListItemDto": {
         "required": [
@@ -3134,6 +4560,80 @@
         },
         "description": "Represents the record summary returned by the record list endpoint."
       },
+      "RecordMhraDateDto": {
+        "type": "object",
+        "properties": {
+          "ukSubmissionDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the UK submission date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          },
+          "ukLicenceDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the UK licence date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          },
+          "ukLaunchDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the UK launch date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          }
+        },
+        "description": "Represents the MHRA dates section of a record."
+      },
+      "RecordMhraProcedureDto": {
+        "type": "object",
+        "properties": {
+          "mhraProcedureType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the MHRA procedure type.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "irpReferenceRegulator": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the IRP reference regulator. Populated when the procedure type is IRP.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "procedureDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the procedure details."
+          }
+        },
+        "description": "Represents the MHRA procedure section of a record."
+      },
       "RecordStatus": {
         "enum": [
           "Unpublished",
@@ -3151,6 +4651,25 @@
         ],
         "type": "string",
         "description": "Represents the type of a record, such as Medicine or Vaccine."
+      },
+      "ReferenceDataDto": {
+        "required": [
+          "id",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Gets the reference data identifier.",
+            "format": "int32"
+          },
+          "label": {
+            "type": "string",
+            "description": "Gets the display label."
+          }
+        },
+        "description": "Represents a selected reference data value."
       },
       "RegisterUserCommandDto": {
         "required": [
@@ -3208,6 +4727,41 @@
           }
         },
         "description": "Represents the details of a user who has been registered."
+      },
+      "RegulatoryDateDto": {
+        "required": [
+          "dateValue",
+          "datePrecision",
+          "isConfidential"
+        ],
+        "type": "object",
+        "properties": {
+          "dateValue": {
+            "type": "string",
+            "description": "Gets the date. Quarter and month precision dates are stored as the first day of the period.",
+            "format": "date"
+          },
+          "datePrecision": {
+            "description": "Gets the precision of the date.",
+            "$ref": "#/components/schemas/DatePrecision"
+          },
+          "isConfidential": {
+            "type": "boolean",
+            "description": "Gets a value indicating whether the date is confidential."
+          },
+          "conditionalApprovalAnticipated": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether conditional approval is anticipated. Only relevant for licence dates.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          }
+        },
+        "description": "Represents a regulatory milestone date."
       },
       "ResendSetupTokenCommand": {
         "type": "object",
@@ -3294,6 +4848,27 @@
         ],
         "type": "string",
         "description": "Specifies the direction in which query results are sorted."
+      },
+      "SubstanceNameType": {
+        "enum": [
+          "GenericName",
+          "DevelopmentName"
+        ],
+        "type": "string",
+        "description": "Represents the type of substance name used in the system."
+      },
+      "TrialPhase": {
+        "enum": [
+          "Preclinical",
+          "PhaseI",
+          "PhaseIAndII",
+          "PhaseII",
+          "PhaseIII",
+          "PhaseIIIAndIV",
+          "PhaseIV",
+          null
+        ],
+        "type": "string"
       },
       "UkpsChallengeType": {
         "enum": [
@@ -3645,6 +5220,15 @@
           }
         },
         "description": "Represents the details required to verify a user's multi-factor authentication setup."
+      },
+      "YesNoUnknown": {
+        "enum": [
+          "Unknown",
+          "No",
+          "Yes",
+          null
+        ],
+        "type": "string"
       }
     }
   },

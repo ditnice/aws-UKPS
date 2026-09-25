@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -97,6 +98,12 @@ builder.Services.AddOpenApi(options =>
             if (type.IsEnum)
             {
                 schema.Type = JsonSchemaType.String;
+
+                // Values are omitted for [Flags] enums by default.
+                if (schema.Enum is null || schema.Enum.Count == 0)
+                {
+                    schema.Enum = [.. Enum.GetNames(type).Select(name => (JsonNode)name)];
+                }
             }
 
             if (schema.Properties is not null)

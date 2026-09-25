@@ -1454,10 +1454,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("record_id");
 
-                    b.Property<int>("RevisionNo")
-                        .HasColumnType("integer")
-                        .HasColumnName("revision_no");
-
                     b.Property<DateTime?>("SubmittedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("submitted_at");
@@ -1487,15 +1483,14 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasIndex("CreatedBy")
                         .HasDatabaseName("ix_record_revisions_created_by");
 
+                    b.HasIndex("RecordId")
+                        .HasDatabaseName("ix_record_revisions_record_id");
+
                     b.HasIndex("SubmittedBy")
                         .HasDatabaseName("ix_record_revisions_submitted_by");
 
                     b.HasIndex("UpdatedBy")
                         .HasDatabaseName("ix_record_revisions_updated_by");
-
-                    b.HasIndex("RecordId", "RevisionNo")
-                        .IsUnique()
-                        .HasDatabaseName("ix_record_revision_record_id_revision_no");
 
                     b.ToTable("record_revisions", "ukps");
                 });
