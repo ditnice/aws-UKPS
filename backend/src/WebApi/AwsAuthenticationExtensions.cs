@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.WebApi.CustomResponses;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 using UKPS.Api.WebApi.InternalServices.Identity;
 
@@ -63,6 +64,7 @@ internal static class AwsAuthenticationExtensions
                 {
                     OnMessageReceived = HandleOnMessageReceived,
                     OnTokenValidated = ctx => HandleOnTokenValidated(ctx),
+                    OnChallenge = HandleOnChallenge,
                 };
             });
     }
@@ -117,5 +119,24 @@ internal static class AwsAuthenticationExtensions
         var handler =
             context.HttpContext.RequestServices.GetRequiredService<ITokenValidationHandler>();
         return handler.Handle(context, context.HttpContext.RequestAborted);
+    }
+
+    private static async Task HandleOnChallenge(JwtBearerChallengeContext ctx)
+    {
+        ctx.HandleResponse();
+
+        var problemDetails = new AuthenticationProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Code = Enum.TryParse<AuthenticationFailCode>(
+                ctx.AuthenticateFailure?.Message,
+                out var code
+            )
+                ? code
+                : null,
+        };
+
+        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await ctx.Response.WriteAsJsonAsync(problemDetails);
     }
 }

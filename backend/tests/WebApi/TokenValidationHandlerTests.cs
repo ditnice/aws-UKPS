@@ -143,9 +143,18 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
             // Assert
             context.Result.ShouldNotBeNull();
             context.Result.Failure.ShouldNotBeNull();
-            context.Result.Failure.Message.ShouldBe(
-                "No authorised membership for the user could be found."
-            );
+            if (testUser.UserOrgMemberships!.Single().Status == UserOrgMembershipStatus.Deactivated)
+            {
+                context.Result.Failure.Message.ShouldBe(
+                    AuthenticationFailCode.MembershipDeactivated.ToString()
+                );
+            }
+            else
+            {
+                context.Result.Failure.Message.ShouldBe(
+                    AuthenticationFailCode.MembershipNotInValidState.ToString()
+                );
+            }
         }
     }
 
@@ -234,7 +243,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.Message.ShouldBe(
-            "No user exists in the database with the given identity ID"
+            AuthenticationFailCode.NoDbUserExistsWithUsername.ToString()
         );
     }
 
@@ -251,7 +260,53 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
 
         context.Result.ShouldNotBeNull();
         context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe("A valid current organisation is required.");
+        context.Result.Failure.Message.ShouldBe(
+            AuthenticationFailCode.SelectedOrganisationRequired.ToString()
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFail_WhenSelectedOrganisationCookieIsNotAnInteger()
+    {
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        context.HttpContext.Request.Cookies = CreateCookieCollection(
+            ("selected_organisation", "not-an-integer")
+        );
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        context.Result.ShouldNotBeNull();
+        context.Result.Failure.ShouldNotBeNull();
+        context.Result.Failure.Message.ShouldBe(
+            AuthenticationFailCode.SelectedOrganisationRequired.ToString()
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFail_WhenSelectedOrganisationDoesNotBelongToUser()
+    {
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        context.HttpContext.Request.Cookies = CreateCookieCollection(
+            ("selected_organisation", "999")
+        );
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        context.Result.ShouldNotBeNull();
+        context.Result.Failure.ShouldNotBeNull();
+        context.Result.Failure.Message.ShouldBe(
+            AuthenticationFailCode.SelectedOrganisationIsNotValid.ToString()
+        );
     }
 
     [Fact]
