@@ -23,6 +23,11 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
         return ParseFromUserPrincipal(Principal);
     }
 
+    public CognitoUsername GetCurrentCognitoUsername()
+    {
+        return FindCognitoUsername(Principal);
+    }
+
     private static string FindUserEmail(ClaimsPrincipal claimsPrincipal)
     {
         string? userEmailClaim = claimsPrincipal.FindFirstValue(UkpsClaimTypes.Email);

@@ -11,6 +11,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.WebApi;
+using UKPS.Api.WebApi.Authorisation;
 using UKPS.Api.WebApi.Controllers;
 using UKPS.Api.WebApi.InternalServices.Hosting;
 using UKPS.Api.WebApi.InternalServices.Identity;
@@ -121,7 +122,7 @@ builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
 builder.AddAwsBearerAuthentication();
 
-builder.Services.AddAuthorization();
+builder.Services.AddUkpsAuthorisation();
 
 var app = builder.Build();
 

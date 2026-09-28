@@ -248,12 +248,64 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldFail_WhenMultipleMembershipsAndOrganisationCookieIsMissing()
+    public async Task Handle_ShouldRequireOrganisationSelection_WhenMultipleMembershipsAndNoneSelected()
     {
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
             clientId: ClientId,
             username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        AssertOrganisationSelectionRequired(
+            context,
+            AuthenticationFailCode.SelectedOrganisationRequired
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldRequireOrganisationSelection_WhenSelectedMembershipIsNoLongerAuthorised()
+    {
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        var selectedMembership = _userWithMultipleMemberships.UserOrgMemberships!.ElementAt(1);
+        _userWithMultipleMemberships
+            .TryUpdateCurrentOrganisation(selectedMembership.OrganisationId)
+            .ShouldBeTrue();
+        selectedMembership.Deactivate();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        AssertOrganisationSelectionRequired(
+            context,
+            AuthenticationFailCode.SelectedOrganisationIsNotValid
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFail_WhenMultipleMembershipsAndNoneAreAuthorised()
+    {
+        User testUser = _userFaker
+            .RuleFor(
+                x => x.UserOrgMemberships,
+                _ =>
+                    _membershipFaker
+                        .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Deactivated)
+                        .Generate(2)
+            )
+            .Generate();
+        await AddEntity(testUser, TestContext.Current.CancellationToken);
+
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: testUser.CognitoUsername
         );
 
         await _handler.Handle(context, CancellationToken.None);
@@ -261,52 +313,10 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.ShouldNotBeNull();
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.Message.ShouldBe(
-            AuthenticationFailCode.SelectedOrganisationRequired.ToString()
+            AuthenticationFailCode.MembershipDeactivated.ToString()
         );
-    }
-
-    [Fact]
-    public async Task Handle_ShouldFail_WhenSelectedOrganisationCookieIsNotAnInteger()
-    {
-        var context = CreateTokenValidatedContext(
-            tokenUse: "access",
-            clientId: ClientId,
-            username: _userWithMultipleMemberships.CognitoUsername
-        );
-
-        context.HttpContext.Request.Cookies = CreateCookieCollection(
-            ("selected_organisation", "not-an-integer")
-        );
-
-        await _handler.Handle(context, CancellationToken.None);
-
-        context.Result.ShouldNotBeNull();
-        context.Result.Failure.ShouldNotBeNull();
-        context.Result.Failure.Message.ShouldBe(
-            AuthenticationFailCode.SelectedOrganisationRequired.ToString()
-        );
-    }
-
-    [Fact]
-    public async Task Handle_ShouldNotAppendClaims_WhenMembershipSelectionFails()
-    {
-        var context = CreateTokenValidatedContext(
-            tokenUse: "access",
-            clientId: ClientId,
-            username: _userWithMultipleMemberships.CognitoUsername
-        );
-
-        context.HttpContext.Request.Cookies = CreateCookieCollection(
-            ("selected_organisation", "999")
-        );
-
-        await _handler.Handle(context, CancellationToken.None);
-
         var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
-
-        identity.FindFirst(UkpsClaimTypes.Email).ShouldBeNull();
-        identity.FindFirst(UkpsClaimTypes.OrganisationId).ShouldBeNull();
-        identity.FindFirst(UkpsClaimTypes.UserRole).ShouldBeNull();
+        identity.FindFirst(UkpsClaimTypes.OrganisationSelectionFailure).ShouldBeNull();
     }
 
     [Fact]
@@ -346,18 +356,21 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         identity.FindFirst(UkpsClaimTypes.UserRole).ShouldBeNull();
     }
 
-    private static IRequestCookieCollection CreateCookieCollection(
-        params (string Name, string Value)[] cookies
+    private static void AssertOrganisationSelectionRequired(
+        TokenValidatedContext context,
+        AuthenticationFailCode expectedFailCode
     )
     {
-        var context = new DefaultHttpContext();
+        context.Result.ShouldBeNull();
 
-        context.Request.Headers.Cookie = string.Join(
-            "; ",
-            cookies.Select(x => $"{x.Name}={x.Value}")
-        );
-
-        return context.Request.Cookies;
+        var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
+        identity
+            .FindFirst(UkpsClaimTypes.OrganisationSelectionFailure)
+            .ShouldNotBeNull()
+            .Value.ShouldBe(expectedFailCode.ToString());
+        identity.FindFirst(UkpsClaimTypes.Email).ShouldNotBeNull();
+        identity.FindFirst(UkpsClaimTypes.OrganisationId).ShouldBeNull();
+        identity.FindFirst(UkpsClaimTypes.UserRole).ShouldBeNull();
     }
 
     private static void AssertIdentityMatchesUserAndMembership(

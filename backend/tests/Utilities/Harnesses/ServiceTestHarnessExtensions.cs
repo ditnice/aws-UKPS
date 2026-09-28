@@ -10,11 +10,13 @@ internal static class ServiceTestHarnessExtensions
     )
         where TService : notnull
     {
+        UserOrgMembership membership = user.UserOrgMemberships!.First();
         return serviceTestHarness.UpdateCurrentUser(x =>
             x with
             {
                 CognitoUsername = user.CognitoUsername,
-                UserRole = user.UserOrgMemberships!.First().UserRole,
+                OrganisationId = membership.OrganisationId,
+                UserRole = membership.UserRole,
                 Email = user.WorkEmail,
             }
         );

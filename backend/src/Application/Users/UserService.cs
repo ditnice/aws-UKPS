@@ -6,6 +6,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
@@ -104,6 +105,28 @@ internal partial class UserService(
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    public async Task<IReadOnlyCollection<OrganisationListDto>> GetCurrentUserOrganisations(
+        CancellationToken cancellationToken
+    )
+    {
+        User user = await currentDbUserEntityService.GetCurrentUser(
+            cancellationToken,
+            q => q.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation)
+        );
+
+        return user.UserOrgMemberships!.Where(x =>
+                x.IsAuthorised() && x.Organisation!.Status == UserOrgStatus.Active
+            )
+            .DistinctBy(x => x.OrganisationId)
+            .Select(x => new OrganisationListDto
+            {
+                Id = x.OrganisationId,
+                OrganisationName = x.Organisation!.OrganisationName,
+            })
+            .OrderBy(x => x.OrganisationName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     public async Task<GetUsersResult> GetUsers(

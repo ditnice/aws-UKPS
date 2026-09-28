@@ -49,8 +49,20 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
         var identity = context.Principal?.Identity as ClaimsIdentity;
 
-        var membership = GetSelectedMembership(user, context);
-        if (membership is null)
+        MembershipSelection selection = GetSelectedMembership(user, context);
+
+        if (selection.SelectionFailure is { } selectionFailure)
+        {
+            // The user is authenticated but must select an organisation. Only endpoints using the
+            // organisation selection policy are accessible until they have done so.
+            identity?.AddClaim(new Claim(UkpsClaimTypes.Email, user.WorkEmail));
+            identity?.AddClaim(
+                new Claim(UkpsClaimTypes.OrganisationSelectionFailure, $"{selectionFailure}")
+            );
+            return;
+        }
+
+        if (selection.Membership is not { } membership)
         {
             return;
         }
@@ -62,7 +74,7 @@ internal class TokenValidationHandler : ITokenValidationHandler
         identity?.AddClaim(new Claim(UkpsClaimTypes.UserRole, $"{membership.UserRole}"));
     }
 
-    private static UserOrgMembership? GetSelectedMembership(
+    private static MembershipSelection GetSelectedMembership(
         User user,
         TokenValidatedContext context
     )
@@ -73,38 +85,43 @@ internal class TokenValidationHandler : ITokenValidationHandler
                 "Cannot get users selected because the user's organisation memberships have not been loaded."
             );
         }
-        var validMemberships = user.UserOrgMemberships.ToArray();
+        var memberships = user.UserOrgMemberships.ToArray();
 
-        if (validMemberships.Length == 0)
+        if (memberships.Length == 0)
         {
             context.Fail(AuthenticationFailCode.NoMembershipsForUser.ToString());
-            return null;
+            return MembershipSelection.Failed;
         }
 
-        if (validMemberships.Length == 1)
+        if (memberships.Length == 1)
         {
-            return GuardMembershipIsActive(validMemberships.Single(), context);
+            return new MembershipSelection(GuardMembershipIsActive(memberships.Single(), context));
         }
 
-        var selectedOrganisationId = user.FindCurrentOrganisationId();
+        var selectedMembership = memberships.FirstOrDefault(x => x.IsSelectedAsCurrentOrganisation);
 
-        if (selectedOrganisationId is null)
+        if (selectedMembership is not null && selectedMembership.IsAuthorised())
         {
-            context.Fail(AuthenticationFailCode.SelectedOrganisationRequired.ToString());
-            return null;
+            return new MembershipSelection(selectedMembership);
         }
 
-        var membership = validMemberships.SingleOrDefault(x =>
-            x.OrganisationId == selectedOrganisationId
-        );
-
-        if (membership is null)
+        if (memberships.Any(x => x.IsAuthorised()))
         {
-            context.Fail(AuthenticationFailCode.SelectedOrganisationIsNotValid.ToString());
-            return null;
+            return new MembershipSelection(
+                null,
+                selectedMembership is null
+                    ? AuthenticationFailCode.SelectedOrganisationRequired
+                    : AuthenticationFailCode.SelectedOrganisationIsNotValid
+            );
         }
 
-        return GuardMembershipIsActive(membership, context);
+        // None of the user's memberships are authorised, so selecting a different
+        // organisation would not help. Fail using the most relevant membership.
+        var failingMembership =
+            selectedMembership
+            ?? memberships.FirstOrDefault(x => x.Status == UserOrgMembershipStatus.Deactivated)
+            ?? memberships[0];
+        return new MembershipSelection(GuardMembershipIsActive(failingMembership, context));
     }
 
     private static UserOrgMembership? GuardMembershipIsActive(
@@ -147,5 +164,13 @@ internal class TokenValidationHandler : ITokenValidationHandler
             return false;
         }
         return true;
+    }
+
+    private readonly record struct MembershipSelection(
+        UserOrgMembership? Membership,
+        AuthenticationFailCode? SelectionFailure = null
+    )
+    {
+        public static MembershipSelection Failed => new(null);
     }
 }

@@ -1,4 +1,4 @@
-import { getOrganisations } from '@/client/generated'
+import { getCurrentUserOrganisations } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -13,7 +13,7 @@ const SelectOrganisationPage = async ({
 }: {
   searchParams: Promise<{ error: string }>
 }) => {
-  const { data: organisations, error } = await getOrganisations({
+  const { data: organisations, error } = await getCurrentUserOrganisations({
     client: await createServerApiClient(),
   })
   const { error: organisationSelectionError } = await searchParams

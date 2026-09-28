@@ -23,12 +23,12 @@ internal sealed class CurrentDbUserEntityService
         Func<IQueryable<User>, IQueryable<User>>? updateQuery = null
     )
     {
-        CurrentUser currentUser = _currentUserInfoService.GetCurrentUserInfo();
+        CognitoUsername cognitoUsername = _currentUserInfoService.GetCurrentCognitoUsername();
         IQueryable<User> query = updateQuery is not null
             ? updateQuery(_dbContext.Users)
             : _dbContext.Users;
         User? user = await query.FirstOrDefaultAsync(
-            x => x.CognitoUsername == currentUser.CognitoUsername,
+            x => x.CognitoUsername == cognitoUsername,
             cancellationToken
         );
         return user

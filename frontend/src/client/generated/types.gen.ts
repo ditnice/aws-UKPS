@@ -1005,63 +1005,60 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
-export type GetOrganisationsData = {
+export type GetCurrentUserOrganisationsData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/organisations';
+    url: '/users/me/organisations';
 };
 
-export type GetOrganisationsErrors = {
+export type GetCurrentUserOrganisationsErrors = {
     /**
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
 };
 
-export type GetOrganisationsError = GetOrganisationsErrors[keyof GetOrganisationsErrors];
+export type GetCurrentUserOrganisationsError = GetCurrentUserOrganisationsErrors[keyof GetCurrentUserOrganisationsErrors];
 
-export type GetOrganisationsResponses = {
+export type GetCurrentUserOrganisationsResponses = {
     /**
      * The organisations were returned successfully.
      */
     200: Array<OrganisationListDto>;
 };
 
-export type GetOrganisationsResponse = GetOrganisationsResponses[keyof GetOrganisationsResponses];
+export type GetCurrentUserOrganisationsResponse = GetCurrentUserOrganisationsResponses[keyof GetCurrentUserOrganisationsResponses];
 
-export type PostOrganisationsData = {
-    body: CreateOrganisationDto;
+export type UpdateCurrentOrganisationData = {
+    /**
+     * A token that can be used to cancel the request.
+     */
+    body: UpdateCurrentOrganisationCommand;
     path?: never;
     query?: never;
-    url: '/organisations';
+    url: '/users/me/current-organisation';
 };
 
-export type PostOrganisationsErrors = {
+export type UpdateCurrentOrganisationErrors = {
     /**
-     * Bad Request
+     * The provided organisation is invalid.
      */
     400: ProblemDetails;
     /**
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
-    /**
-     * Conflict
-     */
-    409: ProblemDetails;
 };
 
-export type PostOrganisationsError = PostOrganisationsErrors[keyof PostOrganisationsErrors];
+export type UpdateCurrentOrganisationError = UpdateCurrentOrganisationErrors[keyof UpdateCurrentOrganisationErrors];
 
-export type PostOrganisationsResponses = {
+export type UpdateCurrentOrganisationResponses = {
     /**
-     * OK
+     * The current organisation was successfully updated.
      */
-    200: OrganisationMembershipDto;
+    200: unknown;
 };
-
-export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
 
 export type GetOrganisationByIdData = {
     body?: never;
@@ -1275,6 +1272,39 @@ export type UpdateUserRoleResponses = {
 
 export type UpdateUserRoleResponse = UpdateUserRoleResponses[keyof UpdateUserRoleResponses];
 
+export type PostOrganisationsData = {
+    body: CreateOrganisationDto;
+    path?: never;
+    query?: never;
+    url: '/organisations';
+};
+
+export type PostOrganisationsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
+};
+
+export type PostOrganisationsError = PostOrganisationsErrors[keyof PostOrganisationsErrors];
+
+export type PostOrganisationsResponses = {
+    /**
+     * OK
+     */
+    200: OrganisationMembershipDto;
+};
+
+export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
+
 export type GetOrganisationsPublicOptionsData = {
     body?: never;
     path?: never;
@@ -1384,36 +1414,6 @@ export type GetUsersMeResponses = {
 };
 
 export type GetUsersMeResponse = GetUsersMeResponses[keyof GetUsersMeResponses];
-
-export type UpdateCurrentOrganisationData = {
-    /**
-     * A token that can be used to cancel the request.
-     */
-    body: UpdateCurrentOrganisationCommand;
-    path?: never;
-    query?: never;
-    url: '/users/me/current-organisation';
-};
-
-export type UpdateCurrentOrganisationErrors = {
-    /**
-     * The provided organisation is invalid.
-     */
-    400: ProblemDetails;
-    /**
-     * Unauthorized
-     */
-    401: AuthenticationProblemDetails;
-};
-
-export type UpdateCurrentOrganisationError = UpdateCurrentOrganisationErrors[keyof UpdateCurrentOrganisationErrors];
-
-export type UpdateCurrentOrganisationResponses = {
-    /**
-     * The current organisation was successfully updated.
-     */
-    200: unknown;
-};
 
 export type GetUsersData = {
     body?: never;
