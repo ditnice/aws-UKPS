@@ -14,7 +14,7 @@ internal sealed class MedicinesProductDetail
     public required string RecordTitle { get; set; }
 
     public string? BrandedName { get; set; }
-    public required string Indication { get; set; }
+    public string? Indication { get; set; }
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
