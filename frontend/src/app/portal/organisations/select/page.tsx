@@ -1,64 +1,55 @@
+import { redirect } from 'next/navigation'
+
 import { getCurrentUserOrganisations } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
-import { Table } from '@/components/Table/Table'
 
-import ManageOrganisationLink from './ManageOrganisationLink'
+import { SelectOrganisationTable } from './_components/SelectOrganisationTable'
 
 export const dynamic = 'force-dynamic'
 
-const SelectOrganisationPage = async ({
-  searchParams,
-}: {
-  searchParams: Promise<{ error: string }>
-}) => {
+const heading = 'Select the organisation to manage'
+
+const SelectOrganisationPage = async () => {
   const { data: organisations, error } = await getCurrentUserOrganisations({
     client: await createServerApiClient(),
   })
-  const { error: organisationSelectionError } = await searchParams
 
   if (!organisations || error) {
     return (
       <>
-        <PageHeader heading="Failed to retrieve organisations" />
+        <PageHeader heading={heading} />
+        <ErrorState data-testid="organisation-retrieval-error">
+          An error occurred when retrieving your organisations. Please try again later.
+        </ErrorState>
+      </>
+    )
+  }
+
+  if (organisations.length === 1) {
+    redirect(`/portal/organisations/${organisations[0].id}/records`)
+  }
+
+  if (organisations.length === 0) {
+    return (
+      <>
+        <PageHeader heading={heading} />
+        <p data-testid="no-organisations">
+          You do not currently have access to manage any organisations.
+        </p>
       </>
     )
   }
 
   return (
     <>
-      <PageHeader heading="Select the organisation to manage" />
+      <PageHeader heading={heading} />
       <p>
         Your email address is associated with multiple organisations. Choose the organisation you
         want to manage.
       </p>
-      {organisationSelectionError && (
-        <ErrorState>
-          An error occurred when attempting to set the organisation you are managing
-        </ErrorState>
-      )}
-      <Table columnWidth="content">
-        <thead>
-          <tr>
-            <th scope="col">Organisation</th>
-            <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {organisations.map((x) => (
-            <tr key={x.id}>
-              <td>{x.organisationName}</td>
-              <td>
-                <ManageOrganisationLink
-                  organisationId={x.id}
-                  organisationName={x.organisationName}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      <SelectOrganisationTable organisations={organisations} />
     </>
   )
 }
