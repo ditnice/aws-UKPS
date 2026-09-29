@@ -124,6 +124,17 @@ internal sealed class User
         UpdatedAt = dateTime;
     }
 
+    internal void Anonymise(DateTime dateTime)
+    {
+        Title = null;
+        FullName = $"User-{Id}";
+        JobTitle = null;
+        WorkTelephone = null;
+        WorkEmail = $"removed-user-{Id}@removed.invalid";
+        LastActive = null;
+        UpdatedAt = dateTime;
+    }
+
     public static User CreateInitialisedUser(CreateInitialisedUserCommand command)
     {
         var userOnboardingRecord = new UserOnboardingRecord()

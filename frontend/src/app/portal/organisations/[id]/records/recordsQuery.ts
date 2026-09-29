@@ -3,12 +3,11 @@ import {
   RecordStatus,
   RecordType,
   SortDirection,
-  UpdateStatus,
 } from '@/client/generated'
 import { parsePage, parsePageSize } from '@/lib/search-and-filter/pagination'
 import { parseMulti, parseSortDirection } from '@/lib/search-and-filter/query'
 
-import { recordStatusLabels, updateStatusLabels } from './labels'
+import { recordStatusLabels } from './labels'
 
 type Filter = (
   | { key: 'search'; value: string }
@@ -16,14 +15,12 @@ type Filter = (
       key: 'record-status'
       value: RecordStatus
     }
-  | { key: 'update-status'; value: UpdateStatus }
 ) & { label: string }
 
 export type OrganisationRecordsSearchParams = {
   search?: string
   recordType?: string | string[]
   recordStatus?: string | string[]
-  updateStatus?: string
   page?: string
   pageSize?: string
   sortBy?: string
@@ -34,7 +31,6 @@ export type RecordsQuery = {
   search?: string
   recordType?: Array<RecordType>
   recordStatus?: Array<RecordStatus>
-  updateStatus?: UpdateStatus
   page?: number
   pageSize?: number
   sortBy?: GetRecordsQuerySortValue
@@ -52,15 +48,6 @@ export const getActiveFilters = (query: RecordsQuery): Filter[] => {
           label: recordStatusLabels[s],
         }) as const,
     ) ?? []),
-    ...(query.updateStatus
-      ? [
-          {
-            key: 'update-status',
-            value: query.updateStatus,
-            label: updateStatusLabels[query.updateStatus],
-          } as const,
-        ]
-      : []),
   ]
 }
 
@@ -71,7 +58,6 @@ export const buildQueryFromFilters = (
   ...initialQuery,
   search: filters.find((f) => f.key === 'search')?.value,
   recordStatus: filters.filter((f) => f.key === 'record-status').map((x) => x.value),
-  updateStatus: filters.find((f) => f.key === 'update-status')?.value,
 })
 
 export const parseQueryFromSearchParams = (
@@ -80,9 +66,6 @@ export const parseQueryFromSearchParams = (
   return {
     search: searchParams.search,
     recordStatus: parseMulti(searchParams.recordStatus, Object.values(RecordStatus)),
-    updateStatus: Object.values(UpdateStatus).includes(searchParams.updateStatus as UpdateStatus)
-      ? (searchParams.updateStatus as UpdateStatus)
-      : undefined,
     recordType: parseMulti(searchParams.recordType, Object.values(RecordType)),
     page: parsePage(searchParams.page),
     pageSize: parsePageSize(searchParams.pageSize),

@@ -12,6 +12,7 @@ using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -74,6 +75,14 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             .Returns(
                 Result<UserInformationDto, GetUsersError>.Ok(
                     new UserInformationDtoFaker().Generate()
+                )
+            );
+
+        _mockUserService
+            .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RemovedUserDto, RemoveUserError>.Ok(
+                    new RemovedUserDto { DisplayName = "User-1" }
                 )
             );
     }
@@ -451,6 +460,101 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             var errors = await response.Content.ShouldContainValidationErrors();
             errors.ShouldContainKey(mod.Label);
         }
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenValidRequest_ShouldReturnOk()
+    {
+        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
+        var response = await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RemovedUserDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldNotBeNull();
+        content.DisplayName.ShouldBe("User-1");
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenValidRequest_ShouldPassUserIdToService()
+    {
+        var userId = 42;
+        var url = new Uri($"{UsersUrl}/{userId}", UriKind.Relative);
+        _ = await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
+
+        await _mockUserService.Received(1).RemoveUser(userId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenNotAllowed_ShouldReturnForbiddenResponse()
+    {
+        _mockUserService
+            .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RemovedUserDto, RemoveUserError>.Err(new RemoveUserError.NotAllowed(1))
+            );
+
+        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
+        var response = await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenCallerAttemptsToRemoveThemselves_ShouldReturnForbiddenResponse()
+    {
+        _mockUserService
+            .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RemovedUserDto, RemoveUserError>.Err(new RemoveUserError.CannotRemoveSelf(1))
+            );
+
+        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
+        var response = await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenUserDoesNotExist_ShouldReturnNotFoundResponse()
+    {
+        _mockUserService
+            .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RemovedUserDto, RemoveUserError>.Err(new RemoveUserError.UserNotFound(1))
+            );
+
+        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
+        var response = await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenMembershipIsNotInAValidState_ShouldReturnBadRequestResponse()
+    {
+        _mockUserService
+            .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RemovedUserDto, RemoveUserError>.Err(
+                    new RemoveUserError.NotAllowedInCurrentState(
+                        new StateMachineTransitionResult<UserOrgStatus>()
+                        {
+                            Success = false,
+                            PreviousState = UserOrgStatus.Removed,
+                            CurrentState = UserOrgStatus.Removed,
+                            PermittedNextState = [],
+                        }
+                    )
+                )
+            );
+
+        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
+        var response = await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     private static Uri UserWithinOrganisationUrl(int userId, int organisationId) =>

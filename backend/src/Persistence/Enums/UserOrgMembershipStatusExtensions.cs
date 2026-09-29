@@ -12,6 +12,7 @@ internal static class UserOrgMembershipStatusExtensions
             UserOrgMembershipStatus.Active => UserOrgStatus.Active,
             UserOrgMembershipStatus.Inactive => UserOrgStatus.Inactive,
             UserOrgMembershipStatus.Deactivated => UserOrgStatus.Deactivated,
+            UserOrgMembershipStatus.Removed => UserOrgStatus.Removed,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(userOrgMembershipStatus),
                 userOrgMembershipStatus,

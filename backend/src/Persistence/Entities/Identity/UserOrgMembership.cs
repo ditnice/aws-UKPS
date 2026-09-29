@@ -40,6 +40,9 @@ internal sealed class UserOrgMembership
     internal StateMachineTransitionResult<UserOrgMembershipStatus> TryReactivate() =>
         _statusManager.TrySendCommand(UserOrgMembershipStateMachine.Command.Reactivate);
 
+    internal StateMachineTransitionResult<UserOrgMembershipStatus> TryRemove() =>
+        _statusManager.TrySendCommand(UserOrgMembershipStateMachine.Command.Remove);
+
     internal bool IsAuthorised()
     {
         UserOrgMembershipStatus[] authorisedStatuses =

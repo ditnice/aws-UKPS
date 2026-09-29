@@ -38,7 +38,7 @@ export default function ManageUserAccessActions({
         return `/portal/organisations/${organisationId}/users/${selectedUserId}/deactivate`
 
       case 'Remove user':
-        return `/portal/organisations/${organisationId}/users/${selectedUserId}/remove`
+        return `/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}/remove`
 
       case 'Manage user details and sign in method':
         return `/portal/organisations/${organisationId}/users/${selectedUserId}/manage-details`
@@ -86,7 +86,7 @@ export default function ManageUserAccessActions({
       ? [
           <Radio
             key="remove"
-            label="Remove user - not implemented yet"
+            label="Remove user"
             value="Remove user"
             hint="Permanently remove the user's access to the system"
             name="action"
