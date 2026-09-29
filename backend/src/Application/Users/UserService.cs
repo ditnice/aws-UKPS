@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -21,6 +22,7 @@ using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
 >;
+using UpdateCurrentOrganisationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.UpdateCurrentOrganisationError>;
 using UpdateUserDetailsResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.UserDetailsDto,
     UKPS.Api.Application.Users.Errors.UpdateUserDetailsError
@@ -42,8 +44,8 @@ internal partial class UserService(
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
         User user = await currentDbUserEntityService.GetCurrentUser(
-            cancellationToken,
-            x => x.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation)
+            x => x.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
+            cancellationToken
         );
         UserOrgMembership membership =
             user.UserOrgMemberships!.FirstOrDefault(x =>
@@ -71,40 +73,38 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
+        User user = await currentDbUserEntityService.GetCurrentUser(
+            q => q.Include(x => x.UserOrgMemberships),
+            cancellationToken
+        );
+
+        if (!user.CanSelectAsCurrentOrganisation(command.OrganisationId))
+        {
+            return UpdateCurrentOrganisationResult.Err(
+                new UpdateCurrentOrganisationError.ProvidedOrganisationWasNotValid()
+            );
+        }
+
+        // Disposing the transaction without committing rolls back any changes.
         await using var transaction = await dbContext.Database.BeginTransactionAsync(
             cancellationToken
         );
 
-        try
+        // Needs to be done in two separate operations so that the unique index on the
+        // selected organisation is not violated while the selection is changed.
+        user.ResetCurrentOrganisation();
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (!user.TryUpdateCurrentOrganisation(command.OrganisationId))
         {
-            User user = await currentDbUserEntityService.GetCurrentUser(
-                cancellationToken,
-                q => q.Include(x => x.UserOrgMemberships)
+            throw new UnreachableException(
+                "The organisation was validated as selectable but could not be selected."
             );
-
-            // Needs to be done in two separate operations to
-            // ensure that the operations are applied in that order.
-
-            user.ResetCurrentOrganisation();
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            bool success = user.TryUpdateCurrentOrganisation(command.OrganisationId);
-            if (!success)
-            {
-                return UpdateCurrentOrganisationResult.Err(
-                    new UpdateCurrentOrganisationError.ProvidedOrganisationWasNotValid()
-                );
-            }
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            await transaction.CommitAsync(cancellationToken);
-            return UpdateCurrentOrganisationResult.Ok();
         }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+        return UpdateCurrentOrganisationResult.Ok();
     }
 
     public async Task<IReadOnlyCollection<OrganisationListDto>> GetCurrentUserOrganisations(
@@ -112,8 +112,8 @@ internal partial class UserService(
     )
     {
         User user = await currentDbUserEntityService.GetCurrentUser(
-            cancellationToken,
-            q => q.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation)
+            q => q.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
+            cancellationToken
         );
 
         return user.UserOrgMemberships!.Where(x =>

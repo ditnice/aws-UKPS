@@ -289,6 +289,33 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task Handle_ShouldAppendClaimsForOnlyAuthorisedMembership_WhenOtherMembershipsAreNotAuthorised()
+    {
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        UserOrgMembership[] memberships =
+            _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
+        memberships[0].Deactivate();
+        memberships[2].Deactivate();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        context.Result.ShouldBeNull();
+        var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
+        identity.FindFirst(UkpsClaimTypes.OrganisationSelectionFailure).ShouldBeNull();
+        AssertIdentityMatchesUserAndMembership(
+            identity,
+            _userWithMultipleMemberships,
+            memberships[1]
+        );
+    }
+
+    [Fact]
     public async Task Handle_ShouldFail_WhenMultipleMembershipsAndNoneAreAuthorised()
     {
         User testUser = _userFaker

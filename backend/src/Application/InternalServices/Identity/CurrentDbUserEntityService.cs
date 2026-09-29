@@ -18,9 +18,12 @@ internal sealed class CurrentDbUserEntityService
         _currentUserInfoService = currentUserInfoService;
     }
 
+    public Task<User> GetCurrentUser(CancellationToken cancellationToken) =>
+        GetCurrentUser(updateQuery: null, cancellationToken);
+
     public async Task<User> GetCurrentUser(
-        CancellationToken cancellationToken,
-        Func<IQueryable<User>, IQueryable<User>>? updateQuery = null
+        Func<IQueryable<User>, IQueryable<User>>? updateQuery,
+        CancellationToken cancellationToken
     )
     {
         CognitoUsername cognitoUsername = _currentUserInfoService.GetCurrentCognitoUsername();
@@ -33,7 +36,7 @@ internal sealed class CurrentDbUserEntityService
         );
         return user
             ?? throw new InvalidOperationException(
-                "Could not find current user by email in the database as expected."
+                "Could not find the current user by Cognito username in the database as expected."
             );
     }
 }

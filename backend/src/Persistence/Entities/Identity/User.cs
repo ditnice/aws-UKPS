@@ -71,9 +71,7 @@ internal sealed class User
             );
         }
 
-        var foundMembership = UserOrgMemberships.FirstOrDefault(x =>
-            x.OrganisationId == organisationId && x.IsAuthorised()
-        );
+        UserOrgMembership? foundMembership = FindSelectableMembership(organisationId);
 
         if (foundMembership is null)
         {
@@ -83,6 +81,18 @@ internal sealed class User
         foundMembership.IsSelectedAsCurrentOrganisation = true;
 
         return true;
+    }
+
+    internal bool CanSelectAsCurrentOrganisation(int organisationId) =>
+        FindSelectableMembership(organisationId) is not null;
+
+    private UserOrgMembership? FindSelectableMembership(int organisationId)
+    {
+        GuardAgainstUserMembershipsNotLoaded();
+
+        return UserOrgMemberships.FirstOrDefault(x =>
+            x.OrganisationId == organisationId && x.IsAuthorised()
+        );
     }
 
     internal void ResetCurrentOrganisation()

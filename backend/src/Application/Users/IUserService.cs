@@ -1,4 +1,3 @@
-global using UpdateCurrentOrganisationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.UpdateCurrentOrganisationError>;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users.Dtos;
@@ -86,7 +85,7 @@ public interface IUserService
     /// A task that represents the asynchronous operation. The task result indicates whether the
     /// current user's organisation was successfully updated or why the update failed.
     /// </returns>
-    Task<UpdateCurrentOrganisationResult> UpdateCurrentOrganisation(
+    Task<Result<UpdateCurrentOrganisationError>> UpdateCurrentOrganisation(
         UpdateCurrentOrganisationCommand command,
         CancellationToken cancellationToken
     );

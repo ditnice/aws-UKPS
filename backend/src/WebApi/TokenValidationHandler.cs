@@ -105,7 +105,17 @@ internal class TokenValidationHandler : ITokenValidationHandler
             return new MembershipSelection(selectedMembership);
         }
 
-        if (memberships.Any(x => x.IsAuthorised()))
+        UserOrgMembership[] authorisedMemberships = memberships
+            .Where(x => x.IsAuthorised())
+            .ToArray();
+
+        if (authorisedMemberships.Length == 1)
+        {
+            // Only one organisation can be managed, so there is nothing for the user to select.
+            return new MembershipSelection(authorisedMemberships[0]);
+        }
+
+        if (authorisedMemberships.Length > 1)
         {
             return new MembershipSelection(
                 null,

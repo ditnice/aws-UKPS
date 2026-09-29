@@ -30,7 +30,6 @@ internal class UserRegistrationService : IUserRegistrationService
         IDateTimeProvider dateTimeProvider,
         IOrganisationAuthoriser organisationAuthoriser,
         UserOnboardingService userOnboardingService,
-        ICurrentUserInfoService currentUserService,
         CurrentDbUserEntityService currentDbUserEntityService,
         IEmailService emailService,
         ISetupLinkCreator setupLinkCreator
