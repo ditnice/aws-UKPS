@@ -61,7 +61,11 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
       {(organisation) => (
         <>
           {userAction && (
-            <UserActionAlert organisationId={organisation.id} userAction={userAction} />
+            <UserActionAlert
+              dismissHref={`/portal/organisations/${organisation.id}`}
+              organisationId={organisation.id}
+              userAction={userAction}
+            />
           )}
           {organisationAction && (
             <OrganisationActionAlert organisationAction={organisationAction.action} />

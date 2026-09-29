@@ -1,15 +1,21 @@
 import clsx from 'clsx'
+import Link from 'next/link'
+import { type LinkProps } from 'next/link'
+import { ComponentPropsWithoutRef, ReactNode } from 'react'
 
 import { Alert as NdsAlert } from '@nice-digital/nds-alert'
 
-import styles from './Alert.module.scss'
+import { Button } from '@/components/Button/Button'
 
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import styles from './Alert.module.scss'
 
 export type AlertType = 'info' | 'caution' | 'error' | 'success'
 
 export type AlertProps = Omit<ComponentPropsWithoutRef<'div'>, 'children'> & {
   children: ReactNode
+  // Where to go when the alert is dismissed
+  dismissHref?: LinkProps['href']
+  dismissText?: string
   nonIntrusive?: boolean
   type?: AlertType
 }
@@ -23,11 +29,25 @@ const nonIntrusiveByType: Record<AlertType, boolean> = {
   success: true,
 }
 
-export function Alert({ children, className, nonIntrusive, type = 'info', ...rest }: AlertProps) {
+export function Alert({
+  children,
+  className,
+  dismissHref,
+  dismissText = 'Dismiss',
+  nonIntrusive,
+  type = 'info',
+  ...rest
+}: AlertProps) {
   return (
     <div className={clsx(styles.wrapper, className)}>
       <NdsAlert nonIntrusive={nonIntrusive ?? nonIntrusiveByType[type]} type={type} {...rest}>
         {children}
+        {/* replace, so the browser back button doesn't bring the alert back */}
+        {dismissHref && (
+          <Button elementType={Link} href={dismissHref} variant="secondary">
+            {dismissText}
+          </Button>
+        )}
       </NdsAlert>
     </div>
   )

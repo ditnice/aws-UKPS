@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationFailCode, AuthenticationProblemDetails, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordsQuerySortValue, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordListItemDto, RecordStatus, RecordType, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationFailCode, AuthenticationProblemDetails, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordsQuerySortValue, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordListItemDto, RecordStatus, RecordType, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -210,6 +210,13 @@ export const fakeRegisterUserConfirmationDto = (options?: Options): RegisterUser
     };
 };
 
+export const fakeRemovedUserDto = (options?: Options): RemovedUserDto => {
+    const f = options?.faker ?? faker;
+    return {
+        displayName: f.string.sample()
+    };
+};
+
 export const fakeResendSetupTokenCommand = (options?: Options): ResendSetupTokenCommand => {
     const f = options?.faker ?? faker;
     return {
@@ -316,7 +323,8 @@ export const fakeUserOrgStatus = (options?: Options): UserOrgStatus => {
         'Active',
         'Rejected',
         'Inactive',
-        'Deactivated'
+        'Deactivated',
+        'Removed'
     ]);
 };
 
@@ -741,6 +749,25 @@ export const fakeGetUserDetailsWithinOrganisationResponse401 = (options?: Option
 export const fakeGetUserDetailsWithinOrganisationResponse403 = (options?: Options): GetUserDetailsWithinOrganisationErrors[403] => fakeProblemDetails(options);
 
 export const fakeGetUserDetailsWithinOrganisationResponse404 = (options?: Options): GetUserDetailsWithinOrganisationErrors[404] => fakeProblemDetails(options);
+
+export const fakeRemoveUserRequest = (options?: Options): Omit<RemoveUserData, 'url'> => {
+    const f = options?.faker ?? faker;
+    return {
+        path: {
+            userId: f.number.int()
+        }
+    };
+};
+
+export const fakeRemoveUserResponse200 = (options?: Options): RemoveUserResponses[200] => fakeRemovedUserDto(options);
+
+export const fakeRemoveUserResponse400 = (options?: Options): RemoveUserErrors[400] => fakeProblemDetails(options);
+
+export const fakeRemoveUserResponse401 = (options?: Options): RemoveUserErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeRemoveUserResponse403 = (options?: Options): RemoveUserErrors[403] => fakeProblemDetails(options);
+
+export const fakeRemoveUserResponse404 = (options?: Options): RemoveUserErrors[404] => fakeProblemDetails(options);
 
 export const fakePatchUsersByUserIdRequest = (options?: Options): Omit<PatchUsersByUserIdData, 'url'> => {
     const f = options?.faker ?? faker;

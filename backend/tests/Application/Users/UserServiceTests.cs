@@ -1,5 +1,7 @@
+using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -31,6 +33,8 @@ public class UserServiceTests : DatabaseTestBase
 {
     private readonly OrganisationFaker _organisationFaker = new();
     private readonly UserFaker _userFaker = new();
+    private readonly Faker<MockUser> _mockUserFaker =
+        new MockAmazonCognitoIdentityProvider.MockUserFaker();
     private readonly UserOrgMembershipFaker _userOrgMembershipFaker = new();
     private readonly UpdateUserDetailsCommandFaker _updateUserDetailsCommandFaker = new();
     private IServiceTestHarness<IUserService> _harness;
@@ -1629,4 +1633,223 @@ public class UserServiceTests : DatabaseTestBase
             LastActiveFrom = lastActiveFrom,
             LastActiveTo = lastActiveTo,
         };
+
+    private async Task<User> AddCallerUser()
+    {
+        User caller = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        _harness = _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = caller.CognitoUsername,
+                Email = caller.WorkEmail,
+                UserRole = UserRole.Super,
+            }
+        );
+        return caller;
+    }
+
+    [Fact]
+    public async Task RemoveUser_ShouldAnonymiseTheUsersPersonalDetails()
+    {
+        await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+
+        _ = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        User? databaseUser = await Context.Users.FindAsync(
+            [target.Id],
+            TestContext.Current.CancellationToken
+        );
+        databaseUser.ShouldNotBeNull();
+        databaseUser.Title.ShouldBeNull();
+        databaseUser.FullName.ShouldBe($"User-{target.Id}");
+        databaseUser.JobTitle.ShouldBeNull();
+        databaseUser.WorkTelephone.ShouldBeNull();
+        databaseUser.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+        databaseUser.LastActive.ShouldBeNull();
+        databaseUser.UpdatedAt.ShouldBe(_currentDateTime);
+    }
+
+    [Fact]
+    public async Task RemoveUser_ShouldReturnTheAnonymisedDisplayName()
+    {
+        await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        RemovedUserDto dto = result.ShouldBeSuccess();
+        dto.DisplayName.ShouldBe($"User-{target.Id}");
+    }
+
+    [Fact]
+    public async Task RemoveUser_ShouldRecordTheRemovalInTheAuditTrail()
+    {
+        User caller = await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+
+        _ = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        UserAudit audit = await Context.UserAudits.SingleAsync(
+            a => a.UserId == target.Id,
+            TestContext.Current.CancellationToken
+        );
+        audit.EventType.ShouldBe(IamEventType.Deleted);
+        audit.UpdatedBy.ShouldBe(caller.Id);
+        audit.UpdatedAt.ShouldBe(_currentDateTime);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenUserDoesNotExist_ShouldReturnUserNotFoundError()
+    {
+        var result = await Service.RemoveUser(999, TestContext.Current.CancellationToken);
+
+        result.ShouldBeError().ShouldBeOfType<RemoveUserError.UserNotFound>();
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenCallerAttemptsToRemoveThemselves_ShouldReturnCannotRemoveSelfError()
+    {
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        _harness = _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = target.CognitoUsername,
+            }
+        );
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeError().ShouldBeOfType<RemoveUserError.CannotRemoveSelf>();
+
+        User? databaseUser = await Context.Users.FindAsync(
+            [target.Id],
+            TestContext.Current.CancellationToken
+        );
+        databaseUser.ShouldNotBeNull();
+        databaseUser.FullName.ShouldBe(target.FullName);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard)]
+    [InlineData(UserRole.Champion)]
+    public async Task RemoveUser_WhenCallerIsNotSuper_ShouldReturnNotAllowedError(
+        UserRole callerRole
+    )
+    {
+        _harness = _harness.UpdateCurrentUser(x => x with { UserRole = callerRole });
+
+        var result = await Service.RemoveUser(1, TestContext.Current.CancellationToken);
+
+        result.ShouldBeError().ShouldBeOfType<RemoveUserError.NotAllowed>();
+    }
+
+    [Fact]
+    public async Task RemoveUser_ShouldDeleteTheUsersCognitoAccount()
+    {
+        await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        AddCognitoAccount(target);
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeSuccess();
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenUserHasNoCognitoAccount_ShouldStillRemoveTheUser()
+    {
+        await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeSuccess().DisplayName.ShouldBe($"User-{target.Id}");
+    }
+
+    [Fact]
+    public async Task RemoveUser_ShouldTransitionTheUsersMembershipsToRemoved()
+    {
+        await AddCallerUser();
+        (User target, UserOrgMembership membership) = await AddUserWithMembership();
+
+        _ = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        UserOrgMembership? databaseMembership = await Context.UserOrgMemberships.FindAsync(
+            [membership.Id],
+            TestContext.Current.CancellationToken
+        );
+        databaseMembership.ShouldNotBeNull();
+        databaseMembership.Status.ShouldBe(UserOrgMembershipStatus.Removed);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenCalledAgainAfterASuccessfulRemoval_ShouldReturnNotAllowedInCurrentStateError()
+    {
+        await AddCallerUser();
+        (User target, _) = await AddUserWithMembership();
+        AddCognitoAccount(target);
+
+        _ = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        var error = result
+            .ShouldBeError()
+            .ShouldBeOfType<RemoveUserError.NotAllowedInCurrentState>();
+        error.TransitionResult.CurrentState.ShouldBe(UserOrgStatus.Removed);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenCognitoDeleteFails_ShouldRollBackTheAnonymisation()
+    {
+        await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        _harness
+            .Cognito.Mock.WhenForAnyArgs(x => x.AdminDeleteUserAsync(default!, default!))
+            .Throws(new TooManyRequestsException("Rate exceeded"));
+
+        await Should.ThrowAsync<TooManyRequestsException>(() =>
+            Service.RemoveUser(target.Id, TestContext.Current.CancellationToken)
+        );
+
+        User databaseUser = await Context
+            .Users.AsNoTracking()
+            .SingleAsync(u => u.Id == target.Id, TestContext.Current.CancellationToken);
+        databaseUser.FullName.ShouldBe(target.FullName);
+        databaseUser.WorkEmail.ShouldBe(target.WorkEmail);
+
+        bool hasRemovalAudit = await Context.UserAudits.AnyAsync(
+            a => a.UserId == target.Id && a.EventType == IamEventType.Deleted,
+            TestContext.Current.CancellationToken
+        );
+        hasRemovalAudit.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenCallerAttemptsToRemoveThemselves_ShouldNotDeleteTheirCognitoAccount()
+    {
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        AddCognitoAccount(target);
+        _harness = _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = target.CognitoUsername,
+            }
+        );
+
+        _ = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldNotBeNull();
+    }
+
+    private void AddCognitoAccount(User user)
+    {
+        _harness.Cognito.AddCurrentUser(
+            _mockUserFaker.Generate() with
+            {
+                Username = user.CognitoUsername.Value,
+            }
+        );
+    }
 }

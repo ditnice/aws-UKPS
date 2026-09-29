@@ -3,7 +3,7 @@ import {
   getUserRegistrationById,
 } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
-import { Alert } from '@/components/Alert/Alert'
+import { Alert, type AlertProps } from '@/components/Alert/Alert'
 
 import { roleLabels } from '../_lib/userLabels'
 
@@ -12,10 +12,12 @@ import type { RegisteredUserResult, RequestResult, UserActionResult } from '../_
 type RegisteredUserActionProps = {
   organisationId: number
   userAction: RegisteredUserResult
+  dismissHref?: AlertProps['dismissHref']
 }
 const renderRegisteredUserAction = async ({
   organisationId,
   userAction,
+  dismissHref,
 }: RegisteredUserActionProps) => {
   const { data: user } = await getUserDetailsWithinOrganisation({
     client: await createServerApiClient(),
@@ -34,21 +36,17 @@ const renderRegisteredUserAction = async ({
       )
     case 'deactivated':
       return (
-        <>
-          <Alert type="success">
-            <h3>{user?.workEmail ?? 'The user'}&apos;s account has been deactivated</h3>
-            <p>We&#39;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
-          </Alert>
-        </>
+        <Alert type="success">
+          <h3>{user?.workEmail ?? 'The user'}&apos;s account has been deactivated</h3>
+          <p>We&#39;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
+        </Alert>
       )
     case 'reactivated':
       return (
-        <>
-          <Alert type="success">
-            <h3>{user?.workEmail ?? 'The user'}&apos;s account has been reactivated</h3>
-            <p>We&rsquo;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
-          </Alert>
-        </>
+        <Alert type="success">
+          <h3>{user?.workEmail ?? 'The user'}&apos;s account has been reactivated</h3>
+          <p>We&rsquo;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
+        </Alert>
       )
     case 'permissions-updated':
       return (
@@ -60,6 +58,18 @@ const renderRegisteredUserAction = async ({
               ? `is now a ${roleLabels[user.userRole].toLowerCase()}`
               : 'permissions have been updated'}
             .
+          </p>
+        </Alert>
+      )
+    case 'removed':
+      return (
+        <Alert type="success" dismissHref={dismissHref}>
+          <h3>User removed from organisation</h3>
+          <p>
+            This user&apos;s personal information is no longer available. In a record&apos;s
+            timeline, they now appear as {user?.fullName ?? 'an anonymised user'}.
+            <br />
+            Records they created can still be accessed and are not affected by removing this user.
           </p>
         </Alert>
       )
@@ -102,9 +112,10 @@ const renderUserRequestAction = async ({ organisationId, userAction }: UserReque
 interface UserActionAlertProps {
   organisationId: number
   userAction: UserActionResult
+  dismissHref?: AlertProps['dismissHref']
 }
-export function UserActionAlert({ organisationId, userAction }: UserActionAlertProps) {
+export function UserActionAlert({ organisationId, userAction, dismissHref }: UserActionAlertProps) {
   return userAction.type === 'user'
-    ? renderRegisteredUserAction({ organisationId: organisationId, userAction: userAction })
+    ? renderRegisteredUserAction({ organisationId, userAction, dismissHref })
     : renderUserRequestAction({ organisationId, userAction })
 }

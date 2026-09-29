@@ -140,6 +140,29 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         );
     }
 
+    public async Task DeleteUser(
+        CognitoUsername cognitoUsername,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _cognito.AdminDeleteUserAsync(
+                new AdminDeleteUserRequest
+                {
+                    UserPoolId = _options.Value.UserPoolId,
+                    Username = cognitoUsername.Value,
+                },
+                cancellationToken
+            );
+        }
+        catch (UserNotFoundException)
+        {
+            // Already gone (e.g. a retry after a partial failure), so treat as deleted.
+            LogCognitoUserAlreadyDeleted(cognitoUsername.Value);
+        }
+    }
+
     public async Task<InitiatedAuthenticationResult> RefreshAuthenticationToken(
         string refreshToken,
         CancellationToken cancellationToken
@@ -400,6 +423,12 @@ internal sealed partial class CognitoIdentityService : IIdentityService
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Cognito authentication failed: {Message}")]
     private partial void LogCognitoAuthenticationFailed(string message, Exception exception);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Cognito user {CognitoUsername} was not found when deleting; treating as already deleted."
+    )]
+    private partial void LogCognitoUserAlreadyDeleted(string cognitoUsername);
 
     private record AuthResponse
     {

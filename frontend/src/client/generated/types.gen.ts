@@ -463,6 +463,16 @@ export type RegisterUserConfirmationDto = {
 };
 
 /**
+ * The result of removing a user.
+ */
+export type RemovedUserDto = {
+    /**
+     * The name the removed user now appears under, for example in a record's timeline.
+     */
+    displayName: string;
+};
+
+/**
  * Represents the command used to request that a new setup link be sent for an
  * expired setup token.
  */
@@ -737,7 +747,8 @@ export const UserOrgStatus = {
     ACTIVE: 'Active',
     REJECTED: 'Rejected',
     INACTIVE: 'Inactive',
-    DEACTIVATED: 'Deactivated'
+    DEACTIVATED: 'Deactivated',
+    REMOVED: 'Removed'
 } as const;
 
 /**
@@ -1618,6 +1629,48 @@ export type GetUserDetailsWithinOrganisationResponses = {
 };
 
 export type GetUserDetailsWithinOrganisationResponse = GetUserDetailsWithinOrganisationResponses[keyof GetUserDetailsWithinOrganisationResponses];
+
+export type RemoveUserData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to remove.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}';
+};
+
+export type RemoveUserErrors = {
+    /**
+     * One of the user's organisation memberships is not in a state that allows removal.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to remove this user, or attempted to remove themselves.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified user does not exist.
+     */
+    404: ProblemDetails;
+};
+
+export type RemoveUserError = RemoveUserErrors[keyof RemoveUserErrors];
+
+export type RemoveUserResponses = {
+    /**
+     * The user was removed. Returns the name they now appear under.
+     */
+    200: RemovedUserDto;
+};
+
+export type RemoveUserResponse = RemoveUserResponses[keyof RemoveUserResponses];
 
 export type PatchUsersByUserIdData = {
     /**
