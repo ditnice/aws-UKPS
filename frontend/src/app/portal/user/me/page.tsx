@@ -26,7 +26,7 @@ export default async function Me({
     <>
       {updated && (
         <Alert type="success">
-          <h3>Your details have been updated.</h3>
+          <h3>Your details have been updated</h3>
         </Alert>
       )}
       <PageHeader backLink={<BackLinkBrowser />} heading="Your details" />

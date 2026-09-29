@@ -11,6 +11,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.WebApi;
+using UKPS.Api.WebApi.Controllers;
 using UKPS.Api.WebApi.InternalServices.Hosting;
 using UKPS.Api.WebApi.InternalServices.Identity;
 
@@ -62,7 +63,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder
-    .Services.AddControllers()
+    .Services.AddControllers(options =>
+    {
+        options.Conventions.Add(new ProducesUnauthorizedResponseConvention());
+    })
     .AddJsonOptions(options =>
     {
         ConfigureJsonEnums(options.JsonSerializerOptions);

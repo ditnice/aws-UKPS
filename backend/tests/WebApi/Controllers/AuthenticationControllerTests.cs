@@ -21,7 +21,10 @@ using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
 >;
-using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError>;
+using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<
+    System.Guid,
+    UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError
+>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
@@ -394,9 +397,10 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task ResendSetupToken_ShouldReturnOkOnSuccess()
     {
+        var expectedCorrelationId = Guid.CreateVersion7();
         _mockedAuthorisationService
             .ResendSetupToken(Arg.Any<ResendSetupTokenCommand>(), Arg.Any<CancellationToken>())
-            .Returns(ResendSetupTokenResult.Ok());
+            .Returns(ResendSetupTokenResult.Ok(expectedCorrelationId));
 
         var response = await _client.PostAsJsonAsync(
             new Uri(ResendSetupTokenUrl, UriKind.Relative),
@@ -405,6 +409,29 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        ResendSetupTokenResponse? body =
+            await response.Content.ReadFromJsonAsync<ResendSetupTokenResponse>(
+                TestContext.Current.CancellationToken
+            );
+        body.ShouldNotBeNull().CorrelationId.ShouldBe(expectedCorrelationId);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_ShouldReturnBadRequestWhenRequestIsInvalid()
+    {
+        _mockedAuthorisationService
+            .ResendSetupToken(Arg.Any<ResendSetupTokenCommand>(), Arg.Any<CancellationToken>())
+            .Returns(
+                ResendSetupTokenResult.Err(new ResendSetupTokenError.InvalidTokenCombination())
+            );
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(ResendSetupTokenUrl, UriKind.Relative),
+            _defaultResendSetupTokenCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]

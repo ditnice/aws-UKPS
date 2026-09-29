@@ -30,7 +30,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
             title="Search and filter records"
             filters={<RecordsTablesFilters query={query} />}
             table={
-              <RecordsFetch query={query}>
+              <RecordsFetch organisationId={organisation.id} query={query}>
                 {(data) => (
                   <>
                     <RecordsQueryResultsSummary query={query} data={data} />

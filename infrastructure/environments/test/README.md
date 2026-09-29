@@ -82,8 +82,9 @@
 | <a name="input_frontend_image_repository_url"></a> [frontend\_image\_repository\_url](#input\_frontend\_image\_repository\_url) | Container image repository URL for the frontend service, without an image tag or digest | `string` | n/a | yes |
 | <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Container image tag for the frontend and backend services and the migrator Lambda | `string` | n/a | yes |
 | <a name="input_migrator_image_repository_url"></a> [migrator\_image\_repository\_url](#input\_migrator\_image\_repository\_url) | Container image repository URL for the backend database migration Lambda, without an image tag or digest | `string` | n/a | yes |
+| <a name="input_qa_support_email"></a> [qa\_support\_email](#input\_qa\_support\_email) | Contact QA support team email address | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-west-2"` | no |
-| <a name="input_seeded_super_users"></a> [seeded\_super\_users](#input\_seeded\_super\_users) | Super users added to seeded backend data for organisation ID 1 | <pre>list(object({<br/>    fullName        = string<br/>    email           = string<br/>    cognitoUsername = string<br/>  }))</pre> | `[]` | no |
+| <a name="input_seeded_users"></a> [seeded\_users](#input\_seeded\_users) | Users added to seeded backend data for organisation ID 1, each with a role of Standard, Champion or Super | <pre>list(object({<br/>    fullName        = string<br/>    email           = string<br/>    cognitoUsername = string<br/>    role            = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_sns_alarm_emails"></a> [sns\_alarm\_emails](#input\_sns\_alarm\_emails) | Map of recipient labels to email addresses subscribed to alarm notifications | <pre>list(object({<br/>    name  = string<br/>    email = string<br/>  }))</pre> | n/a | yes |
 
 ## Outputs

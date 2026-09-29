@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.InternalServices.Identity;
 
 namespace UKPS.Api.WebApi;
@@ -43,7 +44,7 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
         if (user is null)
         {
-            context.Fail($"No user exists in the database with the given identity ID");
+            context.Fail(AuthenticationFailCode.NoDbUserExistsWithUsername.ToString());
             return;
         }
 
@@ -73,17 +74,17 @@ internal class TokenValidationHandler : ITokenValidationHandler
                 "Cannot get users selected because the user's organisation memberships have not been loaded."
             );
         }
-        var validMemberships = user.UserOrgMemberships.Where(x => x.IsAuthorised()).ToArray();
+        var validMemberships = user.UserOrgMemberships.ToArray();
 
         if (validMemberships.Length == 0)
         {
-            context.Fail("No authorised membership for the user could be found.");
+            context.Fail(AuthenticationFailCode.NoMembershipsForUser.ToString());
             return null;
         }
 
         if (validMemberships.Length == 1)
         {
-            return validMemberships.Single();
+            return GuardMembershipIsActive(validMemberships.Single(), context);
         }
 
         var selectedOrganisationId = context.HttpContext.Request.Cookies["selected_organisation"];
@@ -96,7 +97,7 @@ internal class TokenValidationHandler : ITokenValidationHandler
             )
         )
         {
-            context.Fail("A valid selected organisation cookie is required.");
+            context.Fail(AuthenticationFailCode.SelectedOrganisationRequired.ToString());
             return null;
         }
 
@@ -104,11 +105,30 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
         if (membership is null)
         {
-            context.Fail("The selected organisation is not associated with the user.");
+            context.Fail(AuthenticationFailCode.SelectedOrganisationIsNotValid.ToString());
             return null;
         }
 
-        return membership;
+        return GuardMembershipIsActive(membership, context);
+    }
+
+    private static UserOrgMembership? GuardMembershipIsActive(
+        UserOrgMembership userOrgMembership,
+        TokenValidatedContext context
+    )
+    {
+        if (userOrgMembership.IsAuthorised())
+        {
+            return userOrgMembership;
+        }
+        if (userOrgMembership.Status == UserOrgMembershipStatus.Deactivated)
+        {
+            context.Fail(AuthenticationFailCode.MembershipDeactivated.ToString());
+            return null;
+        }
+
+        context.Fail(AuthenticationFailCode.MembershipNotInValidState.ToString());
+        return null;
     }
 
     private static bool ValidateTokenUse(TokenValidatedContext context)

@@ -20,7 +20,7 @@ using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
 >;
-using SortDirection = UKPS.Api.Application.Users.Dtos.SortDirection;
+using SortDirection = UKPS.Api.Application.Common.SortDirection;
 
 namespace UKPS.Api.Tests.Application.Users;
 
