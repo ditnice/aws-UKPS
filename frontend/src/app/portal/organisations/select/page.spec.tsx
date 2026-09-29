@@ -22,6 +22,7 @@ vi.mock('@/client/server-api', () => ({
 
 vi.mock('next/navigation', () => ({
   redirect: mocks.redirect,
+  RedirectType: { push: 'push', replace: 'replace' },
 }))
 
 vi.mock('@nice-digital/nds-page-header', () => ({
@@ -66,7 +67,7 @@ describe('SelectOrganisationPage', () => {
     expect(mocks.redirect).not.toHaveBeenCalled()
   })
 
-  it('redirects to the records page when the user has a single organisation', async () => {
+  it('replaces the history entry with the records page when the user has a single organisation', async () => {
     mockOrganisations({
       data: [{ id: 7, organisationName: 'Only organisation' }],
       error: undefined,
@@ -74,7 +75,7 @@ describe('SelectOrganisationPage', () => {
 
     await expect(SelectOrganisationPage()).rejects.toThrow('NEXT_REDIRECT')
 
-    expect(mocks.redirect).toHaveBeenCalledWith('/portal/organisations/7/records')
+    expect(mocks.redirect).toHaveBeenCalledWith('/portal/organisations/7/records', 'replace')
   })
 
   it('shows a message when the user has no organisations', async () => {

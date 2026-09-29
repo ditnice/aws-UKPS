@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+import { redirect, RedirectType } from 'next/navigation'
 
 import { getCurrentUserOrganisations } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
@@ -28,7 +28,8 @@ const SelectOrganisationPage = async () => {
   }
 
   if (organisations.length === 1) {
-    redirect(`/portal/organisations/${organisations[0].id}/records`)
+    // Replace so the selection page is not left in the browser history for the back button.
+    redirect(`/portal/organisations/${organisations[0].id}/records`, RedirectType.replace)
   }
 
   if (organisations.length === 0) {
