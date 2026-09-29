@@ -111,25 +111,18 @@ internal sealed class RecordViewService(
             RecordStatus = record.RecordStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
-            MedicinesProductDetail = await GetMedicinesProductDetail(revisionId, cancellationToken),
-            MedicinesDetail = await GetMedicinesDetail(revisionId, cancellationToken),
-            MedicinesCompanyInfo = await GetMedicinesCompanyInfo(revisionId, cancellationToken),
-            MedicinesTreatmentDetail = await GetMedicinesTreatmentDetail(
+            RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
+            MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,
                 cancellationToken
             ),
-            MedicinesPatientIdentification = await GetMedicinesPatientIdentification(
+            MedicinesDevelopmentBackground = await GetMedicinesDevelopmentBackground(
                 revisionId,
                 cancellationToken
             ),
-            MedicinesLaboratoryTesting = await GetMedicinesLaboratoryTesting(
-                revisionId,
-                cancellationToken
-            ),
-            MedicinesServiceImpact = await GetMedicinesServiceImpact(revisionId, cancellationToken),
-            MedicinesBudgetImpact = await GetMedicinesBudgetImpact(revisionId, cancellationToken),
-            MedicinesEamsPim = await GetMedicinesEamsPim(revisionId, cancellationToken),
-            MedicinesEuStatus = await GetMedicinesEuStatus(revisionId, cancellationToken),
+            RecordClinicalTrials = await GetRecordClinicalTrials(revisionId, cancellationToken),
+            RecordMhraProcedure = await GetRecordMhraProcedure(revisionId, cancellationToken),
+            RecordMhraDate = await GetRecordMhraDate(revisionId, cancellationToken),
             MedicinesGlobalSubmission = await GetMedicinesGlobalSubmission(
                 revisionId,
                 cancellationToken
@@ -138,10 +131,23 @@ internal sealed class RecordViewService(
                 revisionId,
                 cancellationToken
             ),
-            RecordClinicalTrials = await GetRecordClinicalTrials(revisionId, cancellationToken),
             RecordHta = await GetRecordHta(revisionId, cancellationToken),
-            RecordMhraDate = await GetRecordMhraDate(revisionId, cancellationToken),
-            RecordMhraProcedure = await GetRecordMhraProcedure(revisionId, cancellationToken),
+            MedicinesEuStatus = await GetMedicinesEuStatus(revisionId, cancellationToken),
+            MedicinesEamsPim = await GetMedicinesEamsPim(revisionId, cancellationToken),
+            MedicinesLaboratoryTesting = await GetMedicinesLaboratoryTesting(
+                revisionId,
+                cancellationToken
+            ),
+            MedicinesPatientIdentification = await GetMedicinesPatientIdentification(
+                revisionId,
+                cancellationToken
+            ),
+            MedicinesTreatmentDetail = await GetMedicinesTreatmentDetail(
+                revisionId,
+                cancellationToken
+            ),
+            MedicinesServiceImpact = await GetMedicinesServiceImpact(revisionId, cancellationToken),
+            MedicinesBudgetImpact = await GetMedicinesBudgetImpact(revisionId, cancellationToken),
         };
     }
 
@@ -162,29 +168,44 @@ internal sealed class RecordViewService(
         };
     }
 
-    private Task<MedicinesProductDetailDto?> GetMedicinesProductDetail(
+    private Task<RecordProductDetailDto?> GetRecordProductDetail(
         int revisionId,
         CancellationToken cancellationToken
     ) =>
         dbContext
-            .MedicinesProductDetails.AsNoTracking()
+            .RecordProductDetails.AsNoTracking()
             .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesProductDetailDto
+            .Select(x => new RecordProductDetailDto
             {
-                RecordTitle = x.RecordTitle,
+                CompanyCode = x.CompanyCode,
+                NamesAndIdentifiers = x
+                    .NamesAndIdentifiers.OrderBy(n => n.DisplayOrder)
+                    .ThenBy(n => n.Id)
+                    .Select(n => new RecordNameAndIdentifierDto
+                    {
+                        Name = n.Name,
+                        NameType = n.NameType,
+                    })
+                    .ToList(),
                 BrandedName = x.BrandedName,
+                RecordTitle = x.RecordTitle,
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+    private Task<MedicinesIndicationDetailDto?> GetMedicinesIndicationDetail(
+        int revisionId,
+        CancellationToken cancellationToken
+    ) =>
+        dbContext
+            .MedicinesIndicationDetails.AsNoTracking()
+            .Where(x => x.RevisionId == revisionId)
+            .Select(x => new MedicinesIndicationDetailDto
+            {
                 Indication = x.Indication,
-                IndicationIsPaediatric = x.IndicationIsPaediatric,
-                IndicationIsCancer = x.IndicationIsCancer,
-                IndicationIsRareDisease = x.IndicationIsRareDisease,
-                NiceTaDevelopmentId = x.NiceTaDevelopmentId,
                 BnfChapter =
                     x.BnfChapter == null
                         ? null
                         : new ReferenceDataDto { Id = x.BnfChapter.Id, Label = x.BnfChapter.Label },
-                FormulationType = ToDto(x.FormulationType),
-                Presentation = x.Presentation,
-                MedicineTechnologyStatus = ToFlagList(x.MedicineTechnologyStatus),
                 TherapeuticAreas = x
                     .TherapeuticAreas.OrderBy(t => t.TherapeuticArea!.DisplayOrder)
                     .ThenBy(t => t.TherapeuticArea!.Label)
@@ -194,44 +215,29 @@ internal sealed class RecordViewService(
                         Label = t.TherapeuticArea!.Label,
                     })
                     .ToList(),
-                ActiveSubstances = x
-                    .ActiveSubstances.OrderBy(s => s.DisplayOrder)
-                    .ThenBy(s => s.Id)
-                    .Select(s => new MedicinesActiveSubstanceDto
-                    {
-                        Name = s.Name,
-                        NameType = s.NameType,
-                    })
-                    .ToList(),
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesDetailDto?> GetMedicinesDetail(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesDetails.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesDetailDto
-            {
+                IndicationIsPaediatric = x.IndicationIsPaediatric,
+                IndicationIsCancer = x.IndicationIsCancer,
+                IndicationIsRareDisease = x.IndicationIsRareDisease,
+                FormulationType = ToDto(x.FormulationType),
+                Presentation = x.Presentation,
                 ModeOfAction = x.ModeOfAction,
                 ProposedDoseRegimen = x.ProposedDoseRegimen,
                 IsPersonalisedMedicine = x.IsPersonalisedMedicine,
-                IsRepurposedMedicine = x.IsRepurposedMedicine,
-                RepurposedMedicineDetails = x.RepurposedMedicineDetails,
+                MedicineTechnologyStatus = ToFlagList(x.MedicineTechnologyStatus),
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-    private Task<MedicinesCompanyInfoDto?> GetMedicinesCompanyInfo(
+    private Task<MedicinesDevelopmentBackgroundDto?> GetMedicinesDevelopmentBackground(
         int revisionId,
         CancellationToken cancellationToken
     ) =>
         dbContext
-            .MedicinesCompanyInfos.AsNoTracking()
+            .MedicinesDevelopmentBackgrounds.AsNoTracking()
             .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesCompanyInfoDto
+            .Select(x => new MedicinesDevelopmentBackgroundDto
             {
+                IsRepurposedMedicine = x.IsRepurposedMedicine,
+                RepurposedMedicineDetails = x.RepurposedMedicineDetails,
                 IsOriginatorCompany = x.IsOriginatorCompany,
                 OriginatorCompanyName = x.OriginatorCompanyName,
                 IsCoMarketed = x.IsCoMarketed,
@@ -288,11 +294,11 @@ internal sealed class RecordViewService(
                 PatientPathwayPoint = ToDto(x.PatientPathwayPoint),
                 GenomicTestPathwayPointOther = x.GenomicTestPathwayPointOther,
                 GenomicAlterations = x.GenomicAlterations,
+                AdditionalGenomicFactors = x.AdditionalGenomicFactors,
                 GenomicTestUsedInTrials = x.GenomicTestUsedInTrials,
                 GenomicTestSpecificitySensitivity = x.GenomicTestSpecificitySensitivity,
-                GenomicTestNotes = x.GenomicTestNotes,
                 GenomicTestMandatoryStatus = x.GenomicTestMandatoryStatus,
-                AdditionalGenomicFactors = x.AdditionalGenomicFactors,
+                GenomicTestNotes = x.GenomicTestNotes,
                 MonitoringTestsDetails = x.MonitoringTestsDetails,
                 SafetyTestsDetails = x.SafetyTestsDetails,
             })
@@ -311,12 +317,9 @@ internal sealed class RecordViewService(
                 NhsServiceChangesDetails = x.NhsServiceChangesDetails,
                 HandlingStorageRequirements = x.HandlingStorageRequirements,
                 HandlingStorageDetails = x.HandlingStorageDetails,
-                EstimatedUptake = x.EstimatedUptake,
                 UkPatientPopulationRange = ToDto(x.UkPatientPopulationRange),
                 UkPatientPopulationNotes = x.UkPatientPopulationNotes,
                 EstimatedEligiblePatientPopulation = x.EstimatedEligiblePatientPopulation,
-                CompassionateAccessAvailable = x.CompassionateAccessAvailable,
-                CompassionateAccessDetails = x.CompassionateAccessDetails,
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -329,11 +332,14 @@ internal sealed class RecordViewService(
             .Where(x => x.RevisionId == revisionId)
             .Select(x => new MedicinesBudgetImpactDto
             {
+                EstimatedUptake = x.EstimatedUptake,
+                CompassionateAccessAvailable = x.CompassionateAccessAvailable,
+                CompassionateAccessDetails = x.CompassionateAccessDetails,
                 PatientAccessSchemePlanned = x.PatientAccessSchemePlanned,
+                PatientAccessSchemeRegions = ToFlagList(x.PatientAccessSchemeRegions),
                 IndicationSpecificPricingPlanned = x.IndicationSpecificPricingPlanned,
                 IndicationSpecificPricingDetails = x.IndicationSpecificPricingDetails,
                 NetUkBudgetImpactBand = x.NetUkBudgetImpactBand,
-                PatientAccessSchemeRegions = ToFlagList(x.PatientAccessSchemeRegions),
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -348,9 +354,9 @@ internal sealed class RecordViewService(
             {
                 PimDesignationStatus = x.PimDesignationStatus,
                 WillSubmitToEams = x.WillSubmitToEams,
-                EamsOpinionDecision = x.EamsOpinionDecision,
                 EamsSubmissionDate = ToDto(x.EamsSubmissionDate),
                 EamsOpinionDate = ToDto(x.EamsOpinionDate),
+                EamsOpinionDecision = x.EamsOpinionDecision,
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -396,9 +402,9 @@ internal sealed class RecordViewService(
             .Select(x => new MedicinesIntlRecognitionDto
             {
                 IrpRoute = ToDto(x.IrpRoute),
-                IntlConditionalApprovalAnticipated = x.IntlConditionalApprovalAnticipated,
                 IntlSubmissionDate = ToDto(x.IntlSubmissionDate),
                 IntlLicenceDate = ToDto(x.IntlLicenceDate),
+                IntlConditionalApprovalAnticipated = x.IntlConditionalApprovalAnticipated,
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -414,14 +420,14 @@ internal sealed class RecordViewService(
             {
                 StudyName = x.StudyName,
                 ClinicalTrialsGovNumber = x.ClinicalTrialsGovNumber,
-                BriefDescription = x.BriefDescription,
-                RecruitingInUk = x.RecruitingInUk,
-                TrialPhase = x.TrialPhase,
                 OtherClinicalTrialNumbers = x
                     .OtherClinicalTrialNumbers.OrderBy(n => n.DisplayOrder)
                     .ThenBy(n => n.Id)
                     .Select(n => n.OtherRegistryNumber)
                     .ToList(),
+                TrialPhase = x.TrialPhase,
+                BriefDescription = x.BriefDescription,
+                RecruitingInUk = x.RecruitingInUk,
             })
             .ToListAsync(cancellationToken);
 
@@ -433,8 +439,10 @@ internal sealed class RecordViewService(
             {
                 MedicineHtaSubmissionIntended = x.MedicineHtaSubmissionIntended,
                 MedicineHtaBodies = ToFlagList(x.MedicineHtaBodies),
-                HtaNiceAlignedPathway = x.HtaNiceAlignedPathway,
                 HtaAdditionalDetails = x.HtaAdditionalDetails,
+                HtaNiceAlignedPathway = x.HtaNiceAlignedPathway,
+                NiceTaDevelopmentId = x.NiceTaDevelopmentId,
+                UkLaunchDate = ToDto(x.UkLaunchDate),
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -449,7 +457,7 @@ internal sealed class RecordViewService(
             {
                 UkSubmissionDate = ToDto(x.UkSubmissionDate),
                 UkLicenceDate = ToDto(x.UkLicenceDate),
-                UkLaunchDate = ToDto(x.UkLaunchDate),
+                UkConditionalApprovalAnticipated = x.UkConditionalApprovalAnticipated,
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -481,7 +489,6 @@ internal sealed class RecordViewService(
                 DateValue = regulatoryDate.DateValue,
                 DatePrecision = regulatoryDate.DatePrecision,
                 IsConfidential = regulatoryDate.IsConfidential,
-                ConditionalApprovalAnticipated = regulatoryDate.ConditionalApprovalAnticipated,
             };
 
     /// <summary>

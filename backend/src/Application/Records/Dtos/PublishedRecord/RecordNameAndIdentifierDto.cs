@@ -3,17 +3,17 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
 
 /// <summary>
-/// Represents an active substance name for a medicine.
+/// Represents a name or identifier for a product.
 /// </summary>
-public sealed record MedicinesActiveSubstanceDto
+public sealed record RecordNameAndIdentifierDto
 {
     /// <summary>
-    /// Gets the substance name.
+    /// Gets the name or identifier.
     /// </summary>
     public required string Name { get; init; }
 
     /// <summary>
-    /// Gets the type of the substance name.
+    /// Gets the type of the name or identifier.
     /// </summary>
-    public required SubstanceNameType NameType { get; init; }
+    public required NameAndIdentifierType NameType { get; init; }
 }

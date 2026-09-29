@@ -43,7 +43,9 @@ internal partial class RecordService(
             return GetRecordsResult.Err(organisationError);
         }
 
-        IQueryable<RecordInformationTrackingProjection> query = GetProjectedRecordInformation()
+        IQueryable<RecordInformationTrackingProjection> query = JoinProductDetails(
+                GetBaseRecordProjection()
+            )
             .Where(x => x.OrganisationId == organisationId);
 
         IQueryable<RecordInformationTrackingProjection> filteredRecords = ApplyFilters(
@@ -71,7 +73,7 @@ internal partial class RecordService(
                 RecordType = m.RecordType,
                 RecordStatus = m.RecordStatus,
                 Title = m.Title ?? string.Empty,
-                DevelopmentName = m.DevelopmentName,
+                CompanyCode = m.CompanyCode,
                 ReviewedAt = m.ReviewedAt,
             })
             .ToArray();
@@ -109,14 +111,6 @@ internal partial class RecordService(
         );
 
         return organisationExists ? null : new GetRecordsError.OrganisationNotFound(organisationId);
-    }
-
-    private IQueryable<RecordInformationTrackingProjection> GetProjectedRecordInformation()
-    {
-        var medicines = JoinMedicinesProductDetails(GetBaseRecordProjection());
-        var vaccines = JoinVaccinesProductDetails(GetBaseRecordProjection());
-
-        return medicines.Union(vaccines);
     }
 
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(
@@ -158,10 +152,7 @@ internal partial class RecordService(
 
             input = input.Where(m =>
                 (m.Title != null && EF.Functions.ILike(m.Title, pattern, "\\"))
-                || (
-                    m.DevelopmentName != null
-                    && EF.Functions.ILike(m.DevelopmentName, pattern, "\\")
-                )
+                || EF.Functions.ILike(m.CompanyCode, pattern, "\\")
             );
         }
 
@@ -180,7 +171,7 @@ internal partial class RecordService(
                 GetRecordsQuerySortValue.NextUpdateDue => m =>
                     m.NextUpdateDue == null ? DateTime.MaxValue : m.NextUpdateDue.Value,
                 GetRecordsQuerySortValue.Id => m => m.Id,
-                GetRecordsQuerySortValue.DevelopmentName => m => m.DevelopmentName,
+                GetRecordsQuerySortValue.CompanyCode => m => m.CompanyCode,
                 GetRecordsQuerySortValue.RecordStatus => m => m.RecordStatus,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(sortBy),
@@ -209,7 +200,7 @@ internal partial class RecordService(
         public RecordStatus RecordStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
         public string? Title { get; init; }
-        public string? DevelopmentName { get; init; }
+        public required string CompanyCode { get; init; }
         public DateTime? NextUpdateDue { get; init; }
     }
 
@@ -239,11 +230,11 @@ internal partial class RecordService(
                     : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths), // TODO rules around this need to be reviewed, requires wider-team discussion
         });
 
-    private IQueryable<RecordInformationTrackingProjection> JoinMedicinesProductDetails(
+    private IQueryable<RecordInformationTrackingProjection> JoinProductDetails(
         IQueryable<BaseRecordProjection> input
     ) =>
         input.Join(
-            dbContext.MedicinesProductDetails,
+            dbContext.RecordProductDetails,
             x => x.CurrentDraftRevisionId,
             y => y.RevisionId,
             (a, b) =>
@@ -256,31 +247,7 @@ internal partial class RecordService(
                     ReviewedAt = a.ReviewedAt,
                     NextUpdateDue = a.NextUpdateDue,
                     Title = b.RecordTitle,
-                    DevelopmentName = b
-                        .ActiveSubstances.OrderBy(x => x.DisplayOrder)
-                        .First(x => x.NameType == SubstanceNameType.DevelopmentName)
-                        .Name,
-                }
-        );
-
-    private IQueryable<RecordInformationTrackingProjection> JoinVaccinesProductDetails(
-        IQueryable<BaseRecordProjection> input
-    ) =>
-        input.Join(
-            dbContext.VaccinesProductDetails,
-            x => x.CurrentDraftRevisionId,
-            y => y.RevisionId,
-            (x, details) =>
-                new RecordInformationTrackingProjection
-                {
-                    Id = x.Id,
-                    OrganisationId = x.OrganisationId,
-                    RecordType = x.RecordType,
-                    RecordStatus = x.RecordStatus,
-                    ReviewedAt = x.ReviewedAt,
-                    NextUpdateDue = x.NextUpdateDue,
-                    Title = details.RecordTitle,
-                    DevelopmentName = details.CompanyCode,
+                    CompanyCode = b.CompanyCode,
                 }
         );
 }

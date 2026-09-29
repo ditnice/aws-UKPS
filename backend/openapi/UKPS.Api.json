@@ -2925,7 +2925,7 @@
         "enum": [
           "NextUpdateDue",
           "Id",
-          "DevelopmentName",
+          "CompanyCode",
           "RecordStatus"
         ],
         "type": "string",
@@ -2980,27 +2980,34 @@
         "type": "string",
         "description": "Bodies a medicine may be submitted to for health technology assessment.\nMulti-select — see RecordHta.MedicineHtaBodies. Only populated when\nRecordHta.MedicineHtaSubmissionIntended is Yes."
       },
-      "MedicinesActiveSubstanceDto": {
-        "required": [
-          "name",
-          "nameType"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Gets the substance name."
-          },
-          "nameType": {
-            "description": "Gets the type of the substance name.",
-            "$ref": "#/components/schemas/SubstanceNameType"
-          }
-        },
-        "description": "Represents an active substance name for a medicine."
-      },
       "MedicinesBudgetImpactDto": {
         "type": "object",
         "properties": {
+          "estimatedUptake": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the estimated uptake."
+          },
+          "compassionateAccessAvailable": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether compassionate access is available.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "compassionateAccessDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets details of compassionate access."
+          },
           "patientAccessSchemePlanned": {
             "oneOf": [
               {
@@ -3011,6 +3018,16 @@
                 "$ref": "#/components/schemas/YesNoUnknown"
               }
             ]
+          },
+          "patientAccessSchemeRegions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PatientAccessSchemeRegion"
+            },
+            "description": "Gets the patient access scheme regions, or `null` if unanswered."
           },
           "indicationSpecificPricingPlanned": {
             "oneOf": [
@@ -3040,23 +3057,31 @@
                 "$ref": "#/components/schemas/NetUkBudgetImpactBand"
               }
             ]
-          },
-          "patientAccessSchemeRegions": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/PatientAccessSchemeRegion"
-            },
-            "description": "Gets the patient access scheme regions, or `null` if unanswered."
           }
         },
         "description": "Represents the budget impact section of a medicine record."
       },
-      "MedicinesCompanyInfoDto": {
+      "MedicinesDevelopmentBackgroundDto": {
         "type": "object",
         "properties": {
+          "isRepurposedMedicine": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether this is a repurposed medicine.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "repurposedMedicineDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the differences from the current licensed indications."
+          },
           "isOriginatorCompany": {
             "oneOf": [
               {
@@ -3094,56 +3119,7 @@
             "description": "Gets the co-marketing company name."
           }
         },
-        "description": "Represents the company information section of a medicine record."
-      },
-      "MedicinesDetailDto": {
-        "type": "object",
-        "properties": {
-          "modeOfAction": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the mode of action."
-          },
-          "proposedDoseRegimen": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the proposed dose regimen."
-          },
-          "isPersonalisedMedicine": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether this is a personalised medicine.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "isRepurposedMedicine": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether this is a repurposed medicine.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "repurposedMedicineDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of the repurposed medicine."
-          }
-        },
-        "description": "Represents the medicine detail section of a medicine record."
+        "description": "Represents the development background section of a medicine record."
       },
       "MedicinesEamsPimDto": {
         "type": "object",
@@ -3170,17 +3146,6 @@
               }
             ]
           },
-          "eamsOpinionDecision": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EAMS opinion decision.",
-                "$ref": "#/components/schemas/EamsOpinionDecision"
-              }
-            ]
-          },
           "eamsSubmissionDate": {
             "oneOf": [
               {
@@ -3200,6 +3165,17 @@
               {
                 "description": "Gets the EAMS opinion date.",
                 "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          },
+          "eamsOpinionDecision": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the EAMS opinion decision.",
+                "$ref": "#/components/schemas/EamsOpinionDecision"
               }
             ]
           }
@@ -3298,6 +3274,124 @@
         },
         "description": "Represents the global submission section of a medicine record."
       },
+      "MedicinesIndicationDetailDto": {
+        "required": [
+          "indication",
+          "therapeuticAreas"
+        ],
+        "type": "object",
+        "properties": {
+          "indication": {
+            "type": "string",
+            "description": "Gets the indication."
+          },
+          "bnfChapter": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the BNF chapter.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "therapeuticAreas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReferenceDataDto"
+            },
+            "description": "Gets the therapeutic areas, in display order."
+          },
+          "indicationIsPaediatric": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the indication is paediatric.",
+                "$ref": "#/components/schemas/IndicationPaediatricStatus"
+              }
+            ]
+          },
+          "indicationIsCancer": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the indication is cancer.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "indicationIsRareDisease": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the product is intended to treat a rare disease.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "formulationType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the formulation type.",
+                "$ref": "#/components/schemas/ReferenceDataDto"
+              }
+            ]
+          },
+          "presentation": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the presentation."
+          },
+          "modeOfAction": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the mode of action."
+          },
+          "proposedDoseRegimen": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the proposed dose regimen."
+          },
+          "isPersonalisedMedicine": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether this is a personalised medicine.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          },
+          "medicineTechnologyStatus": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MedicineTechnologyStatus"
+            },
+            "description": "Gets the selected technology statuses, or `null` if unanswered."
+          }
+        },
+        "description": "Represents the indication details section of a medicine record."
+      },
       "MedicinesIntlRecognitionDto": {
         "type": "object",
         "properties": {
@@ -3309,17 +3403,6 @@
               {
                 "description": "Gets the International Recognition Procedure route.",
                 "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          },
-          "intlConditionalApprovalAnticipated": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether international conditional approval is anticipated.",
-                "$ref": "#/components/schemas/YesNoUnknown"
               }
             ]
           },
@@ -3342,6 +3425,17 @@
               {
                 "description": "Gets the international licence date.",
                 "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
+          },
+          "intlConditionalApprovalAnticipated": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether international conditional approval is anticipated.",
+                "$ref": "#/components/schemas/YesNoUnknown"
               }
             ]
           }
@@ -3437,6 +3531,13 @@
             ],
             "description": "Gets the genomic alterations."
           },
+          "additionalGenomicFactors": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets additional genomic factors."
+          },
           "genomicTestUsedInTrials": {
             "type": [
               "null",
@@ -3451,13 +3552,6 @@
             ],
             "description": "Gets the genomic test specificity and sensitivity."
           },
-          "genomicTestNotes": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets additional notes on the genomic test."
-          },
           "genomicTestMandatoryStatus": {
             "oneOf": [
               {
@@ -3469,12 +3563,12 @@
               }
             ]
           },
-          "additionalGenomicFactors": {
+          "genomicTestNotes": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Gets additional genomic factors."
+            "description": "Gets additional notes on the genomic test."
           },
           "monitoringTestsDetails": {
             "type": [
@@ -3535,126 +3629,6 @@
         },
         "description": "Represents the patient identification section of a medicine record."
       },
-      "MedicinesProductDetailDto": {
-        "required": [
-          "recordTitle",
-          "indication",
-          "therapeuticAreas",
-          "activeSubstances"
-        ],
-        "type": "object",
-        "properties": {
-          "recordTitle": {
-            "type": "string",
-            "description": "Gets the short human-readable label identifying the record."
-          },
-          "brandedName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the branded name."
-          },
-          "indication": {
-            "type": "string",
-            "description": "Gets the indication."
-          },
-          "indicationIsPaediatric": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the indication is paediatric.",
-                "$ref": "#/components/schemas/IndicationPaediatricStatus"
-              }
-            ]
-          },
-          "indicationIsCancer": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the indication is cancer.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "indicationIsRareDisease": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the product is intended to treat a rare disease.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "niceTaDevelopmentId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the NICE technology appraisal development identifier."
-          },
-          "bnfChapter": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the BNF chapter.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          },
-          "formulationType": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the formulation type.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          },
-          "presentation": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the presentation."
-          },
-          "medicineTechnologyStatus": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/MedicineTechnologyStatus"
-            },
-            "description": "Gets the selected technology statuses, or `null` if unanswered."
-          },
-          "therapeuticAreas": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReferenceDataDto"
-            },
-            "description": "Gets the therapeutic areas, in display order."
-          },
-          "activeSubstances": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MedicinesActiveSubstanceDto"
-            },
-            "description": "Gets the active substance names, in display order."
-          }
-        },
-        "description": "Represents the product detail section of a medicine record."
-      },
       "MedicinesServiceImpactDto": {
         "type": "object",
         "properties": {
@@ -3694,13 +3668,6 @@
             ],
             "description": "Gets details of the handling or storage requirements."
           },
-          "estimatedUptake": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the estimated uptake."
-          },
           "ukPatientPopulationRange": {
             "oneOf": [
               {
@@ -3725,24 +3692,6 @@
               "string"
             ],
             "description": "Gets the estimated eligible patient population."
-          },
-          "compassionateAccessAvailable": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether compassionate access is available.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "compassionateAccessDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of compassionate access."
           }
         },
         "description": "Represents the NHS service impact section of a medicine record."
@@ -3778,7 +3727,7 @@
           "SpcAmendmentWithoutIndicationChange"
         ],
         "type": "string",
-        "description": "Technology status types selected for a medicine record. Multi-select —\nsee MedicinesProductDetail.MedicineTechnologyStatus."
+        "description": "Technology status types selected for a medicine record. Multi-select —\nsee MedicinesIndicationDetail.MedicineTechnologyStatus."
       },
       "MultiFactorAuthenticationSetupDto": {
         "required": [
@@ -3798,6 +3747,14 @@
           }
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
+      },
+      "NameAndIdentifierType": {
+        "enum": [
+          "GenericName",
+          "OtherIdentifier"
+        ],
+        "type": "string",
+        "description": "The type of a product name or identifier. See RecordNameAndIdentifier.NameType."
       },
       "NetUkBudgetImpactBand": {
         "enum": [
@@ -4170,113 +4127,65 @@
             ],
             "type": "string"
           },
-          "medicinesProductDetail": {
+          "recordProductDetail": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the product detail section.",
-                "$ref": "#/components/schemas/MedicinesProductDetailDto"
+                "description": "Gets the names and identifiers section.",
+                "$ref": "#/components/schemas/RecordProductDetailDto"
               }
             ]
           },
-          "medicinesDetail": {
+          "medicinesIndicationDetail": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the medicine detail section.",
-                "$ref": "#/components/schemas/MedicinesDetailDto"
+                "description": "Gets the indication details section.",
+                "$ref": "#/components/schemas/MedicinesIndicationDetailDto"
               }
             ]
           },
-          "medicinesCompanyInfo": {
+          "medicinesDevelopmentBackground": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the company information section.",
-                "$ref": "#/components/schemas/MedicinesCompanyInfoDto"
+                "description": "Gets the development background section.",
+                "$ref": "#/components/schemas/MedicinesDevelopmentBackgroundDto"
               }
             ]
           },
-          "medicinesTreatmentDetail": {
+          "recordClinicalTrials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordClinicalTrialDto"
+            },
+            "description": "Gets the clinical trials."
+          },
+          "recordMhraProcedure": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the treatment detail section.",
-                "$ref": "#/components/schemas/MedicinesTreatmentDetailDto"
+                "description": "Gets the MHRA procedure section.",
+                "$ref": "#/components/schemas/RecordMhraProcedureDto"
               }
             ]
           },
-          "medicinesPatientIdentification": {
+          "recordMhraDate": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the patient identification section.",
-                "$ref": "#/components/schemas/MedicinesPatientIdentificationDto"
-              }
-            ]
-          },
-          "medicinesLaboratoryTesting": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the laboratory testing section.",
-                "$ref": "#/components/schemas/MedicinesLaboratoryTestingDto"
-              }
-            ]
-          },
-          "medicinesServiceImpact": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the NHS service impact section.",
-                "$ref": "#/components/schemas/MedicinesServiceImpactDto"
-              }
-            ]
-          },
-          "medicinesBudgetImpact": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the budget impact section.",
-                "$ref": "#/components/schemas/MedicinesBudgetImpactDto"
-              }
-            ]
-          },
-          "medicinesEamsPim": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EAMS and PIM section.",
-                "$ref": "#/components/schemas/MedicinesEamsPimDto"
-              }
-            ]
-          },
-          "medicinesEuStatus": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EU status section.",
-                "$ref": "#/components/schemas/MedicinesEuStatusDto"
+                "description": "Gets the MHRA dates section.",
+                "$ref": "#/components/schemas/RecordMhraDateDto"
               }
             ]
           },
@@ -4302,43 +4211,91 @@
               }
             ]
           },
-          "recordClinicalTrials": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordClinicalTrialDto"
-            },
-            "description": "Gets the clinical trials."
-          },
           "recordHta": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the health technology assessment section.",
+                "description": "Gets the health technology assessment and launch section.",
                 "$ref": "#/components/schemas/RecordHtaDto"
               }
             ]
           },
-          "recordMhraDate": {
+          "medicinesEuStatus": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the MHRA dates section.",
-                "$ref": "#/components/schemas/RecordMhraDateDto"
+                "description": "Gets the EU status section.",
+                "$ref": "#/components/schemas/MedicinesEuStatusDto"
               }
             ]
           },
-          "recordMhraProcedure": {
+          "medicinesEamsPim": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the MHRA procedure section.",
-                "$ref": "#/components/schemas/RecordMhraProcedureDto"
+                "description": "Gets the EAMS and PIM section.",
+                "$ref": "#/components/schemas/MedicinesEamsPimDto"
+              }
+            ]
+          },
+          "medicinesLaboratoryTesting": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the laboratory testing section.",
+                "$ref": "#/components/schemas/MedicinesLaboratoryTestingDto"
+              }
+            ]
+          },
+          "medicinesPatientIdentification": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the patient identification section.",
+                "$ref": "#/components/schemas/MedicinesPatientIdentificationDto"
+              }
+            ]
+          },
+          "medicinesTreatmentDetail": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the treatment detail section.",
+                "$ref": "#/components/schemas/MedicinesTreatmentDetailDto"
+              }
+            ]
+          },
+          "medicinesServiceImpact": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the NHS service impact section.",
+                "$ref": "#/components/schemas/MedicinesServiceImpactDto"
+              }
+            ]
+          },
+          "medicinesBudgetImpact": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the budget impact section.",
+                "$ref": "#/components/schemas/MedicinesBudgetImpactDto"
               }
             ]
           },
@@ -4432,23 +4389,12 @@
             "type": "string",
             "description": "Gets the ClinicalTrials.gov number."
           },
-          "briefDescription": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the brief description."
-          },
-          "recruitingInUk": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the trial is recruiting in the UK.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
+          "otherClinicalTrialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order."
           },
           "trialPhase": {
             "oneOf": [
@@ -4461,12 +4407,23 @@
               }
             ]
           },
-          "otherClinicalTrialNumbers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order."
+          "briefDescription": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the brief description of key findings."
+          },
+          "recruitingInUk": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the trial is recruiting in the UK.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
           }
         },
         "description": "Represents a clinical trial on a record."
@@ -4495,6 +4452,13 @@
             },
             "description": "Gets the HTA bodies the medicine will be submitted to, or `null` if unanswered."
           },
+          "htaAdditionalDetails": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets additional HTA details."
+          },
           "htaNiceAlignedPathway": {
             "oneOf": [
               {
@@ -4506,22 +4470,34 @@
               }
             ]
           },
-          "htaAdditionalDetails": {
+          "niceTaDevelopmentId": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Gets additional HTA details."
+            "description": "Gets the NICE technology appraisal development identifier."
+          },
+          "ukLaunchDate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the UK commercial launch date.",
+                "$ref": "#/components/schemas/RegulatoryDateDto"
+              }
+            ]
           }
         },
-        "description": "Represents the health technology assessment section of a record."
+        "description": "Represents the health technology assessment and launch section of a record."
       },
       "RecordListItemDto": {
         "required": [
           "id",
           "recordType",
           "recordStatus",
-          "title"
+          "title",
+          "companyCode"
         ],
         "type": "object",
         "properties": {
@@ -4542,12 +4518,9 @@
             "type": "string",
             "description": "Gets the human-readable record title."
           },
-          "developmentName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the development name of the active substance, when available."
+          "companyCode": {
+            "type": "string",
+            "description": "Gets the company code."
           },
           "reviewedAt": {
             "type": [
@@ -4585,14 +4558,14 @@
               }
             ]
           },
-          "ukLaunchDate": {
+          "ukConditionalApprovalAnticipated": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets the UK launch date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
+                "description": "Gets whether conditional approval is anticipated in the UK.",
+                "$ref": "#/components/schemas/YesNoUnknown"
               }
             ]
           }
@@ -4633,6 +4606,57 @@
           }
         },
         "description": "Represents the MHRA procedure section of a record."
+      },
+      "RecordNameAndIdentifierDto": {
+        "required": [
+          "name",
+          "nameType"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Gets the name or identifier."
+          },
+          "nameType": {
+            "description": "Gets the type of the name or identifier.",
+            "$ref": "#/components/schemas/NameAndIdentifierType"
+          }
+        },
+        "description": "Represents a name or identifier for a product."
+      },
+      "RecordProductDetailDto": {
+        "required": [
+          "companyCode",
+          "namesAndIdentifiers",
+          "recordTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "companyCode": {
+            "type": "string",
+            "description": "Gets the company code."
+          },
+          "namesAndIdentifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordNameAndIdentifierDto"
+            },
+            "description": "Gets the generic names and other identifiers, in display order."
+          },
+          "brandedName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the branded name."
+          },
+          "recordTitle": {
+            "type": "string",
+            "description": "Gets the short human-readable label identifying the record."
+          }
+        },
+        "description": "Represents the names and identifiers section of a record."
       },
       "RecordStatus": {
         "enum": [
@@ -4748,17 +4772,6 @@
           "isConfidential": {
             "type": "boolean",
             "description": "Gets a value indicating whether the date is confidential."
-          },
-          "conditionalApprovalAnticipated": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether conditional approval is anticipated. Only relevant for licence dates.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
           }
         },
         "description": "Represents a regulatory milestone date."
@@ -4848,14 +4861,6 @@
         ],
         "type": "string",
         "description": "Specifies the direction in which query results are sorted."
-      },
-      "SubstanceNameType": {
-        "enum": [
-          "GenericName",
-          "DevelopmentName"
-        ],
-        "type": "string",
-        "description": "Represents the type of substance name used in the system."
       },
       "TrialPhase": {
         "enum": [

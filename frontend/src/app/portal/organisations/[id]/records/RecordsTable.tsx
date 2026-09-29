@@ -23,10 +23,10 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
         getData={(key, data) => {
           switch (key) {
             case 'id':
-              return <>{data.developmentName}</>
+              return <>{data.companyCode}</>
             case 'record-status':
               return <>{recordStatusLabels[data.recordStatus]}</>
-            case 'development-name':
+            case 'company-code':
             case 'next-update':
             case 'records-title':
             case 'actions':

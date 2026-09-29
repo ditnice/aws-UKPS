@@ -58,6 +58,11 @@ public sealed record MedicinesLaboratoryTestingDto
     public string? GenomicAlterations { get; init; }
 
     /// <summary>
+    /// Gets additional genomic factors.
+    /// </summary>
+    public string? AdditionalGenomicFactors { get; init; }
+
+    /// <summary>
     /// Gets the genomic test used in trials.
     /// </summary>
     public string? GenomicTestUsedInTrials { get; init; }
@@ -68,19 +73,14 @@ public sealed record MedicinesLaboratoryTestingDto
     public string? GenomicTestSpecificitySensitivity { get; init; }
 
     /// <summary>
-    /// Gets additional notes on the genomic test.
-    /// </summary>
-    public string? GenomicTestNotes { get; init; }
-
-    /// <summary>
     /// Gets whether the genomic test is mandatory.
     /// </summary>
     public GenomicTestMandatoryStatus? GenomicTestMandatoryStatus { get; init; }
 
     /// <summary>
-    /// Gets additional genomic factors.
+    /// Gets additional notes on the genomic test.
     /// </summary>
-    public string? AdditionalGenomicFactors { get; init; }
+    public string? GenomicTestNotes { get; init; }
 
     /// <summary>
     /// Gets details of monitoring tests.

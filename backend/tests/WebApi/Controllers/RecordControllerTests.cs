@@ -352,7 +352,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                     RecordType = RecordType.Medicine,
                     RecordStatus = RecordStatus.Active,
                     Title = "Test Record",
-                    DevelopmentName = null,
+                    CompanyCode = "ABC-123",
                     ReviewedAt = null,
                 },
             ],
@@ -376,7 +376,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             actualItem.RecordType.ShouldBe(expectedItem.RecordType);
             actualItem.RecordStatus.ShouldBe(expectedItem.RecordStatus);
             actualItem.Title.ShouldBe(expectedItem.Title);
-            actualItem.DevelopmentName.ShouldBe(expectedItem.DevelopmentName);
+            actualItem.CompanyCode.ShouldBe(expectedItem.CompanyCode);
             actualItem.ReviewedAt.ShouldBe(expectedItem.ReviewedAt);
         }
     }

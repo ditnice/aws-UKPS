@@ -28,11 +28,6 @@ public sealed record MedicinesServiceImpactDto
     public string? HandlingStorageDetails { get; init; }
 
     /// <summary>
-    /// Gets the estimated uptake.
-    /// </summary>
-    public string? EstimatedUptake { get; init; }
-
-    /// <summary>
     /// Gets the UK patient population range.
     /// </summary>
     public ReferenceDataDto? UkPatientPopulationRange { get; init; }
@@ -46,14 +41,4 @@ public sealed record MedicinesServiceImpactDto
     /// Gets the estimated eligible patient population.
     /// </summary>
     public string? EstimatedEligiblePatientPopulation { get; init; }
-
-    /// <summary>
-    /// Gets whether compassionate access is available.
-    /// </summary>
-    public YesNoUnknown? CompassionateAccessAvailable { get; init; }
-
-    /// <summary>
-    /// Gets details of compassionate access.
-    /// </summary>
-    public string? CompassionateAccessDetails { get; init; }
 }

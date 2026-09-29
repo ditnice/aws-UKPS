@@ -8,9 +8,29 @@ namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
 public sealed record MedicinesBudgetImpactDto
 {
     /// <summary>
+    /// Gets the estimated uptake.
+    /// </summary>
+    public string? EstimatedUptake { get; init; }
+
+    /// <summary>
+    /// Gets whether compassionate access is available.
+    /// </summary>
+    public YesNoUnknown? CompassionateAccessAvailable { get; init; }
+
+    /// <summary>
+    /// Gets details of compassionate access.
+    /// </summary>
+    public string? CompassionateAccessDetails { get; init; }
+
+    /// <summary>
     /// Gets whether a patient access scheme is planned.
     /// </summary>
     public YesNoUnknown? PatientAccessSchemePlanned { get; init; }
+
+    /// <summary>
+    /// Gets the patient access scheme regions, or <c>null</c> if unanswered.
+    /// </summary>
+    public IReadOnlyCollection<PatientAccessSchemeRegion>? PatientAccessSchemeRegions { get; init; }
 
     /// <summary>
     /// Gets whether indication-specific pricing is planned.
@@ -26,9 +46,4 @@ public sealed record MedicinesBudgetImpactDto
     /// Gets the net UK budget impact band.
     /// </summary>
     public NetUkBudgetImpactBand? NetUkBudgetImpactBand { get; init; }
-
-    /// <summary>
-    /// Gets the patient access scheme regions, or <c>null</c> if unanswered.
-    /// </summary>
-    public IReadOnlyCollection<PatientAccessSchemeRegion>? PatientAccessSchemeRegions { get; init; }
 }

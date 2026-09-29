@@ -4,19 +4,21 @@ using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Persistence.Configurations.MedicinesRevisionContent;
 
-internal sealed class MedicinesDetailConfiguration : IEntityTypeConfiguration<MedicinesDetail>
+internal sealed class MedicinesDevelopmentBackgroundConfiguration
+    : IEntityTypeConfiguration<MedicinesDevelopmentBackground>
 {
-    public void Configure(EntityTypeBuilder<MedicinesDetail> builder)
+    public void Configure(EntityTypeBuilder<MedicinesDevelopmentBackground> builder)
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.IsPersonalisedMedicine);
         builder.Property(x => x.IsRepurposedMedicine);
+        builder.Property(x => x.IsOriginatorCompany);
+        builder.Property(x => x.IsCoMarketed);
 
         builder
             .HasIndex(x => x.RevisionId)
             .IsUnique()
-            .HasDatabaseName("ix_medicines_detail_revision_id");
+            .HasDatabaseName("ix_medicines_development_background_revision_id");
 
         builder
             .HasOne(x => x.Revision)

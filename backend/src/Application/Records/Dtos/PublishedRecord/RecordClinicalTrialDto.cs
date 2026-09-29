@@ -18,14 +18,9 @@ public sealed record RecordClinicalTrialDto
     public required string ClinicalTrialsGovNumber { get; init; }
 
     /// <summary>
-    /// Gets the brief description.
+    /// Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order.
     /// </summary>
-    public string? BriefDescription { get; init; }
-
-    /// <summary>
-    /// Gets whether the trial is recruiting in the UK.
-    /// </summary>
-    public YesNoUnknown? RecruitingInUk { get; init; }
+    public required IReadOnlyCollection<string> OtherClinicalTrialNumbers { get; init; }
 
     /// <summary>
     /// Gets the trial phase.
@@ -33,7 +28,12 @@ public sealed record RecordClinicalTrialDto
     public TrialPhase? TrialPhase { get; init; }
 
     /// <summary>
-    /// Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order.
+    /// Gets the brief description of key findings.
     /// </summary>
-    public required IReadOnlyCollection<string> OtherClinicalTrialNumbers { get; init; }
+    public string? BriefDescription { get; init; }
+
+    /// <summary>
+    /// Gets whether the trial is recruiting in the UK.
+    /// </summary>
+    public YesNoUnknown? RecruitingInUk { get; init; }
 }

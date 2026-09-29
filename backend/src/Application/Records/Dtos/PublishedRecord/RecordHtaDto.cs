@@ -3,7 +3,7 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
 
 /// <summary>
-/// Represents the health technology assessment section of a record.
+/// Represents the health technology assessment and launch section of a record.
 /// </summary>
 public sealed record RecordHtaDto
 {
@@ -18,12 +18,22 @@ public sealed record RecordHtaDto
     public IReadOnlyCollection<MedicineHtaAssessor>? MedicineHtaBodies { get; init; }
 
     /// <summary>
+    /// Gets additional HTA details.
+    /// </summary>
+    public string? HtaAdditionalDetails { get; init; }
+
+    /// <summary>
     /// Gets whether the NICE aligned pathway applies.
     /// </summary>
     public YesNoUnknown? HtaNiceAlignedPathway { get; init; }
 
     /// <summary>
-    /// Gets additional HTA details.
+    /// Gets the NICE technology appraisal development identifier.
     /// </summary>
-    public string? HtaAdditionalDetails { get; init; }
+    public string? NiceTaDevelopmentId { get; init; }
+
+    /// <summary>
+    /// Gets the UK commercial launch date.
+    /// </summary>
+    public RegulatoryDateDto? UkLaunchDate { get; init; }
 }

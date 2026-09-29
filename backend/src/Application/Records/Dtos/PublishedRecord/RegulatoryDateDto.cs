@@ -21,9 +21,4 @@ public sealed record RegulatoryDateDto
     /// Gets a value indicating whether the date is confidential.
     /// </summary>
     public required bool IsConfidential { get; init; }
-
-    /// <summary>
-    /// Gets whether conditional approval is anticipated. Only relevant for licence dates.
-    /// </summary>
-    public YesNoUnknown? ConditionalApprovalAnticipated { get; init; }
 }

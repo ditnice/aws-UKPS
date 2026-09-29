@@ -33,6 +33,9 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<RecordEventFieldChange> RecordEventFieldChanges => Set<RecordEventFieldChange>();
 
     // ── Shared Revision Content ──────────────────────────────────────────────
+    public DbSet<RecordProductDetail> RecordProductDetails => Set<RecordProductDetail>();
+    public DbSet<RecordNameAndIdentifier> RecordNamesAndIdentifiers =>
+        Set<RecordNameAndIdentifier>();
     public DbSet<RegulatoryDate> RegulatoryDates => Set<RegulatoryDate>();
     public DbSet<RecordMhraProcedure> RecordMhraProcedures => Set<RecordMhraProcedure>();
     public DbSet<RecordMhraDate> RecordMhraDates => Set<RecordMhraDate>();
@@ -42,11 +45,12 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
         Set<OtherClinicalTrialNumber>();
 
     // ── Medicines Revision Content ───────────────────────────────────────────
-    public DbSet<MedicinesProductDetail> MedicinesProductDetails => Set<MedicinesProductDetail>();
-    public DbSet<MedicinesActiveSubstance> MedicinesActiveSubstances =>
-        Set<MedicinesActiveSubstance>();
-    public DbSet<MedicinesCompanyInfo> MedicinesCompanyInfos => Set<MedicinesCompanyInfo>();
-    public DbSet<MedicinesDetail> MedicinesDetails => Set<MedicinesDetail>();
+    public DbSet<MedicinesIndicationDetail> MedicinesIndicationDetails =>
+        Set<MedicinesIndicationDetail>();
+    public DbSet<MedicinesIndicationDetailTherapeuticArea> MedicinesIndicationDetailTherapeuticAreas =>
+        Set<MedicinesIndicationDetailTherapeuticArea>();
+    public DbSet<MedicinesDevelopmentBackground> MedicinesDevelopmentBackgrounds =>
+        Set<MedicinesDevelopmentBackground>();
     public DbSet<MedicinesEamsPim> MedicinesEamsPims => Set<MedicinesEamsPim>();
     public DbSet<MedicinesEuStatus> MedicinesEuStatuses => Set<MedicinesEuStatus>();
     public DbSet<MedicinesPatientIdentification> MedicinesPatientIdentifications =>
@@ -57,16 +61,12 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
         Set<MedicinesTreatmentDetail>();
     public DbSet<MedicinesServiceImpact> MedicinesServiceImpacts => Set<MedicinesServiceImpact>();
     public DbSet<MedicinesBudgetImpact> MedicinesBudgetImpacts => Set<MedicinesBudgetImpact>();
-    public DbSet<MedicinesProductDetailTherapeuticArea> MedicinesProductDetailTherapeuticAreas =>
-        Set<MedicinesProductDetailTherapeuticArea>();
     public DbSet<MedicinesIntlRecognition> MedicinesIntlRecognitions =>
         Set<MedicinesIntlRecognition>();
     public DbSet<MedicinesGlobalSubmission> MedicinesGlobalSubmissions =>
         Set<MedicinesGlobalSubmission>();
 
     // ── Vaccines Revision Content ────────────────────────────────────────────
-    public DbSet<VaccinesProductDetail> VaccinesProductDetails => Set<VaccinesProductDetail>();
-    public DbSet<VaccinesCompanyCode> VaccinesCompanyCodes => Set<VaccinesCompanyCode>();
     public DbSet<VaccinesCompanyInfo> VaccinesCompanyInfos => Set<VaccinesCompanyInfo>();
     public DbSet<VaccinesDiseaseDetail> VaccinesDiseaseDetails => Set<VaccinesDiseaseDetail>();
     public DbSet<VaccinesPathogen> VaccinesPathogens => Set<VaccinesPathogen>();

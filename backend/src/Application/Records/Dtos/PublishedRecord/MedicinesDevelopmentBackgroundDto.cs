@@ -3,10 +3,20 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
 
 /// <summary>
-/// Represents the company information section of a medicine record.
+/// Represents the development background section of a medicine record.
 /// </summary>
-public sealed record MedicinesCompanyInfoDto
+public sealed record MedicinesDevelopmentBackgroundDto
 {
+    /// <summary>
+    /// Gets whether this is a repurposed medicine.
+    /// </summary>
+    public YesNoUnknown? IsRepurposedMedicine { get; init; }
+
+    /// <summary>
+    /// Gets the differences from the current licensed indications.
+    /// </summary>
+    public string? RepurposedMedicineDetails { get; init; }
+
     /// <summary>
     /// Gets whether the submitting company is the originator.
     /// </summary>

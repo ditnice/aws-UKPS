@@ -88,7 +88,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         RecordRevision draft = await AddRevision(record, 5, WorkflowStatus.Draft);
         await AddEntities(
             new[] { first, second, rejected, inReview, draft }.Select(r =>
-                new MedicinesProductDetailFaker()
+                new RecordProductDetailFaker(RecordType.Medicine)
                     .RuleFor(x => x.RevisionId, r.Id)
                     .RuleFor(x => x.RecordTitle, $"Title {r.Id}")
                     .Generate()
@@ -104,7 +104,7 @@ public class RecordViewServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
         dto.RevisionId.ShouldBe(second.Id);
-        dto.MedicinesProductDetail.ShouldNotBeNull().RecordTitle.ShouldBe($"Title {second.Id}");
+        dto.RecordProductDetail.ShouldNotBeNull().RecordTitle.ShouldBe($"Title {second.Id}");
     }
 
     [Theory]
@@ -226,9 +226,9 @@ public class RecordViewServiceTests : DatabaseTestBase
         );
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
-        dto.MedicinesProductDetail.ShouldBeNull();
-        dto.MedicinesDetail.ShouldBeNull();
-        dto.MedicinesCompanyInfo.ShouldBeNull();
+        dto.RecordProductDetail.ShouldBeNull();
+        dto.MedicinesIndicationDetail.ShouldBeNull();
+        dto.MedicinesDevelopmentBackground.ShouldBeNull();
         dto.MedicinesTreatmentDetail.ShouldBeNull();
         dto.MedicinesPatientIdentification.ShouldBeNull();
         dto.MedicinesLaboratoryTesting.ShouldBeNull();
@@ -250,49 +250,25 @@ public class RecordViewServiceTests : DatabaseTestBase
         var ct = TestContext.Current.CancellationToken;
         Record record = await AddRecord(RecordStatus.Active);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
-        var bnfChapter = await AddEntity(new BnfChapter { Code = "1.1", Label = "Dyspepsia" }, ct);
-        var formulationType = await AddEntity(new FormulationType { Label = "Tablet" }, ct);
-        var areaB = await AddEntity(
-            new TherapeuticArea { Label = "Oncology", DisplayOrder = 2 },
-            ct
-        );
-        var areaA = await AddEntity(
-            new TherapeuticArea { Label = "Cardiology", DisplayOrder = 1 },
-            ct
-        );
         await AddEntity(
-            new MedicinesProductDetail
+            new RecordProductDetail
             {
                 RevisionId = revision.Id,
-                RecordTitle = "Chronic hepatitis C in adults",
+                CompanyCode = "ABC-123",
                 BrandedName = "Brand",
-                Indication = "Hepatitis C",
-                IndicationIsPaediatric = IndicationPaediatricStatus.ExclusivelyAdults,
-                IndicationIsCancer = YesNoUnknown.No,
-                IndicationIsRareDisease = YesNoUnknown.Yes,
-                NiceTaDevelopmentId = "GID-TA1234",
-                BnfChapterId = bnfChapter.Id,
-                FormulationTypeId = formulationType.Id,
-                Presentation = "10mg",
-                MedicineTechnologyStatus =
-                    MedicineTechnologyStatus.Biosimilar | MedicineTechnologyStatus.NewIndication,
-                TherapeuticAreas =
+                RecordTitle = "Chronic hepatitis C in adults",
+                NamesAndIdentifiers =
                 [
-                    new MedicinesProductDetailTherapeuticArea { TherapeuticAreaId = areaB.Id },
-                    new MedicinesProductDetailTherapeuticArea { TherapeuticAreaId = areaA.Id },
-                ],
-                ActiveSubstances =
-                [
-                    new MedicinesActiveSubstance
+                    new RecordNameAndIdentifier
                     {
-                        Name = "ABC-123",
-                        NameType = SubstanceNameType.DevelopmentName,
+                        Name = "ABC-001",
+                        NameType = NameAndIdentifierType.OtherIdentifier,
                         DisplayOrder = 2,
                     },
-                    new MedicinesActiveSubstance
+                    new RecordNameAndIdentifier
                     {
                         Name = "abcumab",
-                        NameType = SubstanceNameType.GenericName,
+                        NameType = NameAndIdentifierType.GenericName,
                         DisplayOrder = 1,
                     },
                 ],
@@ -309,38 +285,94 @@ public class RecordViewServiceTests : DatabaseTestBase
         var dto = result
             .ShouldBeSuccess()
             .ShouldBeOfType<PublishedMedicineRecordDto>()
-            .MedicinesProductDetail.ShouldNotBeNull();
-        dto.RecordTitle.ShouldBe("Chronic hepatitis C in adults");
+            .RecordProductDetail.ShouldNotBeNull();
+        dto.CompanyCode.ShouldBe("ABC-123");
         dto.BrandedName.ShouldBe("Brand");
-        dto.Indication.ShouldBe("Hepatitis C");
-        dto.IndicationIsPaediatric.ShouldBe(IndicationPaediatricStatus.ExclusivelyAdults);
-        dto.IndicationIsCancer.ShouldBe(YesNoUnknown.No);
-        dto.IndicationIsRareDisease.ShouldBe(YesNoUnknown.Yes);
-        dto.NiceTaDevelopmentId.ShouldBe("GID-TA1234");
-        dto.BnfChapter.ShouldBe(new ReferenceDataDto { Id = bnfChapter.Id, Label = "Dyspepsia" });
-        dto.FormulationType.ShouldBe(
-            new ReferenceDataDto { Id = formulationType.Id, Label = "Tablet" }
-        );
-        dto.Presentation.ShouldBe("10mg");
-        dto.MedicineTechnologyStatus.ShouldBe([
-            MedicineTechnologyStatus.Biosimilar,
-            MedicineTechnologyStatus.NewIndication,
+        dto.RecordTitle.ShouldBe("Chronic hepatitis C in adults");
+        dto.NamesAndIdentifiers.ShouldBe([
+            new RecordNameAndIdentifierDto
+            {
+                Name = "abcumab",
+                NameType = NameAndIdentifierType.GenericName,
+            },
+            new RecordNameAndIdentifierDto
+            {
+                Name = "ABC-001",
+                NameType = NameAndIdentifierType.OtherIdentifier,
+            },
         ]);
+    }
+
+    [Fact]
+    public async Task GetPublishedRecord_IndicationDetail_MapsAllFields()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        Record record = await AddRecord(RecordStatus.Active);
+        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
+        var bnfChapter = await AddEntity(new BnfChapter { Code = "1.1", Label = "Dyspepsia" }, ct);
+        var formulationType = await AddEntity(new FormulationType { Label = "Tablet" }, ct);
+        var areaB = await AddEntity(
+            new TherapeuticArea { Label = "Oncology", DisplayOrder = 2 },
+            ct
+        );
+        var areaA = await AddEntity(
+            new TherapeuticArea { Label = "Cardiology", DisplayOrder = 1 },
+            ct
+        );
+        await AddEntity(
+            new MedicinesIndicationDetail
+            {
+                RevisionId = revision.Id,
+                Indication = "Hepatitis C",
+                BnfChapterId = bnfChapter.Id,
+                TherapeuticAreas =
+                [
+                    new MedicinesIndicationDetailTherapeuticArea { TherapeuticAreaId = areaB.Id },
+                    new MedicinesIndicationDetailTherapeuticArea { TherapeuticAreaId = areaA.Id },
+                ],
+                IndicationIsPaediatric = IndicationPaediatricStatus.ExclusivelyAdults,
+                IndicationIsCancer = YesNoUnknown.No,
+                IndicationIsRareDisease = YesNoUnknown.Yes,
+                FormulationTypeId = formulationType.Id,
+                Presentation = "10mg",
+                ModeOfAction = "Mode",
+                ProposedDoseRegimen = "Dose",
+                IsPersonalisedMedicine = YesNoUnknown.Yes,
+                MedicineTechnologyStatus =
+                    MedicineTechnologyStatus.Biosimilar | MedicineTechnologyStatus.NewIndication,
+            },
+            ct
+        );
+
+        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+            record.Id,
+            RecordType.Medicine,
+            ct
+        );
+
+        var dto = result
+            .ShouldBeSuccess()
+            .ShouldBeOfType<PublishedMedicineRecordDto>()
+            .MedicinesIndicationDetail.ShouldNotBeNull();
+        dto.Indication.ShouldBe("Hepatitis C");
+        dto.BnfChapter.ShouldBe(new ReferenceDataDto { Id = bnfChapter.Id, Label = "Dyspepsia" });
         dto.TherapeuticAreas.ShouldBe([
             new ReferenceDataDto { Id = areaA.Id, Label = "Cardiology" },
             new ReferenceDataDto { Id = areaB.Id, Label = "Oncology" },
         ]);
-        dto.ActiveSubstances.ShouldBe([
-            new MedicinesActiveSubstanceDto
-            {
-                Name = "abcumab",
-                NameType = SubstanceNameType.GenericName,
-            },
-            new MedicinesActiveSubstanceDto
-            {
-                Name = "ABC-123",
-                NameType = SubstanceNameType.DevelopmentName,
-            },
+        dto.IndicationIsPaediatric.ShouldBe(IndicationPaediatricStatus.ExclusivelyAdults);
+        dto.IndicationIsCancer.ShouldBe(YesNoUnknown.No);
+        dto.IndicationIsRareDisease.ShouldBe(YesNoUnknown.Yes);
+        dto.FormulationType.ShouldBe(
+            new ReferenceDataDto { Id = formulationType.Id, Label = "Tablet" }
+        );
+        dto.Presentation.ShouldBe("10mg");
+        dto.ModeOfAction.ShouldBe("Mode");
+        dto.ProposedDoseRegimen.ShouldBe("Dose");
+        dto.IsPersonalisedMedicine.ShouldBe(YesNoUnknown.Yes);
+        dto.MedicineTechnologyStatus.ShouldBe([
+            MedicineTechnologyStatus.Biosimilar,
+            MedicineTechnologyStatus.NewIndication,
         ]);
     }
 
@@ -373,18 +405,11 @@ public class RecordViewServiceTests : DatabaseTestBase
         var intlLicence = await AddDate(revision, DateEventType.IntlLicence, 7);
 
         Context.AddRange(
-            new MedicinesDetail
+            new MedicinesDevelopmentBackground
             {
                 RevisionId = revision.Id,
-                ModeOfAction = "Mode",
-                ProposedDoseRegimen = "Dose",
-                IsPersonalisedMedicine = YesNoUnknown.Yes,
                 IsRepurposedMedicine = YesNoUnknown.No,
                 RepurposedMedicineDetails = "Repurposed",
-            },
-            new MedicinesCompanyInfo
-            {
-                RevisionId = revision.Id,
                 IsOriginatorCompany = YesNoUnknown.No,
                 OriginatorCompanyName = "Originator",
                 IsCoMarketed = YesNoUnknown.Yes,
@@ -432,16 +457,16 @@ public class RecordViewServiceTests : DatabaseTestBase
                 NhsServiceChangesDetails = "Changes",
                 HandlingStorageRequirements = YesNoUnknown.Yes,
                 HandlingStorageDetails = "Fridge",
-                EstimatedUptake = "High",
                 UkPatientPopulationRangeId = populationRange.Id,
                 UkPatientPopulationNotes = "Population notes",
                 EstimatedEligiblePatientPopulation = "5,000",
-                CompassionateAccessAvailable = YesNoUnknown.No,
-                CompassionateAccessDetails = "Compassionate",
             },
             new MedicinesBudgetImpact
             {
                 RevisionId = revision.Id,
+                EstimatedUptake = "High",
+                CompassionateAccessAvailable = YesNoUnknown.No,
+                CompassionateAccessDetails = "Compassionate",
                 PatientAccessSchemePlanned = YesNoUnknown.Yes,
                 IndicationSpecificPricingPlanned = YesNoUnknown.No,
                 IndicationSpecificPricingDetails = "Pricing",
@@ -492,19 +517,11 @@ public class RecordViewServiceTests : DatabaseTestBase
         );
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
-        dto.MedicinesDetail.ShouldBe(
-            new MedicinesDetailDto
+        dto.MedicinesDevelopmentBackground.ShouldBe(
+            new MedicinesDevelopmentBackgroundDto
             {
-                ModeOfAction = "Mode",
-                ProposedDoseRegimen = "Dose",
-                IsPersonalisedMedicine = YesNoUnknown.Yes,
                 IsRepurposedMedicine = YesNoUnknown.No,
                 RepurposedMedicineDetails = "Repurposed",
-            }
-        );
-        dto.MedicinesCompanyInfo.ShouldBe(
-            new MedicinesCompanyInfoDto
-            {
                 IsOriginatorCompany = YesNoUnknown.No,
                 OriginatorCompanyName = "Originator",
                 IsCoMarketed = YesNoUnknown.Yes,
@@ -560,7 +577,6 @@ public class RecordViewServiceTests : DatabaseTestBase
                 NhsServiceChangesDetails = "Changes",
                 HandlingStorageRequirements = YesNoUnknown.Yes,
                 HandlingStorageDetails = "Fridge",
-                EstimatedUptake = "High",
                 UkPatientPopulationRange = new ReferenceDataDto
                 {
                     Id = populationRange.Id,
@@ -568,12 +584,13 @@ public class RecordViewServiceTests : DatabaseTestBase
                 },
                 UkPatientPopulationNotes = "Population notes",
                 EstimatedEligiblePatientPopulation = "5,000",
-                CompassionateAccessAvailable = YesNoUnknown.No,
-                CompassionateAccessDetails = "Compassionate",
             }
         );
 
         var budgetImpact = dto.MedicinesBudgetImpact.ShouldNotBeNull();
+        budgetImpact.EstimatedUptake.ShouldBe("High");
+        budgetImpact.CompassionateAccessAvailable.ShouldBe(YesNoUnknown.No);
+        budgetImpact.CompassionateAccessDetails.ShouldBe("Compassionate");
         budgetImpact.PatientAccessSchemePlanned.ShouldBe(YesNoUnknown.Yes);
         budgetImpact.IndicationSpecificPricingPlanned.ShouldBe(YesNoUnknown.No);
         budgetImpact.IndicationSpecificPricingDetails.ShouldBe("Pricing");
@@ -672,15 +689,17 @@ public class RecordViewServiceTests : DatabaseTestBase
                 RevisionId = revision.Id,
                 MedicineHtaSubmissionIntended = YesNoUnknown.Yes,
                 MedicineHtaBodies = MedicineHtaAssessor.Nice | MedicineHtaAssessor.Awmsg,
-                HtaNiceAlignedPathway = YesNoUnknown.No,
                 HtaAdditionalDetails = "HTA details",
+                HtaNiceAlignedPathway = YesNoUnknown.No,
+                NiceTaDevelopmentId = "GID-TA1234",
+                UkLaunchDateId = ukLaunch.Id,
             },
             new RecordMhraDate
             {
                 RevisionId = revision.Id,
                 UkSubmissionDateId = ukSubmission.Id,
                 UkLicenceDateId = ukLicence.Id,
-                UkLaunchDateId = ukLaunch.Id,
+                UkConditionalApprovalAnticipated = YesNoUnknown.Yes,
             },
             new RecordMhraProcedure
             {
@@ -714,15 +733,17 @@ public class RecordViewServiceTests : DatabaseTestBase
         var hta = dto.RecordHta.ShouldNotBeNull();
         hta.MedicineHtaSubmissionIntended.ShouldBe(YesNoUnknown.Yes);
         hta.MedicineHtaBodies.ShouldBe([MedicineHtaAssessor.Nice, MedicineHtaAssessor.Awmsg]);
-        hta.HtaNiceAlignedPathway.ShouldBe(YesNoUnknown.No);
         hta.HtaAdditionalDetails.ShouldBe("HTA details");
+        hta.HtaNiceAlignedPathway.ShouldBe(YesNoUnknown.No);
+        hta.NiceTaDevelopmentId.ShouldBe("GID-TA1234");
+        hta.UkLaunchDate.ShouldBe(ToDto(ukLaunch));
 
         dto.RecordMhraDate.ShouldBe(
             new RecordMhraDateDto
             {
                 UkSubmissionDate = ToDto(ukSubmission),
                 UkLicenceDate = ToDto(ukLicence),
-                UkLaunchDate = ToDto(ukLaunch),
+                UkConditionalApprovalAnticipated = YesNoUnknown.Yes,
             }
         );
         dto.RecordMhraProcedure.ShouldBe(
@@ -777,7 +798,6 @@ public class RecordViewServiceTests : DatabaseTestBase
                 DatePrecision = DatePrecision.EstimatedMonth,
                 DateValue = new DateOnly(2027, month, 1),
                 IsConfidential = true,
-                ConditionalApprovalAnticipated = YesNoUnknown.Yes,
             },
             TestContext.Current.CancellationToken
         );
@@ -788,6 +808,5 @@ public class RecordViewServiceTests : DatabaseTestBase
             DateValue = date.DateValue,
             DatePrecision = date.DatePrecision,
             IsConfidential = date.IsConfidential,
-            ConditionalApprovalAnticipated = date.ConditionalApprovalAnticipated,
         };
 }

@@ -19,11 +19,6 @@ public sealed record MedicinesEamsPimDto
     public YesNoUnknown? WillSubmitToEams { get; init; }
 
     /// <summary>
-    /// Gets the EAMS opinion decision.
-    /// </summary>
-    public EamsOpinionDecision? EamsOpinionDecision { get; init; }
-
-    /// <summary>
     /// Gets the EAMS submission date.
     /// </summary>
     public RegulatoryDateDto? EamsSubmissionDate { get; init; }
@@ -32,4 +27,9 @@ public sealed record MedicinesEamsPimDto
     /// Gets the EAMS opinion date.
     /// </summary>
     public RegulatoryDateDto? EamsOpinionDate { get; init; }
+
+    /// <summary>
+    /// Gets the EAMS opinion decision.
+    /// </summary>
+    public EamsOpinionDecision? EamsOpinionDecision { get; init; }
 }

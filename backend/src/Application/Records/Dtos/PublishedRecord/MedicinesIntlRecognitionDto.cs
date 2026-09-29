@@ -13,11 +13,6 @@ public sealed record MedicinesIntlRecognitionDto
     public ReferenceDataDto? IrpRoute { get; init; }
 
     /// <summary>
-    /// Gets whether international conditional approval is anticipated.
-    /// </summary>
-    public YesNoUnknown? IntlConditionalApprovalAnticipated { get; init; }
-
-    /// <summary>
     /// Gets the international submission date.
     /// </summary>
     public RegulatoryDateDto? IntlSubmissionDate { get; init; }
@@ -26,4 +21,9 @@ public sealed record MedicinesIntlRecognitionDto
     /// Gets the international licence date.
     /// </summary>
     public RegulatoryDateDto? IntlLicenceDate { get; init; }
+
+    /// <summary>
+    /// Gets whether international conditional approval is anticipated.
+    /// </summary>
+    public YesNoUnknown? IntlConditionalApprovalAnticipated { get; init; }
 }

@@ -1,3 +1,5 @@
+using UKPS.Api.Persistence.Enums;
+
 namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
 
 /// <summary>
@@ -16,7 +18,7 @@ public sealed record RecordMhraDateDto
     public RegulatoryDateDto? UkLicenceDate { get; init; }
 
     /// <summary>
-    /// Gets the UK launch date.
+    /// Gets whether conditional approval is anticipated in the UK.
     /// </summary>
-    public RegulatoryDateDto? UkLaunchDate { get; init; }
+    public YesNoUnknown? UkConditionalApprovalAnticipated { get; init; }
 }

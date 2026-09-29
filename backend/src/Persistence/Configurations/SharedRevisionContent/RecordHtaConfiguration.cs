@@ -10,10 +10,10 @@ internal sealed class RecordHtaConfiguration : IEntityTypeConfiguration<RecordHt
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.HtaNiceAlignedPathway);
         builder.Property(x => x.VaccineHtaAssessor);
         builder.Property(x => x.MedicineHtaSubmissionIntended);
         builder.Property(x => x.MedicineHtaBodies);
+        builder.Property(x => x.HtaNiceAlignedPathway);
 
         builder.HasIndex(x => x.RevisionId).IsUnique().HasDatabaseName("ix_record_hta_revision_id");
 
@@ -21,6 +21,12 @@ internal sealed class RecordHtaConfiguration : IEntityTypeConfiguration<RecordHt
             .HasOne(x => x.Revision)
             .WithMany()
             .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne(x => x.UkLaunchDate)
+            .WithMany()
+            .HasForeignKey(x => x.UkLaunchDateId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
