@@ -24,4 +24,10 @@ internal static class UkpsClaimTypes
     /// The claim type representing the username of the user.
     /// </summary>
     public const string Username = "username";
+
+    /// <summary>
+    /// The claim type indicating that the user is authenticated but an organisation could not be
+    /// resolved for them. The value is the name of the relevant <see cref="AuthenticationFailCode"/>.
+    /// </summary>
+    public const string OrganisationSelectionFailure = "organisation_selection_failure";
 }

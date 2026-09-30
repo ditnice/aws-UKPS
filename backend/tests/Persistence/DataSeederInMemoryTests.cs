@@ -50,7 +50,7 @@ public sealed class DataSeederInMemoryTests
         UserOrgMembership membership = payload.Memberships.Single(m =>
             ReferenceEquals(m.User, user)
         );
-        membership.OrganisationId.ShouldBe(1);
+        membership.Organisation.ShouldBeSameAs(payload.Organisations.First());
         membership.UserRole.ShouldBe(UserRole.Super);
         membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
         membership.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Both);
@@ -92,7 +92,7 @@ public sealed class DataSeederInMemoryTests
     [Theory]
     [InlineData("Standard", UserRole.Standard)]
     [InlineData("champion", UserRole.Champion)]
-    public void BuildPayload_WhenSeedUsersJsonHasNonSuperRole_ShouldAddPharmaUserWithRole(
+    public void BuildPayload_WhenSeedUsersJsonHasNonSuperRole_ShouldAddPharmaUserToFourOrganisations(
         string role,
         UserRole expectedRole
     )
@@ -118,15 +118,26 @@ public sealed class DataSeederInMemoryTests
             string.Equals(u.WorkEmail, email, StringComparison.Ordinal)
         );
         user.UserType.ShouldBe(UserType.PharmaUser);
-        payload.Organisations.First().Status.ShouldBe(UserOrgStatus.Active);
 
-        UserOrgMembership membership = payload.Memberships.Single(m =>
-            ReferenceEquals(m.User, user)
+        Organisation[] expectedOrganisations = payload
+            .Organisations.Take(DataSeederInMemory.NonSuperUserOrganisationCount)
+            .ToArray();
+        expectedOrganisations.Length.ShouldBe(4);
+        expectedOrganisations.ShouldAllBe(o => o.Status == UserOrgStatus.Active);
+
+        UserOrgMembership[] memberships = payload
+            .Memberships.Where(m => ReferenceEquals(m.User, user))
+            .ToArray();
+        memberships.Select(m => m.Organisation).ShouldBe(expectedOrganisations);
+        memberships.ShouldNotContain(m =>
+            ReferenceEquals(m.Organisation, payload.Organisations.Last())
         );
-        membership.OrganisationId.ShouldBe(1);
-        membership.UserRole.ShouldBe(expectedRole);
-        membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
-        membership.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Both);
+        foreach (UserOrgMembership membership in memberships)
+        {
+            membership.UserRole.ShouldBe(expectedRole);
+            membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+            membership.AllowedPharmaceuticalEntity.ShouldBe(PharmaceuticalEntity.Both);
+        }
     }
 
     [Theory]

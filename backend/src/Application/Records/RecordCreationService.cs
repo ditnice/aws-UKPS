@@ -14,19 +14,19 @@ namespace UKPS.Api.Application.Records;
 
 internal class RecordCreationService : IRecordCreationService
 {
-    private readonly ICurrentUserInfoService _currentUserInfoService;
+    private readonly CurrentDbUserEntityService _currentDbUserEntityService;
     private readonly AppDbContext _dbContext;
     private readonly IOrganisationAuthoriser _organisationAuthoriser;
     private readonly IDateTimeProvider _dateTimeProvider;
 
     public RecordCreationService(
-        ICurrentUserInfoService currentUserInfoService,
+        CurrentDbUserEntityService currentDbUserEntityService,
         AppDbContext dbContext,
         IOrganisationAuthoriser organisationAuthoriser,
         IDateTimeProvider dateTimeProvider
     )
     {
-        _currentUserInfoService = currentUserInfoService;
+        _currentDbUserEntityService = currentDbUserEntityService;
         _dbContext = dbContext;
         _organisationAuthoriser = organisationAuthoriser;
         _dateTimeProvider = dateTimeProvider;
@@ -55,7 +55,7 @@ internal class RecordCreationService : IRecordCreationService
         }
 
         DateTime time = _dateTimeProvider.GetUtcNow();
-        User currentUser = await GetCurrentUser(cancellationToken);
+        User currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
 
         (Record record, RecordRevision revision) = Record.CreateInitial(
             organisation,
@@ -75,19 +75,6 @@ internal class RecordCreationService : IRecordCreationService
         return CreateRecordResult.Ok(
             new CreateRecordDto() { RecordId = record.Id, RevisionId = revision.Id }
         );
-    }
-
-    public async Task<User> GetCurrentUser(CancellationToken cancellationToken)
-    {
-        CurrentUser currentUserInfo = _currentUserInfoService.GetCurrentUserInfo();
-        User? user = await _dbContext.Users.FirstOrDefaultAsync(
-            x => x.CognitoUsername == currentUserInfo.CognitoUsername,
-            cancellationToken
-        );
-        return user
-            ?? throw new InvalidOperationException(
-                "Could not find the current user in the database."
-            );
     }
 
     private static MedicinesActiveSubstance[] CreateActiveSubstancesArray(
