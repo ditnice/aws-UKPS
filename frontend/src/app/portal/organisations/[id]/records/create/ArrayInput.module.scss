@@ -1,0 +1,6 @@
+@use '@/styles/spacing';
+@use '@/styles/utils';
+
+.multiValuesInput > input {
+  margin-bottom: utils.rem(spacing.$xx-small) !important;
+}

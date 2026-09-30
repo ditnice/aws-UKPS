@@ -37,4 +37,5 @@ export const errorMessages = {
     'An error occurred when trying to retrieve the user membership request',
 
   updatingUserDetailsError: 'An error occurred when updating user details.',
+  creatingNewRecordError: 'An error occurred when creating a new medical record.',
 } as const
