@@ -7,6 +7,10 @@ namespace UKPS.Api.Persistence.Data.Seeding;
 
 internal sealed class DataSeederInMemory : IDataSeeder
 {
+    // Champion and Standard users are members of several (but not all) organisations so that
+    // organisation selection can be exercised locally.
+    internal const int NonSuperUserOrganisationCount = 4;
+
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -55,21 +59,24 @@ internal sealed class DataSeederInMemory : IDataSeeder
         ValidateConfiguredUsers(configuredUsers);
 
         List<Organisation> organisations = payload.Organisations.ToList();
-        if (organisations.Count == 0)
+        if (organisations.Count < NonSuperUserOrganisationCount)
         {
             throw new InvalidOperationException(
-                "Configured seed users require seeded organisation ID 1."
+                $"Configured seed users require at least {NonSuperUserOrganisationCount} seeded organisations."
             );
         }
 
-        organisations[0].Status = UserOrgStatus.Active;
+        foreach (Organisation organisation in organisations.Take(NonSuperUserOrganisationCount))
+        {
+            organisation.Status = UserOrgStatus.Active;
+        }
 
         List<User> users = payload.Users.ToList();
         List<UserOrgMembership> memberships = payload.Memberships.ToList();
 
         foreach (SeedUser configuredUser in configuredUsers)
         {
-            UpsertConfiguredUser(users, memberships, configuredUser);
+            UpsertConfiguredUser(users, memberships, organisations, configuredUser);
         }
 
         return payload with
@@ -83,6 +90,7 @@ internal sealed class DataSeederInMemory : IDataSeeder
     private static void UpsertConfiguredUser(
         List<User> users,
         List<UserOrgMembership> memberships,
+        IReadOnlyList<Organisation> organisations,
         SeedUser configuredUser
     )
     {
@@ -104,7 +112,13 @@ internal sealed class DataSeederInMemory : IDataSeeder
         UserRole role = Enum.Parse<UserRole>(configuredUser.Role, ignoreCase: true);
         User user = CreateConfiguredUser(configuredUser, role);
         users.Add(user);
-        memberships.Add(CreateMembership(user, role));
+
+        int organisationCount = role == UserRole.Super ? 1 : NonSuperUserOrganisationCount;
+        memberships.AddRange(
+            organisations
+                .Take(organisationCount)
+                .Select(organisation => CreateMembership(user, role, organisation))
+        );
     }
 
     private static User CreateConfiguredUser(SeedUser configuredUser, UserRole role) =>
@@ -117,11 +131,15 @@ internal sealed class DataSeederInMemory : IDataSeeder
             CreatedAt = DateTime.UtcNow,
         };
 
-    private static UserOrgMembership CreateMembership(User user, UserRole role) =>
+    private static UserOrgMembership CreateMembership(
+        User user,
+        UserRole role,
+        Organisation organisation
+    ) =>
         new()
         {
             User = user,
-            OrganisationId = 1,
+            Organisation = organisation,
             UserRole = role,
             Status = UserOrgMembershipStatus.Active,
             AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,

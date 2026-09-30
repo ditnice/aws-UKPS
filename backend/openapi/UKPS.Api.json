@@ -648,6 +648,141 @@
         }
       }
     },
+    "/users/me/organisations": {
+      "get": {
+        "tags": [
+          "CurrentUserOrganisation"
+        ],
+        "summary": "Retrieves the organisations the current user is permitted to manage.",
+        "operationId": "GetCurrentUserOrganisations",
+        "responses": {
+          "200": {
+            "description": "The organisations were returned successfully.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/current-organisation": {
+      "patch": {
+        "tags": [
+          "CurrentUserOrganisation"
+        ],
+        "summary": "Updates the current user's selected organisation.",
+        "operationId": "UpdateCurrentOrganisation",
+        "requestBody": {
+          "description": "A token that can be used to cancel the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentOrganisationCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentOrganisationCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentOrganisationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "The provided organisation is invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The current organisation was successfully updated."
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organisations/{id}": {
       "get": {
         "tags": [
@@ -2627,6 +2762,7 @@
           "SelectedOrganisationIsNotValid",
           "MembershipDeactivated",
           "MembershipNotInValidState",
+          "OrganisationNotActive",
           null
         ],
         "type": "string"
@@ -3303,6 +3439,20 @@
         ],
         "type": "string"
       },
+      "UpdateCurrentOrganisationCommand": {
+        "required": [
+          "organisationId"
+        ],
+        "type": "object",
+        "properties": {
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the identifier of the organisation to set as the current organisation.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the request to update the currently authenticated user's active organisation."
+      },
       "UpdateOrganisationDetailsDto": {
         "required": [
           "organisationName",
@@ -3651,6 +3801,9 @@
   "tags": [
     {
       "name": "Authentication"
+    },
+    {
+      "name": "CurrentUserOrganisation"
     },
     {
       "name": "Organisation"

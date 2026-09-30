@@ -10,7 +10,8 @@ export const AuthenticationFailCode = {
     SELECTED_ORGANISATION_REQUIRED: 'SelectedOrganisationRequired',
     SELECTED_ORGANISATION_IS_NOT_VALID: 'SelectedOrganisationIsNotValid',
     MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
-    MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState'
+    MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState',
+    ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive'
 } as const;
 
 export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];
@@ -504,6 +505,16 @@ export const UkpsChallengeType = { MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'MultiF
 export type UkpsChallengeType = typeof UkpsChallengeType[keyof typeof UkpsChallengeType];
 
 /**
+ * Represents the request to update the currently authenticated user's active organisation.
+ */
+export type UpdateCurrentOrganisationCommand = {
+    /**
+     * Gets the identifier of the organisation to set as the current organisation.
+     */
+    organisationId: number;
+};
+
+/**
  * Represents the data transfer object for updating organisation details.
  */
 export type UpdateOrganisationDetailsDto = {
@@ -991,6 +1002,61 @@ export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerif
 export type PostAuthVerifyMfaResponses = {
     /**
      * The multi-factor authentication setup was successfully verified.
+     */
+    200: unknown;
+};
+
+export type GetCurrentUserOrganisationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/organisations';
+};
+
+export type GetCurrentUserOrganisationsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type GetCurrentUserOrganisationsError = GetCurrentUserOrganisationsErrors[keyof GetCurrentUserOrganisationsErrors];
+
+export type GetCurrentUserOrganisationsResponses = {
+    /**
+     * The organisations were returned successfully.
+     */
+    200: Array<OrganisationListDto>;
+};
+
+export type GetCurrentUserOrganisationsResponse = GetCurrentUserOrganisationsResponses[keyof GetCurrentUserOrganisationsResponses];
+
+export type UpdateCurrentOrganisationData = {
+    /**
+     * A token that can be used to cancel the request.
+     */
+    body: UpdateCurrentOrganisationCommand;
+    path?: never;
+    query?: never;
+    url: '/users/me/current-organisation';
+};
+
+export type UpdateCurrentOrganisationErrors = {
+    /**
+     * The provided organisation is invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type UpdateCurrentOrganisationError = UpdateCurrentOrganisationErrors[keyof UpdateCurrentOrganisationErrors];
+
+export type UpdateCurrentOrganisationResponses = {
+    /**
+     * The current organisation was successfully updated.
      */
     200: unknown;
 };

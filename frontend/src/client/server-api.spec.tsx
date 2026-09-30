@@ -13,7 +13,13 @@ vi.mock('next/headers', () => ({ cookies: mocks.cookies, headers: mocks.headers 
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }))
 vi.mock('server-only', () => ({}))
 vi.mock('./generated/client', () => ({ createClient: mocks.createClient }))
-vi.mock('./generated', () => ({ AuthorisationFailCode: {} as const }))
+vi.mock('./generated', () => ({
+  AuthenticationFailCode: {
+    SELECTED_ORGANISATION_REQUIRED: 'SelectedOrganisationRequired',
+    SELECTED_ORGANISATION_IS_NOT_VALID: 'SelectedOrganisationIsNotValid',
+    MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
+  } as const,
+}))
 
 type ClientWithFetch = { fetch: typeof fetch }
 
@@ -67,6 +73,41 @@ describe('createServerApiClient', () => {
     expect(mocks.redirect).toHaveBeenCalledWith(
       '/auth/sign-in?returnTo=%2Fportal%2Forganisations%2F1%3Fpage%3D2',
     )
+  })
+
+  it.each(['SelectedOrganisationRequired', 'SelectedOrganisationIsNotValid'])(
+    'redirects to the organisation selection page when the backend returns 401 with %s',
+    async (code) => {
+      vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
+      mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
+      mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal') })
+      vi.stubGlobal(
+        'fetch',
+        vi.fn<typeof fetch>().mockResolvedValue(Response.json({ code }, { status: 401 })),
+      )
+
+      const client = await createTestClient()
+      await client.fetch('https://api.example.test/users/me')
+
+      expect(mocks.redirect).toHaveBeenCalledWith('/portal/organisations/select')
+    },
+  )
+
+  it('redirects to the authentication error page for other authentication fail codes', async () => {
+    vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
+    mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
+    mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal') })
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(Response.json({ code: 'MembershipDeactivated' }, { status: 401 })),
+    )
+
+    const client = await createTestClient()
+    await client.fetch('https://api.example.test/users/me')
+
+    expect(mocks.redirect).toHaveBeenCalledWith('/auth/error?code=MembershipDeactivated')
   })
 
   it('uses a portal returnTo fallback when no forwarded route header is available', async () => {

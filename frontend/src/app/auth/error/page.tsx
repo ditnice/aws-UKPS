@@ -20,6 +20,14 @@ const MembershipDeactivated = async ({
       </>
     )
   }
+  if (code === 'OrganisationNotActive') {
+    return (
+      <>
+        <PageHeader heading="Your organisation is not active" />
+        <p>Please contact your organisation&apos;s champion user for more information.</p>
+      </>
+    )
+  }
   return (
     <>
       <PageHeader heading="An unexpected authentication error has occurred." />

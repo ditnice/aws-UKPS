@@ -462,6 +462,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("IsSelectedAsCurrentOrganisation")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_selected_as_current_organisation");
+
                     b.Property<int>("OrganisationId")
                         .HasColumnType("integer")
                         .HasColumnName("organisation_id");
@@ -483,6 +487,11 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_user_org_membership_organisation_id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_org_membership_current_org_per_user")
+                        .HasFilter("\"is_selected_as_current_organisation\" = TRUE");
 
                     b.HasIndex("UserId", "OrganisationId", "AllowedPharmaceuticalEntity")
                         .IsUnique()
