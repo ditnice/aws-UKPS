@@ -686,7 +686,7 @@ export const fakeCreateRecordRequest = (options?: Options): Omit<CreateRecordDat
 
 export const fakeCreateRecordResponse200 = (options?: Options): CreateRecordResponses[200] => fakeCreateRecordDto(options);
 
-export const fakeCreateRecordResponse400 = (options?: Options): CreateRecordErrors[400] => fakeProblemDetails(options);
+export const fakeCreateRecordResponse400 = (options?: Options): CreateRecordErrors[400] => fakeValidationProblemDetails(options);
 
 export const fakeCreateRecordResponse401 = (options?: Options): CreateRecordErrors[401] => fakeAuthenticationProblemDetails(options);
 

@@ -1440,9 +1440,9 @@ export type CreateRecordData = {
 
 export type CreateRecordErrors = {
     /**
-     * The request body is invalid.
+     * The request body is invalid, or the specified organisation does not exist.
      */
-    400: ProblemDetails;
+    400: ValidationProblemDetails;
     /**
      * Unauthorized
      */
