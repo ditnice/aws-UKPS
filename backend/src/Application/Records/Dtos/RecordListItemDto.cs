@@ -28,9 +28,9 @@ public sealed record RecordListItemDto
     public required string Title { get; init; }
 
     /// <summary>
-    /// Gets the development name of the active substance, when available.
+    /// Gets the company code.
     /// </summary>
-    public string? DevelopmentName { get; init; }
+    public required string CompanyCode { get; init; }
 
     /// <summary>
     /// Gets the date the record was last reviewed, when available.

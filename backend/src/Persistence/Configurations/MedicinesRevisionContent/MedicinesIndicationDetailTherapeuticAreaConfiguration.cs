@@ -4,17 +4,17 @@ using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
 namespace UKPS.Api.Persistence.Configurations.MedicinesRevisionContent;
 
-internal sealed class MedicinesProductDetailTherapeuticAreaConfiguration
-    : IEntityTypeConfiguration<MedicinesProductDetailTherapeuticArea>
+internal sealed class MedicinesIndicationDetailTherapeuticAreaConfiguration
+    : IEntityTypeConfiguration<MedicinesIndicationDetailTherapeuticArea>
 {
-    public void Configure(EntityTypeBuilder<MedicinesProductDetailTherapeuticArea> builder)
+    public void Configure(EntityTypeBuilder<MedicinesIndicationDetailTherapeuticArea> builder)
     {
-        builder.HasKey(x => new { x.MedicinesProductDetailId, x.TherapeuticAreaId });
+        builder.HasKey(x => new { x.MedicinesIndicationDetailId, x.TherapeuticAreaId });
 
         builder
-            .HasOne(x => x.MedicinesProductDetail)
+            .HasOne(x => x.MedicinesIndicationDetail)
             .WithMany(x => x.TherapeuticAreas)
-            .HasForeignKey(x => x.MedicinesProductDetailId)
+            .HasForeignKey(x => x.MedicinesIndicationDetailId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder

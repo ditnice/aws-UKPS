@@ -130,32 +130,33 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task CreateRecord_OnValidCommand_ShouldCreateMedicineProductDetails()
+    public async Task CreateRecord_OnValidCommand_ShouldCreateRecordProductDetails()
     {
         var context = _harness.GetClearedContext();
-        var medicinesProductDetail = await context
-            .MedicinesProductDetails.Include(x => x.ActiveSubstances)
+        var recordProductDetail = await context
+            .RecordProductDetails.Include(x => x.NamesAndIdentifiers)
             .FirstOrDefaultAsync(x => x.RevisionId == _validResponse.RevisionId, Ct);
 
-        medicinesProductDetail.ShouldNotBeNull();
-        medicinesProductDetail.RecordTitle.ShouldBe(_validCommand.RecordTitle);
-        medicinesProductDetail.BrandedName.ShouldBe(_validCommand.BrandedName);
+        recordProductDetail.ShouldNotBeNull();
+        recordProductDetail.RecordTitle.ShouldBe(_validCommand.RecordTitle);
+        recordProductDetail.BrandedName.ShouldBe(_validCommand.BrandedName);
+        recordProductDetail.CompanyCode.ShouldBe(_validCommand.DevelopmentName);
 
         foreach (var genericName in _validCommand.GenericNames.Enumerate())
         {
-            medicinesProductDetail.ActiveSubstances.ShouldContain(x =>
+            recordProductDetail.NamesAndIdentifiers.ShouldContain(x =>
                 x.Name == genericName.Value
                 && x.DisplayOrder == genericName.Index
-                && x.NameType == SubstanceNameType.GenericName
+                && x.NameType == NameAndIdentifierType.GenericName
             );
         }
 
-        foreach (var developmentName in _validCommand.DevelopmentNames.Enumerate())
+        foreach (var otherIdentifier in _validCommand.OtherIdentifiers.Enumerate())
         {
-            medicinesProductDetail.ActiveSubstances.ShouldContain(x =>
-                x.Name == developmentName.Value
-                && x.DisplayOrder == developmentName.Index
-                && x.NameType == SubstanceNameType.DevelopmentName
+            recordProductDetail.NamesAndIdentifiers.ShouldContain(x =>
+                x.Name == otherIdentifier.Value
+                && x.DisplayOrder == otherIdentifier.Index
+                && x.NameType == NameAndIdentifierType.OtherIdentifier
             );
         }
     }
@@ -200,17 +201,18 @@ public class RecordCreationServiceTests : DatabaseTestBase
         public CreateRecordCommandFaker()
         {
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
+            RuleFor(x => x.DevelopmentName, f => f.Commerce.ProductName());
+            RuleFor(x => x.BrandedName, f => f.Commerce.ProductName());
             RuleFor(
-                x => x.DevelopmentNames,
+                x => x.GenericNames,
                 f =>
                     Enumerable
                         .Range(0, f.Random.Int(1, 3))
                         .Select(_ => f.Commerce.ProductName())
                         .ToArray()
             );
-            RuleFor(x => x.BrandedName, f => f.Commerce.ProductName());
             RuleFor(
-                x => x.GenericNames,
+                x => x.OtherIdentifiers,
                 f =>
                     Enumerable
                         .Range(0, f.Random.Int(1, 3))

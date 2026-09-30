@@ -3,8 +3,7 @@ using Shouldly;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence.Data.Fakers;
-using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
-using UKPS.Api.Persistence.Entities.VaccinesRevisionContent;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
@@ -27,8 +26,8 @@ public class RecordServiceTests : DatabaseTestBase
     private readonly DateTime _currentDateTime = new(2003, 4, 12, 12, 12, 44, DateTimeKind.Utc);
     private IReadOnlyCollection<Record> _seededMedicineRecords = null!;
     private Record[] _seededVaccineRecords = null!;
-    private IReadOnlyCollection<MedicinesProductDetail> _medicineProductDetailsData = null!;
-    private IReadOnlyCollection<VaccinesProductDetail> _vaccineProductDetailsData = null!;
+    private IReadOnlyCollection<RecordProductDetail> _medicineProductDetailsData = null!;
+    private IReadOnlyCollection<RecordProductDetail> _vaccineProductDetailsData = null!;
     private int _organisationId;
     private List<Record> OrganisationRecords =>
         _seededMedicineRecords
@@ -68,7 +67,7 @@ public class RecordServiceTests : DatabaseTestBase
             x => x.Record,
             _ => faker.PickRandom(records.Where(x => x.RecordType == RecordType.Medicine))
         );
-        var medicineProductDetailsFaker = new MedicinesProductDetailFaker().RuleFor(
+        var medicineProductDetailsFaker = new RecordProductDetailFaker(RecordType.Medicine).RuleFor(
             x => x.Revision,
             _ => medicalRecordRevisionFaker.Generate()
         );
@@ -78,7 +77,7 @@ public class RecordServiceTests : DatabaseTestBase
             x => x.Record,
             _ => faker.PickRandom(records.Where(x => x.RecordType == RecordType.Vaccine))
         );
-        var vaccineProductDetailsFaker = new VaccinesProductDetailFaker().RuleFor(
+        var vaccineProductDetailsFaker = new RecordProductDetailFaker(RecordType.Vaccine).RuleFor(
             x => x.Revision,
             _ => vaccineRecordRevisionFaker.Generate()
         );
@@ -131,7 +130,7 @@ public class RecordServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecords_DevelopmentNameShouldBeSet()
+    public async Task GetRecords_CompanyCodeShouldBeSet()
     {
         GetRecordsResult result = await Service.GetOrganisationRecords(
             _organisationId,
@@ -141,7 +140,7 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        dto.Items.Select(x => x.DevelopmentName).ShouldAllBe(x => !string.IsNullOrEmpty(x));
+        dto.Items.Select(x => x.CompanyCode).ShouldAllBe(x => !string.IsNullOrEmpty(x));
     }
 
     [Fact]
@@ -311,12 +310,12 @@ public class RecordServiceTests : DatabaseTestBase
         foreach (Record record in OrganisationRecords)
         {
             RecordListItemDto item = dto.Items.Single(x => x.Id == record.Id);
-            string developmentName = GetExpectedDevelopmentName(record);
+            string companyCode = GetExpectedCompanyCode(record);
 
             item.Id.ShouldBe(record.Id);
             item.RecordType.ShouldBe(record.RecordType);
             item.RecordStatus.ShouldBe(record.RecordStatus);
-            item.DevelopmentName.ShouldBe(developmentName);
+            item.CompanyCode.ShouldBe(companyCode);
 
             if (record.ReviewedAt.HasValue)
             {
@@ -333,25 +332,15 @@ public class RecordServiceTests : DatabaseTestBase
         }
     }
 
-    private string GetExpectedDevelopmentName(Record record)
+    private string GetExpectedCompanyCode(Record record)
     {
-        var relevantRevision = record.Revisions.OrderBy(x => x.RevisionNo).Last();
-        if (record.RecordType == RecordType.Medicine)
-        {
-            var medicalData = _medicineProductDetailsData.First(x =>
-                x.RevisionId == relevantRevision.Id
-            );
-            return medicalData
-                .ActiveSubstances.Where(x => x.NameType == SubstanceNameType.DevelopmentName)
-                .OrderBy(x => x.DisplayOrder)
-                .First()
-                .Name;
-        }
+        var relevantRevision = record.Revisions.OrderBy(x => x.CreatedAt).Last();
+        var productDetails =
+            record.RecordType == RecordType.Medicine
+                ? _medicineProductDetailsData
+                : _vaccineProductDetailsData;
 
-        var vaccinesProductDetail = _vaccineProductDetailsData.First(x =>
-            x.RevisionId == relevantRevision.Id
-        );
-        return vaccinesProductDetail.CompanyCode;
+        return productDetails.First(x => x.RevisionId == relevantRevision.Id).CompanyCode;
     }
 
     [Fact]

@@ -9,6 +9,7 @@ using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Application.Records.Dtos.PublishedRecord;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -23,6 +24,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     private const string RecordsUrl = "/records/organisations";
 
     private readonly IRecordService _mockRecordService = Substitute.For<IRecordService>();
+    private readonly IRecordViewService _mockRecordViewService =
+        Substitute.For<IRecordViewService>();
     private readonly HttpClient _client;
 
     public RecordControllerTests(WebApplicationFactory<Program> factory)
@@ -36,6 +39,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                 {
                     services.RemoveAll<IRecordService>();
                     services.AddSingleton(_mockRecordService);
+                    services.RemoveAll<IRecordViewService>();
+                    services.AddSingleton(_mockRecordViewService);
                 });
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
@@ -183,6 +188,119 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task GetPublishedRecord_ReturnsOk_WhenRecordExists()
+    {
+        PublishedMedicineRecordDto expected = new()
+        {
+            RecordId = 1,
+            OrganisationId = OrganisationId,
+            RecordStatus = RecordStatus.Active,
+            RevisionId = 3,
+            RecordClinicalTrials = [],
+        };
+        _mockRecordViewService
+            .GetPublishedRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(Result<PublishedRecordDto, GetPublishedRecordError>.Ok(expected));
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<PublishedRecordDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        var record = content.ShouldBeOfType<PublishedMedicineRecordDto>();
+        record.RecordId.ShouldBe(expected.RecordId);
+        record.OrganisationId.ShouldBe(expected.OrganisationId);
+        record.RecordStatus.ShouldBe(expected.RecordStatus);
+        record.RevisionId.ShouldBe(expected.RevisionId);
+    }
+
+    [Fact]
+    public async Task GetPublishedRecord_ReturnsNotFound_WhenRecordNotFound()
+    {
+        _mockRecordViewService
+            .GetPublishedRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<PublishedRecordDto, GetPublishedRecordError>.Err(
+                    new GetPublishedRecordError.NotFound(1)
+                )
+            );
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetPublishedRecord_ReturnsNotFound_WhenRecordTypeDoesNotMatch()
+    {
+        _mockRecordViewService
+            .GetPublishedRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<PublishedRecordDto, GetPublishedRecordError>.Err(
+                    new GetPublishedRecordError.RecordTypeMismatch(
+                        1,
+                        RecordType.Medicine,
+                        RecordType.Vaccine
+                    )
+                )
+            );
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetPublishedRecord_ReturnsForbidden_WhenNotAllowed()
+    {
+        _mockRecordViewService
+            .GetPublishedRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<PublishedRecordDto, GetPublishedRecordError>.Err(
+                    new GetPublishedRecordError.NotAllowed(1)
+                )
+            );
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("?recordType=")]
+    [InlineData("?recordType=Banana")]
+    [InlineData("?recordType=5")]
+    public async Task GetPublishedRecord_ReturnsBadRequest_WhenRecordTypeMissingOrInvalid(
+        string query
+    )
+    {
+        var response = await _client.GetAsync(
+            new Uri($"/records/1{query}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await _mockRecordViewService
+            .DidNotReceiveWithAnyArgs()
+            .GetPublishedRecord(default, default, TestContext.Current.CancellationToken);
+    }
+
     private static Uri AppendQueryParams(string url, GetRecordsQueryDto query)
     {
         var queryParams = new List<string>
@@ -234,7 +352,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                     RecordType = RecordType.Medicine,
                     RecordStatus = RecordStatus.Active,
                     Title = "Test Record",
-                    DevelopmentName = null,
+                    CompanyCode = "ABC-123",
                     ReviewedAt = null,
                 },
             ],
@@ -258,7 +376,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             actualItem.RecordType.ShouldBe(expectedItem.RecordType);
             actualItem.RecordStatus.ShouldBe(expectedItem.RecordStatus);
             actualItem.Title.ShouldBe(expectedItem.Title);
-            actualItem.DevelopmentName.ShouldBe(expectedItem.DevelopmentName);
+            actualItem.CompanyCode.ShouldBe(expectedItem.CompanyCode);
             actualItem.ReviewedAt.ShouldBe(expectedItem.ReviewedAt);
         }
     }

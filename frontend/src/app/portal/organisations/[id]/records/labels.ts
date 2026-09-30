@@ -14,7 +14,7 @@ export const updateStatusLabels: Record<UpdateStatus, string> = {
 
 const recordsTableHeaderKeys = [
   'id',
-  'development-name',
+  'company-code',
   'records-title',
   'record-status',
   'next-update',
@@ -28,7 +28,7 @@ export type RecordsTableHeader = {
 }
 export const organisationRecordsTableHeaders: RecordsTableHeader[] = [
   { key: 'id', label: 'ID', sortColumn: 'Id' },
-  { key: 'development-name', label: 'Development name', sortColumn: 'DevelopmentName' },
+  { key: 'company-code', label: 'Company code', sortColumn: 'CompanyCode' },
   { key: 'records-title', label: 'Records title', sortColumn: null },
   { key: 'record-status', label: 'Record status', sortColumn: 'RecordStatus' },
   { key: 'next-update', label: 'Next update', sortColumn: 'NextUpdateDue' },

@@ -14,14 +14,10 @@ public record CreateRecordCommand
     public int OrganisationId { get; init; }
 
     /// <summary>
-    /// Gets the development names associated with the record.
+    /// Gets the development name associated with the record.
     /// </summary>
-    /// <remarks>
-    /// At least one development name must be provided.
-    /// </remarks>
     [Required]
-    [MinLength(1)]
-    public required IReadOnlyCollection<string> DevelopmentNames { get; init; }
+    public required string DevelopmentName { get; init; }
 
     /// <summary>
     /// Gets the optional branded name associated with the record.
@@ -37,6 +33,11 @@ public record CreateRecordCommand
     [Required]
     [MinLength(1)]
     public required IReadOnlyCollection<string> GenericNames { get; init; }
+
+    /// <summary>
+    /// Gets the other names, codes, or synonyms associated with the record.
+    /// </summary>
+    public IReadOnlyCollection<string> OtherIdentifiers { get; init; } = [];
 
     /// <summary>
     /// Gets the title of the record.
