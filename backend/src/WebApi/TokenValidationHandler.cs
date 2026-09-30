@@ -38,7 +38,8 @@ internal class TokenValidationHandler : ITokenValidationHandler
                 "Subject could not be found as expected on the JWT."
             );
         var user = await _appDbContext
-            .Users.Include(x => x.UserOrgMemberships)
+            .Users.Include(x => x.UserOrgMemberships)!
+                .ThenInclude(x => x.Organisation)
             .FirstOrDefaultAsync(x => x.CognitoUsername == CognitoUsername.Parse(username));
 
         if (user is null)
@@ -95,27 +96,29 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
         if (memberships.Length == 1)
         {
-            return new MembershipSelection(GuardMembershipIsActive(memberships.Single(), context));
+            return new MembershipSelection(
+                GuardMembershipIsSelectable(memberships.Single(), context)
+            );
         }
 
         var selectedMembership = memberships.FirstOrDefault(x => x.IsSelectedAsCurrentOrganisation);
 
-        if (selectedMembership is not null && selectedMembership.IsAuthorised())
+        if (selectedMembership is not null && selectedMembership.IsSelectable())
         {
             return new MembershipSelection(selectedMembership);
         }
 
-        UserOrgMembership[] authorisedMemberships = memberships
-            .Where(x => x.IsAuthorised())
+        UserOrgMembership[] selectableMemberships = memberships
+            .Where(x => x.IsSelectable())
             .ToArray();
 
-        if (authorisedMemberships.Length == 1)
+        if (selectableMemberships.Length == 1)
         {
             // Only one organisation can be managed, so there is nothing for the user to select.
-            return new MembershipSelection(authorisedMemberships[0]);
+            return new MembershipSelection(selectableMemberships[0]);
         }
 
-        if (authorisedMemberships.Length > 1)
+        if (selectableMemberships.Length > 1)
         {
             return new MembershipSelection(
                 null,
@@ -125,32 +128,37 @@ internal class TokenValidationHandler : ITokenValidationHandler
             );
         }
 
-        // None of the user's memberships are authorised, so selecting a different
+        // None of the user's memberships are selectable, so selecting a different
         // organisation would not help. Fail using the most relevant membership.
         var failingMembership =
             selectedMembership
             ?? memberships.FirstOrDefault(x => x.Status == UserOrgMembershipStatus.Deactivated)
             ?? memberships[0];
-        return new MembershipSelection(GuardMembershipIsActive(failingMembership, context));
+        return new MembershipSelection(GuardMembershipIsSelectable(failingMembership, context));
     }
 
-    private static UserOrgMembership? GuardMembershipIsActive(
+    private static UserOrgMembership? GuardMembershipIsSelectable(
         UserOrgMembership userOrgMembership,
         TokenValidatedContext context
     )
     {
-        if (userOrgMembership.IsAuthorised())
-        {
-            return userOrgMembership;
-        }
         if (userOrgMembership.Status == UserOrgMembershipStatus.Deactivated)
         {
             context.Fail(AuthenticationFailCode.MembershipDeactivated.ToString());
             return null;
         }
+        if (!userOrgMembership.IsAuthorised())
+        {
+            context.Fail(AuthenticationFailCode.MembershipNotInValidState.ToString());
+            return null;
+        }
+        if (!userOrgMembership.IsOrganisationActive())
+        {
+            context.Fail(AuthenticationFailCode.OrganisationNotActive.ToString());
+            return null;
+        }
 
-        context.Fail(AuthenticationFailCode.MembershipNotInValidState.ToString());
-        return null;
+        return userOrgMembership;
     }
 
     private static bool ValidateTokenUse(TokenValidatedContext context)

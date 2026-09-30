@@ -50,6 +50,24 @@ internal sealed class UserOrgMembership
         return authorisedStatuses.Contains(Status);
     }
 
+    /// <summary>
+    /// Whether the user can manage the organisation through this membership: the membership
+    /// must be authorised and the organisation itself must be active.
+    /// </summary>
+    internal bool IsSelectable() => IsAuthorised() && IsOrganisationActive();
+
+    internal bool IsOrganisationActive()
+    {
+        if (Organisation is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot check the organisation status because the membership's organisation has not been loaded."
+            );
+        }
+
+        return Organisation.Status == UserOrgStatus.Active;
+    }
+
     public static IEnumerable<UserMembershipAction> GetPermittedActions(
         UserOrgMembershipStatus status
     )

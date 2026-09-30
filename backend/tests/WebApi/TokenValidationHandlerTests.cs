@@ -10,6 +10,7 @@ using UKPS.Api.Application.Authentication;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.InternalServices.Identity;
@@ -33,7 +34,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     public TokenValidationHandlerTests(PostgresFixture fixture)
         : base(fixture)
     {
-        _orgFaker = new OrganisationFaker();
+        _orgFaker = new OrganisationFaker().RuleFor(x => x.Status, _ => UserOrgStatus.Active);
         _membershipFaker = new UserOrgMembershipFaker()
             .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
             .RuleFor(x => x.Organisation, _ => _orgFaker.Generate());
@@ -341,6 +342,122 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.Failure.ShouldNotBeNull();
         context.Result.Failure.Message.ShouldBe(
             AuthenticationFailCode.MembershipDeactivated.ToString()
+        );
+        var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
+        identity.FindFirst(UkpsClaimTypes.OrganisationSelectionFailure).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFail_WhenSingleMembershipOrganisationIsNotActive()
+    {
+        UserOrgStatus[] nonActiveStatuses = Enum.GetValues<UserOrgStatus>()
+            .Except([UserOrgStatus.Active])
+            .ToArray();
+
+        foreach (UserOrgStatus nonActiveStatus in nonActiveStatuses)
+        {
+            User testUser = _userFaker
+                .RuleFor(
+                    x => x.UserOrgMemberships,
+                    _ =>
+                        _membershipFaker
+                            .RuleFor(
+                                x => x.Organisation,
+                                _ => _orgFaker.Generate().Update(o => o.Status = nonActiveStatus)
+                            )
+                            .Generate(1)
+                )
+                .Generate();
+            await AddEntity(testUser, TestContext.Current.CancellationToken);
+
+            var context = CreateTokenValidatedContext(
+                tokenUse: "access",
+                clientId: ClientId,
+                username: testUser.CognitoUsername
+            );
+
+            await _handler.Handle(context, CancellationToken.None);
+
+            context.Result.ShouldNotBeNull();
+            context.Result.Failure.ShouldNotBeNull();
+            context.Result.Failure.Message.ShouldBe(
+                AuthenticationFailCode.OrganisationNotActive.ToString()
+            );
+        }
+    }
+
+    [Fact]
+    public async Task Handle_ShouldRequireOrganisationSelection_WhenSelectedOrganisationIsNoLongerActive()
+    {
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        var selectedMembership = _userWithMultipleMemberships.UserOrgMemberships!.ElementAt(1);
+        _userWithMultipleMemberships
+            .TryUpdateCurrentOrganisation(selectedMembership.OrganisationId)
+            .ShouldBeTrue();
+        selectedMembership.Organisation!.Status = UserOrgStatus.Inactive;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        AssertOrganisationSelectionRequired(
+            context,
+            AuthenticationFailCode.SelectedOrganisationIsNotValid
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldAppendClaimsForOnlyActiveOrganisation_WhenOtherOrganisationsAreNotActive()
+    {
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        UserOrgMembership[] memberships =
+            _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
+        memberships[0].Organisation!.Status = UserOrgStatus.Inactive;
+        memberships[2].Organisation!.Status = UserOrgStatus.RequestedAccess;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        context.Result.ShouldBeNull();
+        var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
+        identity.FindFirst(UkpsClaimTypes.OrganisationSelectionFailure).ShouldBeNull();
+        AssertIdentityMatchesUserAndMembership(
+            identity,
+            _userWithMultipleMemberships,
+            memberships[1]
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFail_WhenMultipleMembershipsAndNoOrganisationsAreActive()
+    {
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        foreach (UserOrgMembership membership in _userWithMultipleMemberships.UserOrgMemberships!)
+        {
+            membership.Organisation!.Status = UserOrgStatus.Inactive;
+        }
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        context.Result.ShouldNotBeNull();
+        context.Result.Failure.ShouldNotBeNull();
+        context.Result.Failure.Message.ShouldBe(
+            AuthenticationFailCode.OrganisationNotActive.ToString()
         );
         var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
         identity.FindFirst(UkpsClaimTypes.OrganisationSelectionFailure).ShouldBeNull();

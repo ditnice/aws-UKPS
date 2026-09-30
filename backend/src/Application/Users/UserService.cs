@@ -74,7 +74,7 @@ internal partial class UserService(
     )
     {
         User user = await currentDbUserEntityService.GetCurrentUser(
-            q => q.Include(x => x.UserOrgMemberships),
+            q => q.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
             cancellationToken
         );
 
@@ -116,9 +116,7 @@ internal partial class UserService(
             cancellationToken
         );
 
-        return user.UserOrgMemberships!.Where(x =>
-                x.IsAuthorised() && x.Organisation!.Status == UserOrgStatus.Active
-            )
+        return user.UserOrgMemberships!.Where(x => x.IsSelectable())
             .DistinctBy(x => x.OrganisationId)
             .Select(x => new OrganisationListDto
             {

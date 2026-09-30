@@ -91,7 +91,7 @@ internal sealed class User
         GuardAgainstUserMembershipsNotLoaded();
 
         return UserOrgMemberships.FirstOrDefault(x =>
-            x.OrganisationId == organisationId && x.IsAuthorised()
+            x.OrganisationId == organisationId && x.IsSelectable()
         );
     }
 

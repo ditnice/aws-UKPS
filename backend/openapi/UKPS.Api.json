@@ -2762,6 +2762,7 @@
           "SelectedOrganisationIsNotValid",
           "MembershipDeactivated",
           "MembershipNotInValidState",
+          "OrganisationNotActive",
           null
         ],
         "type": "string"
