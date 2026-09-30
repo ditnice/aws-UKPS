@@ -8,7 +8,7 @@ internal sealed class Record
     public int Id { get; set; }
     public int OrganisationId { get; set; }
     public RecordType RecordType { get; set; }
-    public RecordStatus RecordStatus { get; set; }
+    public RecordStatus RecordStatus { get; private set; }
 
     /// <summary>
     /// Immutable after insert. Timestamp of initial row creation / first draft.

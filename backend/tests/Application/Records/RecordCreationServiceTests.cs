@@ -1,3 +1,7 @@
+global using CreateRecordResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Records.Dtos.CreateRecordDto,
+    UKPS.Api.Application.Records.Errors.CreateRecordError
+>;
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -11,10 +15,6 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using CreateRecordResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Records.Dtos.CreateRecordDto,
-    UKPS.Api.Application.Records.Errors.CreateRecordError
->;
 
 namespace UKPS.Api.Tests.Application.Records;
 
@@ -193,31 +193,5 @@ public class RecordCreationServiceTests : DatabaseTestBase
         _harness.UpdateCurrentUser(x => x with { UserRole = userRole, OrganisationId = 999 });
         CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
         result.ShouldBeError().ShouldBeOfType<CreateRecordError.NotAuthorised>();
-    }
-
-    private sealed class CreateRecordCommandFaker : Faker<CreateRecordCommand>
-    {
-        public CreateRecordCommandFaker()
-        {
-            RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
-            RuleFor(
-                x => x.DevelopmentNames,
-                f =>
-                    Enumerable
-                        .Range(0, f.Random.Int(1, 3))
-                        .Select(_ => f.Commerce.ProductName())
-                        .ToArray()
-            );
-            RuleFor(x => x.BrandedName, f => f.Commerce.ProductName());
-            RuleFor(
-                x => x.GenericNames,
-                f =>
-                    Enumerable
-                        .Range(0, f.Random.Int(1, 3))
-                        .Select(_ => f.Commerce.ProductName())
-                        .ToArray()
-            );
-            RuleFor(x => x.RecordTitle, f => f.Lorem.Sentence());
-        }
     }
 }
