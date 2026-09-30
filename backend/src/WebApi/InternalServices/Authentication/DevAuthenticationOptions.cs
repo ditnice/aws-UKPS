@@ -1,3 +1,5 @@
+using UKPS.Api.Persistence.Enums;
+
 namespace UKPS.Api.WebApi.InternalServices.Authentication;
 
 /// <summary>
@@ -14,4 +16,9 @@ public sealed record DevAuthenticationOptions
     /// Gets a value indicating whether development authentication is enabled.
     /// </summary>
     public bool IsEnabled { get; init; }
+
+    /// <summary>
+    /// Gets the user role assigned when development authentication is enabled.
+    /// </summary>
+    public UserRole UserRole { get; init; } = UserRole.Super;
 }

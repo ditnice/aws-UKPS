@@ -10,7 +10,7 @@ public sealed record MedicinesIndicationDetailDto
     /// <summary>
     /// Gets the indication.
     /// </summary>
-    public required string Indication { get; init; }
+    public string? Indication { get; init; }
 
     /// <summary>
     /// Gets the BNF chapter.

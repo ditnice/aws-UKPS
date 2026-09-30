@@ -505,7 +505,8 @@ namespace UKPS.Api.Persistence.Migrations
                     allowed_pharmaceutical_entity = table.Column<int>(type: "integer", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
                     user_id = table.Column<int>(type: "integer", nullable: false),
-                    organisation_id = table.Column<int>(type: "integer", nullable: false)
+                    organisation_id = table.Column<int>(type: "integer", nullable: false),
+                    is_selected_as_current_organisation = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -787,7 +788,7 @@ namespace UKPS.Api.Persistence.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     revision_id = table.Column<int>(type: "integer", nullable: false),
-                    indication = table.Column<string>(type: "text", nullable: false),
+                    indication = table.Column<string>(type: "text", nullable: true),
                     bnf_chapter_id = table.Column<int>(type: "integer", nullable: true),
                     indication_is_paediatric = table.Column<int>(type: "integer", nullable: true),
                     indication_is_cancer = table.Column<int>(type: "integer", nullable: true),
@@ -2165,6 +2166,14 @@ namespace UKPS.Api.Persistence.Migrations
                 table: "user_org_memberships",
                 columns: new[] { "user_id", "organisation_id", "allowed_pharmaceutical_entity" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ux_user_org_membership_current_org_per_user",
+                schema: "ukps",
+                table: "user_org_memberships",
+                column: "user_id",
+                unique: true,
+                filter: "\"is_selected_as_current_organisation\" = TRUE");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_registration_requests_approved_by_user_id",

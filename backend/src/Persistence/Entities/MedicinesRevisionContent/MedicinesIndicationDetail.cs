@@ -6,7 +6,7 @@ internal sealed class MedicinesIndicationDetail
 {
     public int Id { get; set; }
     public int RevisionId { get; set; }
-    public required string Indication { get; set; }
+    public string? Indication { get; set; }
     public int? BnfChapterId { get; set; }
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
     public YesNoUnknown? IndicationIsCancer { get; set; }

@@ -26,6 +26,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped(static _ => Substitute.For<IEmailService>());
 
         services.TryAddScoped<UserOnboardingService>();
+        services.TryAddScoped<CurrentDbUserEntityService>();
         services.TryAddScoped<ILoginService, LoginService>();
         services.TryAddScoped<IDateTimeProvider, SystemDateTimeProvider>();
         services.TryAddScoped<IOrganisationAuthoriser, OrganisationAuthoriser>();
@@ -35,6 +36,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped<IOrganisationMembershipService, OrganisationMembershipService>();
         services.TryAddScoped<IUserService, UserService>();
         services.TryAddScoped<IRecordViewService, RecordViewService>();
+        services.TryAddScoped<IRecordCreationService, RecordCreationService>();
         services.AddAuthenticationServices();
         services.AddEmailServices();
         services.TryAddScoped<IUserAdministrationService, UserAdministrationService>();
