@@ -1,5 +1,6 @@
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
 namespace UKPS.Api.Persistence.Data.Seeding;
 
@@ -9,6 +10,7 @@ internal sealed record SeedingDataPayload
     public IReadOnlyCollection<User> Users { get; init; } = [];
     public IReadOnlyCollection<UserOrgMembership> Memberships { get; init; } = [];
     public IReadOnlyCollection<Record> Records { get; init; } = [];
+    public IReadOnlyCollection<RecordProductDetail> RecordProductDetails { get; init; } = [];
 
     public object[] GetAllEntities()
     {
@@ -17,6 +19,7 @@ internal sealed record SeedingDataPayload
             .Concat(Users)
             .Concat(Memberships)
             .Concat(Records)
+            .Concat(RecordProductDetails)
             .ToArray();
     }
 }
