@@ -1,4 +1,5 @@
-import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
+import { PaginatedResponseDtoOfRecordListItemDto, RecordStatus } from '@/client/generated'
+import { Tag, TagColour } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
@@ -10,6 +11,12 @@ type RecordsTableProps = {
   query: RecordsQuery
 }
 const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
+  const recordStatusToTagLabelMap: Record<RecordStatus, TagColour> = {
+    Unpublished: 'grey',
+    Active: 'green',
+    OnHold: 'orange',
+    Archived: 'grey',
+  }
   return (
     <>
       <ApplicationTableWithPagination
@@ -23,12 +30,19 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
         getData={(key, data) => {
           switch (key) {
             case 'id':
-              return <>{data.developmentName}</>
+              return <>{data.id}</>
             case 'record-status':
-              return <>{recordStatusLabels[data.recordStatus]}</>
+              return (
+                <Tag colour={recordStatusToTagLabelMap[data.recordStatus]}>
+                  {recordStatusLabels[data.recordStatus]}
+                </Tag>
+              )
             case 'development-name':
+              return <>{data.developmentName}</>
             case 'next-update':
+              return <>TODO</>
             case 'records-title':
+              return <>TODO</>
             case 'actions':
               return <>TODO</>
           }

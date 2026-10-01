@@ -1,6 +1,7 @@
 using Bogus;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.InternalServices.Authentication;
@@ -31,6 +32,24 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         );
         RuleFor(x => x.Memberships, (f, o) => FakeMemberships(o));
         RuleFor(x => x.Records, (f, o) => FakeRecords(o));
+        RuleFor(x => x.MedicinesProductDetails, (f, o) => FakeMedicineProductDetails(o));
+    }
+
+    private static List<MedicinesProductDetail> FakeMedicineProductDetails(SeedingDataPayload o)
+    {
+        var revisionFaker = new RecordRevisionFaker().RuleFor(
+            y => y.CreatedByUser,
+            (f, _) => f.PickRandom(o.Users.ToArray())
+        );
+        var medicalRecordRevisionFaker = revisionFaker.RuleFor(
+            x => x.Record,
+            f => f.PickRandom(o.Records.Where(x => x.RecordType == RecordType.Medicine))
+        );
+        var medicineProductDetailsFaker = new MedicinesProductDetailFaker().RuleFor(
+            x => x.Revision,
+            _ => medicalRecordRevisionFaker.Generate()
+        );
+        return medicineProductDetailsFaker.Generate(50);
     }
 
     private UserOrgMembership[] FakeMemberships(SeedingDataPayload o)
@@ -84,7 +103,10 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
 
     private Record[] FakeRecords(SeedingDataPayload o)
     {
-        Record[] records = _recordFaker.Generate(20).ToArray();
+        Record[] records = _recordFaker
+            .RuleFor(x => x.RecordType, _ => RecordType.Medicine) // Only seed medicines for now
+            .Generate(20)
+            .ToArray();
         Organisation[] organisations = o.Organisations.ToArray();
         return records
             .Select(
