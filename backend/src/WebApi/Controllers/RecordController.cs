@@ -73,6 +73,8 @@ public class RecordController(
     /// <summary>
     /// Creates a new record.
     /// </summary>
+    /// <param name="command">The details of the record to create.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The created record.</returns>
     /// <response code="200">Returns the created record.</response>
     /// <response code="400">

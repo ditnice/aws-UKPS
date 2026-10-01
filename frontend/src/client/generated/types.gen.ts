@@ -1432,6 +1432,9 @@ export type GetOrganisationRecordsResponses = {
 export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
 
 export type CreateRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
     body: CreateRecordCommand;
     path?: never;
     query?: never;

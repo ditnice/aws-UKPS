@@ -17,6 +17,10 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Records;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using CreateRecordResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Records.Dtos.CreateRecordDto,
+    UKPS.Api.Application.Records.Errors.CreateRecordError
+>;
 using SortDirection = UKPS.Api.Application.Common.SortDirection;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
@@ -26,12 +30,34 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     private const int OrganisationId = 1;
     private const string RecordsUrl = "/records/organisations";
 
+    private static readonly Dictionary<
+        string,
+        Func<CreateRecordCommand, CreateRecordCommand>
+    > _invalidCreateRecordCommandModifiers = new(StringComparer.Ordinal)
+    {
+        ["DevelopmentNames empty"] = x => x with { DevelopmentNames = [] },
+        ["DevelopmentNames null"] = x => x with { DevelopmentNames = null! },
+        ["DevelopmentNames empty item"] = x => x with { DevelopmentNames = [""] },
+        ["DevelopmentNames whitespace item"] = x => x with { DevelopmentNames = ["   "] },
+        ["GenericNames empty"] = x => x with { GenericNames = [] },
+        ["GenericNames null"] = x => x with { GenericNames = null! },
+        ["GenericNames empty item"] = x => x with { GenericNames = [""] },
+        ["GenericNames whitespace item"] = x => x with { GenericNames = ["\n\n"] },
+        ["BrandedName empty"] = x => x with { BrandedName = "" },
+        ["BrandedName whitespace"] = x => x with { BrandedName = "   " },
+        ["RecordTitle empty"] = x => x with { RecordTitle = "" },
+        ["RecordTitle whitespace"] = x => x with { RecordTitle = "   " },
+        ["RecordTitle null"] = x => x with { RecordTitle = null! },
+    };
+
+    public static TheoryData<string> InvalidCreateRecordCommandCases =>
+        new(_invalidCreateRecordCommandModifiers.Keys);
+
     private readonly IRecordService _mockRecordService = Substitute.For<IRecordService>();
-    private readonly HttpClient _client;
     private readonly IRecordCreationService _mockRecordCreationService =
         Substitute.For<IRecordCreationService>();
+    private readonly HttpClient _client;
     private readonly CreateRecordCommandFaker _createRecordCommandFaker = new();
-    private static CancellationToken Ct => TestContext.Current.CancellationToken;
     private readonly CreateRecordDto _defaultCreateRecordDto = new CreateRecordDto
     {
         RecordId = 1,
@@ -140,6 +166,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
 
         var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", CreateQuery());
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
+
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
@@ -184,6 +211,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         var query = CreateQuery() with { Page = page };
         var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", query);
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
+
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
@@ -224,8 +252,10 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     {
         var response = await SendCreateRecordRequest();
 
-        response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadFromJsonAsync<CreateRecordDto>(Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<CreateRecordDto>(
+            TestContext.Current.CancellationToken
+        );
 
         content.ShouldBe(_defaultCreateRecordDto);
     }
@@ -243,7 +273,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
-    public async Task CreateRecord_WhenServiceReturnsInvalidRequestError_ReturnsBadRequestResponse()
+    public async Task CreateRecord_WhenOrganisationDoesNotExist_ReturnsBadRequestResponse()
     {
         _mockRecordCreationService
             .CreateRecord(Arg.Any<CreateRecordCommand>(), Arg.Any<CancellationToken>())
@@ -252,7 +282,9 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         var response = await SendCreateRecordRequest();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(Ct);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
         problem.ShouldNotBeNull();
         problem.Errors.ShouldContainKey(nameof(CreateRecordCommand.OrganisationId));
     }
@@ -268,40 +300,19 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         var response = await _client.PostAsJsonAsync(
             new Uri("/records", UriKind.Relative),
             body,
-            Ct
+            TestContext.Current.CancellationToken
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(Ct);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
         problem.ShouldNotBeNull();
         problem.Errors.ShouldNotBeEmpty();
         await _mockRecordCreationService
             .DidNotReceive()
             .CreateRecord(Arg.Any<CreateRecordCommand>(), Arg.Any<CancellationToken>());
     }
-
-    public static TheoryData<string> InvalidCreateRecordCommandCases =>
-        new(_invalidCreateRecordCommandModifiers.Keys);
-
-    private static readonly Dictionary<
-        string,
-        Func<CreateRecordCommand, CreateRecordCommand>
-    > _invalidCreateRecordCommandModifiers = new(StringComparer.Ordinal)
-    {
-        ["DevelopmentNames empty"] = x => x with { DevelopmentNames = [] },
-        ["DevelopmentNames null"] = x => x with { DevelopmentNames = null! },
-        ["DevelopmentNames empty item"] = x => x with { DevelopmentNames = [""] },
-        ["DevelopmentNames whitespace item"] = x => x with { DevelopmentNames = ["   "] },
-        ["GenericNames empty"] = x => x with { GenericNames = [] },
-        ["GenericNames null"] = x => x with { GenericNames = null! },
-        ["GenericNames empty item"] = x => x with { GenericNames = [""] },
-        ["GenericNames whitespace item"] = x => x with { GenericNames = ["\n\n"] },
-        ["BrandedName empty"] = x => x with { BrandedName = "" },
-        ["BrandedName whitespace"] = x => x with { BrandedName = "   " },
-        ["RecordTitle empty"] = x => x with { RecordTitle = "" },
-        ["RecordTitle whitespace"] = x => x with { RecordTitle = "   " },
-        ["RecordTitle null"] = x => x with { RecordTitle = null! },
-    };
 
     [Theory]
     [MemberData(nameof(InvalidCreateRecordCommandCases))]
@@ -315,7 +326,9 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         var response = await SendCreateRecordRequest(command);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(Ct);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
         problem.ShouldNotBeNull();
         problem.Errors.ShouldNotBeEmpty();
         await _mockRecordCreationService
@@ -430,6 +443,10 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     private Task<HttpResponseMessage> SendCreateRecordRequest(CreateRecordCommand? command = null)
     {
         command ??= _createRecordCommandFaker.Generate();
-        return _client.PostAsJsonAsync(new Uri("/records", UriKind.Relative), command, Ct);
+        return _client.PostAsJsonAsync(
+            new Uri("/records", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
     }
 }

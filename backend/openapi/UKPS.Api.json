@@ -1705,6 +1705,7 @@
         "summary": "Creates a new record.",
         "operationId": "CreateRecord",
         "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
           "content": {
             "application/json": {
               "schema": {
