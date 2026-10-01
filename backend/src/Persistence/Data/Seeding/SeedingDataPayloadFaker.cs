@@ -13,8 +13,12 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
     private readonly OrganisationFaker _organisationFaker = new OrganisationFaker();
     private readonly UserFaker _userFaker = new UserFaker();
     private readonly UserOrgMembershipFaker _membershipFaker = new UserOrgMembershipFaker();
-    private readonly UserOrgMembershipStatus[] _statuses =
-        Enum.GetValues<UserOrgMembershipStatus>();
+
+    // Removed is excluded: seeded users are never anonymised, so seeding one as Removed
+    // would leave fake PII on a membership that should have none (BR-16).
+    private readonly UserOrgMembershipStatus[] _statuses = Enum.GetValues<UserOrgMembershipStatus>()
+        .Where(x => x != UserOrgMembershipStatus.Removed)
+        .ToArray();
     private readonly RecordFaker _recordFaker = new RecordFaker();
 
     public SeedingDataPayloadFaker()

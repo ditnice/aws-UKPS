@@ -14,7 +14,8 @@ namespace UKPS.Api.WebApi.Controllers;
 [Authorize]
 [ApiController]
 [Route("users")]
-public class UserController(IUserService userService) : ControllerBase
+public partial class UserController(IUserService userService, ILogger<UserController> logger)
+    : ControllerBase
 {
     /// <summary>
     /// Gets the information for the currently authenticated user.
@@ -196,4 +197,76 @@ public class UserController(IUserService userService) : ControllerBase
             }
         );
     }
+
+    /// <summary>
+    /// Removes the specified user's personally identifiable information, replacing it with
+    /// anonymised values. Records and audit history created by the user are kept.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to remove.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <response code="200">The user was removed. Returns the name they now appear under.</response>
+    /// <response code="400">One of the user's organisation memberships is not in a state that allows removal.</response>
+    /// <response code="403">The caller is not authorised to remove this user, or attempted to remove themselves.</response>
+    /// <response code="404">The specified user does not exist.</response>
+    [ProducesResponseType<RemovedUserDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [HttpDelete("{userId:int}", Name = nameof(RemoveUser))]
+    public async Task<ActionResult<RemovedUserDto>> RemoveUser(
+        [FromRoute] int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        LogRemoveUserRequested(userId, User.Identity?.Name ?? "unknown");
+
+        var result = await userService.RemoveUser(userId, cancellationToken);
+
+        return result.Match<ActionResult<RemovedUserDto>>(
+            removedUser =>
+            {
+                LogUserRemoved(userId);
+                return Ok(removedUser);
+            },
+            err =>
+                err.Match<ActionResult<RemovedUserDto>>(
+                    notAllowed: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Forbidden",
+                            detail: "You are not authorised to remove this user."
+                        ),
+                    userNotFound: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Not Found",
+                            detail: "The specified user does not exist."
+                        ),
+                    cannotRemoveSelf: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Forbidden",
+                            detail: "You cannot remove yourself."
+                        ),
+                    notAllowedInCurrentState: x =>
+                        Problem(
+                            title: "Invalid membership state",
+                            statusCode: StatusCodes.Status400BadRequest,
+                            detail: $"The user's organisation membership is not in a state that allows this action. Current state [{x.TransitionResult.CurrentState}]"
+                        )
+                )
+        );
+    }
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Remove user requested for user {UserId} by {RequestedBy}."
+    )]
+    private partial void LogRemoveUserRequested(int userId, string requestedBy);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "User {UserId} removed and personal information anonymised."
+    )]
+    private partial void LogUserRemoved(int userId);
 }

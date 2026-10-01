@@ -1,4 +1,11 @@
-export const userActions = ['invited', 'permissions-updated', 'deactivated', 'reactivated'] as const
+export const userActions = [
+  'invited',
+  'permissions-updated',
+  'deactivated',
+  'reactivated',
+  'removed',
+] as const
+
 export type UserAction = (typeof userActions)[number]
 
 export const userRequestActions = ['approved-request', 'rejected-request'] as const
@@ -58,6 +65,7 @@ type UserHrefArgs =
     }
   | { action: UserRequestAction; userRequestId: number }
 export function buildUserActionHref(organisationId: number, args: UserHrefArgs): string {
+  console.log(args)
   return 'userId' in args
     ? `/portal/organisations/${organisationId}?action=${args.action}&userId=${args.userId}`
     : `/portal/organisations/${organisationId}?action=${args.action}&userRequestId=${args.userRequestId}`
