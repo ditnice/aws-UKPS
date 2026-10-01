@@ -33,3 +33,24 @@ test('search for a user', async ({ page }) => {
 
   await expect(page.getByText(userEmail, { exact: true })).toBeVisible()
 })
+
+test('filter standard user', async ({ page }) => {
+  const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+  await page.goto(`/portal/organisations/${organisationId}`)
+
+  await page.getByLabel('Standard user').check()
+
+  await expect(page.getByText('Champion user')).toHaveCount(1)
+})
+
+// test('filter active and pending users', async ({ page }) => {
+//   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+//   await page.goto(`/portal/organisations/${organisationId}`)
+
+//   await page.getByLabel('Deactivated').check()
+//   await page.getByLabel('Pending').check()
+
+//   await expect(page.getByText('Active')).toHaveCount(4)
+//   await expect(page.getByText('Inactive')).toHaveCount(1)
+//   await expect(page.getByText('Requested')).toHaveCount(1)
+// })
