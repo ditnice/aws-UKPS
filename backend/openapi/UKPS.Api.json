@@ -2004,8 +2004,8 @@
               }
             }
           },
-          "404": {
-            "description": "Returned if no users are found matching the query parameters.",
+          "403": {
+            "description": "Returned if the caller is not authorised to view the users of the organisation.",
             "content": {
               "text/plain": {
                 "schema": {

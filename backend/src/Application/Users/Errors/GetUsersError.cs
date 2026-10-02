@@ -8,8 +8,12 @@ public abstract record GetUsersError
     /// <summary>
     /// Represents an error indicating that the operation is not allowed for the specified organisation.
     /// </summary>
-    /// <param name="OrganisationId">The identifier of the organisation for which the operation is not allowed.</param>
-    internal sealed record NotAllowed(int OrganisationId) : GetUsersError;
+    /// <param name="OrganisationId">
+    /// The identifier of the organisation for which the operation is not allowed, or
+    /// <see langword="null"/> when no organisation was specified and the caller may not view
+    /// users in any organisation.
+    /// </param>
+    internal sealed record NotAllowed(int? OrganisationId) : GetUsersError;
 
     /// <summary>
     /// Represents an error indicating that the specified organisation was not found.
