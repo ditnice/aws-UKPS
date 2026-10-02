@@ -1,6 +1,7 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
+using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -127,6 +128,22 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             .UserRegistrationRequests.FindAsync([data.Id], TestContext.Current.CancellationToken);
         entity.ShouldNotBeNull();
         entity.CreatedAt.ShouldBe(_currentTime);
+    }
+
+    [Fact]
+    public async Task RegisterUser_ShouldSendEmail()
+    {
+        RegisterUserCommandDto registerUserCommandDto = _registerUserCommandDtoFaker.Generate();
+
+        var result = await _harness.Service.RegisterUser(
+            _organisation.Id,
+            registerUserCommandDto,
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Emails.Sent.Single().ShouldBeOfType<UserRegisterEmail>();
     }
 
     [Fact]
