@@ -1,3 +1,4 @@
+import { csrfCookieName, csrfHeaderName, getCookie } from '@/lib/auth/cookies'
 import { buildSignInHref, signInPath } from '@/lib/auth/routing'
 
 import type { CreateClientConfig } from './generated/client.gen'
@@ -56,7 +57,7 @@ async function performBrowserRefresh(): Promise<boolean> {
     const response = await globalThis.fetch(refreshUrl, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'X-CSRF-Token': getCookie('csrf_token') ?? '' },
+      headers: { [csrfHeaderName]: getCookie(csrfCookieName) ?? '' },
     })
 
     if (response.ok) browserRefreshGeneration += 1
@@ -107,21 +108,4 @@ function redirectToSignIn(): void {
   }
 
   globalThis.location.replace(buildSignInHref(returnTo))
-}
-
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
-  for (const cookie of document.cookie.split(';')) {
-    const separator = cookie.indexOf('=')
-    const key = (separator === -1 ? cookie : cookie.slice(0, separator)).trim()
-
-    if (key === name) {
-      return decodeURIComponent(separator === -1 ? '' : cookie.slice(separator + 1))
-    }
-  }
-
-  return null
 }
