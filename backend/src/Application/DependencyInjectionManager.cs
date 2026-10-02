@@ -8,6 +8,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.InternalServices.UserOnboarding;
 using UKPS.Api.Application.Organisations;
+using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Users;
 
 namespace UKPS.Api.Application;
@@ -25,13 +26,16 @@ internal static class DependencyInjectionManager
         services.TryAddScoped(static _ => Substitute.For<IEmailService>());
 
         services.TryAddScoped<UserOnboardingService>();
+        services.TryAddScoped<CurrentDbUserEntityService>();
         services.TryAddScoped<ILoginService, LoginService>();
         services.TryAddScoped<IDateTimeProvider, SystemDateTimeProvider>();
         services.TryAddScoped<IOrganisationAuthoriser, OrganisationAuthoriser>();
         services.TryAddScoped<IOrganisationService, OrganisationService>();
+        services.TryAddScoped<IRecordService, RecordService>();
         services.TryAddScoped<IUserRegistrationService, UserRegistrationService>();
         services.TryAddScoped<IOrganisationMembershipService, OrganisationMembershipService>();
         services.TryAddScoped<IUserService, UserService>();
+        services.TryAddScoped<IRecordCreationService, RecordCreationService>();
         services.AddAuthenticationServices();
         services.AddEmailServices();
         services.TryAddScoped<IUserAdministrationService, UserAdministrationService>();

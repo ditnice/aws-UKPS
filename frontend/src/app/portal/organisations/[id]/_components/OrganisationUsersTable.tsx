@@ -77,15 +77,15 @@ function renderActions(user: UserListItemDto, organisationId: number) {
     })
   }
 
+  if (!links.length) return 'Not applicable'
+
   return (
     <ul className={styles.actionList}>
-      {links.length
-        ? links.map((link) => (
-            <li key={link.key}>
-              <Link href={link.href}>{link.label}</Link>
-            </li>
-          ))
-        : 'Not applicable'}
+      {links.map((link) => (
+        <li key={link.key}>
+          <Link href={link.href}>{link.label}</Link>
+        </li>
+      ))}
     </ul>
   )
 }

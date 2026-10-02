@@ -69,6 +69,12 @@ public class AuthenticationController : ControllerBase
             "You have requested too many new setup links for this account. Contact UKPS support for help.",
         Status = StatusCodes.Status403Forbidden,
     };
+    private readonly ProblemDetails _resendSetupTokenInvalidRequest = new ProblemDetails
+    {
+        Title = "Invalid resend request.",
+        Detail = "Exactly one of setupToken or correlationId must be supplied.",
+        Status = StatusCodes.Status400BadRequest,
+    };
 
     /// <summary>
     /// Initialises a new instance of the <see cref="AuthenticationController"/> class.
@@ -306,21 +312,23 @@ public class AuthenticationController : ControllerBase
     /// </returns>
     /// <response code="200">
     /// A new setup link was generated and emailed to the user's registered email address.
+    /// The response body contains the correlation id for the new setup token.
     /// </response>
     /// <response code="400">
-    /// The request body was missing or malformed.
+    /// The request body was missing or malformed, or did not supply exactly one of
+    /// a setup token or a correlation id.
     /// </response>
     /// <response code="403">
     /// The setup token has already been resent the maximum number of times.
     /// </response>
     /// <response code="404">
-    /// The specified setup token does not exist.
+    /// The specified setup token or correlation id does not exist.
     /// </response>
     /// <response code="409">
     /// The setup token has already been consumed.
     /// </response>
     [HttpPost("resend-setup-token")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResendSetupTokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -330,17 +338,18 @@ public class AuthenticationController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        Result<ResendSetupTokenError> result =
+        Result<Guid, ResendSetupTokenError> result =
             await _authorisationAdministrationService.ResendSetupToken(command, cancellationToken);
 
-        return result.Match(
-            Ok,
+        return result.Match<ActionResult>(
+            correlationId => Ok(new ResendSetupTokenResponse { CorrelationId = correlationId }),
             err =>
                 err.Match<ActionResult>(
                     doesNotExist: _ => NotFound(_setupTokenNotFound),
                     consumed: _ => Conflict(_setupTokenConsumed),
                     tooManyAttempts: _ =>
-                        StatusCode(StatusCodes.Status403Forbidden, _setupTokenResendLimitReached)
+                        StatusCode(StatusCodes.Status403Forbidden, _setupTokenResendLimitReached),
+                    invalidTokenCombination: _ => BadRequest(_resendSetupTokenInvalidRequest)
                 )
         );
     }

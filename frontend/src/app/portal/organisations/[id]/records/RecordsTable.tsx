@@ -23,7 +23,7 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
         getData={(key, data) => {
           switch (key) {
             case 'id':
-              return <>{data.niceTaDevelopmentId}</>
+              return <>{data.developmentName}</>
             case 'record-status':
               return <>{recordStatusLabels[data.recordStatus]}</>
             case 'development-name':

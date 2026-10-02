@@ -1,4 +1,4 @@
-namespace UKPS.Api.Application.Users.Dtos;
+namespace UKPS.Api.Application.Common;
 
 /// <summary>
 /// Specifies the direction in which query results are sorted.

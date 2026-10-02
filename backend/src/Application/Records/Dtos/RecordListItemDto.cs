@@ -28,9 +28,9 @@ public sealed record RecordListItemDto
     public required string Title { get; init; }
 
     /// <summary>
-    /// Gets the NICE technology appraisal or other display identifier, when available.
+    /// Gets the development name of the active substance, when available.
     /// </summary>
-    public string? NiceTaDevelopmentId { get; init; }
+    public string? DevelopmentName { get; init; }
 
     /// <summary>
     /// Gets the date the record was last reviewed, when available.

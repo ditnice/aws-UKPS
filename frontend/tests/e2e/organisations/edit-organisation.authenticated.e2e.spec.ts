@@ -9,7 +9,7 @@ test('validates organisation details without changing authenticated-dev data', a
     page.getByRole('heading', { name: "Edit your organisation's details" }),
   ).toBeVisible()
   await page.getByLabel('Organisation name').fill('')
-  await page.getByRole('button', { name: 'Save changes' }).click()
+  await page.getByRole('button', { name: 'Submit' }).click()
 
   await expect(page.getByLabel('Organisation name')).toHaveAttribute('aria-invalid', 'true')
   await expect(page.getByText('Enter the organisation name')).toBeVisible()

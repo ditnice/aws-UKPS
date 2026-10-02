@@ -6,5 +6,5 @@ internal sealed record SeedingOptions
 
     public bool ReseedOnStartup { get; init; }
 
-    public string? SuperUsersJson { get; init; }
+    public string? SeedUsersJson { get; init; }
 }

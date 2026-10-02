@@ -8,7 +8,7 @@ namespace UKPS.Api.Application.Authentication.Errors;
 public abstract record ResendSetupTokenError
 {
     /// <summary>
-    /// Indicates that the setup token could not be found.
+    /// Indicates that the setup token or correlation id (if provided) could not be found.
     /// </summary>
     public sealed record DoesNotExist : ResendSetupTokenError;
 
@@ -22,10 +22,17 @@ public abstract record ResendSetupTokenError
     /// </summary>
     public sealed record TooManyAttempts : ResendSetupTokenError;
 
+    /// <summary>
+    /// Indicates that the request did not supply exactly one of a setup token or a
+    /// correlation id.
+    /// </summary>
+    public sealed record InvalidTokenCombination : ResendSetupTokenError;
+
     internal TResult Match<TResult>(
         Func<DoesNotExist, TResult> doesNotExist,
         Func<Consumed, TResult> consumed,
-        Func<TooManyAttempts, TResult> tooManyAttempts
+        Func<TooManyAttempts, TResult> tooManyAttempts,
+        Func<InvalidTokenCombination, TResult> invalidTokenCombination
     )
     {
         return this switch
@@ -33,6 +40,7 @@ public abstract record ResendSetupTokenError
             DoesNotExist x => doesNotExist(x),
             Consumed x => consumed(x),
             TooManyAttempts x => tooManyAttempts(x),
+            InvalidTokenCombination x => invalidTokenCombination(x),
             _ => throw new UnreachableException("Unknown resend setup token error."),
         };
     }

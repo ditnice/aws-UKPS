@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260917114828_InitialCreate")]
+    [Migration("20260930102351_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -413,6 +413,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("consumed_at");
 
+                    b.Property<Guid?>("CorrelationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("correlation_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -432,6 +436,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
+
+                    b.HasIndex("CorrelationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_onboarding_records_correlation_id");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -457,6 +465,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("IsSelectedAsCurrentOrganisation")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_selected_as_current_organisation");
+
                     b.Property<int>("OrganisationId")
                         .HasColumnType("integer")
                         .HasColumnName("organisation_id");
@@ -478,6 +490,11 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_user_org_membership_organisation_id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_org_membership_current_org_per_user")
+                        .HasFilter("\"is_selected_as_current_organisation\" = TRUE");
 
                     b.HasIndex("UserId", "OrganisationId", "AllowedPharmaceuticalEntity")
                         .IsUnique()
@@ -1060,7 +1077,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("formulation_type_id");
 
                     b.Property<string>("Indication")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("indication");
 

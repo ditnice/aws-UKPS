@@ -23,6 +23,7 @@ public class OrganisationPublicController(IOrganisationService organisationServi
     /// the names of all organisations.
     /// </returns>
     [HttpGet("publicOptions")]
+    [ProducesResponseType<IReadOnlyCollection<OrganisationListDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyCollection<OrganisationListDto>>> GetAllOrganisations(
         CancellationToken cancellationToken
     )

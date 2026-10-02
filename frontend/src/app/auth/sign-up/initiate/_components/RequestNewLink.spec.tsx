@@ -12,7 +12,7 @@ vi.mock('@/client/generated', () => ({
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   vi.mocked(postAuthResendSetupToken).mockResolvedValue({
-    data: undefined,
+    data: { correlationId: 'correlation-id-1' },
     error: undefined,
   })
 })
@@ -25,6 +25,10 @@ afterEach(() => {
 
 function getSendButton() {
   return screen.getByRole('button', { name: 'Send a new link' }) as HTMLButtonElement
+}
+
+function getSupportEmailLink() {
+  return screen.getByRole('link', { name: 'QA@UKPS.com' }) as HTMLAnchorElement
 }
 
 async function clickSend() {
@@ -62,6 +66,28 @@ describe('RequestNewLink', () => {
       screen.getByText(/If you cannot find the email, check your spam or junk folder\./),
     ).toBeDefined()
     expect(screen.getByText('60 seconds')).toBeDefined()
+  })
+
+  it('sends the returned correlation id, instead of the stale setup token, on a subsequent click', async () => {
+    vi.mocked(postAuthResendSetupToken)
+      .mockResolvedValueOnce({ data: { correlationId: 'correlation-id-1' }, error: undefined })
+      .mockResolvedValueOnce({ data: { correlationId: 'correlation-id-2' }, error: undefined })
+
+    render(<RequestNewLink setupToken="test-token" />)
+
+    await clickSend()
+    expect(postAuthResendSetupToken).toHaveBeenNthCalledWith(1, {
+      body: { setupToken: 'test-token' },
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(60 * 1000)
+    })
+    fireEvent.click(getSendButton())
+
+    expect(postAuthResendSetupToken).toHaveBeenNthCalledWith(2, {
+      body: { correlationId: 'correlation-id-1' },
+    })
   })
 
   it('counts down the wait time once a second', async () => {
@@ -102,7 +128,7 @@ describe('RequestNewLink', () => {
     expect(getSendButton().disabled).toBe(false)
   })
 
-  it('shows a generic error message for an unexpected failure status', async () => {
+  it('shows a contact-support message with a working email link for an unexpected failure status', async () => {
     vi.mocked(postAuthResendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 500 },
@@ -113,15 +139,13 @@ describe('RequestNewLink', () => {
 
     fireEvent.click(getSendButton())
 
-    expect(await screen.findByText('We could not send a new link')).toBeDefined()
-    expect(
-      screen.getByText(/Something went wrong and we could not send you a new link\./),
-    ).toBeDefined()
-    expect(screen.getByText('UKPS support')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(screen.getByText(/Please contact the UKPS support team for assistance/)).toBeDefined()
+    expect(getSupportEmailLink().getAttribute('href')).toBe('mailto:QA@UKPS.com')
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 
-  it('shows a not-found message telling the user to check their email for a 404 response', async () => {
+  it('shows a contact-support message for a 404 response', async () => {
     vi.mocked(postAuthResendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 404 },
@@ -132,13 +156,12 @@ describe('RequestNewLink', () => {
 
     fireEvent.click(getSendButton())
 
-    expect(await screen.findByText('We could not find this sign-up link')).toBeDefined()
-    expect(screen.getByText(/You may have already requested a new link\./)).toBeDefined()
-    expect(screen.getByText('UKPS support')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(getSupportEmailLink().getAttribute('href')).toBe('mailto:QA@UKPS.com')
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 
-  it('shows a generic error message for a 400 response', async () => {
+  it('shows a contact-support message for a 400 response', async () => {
     vi.mocked(postAuthResendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 400 },
@@ -149,17 +172,17 @@ describe('RequestNewLink', () => {
 
     fireEvent.click(getSendButton())
 
-    expect(await screen.findByText('We could not send a new link')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeDefined()
   })
 
-  it('shows a generic error message if the request throws, e.g. a network failure', async () => {
+  it('shows a contact-support message if the request throws, e.g. a network failure', async () => {
     vi.mocked(postAuthResendSetupToken).mockRejectedValue(new Error('Network error'))
 
     render(<RequestNewLink setupToken="test-token" />)
 
     fireEvent.click(getSendButton())
 
-    expect(await screen.findByText('We could not send a new link')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeDefined()
   })
 
   it('allows up to three successful attempts', async () => {
@@ -195,7 +218,11 @@ describe('RequestNewLink', () => {
 
     fireEvent.click(getSendButton())
 
-    expect(await screen.findByText('UKPS support')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(
+      screen.getByText(/You have reached the maximum number of attempts to request a new link\./),
+    ).toBeDefined()
+    expect(getSupportEmailLink().getAttribute('href')).toBe('mailto:QA@UKPS.com')
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 
@@ -210,7 +237,8 @@ describe('RequestNewLink', () => {
 
     fireEvent.click(getSendButton())
 
-    expect(await screen.findByText('UKPS support')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(getSupportEmailLink().getAttribute('href')).toBe('mailto:QA@UKPS.com')
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 })
