@@ -47,11 +47,11 @@ public class UserController(IUserService userService) : ControllerBase
     /// </returns>
     /// <response code="200">Returns the paginated list of users.</response>
     /// <response code="400">Returned if the query parameters are invalid or the organisation is not found.</response>
-    /// <response code="404">Returned if no users are found matching the query parameters.</response>
+    /// <response code="403">Returned if the caller is not authorised to view the users of the organisation.</response>
     [HttpGet(Name = nameof(GetUsers))]
     [ProducesResponseType<PaginatedResponseDto<UserListItemDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PaginatedResponseDto<UserListItemDto>>> GetUsers(
         [FromQuery] GetUsersQueryDto? getUsersQuery,
         CancellationToken cancellationToken

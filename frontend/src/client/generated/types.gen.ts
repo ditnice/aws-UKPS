@@ -1556,9 +1556,9 @@ export type GetUsersErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Returned if no users are found matching the query parameters.
+     * Returned if the caller is not authorised to view the users of the organisation.
      */
-    404: ProblemDetails;
+    403: ProblemDetails;
 };
 
 export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];

@@ -720,7 +720,7 @@ export const fakeGetUsersResponse400 = (options?: Options): GetUsersErrors[400] 
 
 export const fakeGetUsersResponse401 = (options?: Options): GetUsersErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeGetUsersResponse404 = (options?: Options): GetUsersErrors[404] => fakeProblemDetails(options);
+export const fakeGetUsersResponse403 = (options?: Options): GetUsersErrors[403] => fakeProblemDetails(options);
 
 export const fakeGetUserDetailsWithinOrganisationRequest = (options?: Options): Omit<GetUserDetailsWithinOrganisationData, 'url'> => {
     const f = options?.faker ?? faker;

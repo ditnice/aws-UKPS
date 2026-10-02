@@ -370,7 +370,11 @@ internal partial class UserService(
     {
         if (!organisationId.HasValue)
         {
-            return null;
+            // No specific organisation requested, so the caller must be permitted the
+            // operation on at least one organisation.
+            return organisationAuthoriser.GetAuthorisedOrganisations(operation).IsNone
+                ? new GetUsersError.NotAllowed(null)
+                : null;
         }
 
         bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
