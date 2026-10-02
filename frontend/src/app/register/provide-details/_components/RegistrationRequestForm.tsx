@@ -104,7 +104,11 @@ export function RegistrationRequestForm() {
                   width="one-third"
                   error={Boolean(errorMessage)}
                   errorMessage={errorMessage}
-                  onChange={(event) => field.handleChange(Number(event.target.value))}
+                  onChange={(event) =>
+                    field.handleChange(
+                      event.target.value == 'choose' ? 0 : Number(event.target.value),
+                    )
+                  }
                   onBlur={field.handleBlur}
                 >
                   <SelectOption value="choose">Choose organisation</SelectOption>
