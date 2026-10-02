@@ -1,7 +1,7 @@
 import { expect, test } from '../fixtures/test'
 import { requireEnvironmentVariable } from '../helpers/test-environment'
 
-test('shows organisation details and users', async ({ page }) => {
+test('shows organisation details and users', { tag: '@champion' }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}`)
 
@@ -11,7 +11,7 @@ test('shows organisation details and users', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'Filter results' })).toBeVisible()
 })
 
-test('updates the URL when filtering users by email', async ({ page }) => {
+test('updates the URL when filtering users by email', { tag: '@champion' }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}?page=3`)
 

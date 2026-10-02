@@ -1,5 +1,3 @@
-export const authStatePath = 'tests/e2e/.auth/authenticated-dev.json'
-
 const defaultAuthenticatedOrigins = ['https://dev.ukps.nice.org.uk']
 
 function getAuthenticatedOrigins(): Set<string> {

@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/test'
 
-test('loads the current-user details form', async ({ page }) => {
+test('loads the current-user details form', { tag: '@champion' }, async ({ page }) => {
   await page.goto('/portal/user/me/edit-details')
 
   await expect(page).toHaveURL('/portal/user/me/edit-details')
@@ -10,6 +10,6 @@ test('loads the current-user details form', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Save' })).toBeVisible()
 })
 
-test('saves current-user details', async () => {
+test('saves current-user details', { tag: '@champion' }, async () => {
   test.fixme(true, 'The form does not call the user API or show a success state.')
 })

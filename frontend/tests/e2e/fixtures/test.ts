@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test as base } from '@playwright/test'
 
+import type { E2eRole } from '../helpers/roles'
+
 type AccessibilityOptions = {
   exclude?: string[]
   include?: string
@@ -8,9 +10,26 @@ type AccessibilityOptions = {
 
 type Fixtures = {
   checkAccessibility: (options?: AccessibilityOptions) => Promise<void>
+  /** The role the current authenticated project signs in as, or undefined for public projects. */
+  role: E2eRole | undefined
+  requireRoleTag: void
 }
 
 export const test = base.extend<Fixtures>({
+  role: async ({}, fixtureUse, testInfo) => {
+    await fixtureUse(testInfo.project.metadata.role as E2eRole | undefined)
+  },
+  requireRoleTag: [
+    async ({}, fixtureUse, testInfo) => {
+      if (testInfo.project.name === 'authenticated-untagged') {
+        throw new Error(
+          "Authenticated specs must be tagged with a role, e.g. { tag: ['@champion'] }.",
+        )
+      }
+      await fixtureUse()
+    },
+    { auto: true },
+  ],
   checkAccessibility: async ({ page }, fixtureUse, testInfo) => {
     await fixtureUse(async ({ exclude = [], include } = {}) => {
       let builder = new AxeBuilder({ page }).withTags([

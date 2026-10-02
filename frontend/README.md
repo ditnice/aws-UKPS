@@ -67,8 +67,31 @@ Set `PLAYWRIGHT_BASE_URL` to target another deployed environment:
 PLAYWRIGHT_BASE_URL=https://example.test pnpm test:e2e
 ```
 
-Authenticated tests run when `E2E_USER_EMAIL`, `E2E_USER_PASSWORD`, `E2E_TOTP_SECRET`,
-and `E2E_ORGANISATION_ID` are set. Credentials are only submitted to trusted origins.
+Authenticated tests (`*.authenticated.e2e.spec.ts`) run as a Standard, Champion or Super user.
+Each role signs in with its own credentials:
+
+```sh
+E2E_ORGANISATION_ID=...          # shared by all roles
+E2E_STANDARD_EMAIL=...  E2E_STANDARD_PASSWORD=...  E2E_STANDARD_TOTP_SECRET=...
+E2E_CHAMPION_EMAIL=...  E2E_CHAMPION_PASSWORD=...  E2E_CHAMPION_TOTP_SECRET=...
+E2E_SUPER_EMAIL=...     E2E_SUPER_PASSWORD=...     E2E_SUPER_TOTP_SECRET=...
+```
+
+A role's projects (`auth-setup-<role>` and `authenticated-<role>`) are only created when all three
+of its variables are set, so roles without credentials are skipped. Tag each authenticated test
+with the role(s) it runs as. A test with several tags runs once per role, and the `role` fixture
+says which role the current run is using:
+
+```ts
+test('shows organisation details', { tag: ['@champion', '@super'] }, async ({ page, role }) => {
+  // ...
+})
+```
+
+Authenticated tests without a role tag fail in the `authenticated-untagged` project. Run every
+configured role with `pnpm test:e2e:authenticated-dev`, or a single role with
+`pnpm test:e2e:authenticated-dev:<standard|champion|super>`. Credentials are only submitted to
+trusted origins.
 The dev environment is trusted by default; set a comma-separated allowlist to trust additional
 environments explicitly:
 

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 import 'dotenv/config'
 
+import { anyRoleGrep, authStatePathFor, configuredRoles, roleGrep } from './tests/e2e/helpers/roles'
 import { isAuthenticatedTargetAllowed, isLocalBaseURL } from './tests/e2e/helpers/test-environment'
 
 const localBaseURL = 'https://localhost:3000'
@@ -15,14 +16,12 @@ const publicTestIgnore = [
   /\.authenticated\.e2e\.spec\.ts/,
   /accessibility\/.*\.e2e\.spec\.ts/,
 ]
-const hasAuthenticatedCredentials = [
-  'E2E_USER_EMAIL',
-  'E2E_USER_PASSWORD',
-  'E2E_TOTP_SECRET',
-  'E2E_ORGANISATION_ID',
-].every((name) => Boolean(process.env[name]?.trim()))
+const authenticatedTestMatch = /.*\.authenticated\.e2e\.spec\.ts/
 const canRunAuthenticatedTests =
-  hasAuthenticatedCredentials && isAuthenticatedTargetAllowed(baseURL)
+  Boolean(process.env.E2E_ORGANISATION_ID?.trim()) && isAuthenticatedTargetAllowed(baseURL)
+// Each role with credentials gets its own sign-in setup and test project, so a spec
+// tagged with several roles runs once per role.
+const authenticatedRoles = canRunAuthenticatedTests ? configuredRoles() : []
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -79,28 +78,37 @@ export default defineConfig({
         ...localChromiumOptions,
       },
     },
-    ...(canRunAuthenticatedTests
-      ? [
-          {
-            name: 'auth-setup',
-            testMatch: /auth\.setup\.ts/,
-            use: {
-              ...devices['Desktop Chrome'],
-              ...localChromiumOptions,
-            },
-          },
-          {
-            name: 'authenticated-chromium',
-            dependencies: ['auth-setup'],
-            testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
-            use: {
-              ...devices['Desktop Chrome'],
-              ...localChromiumOptions,
-              storageState: 'tests/e2e/.auth/authenticated-dev.json',
-            },
-          },
-        ]
-      : []),
+    ...authenticatedRoles.flatMap((role) => [
+      {
+        name: `auth-setup-${role}`,
+        testMatch: /auth\.setup\.ts/,
+        grep: roleGrep(role),
+        use: {
+          ...devices['Desktop Chrome'],
+          ...localChromiumOptions,
+        },
+      },
+      {
+        name: `authenticated-${role}`,
+        dependencies: [`auth-setup-${role}`],
+        testMatch: authenticatedTestMatch,
+        grep: roleGrep(role),
+        metadata: { role },
+        use: {
+          ...devices['Desktop Chrome'],
+          ...localChromiumOptions,
+          storageState: authStatePathFor(role),
+        },
+      },
+    ]),
+    {
+      // Authenticated specs without a role tag would otherwise never run. This project
+      // collects them so the fixture in tests/e2e/fixtures/test.ts can fail them.
+      name: 'authenticated-untagged',
+      testMatch: authenticatedTestMatch,
+      grepInvert: anyRoleGrep,
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
   webServer: isLocal
     ? {
