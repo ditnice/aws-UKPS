@@ -297,8 +297,11 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
+        _harness.Emails.Sent.Count.ShouldBe(2);
+        _harness.Emails.Sent.First().ShouldBeOfType<UserRegisterEmail>();
         _harness
-            .Emails.Sent.ShouldHaveSingleItem()
+            .Emails.Sent.Skip(1)
+            .First()
             .ShouldBeOfType<UserMembershipRequestApprovedNotificationEmail>();
     }
 
@@ -343,7 +346,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         resultA.ShouldBeSuccess();
         resultB.ShouldBeSuccess();
 
-        _harness.Emails.Sent.Count.ShouldBe(1);
+        _harness.Emails.Sent.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -377,8 +380,11 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
+        _harness.Emails.Sent.Count.ShouldBe(2);
+        _harness.Emails.Sent.First().ShouldBeOfType<UserRegisterEmail>();
         _harness
-            .Emails.Sent.ShouldHaveSingleItem()
+            .Emails.Sent.Skip(1)
+            .First()
             .ShouldBeOfType<UserMembershipRequestRejectedNotificationEmail>();
     }
 
