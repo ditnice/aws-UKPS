@@ -1,5 +1,3 @@
-using UKPS.Api.Persistence.Entities.Identity;
-
 namespace UKPS.Api.Application.InternalServices.Communication;
 
 /// <summary>
@@ -11,7 +9,7 @@ public sealed record SendEmailCommand
     /// A reference to the user so that we can identify the user
     /// without logging their email address.
     /// </summary>
-    public required CognitoUsername CognitoUsername { get; init; }
+    public required PersonIdentifier PersonIdentifier { get; init; }
 
     /// <summary>
     /// Gets the email address of the intended recipient.

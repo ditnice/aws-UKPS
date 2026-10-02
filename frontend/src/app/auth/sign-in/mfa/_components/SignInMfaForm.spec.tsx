@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthMfa } from '@/client/generated'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { errorMessages } from '@/lib/form/errorMessages'
 
 import { SignInMfaForm } from './SignInMfaForm'
 
@@ -50,9 +51,7 @@ describe('SignInMfaForm', () => {
     renderValidForm()
     expect(screen.getByLabelText('Security code')).toBeDefined()
     expect(
-      screen.getByText(
-        `Enter the 6-digit authentication code shown in the app for ${exampleUserEmail}.`,
-      ),
+      screen.getByText(`Enter the 6-digit authentication code shown in the app.`),
     ).toBeDefined()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDefined()
     expect(screen.getByRole('link', { name: 'Contact UKPS support' })).toBeDefined()
@@ -95,7 +94,7 @@ describe('SignInMfaForm', () => {
     renderValidForm()
     updateForm(validFormValues)
     submitForm()
-    expect(await screen.findByText('Invalid security code.')).toBeDefined()
+    expect(await screen.findByText(errorMessages.incorrectMfaCode)).toBeDefined()
   })
   it('shows a required validation error when submitted empty', async () => {
     renderValidForm()

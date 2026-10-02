@@ -29,7 +29,10 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
     {
         _appContext = context;
         _mockCurrentUserInfoService = Substitute.For<ICurrentUserInfoService>();
-        _mockCurrentUserInfoService.GetCurrentUserInfo().Returns(_currentUser);
+        _mockCurrentUserInfoService.GetCurrentUserInfo().Returns(_ => _currentUser);
+        _mockCurrentUserInfoService
+            .GetCurrentCognitoUsername()
+            .Returns(_ => _currentUser.CognitoUsername);
         _serviceCollection = new ServiceCollection()
             .AddScoped(_ => GetClearedContext())
             .AddUkpsServices()
@@ -60,7 +63,6 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
     public IServiceTestHarness<TService> UpdateCurrentUser(Func<CurrentUser, CurrentUser> update)
     {
         _currentUser = update(_currentUser);
-        _mockCurrentUserInfoService.GetCurrentUserInfo().Returns(_currentUser);
         return this;
     }
 

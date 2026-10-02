@@ -105,6 +105,7 @@ describe('PasswordInput', () => {
     expect(screen.getByLabelText('Password').getAttribute('aria-describedby')).toBe(
       'password-error',
     )
+    expect(screen.getByLabelText('Password').getAttribute('aria-invalid')).toBe('true')
     expect(asFragment()).toMatchSnapshot()
   })
 

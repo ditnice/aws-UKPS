@@ -1,3 +1,4 @@
+using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Shouldly;
@@ -80,6 +81,48 @@ public class DatabaseConstraintTests : DatabaseTestBase
             exception.InnerException.ShouldBeOfType<PostgresException>();
         postgresException.ConstraintName.ShouldBe(
             ConstraintNames.UserMembershipRequiresOrganisation
+        );
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_WhenAMembershipTestIsApprovedAndRejected_ShouldThrowDbUpdateException()
+    {
+        Faker<UserRegistrationRequest> faker = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, new OrganisationFaker().Generate())
+            .RuleFor(x => x.RejectedAt, f => DateTime.SpecifyKind(f.Date.Past(), DateTimeKind.Utc))
+            .RuleFor(x => x.ApprovedAt, f => DateTime.SpecifyKind(f.Date.Past(), DateTimeKind.Utc));
+        UserRegistrationRequest entity = faker.Generate();
+        Context.Add(entity);
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        PostgresException postgresException =
+            exception.InnerException.ShouldBeOfType<PostgresException>();
+        postgresException.ConstraintName.ShouldBe(
+            ConstraintNames.MembershipRequestsShouldNotBeApprovedAndRejected
+        );
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_WhenUserHasMultipleUserOrgMembershipsMarkedAsSelected_ShouldThrowDbUpdateException()
+    {
+        var user = new UserFaker().Generate();
+        var organisationFaker = new OrganisationFaker();
+        Faker<UserOrgMembership> faker = new UserOrgMembershipFaker()
+            .RuleFor(x => x.User, _ => user)
+            .RuleFor(x => x.Organisation, _ => organisationFaker.Generate())
+            .RuleFor(x => x.IsSelectedAsCurrentOrganisation, _ => true);
+
+        Context.AddRange(faker.Generate(2));
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        PostgresException postgresException =
+            exception.InnerException.ShouldBeOfType<PostgresException>();
+        postgresException.ConstraintName.ShouldBe(
+            ConstraintNames.UsersCannotHaveMultipleSelectedCurrentOrganisations
         );
     }
 

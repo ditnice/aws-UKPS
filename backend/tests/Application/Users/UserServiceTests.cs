@@ -1,6 +1,8 @@
 using Bogus;
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -20,7 +22,7 @@ using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
 >;
-using SortDirection = UKPS.Api.Application.Users.Dtos.SortDirection;
+using SortDirection = UKPS.Api.Application.Common.SortDirection;
 
 namespace UKPS.Api.Tests.Application.Users;
 
@@ -46,14 +48,15 @@ public class UserServiceTests : DatabaseTestBase
 
     private readonly GetUsersQueryDto _getAllUserQuery = new GetUsersQueryDto() { PageSize = 1000 };
     private readonly Faker _faker = new Faker();
+    private readonly IReadOnlyCollection<UserRegistrationRequest> _userRegistrationRequests;
     private readonly IReadOnlyCollection<User> _seededUsers;
 
-    private IEnumerable<User> ViewableUsers =>
-        _seededUsers.Where(x => x.UserOrgMemberships!.Any(x => x.Status != UserOrgStatus.Rejected));
+    private IEnumerable<User> ViewableUsers => _seededUsers;
     private IEnumerable<UserOrgMembership> SeededMemberships =>
         _seededUsers.SelectMany(x => x.UserOrgMemberships!);
-    private IEnumerable<UserOrgMembership> ViewableMemberships =>
-        SeededMemberships.Where(x => x.Status != UserOrgStatus.Rejected);
+    private IEnumerable<UserOrgMembership> ViewableMemberships => SeededMemberships;
+    private int TotalExpectedValues =>
+        ViewableMemberships.Count() + _userRegistrationRequests.Count(x => x.RejectedAt is null);
 
     public UserServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -64,7 +67,7 @@ public class UserServiceTests : DatabaseTestBase
             _currentDateTime
         );
 
-        var organisations = _organisationFaker.Generate(4);
+        var organisations = _organisationFaker.Generate(3);
         var userFaker = new UserFaker().RuleFor(
             x => x.UserOrgMemberships,
             (f, u) =>
@@ -79,6 +82,9 @@ public class UserServiceTests : DatabaseTestBase
                     .ToArray();
             }
         );
+        _userRegistrationRequests = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, f => f.PickRandom(organisations))
+            .Generate(20);
         _seededUsers = userFaker.Generate(50);
     }
 
@@ -86,6 +92,7 @@ public class UserServiceTests : DatabaseTestBase
     {
         await base.InitializeAsync();
         await AddEntities(_seededUsers, TestContext.Current.CancellationToken);
+        await AddEntities(_userRegistrationRequests, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -95,7 +102,7 @@ public class UserServiceTests : DatabaseTestBase
         {
             User currentUser = _faker.PickRandom(ViewableUsers);
             UserOrgMembership currentUserMembership = _faker.PickRandom(
-                currentUser.UserOrgMemberships!.Where(x => x.Status != UserOrgStatus.Rejected)
+                currentUser.UserOrgMemberships
             );
             _harness.UpdateCurrentUser(x =>
                 x with
@@ -123,6 +130,96 @@ public class UserServiceTests : DatabaseTestBase
                 }
             );
         }
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenThereAreMultipleMembershipRequests_ShouldGetTheLatestOne()
+    {
+        var userEmail = "example563@email.com";
+        var organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var faker = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _ => organisation)
+            .RuleFor(x => x.WorkEmail, _ => userEmail)
+            .RuleFor(x => x.RejectedAt, _ => null)
+            .RuleFor(x => x.RejectedBy, _ => null);
+        var registrationRequests = await AddEntities(
+            faker.Generate(5),
+            TestContext.Current.CancellationToken
+        );
+        var latestRequest = registrationRequests.OrderBy(x => x.CreatedAt).Last();
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto() { OrganisationId = organisation.Id },
+            TestContext.Current.CancellationToken
+        );
+        var data = result.ShouldBeSuccess();
+        data.Items.ShouldHaveSingleItem().RegistrationRequestId.ShouldBe(latestRequest.Id);
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenThereIsARejectedMembershipRequest_ShouldNotShowThatRequestAsAUser()
+    {
+        var organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var faker = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _ => organisation)
+            .FinishWith(
+                (f, x) =>
+                    x.Reject(
+                        _userFaker.Generate(),
+                        DateTime.SpecifyKind(f.Date.Past(), DateTimeKind.Utc)
+                    )
+            );
+        await AddEntity(faker.Generate(), TestContext.Current.CancellationToken);
+
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto() { OrganisationId = organisation.Id },
+            TestContext.Current.CancellationToken
+        );
+        var data = result.ShouldBeSuccess();
+        data.Items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenThereIsAnApprovedMembershipRequest_ShouldNotShowThatRequestAsAUser()
+    {
+        var organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var faker = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _ => organisation)
+            .FinishWith(
+                (f, x) =>
+                    x.Approve(
+                        _userFaker.Generate(),
+                        DateTime.SpecifyKind(f.Date.Past(), DateTimeKind.Utc)
+                    )
+            );
+        await AddEntity(faker.Generate(), TestContext.Current.CancellationToken);
+
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto() { OrganisationId = organisation.Id },
+            TestContext.Current.CancellationToken
+        );
+        var data = result.ShouldBeSuccess();
+        data.Items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetUsers_ReturnsUserWaitingForAccessToBeGranted()
+    {
+        GetUsersResult result = await Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
+
+        var data = result.ShouldBeSuccess();
+        data.Items.ShouldContain(x => x.Status == UserOrgStatus.RequestedAccess);
     }
 
     [Fact]
@@ -202,6 +299,55 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetUsers_WhenThereAreTwoMembershipRequestsForTwoDifferenceOrganisations_ShouldShowBothMembershipRequests()
+    {
+        var email = "example@email.com";
+        var userMembershipRequests = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _ => _organisationFaker.Generate())
+            .RuleFor(x => x.WorkEmail, _ => email)
+            .Generate(2);
+        await AddEntities(userMembershipRequests, TestContext.Current.CancellationToken);
+
+        foreach (var item in userMembershipRequests)
+        {
+            GetUsersResult result = await Service.GetUsers(
+                new GetUsersQueryDto() { OrganisationId = item.OrganisationId },
+                TestContext.Current.CancellationToken
+            );
+            PaginatedResponseDto<UserListItemDto> data = result.ShouldBeSuccess();
+            data.Items.ShouldHaveSingleItem().RegistrationRequestId.ShouldBe(item.Id);
+        }
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenLatestMembershipRequestIsRejected_ShouldReturnNoUsersRelatedToThatMembershipRequest()
+    {
+        var email = "example@email.com";
+        var referenceDateTime = new DateTime(2023, 4, 4, 12, 45, 0, DateTimeKind.Utc);
+        var organisation = _organisationFaker.Generate();
+        var userMembershipRequestsFaker = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.WorkEmail, _ => email)
+            .RuleFor(x => x.Organisation, _ => organisation);
+        var membershipRequestA = userMembershipRequestsFaker
+            .RuleFor(x => x.CreatedAt, referenceDateTime.AddHours(-2))
+            .Generate();
+        var membershipRequestB = userMembershipRequestsFaker
+            .RuleFor(x => x.CreatedAt, referenceDateTime.AddHours(-1))
+            .RuleFor(x => x.RejectedAt, _ => referenceDateTime.AddHours(-0.5))
+            .RuleFor(x => x.RejectedByUser, _ => _userFaker.Generate())
+            .Generate();
+        await AddEntities(
+            [membershipRequestA, membershipRequestB],
+            TestContext.Current.CancellationToken
+        );
+        GetUsersResult result = await Service.GetUsers(
+            new GetUsersQueryDto() { OrganisationId = organisation.Id },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess().Items.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task GetUsers_WhenSortParametersSet_ShouldSortBySpecifiedField()
     {
         var getterLookup = new Dictionary<GetUsersQuerySortValue, Func<UserListItemDto, object?>>()
@@ -269,7 +415,7 @@ public class UserServiceTests : DatabaseTestBase
         item.UserId.ShouldBe(userMembership.UserId);
         item.EmailAddress.ShouldBe(userMembership.User!.WorkEmail);
         item.Role.ShouldBe(userMembership.UserRole);
-        item.Status.ShouldBe(userMembership.Status);
+        item.Status.ShouldBe(userMembership.Status.ConvertToUserOrgStatus());
 
         if (userMembership.User.LastActive.HasValue)
         {
@@ -305,7 +451,6 @@ public class UserServiceTests : DatabaseTestBase
         );
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(ViewableMemberships.Count());
         dto.Items.ShouldAllBe(i => i.Status != UserOrgStatus.Rejected);
     }
 
@@ -356,7 +501,7 @@ public class UserServiceTests : DatabaseTestBase
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.Items.ShouldContain(x => x.UserId == sampleMembership.User.Id);
         dto.Items.ShouldAllBe(x =>
-            x.EmailAddress!.Contains(randomlyCapitalised, StringComparison.OrdinalIgnoreCase)
+            x.EmailAddress.Contains(randomlyCapitalised, StringComparison.OrdinalIgnoreCase)
         );
     }
 
@@ -496,7 +641,7 @@ public class UserServiceTests : DatabaseTestBase
         );
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
-        dto.TotalCount.ShouldBe(ViewableMemberships.Count());
+        dto.TotalCount.ShouldBe(TotalExpectedValues);
         dto.Page.ShouldBe(2);
         dto.PageSize.ShouldBe(1);
     }
@@ -513,8 +658,7 @@ public class UserServiceTests : DatabaseTestBase
         );
 
         PaginatedResponseDto<UserListItemDto> dto = result.ShouldBeSuccess();
-        dto.Items.Select(i => _seededUsers.First(x => x.Id == i.UserId))
-            .SelectMany(x => x.UserOrgMemberships!.Select(x => x.OrganisationId))
+        dto.Items.SelectMany(i => GetOrganisationIdsFromUserEmails(i.EmailAddress))
             .Distinct()
             .Count()
             .ShouldBeGreaterThan(1);
@@ -549,7 +693,7 @@ public class UserServiceTests : DatabaseTestBase
     public async Task GetUsers_PageBeyondLastPage_ReturnsEmptyItemsWithCorrectTotalCount()
     {
         var pageSize = 5;
-        var lastPage = (int)Math.Ceiling((double)ViewableMemberships.Count() / pageSize) + 1;
+        var lastPage = (int)Math.Ceiling((double)TotalExpectedValues / pageSize) + 1;
         GetUsersResult result = await Service.GetUsers(
             new() { Page = lastPage, PageSize = pageSize },
             TestContext.Current.CancellationToken
@@ -557,7 +701,7 @@ public class UserServiceTests : DatabaseTestBase
 
         PaginatedResponseDto<UserListItemDto>? dto = result.ShouldBeSuccess();
         dto.Items.ShouldBeEmpty();
-        dto.TotalCount.ShouldBe(ViewableMemberships.Count());
+        dto.TotalCount.ShouldBe(TotalExpectedValues);
         dto.Page.ShouldBe(lastPage);
     }
 
@@ -632,7 +776,14 @@ public class UserServiceTests : DatabaseTestBase
         if (filtersByOrganisation)
         {
             dto.TotalCount.ShouldBe(2);
-            dto.Items.Select(i => i.UserId).ToArray().ShouldBe([users[0].Id, users[2].Id]);
+            dto.Items.Select(i => i.UserId)
+                .Order()
+                .ToArray()
+                .ShouldBe(
+                    new int?[] { users[0].Id, users[2].Id }
+                        .Order()
+                        .ToArray()
+                );
         }
         else
         {
@@ -673,6 +824,94 @@ public class UserServiceTests : DatabaseTestBase
         {
             result.Error.ShouldBeOfType<GetUsersError.NotAllowed>();
         }
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenAStandardUser_NoActionsAreShownAsPermittedOnTheReturnUsers()
+    {
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = UserRole.Standard,
+                OrganisationId = 1,
+            }
+        );
+        var users = await harness.Service.GetUsers(
+            new GetUsersQueryDto(),
+            TestContext.Current.CancellationToken
+        );
+        users.ShouldBeSuccess().Items.ShouldAllBe(x => !x.Actions.Any());
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super)]
+    [InlineData(UserRole.Champion)]
+    public async Task GetUsers_WhenChampionOrSuperUserShouldReturnAllActions(UserRole userRoles)
+    {
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = userRoles,
+                OrganisationId = 1,
+            }
+        );
+        var allActions = Enum.GetValues<UserMembershipAction>();
+        var result = await harness.Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
+        var users = result.ShouldBeSuccess().Items;
+        var actions = users.SelectMany(x => x.Actions).Distinct();
+        var intersection = allActions.Intersect(actions);
+        intersection.Count().ShouldBe(allActions.Length);
+    }
+
+    [Fact]
+    public async Task GetUsers_NoActionsAreShownAsPermittedForTheCurrentUser()
+    {
+        var membership = _faker.PickRandom(ViewableMemberships);
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = membership.User!.CognitoUsername,
+            }
+        );
+        var result = await harness.Service.GetUsers(
+            new GetUsersQueryDto() { Email = membership.User!.WorkEmail },
+            TestContext.Current.CancellationToken
+        );
+        var users = result.ShouldBeSuccess().Items;
+        var foundUser = users.First(x =>
+            string.Equals(
+                x.EmailAddress,
+                membership.User.WorkEmail,
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
+        foundUser.Actions.ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Active, UserMembershipAction.EditUserRole, true)]
+    [InlineData(UserOrgStatus.Inactive, UserMembershipAction.EditUserRole, true)]
+    [InlineData(UserOrgStatus.Active, UserMembershipAction.DeactivateMembership, true)]
+    [InlineData(UserOrgStatus.Active, UserMembershipAction.ReactivateMembership, false)]
+    [InlineData(UserOrgStatus.Deactivated, UserMembershipAction.DeactivateMembership, false)]
+    [InlineData(UserOrgStatus.RequestedAccess, UserMembershipAction.ApproveMembership, true)]
+    [InlineData(UserOrgStatus.RequestedAccess, UserMembershipAction.RejectMembership, true)]
+    [InlineData(UserOrgStatus.Deactivated, UserMembershipAction.ReactivateMembership, true)]
+    public async Task GetUsers_UsersOfGivenState_MayHaveTheGivenAction(
+        UserOrgStatus status,
+        UserMembershipAction action,
+        bool shouldContainAction
+    )
+    {
+        var result = await _harness.Service.GetUsers(
+            new() { Status = [status] },
+            TestContext.Current.CancellationToken
+        );
+        var users = result.ShouldBeSuccess().Items;
+        users.ShouldAllBe(x => x.Actions.Contains(action) == shouldContainAction);
     }
 
     [Fact]
@@ -804,6 +1043,26 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
+    }
+
+    private IEnumerable<int> GetOrganisationIdsFromUserEmails(string emailAddress)
+    {
+        return (
+            _seededUsers
+                .FirstOrDefault(x =>
+                    string.Equals(x.WorkEmail, emailAddress, StringComparison.OrdinalIgnoreCase)
+                )
+                ?.UserOrgMemberships!.Select(x => x.OrganisationId)
+            ?? Enumerable.Empty<int>()
+        )
+            .Concat(
+                _userRegistrationRequests
+                    .Where(x =>
+                        string.Equals(x.WorkEmail, emailAddress, StringComparison.OrdinalIgnoreCase)
+                    )
+                    .Select(x => x.OrganisationId)
+            )
+            .Distinct();
     }
 
     private async Task<User> CreateExistingCurrentUser()
@@ -955,22 +1214,6 @@ public class UserServiceTests : DatabaseTestBase
         notFound.OrganisationId.ShouldBe(otherOrganisation.Id);
     }
 
-    [Fact]
-    public async Task GetUserDetailsWithinOrganisation_ReturnsUserNotFoundError_WhenTheMembershipIsRejected()
-    {
-        (User user, UserOrgMembership membership) = await AddUserWithMembership(
-            status: UserOrgStatus.Rejected
-        );
-
-        GetUserInformationResult result = await Service.GetUserDetailsWithinOrganisation(
-            user.Id,
-            membership.OrganisationId,
-            TestContext.Current.CancellationToken
-        );
-
-        result.ShouldBeError().ShouldBeOfType<GetUsersError.UserNotFound>();
-    }
-
     [Theory]
     [InlineData(UserRole.Super, true)]
     [InlineData(UserRole.Champion, false)]
@@ -1043,23 +1286,326 @@ public class UserServiceTests : DatabaseTestBase
         }
     }
 
-    private async Task<(User User, UserOrgMembership Membership)> AddUserWithMembership(
-        Action<User>? configureUser = null,
-        UserOrgStatus status = UserOrgStatus.Active
-    )
+    [Fact]
+    public async Task UpdateCurrentOrganisation_ShouldUpdateCurrentOrganisationInTheDatabase()
     {
-        User user = _userFaker.Generate().Update(x => configureUser?.Invoke(x));
-        UserOrgMembership membership = new UserOrgMembershipFaker()
-            .RuleFor(x => x.Status, _ => status)
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            3,
+            organisationStatus: UserOrgStatus.Active
+        );
+        _harness.UpdateCurrentUser(user);
+
+        var selectedMembership = _faker.PickRandom(memberships);
+
+        var result = await _harness.Service.UpdateCurrentOrganisation(
+            new UpdateCurrentOrganisationCommand()
+            {
+                OrganisationId = selectedMembership.OrganisationId,
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var updatedUser = await _harness
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
+            .FirstOrDefaultAsync(x => x.Id == user.Id, TestContext.Current.CancellationToken);
+
+        updatedUser
+            ?.FindCurrentOrganisationId()
+            .ShouldNotBeNull()
+            .ShouldBe(selectedMembership.OrganisationId);
+    }
+
+    [Fact]
+    public async Task UpdateCurrentOrganisation_WhenProvidingOrganisationThatIsNotOneThatBelongsToUser_ShouldReturnError()
+    {
+        var otherOrganisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        (User user, _) = await AddUserWithManyMemberships(
+            3,
+            organisationStatus: UserOrgStatus.Active
+        );
+        _harness.UpdateCurrentUser(user);
+
+        Result<UpdateCurrentOrganisationError> result =
+            await _harness.Service.UpdateCurrentOrganisation(
+                new UpdateCurrentOrganisationCommand() { OrganisationId = otherOrganisation.Id },
+                TestContext.Current.CancellationToken
+            );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<UpdateCurrentOrganisationError.ProvidedOrganisationWasNotValid>();
+    }
+
+    [Fact]
+    public async Task UpdateCurrentOrganisation_ShouldBeAbleToBeRunMultipleTimes()
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            3,
+            organisationStatus: UserOrgStatus.Active
+        );
+        _harness.UpdateCurrentUser(user);
+
+        UserOrgMembership selectedMembership = null!;
+        foreach (var _ in Enumerable.Range(0, 5))
+        {
+            selectedMembership = _faker.PickRandom(memberships);
+
+            var result = await _harness.Service.UpdateCurrentOrganisation(
+                new UpdateCurrentOrganisationCommand()
+                {
+                    OrganisationId = selectedMembership.OrganisationId,
+                },
+                TestContext.Current.CancellationToken
+            );
+
+            result.ShouldBeSuccess();
+        }
+
+        var updatedUser = await _harness
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
+            .FirstOrDefaultAsync(x => x.Id == user.Id, TestContext.Current.CancellationToken);
+
+        updatedUser
+            ?.FindCurrentOrganisationId()
+            .ShouldNotBeNull()
+            .ShouldBe(selectedMembership.OrganisationId);
+    }
+
+    [Fact]
+    public async Task UpdateCurrentOrganisation_WhenMembershipIsNotAuthorised_ShouldReturnErrorAndKeepPreviousSelection()
+    {
+        UserOrgMembershipStatus[] unauthorisedStatuses =
+        [
+            UserOrgMembershipStatus.AwaitingSetup,
+            UserOrgMembershipStatus.Deactivated,
+        ];
+
+        foreach (UserOrgMembershipStatus unauthorisedStatus in unauthorisedStatuses)
+        {
+            (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+                2,
+                organisationStatus: UserOrgStatus.Active
+            );
+            UserOrgMembership unauthorisedMembership = new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => unauthorisedStatus)
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = user.Id;
+                    x.Organisation = _organisationFaker.Generate();
+                });
+            await AddEntity(unauthorisedMembership, TestContext.Current.CancellationToken);
+            _harness.UpdateCurrentUser(user);
+
+            UserOrgMembership previousSelection = memberships[0];
+            (
+                await _harness.Service.UpdateCurrentOrganisation(
+                    new UpdateCurrentOrganisationCommand
+                    {
+                        OrganisationId = previousSelection.OrganisationId,
+                    },
+                    TestContext.Current.CancellationToken
+                )
+            ).ShouldBeSuccess();
+
+            Result<UpdateCurrentOrganisationError> result =
+                await _harness.Service.UpdateCurrentOrganisation(
+                    new UpdateCurrentOrganisationCommand
+                    {
+                        OrganisationId = unauthorisedMembership.OrganisationId,
+                    },
+                    TestContext.Current.CancellationToken
+                );
+
+            result
+                .ShouldBeError()
+                .ShouldBeOfType<UpdateCurrentOrganisationError.ProvidedOrganisationWasNotValid>();
+
+            var updatedUser = await _harness
+                .GetClearedContext()
+                .Users.Include(x => x.UserOrgMemberships)
+                .SingleAsync(x => x.Id == user.Id, TestContext.Current.CancellationToken);
+
+            updatedUser.FindCurrentOrganisationId().ShouldBe(previousSelection.OrganisationId);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateCurrentOrganisation_WhenOrganisationIsNotActive_ShouldReturnErrorAndKeepPreviousSelection()
+    {
+        UserOrgStatus[] nonActiveStatuses = Enum.GetValues<UserOrgStatus>()
+            .Except([UserOrgStatus.Active])
+            .ToArray();
+
+        foreach (UserOrgStatus nonActiveStatus in nonActiveStatuses)
+        {
+            (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+                2,
+                organisationStatus: UserOrgStatus.Active
+            );
+            UserOrgMembership inactiveOrganisationMembership = new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = user.Id;
+                    x.Organisation = _organisationFaker
+                        .Generate()
+                        .Update(o => o.Status = nonActiveStatus);
+                });
+            await AddEntity(inactiveOrganisationMembership, TestContext.Current.CancellationToken);
+            _harness.UpdateCurrentUser(user);
+
+            UserOrgMembership previousSelection = memberships[0];
+            (
+                await _harness.Service.UpdateCurrentOrganisation(
+                    new UpdateCurrentOrganisationCommand
+                    {
+                        OrganisationId = previousSelection.OrganisationId,
+                    },
+                    TestContext.Current.CancellationToken
+                )
+            ).ShouldBeSuccess();
+
+            Result<UpdateCurrentOrganisationError> result =
+                await _harness.Service.UpdateCurrentOrganisation(
+                    new UpdateCurrentOrganisationCommand
+                    {
+                        OrganisationId = inactiveOrganisationMembership.OrganisationId,
+                    },
+                    TestContext.Current.CancellationToken
+                );
+
+            result
+                .ShouldBeError()
+                .ShouldBeOfType<UpdateCurrentOrganisationError.ProvidedOrganisationWasNotValid>();
+
+            var updatedUser = await _harness
+                .GetClearedContext()
+                .Users.Include(x => x.UserOrgMemberships)
+                .SingleAsync(x => x.Id == user.Id, TestContext.Current.CancellationToken);
+
+            updatedUser.FindCurrentOrganisationId().ShouldBe(previousSelection.OrganisationId);
+        }
+    }
+
+    [Fact]
+    public async Task GetCurrentUserOrganisations_ShouldReturnOnlyTheOrganisationsOfTheCurrentUsersMemberships()
+    {
+        foreach (UserRole role in Enum.GetValues<UserRole>())
+        {
+            (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+                3,
+                organisationStatus: UserOrgStatus.Active
+            );
+            _harness.UpdateCurrentUser(user).UpdateCurrentUser(x => x with { UserRole = role });
+
+            IReadOnlyCollection<OrganisationListDto> result =
+                await _harness.Service.GetCurrentUserOrganisations(
+                    TestContext.Current.CancellationToken
+                );
+
+            result
+                .Select(x => x.Id)
+                .ShouldBe(memberships.Select(x => x.OrganisationId), ignoreOrder: true);
+            result
+                .Select(x => x.OrganisationName)
+                .ShouldBe(
+                    memberships
+                        .Select(x => x.Organisation!.OrganisationName)
+                        .Order(StringComparer.OrdinalIgnoreCase)
+                );
+        }
+    }
+
+    [Fact]
+    public async Task GetCurrentUserOrganisations_ShouldExcludeUnauthorisedMembershipsAndInactiveOrganisations()
+    {
+        (User user, UserOrgMembership[] validMemberships) = await AddUserWithManyMemberships(
+            1,
+            organisationStatus: UserOrgStatus.Active
+        );
+        UserOrgMembership deactivatedMembership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Deactivated)
             .Generate()
             .Update(x =>
             {
-                x.User = user;
-                x.Organisation = _organisationFaker.Generate();
+                x.UserId = user.Id;
+                x.Organisation = _organisationFaker
+                    .Generate()
+                    .Update(o => o.Status = UserOrgStatus.Active);
             });
+        UserOrgMembership inactiveOrganisationMembership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+            .Generate()
+            .Update(x =>
+            {
+                x.UserId = user.Id;
+                x.Organisation = _organisationFaker
+                    .Generate()
+                    .Update(o => o.Status = UserOrgStatus.Deactivated);
+            });
+        await AddEntities(
+            [deactivatedMembership, inactiveOrganisationMembership],
+            TestContext.Current.CancellationToken
+        );
+        _harness.UpdateCurrentUser(user);
 
-        await AddEntity(membership, TestContext.Current.CancellationToken);
-        return (user, membership);
+        IReadOnlyCollection<OrganisationListDto> result =
+            await _harness.Service.GetCurrentUserOrganisations(
+                TestContext.Current.CancellationToken
+            );
+
+        result.Select(x => x.Id).ShouldBe([validMemberships.Single().OrganisationId]);
+    }
+
+    private async Task<(User User, UserOrgMembership Membership)> AddUserWithMembership(
+        Action<User>? configureUser = null,
+        UserOrgMembershipStatus status = UserOrgMembershipStatus.Active
+    )
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            1,
+            configureUser,
+            status
+        );
+        return (user, memberships.Single());
+    }
+
+    private async Task<(User User, UserOrgMembership[] Memberships)> AddUserWithManyMemberships(
+        int numberOfMemberships,
+        Action<User>? configureUser = null,
+        UserOrgMembershipStatus status = UserOrgMembershipStatus.Active,
+        UserOrgStatus? organisationStatus = null
+    )
+    {
+        User user = _userFaker.Generate().Update(x => configureUser?.Invoke(x));
+        UserOrgMembership[] memberships = new UserOrgMembershipFaker()
+            .RuleFor(x => x.Status, _ => status)
+            .RuleFor(x => x.UserRole, _ => UserRole.Standard)
+            .Generate(numberOfMemberships)
+            .Select(x =>
+                x.Update(x =>
+                {
+                    x.User = user;
+                    x.Organisation = _organisationFaker.Generate();
+                    if (organisationStatus is { } orgStatus)
+                    {
+                        x.Organisation.Status = orgStatus;
+                    }
+                })
+            )
+            .ToArray();
+
+        await AddEntities(memberships, TestContext.Current.CancellationToken);
+        return (user, memberships);
     }
 
     private static GetUsersQueryDto CreateGetUsersQuery(

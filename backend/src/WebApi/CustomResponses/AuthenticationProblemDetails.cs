@@ -10,6 +10,11 @@ namespace UKPS.Api.WebApi.CustomResponses;
 public sealed class AuthenticationProblemDetails : ProblemDetails
 {
     /// <summary>
+    /// Gets or sets the code identifying the reason authentication or authorisation failed.
+    /// </summary>
+    public AuthenticationFailCode? Code { get; init; }
+
+    /// <summary>
     /// Gets the type of authentication challenge required to complete authentication.
     /// </summary>
     public UkpsChallengeType? ChallengeType { get; init; }

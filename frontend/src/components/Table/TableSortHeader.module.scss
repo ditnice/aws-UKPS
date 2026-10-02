@@ -12,6 +12,15 @@
   font-weight: inherit;
   padding: 0;
   text-align: inherit;
+  text-decoration: none;
+
+  &:visited {
+    color: colours.$link;
+  }
+
+  &:hover {
+    color: colours.$link;
+  }
 
   &:focus {
     @include focus.default-focus-style;

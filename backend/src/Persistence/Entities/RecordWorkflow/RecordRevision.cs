@@ -15,12 +15,6 @@ internal sealed class RecordRevision
     /// <summary>Global autoincrement per record.</summary>
     public int RevisionNo { get; set; }
 
-    /// <summary>Increments on each new published revision e.g. 1 in 1.0</summary>
-    public int MajorVersion { get; set; }
-
-    /// <summary>Increments on each draft save within a major version e.g. 1 in 1.1</summary>
-    public int MinorVersion { get; set; }
-
     public WorkflowStatus WorkflowStatus { get; set; }
     public int CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }

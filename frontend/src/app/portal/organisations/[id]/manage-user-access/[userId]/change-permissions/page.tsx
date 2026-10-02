@@ -48,24 +48,25 @@ export default async function ChangeUserPermissions({ params }: Props) {
   return (
     <>
       <PageHeader backLink={backLink} heading="Change user permissions" />
-      <p>
-        {user.workEmail} is a {user.userRole.toLowerCase()} user.
-      </p>
 
       {user.userRole === 'Super' ? (
         <p>This user’s role cannot be changed from here.</p>
       ) : (
         <>
           <p>
+            You are about to make {user.workEmail} a{' '}
+            {user.userRole === 'Standard' ? 'champion' : 'standard'} user.
+          </p>
+          <p>
             If you change this user’s role, they will{' '}
             {user.userRole === 'Standard'
               ? 'gain access to additional capabilities in UK PharmaScan, including:'
-              : 'lose access to the following capabilities in UK PharmaScan:'}
+              : 'lose access to capabilities in UK PharmaScan, including:'}
           </p>
           <ul>
             <li>adding users to your organisation</li>
             <li>changing user roles</li>
-            <li>deactivating and removing users</li>
+            <li>deactivating/removing users</li>
           </ul>
 
           <ChangePermissionsForm

@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +5,7 @@ using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.InternalServices.Identity;
 
 namespace UKPS.Api.WebApi;
@@ -38,19 +38,32 @@ internal class TokenValidationHandler : ITokenValidationHandler
                 "Subject could not be found as expected on the JWT."
             );
         var user = await _appDbContext
-            .Users.Include(x => x.UserOrgMemberships)
+            .Users.Include(x => x.UserOrgMemberships)!
+                .ThenInclude(x => x.Organisation)
             .FirstOrDefaultAsync(x => x.CognitoUsername == CognitoUsername.Parse(username));
 
         if (user is null)
         {
-            context.Fail($"No user exists in the database with the given identity ID");
+            context.Fail(AuthenticationFailCode.NoDbUserExistsWithUsername.ToString());
             return;
         }
 
         var identity = context.Principal?.Identity as ClaimsIdentity;
 
-        var membership = GetSelectedMembership(user, context);
-        if (membership is null)
+        MembershipSelection selection = GetSelectedMembership(user, context);
+
+        if (selection.SelectionFailure is { } selectionFailure)
+        {
+            // The user is authenticated but must select an organisation. Only endpoints using the
+            // organisation selection policy are accessible until they have done so.
+            identity?.AddClaim(new Claim(UkpsClaimTypes.Email, user.WorkEmail));
+            identity?.AddClaim(
+                new Claim(UkpsClaimTypes.OrganisationSelectionFailure, $"{selectionFailure}")
+            );
+            return;
+        }
+
+        if (selection.Membership is not { } membership)
         {
             return;
         }
@@ -62,7 +75,7 @@ internal class TokenValidationHandler : ITokenValidationHandler
         identity?.AddClaim(new Claim(UkpsClaimTypes.UserRole, $"{membership.UserRole}"));
     }
 
-    private static UserOrgMembership? GetSelectedMembership(
+    private static MembershipSelection GetSelectedMembership(
         User user,
         TokenValidatedContext context
     )
@@ -73,42 +86,79 @@ internal class TokenValidationHandler : ITokenValidationHandler
                 "Cannot get users selected because the user's organisation memberships have not been loaded."
             );
         }
-        var validMemberships = user.UserOrgMemberships.Where(x => x.IsAuthorised()).ToArray();
+        var memberships = user.UserOrgMemberships.ToArray();
 
-        if (validMemberships.Length == 0)
+        if (memberships.Length == 0)
         {
-            context.Fail("No authorised membership for the user could be found.");
+            context.Fail(AuthenticationFailCode.NoMembershipsForUser.ToString());
+            return MembershipSelection.Failed;
+        }
+
+        if (memberships.Length == 1)
+        {
+            return new MembershipSelection(
+                GuardMembershipIsSelectable(memberships.Single(), context)
+            );
+        }
+
+        var selectedMembership = memberships.FirstOrDefault(x => x.IsSelectedAsCurrentOrganisation);
+
+        if (selectedMembership is not null && selectedMembership.IsSelectable())
+        {
+            return new MembershipSelection(selectedMembership);
+        }
+
+        UserOrgMembership[] selectableMemberships = memberships
+            .Where(x => x.IsSelectable())
+            .ToArray();
+
+        if (selectableMemberships.Length == 1)
+        {
+            // Only one organisation can be managed, so there is nothing for the user to select.
+            return new MembershipSelection(selectableMemberships[0]);
+        }
+
+        if (selectableMemberships.Length > 1)
+        {
+            return new MembershipSelection(
+                null,
+                selectedMembership is null
+                    ? AuthenticationFailCode.SelectedOrganisationRequired
+                    : AuthenticationFailCode.SelectedOrganisationIsNotValid
+            );
+        }
+
+        // None of the user's memberships are selectable, so selecting a different
+        // organisation would not help. Fail using the most relevant membership.
+        var failingMembership =
+            selectedMembership
+            ?? memberships.FirstOrDefault(x => x.Status == UserOrgMembershipStatus.Deactivated)
+            ?? memberships[0];
+        return new MembershipSelection(GuardMembershipIsSelectable(failingMembership, context));
+    }
+
+    private static UserOrgMembership? GuardMembershipIsSelectable(
+        UserOrgMembership userOrgMembership,
+        TokenValidatedContext context
+    )
+    {
+        if (userOrgMembership.Status == UserOrgMembershipStatus.Deactivated)
+        {
+            context.Fail(AuthenticationFailCode.MembershipDeactivated.ToString());
+            return null;
+        }
+        if (!userOrgMembership.IsAuthorised())
+        {
+            context.Fail(AuthenticationFailCode.MembershipNotInValidState.ToString());
+            return null;
+        }
+        if (!userOrgMembership.IsOrganisationActive())
+        {
+            context.Fail(AuthenticationFailCode.OrganisationNotActive.ToString());
             return null;
         }
 
-        if (validMemberships.Length == 1)
-        {
-            return validMemberships.Single();
-        }
-
-        var selectedOrganisationId = context.HttpContext.Request.Cookies["selected_organisation"];
-
-        if (
-            !int.TryParse(
-                selectedOrganisationId,
-                CultureInfo.InvariantCulture,
-                out var organisationId
-            )
-        )
-        {
-            context.Fail("A valid selected organisation cookie is required.");
-            return null;
-        }
-
-        var membership = validMemberships.SingleOrDefault(x => x.OrganisationId == organisationId);
-
-        if (membership is null)
-        {
-            context.Fail("The selected organisation is not associated with the user.");
-            return null;
-        }
-
-        return membership;
+        return userOrgMembership;
     }
 
     private static bool ValidateTokenUse(TokenValidatedContext context)
@@ -132,5 +182,13 @@ internal class TokenValidationHandler : ITokenValidationHandler
             return false;
         }
         return true;
+    }
+
+    private readonly record struct MembershipSelection(
+        UserOrgMembership? Membership,
+        AuthenticationFailCode? SelectionFailure = null
+    )
+    {
+        public static MembershipSelection Failed => new(null);
     }
 }

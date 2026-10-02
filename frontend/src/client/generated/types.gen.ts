@@ -4,6 +4,18 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export const AuthenticationFailCode = {
+    NO_DB_USER_EXISTS_WITH_USERNAME: 'NoDbUserExistsWithUsername',
+    NO_MEMBERSHIPS_FOR_USER: 'NoMembershipsForUser',
+    SELECTED_ORGANISATION_REQUIRED: 'SelectedOrganisationRequired',
+    SELECTED_ORGANISATION_IS_NOT_VALID: 'SelectedOrganisationIsNotValid',
+    MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
+    MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState',
+    ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive'
+} as const;
+
+export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];
+
 /**
  * Represents problem details returned when authentication fails or
  * additional authentication is required.
@@ -14,6 +26,7 @@ export type AuthenticationProblemDetails = {
     status?: null | number;
     detail?: null | string;
     instance?: null | string;
+    code?: null | AuthenticationFailCode;
     challengeType?: null | UkpsChallengeType;
     /**
      * Gets the session identifier associated with the authentication challenge.
@@ -48,9 +61,74 @@ export type CreateOrganisationDto = {
 };
 
 /**
+ * Contains the details required to create a new record.
+ */
+export type CreateRecordCommand = {
+    /**
+     * Gets the identifier of the organisation for which the record will be created.
+     */
+    organisationId: number;
+    /**
+     * Gets the development names associated with the record.
+     */
+    developmentNames: Array<string>;
+    /**
+     * Gets the optional branded name associated with the record.
+     */
+    brandedName?: null | string;
+    /**
+     * Gets the generic names associated with the record.
+     */
+    genericNames: Array<string>;
+    /**
+     * Gets the title of the record.
+     */
+    recordTitle: string;
+};
+
+/**
+ * Represents the result of creating a record.
+ */
+export type CreateRecordDto = {
+    /**
+     * Gets the identifier of the newly created record.
+     */
+    recordId: number;
+    /**
+     * Gets the identifier of the initial revision created for the record.
+     */
+    revisionId: number;
+};
+
+/**
+ * Specifies the fields by which records can be sorted.
+ */
+export const GetRecordsQuerySortValue = {
+    NEXT_UPDATE_DUE: 'NextUpdateDue',
+    ID: 'Id',
+    DEVELOPMENT_NAME: 'DevelopmentName',
+    RECORD_STATUS: 'RecordStatus'
+} as const;
+
+/**
+ * Specifies the fields by which records can be sorted.
+ */
+export type GetRecordsQuerySortValue = typeof GetRecordsQuerySortValue[keyof typeof GetRecordsQuerySortValue];
+
+/**
  * Specifies the fields by which users can be sorted when querying users.
  */
-export type GetUsersQuerySortValue = 'LastActive' | 'Email' | 'Role' | 'Status';
+export const GetUsersQuerySortValue = {
+    LAST_ACTIVE: 'LastActive',
+    EMAIL: 'Email',
+    ROLE: 'Role',
+    STATUS: 'Status'
+} as const;
+
+/**
+ * Specifies the fields by which users can be sorted when querying users.
+ */
+export type GetUsersQuerySortValue = typeof GetUsersQuerySortValue[keyof typeof GetUsersQuerySortValue];
 
 /**
  * Represents the credentials provided by a user when attempting to authenticate.
@@ -164,6 +242,20 @@ export type OrganisationDetailsDto = {
 };
 
 /**
+ * Represents the ID and name of an organisation.
+ */
+export type OrganisationListDto = {
+    /**
+     * Gets the unique identifier of the organisation.
+     */
+    id: number;
+    /**
+     * Gets the name of the organisation.
+     */
+    organisationName: string;
+};
+
+/**
  * Represents the data transfer object for an organisation membership.
  */
 export type OrganisationMembershipDto = {
@@ -200,7 +292,39 @@ export type OrganisationMembershipDto = {
 /**
  * Represents the different types of organisations within the system.
  */
-export type OrganisationType = 'PharmaCompany' | 'HorizonScanning' | 'Strategic' | 'Internal';
+export const OrganisationType = {
+    PHARMA_COMPANY: 'PharmaCompany',
+    HORIZON_SCANNING: 'HorizonScanning',
+    STRATEGIC: 'Strategic',
+    INTERNAL: 'Internal'
+} as const;
+
+/**
+ * Represents the different types of organisations within the system.
+ */
+export type OrganisationType = typeof OrganisationType[keyof typeof OrganisationType];
+
+/**
+ * Represents a paginated response containing a collection of items and pagination metadata.
+ */
+export type PaginatedResponseDtoOfRecordListItemDto = {
+    /**
+     * Gets the collection of items in the current page.
+     */
+    items: Array<RecordListItemDto>;
+    /**
+     * Gets the total number of items across all pages.
+     */
+    totalCount: number;
+    /**
+     * Gets the current page number (1-based index).
+     */
+    page: number;
+    /**
+     * Gets the number of items per page.
+     */
+    pageSize: number;
+};
 
 /**
  * Represents a paginated response containing a collection of items and pagination metadata.
@@ -237,6 +361,137 @@ export type ProblemDetails = {
     status?: null | number;
     detail?: null | string;
     instance?: null | string;
+};
+
+/**
+ * Represents the record summary returned by the record list endpoint.
+ */
+export type RecordListItemDto = {
+    /**
+     * Gets the record identifier.
+     */
+    id: number;
+    /**
+     * Gets the record type.
+     */
+    recordType: RecordType;
+    /**
+     * Gets the record status.
+     */
+    recordStatus: RecordStatus;
+    /**
+     * Gets the human-readable record title.
+     */
+    title: string;
+    /**
+     * Gets the development name of the active substance, when available.
+     */
+    developmentName?: null | string;
+    /**
+     * Gets the date the record was last reviewed, when available.
+     */
+    reviewedAt?: null | string;
+};
+
+/**
+ * Represents the status of a record in the system.
+ */
+export const RecordStatus = {
+    UNPUBLISHED: 'Unpublished',
+    ACTIVE: 'Active',
+    ON_HOLD: 'OnHold',
+    ARCHIVED: 'Archived'
+} as const;
+
+/**
+ * Represents the status of a record in the system.
+ */
+export type RecordStatus = typeof RecordStatus[keyof typeof RecordStatus];
+
+/**
+ * Represents the type of a record, such as Medicine or Vaccine.
+ */
+export const RecordType = { MEDICINE: 'Medicine', VACCINE: 'Vaccine' } as const;
+
+/**
+ * Represents the type of a record, such as Medicine or Vaccine.
+ */
+export type RecordType = typeof RecordType[keyof typeof RecordType];
+
+/**
+ * Represents the information required to register a new user.
+ */
+export type RegisterUserCommandDto = {
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
+};
+
+/**
+ * Represents the details of a user who has been registered.
+ */
+export type RegisterUserConfirmationDto = {
+    /**
+     * ID for the user.
+     */
+    id: number;
+    /**
+     * Gets the name of the user's organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
+};
+
+/**
+ * Represents the command used to request that a new setup link be sent for an
+ * expired setup token.
+ */
+export type ResendSetupTokenCommand = {
+    /**
+     * Gets the expired setup token to reissue. Supplied on the first resend
+     * request for a tab, when only the token embedded in the page is known.
+     * Exactly one of SetupToken or CorrelationId must be supplied.
+     */
+    setupToken?: null | string;
+    /**
+     * Gets the correlation id returned by a previous resend, used to identify
+     * the record on a subsequent resend from the same tab without needing a
+     * currently-valid setup token. Exactly one of SetupToken or CorrelationId
+     * must be supplied.
+     */
+    correlationId?: null | string;
+};
+
+/**
+ * Represents the outcome of a successful setup token resend.
+ */
+export type ResendSetupTokenResponse = {
+    /**
+     * Gets the correlation id for the newly issued setup token, to be supplied
+     * on any subsequent resend request from the same tab instead of the
+     * (now stale) setup token.
+     */
+    correlationId: string;
 };
 
 /**
@@ -278,9 +533,26 @@ export type SetupUserCommand = {
 /**
  * Specifies the direction in which query results are sorted.
  */
-export type SortDirection = 'Ascending' | 'Descending';
+export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' } as const;
 
-export type UkpsChallengeType = 'MultiFactorAuthenticationRequired' | 'MultiFactorAuthenticationSetupRequired';
+/**
+ * Specifies the direction in which query results are sorted.
+ */
+export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
+
+export const UkpsChallengeType = { MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'MultiFactorAuthenticationRequired', MULTI_FACTOR_AUTHENTICATION_SETUP_REQUIRED: 'MultiFactorAuthenticationSetupRequired' } as const;
+
+export type UkpsChallengeType = typeof UkpsChallengeType[keyof typeof UkpsChallengeType];
+
+/**
+ * Represents the request to update the currently authenticated user's active organisation.
+ */
+export type UpdateCurrentOrganisationCommand = {
+    /**
+     * Gets the identifier of the organisation to set as the current organisation.
+     */
+    organisationId: number;
+};
 
 /**
  * Represents the data transfer object for updating organisation details.
@@ -315,6 +587,10 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
      */
     userRole: UserRole;
 };
+
+export const UpdateStatus = { OVERDUE: 'Overdue', NOT_OVERDUE: 'NotOverdue' } as const;
+
+export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
 
 /**
  * Represents the details to update for an existing user.
@@ -409,11 +685,15 @@ export type UserListItemDto = {
     /**
      * Gets the unique identifier of the user.
      */
-    userId: number;
+    userId: null | number;
+    /**
+     * The optional lasted active registration request associated with the user.
+     */
+    registrationRequestId: null | number;
     /**
      * Gets the email address of the user, if available.
      */
-    emailAddress?: null | string;
+    emailAddress: string;
     /**
      * Gets the role of the user within the system.
      */
@@ -425,37 +705,75 @@ export type UserListItemDto = {
     /**
      * Gets the date and time when the user was last active, if available.
      */
-    lastActive?: null | string;
+    lastActive: null | string;
+    /**
+     * Gets the actions that can be performed by the current user.
+     */
+    actions: Array<UserMembershipAction>;
 };
 
 /**
- * Represents a request for a user's membership.
+ * Defines the actions that can be performed on a user's membership.
  */
-export type UserMembershipRequestDto = {
-    /**
-     * Gets the unique identifier of the membership request.
-     */
-    id: number;
-    /**
-     * The email associated with the email address.
-     */
-    workEmail: string;
-};
+export const UserMembershipAction = {
+    APPROVE_MEMBERSHIP: 'ApproveMembership',
+    REJECT_MEMBERSHIP: 'RejectMembership',
+    DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
+    REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
+    EDIT_USER_ROLE: 'EditUserRole'
+} as const;
+
+/**
+ * Defines the actions that can be performed on a user's membership.
+ */
+export type UserMembershipAction = typeof UserMembershipAction[keyof typeof UserMembershipAction];
 
 /**
  * Represents the status of a user's association with an organisation.
  */
-export type UserOrgStatus = 'RequestedAccess' | 'AwaitingSetup' | 'Active' | 'Rejected' | 'Inactive' | 'Deactivated';
+export const UserOrgStatus = {
+    REQUESTED_ACCESS: 'RequestedAccess',
+    AWAITING_SETUP: 'AwaitingSetup',
+    ACTIVE: 'Active',
+    REJECTED: 'Rejected',
+    INACTIVE: 'Inactive',
+    DEACTIVATED: 'Deactivated'
+} as const;
+
+/**
+ * Represents the status of a user's association with an organisation.
+ */
+export type UserOrgStatus = typeof UserOrgStatus[keyof typeof UserOrgStatus];
 
 /**
  * Represents the different roles a user can have within the system.
  */
-export type UserRole = 'Standard' | 'Champion' | 'Super';
+export const UserRole = {
+    STANDARD: 'Standard',
+    CHAMPION: 'Champion',
+    SUPER: 'Super'
+} as const;
+
+/**
+ * Represents the different roles a user can have within the system.
+ */
+export type UserRole = typeof UserRole[keyof typeof UserRole];
 
 /**
  * Represents the different types of users in the system.
  */
-export type UserType = 'PharmaUser' | 'HorizonScanner' | 'StrategicUser' | 'QaUser' | 'ItAdmin';
+export const UserType = {
+    PHARMA_USER: 'PharmaUser',
+    HORIZON_SCANNER: 'HorizonScanner',
+    STRATEGIC_USER: 'StrategicUser',
+    QA_USER: 'QaUser',
+    IT_ADMIN: 'ItAdmin'
+} as const;
+
+/**
+ * Represents the different types of users in the system.
+ */
+export type UserType = typeof UserType[keyof typeof UserType];
 
 export type ValidationProblemDetails = {
     type?: null | string;
@@ -612,17 +930,21 @@ export type GetAuthValidateSetupTokenData = {
 
 export type GetAuthValidateSetupTokenErrors = {
     /**
-     * Bad Request
+     * The setupToken query parameter was missing or was not a valid GUID.
      */
     400: ProblemDetails;
-    /**
-     * The setup token has expired or has already been consumed.
-     */
-    401: ProblemDetails;
     /**
      * The specified setup token does not exist.
      */
     404: ProblemDetails;
+    /**
+     * The setup token has already been consumed.
+     */
+    409: ProblemDetails;
+    /**
+     * The setup token has expired.
+     */
+    410: ProblemDetails;
 };
 
 export type GetAuthValidateSetupTokenError = GetAuthValidateSetupTokenErrors[keyof GetAuthValidateSetupTokenErrors];
@@ -633,6 +955,48 @@ export type GetAuthValidateSetupTokenResponses = {
      */
     200: unknown;
 };
+
+export type PostAuthResendSetupTokenData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ResendSetupTokenCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/resend-setup-token';
+};
+
+export type PostAuthResendSetupTokenErrors = {
+    /**
+     * The request body was missing or malformed, or did not supply exactly one of
+     * a setup token or a correlation id.
+     */
+    400: ProblemDetails;
+    /**
+     * The setup token has already been resent the maximum number of times.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified setup token or correlation id does not exist.
+     */
+    404: ProblemDetails;
+    /**
+     * The setup token has already been consumed.
+     */
+    409: ProblemDetails;
+};
+
+export type PostAuthResendSetupTokenError = PostAuthResendSetupTokenErrors[keyof PostAuthResendSetupTokenErrors];
+
+export type PostAuthResendSetupTokenResponses = {
+    /**
+     * A new setup link was generated and emailed to the user's registered email address.
+     * The response body contains the correlation id for the new setup token.
+     */
+    200: ResendSetupTokenResponse;
+};
+
+export type PostAuthResendSetupTokenResponse = PostAuthResendSetupTokenResponses[keyof PostAuthResendSetupTokenResponses];
 
 export type PostAuthSetupUserData = {
     /**
@@ -657,6 +1021,14 @@ export type PostAuthSetupUserErrors = {
      * Not Found
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
+    /**
+     * Gone
+     */
+    410: ProblemDetails;
 };
 
 export type PostAuthSetupUserError = PostAuthSetupUserErrors[keyof PostAuthSetupUserErrors];
@@ -697,113 +1069,57 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
-export type GetUserMembershipRequestData = {
+export type GetCurrentUserOrganisationsData = {
     body?: never;
-    path: {
-        /**
-         * The unique identifier of the organisation.
-         */
-        organisationId: number;
-        /**
-         * The unique identifier of the user.
-         */
-        userId: number;
-    };
+    path?: never;
     query?: never;
-    url: '/organisations/{organisationId}/users/{userId}/membership-requests';
+    url: '/users/me/organisations';
 };
 
-export type GetUserMembershipRequestErrors = {
+export type GetCurrentUserOrganisationsErrors = {
     /**
-     * The authenticated user is not allowed to access the requested membership
-     * request.
+     * Unauthorized
      */
-    403: ProblemDetails;
-    /**
-     * The requested user membership request could not be found.
-     */
-    404: ProblemDetails;
+    401: AuthenticationProblemDetails;
 };
 
-export type GetUserMembershipRequestError = GetUserMembershipRequestErrors[keyof GetUserMembershipRequestErrors];
+export type GetCurrentUserOrganisationsError = GetCurrentUserOrganisationsErrors[keyof GetCurrentUserOrganisationsErrors];
 
-export type GetUserMembershipRequestResponses = {
+export type GetCurrentUserOrganisationsResponses = {
     /**
-     * The user membership request was found and returned successfully.
+     * The organisations were returned successfully.
      */
-    200: UserMembershipRequestDto;
+    200: Array<OrganisationListDto>;
 };
 
-export type GetUserMembershipRequestResponse = GetUserMembershipRequestResponses[keyof GetUserMembershipRequestResponses];
+export type GetCurrentUserOrganisationsResponse = GetCurrentUserOrganisationsResponses[keyof GetCurrentUserOrganisationsResponses];
 
-export type ApproveData = {
-    body?: never;
-    path: {
-        /**
-         * The identifier of the organisation containing the membership request.
-         */
-        organisationId: number;
-        /**
-         * The identifier of the user associated with the membership request.
-         */
-        userId: number;
-    };
+export type UpdateCurrentOrganisationData = {
+    /**
+     * A token that can be used to cancel the request.
+     */
+    body: UpdateCurrentOrganisationCommand;
+    path?: never;
     query?: never;
-    url: '/organisations/{organisationId}/users/{userId}/membership-requests/approve';
+    url: '/users/me/current-organisation';
 };
 
-export type ApproveErrors = {
+export type UpdateCurrentOrganisationErrors = {
     /**
-     * The current user is not allowed to approve the membership request.
+     * The provided organisation is invalid.
      */
-    403: ProblemDetails;
+    400: ProblemDetails;
     /**
-     * The membership request could not be found.
+     * Unauthorized
      */
-    404: ProblemDetails;
+    401: AuthenticationProblemDetails;
 };
 
-export type ApproveError = ApproveErrors[keyof ApproveErrors];
+export type UpdateCurrentOrganisationError = UpdateCurrentOrganisationErrors[keyof UpdateCurrentOrganisationErrors];
 
-export type ApproveResponses = {
+export type UpdateCurrentOrganisationResponses = {
     /**
-     * The membership request was successfully approved.
-     */
-    200: unknown;
-};
-
-export type RejectData = {
-    body?: never;
-    path: {
-        /**
-         * The identifier of the organisation containing the membership request.
-         */
-        organisationId: number;
-        /**
-         * The identifier of the user associated with the membership request.
-         */
-        userId: number;
-    };
-    query?: never;
-    url: '/organisations/{organisationId}/users/{userId}/membership-requests/reject';
-};
-
-export type RejectErrors = {
-    /**
-     * The current user is not allowed to reject the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
-     */
-    404: ProblemDetails;
-};
-
-export type RejectError = RejectErrors[keyof RejectErrors];
-
-export type RejectResponses = {
-    /**
-     * The membership request was successfully rejected.
+     * The current organisation was successfully updated.
      */
     200: unknown;
 };
@@ -821,6 +1137,10 @@ export type GetOrganisationByIdData = {
 };
 
 export type GetOrganisationByIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * No organisation exists with the specified identifier.
      */
@@ -859,6 +1179,10 @@ export type UpdateOrganisationDetailsErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * No organisation exists with the specified identifier.
      */
     404: ProblemDetails;
@@ -896,6 +1220,10 @@ export type DeactivateMembershipErrors = {
      * Bad Request
      */
     400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * The caller is not authorised to deactivate the membership, or the membership is their own.
      */
@@ -939,6 +1267,10 @@ export type ReactivateMembershipErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * Forbidden
      */
     403: ProblemDetails;
@@ -980,6 +1312,10 @@ export type UpdateUserRoleData = {
 
 export type UpdateUserRoleErrors = {
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * The caller is not authorised to update the membership, or the membership is their own.
      */
     403: ProblemDetails;
@@ -1013,6 +1349,10 @@ export type PostOrganisationsErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * Conflict
      */
     409: ProblemDetails;
@@ -1029,12 +1369,142 @@ export type PostOrganisationsResponses = {
 
 export type PostOrganisationsResponse = PostOrganisationsResponses[keyof PostOrganisationsResponses];
 
+export type GetOrganisationsPublicOptionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/organisations/publicOptions';
+};
+
+export type GetOrganisationsPublicOptionsResponses = {
+    /**
+     * A task that represents the asynchronous operation. The task result contains
+     * the names of all organisations.
+     */
+    200: Array<OrganisationListDto>;
+};
+
+export type GetOrganisationsPublicOptionsResponse = GetOrganisationsPublicOptionsResponses[keyof GetOrganisationsPublicOptionsResponses];
+
+export type GetOrganisationRecordsData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the organisation.
+         */
+        organisationId: number;
+    };
+    query?: {
+        /**
+         * Gets or initialises the multi-field search term.
+         */
+        Search?: string;
+        /**
+         * Gets or initialises the record types to include.
+         */
+        RecordType?: Array<RecordType>;
+        /**
+         * Gets or initialises the record statuses to include.
+         */
+        RecordStatus?: Array<RecordStatus>;
+        /**
+         * Gets or initialises the 1-based page number.
+         */
+        Page?: number;
+        /**
+         * Gets or initialises the number of records per page.
+         */
+        PageSize?: number;
+        /**
+         * Gets or initialises the field by which records are sorted.
+         */
+        SortBy?: GetRecordsQuerySortValue;
+        /**
+         * Gets or initialises the sort direction.
+         */
+        SortDirection?: SortDirection;
+        /**
+         * Gets or initialises the update status filter. When set, only records that are
+         * overdue or not overdue for review will be returned.
+         */
+        UpdateStatus?: UpdateStatus;
+    };
+    url: '/records/organisations/{organisationId}';
+};
+
+export type GetOrganisationRecordsErrors = {
+    /**
+     * The query parameters are invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type GetOrganisationRecordsError = GetOrganisationRecordsErrors[keyof GetOrganisationRecordsErrors];
+
+export type GetOrganisationRecordsResponses = {
+    /**
+     * Returns the matching records.
+     */
+    200: PaginatedResponseDtoOfRecordListItemDto;
+};
+
+export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
+
+export type CreateRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: CreateRecordCommand;
+    path?: never;
+    query?: never;
+    url: '/records';
+};
+
+export type CreateRecordErrors = {
+    /**
+     * The request body is invalid, or the specified organisation does not exist.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to create the requested record.
+     */
+    403: ProblemDetails;
+};
+
+export type CreateRecordError = CreateRecordErrors[keyof CreateRecordErrors];
+
+export type CreateRecordResponses = {
+    /**
+     * Returns the created record.
+     */
+    200: CreateRecordDto;
+};
+
+export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
+
 export type GetUsersMeData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/users/me';
 };
+
+export type GetUsersMeErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type GetUsersMeError = GetUsersMeErrors[keyof GetUsersMeErrors];
 
 export type GetUsersMeResponses = {
     /**
@@ -1105,6 +1575,10 @@ export type GetUsersErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * Returned if no users are found matching the query parameters.
      */
     404: ProblemDetails;
@@ -1143,6 +1617,10 @@ export type GetUserDetailsWithinOrganisationErrors = {
      * Returned if the specified organisation does not exist.
      */
     400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
     /**
      * Returned if the caller is not authorised to view the organisation's users.
      */
@@ -1185,6 +1663,10 @@ export type PatchUsersByUserIdErrors = {
      */
     400: ValidationProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * The caller is not authorised to update the specified user's details.
      */
     403: ProblemDetails;
@@ -1225,6 +1707,10 @@ export type PostUsersOnboardErrors = {
      */
     400: ProblemDetails;
     /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
      * The current user does not have permission to onboard users.
      */
     403: ProblemDetails;
@@ -1245,3 +1731,158 @@ export type PostUsersOnboardResponses = {
 };
 
 export type PostUsersOnboardResponse = PostUsersOnboardResponses[keyof PostUsersOnboardResponses];
+
+export type RegisterUserData = {
+    /**
+     * A token used to cancel the operation.
+     */
+    body: RegisterUserCommandDto;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/membership-requests';
+};
+
+export type RegisterUserErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+};
+
+export type RegisterUserError = RegisterUserErrors[keyof RegisterUserErrors];
+
+export type RegisterUserResponses = {
+    /**
+     * OK
+     */
+    200: RegisterUserConfirmationDto;
+};
+
+export type RegisterUserResponse = RegisterUserResponses[keyof RegisterUserResponses];
+
+export type GetUserRegistrationByIdData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+        /**
+         * The unique identifier of the user to retrieve.
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/membership-requests/{id}';
+};
+
+export type GetUserRegistrationByIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Forbidden
+     */
+    403: ProblemDetails;
+    /**
+     * No user was found with the supplied identifier.
+     */
+    404: ProblemDetails;
+};
+
+export type GetUserRegistrationByIdError = GetUserRegistrationByIdErrors[keyof GetUserRegistrationByIdErrors];
+
+export type GetUserRegistrationByIdResponses = {
+    /**
+     * The user's details were successfully retrieved.
+     */
+    200: RegisterUserConfirmationDto;
+};
+
+export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];
+
+export type ApproveData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+        /**
+         * The identifier for the registration request.
+         */
+        registrationRequestId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve';
+};
+
+export type ApproveErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The current user is not allowed to approve the membership request.
+     */
+    403: ProblemDetails;
+    /**
+     * The membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type ApproveError = ApproveErrors[keyof ApproveErrors];
+
+export type ApproveResponses = {
+    /**
+     * The membership request was successfully approved.
+     */
+    200: unknown;
+};
+
+export type RejectData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the organisation containing the membership request.
+         */
+        organisationId: number;
+        /**
+         * The identifier for the registration request.
+         */
+        registrationRequestId: number;
+    };
+    query?: never;
+    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject';
+};
+
+export type RejectErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The current user is not allowed to reject the membership request.
+     */
+    403: ProblemDetails;
+    /**
+     * The membership request could not be found.
+     */
+    404: ProblemDetails;
+};
+
+export type RejectError = RejectErrors[keyof RejectErrors];
+
+export type RejectResponses = {
+    /**
+     * The membership request was successfully rejected.
+     */
+    200: unknown;
+};

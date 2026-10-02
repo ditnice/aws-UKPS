@@ -1,1 +1,45 @@
 @use '@nice-digital/design-system/scss/base';
+
+// Override the NDS 66ch readable-width constraint so content can use its full container width.
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+.h1-alt,
+p,
+.p,
+.lead,
+ul,
+ol,
+.list {
+  max-width: none;
+}
+
+// The Accordion package applies its own 66ch constraint in a separate stylesheet.
+body .accordion {
+  max-width: none;
+}
+
+p {
+  margin-bottom: 2rem;
+}
+
+h2 {
+  margin-bottom: 2rem;
+}
+
+input {
+  margin-bottom: 2rem;
+}
+
+dl {
+  margin-bottom: 2rem;
+}

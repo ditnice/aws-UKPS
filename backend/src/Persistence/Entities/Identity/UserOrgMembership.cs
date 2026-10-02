@@ -7,7 +7,7 @@ internal sealed class UserOrgMembership
 {
     public int Id { get; set; }
     public required UserRole UserRole { get; set; }
-    public required UserOrgStatus Status
+    public required UserOrgMembershipStatus Status
     {
         get => _statusManager.State;
         init => _statusManager = new UserOrgMembershipStateMachine(value);
@@ -19,29 +19,91 @@ internal sealed class UserOrgMembership
     public User? User { get; set; }
     public int OrganisationId { get; set; }
     public Organisation? Organisation { get; set; }
+    public bool IsSelectedAsCurrentOrganisation { get; set; }
 
     private UserOrgMembershipStateMachine _statusManager = new UserOrgMembershipStateMachine(
-        UserOrgStatus.AwaitingSetup
+        UserOrgMembershipStatus.AwaitingSetup
     );
 
-    internal StateMachineTransitionResult<UserOrgStatus> TryFinaliseSetup() =>
+    internal StateMachineTransitionResult<UserOrgMembershipStatus> TryFinaliseSetup() =>
         _statusManager.TrySendCommand(UserOrgMembershipStateMachine.Command.FinaliseSetup);
 
     internal void FinaliseSetup() =>
         _statusManager.SendCommand(UserOrgMembershipStateMachine.Command.FinaliseSetup);
 
-    internal StateMachineTransitionResult<UserOrgStatus> TryDeactivate() =>
+    internal StateMachineTransitionResult<UserOrgMembershipStatus> TryDeactivate() =>
         _statusManager.TrySendCommand(UserOrgMembershipStateMachine.Command.Deactivate);
 
     internal void Deactivate() =>
         _statusManager.SendCommand(UserOrgMembershipStateMachine.Command.Deactivate);
 
-    internal StateMachineTransitionResult<UserOrgStatus> TryReactivate() =>
+    internal StateMachineTransitionResult<UserOrgMembershipStatus> TryReactivate() =>
         _statusManager.TrySendCommand(UserOrgMembershipStateMachine.Command.Reactivate);
 
     internal bool IsAuthorised()
     {
-        UserOrgStatus[] authorisedStatuses = [UserOrgStatus.Active, UserOrgStatus.Inactive];
+        UserOrgMembershipStatus[] authorisedStatuses =
+        [
+            UserOrgMembershipStatus.Active,
+            UserOrgMembershipStatus.Inactive,
+        ];
         return authorisedStatuses.Contains(Status);
+    }
+
+    /// <summary>
+    /// Whether the user can manage the organisation through this membership: the membership
+    /// must be authorised and the organisation itself must be active.
+    /// </summary>
+    internal bool IsSelectable() => IsAuthorised() && IsOrganisationActive();
+
+    internal bool IsOrganisationActive()
+    {
+        if (Organisation is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot check the organisation status because the membership's organisation has not been loaded."
+            );
+        }
+
+        return Organisation.Status == UserOrgStatus.Active;
+    }
+
+    public static IEnumerable<UserMembershipAction> GetPermittedActions(
+        UserOrgMembershipStatus status
+    )
+    {
+        UserMembershipAction[] nonCommandRelatedActions =
+            status == UserOrgMembershipStatus.Active || status == UserOrgMembershipStatus.Inactive
+                ? [UserMembershipAction.EditUserRole]
+                : [];
+        var statusManager = new UserOrgMembershipStateMachine(status);
+        IEnumerable<UserOrgMembershipStateMachine.Command> permittedCommands =
+            statusManager.GetPermittedStateChangingCommands();
+        return GetActionsFromPermittedCommands(permittedCommands).Concat(nonCommandRelatedActions);
+    }
+
+    private static IEnumerable<UserMembershipAction> GetActionsFromPermittedCommands(
+        IEnumerable<UserOrgMembershipStateMachine.Command> permittedCommands
+    )
+    {
+        return permittedCommands.Select(ConvertCommandToAction).OfType<UserMembershipAction>();
+    }
+
+    private static UserMembershipAction? ConvertCommandToAction(
+        UserOrgMembershipStateMachine.Command x
+    )
+    {
+        return x switch
+        {
+            UserOrgMembershipStateMachine.Command.AccessGranted =>
+                UserMembershipAction.ApproveMembership,
+            UserOrgMembershipStateMachine.Command.RequestRejected =>
+                UserMembershipAction.RejectMembership,
+            UserOrgMembershipStateMachine.Command.Deactivate =>
+                UserMembershipAction.DeactivateMembership,
+            UserOrgMembershipStateMachine.Command.Reactivate =>
+                UserMembershipAction.ReactivateMembership,
+            _ => null,
+        };
     }
 }

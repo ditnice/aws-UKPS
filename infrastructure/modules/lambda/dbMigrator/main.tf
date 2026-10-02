@@ -40,7 +40,7 @@ resource "aws_lambda_function" "db_migrator" {
       Database__Name             = var.db_name
       Database__MigrateOnStartup = "true"
       Seeding__ReseedOnStartup   = "true"
-      Seeding__SuperUsersJson    = var.seeded_super_users_json
+      Seeding__SeedUsersJson     = var.seeded_users_json
       DB_SECRET_ARN              = var.db_secret_arn
     }
   }

@@ -21,18 +21,6 @@ internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<Rec
             .HasDatabaseName("ix_record_revision_record_id_revision_no");
 
         builder
-            .HasIndex(x => new
-            {
-                x.RecordId,
-                x.MajorVersion,
-                x.MinorVersion,
-            })
-            .IsUnique()
-            .HasDatabaseName("ix_record_revision_record_id_major_minor");
-
-        // Circular relationship with Record — both sides use Restrict to avoid
-        // cascade cycles. Record is always inserted first with null revision FKs.
-        builder
             .HasOne(x => x.Record)
             .WithMany(x => x.Revisions)
             .HasForeignKey(x => x.RecordId)

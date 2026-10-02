@@ -1,4 +1,5 @@
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.InternalServices.Identity;
@@ -36,5 +37,10 @@ internal sealed class MockCurrentUserInfoService : ICurrentUserInfoService
             Email = sampleUser.User!.WorkEmail,
             CognitoUsername = sampleUser.User.CognitoUsername,
         };
+    }
+
+    public CognitoUsername GetCurrentCognitoUsername()
+    {
+        return GetCurrentUserInfo().CognitoUsername;
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
@@ -24,7 +25,8 @@ namespace UKPS.Api.Application.Organisations;
 internal sealed class OrganisationMembershipService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
-    ICurrentUserInfoService currentUserInfoService
+    ICurrentUserInfoService currentUserInfoService,
+    IEmailService emailService
 ) : IOrganisationMembershipService
 {
     public async Task<UpdateUserRoleResult> UpdateUserRole(
@@ -112,10 +114,29 @@ internal sealed class OrganisationMembershipService(
         if (!result.Success)
         {
             return DeactivateUserResult.Err(
-                new OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState(result)
+                new OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState(
+                    ConvertToUserOrgStatusTransitionResult(result)
+                )
             );
         }
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (result.HasChanged)
+        {
+            await emailService.SendEmail(
+                new SendEmailCommand()
+                {
+                    PersonIdentifier = membership.User!.CognitoUsername,
+                    RecipientAddress = membership.User.WorkEmail,
+                    Email = new DeactivatedUserNotificationEmail()
+                    {
+                        OrganisationName = membership.Organisation!.OrganisationName,
+                    },
+                },
+                cancellationToken
+            );
+        }
+
         return DeactivateUserResult.Ok(MapToDto(membership));
     }
 
@@ -150,10 +171,28 @@ internal sealed class OrganisationMembershipService(
         if (!result.Success)
         {
             return ReactivateUserResult.Err(
-                new OrganisationMembershipReactivateUserError.NotAllowedInCurrentState(result)
+                new OrganisationMembershipReactivateUserError.NotAllowedInCurrentState(
+                    ConvertToUserOrgStatusTransitionResult(result)
+                )
             );
         }
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (result.HasChanged)
+        {
+            await emailService.SendEmail(
+                new SendEmailCommand()
+                {
+                    PersonIdentifier = membership.User!.CognitoUsername,
+                    RecipientAddress = membership.User.WorkEmail,
+                    Email = new ReactivatedUserNotificationEmail()
+                    {
+                        OrganisationName = membership.Organisation!.OrganisationName,
+                    },
+                },
+                cancellationToken
+            );
+        }
         return ReactivateUserResult.Ok(MapToDto(membership));
     }
 
@@ -172,6 +211,19 @@ internal sealed class OrganisationMembershipService(
             && (membership.UserRole == UserRole.Super || command.UserRole == UserRole.Super);
     }
 
+    private static StateMachineTransitionResult<UserOrgStatus> ConvertToUserOrgStatusTransitionResult(
+        StateMachineTransitionResult<UserOrgMembershipStatus> result
+    )
+    {
+        return new StateMachineTransitionResult<UserOrgStatus>()
+        {
+            PreviousState = result.PreviousState.ConvertToUserOrgStatus(),
+            CurrentState = result.CurrentState.ConvertToUserOrgStatus(),
+            Success = result.Success,
+            PermittedNextState = result.PermittedNextState.Cast<UserOrgStatus>().ToArray(),
+        };
+    }
+
     private static OrganisationMembershipDto MapToDto(UserOrgMembership entity)
     {
         return new OrganisationMembershipDto
@@ -180,7 +232,7 @@ internal sealed class OrganisationMembershipService(
             UserId = entity.UserId,
             OrganisationId = entity.OrganisationId,
             UserRole = entity.UserRole,
-            Status = entity.Status,
+            Status = entity.Status.ConvertToUserOrgStatus(),
             AllowedPharmaceuticalEntity = entity.AllowedPharmaceuticalEntity,
             CreatedAt = entity.CreatedAt,
         };

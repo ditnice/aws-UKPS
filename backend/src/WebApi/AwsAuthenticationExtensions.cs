@@ -1,9 +1,13 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using UKPS.Api.Application.Authentication;
+using UKPS.Api.Persistence.Enums;
+using UKPS.Api.WebApi.CustomResponses;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using UKPS.Api.WebApi.InternalServices.Identity;
 
 namespace UKPS.Api.WebApi;
 
@@ -21,7 +25,7 @@ internal static class AwsAuthenticationExtensions
 
         if (devAuthenticationConfiguration.IsEnabled)
         {
-            ConfigureDevAuthentication(builder.Services);
+            ConfigureDevAuthentication(builder.Services, devAuthenticationConfiguration.UserRole);
             return;
         }
 
@@ -60,13 +64,16 @@ internal static class AwsAuthenticationExtensions
                 {
                     OnMessageReceived = HandleOnMessageReceived,
                     OnTokenValidated = ctx => HandleOnTokenValidated(ctx),
+                    OnChallenge = HandleOnChallenge,
                 };
             });
     }
 
-    private static void ConfigureDevAuthentication(IServiceCollection services)
+    private static void ConfigureDevAuthentication(IServiceCollection services, UserRole userRole)
     {
-        var authOptions = new DevAuthenticationClaims();
+        var authOptions = new DevAuthenticationClaims().UpdateClaim(
+            new Claim(UkpsClaimTypes.UserRole, userRole.ToString())
+        );
         services.AddSingleton(authOptions);
 
         services
@@ -112,5 +119,24 @@ internal static class AwsAuthenticationExtensions
         var handler =
             context.HttpContext.RequestServices.GetRequiredService<ITokenValidationHandler>();
         return handler.Handle(context, context.HttpContext.RequestAborted);
+    }
+
+    private static async Task HandleOnChallenge(JwtBearerChallengeContext ctx)
+    {
+        ctx.HandleResponse();
+
+        var problemDetails = new AuthenticationProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Code = Enum.TryParse<AuthenticationFailCode>(
+                ctx.AuthenticateFailure?.Message,
+                out var code
+            )
+                ? code
+                : null,
+        };
+
+        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await ctx.Response.WriteAsJsonAsync(problemDetails);
     }
 }

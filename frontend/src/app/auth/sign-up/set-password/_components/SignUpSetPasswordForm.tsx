@@ -146,8 +146,12 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
 }
 
 function getSubmitError(error: { detail?: null | string }, status?: number) {
-  if (status === 401) {
-    return error.detail ?? 'This sign-up link has expired or has already been used.'
+  if (status === 410) {
+    return error.detail ?? 'This sign-up link has expired.'
+  }
+
+  if (status === 409) {
+    return error.detail ?? 'This sign-up link has already been used.'
   }
 
   if (status === 404) {

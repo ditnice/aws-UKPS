@@ -8,7 +8,17 @@ internal sealed class RecordHta
     public int RevisionId { get; set; }
 
     /// <summary>Vaccines only: JCVI, NICE, or Not applicable (single-select radio).</summary>
-    public string? HtaBodyVaccine { get; set; }
+    public VaccineHtaAssessor? VaccineHtaAssessor { get; set; }
+
+    /// <summary>
+    /// Medicines only: is an HTA submission planned for this indication?
+    /// </summary>
+    public YesNoUnknown? MedicineHtaSubmissionIntended { get; set; }
+
+    /// <summary>
+    /// Medicines only, multi-select.
+    /// </summary>
+    public MedicineHtaAssessor? MedicineHtaBodies { get; set; }
 
     /// <summary>Medicines only. Conditional on NICE being selected.</summary>
     public YesNoUnknown? HtaNiceAlignedPathway { get; set; }
@@ -17,5 +27,4 @@ internal sealed class RecordHta
 
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
-    public ICollection<RecordHtaBody> HtaBodies { get; set; } = [];
 }

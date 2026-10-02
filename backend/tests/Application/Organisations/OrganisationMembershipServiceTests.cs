@@ -22,6 +22,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     private readonly UserFaker _userFaker;
     private readonly UserOrgMembershipFaker _membershipFaker;
     private readonly OrganisationFaker _organisationFaker;
+    private readonly ServiceTestHarness<IOrganisationMembershipService> _harness;
     private readonly IOrganisationMembershipService _service;
 
     public OrganisationMembershipServiceTests(PostgresFixture fixture)
@@ -30,7 +31,8 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         _userFaker = new UserFaker();
         _membershipFaker = new UserOrgMembershipFaker();
         _organisationFaker = new OrganisationFaker();
-        _service = new ServiceTestHarness<IOrganisationMembershipService>(Context).Service;
+        _harness = new ServiceTestHarness<IOrganisationMembershipService>(Context);
+        _service = _harness.Service;
     }
 
     [Theory]
@@ -270,7 +272,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Active
+                _ => UserOrgMembershipStatus.Active
             )
         );
         var result = await _service.DeactivateMembership(
@@ -287,17 +289,57 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             m => m.Id == userOrgMembership.Id,
             TestContext.Current.CancellationToken
         );
-        saved.Status.ShouldBe(UserOrgStatus.Deactivated);
+        saved.Status.ShouldBe(UserOrgMembershipStatus.Deactivated);
     }
 
-    [Theory]
-    [InlineData(UserOrgStatus.AwaitingSetup)]
-    [InlineData(UserOrgStatus.RequestedAccess)]
-    [InlineData(UserOrgStatus.Rejected)]
-    public async Task DeactivateMembership_WhenInInvalidInitialState_ShouldReturnError(
-        UserOrgStatus invalidInitialState
-    )
+    [Fact]
+    public async Task DeactivateMembership_WhenAUserIsDeactivatedTwice_AUserShouldOnlyGetOneNotificationEmail()
     {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgMembershipStatus.Active
+            )
+        );
+
+        foreach (var _ in Enumerable.Range(0, 2))
+        {
+            var result = await _service.DeactivateMembership(
+                userOrgMembership.OrganisationId,
+                userOrgMembership.Id,
+                CancellationToken.None
+            );
+
+            result.ShouldBeSuccess();
+        }
+
+        _harness.Emails.Sent.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_ShouldSendNotificationEmail()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgMembershipStatus.Active
+            )
+        );
+        var result = await _service.DeactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Emails.Sent.Single().ShouldBeOfType<DeactivatedUserNotificationEmail>();
+    }
+
+    [Fact]
+    public async Task DeactivateMembership_WhenInInvalidInitialState_ShouldReturnError()
+    {
+        var invalidInitialState = UserOrgMembershipStatus.AwaitingSetup;
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
@@ -313,7 +355,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         var error = result
             .ShouldBeError()
             .ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState>();
-        error.TransitionResult.CurrentState.ShouldBe(invalidInitialState);
+        error.TransitionResult.CurrentState.ShouldBe(invalidInitialState.ConvertToUserOrgStatus());
     }
 
     [Theory]
@@ -331,7 +373,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Active
+                _ => UserOrgMembershipStatus.Active
             )
         );
         var harness = new ServiceTestHarness<IOrganisationMembershipService>(
@@ -368,7 +410,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Deactivated
+                _ => UserOrgMembershipStatus.Deactivated
             )
         );
         var result = await _service.DeactivateMembership(
@@ -408,12 +450,36 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ReactivateMembership_WhenAUserIsReactivatedTwice_AUserShouldOnlyGetOneNotificationEmail()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgMembershipStatus.Deactivated
+            )
+        );
+
+        foreach (var _ in Enumerable.Range(0, 2))
+        {
+            var result = await _service.ReactivateMembership(
+                userOrgMembership.OrganisationId,
+                userOrgMembership.Id,
+                CancellationToken.None
+            );
+
+            result.ShouldBeSuccess();
+        }
+
+        _harness.Emails.Sent.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task ReactivateMembership_ShouldReactivateTheSpecifiedMembership()
     {
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Deactivated
+                _ => UserOrgMembershipStatus.Deactivated
             )
         );
         var result = await _service.ReactivateMembership(
@@ -430,17 +496,13 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             m => m.Id == userOrgMembership.Id,
             TestContext.Current.CancellationToken
         );
-        saved.Status.ShouldBe(UserOrgStatus.Active);
+        saved.Status.ShouldBe(UserOrgMembershipStatus.Active);
     }
 
-    [Theory]
-    [InlineData(UserOrgStatus.AwaitingSetup)]
-    [InlineData(UserOrgStatus.RequestedAccess)]
-    [InlineData(UserOrgStatus.Rejected)]
-    public async Task ReactivateMembership_WhenInInvalidInitialState_ShouldReturnError(
-        UserOrgStatus invalidInitialState
-    )
+    [Fact]
+    public async Task ReactivateMembership_WhenInInvalidInitialState_ShouldReturnError()
     {
+        var invalidInitialState = UserOrgMembershipStatus.AwaitingSetup;
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
@@ -457,7 +519,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             .ShouldBeError()
             .ShouldBeOfType<OrganisationMembershipReactivateUserError.NotAllowedInCurrentState>();
         error.TransitionResult.CurrentState.ShouldBe(
-            invalidInitialState,
+            invalidInitialState.ConvertToUserOrgStatus(),
             $"Expected error state for invalid initial state of [{invalidInitialState}]"
         );
     }
@@ -477,7 +539,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Deactivated
+                _ => UserOrgMembershipStatus.Deactivated
             )
         );
         var harness = new ServiceTestHarness<IOrganisationMembershipService>(
@@ -513,7 +575,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Active
+                _ => UserOrgMembershipStatus.Active
             )
         );
         var result = await _service.ReactivateMembership(
@@ -553,6 +615,29 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ReactivateMembership_ShouldSendNotificationEmail()
+    {
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgMembershipStatus.Deactivated
+            )
+        );
+        var result = await _service.ReactivateMembership(
+            userOrgMembership.OrganisationId,
+            userOrgMembership.Id,
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess();
+
+        var email = _harness
+            .Emails.Sent.Single()
+            .ShouldBeOfType<ReactivatedUserNotificationEmail>();
+        email.OrganisationName.ShouldBe(userOrgMembership.Organisation!.OrganisationName);
+    }
+
+    [Fact]
     public async Task UpdateUserRole_ShouldReturnError_WhenTheMembershipBelongsToTheCurrentUser()
     {
         var userOrgMembership = await SetupUserOrgMembership();
@@ -584,7 +669,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         var userOrgMembership = await SetupUserOrgMembership(
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
-                _ => UserOrgStatus.Active
+                _ => UserOrgMembershipStatus.Active
             )
         );
         var harness = await CreateHarnessActingAsMembershipOwner(userOrgMembership);
@@ -604,7 +689,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             m => m.Id == userOrgMembership.Id,
             TestContext.Current.CancellationToken
         );
-        saved.Status.ShouldBe(UserOrgStatus.Active);
+        saved.Status.ShouldBe(UserOrgMembershipStatus.Active);
     }
 
     // The caller is recognised by the email claim, so acting as the membership's own user means

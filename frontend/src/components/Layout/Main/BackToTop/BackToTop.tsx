@@ -14,7 +14,10 @@ export function BackToTop() {
   // Default to hidden: this is server-rendered before any measurement is possible,
   // so starting visible would flash the link on short pages before the effect below
   // (which only runs after hydration) can hide it again.
-  const [isVisible, setIsVisible] = useState(false)
+  const [isOverflowing, setIsOverflowing] = useState(false)
+  // The bar is sticky to the bottom of the viewport, so showing it before the user
+  // has scrolled would cover whatever controls sit at the fold on page load.
+  const [hasScrolled, setHasScrolled] = useState(false)
 
   useLayoutEffect(() => {
     function checkVisibility() {
@@ -22,12 +25,18 @@ export function BackToTop() {
       const footerHeight = footer instanceof HTMLElement ? footer.offsetHeight : 0
       const scrollableHeight = document.documentElement.scrollHeight - footerHeight
 
-      setIsVisible(scrollableHeight > window.innerHeight)
+      setIsOverflowing(scrollableHeight > window.innerHeight)
+    }
+
+    function checkScrollPosition() {
+      setHasScrolled(window.scrollY > 0)
     }
 
     checkVisibility()
+    checkScrollPosition()
 
     window.addEventListener('resize', checkVisibility)
+    window.addEventListener('scroll', checkScrollPosition, { passive: true })
 
     const resizeObserver = new ResizeObserver(checkVisibility)
     const resizeObserverTarget = document.querySelector('[data-component="main"]') ?? document.body
@@ -35,6 +44,7 @@ export function BackToTop() {
 
     return () => {
       window.removeEventListener('resize', checkVisibility)
+      window.removeEventListener('scroll', checkScrollPosition)
       resizeObserver.disconnect()
     }
   }, [])
@@ -53,7 +63,7 @@ export function BackToTop() {
   }
 
   return (
-    <div className={clsx(styles.wrapper, !isVisible && styles.hidden)}>
+    <div className={clsx(styles.wrapper, !(isOverflowing && hasScrolled) && styles.hidden)}>
       <nav aria-labelledby="back-to-top-link" className={styles.nav}>
         <a className={styles.anchor} id="back-to-top-link" href="#top" onClick={handleClick}>
           <Container className={styles.container}>

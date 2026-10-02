@@ -13,10 +13,7 @@ internal sealed class RecordEvent
     /// <summary>Populated for QA-related events.</summary>
     public int? QaReviewId { get; set; }
 
-    /// <summary>Populated for issue-level events.</summary>
-    public int? QaReviewItemId { get; set; }
-
-    public RecordEventType EventType { get; set; }
+    public required RecordEventType EventType { get; set; }
 
     /// <summary>Null for system-triggered events.</summary>
     public int? PerformedBy { get; set; }
@@ -31,7 +28,6 @@ internal sealed class RecordEvent
     public Record? Record { get; set; }
     public RecordRevision? Revision { get; set; }
     public QaReview? QaReview { get; set; }
-    public QaReviewItem? QaReviewItem { get; set; }
     public Identity.User? PerformedByUser { get; set; }
     public ICollection<RecordEventFieldChange> FieldChanges { get; set; } = [];
 }

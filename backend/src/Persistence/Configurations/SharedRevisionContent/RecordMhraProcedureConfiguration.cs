@@ -28,5 +28,11 @@ internal sealed class RecordMhraProcedureConfiguration
             .WithMany()
             .HasForeignKey(x => x.MhraProcedureTypeId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne(x => x.IrpReferenceRegulator)
+            .WithMany()
+            .HasForeignKey(x => x.IrpReferenceRegulatorId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

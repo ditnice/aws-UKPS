@@ -1,41 +1,29 @@
 import Link from 'next/link'
 
-import { EnhancedPagination } from '@nice-digital/nds-enhanced-pagination'
-import { FilterSummary } from '@nice-digital/nds-filters'
-import { Grid, GridItem } from '@nice-digital/nds-grid'
-
 import type { Client } from '@/client/generated/client'
-import { getUsers, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserListItemDto } from '@/client/generated/types.gen'
+import { getUsers } from '@/client/generated/sdk.gen'
+import type { UserListItemDto, UserMembershipAction } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
-import { Table } from '@/components/Table/Table'
 import { Tag } from '@/components/Tag/Tag'
-import { pageSizeOptions } from '@/lib/search-and-filter/pagination'
 
 import {
   lastActivePresetDays,
+  organisationUserTableHeaders,
   roleLabels,
   statusLabels,
   statusTagColours,
   type LastActivePreset,
 } from '../_lib/userLabels'
-import { buildUserListHref, type UserListQuery } from '../_lib/userListQuery'
+import { buildUserListSearchParams, type UserListQuery } from '../_lib/userListQuery'
 import styles from '../page.module.scss'
 
-import type { ComponentProps } from 'react'
+import { ApplicationTableWithPagination } from './ApplicationTable'
+import { UserFilterSummary } from './UserFilterSummary'
 
 interface OrganisationUsersTableProps {
   apiClient: Client
   organisationId: number
   query: UserListQuery
-}
-
-function PaginationLink({ children, ...props }: ComponentProps<typeof Link>) {
-  return (
-    <Link {...props} scroll={false}>
-      {children}
-    </Link>
-  )
 }
 
 function formatDate(date: string | null | undefined): string {
@@ -52,60 +40,54 @@ function renderStatus(status: UserListItemDto['status']) {
   return status ? <Tag colour={statusTagColours[status]}>{label}</Tag> : <Tag>{label}</Tag>
 }
 
-function renderActions(
-  user: UserListItemDto,
-  organisationId: number,
-  currentUserId: number | undefined,
-) {
-  // Users cannot change their own role or deactivate themselves
-  if (user.userId === currentUserId) {
-    return 'Not applicable'
+function renderActions(user: UserListItemDto, organisationId: number) {
+  const editActivities: UserMembershipAction[] = ['EditUserRole', 'DeactivateMembership']
+
+  const links: { key: string; label: string; href: string }[] = []
+
+  if (user.actions.includes('ApproveMembership') && user.registrationRequestId) {
+    links.push({
+      key: 'approve',
+      label: 'Approve',
+      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestId}/approve`,
+    })
   }
 
-  switch (user.status) {
-    case 'Active':
-    case 'Inactive':
-      return (
-        <Link href={`/portal/organisations/${organisationId}/manage-user-access/${user.userId}`}>
-          Edit role
-        </Link>
-      )
-    case 'Deactivated':
-      return <a>Reactivate</a>
-    case 'RequestedAccess':
-      return (
-        <ul className={styles.actionList}>
-          <li>
-            <Link
-              href={`/portal/organisations/${organisationId}/registration-request/approve/${user.userId}`}
-            >
-              Approve
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={`/portal/organisations/${organisationId}/registration-request/reject/${user.userId}`}
-            >
-              Reject
-            </Link>
-          </li>
-        </ul>
-      )
-    default:
-      return 'Not applicable'
+  if (user.actions.includes('RejectMembership') && user.registrationRequestId) {
+    links.push({
+      key: 'reject',
+      label: 'Reject',
+      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestId}/reject`,
+    })
   }
-}
 
-function getFirstResult(totalCount: number, currentPage: number, pageSize: number): number {
-  return totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
-}
+  if (user.actions.includes('ReactivateMembership')) {
+    links.push({
+      key: 'reactivate',
+      label: 'Reactivate',
+      href: `/portal/organisations/${organisationId}/users/${user.userId}/reactivate`,
+    })
+  }
 
-function getLastResult(totalCount: number, currentPage: number, pageSize: number): number {
-  return Math.min(currentPage * pageSize, totalCount)
-}
+  if (user.actions.some((x) => editActivities.includes(x))) {
+    links.push({
+      key: 'edit',
+      label: 'Edit',
+      href: `/portal/organisations/${organisationId}/manage-user-access/${user.userId}`,
+    })
+  }
 
-function getTotalPages(totalCount: number, pageSize: number): number {
-  return Math.ceil(totalCount / pageSize)
+  if (!links.length) return 'Not applicable'
+
+  return (
+    <ul className={styles.actionList}>
+      {links.map((link) => (
+        <li key={link.key}>
+          <Link href={link.href}>{link.label}</Link>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 function getLastActiveFromDate(preset: LastActivePreset): string {
@@ -119,35 +101,27 @@ export async function OrganisationUsersTable({
   organisationId,
   query,
 }: OrganisationUsersTableProps) {
-  const { page, pageSize, status, role, email, lastActive } = query
+  const { page, pageSize, status, role, email, lastActive, sortBy, sortDirection } = query
 
-  const [{ data: me }, { data: users, error: usersError }] = await Promise.all([
-    getUsersMe({ client: apiClient }),
-    getUsers({
-      client: apiClient,
-      query: {
-        OrganisationId: organisationId,
-        Page: page,
-        PageSize: pageSize,
-        Status: status.length ? status : undefined,
-        Role: role.length ? role : undefined,
-        Email: email,
-        LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
-      },
-    }),
-  ])
-  const currentUserId = me?.userId
-
-  const totalCount = users?.totalCount ?? 0
+  const { data: users, error: usersError } = await getUsers({
+    client: apiClient,
+    query: {
+      OrganisationId: organisationId,
+      Page: page,
+      PageSize: pageSize,
+      Status: status.length ? status : undefined,
+      Role: role.length ? role : undefined,
+      Email: email,
+      LastActiveFrom: lastActive ? getLastActiveFromDate(lastActive) : undefined,
+      SortBy: sortBy,
+      SortDirection: sortDirection,
+    },
+  })
 
   return (
     <>
       <div className={styles['table-toolbar']}>
-        <FilterSummary className={styles['users-filter-summary']}>
-          {users
-            ? `Showing results ${getFirstResult(totalCount, page, pageSize)} to ${getLastResult(totalCount, page, pageSize)} of ${totalCount}`
-            : 'Showing results'}
-        </FilterSummary>
+        <UserFilterSummary query={query} users={users} />
         {/* TODO - remove the elementType when the Button wrapper is merged */}
         <Button elementType={Link} href={`/portal/organisations/${organisationId}/onboard-user`}>
           Add a new user
@@ -156,68 +130,29 @@ export async function OrganisationUsersTable({
       {usersError || !users ? (
         <p role="alert">There was a problem retrieving the users. Please try again later.</p>
       ) : (
-        <>
-          <Table columnWidth="content">
-            <caption className="visually-hidden">Organisation Users</caption>
-            <thead>
-              <tr>
-                <th scope="col">Email address</th>
-                <th scope="col">Role</th>
-                <th scope="col">Status</th>
-                <th scope="col">Last active</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.items.length > 0 ? (
-                users.items.map((user) => (
-                  <tr key={user.userId}>
-                    <td>{user.emailAddress ?? 'N/A'}</td>
-                    <td>{user.role ? roleLabels[user.role] : 'N/A'}</td>
-                    <td>{renderStatus(user.status)}</td>
-                    <td>{formatDate(user.lastActive)}</td>
-                    <td>{renderActions(user, organisationId, currentUserId)}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5}>No users found for this organisation.</td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-
-          <Grid verticalAlignment="middle">
-            <GridItem cols={12} sm={6}>
-              <EnhancedPagination
-                currentPage={page}
-                elementType={PaginationLink}
-                mapPageNumberToHref={(pageNumber) =>
-                  buildUserListHref({ ...query, page: pageNumber })
-                }
-                totalPages={getTotalPages(totalCount, pageSize)}
-              />
-            </GridItem>
-            <GridItem cols={12} sm={6} className="text-right">
-              <p className={styles.resultsPerPageHeading}>Results per page</p>
-              <ol className={`list list--piped ${styles.resultsPerPageList}`}>
-                {pageSizeOptions.map((count) => (
-                  <li key={count}>
-                    {pageSize === count ? (
-                      count
-                    ) : (
-                      <PaginationLink
-                        href={buildUserListHref({ ...query, page: 1, pageSize: count })}
-                      >
-                        {count}
-                      </PaginationLink>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </GridItem>
-          </Grid>
-        </>
+        <ApplicationTableWithPagination
+          result={users}
+          getItemKey={(x) => x.userId}
+          headers={organisationUserTableHeaders}
+          captionName={'Organisation Users'}
+          query={query}
+          queryToSearchParams={buildUserListSearchParams}
+          fallbackText="No users found for this organisation."
+          getData={(key, data) => {
+            switch (key) {
+              case 'actions':
+                return <>{renderActions(data, organisationId)}</>
+              case 'email':
+                return <>{data.emailAddress ?? 'N/A'}</>
+              case 'lastActive':
+                return <>{formatDate(data.lastActive)}</>
+              case 'role':
+                return <>{data.role ? roleLabels[data.role] : 'N/A'}</>
+              case 'status':
+                return <>{renderStatus(data.status)}</>
+            }
+          }}
+        />
       )}
     </>
   )

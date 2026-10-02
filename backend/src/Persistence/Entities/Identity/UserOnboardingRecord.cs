@@ -3,9 +3,11 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 internal class UserOnboardingRecord
 {
     public required Guid SetupToken { get; init; }
+    public Guid? CorrelationId { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required string CreatedBy { get; init; }
     public DateTime? ConsumedAt { get; private set; }
+    public int ResendCount { get; init; }
 
     public User? User { get; init; }
     public int UserId { get; init; }

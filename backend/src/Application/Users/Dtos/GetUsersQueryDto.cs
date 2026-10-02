@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Users.Dtos;

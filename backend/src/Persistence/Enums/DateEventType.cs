@@ -49,4 +49,7 @@ public enum DateEventType
     /// Represents the EU orphan designation granted event.
     /// </summary>
     EuOrphanGranted = 8,
+
+    /// <summary>Date the EU ATMP classification recommendation was provided.</summary>
+    AtmpClassificationRecommendation = 9,
 }
