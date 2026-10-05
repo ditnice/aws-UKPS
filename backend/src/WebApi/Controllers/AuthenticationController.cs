@@ -218,11 +218,11 @@ public class AuthenticationController : ControllerBase
             return Unauthorized(_csrfValidationFailed);
         }
 
+        ClearAuthenticationCookies();
         await _loginService.SignOut(
             Request.Cookies[RefreshCookieName] ?? string.Empty,
             cancellationToken
         );
-        ClearAuthenticationCookies();
 
         return Ok();
     }

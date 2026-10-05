@@ -1,5 +1,8 @@
+using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
@@ -174,6 +177,26 @@ public class LoginServiceTests : DatabaseTestBase
     {
         Exception? exception = await Record.ExceptionAsync(() =>
             _harness.Service.SignOut("invalid-token", TestContext.Current.CancellationToken)
+        );
+
+        exception.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SignOut_WhenCognitoIsThrottling_ShouldCompleteSuccessfully()
+    {
+        _harness
+            .Cognito.Mock.RevokeTokenAsync(
+                Arg.Any<RevokeTokenRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Throws(new TooManyRequestsException("Rate exceeded"));
+
+        Exception? exception = await Record.ExceptionAsync(() =>
+            _harness.Service.SignOut(
+                _harness.Cognito.RefreshToken,
+                TestContext.Current.CancellationToken
+            )
         );
 
         exception.ShouldBeNull();

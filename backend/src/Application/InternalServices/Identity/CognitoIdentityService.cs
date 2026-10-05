@@ -195,6 +195,11 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         {
             LogCognitoTokenRevocationIgnored(ex.Message, ex);
         }
+        // Sign-out must still clear the local session when Cognito is unavailable or throttling.
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            LogCognitoTokenRevocationFailed(ex.Message, ex);
+        }
     }
 
     public async Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
@@ -426,6 +431,12 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         Message = "Cognito token revocation ignored: {Message}"
     )]
     private partial void LogCognitoTokenRevocationIgnored(string message, Exception exception);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Cognito token revocation failed: {Message}"
+    )]
+    private partial void LogCognitoTokenRevocationFailed(string message, Exception exception);
 
     private record AuthResponse
     {
