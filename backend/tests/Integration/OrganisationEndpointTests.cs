@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using Bogus;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -377,6 +379,92 @@ public class OrganisationEndpointTests : DatabaseTestBase
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_StandardUser_ReturnsForbiddenProblem()
+    {
+        UserOrgMembership membership = await SeedMembership();
+        AuthenticateAs(UserRole.Standard, membership.OrganisationId);
+        var uri = new Uri(
+            $"/organisations/{membership.OrganisationId}/memberships/{membership.Id}/update-role",
+            UriKind.Relative
+        );
+        UpdateOrgMembershipUserRoleCommandDto command = new() { UserRole = UserRole.Champion };
+
+        HttpResponseMessage response = await _httpClient.PatchAsJsonAsync(
+            uri,
+            command,
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+        problem.ShouldNotBeNull();
+        problem.Status.ShouldBe(StatusCodes.Status403Forbidden);
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_ChampionManagingSuperUser_ReturnsForbiddenProblem()
+    {
+        UserOrgMembership membership = await SeedMembership(
+            new UserOrgMembershipFaker().RuleFor(x => x.UserRole, _ => UserRole.Super)
+        );
+        AuthenticateAs(UserRole.Champion, membership.OrganisationId);
+        var uri = new Uri(
+            $"/organisations/{membership.OrganisationId}/memberships/{membership.Id}/update-role",
+            UriKind.Relative
+        );
+        UpdateOrgMembershipUserRoleCommandDto command = new() { UserRole = UserRole.Standard };
+
+        HttpResponseMessage response = await _httpClient.PatchAsJsonAsync(
+            uri,
+            command,
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(999999)]
+    public async Task GetOrganisationById_ChampionOfAnotherOrganisation_ReturnsForbiddenWhetherOrNotItExists(
+        int organisationId
+    )
+    {
+        await SeedMembership();
+        AuthenticateAs(UserRole.Champion, organisationId: 2);
+
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            new Uri($"/organisations/{organisationId}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(999999)]
+    public async Task UpdateOrganisationDetails_ChampionOfAnotherOrganisation_ReturnsForbiddenWhetherOrNotItExists(
+        int organisationId
+    )
+    {
+        await SeedMembership();
+        AuthenticateAs(UserRole.Champion, organisationId: 2);
+
+        HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
+            new Uri($"/organisations/{organisationId}", UriKind.Relative),
+            CreateValidUpdateDto(),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     private static UpdateOrganisationDetailsDto CreateValidUpdateDto() =>

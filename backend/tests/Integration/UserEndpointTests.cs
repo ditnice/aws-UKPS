@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Bogus;
+using Microsoft.AspNetCore.Mvc;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users.Dtos;
@@ -8,6 +9,7 @@ using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Common;
+using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
 
 namespace UKPS.Api.Tests.Integration;
@@ -166,5 +168,64 @@ public class UserEndpointTests : DatabaseTestBase
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_AnotherUserOrMissingUser_ReturnIndistinguishableNotFound()
+    {
+        User otherUser = _seededUsers.First();
+        AuthenticateAs(UserRole.Standard, otherUser.UserOrgMemberships!.First().OrganisationId);
+        UpdateUserDetailsCommand command = new UpdateUserDetailsCommandFaker().Generate();
+
+        HttpResponseMessage otherUserResponse = await _httpClient.PatchAsJsonAsync(
+            new Uri($"/users/{otherUser.Id}", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
+        HttpResponseMessage missingUserResponse = await _httpClient.PatchAsJsonAsync(
+            new Uri("/users/999999", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        otherUserResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        missingUserResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        ProblemDetails? otherUserProblem =
+            await otherUserResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+                TestContext.Current.CancellationToken
+            );
+        ProblemDetails? missingUserProblem =
+            await missingUserResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+                TestContext.Current.CancellationToken
+            );
+        otherUserProblem.ShouldNotBeNull();
+        missingUserProblem.ShouldNotBeNull();
+        otherUserProblem.Title.ShouldBe(missingUserProblem.Title);
+        otherUserProblem.Detail.ShouldBe(missingUserProblem.Detail);
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_NotAuthorisedForOrganisation_ReturnsForbiddenWhetherOrNotRequestExists()
+    {
+        UserRegistrationRequest request = _userRegistrationRequests[0];
+        AuthenticateAs(UserRole.Champion, request.OrganisationId + 1000);
+
+        HttpResponseMessage existingResponse = await _httpClient.GetAsync(
+            new Uri(
+                $"/organisations/{request.OrganisationId}/membership-requests/{request.Id}",
+                UriKind.Relative
+            ),
+            TestContext.Current.CancellationToken
+        );
+        HttpResponseMessage guessedResponse = await _httpClient.GetAsync(
+            new Uri(
+                $"/organisations/{request.OrganisationId}/membership-requests/999999",
+                UriKind.Relative
+            ),
+            TestContext.Current.CancellationToken
+        );
+
+        existingResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        guessedResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

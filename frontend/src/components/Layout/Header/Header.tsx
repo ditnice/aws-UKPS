@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 
+import { Account } from './Account/Account'
 import styles from './Header.module.scss'
 import { Nav } from './Nav/Nav'
 import { SkipLink } from './SkipLink/SkipLink'
@@ -59,6 +60,9 @@ export function Header({ skipLinkId }: HeaderProps) {
               >
                 {isExpanded ? 'Close' : 'Menu'}
               </button>
+              <div className={styles.account}>
+                <Account />
+              </div>
             </div>
           </div>
           <Nav isExpanded={isExpanded} />

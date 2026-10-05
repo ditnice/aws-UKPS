@@ -102,6 +102,9 @@ export function RegistrationRequestForm() {
                   label="Select the organisation you are requesting access for"
                   name="organisation"
                   width="one-third"
+                  hint="If your organisation is not registered, you must
+                  register your organisation before you can
+                  set up your account."
                   error={Boolean(errorMessage)}
                   errorMessage={errorMessage}
                   onChange={(event) =>
@@ -118,11 +121,6 @@ export function RegistrationRequestForm() {
                     </SelectOption>
                   ))}
                 </Select>
-                <p>
-                  If your organisation is not registered, you must{' '}
-                  <a href="URL">register your organisation (opens in a new tab)</a> before you can
-                  set up your account.
-                </p>
               </>
             )
           }}

@@ -133,6 +133,39 @@
         }
       }
     },
+    "/auth/sign-out": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Ends the current authentication session and clears authentication cookies.",
+        "responses": {
+          "200": {
+            "description": "The user was signed out and authentication cookies were cleared."
+          },
+          "401": {
+            "description": "The CSRF token was missing or invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/mfa": {
       "post": {
         "tags": [
@@ -823,6 +856,26 @@
               }
             }
           },
+          "403": {
+            "description": "The caller is not authorised to view the organisation.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "No organisation exists with the specified identifier.",
             "content": {
@@ -927,6 +980,26 @@
           },
           "400": {
             "description": "The supplied organisation details failed validation.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to update the organisation.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1192,7 +1265,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "The caller is not authorised to reactivate the membership.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1321,6 +1394,26 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrganisationMembershipDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The supplied role is invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1674,6 +1767,158 @@
               }
             }
           },
+          "403": {
+            "description": "The caller is not authorised to view the organisation's records.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified organisation does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records": {
+      "post": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Creates a new record.",
+        "operationId": "CreateRecord",
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecordCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecordCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Returns the created record.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRecordDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRecordDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body is invalid, or the specified organisation does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to create the requested record.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -1892,8 +2137,8 @@
               }
             }
           },
-          "404": {
-            "description": "Returned if no users are found matching the query parameters.",
+          "403": {
+            "description": "Returned if the caller is not authorised to view the users of the organisation.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1985,26 +2230,6 @@
               }
             }
           },
-          "400": {
-            "description": "Returned if the specified organisation does not exist.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "403": {
             "description": "Returned if the caller is not authorised to view the organisation's users.",
             "content": {
@@ -2026,7 +2251,7 @@
             }
           },
           "404": {
-            "description": "Returned if the user is not a member of the specified organisation.",
+            "description": "Returned if the organisation does not exist or the user is not a member of it.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2149,27 +2374,7 @@
             }
           },
           "404": {
-            "description": "The specified user does not exist.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller is not authorised to update the specified user's details.",
+            "description": "The specified user does not exist or is not accessible to the caller.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2497,7 +2702,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "The current user is not allowed to view membership requests for the organisation.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2517,7 +2722,7 @@
             }
           },
           "404": {
-            "description": "No user was found with the supplied identifier.",
+            "description": "No membership request was found with the supplied identifier.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2867,6 +3072,70 @@
           }
         },
         "description": "Represents the information required to create a new organisation."
+      },
+      "CreateRecordCommand": {
+        "required": [
+          "organisationId",
+          "developmentNames",
+          "genericNames",
+          "recordTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the identifier of the organisation for which the record will be created.",
+            "format": "int32"
+          },
+          "developmentNames": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the development names associated with the record."
+          },
+          "brandedName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the optional branded name associated with the record."
+          },
+          "genericNames": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the generic names associated with the record."
+          },
+          "recordTitle": {
+            "type": "string",
+            "description": "Gets the title of the record."
+          }
+        },
+        "description": "Contains the details required to create a new record."
+      },
+      "CreateRecordDto": {
+        "required": [
+          "recordId",
+          "revisionId"
+        ],
+        "type": "object",
+        "properties": {
+          "recordId": {
+            "type": "integer",
+            "description": "Gets the identifier of the newly created record.",
+            "format": "int32"
+          },
+          "revisionId": {
+            "type": "integer",
+            "description": "Gets the identifier of the initial revision created for the record.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the result of creating a record."
       },
       "GetRecordsQuerySortValue": {
         "enum": [
