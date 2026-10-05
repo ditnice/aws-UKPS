@@ -94,15 +94,13 @@ public class UserController(IUserService userService) : ControllerBase
     /// successful, or an appropriate error response if the request fails.
     /// </returns>
     /// <response code="200">Returns the user's details and their role within the organisation.</response>
-    /// <response code="400">Returned if the specified organisation does not exist.</response>
     /// <response code="403">Returned if the caller is not authorised to view the organisation's users.</response>
-    /// <response code="404">Returned if the user is not a member of the specified organisation.</response>
+    /// <response code="404">Returned if the organisation does not exist or the user is not a member of it.</response>
     [HttpGet(
         "{userId:int}/organisations/{organisationId:int}",
         Name = nameof(GetUserDetailsWithinOrganisation)
     )]
     [ProducesResponseType<UserInformationDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserInformationDto>> GetUserDetailsWithinOrganisation(
@@ -122,7 +120,7 @@ public class UserController(IUserService userService) : ControllerBase
             error =>
                 error switch
                 {
-                    GetUsersError.OrganisationNotFound => BadRequest("Organisation not found."),
+                    GetUsersError.OrganisationNotFound => NotFound("Organisation not found."),
                     GetUsersError.UserNotFound => NotFound(
                         "The user is not a member of this organisation."
                     ),
@@ -146,19 +144,17 @@ public class UserController(IUserService userService) : ControllerBase
     /// Returns <see cref="UserDetailsDto"/> with the updated user details when the operation
     /// succeeds (200 OK).
     /// Returns a bad request response (400 Bad Request) when the supplied user details are invalid.
-    /// Returns a not found response (404 Not Found) when the specified user does not exist.
-    /// Returns a forbidden response (403 Forbidden) when the caller is not authorised to update
-    /// the specified user's details.
+    /// Returns a not found response (404 Not Found) when the specified user does not exist or the
+    /// caller is not authorised to update them. The two cases are deliberately indistinguishable
+    /// so that user identifiers cannot be enumerated (see ADR-004).
     /// </returns>
     /// <response code="200">The user's details were successfully updated.</response>
     /// <response code="400">The supplied user details are invalid.</response>
-    /// <response code="403">The caller is not authorised to update the specified user's details.</response>
-    /// <response code="404">The specified user does not exist.</response>
+    /// <response code="404">The specified user does not exist or is not accessible to the caller.</response>
     /// <response code="409">The request conflicts with the existing data such as another users email.</response>
     [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [HttpPatch("{userId:int}")]
     public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
@@ -173,19 +169,11 @@ public class UserController(IUserService userService) : ControllerBase
             x => Ok(x),
             err =>
             {
+                // Unauthorised and missing users share a response so that user identifiers
+                // cannot be enumerated (ADR-004).
                 return err.Match<ActionResult<UserDetailsDto>>(
-                    unauthorised: () =>
-                        Problem(
-                            statusCode: StatusCodes.Status403Forbidden,
-                            title: "Forbidden",
-                            detail: "You are not authorised to update this user's details."
-                        ),
-                    userDoesNotExist: () =>
-                        Problem(
-                            statusCode: StatusCodes.Status404NotFound,
-                            title: "Not Found",
-                            detail: "The specified user does not exist."
-                        ),
+                    unauthorised: () => UserNotFound(),
+                    userDoesNotExist: () => UserNotFound(),
                     conflictingEmail: () =>
                         Problem(
                             statusCode: StatusCodes.Status409Conflict,
@@ -196,4 +184,11 @@ public class UserController(IUserService userService) : ControllerBase
             }
         );
     }
+
+    private ObjectResult UserNotFound() =>
+        Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            title: "Not Found",
+            detail: "The specified user could not be found."
+        );
 }

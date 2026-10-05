@@ -1119,6 +1119,10 @@ export type GetOrganisationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
+     * The caller is not authorised to view the organisation.
+     */
+    403: ProblemDetails;
+    /**
      * No organisation exists with the specified identifier.
      */
     404: ProblemDetails;
@@ -1159,6 +1163,10 @@ export type UpdateOrganisationDetailsErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to update the organisation.
+     */
+    403: ProblemDetails;
     /**
      * No organisation exists with the specified identifier.
      */
@@ -1248,7 +1256,7 @@ export type ReactivateMembershipErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Forbidden
+     * The caller is not authorised to reactivate the membership.
      */
     403: ProblemDetails;
     /**
@@ -1288,6 +1296,10 @@ export type UpdateUserRoleData = {
 };
 
 export type UpdateUserRoleErrors = {
+    /**
+     * The supplied role is invalid.
+     */
+    400: ProblemDetails;
     /**
      * Unauthorized
      */
@@ -1418,6 +1430,14 @@ export type GetOrganisationRecordsErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to view the organisation's records.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified organisation does not exist.
+     */
+    404: ProblemDetails;
 };
 
 export type GetOrganisationRecordsError = GetOrganisationRecordsErrors[keyof GetOrganisationRecordsErrors];
@@ -1591,10 +1611,6 @@ export type GetUserDetailsWithinOrganisationData = {
 
 export type GetUserDetailsWithinOrganisationErrors = {
     /**
-     * Returned if the specified organisation does not exist.
-     */
-    400: ProblemDetails;
-    /**
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
@@ -1603,7 +1619,7 @@ export type GetUserDetailsWithinOrganisationErrors = {
      */
     403: ProblemDetails;
     /**
-     * Returned if the user is not a member of the specified organisation.
+     * Returned if the organisation does not exist or the user is not a member of it.
      */
     404: ProblemDetails;
 };
@@ -1644,11 +1660,7 @@ export type PatchUsersByUserIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The caller is not authorised to update the specified user's details.
-     */
-    403: ProblemDetails;
-    /**
-     * The specified user does not exist.
+     * The specified user does not exist or is not accessible to the caller.
      */
     404: ProblemDetails;
     /**
@@ -1764,11 +1776,11 @@ export type GetUserRegistrationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Forbidden
+     * The current user is not allowed to view membership requests for the organisation.
      */
     403: ProblemDetails;
     /**
-     * No user was found with the supplied identifier.
+     * No membership request was found with the supplied identifier.
      */
     404: ProblemDetails;
 };
