@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
 
 import { RegisterUserConfirmationDto } from '@/client/generated'
@@ -19,6 +20,7 @@ export default function RequestSubmitted() {
   )
   const userJson = isClient ? sessionStorage.getItem(id) : null
   const user = userJson ? (JSON.parse(userJson) as RegisterUserConfirmationDto) : null
+  const router = useRouter()
 
   return (
     <>
@@ -38,9 +40,7 @@ export default function RequestSubmitted() {
           </SummaryList>
         </>
       )}
-      <Link href="/portal">
-        <Button>Return to UK PharmaScan home</Button>
-      </Link>
+      <Button onClick={() => router.push('/')}>Return to UK PharmaScan home</Button>
     </>
   )
 }
