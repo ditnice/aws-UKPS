@@ -6,6 +6,7 @@ settings:
 
 overrides:
   nanoid: ^3.3.18
+  undici: ^7.29.1
 
 patchedDependencies:
   '@nice-digital/nds-filters@5.1.0': be23a55e49d48e06353e928abcda45b8431f748e4df140b1f56e983c05de3a41
@@ -5131,10 +5132,6 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
-  undici@7.29.0:
-    resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
-    engines: {node: '>=20.18.1'}
-
   undici@7.29.1:
     resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
     engines: {node: '>=20.18.1'}
@@ -9792,7 +9789,7 @@ snapshots:
       sax: 1.6.1
       ts-essentials: 10.0.3(typescript@5.9.3)
       tsx: 4.22.4
-      undici: 7.29.0
+      undici: 7.29.1
       uuid: 13.0.2
       ws: 8.21.3
     transitivePeerDependencies:
@@ -10725,8 +10722,6 @@ snapshots:
       which-boxed-primitive: 1.1.1
 
   undici-types@6.21.0: {}
-
-  undici@7.29.0: {}
 
   undici@7.29.1: {}
 
