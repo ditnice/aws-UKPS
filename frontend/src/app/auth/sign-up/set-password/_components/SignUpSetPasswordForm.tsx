@@ -110,8 +110,6 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
       <p>Your password must:</p>
       <ul>
         <li>be at least 8 characters long</li>
-        <li>be 256 characters or fewer</li>
-        <li>not contain spaces or other whitespace</li>
       </ul>
 
       <form.Field name="password">
