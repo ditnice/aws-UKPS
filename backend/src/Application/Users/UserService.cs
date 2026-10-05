@@ -563,7 +563,7 @@ internal partial class UserService(
                 }
             }
 
-            await AnonymiseUserAndCopies(user, currentUser, cancellationToken);
+            await AnonymiseUserAndAuditHistory(user, currentUser, cancellationToken);
 
             // Inside the transaction so a Cognito failure rolls back the anonymisation.
             await identityService.DeleteUser(user.CognitoUsername, cancellationToken);
@@ -579,35 +579,19 @@ internal partial class UserService(
         }
     }
 
-    private async Task AnonymiseUserAndCopies(
+    private async Task AnonymiseUserAndAuditHistory(
         User user,
         CurrentUser currentUser,
         CancellationToken cancellationToken
     )
     {
-        // Captured before anonymising, so copies held elsewhere can still be found and replaced.
-        string previousFullName = user.FullName;
-        string previousWorkEmail = user.WorkEmail;
         DateTime now = timeProvider.GetUtcNow();
 
         user.Anonymise(now);
         await AddUserRemovedAudit(user.Id, currentUser, now, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await AnonymiseAuditCopies(user, previousWorkEmail, cancellationToken);
-        await AnonymiseSignUpCopies(user, previousWorkEmail, cancellationToken);
-        await AnonymiseAuditNoteMentions(
-            user,
-            previousFullName,
-            previousWorkEmail,
-            cancellationToken
-        );
-        await AnonymiseRecordNoteMentions(
-            user,
-            previousFullName,
-            previousWorkEmail,
-            cancellationToken
-        );
+        await AnonymiseUserAuditHistory(user, cancellationToken);
     }
 
     private async Task AddUserRemovedAudit(
@@ -633,15 +617,8 @@ internal partial class UserService(
         );
     }
 
-    // Clears copies of the user's details held in audit and email history.
-    private async Task AnonymiseAuditCopies(
-        User user,
-        string previousWorkEmail,
-        CancellationToken cancellationToken
-    )
+    private async Task AnonymiseUserAuditHistory(User user, CancellationToken cancellationToken)
     {
-        string emailPattern = Helpers.EscapeLikePattern(previousWorkEmail);
-        string anonymisedEmail = user.WorkEmail;
         string[] personalFieldPaths =
         [
             nameof(User.Title),
@@ -661,170 +638,6 @@ internal partial class UserService(
                 s =>
                     s.SetProperty(x => x.OldValue, (string?)null)
                         .SetProperty(x => x.NewValue, (string?)null),
-                cancellationToken
-            );
-
-        await dbContext
-            .UserOnboardingRecords.Where(x => EF.Functions.ILike(x.CreatedBy, emailPattern, "\\"))
-            .ExecuteUpdateAsync(
-                s => s.SetProperty(x => x.CreatedBy, anonymisedEmail),
-                cancellationToken
-            );
-
-        await dbContext
-            .EmailAudits.Where(x => EF.Functions.ILike(x.Recipients, $"%{emailPattern}%", "\\"))
-            .ExecuteUpdateAsync(
-                s =>
-                    s.SetProperty(
-                        x => x.Recipients,
-                        x => x.Recipients.Replace(previousWorkEmail, anonymisedEmail)
-                    ),
-                cancellationToken
-            );
-    }
-
-    // Replaces copies of the user's details captured when they signed up or signed the terms.
-    private async Task AnonymiseSignUpCopies(
-        User user,
-        string previousWorkEmail,
-        CancellationToken cancellationToken
-    )
-    {
-        string emailPattern = Helpers.EscapeLikePattern(previousWorkEmail);
-        string displayName = user.FullName;
-        string anonymisedEmail = user.WorkEmail;
-
-        await dbContext
-            .UserRegistrationRequests.Where(x =>
-                EF.Functions.ILike(x.WorkEmail, emailPattern, "\\")
-            )
-            .ExecuteUpdateAsync(
-                s =>
-                    s.SetProperty(x => x.FullName, displayName)
-                        .SetProperty(x => x.WorkEmail, anonymisedEmail)
-                        .SetProperty(x => x.PhoneNumber, string.Empty),
-                cancellationToken
-            );
-
-        await dbContext
-            .TermsAcceptances.Where(x => EF.Functions.ILike(x.SignatoryEmail, emailPattern, "\\"))
-            .ExecuteUpdateAsync(
-                s =>
-                    s.SetProperty(x => x.SignatoryName, displayName)
-                        .SetProperty(x => x.SignatoryEmail, anonymisedEmail)
-                        .SetProperty(x => x.SignatoryJobTitle, (string?)null)
-                        .SetProperty(x => x.IpAddress, (string?)null),
-                cancellationToken
-            );
-    }
-
-    // Replaces mentions of the user's name or email in free-text reasons and notes on audit entries.
-    private async Task AnonymiseAuditNoteMentions(
-        User user,
-        string previousFullName,
-        string previousWorkEmail,
-        CancellationToken cancellationToken
-    )
-    {
-        string namePattern = $"%{Helpers.EscapeLikePattern(previousFullName)}%";
-        string emailPattern = $"%{Helpers.EscapeLikePattern(previousWorkEmail)}%";
-        string displayName = user.FullName;
-        string anonymisedEmail = user.WorkEmail;
-
-        await dbContext
-            .UserAudits.Where(x =>
-                EF.Functions.ILike((x.Reason ?? "") + " " + (x.Notes ?? ""), namePattern, "\\")
-                || EF.Functions.ILike((x.Reason ?? "") + " " + (x.Notes ?? ""), emailPattern, "\\")
-            )
-            .ExecuteUpdateAsync(
-                s =>
-                    s.SetProperty(
-                            x => x.Reason,
-                            x =>
-                                x.Reason!.Replace(previousFullName, displayName)
-                                    .Replace(previousWorkEmail, anonymisedEmail)
-                        )
-                        .SetProperty(
-                            x => x.Notes,
-                            x =>
-                                x.Notes!.Replace(previousFullName, displayName)
-                                    .Replace(previousWorkEmail, anonymisedEmail)
-                        ),
-                cancellationToken
-            );
-
-        await dbContext
-            .OrganisationAudits.Where(x =>
-                EF.Functions.ILike((x.Reason ?? "") + " " + (x.Notes ?? ""), namePattern, "\\")
-                || EF.Functions.ILike((x.Reason ?? "") + " " + (x.Notes ?? ""), emailPattern, "\\")
-            )
-            .ExecuteUpdateAsync(
-                s =>
-                    s.SetProperty(
-                            x => x.Reason,
-                            x =>
-                                x.Reason!.Replace(previousFullName, displayName)
-                                    .Replace(previousWorkEmail, anonymisedEmail)
-                        )
-                        .SetProperty(
-                            x => x.Notes,
-                            x =>
-                                x.Notes!.Replace(previousFullName, displayName)
-                                    .Replace(previousWorkEmail, anonymisedEmail)
-                        ),
-                cancellationToken
-            );
-    }
-
-    // Replaces mentions of the user's name or email in free-text notes on record workflow entries.
-    // The record content itself is deliberately left untouched.
-    private async Task AnonymiseRecordNoteMentions(
-        User user,
-        string previousFullName,
-        string previousWorkEmail,
-        CancellationToken cancellationToken
-    )
-    {
-        string namePattern = $"%{Helpers.EscapeLikePattern(previousFullName)}%";
-        string emailPattern = $"%{Helpers.EscapeLikePattern(previousWorkEmail)}%";
-        string displayName = user.FullName;
-        string anonymisedEmail = user.WorkEmail;
-
-        await dbContext
-            .QaReviews.Where(x =>
-                x.Note != null
-                && (
-                    EF.Functions.ILike(x.Note, namePattern, "\\")
-                    || EF.Functions.ILike(x.Note, emailPattern, "\\")
-                )
-            )
-            .ExecuteUpdateAsync(
-                s =>
-                    s.SetProperty(
-                        x => x.Note,
-                        x =>
-                            x.Note!.Replace(previousFullName, displayName)
-                                .Replace(previousWorkEmail, anonymisedEmail)
-                    ),
-                cancellationToken
-            );
-
-        await dbContext
-            .RecordStatusHistories.Where(x =>
-                x.Note != null
-                && (
-                    EF.Functions.ILike(x.Note, namePattern, "\\")
-                    || EF.Functions.ILike(x.Note, emailPattern, "\\")
-                )
-            )
-            .ExecuteUpdateAsync(
-                s =>
-                    s.SetProperty(
-                        x => x.Note,
-                        x =>
-                            x.Note!.Replace(previousFullName, displayName)
-                                .Replace(previousWorkEmail, anonymisedEmail)
-                    ),
                 cancellationToken
             );
     }

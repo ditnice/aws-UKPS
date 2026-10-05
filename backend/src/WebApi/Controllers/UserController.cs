@@ -14,8 +14,7 @@ namespace UKPS.Api.WebApi.Controllers;
 [Authorize]
 [ApiController]
 [Route("users")]
-public partial class UserController(IUserService userService, ILogger<UserController> logger)
-    : ControllerBase
+public class UserController(IUserService userService) : ControllerBase
 {
     /// <summary>
     /// Gets the information for the currently authenticated user.
@@ -218,16 +217,10 @@ public partial class UserController(IUserService userService, ILogger<UserContro
         CancellationToken cancellationToken
     )
     {
-        LogRemoveUserRequested(userId, User.Identity?.Name ?? "unknown");
-
         var result = await userService.RemoveUser(userId, cancellationToken);
 
         return result.Match<ActionResult<RemovedUserDto>>(
-            removedUser =>
-            {
-                LogUserRemoved(userId);
-                return Ok(removedUser);
-            },
+            removedUser => Ok(removedUser),
             err =>
                 err.Match<ActionResult<RemovedUserDto>>(
                     notAllowed: () =>
@@ -257,16 +250,4 @@ public partial class UserController(IUserService userService, ILogger<UserContro
                 )
         );
     }
-
-    [LoggerMessage(
-        Level = LogLevel.Information,
-        Message = "Remove user requested for user {UserId} by {RequestedBy}."
-    )]
-    private partial void LogRemoveUserRequested(int userId, string requestedBy);
-
-    [LoggerMessage(
-        Level = LogLevel.Information,
-        Message = "User {UserId} removed and personal information anonymised."
-    )]
-    private partial void LogUserRemoved(int userId);
 }

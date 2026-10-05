@@ -48,7 +48,10 @@ export default async function RemoveUser({ params }: Props) {
   return (
     <>
       <PageHeader backLink={backLink} heading="Remove user" />
-      <p>You are about to remove {user.workEmail} from your organisation.</p>
+      <p>
+        You are about to permanently remove {user.workEmail} from UK PharmaScan and all
+        organisations they belong to.
+      </p>
       <p>
         This will permanently remove their personal information from UK PharmaScan. Any records
         created by them will not be affected.

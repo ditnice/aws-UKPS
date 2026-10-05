@@ -65,7 +65,6 @@ type UserHrefArgs =
     }
   | { action: UserRequestAction; userRequestId: number }
 export function buildUserActionHref(organisationId: number, args: UserHrefArgs): string {
-  console.log(args)
   return 'userId' in args
     ? `/portal/organisations/${organisationId}?action=${args.action}&userId=${args.userId}`
     : `/portal/organisations/${organisationId}?action=${args.action}&userRequestId=${args.userRequestId}`

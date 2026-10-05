@@ -182,7 +182,7 @@ it('tells the user what the removed user now appears as', async () => {
 
   await renderRemovedAlert()
 
-  expect(screen.getByRole('heading', { name: 'User removed from organisation' })).not.toBeNull()
+  expect(screen.getByRole('heading', { name: 'User removed from UK PharmaScan' })).not.toBeNull()
   expect(screen.getByText(/they now appear as User-4\./)).not.toBeNull()
 })
 

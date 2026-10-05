@@ -131,12 +131,6 @@ dotnet dev-certs https --clean
 dotnet dev-certs https --trust
 ```
 
-If after completing this step "There was an error trusting the HTTPS developer certificate.
-It will be trusted by some clients but not by others.",
-ignore and continue with process, rest of certificate process will work as intended.
-
-Same applies for step 3 also.
-
 3. Check the certificate and been installed and trusted
 
 ```

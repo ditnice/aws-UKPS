@@ -64,7 +64,7 @@ const renderRegisteredUserAction = async ({
     case 'removed':
       return (
         <Alert type="success" dismissHref={dismissHref}>
-          <h3>User removed from organisation</h3>
+          <h3>User removed from UK PharmaScan</h3>
           <p>
             This user&apos;s personal information is no longer available. In a record&apos;s
             timeline, they now appear as {user?.fullName ?? 'an anonymised user'}.

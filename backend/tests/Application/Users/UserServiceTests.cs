@@ -1699,6 +1699,70 @@ public class UserServiceTests : DatabaseTestBase
         audit.UpdatedAt.ShouldBe(_currentDateTime);
     }
 
+    [Theory]
+    [InlineData(nameof(User.Title))]
+    [InlineData(nameof(User.FullName))]
+    [InlineData(nameof(User.JobTitle))]
+    [InlineData(nameof(User.WorkTelephone))]
+    [InlineData(nameof(User.WorkEmail))]
+    public async Task RemoveUser_ShouldClearOnlyTheRemovedUsersPersonalAuditValues(string fieldPath)
+    {
+        await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        User other = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        UserAudit targetAudit = new()
+        {
+            UserId = target.Id,
+            FieldPath = fieldPath,
+            OldValue = "old personal value",
+            NewValue = "new personal value",
+            EventType = IamEventType.FieldUpdated,
+            UpdatedAt = _currentDateTime,
+        };
+        UserAudit otherAudit = new()
+        {
+            UserId = other.Id,
+            FieldPath = fieldPath,
+            OldValue = "old personal value",
+            NewValue = "new personal value",
+            EventType = IamEventType.FieldUpdated,
+            UpdatedAt = _currentDateTime,
+        };
+        UserAudit nonPersonalAudit = new()
+        {
+            UserId = target.Id,
+            FieldPath = nameof(User.UserType),
+            OldValue = "old type",
+            NewValue = "new type",
+            EventType = IamEventType.FieldUpdated,
+            UpdatedAt = _currentDateTime,
+        };
+        await AddEntities(
+            [targetAudit, otherAudit, nonPersonalAudit],
+            TestContext.Current.CancellationToken
+        );
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeSuccess();
+        UserAudit updatedTargetAudit = await Context
+            .UserAudits.AsNoTracking()
+            .SingleAsync(a => a.Id == targetAudit.Id, TestContext.Current.CancellationToken);
+        UserAudit unchangedOtherAudit = await Context
+            .UserAudits.AsNoTracking()
+            .SingleAsync(a => a.Id == otherAudit.Id, TestContext.Current.CancellationToken);
+        UserAudit unchangedNonPersonalAudit = await Context
+            .UserAudits.AsNoTracking()
+            .SingleAsync(a => a.Id == nonPersonalAudit.Id, TestContext.Current.CancellationToken);
+
+        updatedTargetAudit.OldValue.ShouldBeNull();
+        updatedTargetAudit.NewValue.ShouldBeNull();
+        unchangedOtherAudit.OldValue.ShouldBe("old personal value");
+        unchangedOtherAudit.NewValue.ShouldBe("new personal value");
+        unchangedNonPersonalAudit.OldValue.ShouldBe("old type");
+        unchangedNonPersonalAudit.NewValue.ShouldBe("new type");
+    }
+
     [Fact]
     public async Task RemoveUser_WhenUserDoesNotExist_ShouldReturnUserNotFoundError()
     {
@@ -1782,6 +1846,25 @@ public class UserServiceTests : DatabaseTestBase
         );
         databaseMembership.ShouldNotBeNull();
         databaseMembership.Status.ShouldBe(UserOrgMembershipStatus.Removed);
+    }
+
+    [Fact]
+    public async Task RemoveUser_ShouldRemoveMembershipsAcrossAllOrganisations()
+    {
+        await AddCallerUser();
+        (User target, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(3);
+        AddCognitoAccount(target);
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeSuccess();
+        List<UserOrgMembership> databaseMemberships = await Context
+            .UserOrgMemberships.AsNoTracking()
+            .Where(m => m.UserId == target.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        databaseMemberships.Count.ShouldBe(memberships.Length);
+        databaseMemberships.ShouldAllBe(m => m.Status == UserOrgMembershipStatus.Removed);
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldBeNull();
     }
 
     [Fact]

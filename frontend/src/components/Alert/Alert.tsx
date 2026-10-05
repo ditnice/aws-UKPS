@@ -42,7 +42,6 @@ export function Alert({
     <div className={clsx(styles.wrapper, className)}>
       <NdsAlert nonIntrusive={nonIntrusive ?? nonIntrusiveByType[type]} type={type} {...rest}>
         {children}
-        {/* replace, so the browser back button doesn't bring the alert back */}
         {dismissHref && (
           <Button elementType={Link} href={dismissHref} variant="secondary">
             {dismissText}
