@@ -9,30 +9,18 @@ using UKPS.Api.Application.Records.Errors;
 namespace UKPS.Api.WebApi.Controllers;
 
 /// <summary>
-/// Provides endpoints for retrieving records.
+/// Provides endpoints for retrieving and creating records.
 /// </summary>
+/// <param name="recordService">The service used to retrieve records.</param>
+/// <param name="recordCreationService">The service used to create records.</param>
 [Authorize]
 [ApiController]
 [Route("records")]
-public class RecordController : ControllerBase
+public class RecordController(
+    IRecordService recordService,
+    IRecordCreationService recordCreationService
+) : ControllerBase
 {
-    private readonly IRecordCreationService _recordCreationService;
-    private readonly IRecordService _recordService;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RecordController"/> class.
-    /// </summary>
-    /// <param name="recordCreationService">The service used to create records.</param>
-    /// <param name="recordService">The service used to retrieve records.</param>
-    public RecordController(
-        IRecordCreationService recordCreationService,
-        IRecordService recordService
-    )
-    {
-        _recordCreationService = recordCreationService;
-        _recordService = recordService;
-    }
-
     /// <summary>
     /// Retrieves a paginated list of records belonging to the user's organisation.
     /// </summary>
@@ -42,9 +30,13 @@ public class RecordController : ControllerBase
     /// <returns>A paginated list of record summaries.</returns>
     /// <response code="200">Returns the matching records.</response>
     /// <response code="400">The query parameters are invalid.</response>
+    /// <response code="403">The caller is not authorised to view the organisation's records.</response>
+    /// <response code="404">The specified organisation does not exist.</response>
     [HttpGet("organisations/{organisationId:int}", Name = nameof(GetOrganisationRecords))]
     [ProducesResponseType<PaginatedResponseDto<RecordListItemDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PaginatedResponseDto<RecordListItemDto>>> GetOrganisationRecords(
         [FromRoute] int organisationId,
         [FromQuery] GetRecordsQueryDto? getRecordQuery,
@@ -56,7 +48,7 @@ public class RecordController : ControllerBase
             return BadRequest();
         }
 
-        var result = await _recordService.GetOrganisationRecords(
+        var result = await recordService.GetOrganisationRecords(
             organisationId,
             getRecordQuery,
             cancellationToken
@@ -68,8 +60,8 @@ public class RecordController : ControllerBase
                 error switch
                 {
                     GetRecordsError.OrganisationNotFound => Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Bad Request",
+                        statusCode: StatusCodes.Status404NotFound,
+                        title: "Not Found",
                         detail: "Organisation not found."
                     ),
                     GetRecordsError.NotAllowed => Problem(
@@ -85,20 +77,24 @@ public class RecordController : ControllerBase
     /// <summary>
     /// Creates a new record.
     /// </summary>
+    /// <param name="command">The details of the record to create.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The created record.</returns>
     /// <response code="200">Returns the created record.</response>
-    /// <response code="400">The request body is invalid.</response>
+    /// <response code="400">
+    /// The request body is invalid, or the specified organisation does not exist.
+    /// </response>
     /// <response code="403">The caller is not authorised to create the requested record.</response>
     [HttpPost(Name = nameof(CreateRecord))]
     [ProducesResponseType<CreateRecordDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<CreateRecordDto>> CreateRecord(
         CreateRecordCommand command,
         CancellationToken cancellationToken
     )
     {
-        CreateRecordResult result = await _recordCreationService.CreateRecord(
+        CreateRecordResult result = await recordCreationService.CreateRecord(
             command,
             cancellationToken
         );
@@ -113,11 +109,13 @@ public class RecordController : ControllerBase
                             detail: "You are not authorised to create a record for this organisation."
                         ),
                     organisationDoesNotExist: _ =>
-                        Problem(
-                            statusCode: StatusCodes.Status400BadRequest,
-                            title: "Organisation not found",
-                            detail: "The specified organisation does not exist or is invalid."
-                        )
+                    {
+                        ModelState.AddModelError(
+                            nameof(CreateRecordCommand.OrganisationId),
+                            "The specified organisation does not exist or is invalid."
+                        );
+                        return ValidationProblem(ModelState);
+                    }
                 )
         );
     }

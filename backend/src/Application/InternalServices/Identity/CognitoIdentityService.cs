@@ -177,6 +177,31 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         }
     }
 
+    public async Task RevokeRefreshToken(string refreshToken, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _cognito.RevokeTokenAsync(
+                new RevokeTokenRequest
+                {
+                    ClientId = _options.Value.ClientId,
+                    ClientSecret = _options.Value.ClientSecret,
+                    Token = refreshToken,
+                },
+                cancellationToken
+            );
+        }
+        catch (Exception ex) when (ex is NotAuthorizedException or InvalidParameterException)
+        {
+            LogCognitoTokenRevocationIgnored(ex.Message, ex);
+        }
+        // Sign-out must still clear the local session when Cognito is unavailable or throttling.
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            LogCognitoTokenRevocationFailed(ex.Message, ex);
+        }
+    }
+
     public async Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
         string authenticationSessionId,
         CancellationToken cancellationToken
@@ -400,6 +425,18 @@ internal sealed partial class CognitoIdentityService : IIdentityService
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Cognito authentication failed: {Message}")]
     private partial void LogCognitoAuthenticationFailed(string message, Exception exception);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Cognito token revocation ignored: {Message}"
+    )]
+    private partial void LogCognitoTokenRevocationIgnored(string message, Exception exception);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Cognito token revocation failed: {Message}"
+    )]
+    private partial void LogCognitoTokenRevocationFailed(string message, Exception exception);
 
     private record AuthResponse
     {

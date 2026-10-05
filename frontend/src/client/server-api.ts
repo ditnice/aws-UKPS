@@ -10,6 +10,7 @@ import { createClient } from './generated/client'
 import type { Client } from './generated/client'
 
 const fallbackReturnTo = '/portal'
+const selectOrganisationPath = '/portal/organisations/select'
 
 export async function createServerApiClient(): Promise<Client> {
   const baseUrl = process.env.BACKEND_API_BASE_URL
@@ -46,6 +47,10 @@ function createServerFetch(returnTo: string): typeof fetch {
         .json()
         .catch(() => null)
 
+      if (isOrganisationSelectionFailCode(content?.code)) {
+        redirect(selectOrganisationPath)
+      }
+
       if (isAuthorisationFailCode(content?.code)) {
         redirectToAuthenticationError(content?.code)
       }
@@ -55,6 +60,13 @@ function createServerFetch(returnTo: string): typeof fetch {
 
     return response
   }
+}
+
+function isOrganisationSelectionFailCode(value: unknown): boolean {
+  return (
+    value === AuthenticationFailCode.SELECTED_ORGANISATION_REQUIRED ||
+    value === AuthenticationFailCode.SELECTED_ORGANISATION_IS_NOT_VALID
+  )
 }
 
 function isAuthorisationFailCode(value: unknown): value is AuthenticationFailCode {

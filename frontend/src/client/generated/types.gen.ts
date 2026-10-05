@@ -10,7 +10,8 @@ export const AuthenticationFailCode = {
     SELECTED_ORGANISATION_REQUIRED: 'SelectedOrganisationRequired',
     SELECTED_ORGANISATION_IS_NOT_VALID: 'SelectedOrganisationIsNotValid',
     MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
-    MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState'
+    MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState',
+    ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive'
 } as const;
 
 export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];
@@ -544,6 +545,16 @@ export const UkpsChallengeType = { MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'MultiF
 export type UkpsChallengeType = typeof UkpsChallengeType[keyof typeof UkpsChallengeType];
 
 /**
+ * Represents the request to update the currently authenticated user's active organisation.
+ */
+export type UpdateCurrentOrganisationCommand = {
+    /**
+     * Gets the identifier of the organisation to set as the current organisation.
+     */
+    organisationId: number;
+};
+
+/**
  * Represents the data transfer object for updating organisation details.
  */
 export type UpdateOrganisationDetailsDto = {
@@ -851,6 +862,29 @@ export type PostAuthRefreshResponses = {
     200: unknown;
 };
 
+export type PostAuthSignOutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/sign-out';
+};
+
+export type PostAuthSignOutErrors = {
+    /**
+     * The CSRF token was missing or invalid.
+     */
+    401: ProblemDetails;
+};
+
+export type PostAuthSignOutError = PostAuthSignOutErrors[keyof PostAuthSignOutErrors];
+
+export type PostAuthSignOutResponses = {
+    /**
+     * The user was signed out and authentication cookies were cleared.
+     */
+    200: unknown;
+};
+
 export type PostAuthMfaData = {
     /**
      * A token to monitor for cancellation requests.
@@ -1035,6 +1069,61 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
+export type GetCurrentUserOrganisationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/organisations';
+};
+
+export type GetCurrentUserOrganisationsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type GetCurrentUserOrganisationsError = GetCurrentUserOrganisationsErrors[keyof GetCurrentUserOrganisationsErrors];
+
+export type GetCurrentUserOrganisationsResponses = {
+    /**
+     * The organisations were returned successfully.
+     */
+    200: Array<OrganisationListDto>;
+};
+
+export type GetCurrentUserOrganisationsResponse = GetCurrentUserOrganisationsResponses[keyof GetCurrentUserOrganisationsResponses];
+
+export type UpdateCurrentOrganisationData = {
+    /**
+     * A token that can be used to cancel the request.
+     */
+    body: UpdateCurrentOrganisationCommand;
+    path?: never;
+    query?: never;
+    url: '/users/me/current-organisation';
+};
+
+export type UpdateCurrentOrganisationErrors = {
+    /**
+     * The provided organisation is invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type UpdateCurrentOrganisationError = UpdateCurrentOrganisationErrors[keyof UpdateCurrentOrganisationErrors];
+
+export type UpdateCurrentOrganisationResponses = {
+    /**
+     * The current organisation was successfully updated.
+     */
+    200: unknown;
+};
+
 export type GetOrganisationByIdData = {
     body?: never;
     path: {
@@ -1052,6 +1141,10 @@ export type GetOrganisationByIdErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to view the organisation.
+     */
+    403: ProblemDetails;
     /**
      * No organisation exists with the specified identifier.
      */
@@ -1093,6 +1186,10 @@ export type UpdateOrganisationDetailsErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to update the organisation.
+     */
+    403: ProblemDetails;
     /**
      * No organisation exists with the specified identifier.
      */
@@ -1182,7 +1279,7 @@ export type ReactivateMembershipErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Forbidden
+     * The caller is not authorised to reactivate the membership.
      */
     403: ProblemDetails;
     /**
@@ -1222,6 +1319,10 @@ export type UpdateUserRoleData = {
 };
 
 export type UpdateUserRoleErrors = {
+    /**
+     * The supplied role is invalid.
+     */
+    400: ProblemDetails;
     /**
      * Unauthorized
      */
@@ -1352,6 +1453,14 @@ export type GetOrganisationRecordsErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to view the organisation's records.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified organisation does not exist.
+     */
+    404: ProblemDetails;
 };
 
 export type GetOrganisationRecordsError = GetOrganisationRecordsErrors[keyof GetOrganisationRecordsErrors];
@@ -1366,6 +1475,9 @@ export type GetOrganisationRecordsResponses = {
 export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
 
 export type CreateRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
     body: CreateRecordCommand;
     path?: never;
     query?: never;
@@ -1374,9 +1486,9 @@ export type CreateRecordData = {
 
 export type CreateRecordErrors = {
     /**
-     * The request body is invalid.
+     * The request body is invalid, or the specified organisation does not exist.
      */
-    400: ProblemDetails;
+    400: ValidationProblemDetails;
     /**
      * Unauthorized
      */
@@ -1487,9 +1599,9 @@ export type GetUsersErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Returned if no users are found matching the query parameters.
+     * Returned if the caller is not authorised to view the users of the organisation.
      */
-    404: ProblemDetails;
+    403: ProblemDetails;
 };
 
 export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];
@@ -1522,10 +1634,6 @@ export type GetUserDetailsWithinOrganisationData = {
 
 export type GetUserDetailsWithinOrganisationErrors = {
     /**
-     * Returned if the specified organisation does not exist.
-     */
-    400: ProblemDetails;
-    /**
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
@@ -1534,7 +1642,7 @@ export type GetUserDetailsWithinOrganisationErrors = {
      */
     403: ProblemDetails;
     /**
-     * Returned if the user is not a member of the specified organisation.
+     * Returned if the organisation does not exist or the user is not a member of it.
      */
     404: ProblemDetails;
 };
@@ -1575,11 +1683,7 @@ export type PatchUsersByUserIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The caller is not authorised to update the specified user's details.
-     */
-    403: ProblemDetails;
-    /**
-     * The specified user does not exist.
+     * The specified user does not exist or is not accessible to the caller.
      */
     404: ProblemDetails;
     /**
@@ -1695,11 +1799,11 @@ export type GetUserRegistrationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Forbidden
+     * The current user is not allowed to view membership requests for the organisation.
      */
     403: ProblemDetails;
     /**
-     * No user was found with the supplied identifier.
+     * No membership request was found with the supplied identifier.
      */
     404: ProblemDetails;
 };

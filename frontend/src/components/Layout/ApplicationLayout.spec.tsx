@@ -15,6 +15,7 @@ vi.mock('next/image', async () => ({
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
+  useRouter: () => ({ push: vi.fn() }),
 }))
 
 vi.mock('@nice-digital/nds-container', () => ({

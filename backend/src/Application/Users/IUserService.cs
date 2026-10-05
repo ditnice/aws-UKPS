@@ -1,4 +1,5 @@
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 
@@ -72,6 +73,33 @@ public interface IUserService
     Task<Result<UserInformationDto, GetUsersError>> GetUserDetailsWithinOrganisation(
         int userId,
         int organisationId,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Updates the currently authenticated user's active organisation.
+    /// </summary>
+    /// <param name="command">The organisation update request.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result indicates whether the
+    /// current user's organisation was successfully updated or why the update failed.
+    /// </returns>
+    Task<Result<UpdateCurrentOrganisationError>> UpdateCurrentOrganisation(
+        UpdateCurrentOrganisationCommand command,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Gets the organisations the currently authenticated user is permitted to select as their
+    /// current organisation.
+    /// </summary>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the active
+    /// organisations for which the current user holds an authorised membership, ordered by name.
+    /// </returns>
+    Task<IReadOnlyCollection<OrganisationListDto>> GetCurrentUserOrganisations(
         CancellationToken cancellationToken
     );
 }

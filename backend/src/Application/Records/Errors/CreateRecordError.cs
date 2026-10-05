@@ -21,13 +21,16 @@ public abstract record CreateRecordError
         Func<OrganisationDoesNotExist, TResult> organisationDoesNotExist
     )
     {
+        ArgumentNullException.ThrowIfNull(notAuthorised);
+        ArgumentNullException.ThrowIfNull(organisationDoesNotExist);
+
         return this switch
         {
-            NotAuthorised notAuthorisedError => notAuthorised(notAuthorisedError),
-            OrganisationDoesNotExist organisationDoesNotExistError => organisationDoesNotExist(
-                organisationDoesNotExistError
+            NotAuthorised e => notAuthorised(e),
+            OrganisationDoesNotExist e => organisationDoesNotExist(e),
+            _ => throw new NotSupportedException(
+                $"Unsupported {nameof(CreateRecordError)} subtype: {GetType().Name}."
             ),
-            _ => throw new NotSupportedException(),
         };
     }
 }

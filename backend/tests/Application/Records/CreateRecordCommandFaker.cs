@@ -14,6 +14,7 @@ internal sealed class CreateRecordCommandFaker : Faker<CreateRecordCommand>
                 Enumerable
                     .Range(0, f.Random.Int(1, 3))
                     .Select(_ => f.Commerce.ProductName())
+                    .Distinct(StringComparer.Ordinal)
                     .ToArray()
         );
         RuleFor(x => x.BrandedName, f => f.Commerce.ProductName());
@@ -23,6 +24,7 @@ internal sealed class CreateRecordCommandFaker : Faker<CreateRecordCommand>
                 Enumerable
                     .Range(0, f.Random.Int(1, 3))
                     .Select(_ => f.Commerce.ProductName())
+                    .Distinct(StringComparer.Ordinal)
                     .ToArray()
         );
         RuleFor(x => x.RecordTitle, f => f.Lorem.Sentence());

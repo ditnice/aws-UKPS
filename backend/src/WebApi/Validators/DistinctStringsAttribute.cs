@@ -21,7 +21,7 @@ internal sealed class DistinctStringsAttribute : ValidationAttribute
         }
 
         var comparer = GetComparer(StringComparison);
-        return values.Select(x => x.Trim()).Distinct(comparer).Count() == values.Count()
+        return values.Select(x => x?.Trim()).Distinct(comparer).Count() == values.Count()
             ? ValidationResult.Success
             : new ValidationResult(
                 $"{validationContext.DisplayName} must contain distinct values."

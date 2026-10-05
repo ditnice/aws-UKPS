@@ -133,6 +133,39 @@
         }
       }
     },
+    "/auth/sign-out": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Ends the current authentication session and clears authentication cookies.",
+        "responses": {
+          "200": {
+            "description": "The user was signed out and authentication cookies were cleared."
+          },
+          "401": {
+            "description": "The CSRF token was missing or invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/mfa": {
       "post": {
         "tags": [
@@ -648,6 +681,141 @@
         }
       }
     },
+    "/users/me/organisations": {
+      "get": {
+        "tags": [
+          "CurrentUserOrganisation"
+        ],
+        "summary": "Retrieves the organisations the current user is permitted to manage.",
+        "operationId": "GetCurrentUserOrganisations",
+        "responses": {
+          "200": {
+            "description": "The organisations were returned successfully.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganisationListDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/current-organisation": {
+      "patch": {
+        "tags": [
+          "CurrentUserOrganisation"
+        ],
+        "summary": "Updates the current user's selected organisation.",
+        "operationId": "UpdateCurrentOrganisation",
+        "requestBody": {
+          "description": "A token that can be used to cancel the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentOrganisationCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentOrganisationCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentOrganisationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "The provided organisation is invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The current organisation was successfully updated."
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organisations/{id}": {
       "get": {
         "tags": [
@@ -684,6 +852,26 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrganisationDetailsDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to view the organisation.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -792,6 +980,26 @@
           },
           "400": {
             "description": "The supplied organisation details failed validation.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to update the organisation.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1057,7 +1265,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "The caller is not authorised to reactivate the membership.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1186,6 +1394,26 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrganisationMembershipDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The supplied role is invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1539,6 +1767,46 @@
               }
             }
           },
+          "403": {
+            "description": "The caller is not authorised to view the organisation's records.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified organisation does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -1570,6 +1838,7 @@
         "summary": "Creates a new record.",
         "operationId": "CreateRecord",
         "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
           "content": {
             "application/json": {
               "schema": {
@@ -1611,21 +1880,21 @@
             }
           },
           "400": {
-            "description": "The request body is invalid.",
+            "description": "The request body is invalid, or the specified organisation does not exist.",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               }
             }
@@ -1868,8 +2137,8 @@
               }
             }
           },
-          "404": {
-            "description": "Returned if no users are found matching the query parameters.",
+          "403": {
+            "description": "Returned if the caller is not authorised to view the users of the organisation.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1961,26 +2230,6 @@
               }
             }
           },
-          "400": {
-            "description": "Returned if the specified organisation does not exist.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "403": {
             "description": "Returned if the caller is not authorised to view the organisation's users.",
             "content": {
@@ -2002,7 +2251,7 @@
             }
           },
           "404": {
-            "description": "Returned if the user is not a member of the specified organisation.",
+            "description": "Returned if the organisation does not exist or the user is not a member of it.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2125,27 +2374,7 @@
             }
           },
           "404": {
-            "description": "The specified user does not exist.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller is not authorised to update the specified user's details.",
+            "description": "The specified user does not exist or is not accessible to the caller.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2473,7 +2702,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "The current user is not allowed to view membership requests for the organisation.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2493,7 +2722,7 @@
             }
           },
           "404": {
-            "description": "No user was found with the supplied identifier.",
+            "description": "No membership request was found with the supplied identifier.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2738,6 +2967,7 @@
           "SelectedOrganisationIsNotValid",
           "MembershipDeactivated",
           "MembershipNotInValidState",
+          "OrganisationNotActive",
           null
         ],
         "type": "string"
@@ -3479,6 +3709,20 @@
         ],
         "type": "string"
       },
+      "UpdateCurrentOrganisationCommand": {
+        "required": [
+          "organisationId"
+        ],
+        "type": "object",
+        "properties": {
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the identifier of the organisation to set as the current organisation.",
+            "format": "int32"
+          }
+        },
+        "description": "Represents the request to update the currently authenticated user's active organisation."
+      },
       "UpdateOrganisationDetailsDto": {
         "required": [
           "organisationName",
@@ -3827,6 +4071,9 @@
   "tags": [
     {
       "name": "Authentication"
+    },
+    {
+      "name": "CurrentUserOrganisation"
     },
     {
       "name": "Organisation"
