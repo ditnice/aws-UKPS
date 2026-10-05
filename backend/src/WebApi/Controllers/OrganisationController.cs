@@ -31,11 +31,15 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// <response code="200">
     /// The organisation was found and its details were returned.
     /// </response>
+    /// <response code="403">
+    /// The caller is not authorised to view the organisation.
+    /// </response>
     /// <response code="404">
     /// No organisation exists with the specified identifier.
     /// </response>
     [HttpGet("{id:int}", Name = nameof(GetOrganisationById))]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationDetailsDto>> GetOrganisationById(
         int id,
@@ -50,7 +54,11 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 error switch
                 {
                     GetOrganisationByIdError.NotFound => NotFound(),
-                    GetOrganisationByIdError.NotAllowed => Forbid(),
+                    GetOrganisationByIdError.NotAllowed => Problem(
+                        statusCode: StatusCodes.Status403Forbidden,
+                        title: "Forbidden",
+                        detail: "You are not authorised to view this organisation."
+                    ),
                     _ => throw new UnreachableException(
                         "Unhandled GetOrganisationByIdError variant."
                     ),
@@ -77,12 +85,16 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// <response code="400">
     /// The supplied organisation details failed validation.
     /// </response>
+    /// <response code="403">
+    /// The caller is not authorised to update the organisation.
+    /// </response>
     /// <response code="404">
     /// No organisation exists with the specified identifier.
     /// </response>
     [HttpPut("{id:int}", Name = nameof(UpdateOrganisationDetails))]
     [ProducesResponseType<OrganisationDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationDetailsDto>> UpdateOrganisationDetails(
         int id,
@@ -107,7 +119,11 @@ public class OrganisationController(IOrganisationService organisationService) : 
                 error switch
                 {
                     UpdateOrganisationDetailsError.NotFound => NotFound(),
-                    UpdateOrganisationDetailsError.NotAllowed => Forbid(),
+                    UpdateOrganisationDetailsError.NotAllowed => Problem(
+                        statusCode: StatusCodes.Status403Forbidden,
+                        title: "Forbidden",
+                        detail: "You are not authorised to update this organisation."
+                    ),
                     _ => throw new UnreachableException(
                         "Unhandled UpdateOrganisationDetailsError variant."
                     ),
@@ -209,6 +225,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// <response code="200">
     /// The membership was successfully reactivated.
     /// </response>
+    /// <response code="403">
+    /// The caller is not authorised to reactivate the membership.
+    /// </response>
     /// <response code="404">
     /// The specified organisation membership could not be found.
     /// </response>
@@ -279,6 +298,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// <response code="200">
     /// The membership role was successfully updated.
     /// </response>
+    /// <response code="400">
+    /// The supplied role is invalid.
+    /// </response>
     /// <response code="403">
     /// The caller is not authorised to update the membership, or the membership is their own.
     /// </response>
@@ -290,6 +312,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
         Name = nameof(UpdateUserRole)
     )]
     [ProducesResponseType<OrganisationMembershipDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrganisationMembershipDto>> UpdateUserRole(
@@ -314,16 +337,20 @@ public class OrganisationController(IOrganisationService organisationService) : 
                     OrganisationMembershipUpdateUserRoleError.NotFound notFound => NotFound(
                         $"Could not find a membership with organisation ID = {notFound.OrganisationId} and membership ID = {notFound.MembershipId}."
                     ),
-                    OrganisationMembershipUpdateUserRoleError.NotAllowed => Forbid(
-                        "The user is not authorised to perform this action."
+                    OrganisationMembershipUpdateUserRoleError.NotAllowed => Problem(
+                        title: "Not authorised",
+                        statusCode: StatusCodes.Status403Forbidden,
+                        detail: "The user is not authorised to perform this action."
                     ),
                     OrganisationMembershipUpdateUserRoleError.CannotChangeOwnRole => Problem(
                         title: "Not authorised",
                         statusCode: StatusCodes.Status403Forbidden,
                         detail: "You cannot change your own role."
                     ),
-                    OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole => Forbid(
-                        "The user is not authorised to perform this action."
+                    OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole => Problem(
+                        title: "Not authorised",
+                        statusCode: StatusCodes.Status403Forbidden,
+                        detail: "The user is not authorised to perform this action."
                     ),
                     _ => throw new UnreachableException(),
                 }
