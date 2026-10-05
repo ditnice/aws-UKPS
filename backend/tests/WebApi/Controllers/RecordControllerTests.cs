@@ -129,7 +129,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
-    public async Task GetRecords_ReturnsBadRequest_WhenOrganisationNotFound()
+    public async Task GetRecords_ReturnsNotFound_WhenOrganisationNotFound()
     {
         _mockRecordService
             .GetOrganisationRecords(
@@ -146,7 +146,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         var url = AppendQueryParams($"{RecordsUrl}/{OrganisationId}", CreateQuery());
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]

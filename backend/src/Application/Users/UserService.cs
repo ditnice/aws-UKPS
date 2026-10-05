@@ -138,7 +138,7 @@ internal partial class UserService(
     {
         GetUsersError? organisationError = await ValidateOrganisationAsync(
             getUsersQuery.OrganisationId,
-            Operation.Read,
+            Operation.ElevatedRead,
             cancellationToken
         );
         if (organisationError is not null)
@@ -147,7 +147,7 @@ internal partial class UserService(
         }
 
         var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
-            Operation.Read
+            Operation.ElevatedRead
         );
         IQueryable<UserInformationTrackingProjection> unionQuery = GetProjectedUserInformation();
         IQueryable<UserInformationTrackingProjection> organisationMemberships = ApplyFilters(
@@ -374,7 +374,11 @@ internal partial class UserService(
     {
         if (!organisationId.HasValue)
         {
-            return null;
+            // No specific organisation requested, so the caller must be permitted the
+            // operation on at least one organisation.
+            return organisationAuthoriser.GetAuthorisedOrganisations(operation).IsNone
+                ? new GetUsersError.NotAllowed(null)
+                : null;
         }
 
         bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
