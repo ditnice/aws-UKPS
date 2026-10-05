@@ -133,6 +133,39 @@
         }
       }
     },
+    "/auth/sign-out": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Ends the current authentication session and clears authentication cookies.",
+        "responses": {
+          "200": {
+            "description": "The user was signed out and authentication cookies were cleared."
+          },
+          "401": {
+            "description": "The CSRF token was missing or invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/mfa": {
       "post": {
         "tags": [
