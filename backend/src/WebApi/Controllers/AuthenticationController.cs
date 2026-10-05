@@ -77,6 +77,13 @@ public class AuthenticationController : ControllerBase
         Detail = "Exactly one of setupToken or correlationId must be supplied.",
         Status = StatusCodes.Status400BadRequest,
     };
+    private readonly ProblemDetails _csrfValidationFailed = new ProblemDetails
+    {
+        Title = "CSRF validation failed",
+        Detail =
+            "The request could not be authenticated because the CSRF token was missing or invalid.",
+        Status = StatusCodes.Status401Unauthorized,
+    };
 
     /// <summary>
     /// Initialises a new instance of the <see cref="AuthenticationController"/> class.
@@ -180,14 +187,7 @@ public class AuthenticationController : ControllerBase
     {
         if (!PassesCsrfValidation())
         {
-            return Unauthorized(
-                new ProblemDetails
-                {
-                    Title = "CSRF validation failed",
-                    Detail =
-                        "The request could not be authenticated because the CSRF token was missing or invalid.",
-                }
-            );
+            return Unauthorized(_csrfValidationFailed);
         }
         var command = new RefreshAuthenticationTokenCommand
         {
@@ -215,14 +215,7 @@ public class AuthenticationController : ControllerBase
     {
         if (!PassesCsrfValidation())
         {
-            return Unauthorized(
-                new ProblemDetails
-                {
-                    Title = "CSRF validation failed",
-                    Detail =
-                        "The request could not be authenticated because the CSRF token was missing or invalid.",
-                }
-            );
+            return Unauthorized(_csrfValidationFailed);
         }
 
         await _loginService.SignOut(

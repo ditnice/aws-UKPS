@@ -191,11 +191,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 cancellationToken
             );
         }
-        catch (NotAuthorizedException ex)
-        {
-            LogCognitoTokenRevocationIgnored(ex.Message, ex);
-        }
-        catch (InvalidParameterException ex)
+        catch (Exception ex) when (ex is NotAuthorizedException or InvalidParameterException)
         {
             LogCognitoTokenRevocationIgnored(ex.Message, ex);
         }

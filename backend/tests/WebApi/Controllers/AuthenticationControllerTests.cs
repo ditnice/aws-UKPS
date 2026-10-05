@@ -805,38 +805,31 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         AssertCookiesDoNotExist(response.Headers);
     }
 
-    private async Task<HttpResponseMessage> SendRefreshRequest(
+    private Task<HttpResponseMessage> SendRefreshRequest(
         string? csrfCookie = "test-csrf-token",
         string? csrfHeader = "test-csrf-token"
     )
     {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            new Uri(RefreshUrl, UriKind.Relative)
-        );
-
-        if (csrfHeader is not null)
-        {
-            request.Headers.Add("X-CSRF-Token", csrfHeader);
-        }
-        if (csrfCookie is not null)
-        {
-            request.Headers.Add("Cookie", $"{CsrfCookieName}={csrfCookie}");
-        }
-
-        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        return SendCsrfProtectedRequest(RefreshUrl, csrfCookie, csrfHeader, refreshCookie: null);
     }
 
-    private async Task<HttpResponseMessage> SendSignOutRequest(
+    private Task<HttpResponseMessage> SendSignOutRequest(
         string? csrfCookie = "test-csrf-token",
         string? csrfHeader = "test-csrf-token",
         string? refreshCookie = "test-refresh-token"
     )
     {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            new Uri(SignOutUrl, UriKind.Relative)
-        );
+        return SendCsrfProtectedRequest(SignOutUrl, csrfCookie, csrfHeader, refreshCookie);
+    }
+
+    private async Task<HttpResponseMessage> SendCsrfProtectedRequest(
+        string url,
+        string? csrfCookie,
+        string? csrfHeader,
+        string? refreshCookie
+    )
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(url, UriKind.Relative));
 
         if (csrfHeader is not null)
         {

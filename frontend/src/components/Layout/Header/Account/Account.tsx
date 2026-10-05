@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
 
@@ -57,7 +58,7 @@ export function Account() {
 
   if (!isLoggedIn) {
     return (
-      <Button to={buildSignInHref(undefined)} variant="inverse">
+      <Button elementType={Link} href={buildSignInHref(undefined)} variant="inverse">
         Sign in
       </Button>
     )
