@@ -24,8 +24,20 @@ export default defineConfig({
         'src/collections/**',
         'src/globals/**',
         // Local dev showcase of design-system components, to be removed.
-        'src/app/portal/components/\\(examples\\)/**',
+        'src/app/portal/components/**',
+        // Framework glue with no logic, covered by Playwright smoke tests. See ADR-005.
+        'src/app/**/layout.tsx',
+        'src/app/**/not-found.tsx',
+        'src/app/portal/\\[...notFound\\]/page.tsx',
+        'src/styles/fonts.ts',
       ],
+      // Baseline ratchet (ADR-005): raise as coverage improves, never lower.
+      thresholds: {
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
+      },
     },
   },
 })
