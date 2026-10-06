@@ -92,6 +92,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             new RegisterUserConfirmationDto
             {
                 Id = user.Id,
+                RequestGuid = user.RequestGuid,
                 OrganisationName = user.OrganisationName,
                 FullName = registerUserCommandDto.FullName,
                 WorkEmail = registerUserCommandDto.WorkEmail,
@@ -150,6 +151,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             new RegisterUserConfirmationDto
             {
                 Id = request.Id,
+                RequestGuid = request.RequestGuid,
                 OrganisationName = request.Organisation!.OrganisationName,
                 FullName = request.FullName,
                 WorkEmail = request.WorkEmail,

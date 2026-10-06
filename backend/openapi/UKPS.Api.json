@@ -3583,6 +3583,7 @@
       "RegisterUserConfirmationDto": {
         "required": [
           "id",
+          "requestGuid",
           "organisationName",
           "fullName",
           "workEmail",
@@ -3594,6 +3595,11 @@
             "type": "integer",
             "description": "ID for the user.",
             "format": "int32"
+          },
+          "requestGuid": {
+            "type": "string",
+            "description": "Guid for the user.",
+            "format": "uuid"
           },
           "organisationName": {
             "type": "string",

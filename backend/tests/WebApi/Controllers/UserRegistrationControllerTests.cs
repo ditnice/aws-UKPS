@@ -333,6 +333,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
         new()
         {
             Id = 1,
+            RequestGuid = Guid.NewGuid(),
             OrganisationName = "Test",
             FullName = "Test2",
             PhoneNumber = "07845796823",

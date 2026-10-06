@@ -3,6 +3,8 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 internal sealed class UserRegistrationRequest
 {
     public int Id { get; init; }
+
+    public Guid RequestGuid { get; init; } = Guid.NewGuid();
     public required int OrganisationId { get; init; }
     public required string FullName { get; init; }
     public required string WorkEmail { get; init; }

@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260930102351_InitialCreate")]
+    [Migration("20261006110514_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -545,6 +545,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int?>("RejectedBy")
                         .HasColumnType("integer")
                         .HasColumnName("rejected_by");
+
+                    b.Property<Guid>("RequestGuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_guid");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()

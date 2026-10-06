@@ -203,6 +203,7 @@ export const fakeRegisterUserConfirmationDto = (options?: Options): RegisterUser
     const f = options?.faker ?? faker;
     return {
         id: f.number.int(),
+        requestGuid: f.string.uuid(),
         organisationName: f.string.sample(),
         fullName: f.person.fullName(),
         workEmail: f.internet.email(),

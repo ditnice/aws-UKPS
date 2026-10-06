@@ -543,6 +543,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rejected_by");
 
+                    b.Property<Guid>("RequestGuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_guid");
+
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()

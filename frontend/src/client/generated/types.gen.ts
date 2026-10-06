@@ -445,6 +445,10 @@ export type RegisterUserConfirmationDto = {
      */
     id: number;
     /**
+     * Guid for the user.
+     */
+    requestGuid: string;
+    /**
      * Gets the name of the user's organisation.
      */
     organisationName: string;

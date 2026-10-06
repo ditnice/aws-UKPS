@@ -293,6 +293,7 @@ internal class UserRegistrationService : IUserRegistrationService
         return new()
         {
             Id = userRegistrationRequest.Id,
+            RequestGuid = userRegistrationRequest.RequestGuid,
             OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
             FullName = userRegistrationRequest.FullName,
             WorkEmail = userRegistrationRequest.WorkEmail,
