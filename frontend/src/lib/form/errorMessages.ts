@@ -18,9 +18,9 @@ export const errorMessages = {
   organisationRequired: 'Select an organisation',
 
   //// Onboarding
-  userNameRequired: "Enter the user's full name",
-  userEmailRequired: "Enter the user's work email address",
-  userPhoneNumberRequired: "Enter the user's phone number",
+  userNameRequired: 'Enter their full name',
+  userEmailRequired: 'Enter an email address',
+  userPhoneNumberRequired: 'Enter their phone number',
 
   //// Records
   developmentNameRequired: 'Enter development name',
