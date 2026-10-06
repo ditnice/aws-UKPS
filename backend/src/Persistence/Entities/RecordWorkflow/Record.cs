@@ -37,6 +37,35 @@ internal sealed class Record
     public ICollection<RecordStatusHistory> StatusHistory { get; set; } = [];
     public ICollection<RecordEvent> Events { get; set; } = [];
 
+    /// <summary>Changes the record's status and records the change in its status history.</summary>
+    /// <param name="toStatus">The new status.</param>
+    /// <param name="time">When the status changed.</param>
+    /// <param name="changedBy">The user who changed it, or null for system-triggered changes.</param>
+    /// <param name="reason">Why the status changed.</param>
+    /// <param name="note">Further details about the change.</param>
+    internal void ChangeStatus(
+        RecordStatus toStatus,
+        DateTime time,
+        User? changedBy,
+        RecordStatusChangeReason? reason = null,
+        string? note = null
+    )
+    {
+        StatusHistory.Add(
+            new RecordStatusHistory
+            {
+                Record = this,
+                FromStatus = RecordStatus,
+                ToStatus = toStatus,
+                Reason = reason,
+                Note = note,
+                UpdatedAt = time,
+                UpdatedByUser = changedBy,
+            }
+        );
+        RecordStatus = toStatus;
+    }
+
     internal static (Record record, RecordRevision recordRevision) CreateInitial(
         Organisation organisation,
         DateTime time,

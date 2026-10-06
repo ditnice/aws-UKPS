@@ -31,9 +31,4 @@ public sealed record RecordClinicalTrialDto
     /// Gets the brief description of key findings.
     /// </summary>
     public string? BriefDescription { get; init; }
-
-    /// <summary>
-    /// Gets whether the trial is recruiting in the UK.
-    /// </summary>
-    public YesNoUnknown? RecruitingInUk { get; init; }
 }

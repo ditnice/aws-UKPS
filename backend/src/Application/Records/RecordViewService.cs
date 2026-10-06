@@ -120,6 +120,10 @@ internal sealed class RecordViewService(
                 revisionId,
                 cancellationToken
             ),
+            RecordClinicalTrialInformation = await GetRecordClinicalTrialInformation(
+                revisionId,
+                cancellationToken
+            ),
             RecordClinicalTrials = await GetRecordClinicalTrials(revisionId, cancellationToken),
             RecordMhraProcedure = await GetRecordMhraProcedure(revisionId, cancellationToken),
             RecordMhraDate = await GetRecordMhraDate(revisionId, cancellationToken),
@@ -408,6 +412,19 @@ internal sealed class RecordViewService(
             })
             .SingleOrDefaultAsync(cancellationToken);
 
+    private Task<RecordClinicalTrialInformationDto?> GetRecordClinicalTrialInformation(
+        int revisionId,
+        CancellationToken cancellationToken
+    ) =>
+        dbContext
+            .RecordClinicalTrialInformation.AsNoTracking()
+            .Where(x => x.RevisionId == revisionId)
+            .Select(x => new RecordClinicalTrialInformationDto
+            {
+                RecruitingInUk = x.RecruitingInUk,
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
     private async Task<IReadOnlyCollection<RecordClinicalTrialDto>> GetRecordClinicalTrials(
         int revisionId,
         CancellationToken cancellationToken
@@ -427,7 +444,6 @@ internal sealed class RecordViewService(
                     .ToList(),
                 TrialPhase = x.TrialPhase,
                 BriefDescription = x.BriefDescription,
-                RecruitingInUk = x.RecruitingInUk,
             })
             .ToListAsync(cancellationToken);
 

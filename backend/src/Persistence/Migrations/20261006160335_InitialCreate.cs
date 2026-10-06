@@ -675,7 +675,7 @@ namespace UKPS.Api.Persistence.Migrations
                     to_status = table.Column<int>(type: "integer", nullable: false),
                     reason = table.Column<int>(type: "integer", nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
-                    updated_by = table.Column<int>(type: "integer", nullable: false),
+                    updated_by = table.Column<int>(type: "integer", nullable: true),
                     updated_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
                 },
                 constraints: table =>
@@ -987,6 +987,28 @@ namespace UKPS.Api.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "record_clinical_trial_information",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    revision_id = table.Column<int>(type: "integer", nullable: false),
+                    recruiting_in_uk = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_record_clinical_trial_information", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_record_clinical_trial_information_record_revisions_revision",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "record_clinical_trials",
                 schema: "ukps",
                 columns: table => new
@@ -997,8 +1019,7 @@ namespace UKPS.Api.Persistence.Migrations
                     study_name = table.Column<string>(type: "text", nullable: false),
                     clinical_trials_gov_number = table.Column<string>(type: "text", nullable: false),
                     trial_phase = table.Column<int>(type: "integer", nullable: true),
-                    brief_description = table.Column<string>(type: "text", nullable: true),
-                    recruiting_in_uk = table.Column<int>(type: "integer", nullable: true)
+                    brief_description = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1926,6 +1947,13 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "reviewed_by");
 
             migrationBuilder.CreateIndex(
+                name: "ix_record_clinical_trial_information_revision_id",
+                schema: "ukps",
+                table: "record_clinical_trial_information",
+                column: "revision_id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_record_clinical_trial_revision_id",
                 schema: "ukps",
                 table: "record_clinical_trials",
@@ -2322,6 +2350,10 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "other_clinical_trial_numbers",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "record_clinical_trial_information",
                 schema: "ukps");
 
             migrationBuilder.DropTable(

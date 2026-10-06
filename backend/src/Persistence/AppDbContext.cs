@@ -41,6 +41,8 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<RecordMhraDate> RecordMhraDates => Set<RecordMhraDate>();
     public DbSet<RecordHta> RecordHtas => Set<RecordHta>();
     public DbSet<RecordClinicalTrial> RecordClinicalTrials => Set<RecordClinicalTrial>();
+    public DbSet<RecordClinicalTrialInformation> RecordClinicalTrialInformation =>
+        Set<RecordClinicalTrialInformation>();
     public DbSet<OtherClinicalTrialNumber> OtherClinicalTrialNumbers =>
         Set<OtherClinicalTrialNumber>();
 

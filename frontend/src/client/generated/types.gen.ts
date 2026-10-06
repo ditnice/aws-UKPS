@@ -787,6 +787,7 @@ export type PublishedRecordDtoPublishedMedicineRecordDto = {
     recordProductDetail?: null | RecordProductDetailDto;
     medicinesIndicationDetail?: null | MedicinesIndicationDetailDto;
     medicinesDevelopmentBackground?: null | MedicinesDevelopmentBackgroundDto;
+    recordClinicalTrialInformation?: null | RecordClinicalTrialInformationDto;
     /**
      * Gets the clinical trials.
      */
@@ -873,6 +874,12 @@ export type RecordClinicalTrialDto = {
      * Gets the brief description of key findings.
      */
     briefDescription?: null | string;
+};
+
+/**
+ * Represents the answers about a record's clinical trials as a whole.
+ */
+export type RecordClinicalTrialInformationDto = {
     recruitingInUk?: null | YesNoUnknown;
 };
 
