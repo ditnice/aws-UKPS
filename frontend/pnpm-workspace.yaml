@@ -1,9 +1,10 @@
 minimumReleaseAge: 10080 # 7 days
 
 # Force patched versions of transitive deps flagged by `trivy fs` for known
-# vulns, until the packages pulling them in (payload) release versions that
+# vulns, until the packages pulling them in (payload, css-tree) release versions that
 # bump them on their own.
 overrides:
+  source-map-js: ^1.2.2 # CVE-2026-93749, via css-tree/postcss
   undici: ^7.29.1 # CVE-2026-19534, CVE-2026-84961, via payload (pins 7.29.0)
 
 allowBuilds:
