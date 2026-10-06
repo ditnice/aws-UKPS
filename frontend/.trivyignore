@@ -1,0 +1,8 @@
+# Accepted vulns flagged by `trivy fs`. Prefer an override in
+# pnpm-workspace.yaml when a fixed version exists; only list here when there's
+# no fix upstream. Each entry has an expiry so it gets re-reviewed.
+
+# braces 3.0.3: DoS via stack overflow from deeply nested patterns. No fixed
+# version published. Only reached via build/dev tooling (sass -> chokidar,
+# micromatch via fast-glob/stylelint/eslint), never with user-supplied patterns.
+CVE-2026-93687 exp:2027-01-06

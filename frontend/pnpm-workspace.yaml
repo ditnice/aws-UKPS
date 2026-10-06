@@ -1,10 +1,9 @@
 minimumReleaseAge: 10080 # 7 days
 
 # Force patched versions of transitive deps flagged by `trivy fs` for known
-# vulns, until the packages pulling them in (next) release versions that
+# vulns, until the packages pulling them in (payload) release versions that
 # bump them on their own.
 overrides:
-  nanoid: ^3.3.18 # CVE-2026-67213, via next -> postcss
   undici: ^7.29.1 # CVE-2026-19534, CVE-2026-84961, via payload (pins 7.29.0)
 
 allowBuilds:
