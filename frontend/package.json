@@ -32,6 +32,7 @@
     "test:e2e:ui": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts --ui",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/int --config ./vitest.config.mts",
     "test:unit": "cross-env NODE_OPTIONS=--no-deprecation vitest run src --config ./vitest.config.mts",
+    "test:coverage": "cross-env NODE_OPTIONS=--no-deprecation vitest run src --config ./vitest.config.mts --coverage",
     "test:unit:refresh": "cross-env NODE_OPTIONS=--no-deprecation vitest run src --config ./vitest.config.mts -u"
   },
   "dependencies": {
@@ -98,6 +99,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "4.7.0",
+    "@vitest/coverage-v8": "4.1.11",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.3.6",
     "eslint-import-resolver-typescript": "^4.4.5",

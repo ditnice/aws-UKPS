@@ -8,5 +8,16 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.spec.{ts,tsx}', 'tests/int/**/*.int.spec.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov', 'teamcity'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.spec.{ts,tsx}',
+        'src/client/generated/**',
+        'src/payload-types.ts',
+        'src/migrations/**',
+      ],
+    },
   },
 })
