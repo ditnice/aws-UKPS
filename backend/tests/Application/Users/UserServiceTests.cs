@@ -726,8 +726,7 @@ public class UserServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(UserRole.Super, false)]
     [InlineData(UserRole.Champion, true)]
-    [InlineData(UserRole.Standard, true)]
-    public async Task GetUsers_ReturnsAllUsersForSuperAdmins_AndFiltersByOrganisationForOtherRoles(
+    public async Task GetUsers_WhenChampionOrSuperUser_ReturnsUsersForTheirPermittedOrganisations(
         UserRole userRole,
         bool filtersByOrganisation
     )
@@ -757,6 +756,15 @@ public class UserServiceTests : DatabaseTestBase
                     x.User = users[2];
                     x.Organisation = organisations[0];
                 }),
+            // users[2] belongs to both organisations, so a row for organisations[1] must not
+            // be returned to a champion of organisations[0].
+            _userOrgMembershipFaker
+                .Generate()
+                .Update(x =>
+                {
+                    x.User = users[2];
+                    x.Organisation = organisations[1];
+                }),
         };
         await AddEntities(memberships, TestContext.Current.CancellationToken);
         var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
@@ -766,13 +774,13 @@ public class UserServiceTests : DatabaseTestBase
                 UserRole = userRole,
             }
         );
+
         var results = await harness.Service.GetUsers(
             _getAllUserQuery,
             TestContext.Current.CancellationToken
         );
 
         var dto = results.ShouldBeSuccess();
-
         if (filtersByOrganisation)
         {
             dto.TotalCount.ShouldBe(2);
@@ -787,17 +795,19 @@ public class UserServiceTests : DatabaseTestBase
         }
         else
         {
-            dto.Items.Select(i => i.UserId)
-                .ShouldContainSet([users[0].Id, users[1].Id, users[2].Id]);
+            dto.TotalCount.ShouldBe(TotalExpectedValues + memberships.Count);
         }
     }
 
     [Theory]
-    [InlineData(UserRole.Super, true)]
-    [InlineData(UserRole.Champion, false)]
-    [InlineData(UserRole.Standard, false)]
+    [InlineData(UserRole.Super, false, true)]
+    [InlineData(UserRole.Champion, false, false)]
+    [InlineData(UserRole.Champion, true, true)]
+    [InlineData(UserRole.Standard, false, false)]
+    [InlineData(UserRole.Standard, true, false)]
     public async Task GetUsers_ReturnsNotAllowed_WhenExplicitlyRequestingUsersForAnOrganisationIsNotAllowedToAccess(
         UserRole userRole,
+        bool requestsOwnOrganisation,
         bool isAllowedToAccess
     )
     {
@@ -812,7 +822,9 @@ public class UserServiceTests : DatabaseTestBase
         );
         IUserService service = harness.Service;
         GetUsersResult result = await service.GetUsers(
-            CreateGetUsersQuery(organisationId: otherOrganisation),
+            CreateGetUsersQuery(
+                organisationId: requestsOwnOrganisation ? userOrganisation : otherOrganisation
+            ),
             TestContext.Current.CancellationToken
         );
 
@@ -827,7 +839,7 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUsers_WhenAStandardUser_NoActionsAreShownAsPermittedOnTheReturnUsers()
+    public async Task GetUsers_WhenStandardUser_ReturnsNotAllowed()
     {
         var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
             x with
@@ -836,11 +848,11 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationId = 1,
             }
         );
-        var users = await harness.Service.GetUsers(
+        var result = await harness.Service.GetUsers(
             new GetUsersQueryDto(),
             TestContext.Current.CancellationToken
         );
-        users.ShouldBeSuccess().Items.ShouldAllBe(x => !x.Actions.Any());
+        result.ShouldBeError().ShouldBeOfType<GetUsersError.NotAllowed>();
     }
 
     [Theory]

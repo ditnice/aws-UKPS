@@ -164,6 +164,20 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     }
 
     [Fact]
+    public async Task GetUserRegistrationById_UserNotAuthorised_ReturnsForbidden()
+    {
+        _mock
+            .GetUserRegistrationById(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                    new GetUserDetailsError.UserNotAuthorised()
+                )
+            );
+        HttpResponseMessage response = await SendGetUserMembershipRequestById(1, 1);
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task ApproveRequest_OnValidRequest_ReturnsOk()
     {
         HttpResponseMessage response = await SendApproveRequest(

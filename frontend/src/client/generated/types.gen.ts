@@ -69,6 +69,50 @@ export type CreateOrganisationDto = {
 };
 
 /**
+ * Contains the details required to create a new record.
+ */
+export type CreateRecordCommand = {
+    /**
+     * Gets the identifier of the organisation for which the record will be created.
+     */
+    organisationId: number;
+    /**
+     * Gets the development name associated with the record.
+     */
+    developmentName: string;
+    /**
+     * Gets the optional branded name associated with the record.
+     */
+    brandedName?: null | string;
+    /**
+     * Gets the generic names associated with the record.
+     */
+    genericNames: Array<string>;
+    /**
+     * Gets the other names, codes, or synonyms associated with the record.
+     */
+    otherIdentifiers: Array<string>;
+    /**
+     * Gets the title of the record.
+     */
+    recordTitle: string;
+};
+
+/**
+ * Represents the result of creating a record.
+ */
+export type CreateRecordDto = {
+    /**
+     * Gets the identifier of the newly created record.
+     */
+    recordId: number;
+    /**
+     * Gets the identifier of the initial revision created for the record.
+     */
+    revisionId: number;
+};
+
+/**
  * Represents the level of precision for a date.
  */
 export const DatePrecision = {
@@ -1461,6 +1505,29 @@ export type PostAuthRefreshResponses = {
     200: unknown;
 };
 
+export type PostAuthSignOutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/sign-out';
+};
+
+export type PostAuthSignOutErrors = {
+    /**
+     * The CSRF token was missing or invalid.
+     */
+    401: ProblemDetails;
+};
+
+export type PostAuthSignOutError = PostAuthSignOutErrors[keyof PostAuthSignOutErrors];
+
+export type PostAuthSignOutResponses = {
+    /**
+     * The user was signed out and authentication cookies were cleared.
+     */
+    200: unknown;
+};
+
 export type PostAuthMfaData = {
     /**
      * A token to monitor for cancellation requests.
@@ -1718,6 +1785,10 @@ export type GetOrganisationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
+     * The caller is not authorised to view the organisation.
+     */
+    403: ProblemDetails;
+    /**
      * No organisation exists with the specified identifier.
      */
     404: ProblemDetails;
@@ -1758,6 +1829,10 @@ export type UpdateOrganisationDetailsErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to update the organisation.
+     */
+    403: ProblemDetails;
     /**
      * No organisation exists with the specified identifier.
      */
@@ -1847,7 +1922,7 @@ export type ReactivateMembershipErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Forbidden
+     * The caller is not authorised to reactivate the membership.
      */
     403: ProblemDetails;
     /**
@@ -1887,6 +1962,10 @@ export type UpdateUserRoleData = {
 };
 
 export type UpdateUserRoleErrors = {
+    /**
+     * The supplied role is invalid.
+     */
+    400: ProblemDetails;
     /**
      * Unauthorized
      */
@@ -2017,6 +2096,14 @@ export type GetOrganisationRecordsErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to view the organisation's records.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified organisation does not exist.
+     */
+    404: ProblemDetails;
 };
 
 export type GetOrganisationRecordsError = GetOrganisationRecordsErrors[keyof GetOrganisationRecordsErrors];
@@ -2077,6 +2164,42 @@ export type GetPublishedRecordResponses = {
 };
 
 export type GetPublishedRecordResponse = GetPublishedRecordResponses[keyof GetPublishedRecordResponses];
+
+export type CreateRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: CreateRecordCommand;
+    path?: never;
+    query?: never;
+    url: '/records';
+};
+
+export type CreateRecordErrors = {
+    /**
+     * The request body is invalid, or the specified organisation does not exist.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to create the requested record.
+     */
+    403: ProblemDetails;
+};
+
+export type CreateRecordError = CreateRecordErrors[keyof CreateRecordErrors];
+
+export type CreateRecordResponses = {
+    /**
+     * Returns the created record.
+     */
+    200: CreateRecordDto;
+};
+
+export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
 
 export type GetUsersMeData = {
     body?: never;
@@ -2167,9 +2290,9 @@ export type GetUsersErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Returned if no users are found matching the query parameters.
+     * Returned if the caller is not authorised to view the users of the organisation.
      */
-    404: ProblemDetails;
+    403: ProblemDetails;
 };
 
 export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];
@@ -2202,10 +2325,6 @@ export type GetUserDetailsWithinOrganisationData = {
 
 export type GetUserDetailsWithinOrganisationErrors = {
     /**
-     * Returned if the specified organisation does not exist.
-     */
-    400: ProblemDetails;
-    /**
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
@@ -2214,7 +2333,7 @@ export type GetUserDetailsWithinOrganisationErrors = {
      */
     403: ProblemDetails;
     /**
-     * Returned if the user is not a member of the specified organisation.
+     * Returned if the organisation does not exist or the user is not a member of it.
      */
     404: ProblemDetails;
 };
@@ -2255,11 +2374,7 @@ export type PatchUsersByUserIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The caller is not authorised to update the specified user's details.
-     */
-    403: ProblemDetails;
-    /**
-     * The specified user does not exist.
+     * The specified user does not exist or is not accessible to the caller.
      */
     404: ProblemDetails;
     /**
@@ -2375,11 +2490,11 @@ export type GetUserRegistrationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Forbidden
+     * The current user is not allowed to view membership requests for the organisation.
      */
     403: ProblemDetails;
     /**
-     * No user was found with the supplied identifier.
+     * No membership request was found with the supplied identifier.
      */
     404: ProblemDetails;
 };

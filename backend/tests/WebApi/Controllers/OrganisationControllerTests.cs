@@ -155,7 +155,9 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
             TestContext.Current.CancellationToken
         );
 
-        result.Result.ShouldBeOfType<ForbidResult>();
+        result
+            .Result.ShouldBeOfType<ObjectResult>()
+            .StatusCode.ShouldBe((int)HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -213,7 +215,9 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
             TestContext.Current.CancellationToken
         );
 
-        result.Result.ShouldBeOfType<ForbidResult>();
+        result
+            .Result.ShouldBeOfType<ObjectResult>()
+            .StatusCode.ShouldBe((int)HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -557,7 +561,7 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task UpdateUserRole_UserIsNotAuthorised_ReturnsForbidResult()
+    public async Task UpdateUserRole_UserIsNotAuthorised_ReturnsForbidden()
     {
         _organisationMembershipService
             .UpdateUserRole(
@@ -577,11 +581,13 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
             new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
             TestContext.Current.CancellationToken
         );
-        result.Result.ShouldBeOfType<ForbidResult>();
+        result
+            .Result.ShouldBeOfType<ObjectResult>()
+            .StatusCode.ShouldBe((int)HttpStatusCode.Forbidden);
     }
 
     [Fact]
-    public async Task UpdateUserRole_CannotManageSuperRole_ReturnsForbidResult()
+    public async Task UpdateUserRole_CannotManageSuperRole_ReturnsForbidden()
     {
         _organisationMembershipService
             .UpdateUserRole(
@@ -601,7 +607,9 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
             new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
             TestContext.Current.CancellationToken
         );
-        result.Result.ShouldBeOfType<ForbidResult>();
+        result
+            .Result.ShouldBeOfType<ObjectResult>()
+            .StatusCode.ShouldBe((int)HttpStatusCode.Forbidden);
     }
 
     [Fact]

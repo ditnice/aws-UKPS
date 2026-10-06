@@ -37,7 +37,7 @@ export default async function SignUpTermsAndConditions({
 
       <p>Read and accept the terms and conditions before continuing.</p>
 
-      <Alert type="caution">
+      <Alert type="caution" nonIntrusive>
         By accepting, you confirm you will use UK PharmaScan only for authorised purposes in line
         with your organisation&apos;s data use agreement.
       </Alert>

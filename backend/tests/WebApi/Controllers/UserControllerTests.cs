@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Bogus;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -245,7 +246,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task GetUserDetailsWithinOrganisation_ReturnsBadRequest_WhenOrganisationDoesNotExist()
+    public async Task GetUserDetailsWithinOrganisation_ReturnsNotFound_WhenOrganisationDoesNotExist()
     {
         _mockUserService
             .GetUserDetailsWithinOrganisation(
@@ -264,7 +265,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -337,7 +338,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task UpdateUserDetails_WhenForbidden_ShouldReturnForbiddenResponse()
+    public async Task UpdateUserDetails_WhenForbidden_ShouldReturnNotFoundResponse()
     {
         _mockUserService
             .UpdateUserDetails(
@@ -358,7 +359,50 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenForbiddenOrUserDoesNotExist_ShouldReturnIndistinguishableResponses()
+    {
+        _mockUserService
+            .UpdateUserDetails(1, Arg.Any<UpdateUserDetailsCommand>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<UserDetailsDto, UpdateUserDetailsError>.Err(
+                    new UpdateUserDetailsError.Unauthorised()
+                )
+            );
+        _mockUserService
+            .UpdateUserDetails(2, Arg.Any<UpdateUserDetailsCommand>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<UserDetailsDto, UpdateUserDetailsError>.Err(
+                    new UpdateUserDetailsError.UserDoesNotExist()
+                )
+            );
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate();
+
+        var forbiddenResponse = await _client.PatchAsJsonAsync(
+            new Uri($"{UsersUrl}/{1}", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
+        var missingResponse = await _client.PatchAsJsonAsync(
+            new Uri($"{UsersUrl}/{2}", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        var forbiddenProblem = await forbiddenResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+        var missingProblem = await missingResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+        forbiddenResponse.StatusCode.ShouldBe(missingResponse.StatusCode);
+        forbiddenProblem.ShouldNotBeNull();
+        missingProblem.ShouldNotBeNull();
+        forbiddenProblem.Title.ShouldBe(missingProblem.Title);
+        forbiddenProblem.Detail.ShouldBe(missingProblem.Detail);
     }
 
     [Fact]
