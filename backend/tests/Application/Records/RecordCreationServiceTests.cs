@@ -1,7 +1,3 @@
-global using CreateRecordResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Records.Dtos.CreateRecordDto,
-    UKPS.Api.Application.Records.Errors.CreateRecordError
->;
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -15,6 +11,10 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using CreateRecordResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Records.Dtos.CreateRecordDto,
+    UKPS.Api.Application.Records.Errors.CreateRecordError
+>;
 
 namespace UKPS.Api.Tests.Application.Records;
 

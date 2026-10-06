@@ -65,7 +65,8 @@ const ArrayInput = <T extends string>({
   const errorMessage = getFieldErrorMessage(field.state.meta.errors)
   return (
     <FormGroup>
-      <ErrorState>{errorMessage}</ErrorState>
+      {/* FormGroup clones each child, so empty slots must be elements rather than null */}
+      {errorMessage ? <ErrorState>{errorMessage}</ErrorState> : <></>}
       {field.state.value.map((_, i) => {
         const subfieldName = `${field.name}[${i}]` as const
         return (
@@ -76,12 +77,12 @@ const ArrayInput = <T extends string>({
                 <Input
                   error={Boolean(errorMessage)}
                   errorMessage={errorMessage}
-                  label={`${labelPrefix} ${i > 0 ? i + 1 : ''}`}
+                  label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
                   className={styles.multiValuesInput}
                   name={subfield.name}
                   onBlur={subfield.handleBlur}
                   value={subfield.state.value}
-                  hint={i == 0 ? hint : undefined}
+                  hint={i === 0 ? hint : undefined}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     subfield.handleChange(event.target.value)
                   }
@@ -89,17 +90,15 @@ const ArrayInput = <T extends string>({
                 />
               )
             })}
-            {i > 0 ? (
+            {i > 0 && (
               <Button
                 data-testid={`remove-button-${i}`}
                 type="button"
                 variant="secondary"
                 onClick={() => field.removeValue(i)}
               >
-                {removeItemLabel}
+                {removeItemLabel} <span className="visually-hidden">{i + 1}</span>
               </Button>
-            ) : (
-              <></>
             )}
           </div>
         )

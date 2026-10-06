@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import ArrayInput, { ArrayInputProps, Field } from './ArrayInput'
+import ArrayInput, { ArrayInputProps } from './ArrayInput'
 
 const defaultProps: ArrayInputProps<string> = {
   addItemLabel: 'add-item-label',
@@ -94,7 +94,16 @@ describe('ArrayInput', () => {
   it('should render the remove button with the configured label', () => {
     renderComponent()
 
-    expect(screen.getByTestId('remove-button-1').innerHTML).toBe(defaultProps.removeItemLabel)
+    expect(screen.getByTestId('remove-button-1').textContent).toBe(
+      `${defaultProps.removeItemLabel} 2`,
+    )
+  })
+
+  it('should give each remove button a distinct accessible name', () => {
+    renderComponent()
+
+    expect(screen.getByRole('button', { name: 'remove-item-label 2' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'remove-item-label 3' })).toBeDefined()
   })
 
   it('should call removeValue with the item index when a remove button is clicked', () => {
@@ -221,6 +230,12 @@ describe('ArrayInput', () => {
     })
 
     expect(screen.getByText('There is an error')).toBeDefined()
+  })
+
+  it('should not render an alert when there is no field error', () => {
+    renderComponent()
+
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('should render a subfield error', () => {

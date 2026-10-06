@@ -17,28 +17,30 @@ import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
 import ArrayInput from './ArrayInput'
 
-const developmentNameRequiredError = 'Enter development name'
-const genericNameRequiredError = 'Enter generic name'
+const inputWidth = 'two-thirds'
+
+const isDistinctIgnoringCase = (values: string[]) =>
+  new Set(values.map((value) => value.toLowerCase())).size === values.length
+
 export const createRecordCommandSchema = z.object({
   organisationId: z.number(),
   developmentNames: z
-    .array(z.string().trim().min(1, { message: developmentNameRequiredError }))
-    .min(1, { message: developmentNameRequiredError })
-    .refine((values) => new Set(values).size === values.length, {
-      message: 'Development names must be distinct',
-    }),
-  brandedName: z.string().trim().nullable().optional(),
+    .array(z.string().trim().min(1, errorMessages.developmentNameRequired))
+    .min(1, errorMessages.developmentNameRequired)
+    .refine(isDistinctIgnoringCase, errorMessages.developmentNamesDistinct),
+  brandedName: z
+    .string()
+    .nullish()
+    .transform((value) => value?.trim() || null),
   genericNames: z
-    .array(z.string().trim().min(1, { message: genericNameRequiredError }))
-    .min(1, { message: genericNameRequiredError })
-    .refine((values) => new Set(values).size === values.length, {
-      message: 'Generic names must be distinct',
-    }),
+    .array(z.string().trim().min(1, errorMessages.genericNameRequired))
+    .min(1, errorMessages.genericNameRequired)
+    .refine(isDistinctIgnoringCase, errorMessages.genericNamesDistinct),
   recordTitle: z
     .string()
     .trim()
-    .min(1, { message: 'Enter record title' })
-    .max(100, { message: 'Record title cannot be greater than 100 characters' }),
+    .min(1, errorMessages.recordTitleRequired)
+    .max(100, errorMessages.recordTitleTooLong),
 })
 
 type CreateMedicineRecordFormProps = {
@@ -46,8 +48,7 @@ type CreateMedicineRecordFormProps = {
 }
 const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormProps) => {
   const router = useRouter()
-  const [error, setError] = useState<boolean>()
-  const inputWidth = 'two-thirds' as const
+  const [error, setError] = useState(false)
   const defaultValues: CreateRecordCommand = {
     organisationId,
     developmentNames: [''],
@@ -58,10 +59,12 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value, formApi }) => {
-      createRecordCommandSchema.parse(value)
-      const { error, response } = await createRecord({ body: value })
+      setError(false)
+      const data = createRecordCommandSchema.parse(value)
+      const { error, response } = await createRecord({ body: data })
       if (response?.ok) {
         router.push(`/portal/organisations/${organisationId}/records`)
+        return
       }
 
       setError(true)
@@ -87,17 +90,17 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        form.handleSubmit()
+        void form.handleSubmit()
       }}
     >
       {error && <ErrorState>{errorMessages.creatingNewRecordError}</ErrorState>}
       <form.Field name="developmentNames" mode="array">
         {(field) => (
           <ArrayInput
-            labelPrefix={'Development name'}
+            labelPrefix="Development name"
             hint="Enter the name this medicine is known by in development (also called a synonym). This can include code names, historical names, abbreviations or alternate spellings."
             addItemLabel="Add additional development name"
-            removeItemLabel="Remove Development Name"
+            removeItemLabel="Remove development name"
             width={inputWidth}
             field={field}
             getSubfield={(name, renderInputs) => (
@@ -110,28 +113,26 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
-            <>
-              <Input
-                error={Boolean(errorMessage)}
-                errorMessage={errorMessage}
-                label="Branded name (Optional)"
-                name={field.name}
-                onBlur={field.handleBlur}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  field.handleChange(event.target.value)
-                }
-                value={field.state.value?.toString()}
-                width={inputWidth}
-              />
-            </>
+            <Input
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Branded name (Optional)"
+              name={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              value={field.state.value ?? ''}
+              width={inputWidth}
+            />
           )
         }}
       </form.Field>
       <form.Field name="genericNames" mode="array">
         {(field) => (
           <ArrayInput
-            labelPrefix={'Generic name'}
-            hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastain."
+            labelPrefix="Generic name"
+            hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
             addItemLabel="Add additional active substance"
             removeItemLabel="Remove active substance"
             width={inputWidth}
@@ -146,21 +147,19 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
-            <>
-              <Textarea
-                error={Boolean(errorMessage)}
-                errorMessage={errorMessage}
-                label="Record title"
-                name={field.name}
-                hint="Enter a title to help you to identify this record. You can enter up to 100 characters."
-                onBlur={field.handleBlur}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  field.handleChange(event.target.value)
-                }
-                value={field.state.value?.toString()}
-                width={inputWidth}
-              />
-            </>
+            <Textarea
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Record title"
+              name={field.name}
+              hint="Enter a title to help you to identify this record. You can enter up to 100 characters."
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+                field.handleChange(event.target.value)
+              }
+              value={field.state.value}
+              width={inputWidth}
+            />
           )
         }}
       </form.Field>

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CreateRecordCommand } from '@/client/generated'
+import { errorMessages } from '@/lib/form/errorMessages'
 
 import CreateMedicineRecordForm from './CreateMedicineRecordForm'
 
@@ -134,7 +135,7 @@ describe('CreateMedicineRecordForm', () => {
 
       expect(screen.getByLabelText('Development name 2')).toBeDefined()
 
-      fireEvent.click(screen.getByText('Remove Development Name'))
+      fireEvent.click(screen.getByText('Remove development name'))
 
       expect(screen.queryByLabelText('Development name 2')).toBeNull()
     })
@@ -145,7 +146,24 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(screen.getByText('Enter development name')).toBeDefined()
+        expect(screen.getByText(errorMessages.developmentNameRequired)).toBeDefined()
+      })
+
+      expect(mocks.createRecord).not.toHaveBeenCalled()
+    })
+
+    it('rejects duplicate development names that differ only by case', async () => {
+      renderComponent()
+
+      fillArrayField('Add additional development name', 'Development name', [
+        'duplicate',
+        'DUPLICATE',
+      ])
+
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(screen.getByText(errorMessages.developmentNamesDistinct)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
@@ -162,7 +180,7 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(screen.getByText('Development names must be distinct')).toBeDefined()
+        expect(screen.getByText(errorMessages.developmentNamesDistinct)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
@@ -197,7 +215,21 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(screen.getByText('Enter generic name')).toBeDefined()
+        expect(screen.getByText(errorMessages.genericNameRequired)).toBeDefined()
+      })
+
+      expect(mocks.createRecord).not.toHaveBeenCalled()
+    })
+
+    it('rejects duplicate generic names that differ only by case', async () => {
+      renderComponent()
+
+      fillArrayField('Add additional active substance', 'Generic name', ['duplicate', 'DUPLICATE'])
+
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(screen.getByText(errorMessages.genericNamesDistinct)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
@@ -211,7 +243,7 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(screen.getByText('Generic names must be distinct')).toBeDefined()
+        expect(screen.getByText(errorMessages.genericNamesDistinct)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
@@ -247,7 +279,7 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(screen.getByText('Enter record title')).toBeDefined()
+        expect(screen.getByText(errorMessages.recordTitleRequired)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
@@ -264,7 +296,7 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(screen.getByText('Record title cannot be greater than 100 characters')).toBeDefined()
+        expect(screen.getByText(errorMessages.recordTitleTooLong)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
@@ -305,6 +337,51 @@ describe('CreateMedicineRecordForm', () => {
       })
     })
 
+    it('sends a null branded name when the branded name is left empty', async () => {
+      renderComponent(123)
+
+      fillInForm({ ...validFormValues, brandedName: '   ' })
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(mocks.createRecord).toHaveBeenCalled()
+      })
+
+      expect(mocks.createRecord).toHaveBeenCalledWith({
+        body: {
+          organisationId: 123,
+          ...validFormValues,
+          brandedName: null,
+        },
+      })
+    })
+
+    it('sends trimmed values to the API', async () => {
+      renderComponent(123)
+
+      fillInForm({
+        developmentNames: ['  dn1  '],
+        brandedName: '  branded  ',
+        genericNames: ['  gn1  '],
+        recordTitle: '  record-title  ',
+      })
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(mocks.createRecord).toHaveBeenCalled()
+      })
+
+      expect(mocks.createRecord).toHaveBeenCalledWith({
+        body: {
+          organisationId: 123,
+          developmentNames: ['dn1'],
+          brandedName: 'branded',
+          genericNames: ['gn1'],
+          recordTitle: 'record-title',
+        },
+      })
+    })
+
     it('navigates to the records page after successful submission', async () => {
       renderComponent(123)
 
@@ -314,6 +391,19 @@ describe('CreateMedicineRecordForm', () => {
       await waitFor(() => {
         expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123/records')
       })
+    })
+
+    it('does not show an error after successful submission', async () => {
+      renderComponent(123)
+
+      fillInForm(validFormValues)
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalled()
+      })
+
+      expect(screen.queryByText(errorMessages.creatingNewRecordError)).toBeNull()
     })
 
     it('does not navigate when the API request fails', async () => {

@@ -2,44 +2,63 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UKPS.Api.WebApi.Validators;
 
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+/// <summary>
+/// Validates that every item in a string collection is distinct.
+/// </summary>
+/// <remarks>
+/// Items are trimmed before being compared, so values differing only by leading or trailing
+/// whitespace are treated as duplicates. A null collection is treated as valid; combine with
+/// <see cref="RequiredAttribute"/> to require a value.
+/// </remarks>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 internal sealed class DistinctStringsAttribute : ValidationAttribute
 {
-    public StringComparison StringComparison { get; }
+    private const string DefaultErrorMessage = "{0} must contain distinct values.";
+
+    private readonly StringComparer _comparer;
 
     public DistinctStringsAttribute(StringComparison stringComparison)
+        : base(DefaultErrorMessage)
     {
         StringComparison = stringComparison;
+        _comparer = StringComparer.FromComparison(stringComparison);
     }
 
-    /// <inheritdoc />
+    public DistinctStringsAttribute(StringComparison stringComparison, string errorMessage)
+        : base(errorMessage: errorMessage)
+    {
+        StringComparison = stringComparison;
+        _comparer = StringComparer.FromComparison(stringComparison);
+    }
+
+    /// <summary>
+    /// Gets the comparison used to determine whether two items are equal.
+    /// </summary>
+    public StringComparison StringComparison { get; }
+
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
-        if (value is not IEnumerable<string> values)
+        if (value is null)
         {
-            return ValidationResult.Success;
+            return ValidationResult.Success!;
         }
 
-        var comparer = GetComparer(StringComparison);
-        return values.Select(x => x?.Trim()).Distinct(comparer).Count() == values.Count()
-            ? ValidationResult.Success
-            : new ValidationResult(
-                $"{validationContext.DisplayName} must contain distinct values."
-            );
-    }
-
-    private static StringComparer GetComparer(StringComparison stringComparison)
-    {
-        return stringComparison switch
+        if (value is not IEnumerable<string?> items)
         {
-            StringComparison.Ordinal => StringComparer.Ordinal,
-            StringComparison.OrdinalIgnoreCase => StringComparer.OrdinalIgnoreCase,
-            StringComparison.InvariantCulture => StringComparer.InvariantCulture,
-            StringComparison.InvariantCultureIgnoreCase =>
-                StringComparer.InvariantCultureIgnoreCase,
-            StringComparison.CurrentCulture => StringComparer.CurrentCulture,
-            StringComparison.CurrentCultureIgnoreCase => StringComparer.CurrentCultureIgnoreCase,
-            _ => throw new ArgumentOutOfRangeException(nameof(stringComparison)),
-        };
+            throw new InvalidOperationException(
+                $"{nameof(DistinctStringsAttribute)} can only be applied to string collections."
+            );
+        }
+
+        var seen = new HashSet<string?>(_comparer);
+        if (items.All(item => seen.Add(item?.Trim())))
+        {
+            return ValidationResult.Success!;
+        }
+
+        return new ValidationResult(
+            FormatErrorMessage(validationContext.DisplayName),
+            validationContext.MemberName is null ? null : [validationContext.MemberName]
+        );
     }
 }

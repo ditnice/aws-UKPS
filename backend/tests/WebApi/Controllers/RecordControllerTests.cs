@@ -17,6 +17,10 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Records;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using CreateRecordResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Records.Dtos.CreateRecordDto,
+    UKPS.Api.Application.Records.Errors.CreateRecordError
+>;
 using SortDirection = UKPS.Api.Application.Common.SortDirection;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
@@ -40,6 +44,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             {
                 DevelopmentNames = ["not-distinct", "not-distinct"],
             },
+        ["DevelopmentNames duplicate items differing by case"] = x =>
+            x with
+            {
+                DevelopmentNames = ["not-distinct", "NOT-DISTINCT"],
+            },
         ["GenericNames empty"] = x => x with { GenericNames = [] },
         ["GenericNames null"] = x => x with { GenericNames = null! },
         ["GenericNames empty item"] = x => x with { GenericNames = [""] },
@@ -48,6 +57,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             x with
             {
                 GenericNames = ["not-distinct", "not-distinct"],
+            },
+        ["GenericNames duplicate items differing by case"] = x =>
+            x with
+            {
+                GenericNames = ["not-distinct", "NOT-DISTINCT"],
             },
         ["BrandedName empty"] = x => x with { BrandedName = "" },
         ["BrandedName whitespace"] = x => x with { BrandedName = "   " },
