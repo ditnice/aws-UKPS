@@ -49,6 +49,7 @@ type CreateMedicineRecordFormProps = {
 const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormProps) => {
   const router = useRouter()
   const [error, setError] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const defaultValues: CreateRecordCommand = {
     organisationId,
     developmentNames: [''],
@@ -60,6 +61,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
     defaultValues,
     onSubmit: async ({ value, formApi }) => {
       setError(false)
+      setIsSubmitting(true)
       const data = createRecordCommandSchema.parse(value)
       const { error, response } = await createRecord({ body: data })
       if (response?.ok) {
@@ -67,6 +69,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         return
       }
 
+      setIsSubmitting(false)
       setError(true)
 
       if (isValidationProblemDetails(error)) {
@@ -163,7 +166,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
           )
         }}
       </form.Field>
-      <Button type="submit" variant="cta">
+      <Button disabled={isSubmitting} type="submit" variant="cta">
         Save and continue
       </Button>
     </form>

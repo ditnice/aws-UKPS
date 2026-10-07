@@ -424,6 +424,87 @@ describe('CreateMedicineRecordForm', () => {
       expect(mocks.push).not.toHaveBeenCalled()
     })
 
+    it('disables the submit button while the request is in progress', async () => {
+      let resolveRequest: (value: unknown) => void = () => {}
+      mocks.createRecord.mockReturnValue(
+        new Promise((resolve) => {
+          resolveRequest = resolve
+        }),
+      )
+
+      renderComponent()
+
+      fillInForm(validFormValues)
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: 'Save and continue' }).hasAttribute('disabled'),
+        ).toBe(true)
+      })
+
+      resolveRequest({ error: undefined, response: { ok: true } })
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalled()
+      })
+    })
+
+    it('re-enables the submit button when the API request fails', async () => {
+      mocks.createRecord.mockResolvedValue({
+        error: {},
+        response: { ok: false },
+      })
+
+      renderComponent()
+
+      fillInForm(validFormValues)
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(screen.getByText(errorMessages.creatingNewRecordError)).toBeDefined()
+      })
+
+      expect(
+        screen.getByRole('button', { name: 'Save and continue' }).hasAttribute('disabled'),
+      ).toBe(false)
+    })
+
+    it.each([
+      ['development names', 'DevelopmentNames', 'Development name'],
+      ['generic names', 'GenericNames', 'Generic name'],
+    ])(
+      'allows resubmission after correcting %s rejected by the API',
+      async (_, errorKey, label) => {
+        const apiErrorMessage = 'The API rejected these names'
+        mocks.createRecord.mockResolvedValueOnce({
+          error: { title: 'Validation failed', errors: { [errorKey]: [apiErrorMessage] } },
+          response: { ok: false },
+        })
+
+        renderComponent()
+
+        fillInForm(validFormValues)
+        clickSubmitButton()
+
+        await waitFor(() => {
+          expect(screen.getByText(apiErrorMessage)).toBeDefined()
+        })
+
+        setFieldValue(label, 'corrected')
+
+        await waitFor(() => {
+          expect(screen.queryByText(apiErrorMessage)).toBeNull()
+        })
+
+        clickSubmitButton()
+
+        await waitFor(() => {
+          expect(mocks.createRecord).toHaveBeenCalledTimes(2)
+        })
+      },
+    )
+
     it('shows an error when the API request fails', async () => {
       mocks.createRecord.mockResolvedValue({
         error: {},

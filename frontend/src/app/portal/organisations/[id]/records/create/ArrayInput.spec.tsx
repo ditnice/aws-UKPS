@@ -16,6 +16,7 @@ const defaultProps: ArrayInputProps<string> = {
     },
     pushValue: vi.fn(),
     removeValue: vi.fn(),
+    setMeta: vi.fn(),
   },
   getSubfield: (name, subfieldRender) => {
     return subfieldRender({
@@ -193,6 +194,28 @@ describe('ArrayInput', () => {
     })
 
     expect(handleChange).toHaveBeenCalledWith('new value')
+  })
+
+  it('should clear the field API error when an input changes', () => {
+    const setMeta = vi.fn()
+
+    renderComponent({
+      field: {
+        ...defaultProps.field,
+        setMeta,
+      },
+    })
+
+    fireEvent.change(screen.getByLabelText('label-prefix 2'), {
+      target: { value: 'new value' },
+    })
+
+    expect(setMeta).toHaveBeenCalledTimes(1)
+
+    const updater = setMeta.mock.calls[0][0]
+    expect(updater({ errorMap: { onSubmit: 'API error', onDynamic: 'client error' } })).toEqual({
+      errorMap: { onSubmit: undefined, onDynamic: 'client error' },
+    })
   })
 
   it('should call subfield handleBlur when an input loses focus', () => {
