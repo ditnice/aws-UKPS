@@ -200,7 +200,7 @@ export default function SignUpSetMfa() {
                 errorMessage={errorMessage}
                 hint="Enter the 6-digit authentication code shown in your authenticator app."
                 inputMode="numeric"
-                label="Authentication code"
+                label="Enter your authentication code"
                 name={field.name}
                 onBlur={field.handleBlur}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
