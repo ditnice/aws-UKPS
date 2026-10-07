@@ -2,17 +2,11 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getAuthValidateSetupToken } from '@/client/generated/sdk.gen'
+import { redirect } from '@/test-utils/nextNavigation'
 
 import SignUpInitiate from './page'
 
-const redirect = vi.fn()
-
-vi.mock('next/navigation', () => ({
-  redirect: (url: string) => {
-    redirect(url)
-    throw new Error('NEXT_REDIRECT')
-  },
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated/sdk.gen', () => ({
   getAuthValidateSetupToken: vi.fn(),

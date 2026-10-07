@@ -15,11 +15,7 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => ({
-  notFound: vi.fn(() => {
-    throw new Error('NEXT_NOT_FOUND')
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@nice-digital/nds-page-header', () => ({
   PageHeader: ({ heading }: { heading: string }) => <h1>{heading}</h1>,

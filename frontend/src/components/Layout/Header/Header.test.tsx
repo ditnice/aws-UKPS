@@ -12,10 +12,7 @@ vi.mock('next/image', async () => ({
   default: (await import('@/test-utils/nextMocks')).NextImageMock,
 }))
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useRouter: () => ({ push: vi.fn() }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {

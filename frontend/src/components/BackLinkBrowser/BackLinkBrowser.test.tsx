@@ -2,15 +2,11 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { router } from '@/test-utils/nextNavigation'
+
 import { BackLinkBrowser } from './BackLinkBrowser'
 
-const mockBack = vi.fn()
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    back: mockBack,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
@@ -36,7 +32,7 @@ describe('BackLinkBrowser', () => {
     await user.click(link)
 
     expect(onClick).toHaveBeenCalledOnce()
-    expect(mockBack).toHaveBeenCalledOnce()
+    expect(router.back).toHaveBeenCalledOnce()
     expect(asFragment()).toMatchSnapshot()
   })
 })

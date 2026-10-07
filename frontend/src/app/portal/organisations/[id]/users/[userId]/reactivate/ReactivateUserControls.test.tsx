@@ -3,21 +3,16 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
+import { router } from '@/test-utils/nextNavigation'
+
 import ReactivateUserControls, { ReactivateUserControlsProps } from './ReactivateUserControls'
 
 const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
-  back: vi.fn(),
   reactivateMembership: vi.fn(),
   buildUserActionHref: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mocks.push,
-    back: mocks.back,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   reactivateMembership: mocks.reactivateMembership,
@@ -71,7 +66,7 @@ describe('ReactivateUserControls', () => {
     renderComponent()
     await user.click(getActionButton())
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledExactlyOnceWith(mockHref)
+      expect(router.push).toHaveBeenCalledExactlyOnceWith(mockHref)
       expect(mocks.buildUserActionHref).toHaveBeenCalledWith(defaultProps.organisationId, {
         action: 'reactivated',
         userId: defaultProps.userId,
@@ -85,7 +80,7 @@ describe('ReactivateUserControls', () => {
     await user.click(getActionButton())
     await waitFor(() => {
       expect(getActionError()).toBeTruthy()
-      expect(mocks.push).not.toHaveBeenCalled()
+      expect(router.push).not.toHaveBeenCalled()
     })
   })
 
@@ -93,7 +88,7 @@ describe('ReactivateUserControls', () => {
     renderComponent()
     await user.click(getCancelButton())
     await waitFor(() => {
-      expect(mocks.back).toHaveBeenCalledOnce()
+      expect(router.back).toHaveBeenCalledOnce()
     })
   })
 })

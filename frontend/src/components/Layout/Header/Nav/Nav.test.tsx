@@ -7,9 +7,7 @@ vi.mock('next/link', async () => ({
   default: (await import('@/test-utils/nextMocks')).NextLinkMock,
 }))
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 describe('Nav', () => {
   it('renders collapsed', () => {
     const { asFragment } = render(<Nav isExpanded={false} />)

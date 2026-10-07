@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
 import type { UserInformationDto, UserRole } from '@/client/generated/types.gen'
+import { notFound, notFoundError, router } from '@/test-utils/nextNavigation'
 
 import ManageUserAccess from './page'
 
@@ -16,19 +17,9 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(() => Promise.resolve({})),
 }))
 
-const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
-}))
+const mocks = router
 
-const notFound = vi.hoisted(() => vi.fn())
-const notFoundError = new Error('Not found')
-
-vi.mock('next/navigation', () => ({
-  notFound,
-  useRouter: () => ({
-    push: mocks.push,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 const userRole = 'Standard' as UserRole
 const user: UserInformationDto = {
   userId: 4,
@@ -83,10 +74,6 @@ const params = Promise.resolve({
 })
 
 beforeEach(() => {
-  notFound.mockImplementation(() => {
-    throw notFoundError
-  })
-
   mockUserResponse()
   mockCurrentUserResponse()
 })

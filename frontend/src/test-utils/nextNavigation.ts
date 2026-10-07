@@ -4,9 +4,9 @@ import { vi } from 'vitest'
 //
 //   vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 //
-// and import `router`, `navigationState`, `redirect` or `notFound` from here to set state or
-// assert calls. `vi.clearAllMocks()` runs after every test, so call history doesn't leak between
-// tests; `navigationState` is plain data, so set it in `beforeEach` when a test depends on it.
+// Import `router`, `navigationState`, `redirect` or `notFound` to set state or assert calls.
+// Global setup resets state, call history and implementations before each test.
+// These mocks model control flow, not the full Next.js runtime.
 
 export const router = {
   push: vi.fn(),
@@ -34,13 +34,39 @@ export const useParams = () => navigationState.params
 
 export const RedirectType = { push: 'push', replace: 'replace' } as const
 
-// Next.js stops rendering by throwing from these, so the mocks throw too.
-export const redirect = vi.fn((url: string, _type?: string): never => {
-  throw new Error(`NEXT_REDIRECT: ${url}`)
-})
-export const permanentRedirect = vi.fn((url: string, _type?: string): never => {
-  throw new Error(`NEXT_REDIRECT: ${url}`)
-})
-export const notFound = vi.fn((): never => {
-  throw new Error('NEXT_NOT_FOUND')
-})
+class NavigationError extends Error {}
+
+export const notFoundError = new NavigationError('NEXT_NOT_FOUND')
+
+function throwRedirect(url: string, _type?: string): never {
+  throw new NavigationError(`NEXT_REDIRECT: ${url}`)
+}
+
+function throwNotFound(): never {
+  throw notFoundError
+}
+
+function rethrowNavigationError(error: unknown): void {
+  if (error instanceof NavigationError) {
+    throw error
+  }
+}
+
+// Next.js terminates rendering rather than returning from these functions.
+export const redirect = vi.fn(throwRedirect)
+export const permanentRedirect = vi.fn(throwRedirect)
+export const notFound = vi.fn(throwNotFound)
+export const unstable_rethrow = vi.fn(rethrowNavigationError)
+
+export function resetNextNavigation() {
+  navigationState.pathname = '/'
+  navigationState.searchParams = new URLSearchParams()
+  navigationState.params = {}
+  for (const method of Object.values(router)) {
+    method.mockReset()
+  }
+  redirect.mockReset().mockImplementation(throwRedirect)
+  permanentRedirect.mockReset().mockImplementation(throwRedirect)
+  notFound.mockReset().mockImplementation(throwNotFound)
+  unstable_rethrow.mockReset().mockImplementation(rethrowNavigationError)
+}

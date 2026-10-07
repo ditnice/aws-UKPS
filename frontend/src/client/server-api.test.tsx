@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { redirect } from '@/test-utils/nextNavigation'
+
 import { createServerApiClient } from './server-api'
 
 const mocks = vi.hoisted(() => ({
   cookies: vi.fn(),
   createClient: vi.fn(),
   headers: vi.fn(),
-  redirect: vi.fn(),
 }))
 
 vi.mock('next/headers', () => ({ cookies: mocks.cookies, headers: mocks.headers }))
-vi.mock('next/navigation', () => ({ redirect: mocks.redirect }))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 vi.mock('server-only', () => ({}))
 vi.mock('./generated/client', () => ({ createClient: mocks.createClient }))
 vi.mock('./generated', () => ({
@@ -62,9 +63,11 @@ describe('createServerApiClient', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const client = await createTestClient()
-    await client.fetch('https://api.example.test/organisations/1')
+    await expect(client.fetch('https://api.example.test/organisations/1')).rejects.toThrow(
+      'NEXT_REDIRECT: /auth/sign-in?returnTo=%2Fportal%2Forganisations%2F1%3Fpage%3D2',
+    )
 
-    expect(mocks.redirect).toHaveBeenCalledWith(
+    expect(redirect).toHaveBeenCalledWith(
       '/auth/sign-in?returnTo=%2Fportal%2Forganisations%2F1%3Fpage%3D2',
     )
   })
@@ -81,9 +84,11 @@ describe('createServerApiClient', () => {
       )
 
       const client = await createTestClient()
-      await client.fetch('https://api.example.test/users/me')
+      await expect(client.fetch('https://api.example.test/users/me')).rejects.toThrow(
+        'NEXT_REDIRECT: /portal/organisations/select',
+      )
 
-      expect(mocks.redirect).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(redirect).toHaveBeenCalledWith('/portal/organisations/select')
     },
   )
 
@@ -99,9 +104,11 @@ describe('createServerApiClient', () => {
     )
 
     const client = await createTestClient()
-    await client.fetch('https://api.example.test/users/me')
+    await expect(client.fetch('https://api.example.test/users/me')).rejects.toThrow(
+      'NEXT_REDIRECT: /auth/error?code=MembershipDeactivated',
+    )
 
-    expect(mocks.redirect).toHaveBeenCalledWith('/auth/error?code=MembershipDeactivated')
+    expect(redirect).toHaveBeenCalledWith('/auth/error?code=MembershipDeactivated')
   })
 
   it('uses a portal returnTo fallback when no forwarded route header is available', async () => {
@@ -114,9 +121,11 @@ describe('createServerApiClient', () => {
     )
 
     const client = await createTestClient()
-    await client.fetch('https://api.example.test/users')
+    await expect(client.fetch('https://api.example.test/users')).rejects.toThrow(
+      'NEXT_REDIRECT: /auth/sign-in?returnTo=%2Fportal',
+    )
 
-    expect(mocks.redirect).toHaveBeenCalledWith('/auth/sign-in?returnTo=%2Fportal')
+    expect(redirect).toHaveBeenCalledWith('/auth/sign-in?returnTo=%2Fportal')
   })
 
   it('does not redirect server auth requests that return 401', async () => {
@@ -132,7 +141,7 @@ describe('createServerApiClient', () => {
     const response = await client.fetch('https://api.example.test/auth/refresh')
 
     expect(response.status).toBe(401)
-    expect(mocks.redirect).not.toHaveBeenCalled()
+    expect(redirect).not.toHaveBeenCalled()
   })
 
   it('passes through successful server API responses', async () => {
@@ -145,7 +154,7 @@ describe('createServerApiClient', () => {
     const client = await createTestClient()
 
     await expect(client.fetch('https://api.example.test/users')).resolves.toBe(successResponse)
-    expect(mocks.redirect).not.toHaveBeenCalled()
+    expect(redirect).not.toHaveBeenCalled()
   })
 
   it('fails clearly when the backend API base URL is absent', async () => {

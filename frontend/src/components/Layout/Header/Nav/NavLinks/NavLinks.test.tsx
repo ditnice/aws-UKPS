@@ -1,23 +1,15 @@
 import { render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import { NavLinks } from './NavLinks'
-
-const navigationState = vi.hoisted(() => ({
-  pathname: '/',
-}))
 
 vi.mock('next/link', async () => ({
   default: (await import('@/test-utils/nextMocks')).NextLinkMock,
 }))
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => navigationState.pathname,
-}))
-
-afterEach(() => {
-  navigationState.pathname = '/'
-})
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 describe('NavLinks', () => {
   it('renders root links for the root path', () => {

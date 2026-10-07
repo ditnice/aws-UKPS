@@ -9,17 +9,14 @@ import {
   type RegisterUserConfirmationDto,
 } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { RegistrationRequestForm } from './RegistrationRequestForm'
 
-const { mockPush } = vi.hoisted(() => ({ mockPush: vi.fn() }))
+const { push: mockPush } = router
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   getOrganisationsPublicOptions: vi.fn(),

@@ -3,16 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthSignOut } from '@/client/generated'
+import { router } from '@/test-utils/nextNavigation'
 
 import { Account } from './Account'
 
-const mockPush = vi.fn()
+const { push: mockPush } = router
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   postAuthSignOut: vi.fn(),

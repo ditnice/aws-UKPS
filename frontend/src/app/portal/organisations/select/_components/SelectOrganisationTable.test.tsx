@@ -3,18 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { updateCurrentOrganisation } from '@/client/generated'
+import { router } from '@/test-utils/nextNavigation'
 
 import { SelectOrganisationTable } from './SelectOrganisationTable'
 
-const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
-}))
+const mocks = router
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mocks.push,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   updateCurrentOrganisation: vi.fn(),

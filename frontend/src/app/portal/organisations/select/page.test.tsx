@@ -3,14 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getCurrentUserOrganisations } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
+import { redirect } from '@/test-utils/nextNavigation'
 
 import SelectOrganisationPage from './page'
 
-const mocks = vi.hoisted(() => ({
-  redirect: vi.fn(() => {
-    throw new Error('NEXT_REDIRECT')
-  }),
-}))
+const mocks = { redirect }
 
 vi.mock('@/client/generated', () => ({
   getCurrentUserOrganisations: vi.fn(),
@@ -20,10 +17,7 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => ({
-  redirect: mocks.redirect,
-  RedirectType: { push: 'push', replace: 'replace' },
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@nice-digital/nds-page-header', () => ({
   PageHeader: ({ heading }: { heading: string }) => <h1>{heading}</h1>,

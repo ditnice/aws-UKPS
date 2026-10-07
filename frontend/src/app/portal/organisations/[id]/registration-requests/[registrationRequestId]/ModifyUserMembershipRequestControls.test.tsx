@@ -3,21 +3,18 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
+import { router } from '@/test-utils/nextNavigation'
+
 import ModifyUserMembershipRequestControls, {
   ModifyUserMembershipRequestControlsProps,
 } from './ModifyUserMembershipRequestControls'
 
 const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
   approve: vi.fn(),
   reject: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mocks.push,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   approve: mocks.approve,
@@ -96,7 +93,7 @@ describe('ModifyUserMembershipRequestControls', () => {
     renderComponent({ action: 'Approve', successLink })
     await clickActionButton()
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledExactlyOnceWith(successLink)
+      expect(router.push).toHaveBeenCalledExactlyOnceWith(successLink)
     })
   })
 
@@ -105,7 +102,7 @@ describe('ModifyUserMembershipRequestControls', () => {
     renderComponent()
     await clickActionButton()
     await waitFor(() => {
-      expect(mocks.push).not.toHaveBeenCalled()
+      expect(router.push).not.toHaveBeenCalled()
       expect(screen.getByTestId('action-error')).toBeInTheDocument()
     })
   })

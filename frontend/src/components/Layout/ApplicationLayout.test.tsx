@@ -13,10 +13,7 @@ vi.mock('next/image', async () => ({
   default: (await import('@/test-utils/nextMocks')).NextImageMock,
 }))
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useRouter: () => ({ push: vi.fn() }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@nice-digital/nds-container', () => ({
   Container: ({ children }: MockComponentProps) => <div data-testid="container">{children}</div>,

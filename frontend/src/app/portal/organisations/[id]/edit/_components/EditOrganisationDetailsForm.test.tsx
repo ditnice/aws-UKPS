@@ -3,21 +3,19 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { errorMessages } from '@/lib/form/errorMessages'
+import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { EditOrganisationDetailsForm } from './EditOrganisationDetailsForm'
 
 import type { EditOrganisationDetailsFormProps } from './EditOrganisationDetailsForm'
 
-const { pushMock, backMock, updateOrganisationDetailsActionMock } = vi.hoisted(() => ({
-  pushMock: vi.fn(),
-  backMock: vi.fn(),
+const { push: pushMock, back: backMock } = router
+const { updateOrganisationDetailsActionMock } = vi.hoisted(() => ({
   updateOrganisationDetailsActionMock: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: pushMock, back: backMock }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('../_actions/updateOrganisationDetails', () => ({
   updateOrganisationDetailsAction: updateOrganisationDetailsActionMock,

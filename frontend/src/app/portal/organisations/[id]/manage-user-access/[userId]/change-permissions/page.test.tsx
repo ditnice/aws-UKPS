@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation } from '@/client/generated/sdk.gen'
 import type { UserInformationDto } from '@/client/generated/types.gen'
+import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import ChangeUserPermissions from './page'
 
@@ -15,8 +16,7 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(() => Promise.resolve({})),
 }))
 
-const notFound = vi.hoisted(() => vi.fn())
-vi.mock('next/navigation', () => ({ notFound }))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('./_components/ChangePermissionsForm', () => ({
   ChangePermissionsForm: ({
@@ -124,7 +124,7 @@ describe('ChangeUserPermissions', () => {
   it('calls notFound when the user is not a member of the organisation', async () => {
     mockErrorResponse(404)
 
-    await ChangeUserPermissions({ params })
+    await expect(ChangeUserPermissions({ params })).rejects.toBe(notFoundError)
 
     expect(notFound).toHaveBeenCalled()
   })

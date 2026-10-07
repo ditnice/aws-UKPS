@@ -3,19 +3,17 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import { RegisterUserConfirmationDto } from '@/client/generated'
+import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import UserMembershipRetrievalWrapper, {
   UserMembershipRetrievalWrapperProps,
 } from './UserMembershipRetrievalWrapper'
 
-const { mockGetMembership, notFound } = vi.hoisted(() => ({
+const { mockGetMembership } = vi.hoisted(() => ({
   mockGetMembership: vi.fn(),
-  notFound: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => ({
-  notFound,
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 vi.mock('@/client/generated', () => ({
   getUserRegistrationById: mockGetMembership,
 }))
@@ -75,7 +73,7 @@ describe('UserMembershipRetrievalWrapper', () => {
     mockGetMembership.mockResolvedValue({
       error: { status: 404 },
     })
-    await renderComponent()
+    await expect(renderComponent()).rejects.toBe(notFoundError)
     expect(notFound).toHaveBeenCalledOnce()
     confirmChildrenNotRendered()
   })

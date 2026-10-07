@@ -5,17 +5,14 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { postAuthMfa } from '@/client/generated'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { SignInMfaForm } from './SignInMfaForm'
 
-const mockPush = vi.fn()
+const { push: mockPush } = router
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   postAuthMfa: vi.fn(),

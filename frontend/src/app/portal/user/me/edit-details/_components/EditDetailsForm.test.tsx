@@ -5,13 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { UpdateUserDetailsCommand } from '@/client/generated'
 import { fakeUpdateUserDetailsCommand } from '@/client/generated/@faker-js/faker.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { EditDetailsForm, EditDetailsFormProps } from './EditDetailsForm'
 
 const mocks = vi.hoisted(() => ({
-  back: vi.fn(),
-  push: vi.fn(),
   patchUsersByUserId: vi.fn(),
   phoneNumberValidationMock: vi.fn(),
 }))
@@ -20,12 +19,7 @@ vi.mock('libphonenumber-js/max', () => ({
   isValidPhoneNumber: mocks.phoneNumberValidationMock,
 }))
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    back: mocks.back,
-    push: mocks.push,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   patchUsersByUserId: mocks.patchUsersByUserId,
@@ -253,7 +247,7 @@ describe('EditDetailsForm', () => {
     await fillValidForm()
     await clickSubmit()
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledWith('/portal/user/me?updated=true')
+      expect(router.push).toHaveBeenCalledWith('/portal/user/me?updated=true')
     })
   })
 
@@ -267,7 +261,7 @@ describe('EditDetailsForm', () => {
 
     await user.click(cancel)
 
-    expect(mocks.back).toHaveBeenCalledOnce()
+    expect(router.back).toHaveBeenCalledOnce()
     for (const { message } of requiredErrors) {
       expect(screen.queryByText(message)).toBeNull()
     }
@@ -285,7 +279,7 @@ describe('EditDetailsForm', () => {
 
     expect(await screen.findByText(errorMessages.updatingUserDetailsError)).toBeInTheDocument()
 
-    expect(mocks.push).not.toHaveBeenCalled()
+    expect(router.push).not.toHaveBeenCalled()
     expect(mocks.patchUsersByUserId).toHaveBeenCalledOnce()
 
     for (const label of ['Full name', 'Work email address', 'Contact number']) {
@@ -337,6 +331,6 @@ describe('EditDetailsForm', () => {
     }
 
     expect(screen.getByText(errorMessages.updatingUserDetailsError)).toBeInTheDocument()
-    expect(mocks.push).not.toHaveBeenCalled()
+    expect(router.push).not.toHaveBeenCalled()
   })
 })

@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { router } from '@/test-utils/nextNavigation'
+
 import { changeUserPermissionsAction } from '../_actions/changeUserPermissions'
 
 import { ChangePermissionsForm } from './ChangePermissionsForm'
@@ -10,9 +12,8 @@ vi.mock('../_actions/changeUserPermissions', () => ({
   changeUserPermissionsAction: vi.fn(),
 }))
 
-const push = vi.hoisted(() => vi.fn())
-const back = vi.hoisted(() => vi.fn())
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push, back }) }))
+const { push, back } = router
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 const props = {
   organisationId: 2,

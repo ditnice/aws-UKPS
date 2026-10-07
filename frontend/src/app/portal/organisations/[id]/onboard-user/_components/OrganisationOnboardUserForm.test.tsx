@@ -7,12 +7,12 @@ import { postUsersOnboard } from '@/client/generated/sdk.gen'
 import type { OnboardedUserDto } from '@/client/generated/types.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { NextLinkMock } from '@/test-utils/nextMocks'
+import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { OrganisationOnboardUserForm } from './OrganisationOnboardUserForm'
 
 const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
   phoneNumberValidationMock: vi.fn(),
 }))
 
@@ -28,11 +28,7 @@ vi.mock('next/link', () => ({
   default: NextLinkMock,
 }))
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mocks.push,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 beforeEach(() => {
   mocks.phoneNumberValidationMock.mockReturnValue(true)
@@ -186,7 +182,9 @@ describe('OrganisationOnboardUserForm', () => {
         },
         credentials: 'include',
       })
-      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123?action=invited&userId=456')
+      expect(router.push).toHaveBeenCalledWith(
+        '/portal/organisations/123?action=invited&userId=456',
+      )
     })
   })
 
@@ -197,8 +195,8 @@ describe('OrganisationOnboardUserForm', () => {
     await fillValidForm()
     await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
-    await waitFor(() => expect(mocks.push).toHaveBeenCalled())
-    expect(mocks.push.mock.calls[0][0]).not.toContain('test')
+    await waitFor(() => expect(router.push).toHaveBeenCalled())
+    expect(router.push.mock.calls[0][0]).not.toContain('test')
   })
 
   it('redirects without an alert when the API does not return the new user id', async () => {
@@ -215,7 +213,7 @@ describe('OrganisationOnboardUserForm', () => {
     await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123')
+      expect(router.push).toHaveBeenCalledWith('/portal/organisations/123')
     })
   })
 

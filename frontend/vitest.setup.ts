@@ -1,5 +1,9 @@
 import 'dotenv/config'
-import { afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
+
+import { resetNextNavigation } from './src/test-utils/nextNavigation'
+
+beforeEach(resetNextNavigation)
 
 afterEach(() => {
   vi.clearAllMocks()
