@@ -109,11 +109,18 @@ const renderUserRequestAction = async ({ organisationId, userAction }: UserReque
   }
 }
 
-interface UserActionAlertProps {
+type UserActionAlertProps = {
   organisationId: number
-  userAction: UserActionResult
-  dismissHref?: AlertProps['dismissHref']
-}
+} & (
+  | {
+      userAction: Omit<RegisteredUserResult, 'action'> & { action: 'removed' }
+      dismissHref?: AlertProps['dismissHref']
+    }
+  | {
+      userAction: UserActionResult
+      dismissHref?: never
+    }
+)
 export function UserActionAlert({ organisationId, userAction, dismissHref }: UserActionAlertProps) {
   return userAction.type === 'user'
     ? renderRegisteredUserAction({ organisationId, userAction, dismissHref })

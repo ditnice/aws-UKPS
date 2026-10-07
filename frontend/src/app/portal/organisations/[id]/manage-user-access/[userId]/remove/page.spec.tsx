@@ -1,13 +1,14 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getUserDetailsWithinOrganisation } from '@/client/generated/sdk.gen'
+import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
 import type { UserInformationDto } from '@/client/generated/types.gen'
 
 import RemoveUser from './page'
 
 vi.mock('@/client/generated/sdk.gen', () => ({
   getUserDetailsWithinOrganisation: vi.fn(),
+  getUsersMe: vi.fn(),
 }))
 
 vi.mock('@/client/server-api', () => ({
@@ -36,6 +37,7 @@ const user: UserInformationDto = {
   organisationId: 2,
   organisationName: 'Example Pharma',
   userRole: 'Standard',
+  status: 'Active',
 }
 
 function mockResponse() {
@@ -57,6 +59,13 @@ const params = Promise.resolve({ id: '2', userId: '4' })
 
 beforeEach(() => {
   vi.clearAllMocks()
+  notFound.mockImplementation(() => {
+    throw new Error('NEXT_NOT_FOUND')
+  })
+  vi.mocked(getUsersMe).mockResolvedValue({
+    data: { ...user, userId: 1, userRole: 'Super' },
+    error: undefined,
+  })
   mockResponse()
 })
 
@@ -106,9 +115,40 @@ describe('RemoveUser', () => {
   it('calls notFound when the user is not a member of the organisation', async () => {
     mockErrorResponse(404)
 
-    await RemoveUser({ params })
+    await expect(RemoveUser({ params })).rejects.toThrow('NEXT_NOT_FOUND')
 
     expect(notFound).toHaveBeenCalled()
+  })
+
+  it.each(['Standard', 'Champion'] as const)('rejects a %s caller', async (userRole) => {
+    vi.mocked(getUsersMe).mockResolvedValue({ data: { ...user, userRole }, error: undefined })
+
+    await expect(RemoveUser({ params })).rejects.toThrow('NEXT_NOT_FOUND')
+
+    expect(getUserDetailsWithinOrganisation).not.toHaveBeenCalled()
+  })
+
+  it('calls notFound when the current user cannot be retrieved', async () => {
+    vi.mocked(getUsersMe).mockResolvedValue({ data: undefined, error: { status: 500 } })
+
+    await expect(RemoveUser({ params })).rejects.toThrow('NEXT_NOT_FOUND')
+  })
+
+  it('calls notFound for an already-removed user', async () => {
+    vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
+      data: { ...user, status: 'Removed' },
+      error: undefined,
+    })
+
+    await expect(RemoveUser({ params })).rejects.toThrow('NEXT_NOT_FOUND')
+  })
+
+  it('uses the parsed user ID in the back link', async () => {
+    render(await RemoveUser({ params: Promise.resolve({ id: '02', userId: '004' }) }))
+
+    expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
+      '/portal/organisations/2/manage-user-access/4',
+    )
   })
 
   it('renders an error when the user cannot be retrieved', async () => {

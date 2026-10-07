@@ -10,6 +10,8 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import { buildUserActionHref } from '../../../_lib/userActionAlert'
 
+import type { MouseEvent } from 'react'
+
 export type RemoveUserControlsProps = {
   organisationId: number
   userId: number
@@ -55,7 +57,12 @@ const RemoveUserControls = ({ organisationId, userId }: RemoveUserControlsProps)
         <Button
           elementType={Link}
           variant="secondary"
-          disabled={loading}
+          aria-disabled={loading}
+          onClick={(event: MouseEvent) => {
+            if (loading) {
+              event.preventDefault()
+            }
+          }}
           href={`/portal/organisations/${organisationId}/manage-user-access/${userId}`}
         >
           Cancel

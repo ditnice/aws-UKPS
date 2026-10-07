@@ -46,4 +46,9 @@ public sealed record UserInformationDto
     /// Gets the role assigned to the user within the organisation.
     /// </summary>
     public required UserRole UserRole { get; init; }
+
+    /// <summary>
+    /// Gets the user's membership status within the organisation.
+    /// </summary>
+    public required UserOrgStatus Status { get; init; }
 }

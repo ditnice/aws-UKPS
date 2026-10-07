@@ -69,6 +69,7 @@ internal partial class UserService(
             OrganisationId = membership.Organisation!.Id,
             OrganisationName = membership.Organisation.OrganisationName,
             UserRole = currentUser.UserRole,
+            Status = membership.Status.ConvertToUserOrgStatus(),
         };
     }
 
@@ -222,6 +223,7 @@ internal partial class UserService(
                 OrganisationId = m.OrganisationId,
                 OrganisationName = m.Organisation!.OrganisationName,
                 UserRole = m.UserRole,
+                Status = (UserOrgStatus)m.Status,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -545,6 +547,7 @@ internal partial class UserService(
                 return RemoveUserResult.Err(new RemoveUserError.UserNotFound(userId));
             }
 
+            // Compare the stable Cognito identity so email changes cannot bypass the self-removal guard.
             if (user.CognitoUsername == currentUser.CognitoUsername)
             {
                 return RemoveUserResult.Err(new RemoveUserError.CannotRemoveSelf(userId));
@@ -561,7 +564,7 @@ internal partial class UserService(
                 {
                     return RemoveUserResult.Err(
                         new RemoveUserError.NotAllowedInCurrentState(
-                            ConvertToUserOrgStatusTransitionResult(transitionResult)
+                            transitionResult.ConvertToUserOrgStatusTransitionResult()
                         )
                     );
                 }
@@ -569,7 +572,9 @@ internal partial class UserService(
 
             await AnonymiseUserAndAuditHistory(user, currentUser, cancellationToken);
 
-            // Inside the transaction so a Cognito failure rolls back the anonymisation.
+            // A Cognito failure rolls back the DB changes. If deletion succeeds but commit fails,
+            // DB changes roll back and retry tolerates the absent Cognito user. Committing first
+            // blocks endpoint retries because Removed is terminal; reordering needs durable retries.
             await identityService.DeleteUser(user.CognitoUsername, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -623,20 +628,11 @@ internal partial class UserService(
 
     private async Task AnonymiseUserAuditHistory(User user, CancellationToken cancellationToken)
     {
-        string[] personalFieldPaths =
-        [
-            nameof(User.Title),
-            nameof(User.FullName),
-            nameof(User.JobTitle),
-            nameof(User.WorkTelephone),
-            nameof(User.WorkEmail),
-        ];
-
         await dbContext
             .UserAudits.Where(x =>
                 x.UserId == user.Id
                 && x.FieldPath != null
-                && personalFieldPaths.Contains(x.FieldPath)
+                && UserAuditFieldPaths.PersonalFields.Contains(x.FieldPath)
             )
             .ExecuteUpdateAsync(
                 s =>
@@ -693,19 +689,6 @@ internal partial class UserService(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred whilst removing a user.")]
     private partial void LogRemovingUserFailed(Exception ex);
-
-    private static StateMachineTransitionResult<UserOrgStatus> ConvertToUserOrgStatusTransitionResult(
-        StateMachineTransitionResult<UserOrgMembershipStatus> result
-    )
-    {
-        return new StateMachineTransitionResult<UserOrgStatus>()
-        {
-            PreviousState = result.PreviousState.ConvertToUserOrgStatus(),
-            CurrentState = result.CurrentState.ConvertToUserOrgStatus(),
-            Success = result.Success,
-            PermittedNextState = result.PermittedNextState.Cast<UserOrgStatus>().ToArray(),
-        };
-    }
 
     public record UserInformationTrackingProjection()
     {

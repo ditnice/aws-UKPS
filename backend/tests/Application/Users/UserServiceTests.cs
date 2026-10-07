@@ -1,6 +1,8 @@
+using System.Data.Common;
 using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.Common;
@@ -8,6 +10,7 @@ using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
@@ -131,6 +134,7 @@ public class UserServiceTests : DatabaseTestBase
                     OrganisationId = currentUserMembership.OrganisationId,
                     OrganisationName = currentUserMembership.Organisation!.OrganisationName,
                     UserRole = currentUserMembership.UserRole,
+                    Status = currentUserMembership.Status.ConvertToUserOrgStatus(),
                 }
             );
         }
@@ -1111,10 +1115,19 @@ public class UserServiceTests : DatabaseTestBase
         );
     }
 
-    [Fact]
-    public async Task GetUserDetailsWithinOrganisation_MapsUserAndMembershipFields_WhenTheUserIsAMember()
+    [Theory]
+    [InlineData((int)UserOrgMembershipStatus.AwaitingSetup)]
+    [InlineData((int)UserOrgMembershipStatus.Active)]
+    [InlineData((int)UserOrgMembershipStatus.Inactive)]
+    [InlineData((int)UserOrgMembershipStatus.Deactivated)]
+    [InlineData((int)UserOrgMembershipStatus.Removed)]
+    public async Task GetUserDetailsWithinOrganisation_MapsUserAndMembershipFields_WhenTheUserIsAMember(
+        int status
+    )
     {
-        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        (User user, UserOrgMembership membership) = await AddUserWithMembership(
+            status: (UserOrgMembershipStatus)status
+        );
 
         GetUserInformationResult result = await Service.GetUserDetailsWithinOrganisation(
             user.Id,
@@ -1134,6 +1147,7 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationId = membership.OrganisationId,
                 OrganisationName = membership.Organisation!.OrganisationName,
                 UserRole = membership.UserRole,
+                Status = (UserOrgStatus)membership.Status,
             }
         );
     }
@@ -1712,11 +1726,11 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(nameof(User.Title))]
-    [InlineData(nameof(User.FullName))]
-    [InlineData(nameof(User.JobTitle))]
-    [InlineData(nameof(User.WorkTelephone))]
-    [InlineData(nameof(User.WorkEmail))]
+    [InlineData(UserAuditFieldPaths.Title)]
+    [InlineData(UserAuditFieldPaths.FullName)]
+    [InlineData(UserAuditFieldPaths.JobTitle)]
+    [InlineData(UserAuditFieldPaths.WorkTelephone)]
+    [InlineData(UserAuditFieldPaths.WorkEmail)]
     public async Task RemoveUser_ShouldClearOnlyTheRemovedUsersPersonalAuditValues(string fieldPath)
     {
         await AddCallerUser();
@@ -1919,6 +1933,118 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         hasRemovalAudit.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenCommitFailsAfterCognitoDeletion_ShouldRollBackAndAllowRetry()
+    {
+        User caller = await AddCallerUser();
+        (User target, UserOrgMembership membership) = await AddUserWithMembership();
+        UserAudit personalAudit = await AddEntity(
+            new UserAudit
+            {
+                UserId = target.Id,
+                FieldPath = UserAuditFieldPaths.FullName,
+                OldValue = "old personal value",
+                NewValue = target.FullName,
+                EventType = IamEventType.FieldUpdated,
+                UpdatedAt = _currentDateTime,
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        var interceptor = new FailFirstCommitInterceptor();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(
+                Context.Database.GetConnectionString(),
+                npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "ukps")
+            )
+            .UseSnakeCaseNamingConvention()
+            .AddInterceptors(interceptor)
+            .Options;
+        await using var failureContext = new AppDbContext(options);
+        _harness = new ServiceTestHarness<IUserService>(failureContext)
+            .UpdateCurrentTime(_currentDateTime)
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    CognitoUsername = caller.CognitoUsername,
+                    Email = caller.WorkEmail,
+                    UserRole = UserRole.Super,
+                }
+            );
+        AddCognitoAccount(target);
+
+        await Should.ThrowAsync<InvalidOperationException>(() =>
+            Service.RemoveUser(target.Id, TestContext.Current.CancellationToken)
+        );
+
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldBeNull();
+        User unchangedUser = await Context
+            .Users.AsNoTracking()
+            .SingleAsync(u => u.Id == target.Id, TestContext.Current.CancellationToken);
+        unchangedUser.FullName.ShouldBe(target.FullName);
+        unchangedUser.WorkEmail.ShouldBe(target.WorkEmail);
+        var unchangedMembership = await Context
+            .UserOrgMemberships.AsNoTracking()
+            .SingleAsync(m => m.Id == membership.Id, TestContext.Current.CancellationToken);
+        unchangedMembership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+        var unchangedAudit = await Context
+            .UserAudits.AsNoTracking()
+            .SingleAsync(a => a.Id == personalAudit.Id, TestContext.Current.CancellationToken);
+        unchangedAudit.OldValue.ShouldBe("old personal value");
+        unchangedAudit.NewValue.ShouldBe(target.FullName);
+        (
+            await Context.UserAudits.AnyAsync(
+                a => a.UserId == target.Id && a.EventType == IamEventType.Deleted,
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldBeFalse();
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeSuccess().DisplayName.ShouldBe($"User-{target.Id}");
+        interceptor.CommitAttempts.ShouldBe(2);
+        var removedUser = await Context
+            .Users.AsNoTracking()
+            .SingleAsync(u => u.Id == target.Id, TestContext.Current.CancellationToken);
+        removedUser.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+        var removedMembership = await Context
+            .UserOrgMemberships.AsNoTracking()
+            .SingleAsync(m => m.Id == membership.Id, TestContext.Current.CancellationToken);
+        removedMembership.Status.ShouldBe(UserOrgMembershipStatus.Removed);
+        var clearedAudit = await Context
+            .UserAudits.AsNoTracking()
+            .SingleAsync(a => a.Id == personalAudit.Id, TestContext.Current.CancellationToken);
+        clearedAudit.OldValue.ShouldBeNull();
+        clearedAudit.NewValue.ShouldBeNull();
+        (
+            await Context.UserAudits.CountAsync(
+                a => a.UserId == target.Id && a.EventType == IamEventType.Deleted,
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldBe(1);
+    }
+
+    private sealed class FailFirstCommitInterceptor : DbTransactionInterceptor
+    {
+        public int CommitAttempts { get; private set; }
+
+        public override ValueTask<InterceptionResult> TransactionCommittingAsync(
+            DbTransaction transaction,
+            TransactionEventData eventData,
+            InterceptionResult result,
+            CancellationToken cancellationToken = default
+        )
+        {
+            CommitAttempts++;
+            if (CommitAttempts == 1)
+            {
+                throw new InvalidOperationException("Simulated database commit failure.");
+            }
+
+            return ValueTask.FromResult(result);
+        }
     }
 
     [Fact]

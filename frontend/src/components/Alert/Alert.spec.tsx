@@ -83,7 +83,7 @@ describe('Alert dismiss button', () => {
       </Alert>,
     )
 
-    screen.getByRole('link', { name: 'Got it' })
+    expect(screen.getByRole('link', { name: 'Got it' })).not.toBeNull()
     expect(screen.queryByRole('link', { name: 'Dismiss' })).toBeNull()
   })
 })

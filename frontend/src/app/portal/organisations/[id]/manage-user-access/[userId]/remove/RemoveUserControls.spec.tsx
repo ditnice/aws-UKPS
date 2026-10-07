@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import RemoveUserControls, { RemoveUserControlsProps } from './RemoveUserControls'
 
+import type { ComponentPropsWithoutRef } from 'react'
+
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   removeUser: vi.fn(),
@@ -13,6 +15,11 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mocks.push,
   }),
+}))
+
+// Use a plain anchor so Next's own navigation handler cannot mask a missing Cancel guard.
+vi.mock('next/link', () => ({
+  default: ({ children, ...props }: ComponentPropsWithoutRef<'a'>) => <a {...props}>{children}</a>,
 }))
 
 vi.mock('@/client/generated', () => ({
@@ -91,5 +98,31 @@ describe('RemoveUserControls', () => {
     expect(getCancelLink().getAttribute('href')).toBe(
       `/portal/organisations/${defaultProps.organisationId}/manage-user-access/${defaultProps.userId}`,
     )
+  })
+
+  it('blocks Cancel while removal is pending and restores it after failure', async () => {
+    let resolveRequest!: (value: { error: object }) => void
+    mocks.removeUser.mockReturnValue(
+      new Promise<{ error: object }>((resolve) => {
+        resolveRequest = resolve
+      }),
+    )
+    renderComponent()
+
+    fireEvent.click(getActionButton())
+
+    expect(getCancelLink().getAttribute('aria-disabled')).toBe('true')
+    const pendingClick = new MouseEvent('click', { bubbles: true, cancelable: true })
+    fireEvent(getCancelLink(), pendingClick)
+    expect(pendingClick.defaultPrevented).toBe(true)
+
+    resolveRequest({ error: {} })
+    await waitFor(() => {
+      expect(getCancelLink().getAttribute('aria-disabled')).toBe('false')
+    })
+    expect(getCancelLink().getAttribute('href')).toBe(
+      `/portal/organisations/${defaultProps.organisationId}/manage-user-access/${defaultProps.userId}`,
+    )
+    expect(getActionError()).toBeTruthy()
   })
 })

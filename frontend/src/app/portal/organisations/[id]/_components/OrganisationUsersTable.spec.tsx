@@ -33,7 +33,7 @@ const query = {
 const removedUser: UserListItemDto = {
   userId: 5,
   registrationRequestId: null,
-  emailAddress: 'user-5@removed.invalid',
+  emailAddress: 'removed-user-5@removed.invalid',
   role: 'Standard',
   status: 'Removed',
   lastActive: null,

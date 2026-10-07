@@ -686,6 +686,10 @@ export type UserInformationDto = {
      * Gets the role assigned to the user within the organisation.
      */
     userRole: UserRole;
+    /**
+     * Gets the user's membership status within the organisation.
+     */
+    status: UserOrgStatus;
 };
 
 /**

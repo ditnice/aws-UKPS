@@ -115,7 +115,7 @@ internal sealed class OrganisationMembershipService(
         {
             return DeactivateUserResult.Err(
                 new OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState(
-                    ConvertToUserOrgStatusTransitionResult(result)
+                    result.ConvertToUserOrgStatusTransitionResult()
                 )
             );
         }
@@ -172,7 +172,7 @@ internal sealed class OrganisationMembershipService(
         {
             return ReactivateUserResult.Err(
                 new OrganisationMembershipReactivateUserError.NotAllowedInCurrentState(
-                    ConvertToUserOrgStatusTransitionResult(result)
+                    result.ConvertToUserOrgStatusTransitionResult()
                 )
             );
         }
@@ -209,19 +209,6 @@ internal sealed class OrganisationMembershipService(
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
         return currentUser.UserRole != UserRole.Super
             && (membership.UserRole == UserRole.Super || command.UserRole == UserRole.Super);
-    }
-
-    private static StateMachineTransitionResult<UserOrgStatus> ConvertToUserOrgStatusTransitionResult(
-        StateMachineTransitionResult<UserOrgMembershipStatus> result
-    )
-    {
-        return new StateMachineTransitionResult<UserOrgStatus>()
-        {
-            PreviousState = result.PreviousState.ConvertToUserOrgStatus(),
-            CurrentState = result.CurrentState.ConvertToUserOrgStatus(),
-            Success = result.Success,
-            PermittedNextState = result.PermittedNextState.Cast<UserOrgStatus>().ToArray(),
-        };
     }
 
     private static OrganisationMembershipDto MapToDto(UserOrgMembership entity)

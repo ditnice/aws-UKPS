@@ -381,7 +381,8 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         organisationMembershipId: f.number.int(),
         organisationId: f.number.int(),
         organisationName: f.string.sample(),
-        userRole: fakeUserRole(options)
+        userRole: fakeUserRole(options),
+        status: fakeUserOrgStatus(options)
     };
 };
 

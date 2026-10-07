@@ -3984,7 +3984,8 @@
           "organisationMembershipId",
           "organisationId",
           "organisationName",
-          "userRole"
+          "userRole",
+          "status"
         ],
         "type": "object",
         "properties": {
@@ -4022,6 +4023,10 @@
           "userRole": {
             "description": "Gets the role assigned to the user within the organisation.",
             "$ref": "#/components/schemas/UserRole"
+          },
+          "status": {
+            "description": "Gets the user's membership status within the organisation.",
+            "$ref": "#/components/schemas/UserOrgStatus"
           }
         },
         "description": "Represents information about a user and their membership within an organisation."

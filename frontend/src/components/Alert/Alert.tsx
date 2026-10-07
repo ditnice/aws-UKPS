@@ -1,13 +1,13 @@
 import clsx from 'clsx'
-import Link from 'next/link'
-import { type LinkProps } from 'next/link'
-import { ComponentPropsWithoutRef, ReactNode } from 'react'
+import Link, { type LinkProps } from 'next/link'
 
 import { Alert as NdsAlert } from '@nice-digital/nds-alert'
 
 import { Button } from '@/components/Button/Button'
 
 import styles from './Alert.module.scss'
+
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 
 export type AlertType = 'info' | 'caution' | 'error' | 'success'
 

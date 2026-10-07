@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getUserDetailsWithinOrganisation } from '@/client/generated/sdk.gen'
+import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -21,17 +21,23 @@ export default async function RemoveUser({ params }: Props) {
   }
 
   const apiClient = await createServerApiClient()
+  const { data: currentUser } = await getUsersMe({ client: apiClient })
+
+  if (!currentUser || currentUser.userRole !== 'Super') {
+    notFound()
+  }
+
   const { data: user, response } = await getUserDetailsWithinOrganisation({
     client: apiClient,
     path: { userId: selectedUserId, organisationId },
   })
 
-  if (response?.status === 404) {
+  if (response?.status === 404 || user?.status === 'Removed') {
     notFound()
   }
 
   const backLink = (
-    <BackLink href={`/portal/organisations/${organisationId}/manage-user-access/${userId}`}>
+    <BackLink href={`/portal/organisations/${organisationId}/manage-user-access/${selectedUserId}`}>
       Back
     </BackLink>
   )
