@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { UserInformationDto, getUsersMe } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import EditDetails from './page'
@@ -10,29 +11,13 @@ vi.mock('@/client/generated', () => ({
   getUsersMe: vi.fn(),
 }))
 
-vi.mock('@/components/BackLinkBrowser/BackLinkBrowser', () => ({
-  BackLinkBrowser: () => <div data-testid="back-link" />,
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-vi.mock('@/components/PageHeader/PageHeader', () => ({
-  PageHeader: ({ heading, backLink }: { heading: string; backLink: React.ReactNode }) => (
-    <div data-testid="page-header">
-      {backLink}
-      <h1>{heading}</h1>
-    </div>
-  ),
-}))
-
-vi.mock('@/components/Placeholder/ErrorState', () => ({
-  ErrorState: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="error-state">{children}</div>
-  ),
-}))
-
+// Isolate form prop wiring here; interaction and submission tests use the real form.
 vi.mock('./_components/EditDetailsForm', () => ({
   EditDetailsForm: ({ userId, initialValues }: { userId: number; initialValues: unknown }) => (
     <div data-testid="edit-details-form">
@@ -43,6 +28,11 @@ vi.mock('./_components/EditDetailsForm', () => ({
 }))
 
 const mockedGetUsersMe = vi.mocked(getUsersMe)
+const apiClient = {} as Awaited<ReturnType<typeof createServerApiClient>>
+
+beforeEach(() => {
+  vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
+})
 
 const exampleUser: UserInformationDto = {
   userId: 1,
@@ -54,7 +44,9 @@ const exampleUser: UserInformationDto = {
   organisationName: 'Example Organisation',
   userRole: 'Standard',
 }
-describe('EditDetails', () => {
+// Direct invocation checks orchestration and the returned synchronous tree only.
+// It does not exercise Next.js rendering, routing or hydration.
+describe('EditDetails (direct invocation)', () => {
   it('renders the page header', async () => {
     mockedGetUsersMe.mockResolvedValue({
       data: exampleUser,
@@ -67,7 +59,7 @@ describe('EditDetails', () => {
 
     expect(screen.getByRole('heading', { name: 'Edit your details' })).toBeInTheDocument()
 
-    expect(screen.getByTestId('back-link')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
   })
 
   it('renders the edit details form when editing the current user', async () => {
@@ -79,6 +71,7 @@ describe('EditDetails', () => {
 
     render(result)
 
+    expect(getUsersMe).toHaveBeenCalledExactlyOnceWith({ client: apiClient })
     expect(screen.getByTestId('edit-details-form')).toBeInTheDocument()
     const textContent = screen.getByTestId('user-id').textContent.trim()
     expect(textContent).toBe(exampleUser.userId.toString())
@@ -100,10 +93,8 @@ describe('EditDetails', () => {
 
     render(result)
 
-    expect(screen.getByTestId('error-state').textContent).toBe(
-      errorMessages.failedToRetrieveCurrentUser,
-    )
+    expect(screen.getByRole('alert')).toHaveTextContent(errorMessages.failedToRetrieveCurrentUser)
 
-    expect(screen.queryByTestId('edit-details-form')).toBeFalsy()
+    expect(screen.queryByTestId('edit-details-form')).not.toBeInTheDocument()
   })
 })

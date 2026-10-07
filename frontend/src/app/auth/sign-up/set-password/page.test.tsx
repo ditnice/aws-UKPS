@@ -3,12 +3,14 @@ import { describe, expect, it, vi } from 'vitest'
 
 import SignUpSetPassword from './page'
 
+// Isolate setup-token prop wiring; password interactions use the real form in its tests.
 vi.mock('./_components/SignUpSetPasswordForm', () => ({
   SignUpSetPasswordForm: ({ setupToken }: { setupToken: string }) => (
     <div>Set password form for {setupToken}</div>
   ),
 }))
-describe('SignUpSetPassword', () => {
+// Direct invocation checks the returned synchronous tree, not Next.js rendering or hydration.
+describe('SignUpSetPassword (direct invocation)', () => {
   it('renders an error if the setup token is missing', async () => {
     render(await SignUpSetPassword({ searchParams: Promise.resolve({}) }))
 

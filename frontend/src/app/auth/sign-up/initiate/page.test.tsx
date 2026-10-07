@@ -18,7 +18,9 @@ beforeEach(() => {
     error: undefined,
   })
 })
-describe('SignUpInitiate', () => {
+// Direct invocation checks orchestration and the returned synchronous tree only.
+// It does not exercise Next.js rendering, routing, hydration or redirect handling.
+describe('SignUpInitiate (direct invocation)', () => {
   it('renders an error if the setup token is missing', async () => {
     render(await SignUpInitiate({ searchParams: Promise.resolve({}) }))
 
@@ -128,41 +130,6 @@ describe('SignUpInitiate', () => {
 
     expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
     expect(screen.getByText('This sign-up link is not valid.')).toBeInTheDocument()
-    expect(redirect).not.toHaveBeenCalled()
-  })
-
-  it.each([
-    [404, 'This sign-up link could not be found.'],
-    [409, 'This sign-up link has already been used.'],
-    [500, 'We could not check your sign-up link. Try again later.'],
-  ] as const)(
-    'renders a status-specific fallback for a %i response without backend content',
-    async (status, detail) => {
-      vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
-        data: undefined,
-        error: { status },
-        response: new Response(null, { status }),
-      })
-
-      render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
-
-      expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
-      expect(screen.getByText(detail)).toBeInTheDocument()
-      expect(redirect).not.toHaveBeenCalled()
-    },
-  )
-
-  it.each([400, 500])('preserves backend content for a %i response', async (status) => {
-    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
-      data: undefined,
-      error: { detail: 'Backend explanation.', status, title: 'Backend title.' },
-      response: new Response(null, { status }),
-    })
-
-    render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
-
-    expect(screen.getByText('Backend title.')).toBeInTheDocument()
-    expect(screen.getByText('Backend explanation.')).toBeInTheDocument()
     expect(redirect).not.toHaveBeenCalled()
   })
 

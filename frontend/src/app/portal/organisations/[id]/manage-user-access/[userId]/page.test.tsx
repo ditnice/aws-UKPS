@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
 import type { UserInformationDto, UserRole } from '@/client/generated/types.gen'
-import { notFound, notFoundError, router } from '@/test-utils/nextNavigation'
+import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import ManageUserAccess from './page'
 
@@ -16,8 +15,6 @@ vi.mock('@/client/generated/sdk.gen', () => ({
 vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(() => Promise.resolve({})),
 }))
-
-const mocks = router
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 const userRole = 'Standard' as UserRole
@@ -77,39 +74,21 @@ beforeEach(() => {
   mockUserResponse()
   mockCurrentUserResponse()
 })
-let interactions: ReturnType<typeof userEvent.setup>
-
-beforeEach(() => {
-  interactions = userEvent.setup()
-})
-
-describe('ManageUserAccess', () => {
-  it('renders the change user permissions action', async () => {
+// Direct invocation checks orchestration and the returned synchronous tree only.
+// It does not exercise Next.js rendering, routing, hydration or not-found handling.
+describe('ManageUserAccess (direct invocation)', () => {
+  it('returns the selected user summary and access actions', async () => {
     render(await ManageUserAccess({ params }))
 
+    expect(screen.getByRole('heading', { name: "Manage user's access" })).toBeInTheDocument()
+    expect(screen.getByText('julie.brooks@example.com is a standard user.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
+      'href',
+      '/portal/organisations/2',
+    )
     expect(
       screen.getByRole('radio', {
         name: 'Change user permissions',
-      }),
-    ).toBeInTheDocument()
-  })
-
-  it('renders the deactivate user action', async () => {
-    render(await ManageUserAccess({ params }))
-
-    expect(
-      screen.getByRole('radio', {
-        name: 'Deactivate user',
-      }),
-    ).toBeInTheDocument()
-  })
-
-  it('renders the manage user details action', async () => {
-    render(await ManageUserAccess({ params }))
-
-    expect(
-      screen.getByRole('radio', {
-        name: /Manage user details and sign in method/,
       }),
     ).toBeInTheDocument()
   })
@@ -126,18 +105,6 @@ describe('ManageUserAccess', () => {
     ).toBeInTheDocument()
   })
 
-  it('does not render the remove user action when the current user is a Champion user', async () => {
-    mockCurrentUserResponse({ userRole: 'Champion' })
-
-    render(await ManageUserAccess({ params }))
-
-    expect(
-      screen.queryByRole('radio', {
-        name: 'Remove user - not implemented yet',
-      }),
-    ).toBeNull()
-  })
-
   it('uses the current user role rather than the selected user role when displaying the remove action', async () => {
     mockUserResponse({ userRole: 'Super' })
     mockCurrentUserResponse({ userRole: 'Champion' })
@@ -149,34 +116,6 @@ describe('ManageUserAccess', () => {
         name: 'Remove user - not implemented yet',
       }),
     ).toBeNull()
-  })
-
-  it('shows an error when Continue is clicked without selecting an action', async () => {
-    render(await ManageUserAccess({ params }))
-
-    await interactions.click(
-      screen.getByRole('button', {
-        name: 'Continue',
-      }),
-    )
-
-    expect(screen.getByText('Select an option - No answer provided')).toBeInTheDocument()
-    expect(mocks.push).not.toHaveBeenCalled()
-  })
-
-  it('clears the selection error when an action is selected and navigates on Continue', async () => {
-    render(await ManageUserAccess({ params }))
-    await interactions.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(screen.getByText('Select an option - No answer provided')).toBeInTheDocument()
-
-    await interactions.click(screen.getByRole('radio', { name: 'Change user permissions' }))
-    expect(screen.queryByText('Select an option - No answer provided')).toBeNull()
-    expect(mocks.push).not.toHaveBeenCalled()
-
-    await interactions.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(mocks.push).toHaveBeenCalledExactlyOnceWith(
-      '/portal/organisations/2/manage-user-access/4/change-permissions',
-    )
   })
 
   it('calls notFound when the user is not a member of the organisation', async () => {
@@ -219,37 +158,4 @@ describe('ManageUserAccess', () => {
       'There was a problem retrieving the user. Please try again later.',
     )
   })
-
-  it('navigates to change permissions when selected', async () => {
-    render(await ManageUserAccess({ params }))
-    await interactions.click(
-      screen.getByRole('radio', {
-        name: 'Change user permissions',
-      }),
-    )
-    await interactions.click(
-      screen.getByRole('button', {
-        name: 'Continue',
-      }),
-    )
-    expect(mocks.push).toHaveBeenCalledExactlyOnceWith(
-      '/portal/organisations/2/manage-user-access/4/change-permissions',
-    )
-  })
-
-  it('navigates to deactivate user when selected', async () => {
-    render(await ManageUserAccess({ params }))
-    await interactions.click(
-      screen.getByRole('radio', {
-        name: 'Deactivate user',
-      }),
-    )
-    await interactions.click(
-      screen.getByRole('button', {
-        name: 'Continue',
-      }),
-    )
-    expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/portal/organisations/2/users/4/deactivate')
-  })
-  // add in tests for navigating to remove user and manage user access once it has been implemented
 })

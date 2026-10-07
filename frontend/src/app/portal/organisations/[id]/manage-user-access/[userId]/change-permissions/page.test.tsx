@@ -18,6 +18,7 @@ vi.mock('@/client/server-api', () => ({
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
+// Isolate membership/role prop wiring; mutation behaviour uses the real form in its tests.
 vi.mock('./_components/ChangePermissionsForm', () => ({
   ChangePermissionsForm: ({
     currentRole,
@@ -63,7 +64,9 @@ function mockErrorResponse(status: number) {
 }
 
 const params = Promise.resolve({ id: '2', userId: '4' })
-describe('ChangeUserPermissions', () => {
+// Direct invocation checks orchestration and the returned synchronous tree only.
+// It does not exercise Next.js rendering, routing, hydration or not-found handling.
+describe('ChangeUserPermissions (direct invocation)', () => {
   it("requests the selected user's details within the organisation", async () => {
     mockResponse()
 

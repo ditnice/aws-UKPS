@@ -24,7 +24,10 @@ vi.mock('@/client/server-api', () => ({
 const testData: RegisterUserConfirmationDto = {
   id: 3,
   workEmail: 'example@email.com',
-} as RegisterUserConfirmationDto
+  fullName: 'Jane Smith',
+  organisationName: 'Example Pharma',
+  phoneNumber: '01234 567890',
+}
 beforeEach(() => {
   mockGetMembership.mockResolvedValue({
     data: testData,
@@ -44,15 +47,17 @@ const renderComponent = async (overrides?: Partial<UserMembershipRetrievalWrappe
 
 const assertErrorMessageShown = () => {
   const element = screen.queryByTestId('failure-message')
-  expect(element).toBeTruthy()
+  expect(element).toBeInTheDocument()
 }
 
 const confirmChildrenNotRendered = () => {
   const element = screen.queryByTestId('children')
-  expect(element).toBeFalsy()
+  expect(element).not.toBeInTheDocument()
 }
 
-describe('UserMembershipRetrievalWrapper', () => {
+// Direct invocation checks retrieval and the returned synchronous child tree only.
+// It does not exercise Next.js async rendering or not-found handling.
+describe('UserMembershipRetrievalWrapper (direct invocation)', () => {
   it('renders child content on success', async () => {
     await renderComponent({
       children: (request) => <div data-testid="data">{JSON.stringify(request)}</div>,

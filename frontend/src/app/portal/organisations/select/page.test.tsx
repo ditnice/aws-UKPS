@@ -19,10 +19,7 @@ vi.mock('@/client/server-api', () => ({
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
-vi.mock('@nice-digital/nds-page-header', () => ({
-  PageHeader: ({ heading }: { heading: string }) => <h1>{heading}</h1>,
-}))
-
+// Isolate organisation-list prop wiring; selection behaviour uses the real table in its tests.
 vi.mock('./_components/SelectOrganisationTable', () => ({
   SelectOrganisationTable: ({ organisations }: { organisations: { id: number }[] }) => (
     <div data-testid="select-organisation-table">{organisations.length}</div>
@@ -41,7 +38,9 @@ beforeEach(() => {
     {} as Awaited<ReturnType<typeof createServerApiClient>>,
   )
 })
-describe('SelectOrganisationPage', () => {
+// Direct invocation checks orchestration and the returned synchronous tree only.
+// It does not exercise Next.js rendering, redirects or browser-history behaviour.
+describe('SelectOrganisationPage (direct invocation)', () => {
   it('renders the organisation table when the user has multiple organisations', async () => {
     mockOrganisations({
       data: [
@@ -57,7 +56,7 @@ describe('SelectOrganisationPage', () => {
     expect(mocks.redirect).not.toHaveBeenCalled()
   })
 
-  it('replaces the history entry with the records page when the user has a single organisation', async () => {
+  it('requests a replacement redirect to records when the user has a single organisation', async () => {
     mockOrganisations({
       data: [{ id: 7, organisationName: 'Only organisation' }],
       error: undefined,
@@ -73,7 +72,9 @@ describe('SelectOrganisationPage', () => {
 
     render(await SelectOrganisationPage())
 
-    expect(screen.getByTestId('no-organisations')).toBeTruthy()
+    expect(
+      screen.getByText('You do not currently have access to manage any organisations.'),
+    ).toBeInTheDocument()
     expect(screen.queryByTestId('select-organisation-table')).toBeNull()
   })
 
@@ -82,7 +83,9 @@ describe('SelectOrganisationPage', () => {
 
     render(await SelectOrganisationPage())
 
-    expect(screen.getByTestId('organisation-retrieval-error')).toBeTruthy()
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'An error occurred when retrieving your organisations. Please try again later.',
+    )
     expect(screen.queryByTestId('select-organisation-table')).toBeNull()
   })
 })

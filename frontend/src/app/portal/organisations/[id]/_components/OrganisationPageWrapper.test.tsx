@@ -17,14 +17,12 @@ vi.mock('@/client/server-api', () => ({
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
-vi.mock('@nice-digital/nds-page-header', () => ({
-  PageHeader: ({ heading }: { heading: string }) => <h1>{heading}</h1>,
-}))
-
 const mockedCreateServerApiClient = vi.mocked(createServerApiClient)
 const mockedGetOrganisationById = vi.mocked(getOrganisationById)
 
-describe('OrganisationPageWrapper', () => {
+// Direct invocation checks retrieval and the returned synchronous child tree only.
+// It does not exercise Next.js async rendering or not-found handling.
+describe('OrganisationPageWrapper (direct invocation)', () => {
   const organisation = {
     id: 123,
     organisationName: 'Example Pharma',

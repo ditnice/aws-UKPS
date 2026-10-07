@@ -56,7 +56,9 @@ beforeEach(() => {
   vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({ data: user, error: undefined })
   vi.mocked(getUserRegistrationById).mockResolvedValue({ data: registration, error: undefined })
 })
-describe('UserActionAlert', () => {
+// Direct invocation checks API orchestration and returned alert content only.
+// It does not exercise Next.js async rendering, streaming or hydration.
+describe('UserActionAlert (direct invocation)', () => {
   it('looks the user up in the organisation the alert belongs to', async () => {
     await renderAlert({ type: 'user', action: 'invited', userId: 4 })
 

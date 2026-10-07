@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 
 import SignUpTermsAndConditions from './page'
 
-describe('SignUpTermsAndConditions', () => {
+// Direct invocation checks the returned synchronous tree and hrefs, not Next.js navigation.
+describe('SignUpTermsAndConditions (direct invocation)', () => {
   it('renders an error if the setup token is missing', async () => {
     render(await SignUpTermsAndConditions({ searchParams: Promise.resolve({}) }))
 

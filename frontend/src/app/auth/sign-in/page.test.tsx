@@ -3,12 +3,14 @@ import { describe, expect, it, vi } from 'vitest'
 
 import SignIn from './page'
 
+// Isolate returnTo prop wiring; form interactions are tested with the real form separately.
 vi.mock('./_components/SignInForm', () => ({
   SignInForm: ({ returnTo }: { returnTo?: string }) => (
     <div>Sign in form returnTo: {returnTo ?? 'none'}</div>
   ),
 }))
-describe('SignIn', () => {
+// Direct invocation checks the returned synchronous tree, not Next.js rendering or hydration.
+describe('SignIn (direct invocation)', () => {
   it('passes a safe returnTo path to the sign-in form', async () => {
     render(
       await SignIn({
