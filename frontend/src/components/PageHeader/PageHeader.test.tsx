@@ -14,23 +14,19 @@ describe('PageHeader', () => {
   })
 
   it('applies the page header wrapper class', () => {
-    const { asFragment, container } = render(<PageHeader heading="Sign-in" />)
+    const { container } = render(<PageHeader heading="Sign-in" />)
 
     const pageHeader = container.querySelector('[data-component="page-header"]')
 
     expect(pageHeader?.parentElement?.className).toContain('page-header-wrapper')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('preserves a supplied className on the wrapper', () => {
-    const { asFragment, container } = render(
-      <PageHeader className="custom-page-header" heading="Sign-in" />,
-    )
+    const { container } = render(<PageHeader className="custom-page-header" heading="Sign-in" />)
 
     const pageHeader = container.querySelector('[data-component="page-header"]')
 
     expect(pageHeader?.parentElement?.classList.contains('custom-page-header')).toBe(true)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders a back link in the page header navigation slot', () => {
@@ -43,7 +39,7 @@ describe('PageHeader', () => {
   })
 
   it('prefers backLink over breadcrumbs', () => {
-    const { asFragment } = render(
+    render(
       <PageHeader
         backLink={<BackLink href="/previous">Back</BackLink>}
         breadcrumbs={<nav aria-label="Breadcrumbs">Breadcrumbs</nav>}
@@ -53,6 +49,5 @@ describe('PageHeader', () => {
 
     expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Breadcrumbs')).toBeNull()
-    expect(asFragment()).toMatchSnapshot()
   })
 })

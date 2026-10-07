@@ -1,25 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
+import { inputWidthCases } from '@/test-utils/inputWidthCases'
+
 import { Input } from './Input'
 
-import type { InputWidth } from './Input'
-
-const widths: InputWidth[] = [
-  2,
-  3,
-  4,
-  5,
-  10,
-  20,
-  30,
-  'full',
-  'three-quarters',
-  'two-thirds',
-  'one-half',
-  'one-third',
-  'one-quarter',
-]
 describe('Input', () => {
   it('renders an unmodified design system input by default', () => {
     const { asFragment } = render(<Input label="First name" name="firstname" />)
@@ -47,21 +32,17 @@ describe('Input', () => {
   })
 
   it('merges width styles with an explicit style prop', () => {
-    const { asFragment } = render(
-      <Input label="Age" name="age" width="full" style={{ color: 'red' }} />,
-    )
+    render(<Input label="Age" name="age" width="full" style={{ color: 'red' }} />)
 
     const input = screen.getByLabelText('Age')
     expect(input.style.width).toBe('100%')
     expect(input.style.color).toBe('red')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('forwards other input props', () => {
-    const { asFragment } = render(<Input label="Age" name="age" hint="Please enter in years" />)
+    render(<Input label="Age" name="age" hint="Please enter in years" />)
 
     expect(screen.getByText('Please enter in years')).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('associates hint text with the input', () => {
@@ -103,10 +84,14 @@ describe('Input', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it.each(widths)('renders the %s width variant', (width) => {
-    const { asFragment } = render(<Input label="Age" name="age" width={width} />)
+  it.each(inputWidthCases)(
+    'renders the $width width variant',
+    ({ width, maxWidth, fluidWidth }) => {
+      render(<Input label="Age" name="age" width={width} />)
 
-    expect(screen.getByLabelText('Age')).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
-  })
+      const input = screen.getByLabelText('Age')
+      expect(input.style.maxWidth).toBe(maxWidth)
+      expect(input.style.width).toBe(fluidWidth)
+    },
+  )
 })

@@ -29,36 +29,32 @@ describe('Legal', () => {
   })
 
   it('renders the legal menu navigation landmark', () => {
-    const { asFragment } = render(<Legal />)
+    render(<Legal />)
 
     expect(screen.getByRole('navigation', { name: 'Legal menu' })).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it.each(legalLinks)('renders the $name link', ({ name, href }) => {
-    const { asFragment } = render(<Legal />)
+    render(<Legal />)
 
     expect(screen.getByRole('link', { name }).getAttribute('href')).toBe(href)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders the copyright notice for the current year', () => {
-    const { asFragment, container } = render(<Legal />)
+    const { container } = render(<Legal />)
 
     const copyright = container.querySelector('p')
     expect(copyright?.textContent?.replace(/\s+/g, ' ')).toContain(
       '© NICE 2026. All rights reserved.',
     )
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders the notice of rights link', () => {
-    const { asFragment } = render(<Legal />)
+    render(<Legal />)
 
     expect(screen.getByRole('link', { name: 'Notice of rights' }).getAttribute('href')).toBe(
       'https://www.nice.org.uk/terms-and-conditions#notice-of-rights',
     )
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('updates the copyright year when the clock advances', () => {

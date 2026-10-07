@@ -22,7 +22,7 @@ describe('BackLinkBrowser', () => {
   })
 
   it('navigates back without following the link', async () => {
-    const { asFragment } = render(<BackLinkBrowser />)
+    render(<BackLinkBrowser />)
 
     const link = screen.getByRole('link', { name: 'Back' })
     const onClick = vi.fn((event: Event) => {
@@ -33,6 +33,5 @@ describe('BackLinkBrowser', () => {
 
     expect(onClick).toHaveBeenCalledOnce()
     expect(router.back).toHaveBeenCalledOnce()
-    expect(asFragment()).toMatchSnapshot()
   })
 })

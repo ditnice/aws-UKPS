@@ -21,21 +21,25 @@ beforeEach(() => {
 
 describe('Header', () => {
   it('renders collapsed by default', () => {
-    const { asFragment } = render(<Header skipLinkId="content-start" />)
+    render(<Header skipLinkId="content-start" />)
 
-    expect(screen.getByRole('button', { name: 'Expand site menu' })).toBeInTheDocument()
+    const toggle = screen.getByRole('button', { name: 'Expand site menu' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveAttribute('aria-controls', 'header-menu')
+    expect(document.getElementById('header-menu')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Skip to content' }).getAttribute('href')).toBe(
       '#content-start',
     )
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders expanded after the mobile menu button is clicked', async () => {
-    const { asFragment } = render(<Header skipLinkId="content-start" />)
+    render(<Header skipLinkId="content-start" />)
 
     await user.click(screen.getByRole('button', { name: 'Expand site menu' }))
 
-    expect(screen.getByRole('button', { name: 'Close site menu' })).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
+    expect(screen.getByRole('button', { name: 'Close site menu' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
   })
 })

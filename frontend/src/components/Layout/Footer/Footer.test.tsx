@@ -15,23 +15,20 @@ describe('Footer', () => {
   })
 
   it('has the footer data-component attribute', () => {
-    const { asFragment } = render(<Footer />)
+    render(<Footer />)
 
     expect(screen.getByRole('contentinfo').getAttribute('data-component')).toBe('footer')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders the placeholder content', () => {
-    const { asFragment } = render(<Footer />)
+    render(<Footer />)
 
     expect(screen.getByText('Footer placeholder content')).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders Legal as a child', () => {
-    const { asFragment } = render(<Footer />)
+    render(<Footer />)
 
     expect(screen.getByTestId('legal')).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
   })
 })

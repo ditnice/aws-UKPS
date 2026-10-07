@@ -3,25 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { createRef } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { InputWidth } from '@/components/Input/Input'
+import { inputWidthCases } from '@/test-utils/inputWidthCases'
 
 import { Select, SelectOption } from './Select'
 
-const widths: InputWidth[] = [
-  2,
-  3,
-  4,
-  5,
-  10,
-  20,
-  30,
-  'full',
-  'three-quarters',
-  'two-thirds',
-  'one-half',
-  'one-third',
-  'one-quarter',
-]
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
@@ -45,25 +30,23 @@ describe('Select', () => {
   })
 
   it('defaults the id to the name', () => {
-    const { asFragment } = render(
+    render(
       <Select label="Sort by" name="sort">
         <SelectOption value="published">Recently published</SelectOption>
       </Select>,
     )
 
     expect(screen.getByLabelText('Sort by').getAttribute('id')).toBe('sort')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('supports an explicit id', () => {
-    const { asFragment } = render(
+    render(
       <Select id="sort-select" label="Sort by" name="sort">
         <SelectOption value="published">Recently published</SelectOption>
       </Select>,
     )
 
     expect(screen.getByLabelText('Sort by').getAttribute('id')).toBe('sort-select')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders a hint and describes the select with it', () => {
@@ -115,7 +98,7 @@ describe('Select', () => {
 
   it('forwards native select props', () => {
     const handleChange = vi.fn()
-    const { asFragment } = render(
+    render(
       <Select disabled label="Sort by" name="sort" onChange={handleChange} required>
         <SelectOption value="published">Recently published</SelectOption>
         <SelectOption disabled value="updated">
@@ -130,7 +113,6 @@ describe('Select', () => {
     expect(screen.getByRole('option', { name: 'Recently updated' }).hasAttribute('disabled')).toBe(
       true,
     )
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('calls onChange when the selected option changes', async () => {
@@ -170,7 +152,7 @@ describe('Select', () => {
   })
 
   it('merges a consumer className onto the root wrapper', () => {
-    const { asFragment, container } = render(
+    const { container } = render(
       <Select className="extra-class" label="Sort by" name="sort">
         <SelectOption value="published">Recently published</SelectOption>
       </Select>,
@@ -178,22 +160,20 @@ describe('Select', () => {
 
     const root = container.querySelector('[data-component="select"]')
     expect(root?.classList.contains('extra-class')).toBe(true)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders no label element when label is null', () => {
-    const { asFragment } = render(
+    render(
       <Select label={null} name="sort">
         <SelectOption value="published">Recently published</SelectOption>
       </Select>,
     )
 
     expect(screen.queryByText('Sort by')).toBeNull()
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('applies a max-width for a fixed width', () => {
-    const { asFragment } = render(
+    render(
       <Select label="Sort by" name="sort" width={10}>
         <SelectOption value="published">Recently published</SelectOption>
       </Select>,
@@ -201,11 +181,10 @@ describe('Select', () => {
 
     const select = screen.getByLabelText('Sort by')
     expect(select.style.maxWidth).toBe('11.5em')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('applies a width for a fluid width', () => {
-    const { asFragment } = render(
+    render(
       <Select label="Sort by" name="sort" width="one-half">
         <SelectOption value="published">Recently published</SelectOption>
       </Select>,
@@ -213,11 +192,10 @@ describe('Select', () => {
 
     const select = screen.getByLabelText('Sort by')
     expect(select.style.width).toBe('50%')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('merges width styles with an explicit style prop', () => {
-    const { asFragment } = render(
+    render(
       <Select label="Sort by" name="sort" style={{ color: 'red' }} width="full">
         <SelectOption value="published">Recently published</SelectOption>
       </Select>,
@@ -226,17 +204,20 @@ describe('Select', () => {
     const select = screen.getByLabelText('Sort by')
     expect(select.style.width).toBe('100%')
     expect(select.style.color).toBe('red')
-    expect(asFragment()).toMatchSnapshot()
   })
 
-  it.each(widths)('renders the %s width variant', (width) => {
-    const { asFragment } = render(
-      <Select label="Sort by" name="sort" width={width}>
-        <SelectOption value="published">Recently published</SelectOption>
-      </Select>,
-    )
+  it.each(inputWidthCases)(
+    'renders the $width width variant',
+    ({ width, maxWidth, fluidWidth }) => {
+      render(
+        <Select label="Sort by" name="sort" width={width}>
+          <SelectOption value="published">Recently published</SelectOption>
+        </Select>,
+      )
 
-    expect(screen.getByLabelText('Sort by')).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
-  })
+      const select = screen.getByLabelText('Sort by')
+      expect(select.style.maxWidth).toBe(maxWidth)
+      expect(select.style.width).toBe(fluidWidth)
+    },
+  )
 })

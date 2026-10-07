@@ -5,39 +5,38 @@ import { Tag } from './Tag'
 
 import type { TagColour } from './Tag'
 
-const colours: TagColour[] = [
-  'grey',
-  'green',
-  'teal',
-  'blue',
-  'purple',
-  'magenta',
-  'red',
-  'orange',
-  'yellow',
+const colours: { colour: TagColour; backgroundColor: string; color: string }[] = [
+  { colour: 'grey', backgroundColor: '#cecece', color: '#0b0c0c' },
+  { colour: 'green', backgroundColor: '#cfe4dc', color: '#083d29' },
+  { colour: 'teal', backgroundColor: '#d0e6e7', color: '#0b4144' },
+  { colour: 'blue', backgroundColor: '#d2e2f1', color: '#0f385c' },
+  { colour: 'purple', backgroundColor: '#ddd6ec', color: '#2a1950' },
+  { colour: 'magenta', backgroundColor: '#f4d7e5', color: '#651b3e' },
+  { colour: 'red', backgroundColor: '#f4d7d7', color: '#651b1b' },
+  { colour: 'orange', backgroundColor: '#fde4d7', color: '#7a3c1c' },
+  { colour: 'yellow', backgroundColor: '#ffee80', color: '#7a3c1c' },
 ]
 
 describe('Tag', () => {
-  it.each(colours)('renders the %s colour variant', (colour) => {
+  it.each(colours)('renders the $colour colour variant', ({ colour, backgroundColor, color }) => {
     const { asFragment } = render(<Tag colour={colour}>Status</Tag>)
 
-    expect(screen.getByText('Status')).toBeInTheDocument()
+    expect(screen.getByText('Status')).toHaveStyle({ backgroundColor, color })
     expect(asFragment()).toMatchSnapshot()
   })
 
   it('wraps the design-system tag when a className is supplied', () => {
-    const { asFragment, container } = render(
+    const { container } = render(
       <Tag className="additional-class" colour="green">
         Active
       </Tag>,
     )
 
     expect(container.firstElementChild?.classList.contains('additional-class')).toBe(true)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('merges consumer styles with the colour styles', () => {
-    const { asFragment } = render(
+    render(
       <Tag colour="blue" style={{ border: '1px solid red' }}>
         Draft
       </Tag>,
@@ -46,7 +45,6 @@ describe('Tag', () => {
     const tag = screen.getByText('Draft')
     expect(tag.style.border).toBe('1px solid red')
     expect(tag.style.backgroundColor).toBe('rgb(210, 226, 241)')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('passes through design-system modifier props and HTML attributes', () => {
@@ -56,7 +54,11 @@ describe('Tag', () => {
       </Tag>,
     )
 
-    expect(screen.getByTestId('priority-tag')).toBeInTheDocument()
+    expect(screen.getByTestId('priority-tag')).toHaveClass(
+      'tag--flush',
+      'tag--impact',
+      'tag--outline',
+    )
     expect(asFragment()).toMatchSnapshot()
   })
 

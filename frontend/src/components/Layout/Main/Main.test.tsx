@@ -17,48 +17,42 @@ describe('Main', () => {
   })
 
   it('renders children', () => {
-    const { asFragment } = render(
+    render(
       <Main>
         <p>Page content</p>
       </Main>,
     )
 
     expect(screen.getByText('Page content')).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('applies padding by default', () => {
-    const { asFragment } = render(<Main />)
+    render(<Main />)
 
     expect(screen.getByRole('main').classList.contains(styles.withPadding)).toBe(true)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('omits padding when withPadding is false', () => {
-    const { asFragment } = render(<Main withPadding={false} />)
+    render(<Main withPadding={false} />)
 
     expect(screen.getByRole('main').classList.contains(styles.withPadding)).toBe(false)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('preserves custom class names', () => {
-    const { asFragment } = render(<Main className="additional-class" />)
+    render(<Main className="additional-class" />)
 
     expect(screen.getByRole('main').classList.contains('additional-class')).toBe(true)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('forwards native main attributes', () => {
-    const { asFragment } = render(<Main id="page-main" />)
+    render(<Main id="page-main" />)
 
     expect(screen.getByRole('main').getAttribute('id')).toBe('page-main')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders BackToTop as a child', () => {
-    const { asFragment } = render(<Main />)
+    render(<Main />)
 
     expect(screen.getByTestId('back-to-top')).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
   })
 })

@@ -15,16 +15,19 @@ describe('NavLinks', () => {
   it('renders root links for the root path', () => {
     navigationState.pathname = '/'
 
-    const { asFragment } = render(<NavLinks />)
+    render(<NavLinks />)
 
     expect(screen.getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBe('page')
-    expect(asFragment()).toMatchSnapshot()
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about-us')
+    expect(screen.getByRole('link', { name: 'About' })).not.toHaveAttribute('aria-current')
+    expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
   })
 
   it('renders portal links for the portal path', () => {
     navigationState.pathname = '/portal'
 
-    const { asFragment } = render(<NavLinks />)
+    render(<NavLinks />)
 
     expect(screen.getByRole('link', { name: 'Dashboard' }).getAttribute('aria-current')).toBe(
       'page',
@@ -32,37 +35,39 @@ describe('NavLinks', () => {
     expect(screen.getByRole('link', { name: 'Components' }).hasAttribute('aria-current')).toBe(
       false,
     )
-    expect(asFragment()).toMatchSnapshot()
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/portal')
+    expect(screen.getByRole('link', { name: 'Components' })).toHaveAttribute(
+      'href',
+      '/portal/components',
+    )
+    expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument()
   })
 
   it('marks nested portal links as active', () => {
     navigationState.pathname = '/portal/components/examples'
 
-    const { asFragment } = render(<NavLinks />)
+    render(<NavLinks />)
 
     expect(screen.getByRole('link', { name: 'Components' }).getAttribute('aria-current')).toBe(
       'page',
     )
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders custom root links', () => {
-    const { asFragment } = render(
-      <NavLinks rootLinks={[{ href: '/guidance', label: 'Guidance' }]} />,
-    )
+    render(<NavLinks rootLinks={[{ href: '/guidance', label: 'Guidance' }]} />)
 
-    expect(screen.getByRole('link', { name: 'Guidance' })).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
+    expect(screen.getByRole('link', { name: 'Guidance' })).toHaveAttribute('href', '/guidance')
   })
 
   it('renders custom portal links', () => {
     navigationState.pathname = '/portal/settings'
 
-    const { asFragment } = render(
-      <NavLinks portalLinks={[{ href: '/portal/settings', label: 'Settings' }]} />,
-    )
+    render(<NavLinks portalLinks={[{ href: '/portal/settings', label: 'Settings' }]} />)
 
     expect(screen.getByRole('link', { name: 'Settings' }).getAttribute('aria-current')).toBe('page')
-    expect(asFragment()).toMatchSnapshot()
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'href',
+      '/portal/settings',
+    )
   })
 })

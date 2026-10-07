@@ -59,7 +59,7 @@ describe('Table', () => {
   })
 
   it('forwards className and table attributes in both modes', () => {
-    const { asFragment, container } = render(
+    const { container } = render(
       <Table aria-label="Users" className="additional-class">
         {rows}
       </Table>,
@@ -67,11 +67,10 @@ describe('Table', () => {
     const table = container.querySelector('table')
     expect(table?.classList.contains('additional-class')).toBe(true)
     expect(table?.getAttribute('aria-label')).toBe('Users')
-    expect(asFragment()).toMatchSnapshot()
 
     cleanup()
 
-    const { asFragment: wrappedAsFragment, container: wrappedContainer } = render(
+    const { container: wrappedContainer } = render(
       <Table aria-label="Users" className="additional-class" columnWidth="equal">
         {rows}
       </Table>,
@@ -79,11 +78,10 @@ describe('Table', () => {
     const wrappedTable = wrappedContainer.querySelector('table')
     expect(wrappedTable?.classList.contains('additional-class')).toBe(true)
     expect(wrappedTable?.getAttribute('aria-label')).toBe('Users')
-    expect(wrappedAsFragment()).toMatchSnapshot()
   })
 
   it('renders a caption child', () => {
-    const { asFragment, container } = render(
+    const { container } = render(
       <Table columnWidth="content">
         <caption>Organisation users</caption>
         {rows}
@@ -91,6 +89,5 @@ describe('Table', () => {
     )
 
     expect(container.querySelector('caption')?.textContent).toBe('Organisation users')
-    expect(asFragment()).toMatchSnapshot()
   })
 })

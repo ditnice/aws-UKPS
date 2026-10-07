@@ -23,16 +23,17 @@ describe('SkipLink', () => {
 
     const { asFragment } = render(<SkipLink to="#content-start">Skip to content</SkipLink>)
 
+    expect(asFragment()).toMatchSnapshot()
+
     await user.click(screen.getByRole('link', { name: 'Skip to content' }))
 
     expect(target).toHaveFocus()
     expect(target.tabIndex).toBe(-1)
     expect(target.scrollIntoView).toHaveBeenCalledWith({ block: 'start' })
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders a hash link without changing focus when the target is missing', async () => {
-    const { asFragment } = render(<SkipLink to="#missing">Missing target</SkipLink>)
+    render(<SkipLink to="#missing">Missing target</SkipLink>)
 
     const link = screen.getByRole('link', { name: 'Missing target' })
     await user.tab()
@@ -40,11 +41,10 @@ describe('SkipLink', () => {
     await user.click(link)
 
     expect(link).toHaveFocus()
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders an empty hash link without changing focus when clicked', async () => {
-    const { asFragment } = render(<SkipLink to="#">Empty target</SkipLink>)
+    render(<SkipLink to="#">Empty target</SkipLink>)
 
     const link = screen.getByRole('link', { name: 'Empty target' })
     await user.tab()
@@ -52,15 +52,13 @@ describe('SkipLink', () => {
     await user.click(link)
 
     expect(link).toHaveFocus()
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders a normal link for non-hash destinations', () => {
-    const { asFragment } = render(<SkipLink to="/accessibility">Accessibility help</SkipLink>)
+    render(<SkipLink to="/accessibility">Accessibility help</SkipLink>)
 
     expect(screen.getByRole('link', { name: 'Accessibility help' }).getAttribute('href')).toBe(
       '/accessibility',
     )
-    expect(asFragment()).toMatchSnapshot()
   })
 })

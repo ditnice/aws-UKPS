@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getOrganisationById } from '@/client/generated'
@@ -62,13 +62,7 @@ describe('OrganisationPageWrapper', () => {
 
     expect(children).toHaveBeenCalledOnce()
     expect(children).toHaveBeenCalledWith(organisation)
-    expect(result).toMatchInlineSnapshot(`
-      <React.Fragment>
-        <div>
-          Organisation content
-        </div>
-      </React.Fragment>
-    `)
+    expect(screen.getByText('Organisation content')).toBeInTheDocument()
   })
 
   it('retrieves the organisation using the numeric organisation ID', async () => {

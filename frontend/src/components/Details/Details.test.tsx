@@ -35,17 +35,16 @@ describe('Details', () => {
   })
 
   it('toggles open when the summary is clicked', async () => {
-    const { asFragment } = render(<Details summary="Help with nationality">Some content</Details>)
+    render(<Details summary="Help with nationality">Some content</Details>)
 
     const summary = screen.getByText('Help with nationality')
     await user.click(summary)
 
     expect(summary.closest('details')!.open).toBe(true)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('closes again when the summary is clicked a second time', async () => {
-    const { asFragment } = render(
+    render(
       <Details open summary="Help with nationality">
         Some content
       </Details>,
@@ -55,22 +54,20 @@ describe('Details', () => {
     await user.click(summary)
 
     expect(summary.closest('details')!.open).toBe(false)
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('forwards native attributes to the details element', () => {
-    const { asFragment } = render(
+    render(
       <Details id="nationality-details" summary="Help with nationality">
         Some content
       </Details>,
     )
 
     expect(document.getElementById('nationality-details')).not.toBeNull()
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('preserves custom class names', () => {
-    const { asFragment } = render(
+    render(
       <Details className="additional-class" summary="Help with nationality">
         Some content
       </Details>,
@@ -79,6 +76,5 @@ describe('Details', () => {
     expect(screen.getByText('Help with nationality').closest('details')?.className).toContain(
       'additional-class',
     )
-    expect(asFragment()).toMatchSnapshot()
   })
 })

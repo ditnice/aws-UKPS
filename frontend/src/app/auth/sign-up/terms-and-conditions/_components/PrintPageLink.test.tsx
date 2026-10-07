@@ -22,9 +22,9 @@ describe('PrintPageLink', () => {
     const button = screen.getByRole('button', { name: 'Print page' })
     expect(button.getAttribute('type')).toBe('button')
     expect(screen.queryByRole('link', { name: 'Print page' })).toBeNull()
+    expect(asFragment()).toMatchSnapshot()
 
     await user.click(button)
     expect(print).toHaveBeenCalledTimes(1)
-    expect(asFragment()).toMatchSnapshot()
   })
 })

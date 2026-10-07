@@ -43,10 +43,10 @@ describe('Button', () => {
     expect(button.className).toMatch(/\bbtn\b/)
     expect(button.classList.contains('custom-class')).toBe(true)
     expect(screen.queryByRole('link', { name: 'Print page' })).toBeNull()
+    expect(asFragment()).toMatchSnapshot()
 
     await user.click(button)
     expect(handleClick).toHaveBeenCalledTimes(1)
-    expect(asFragment()).toMatchSnapshot()
   })
 })
 

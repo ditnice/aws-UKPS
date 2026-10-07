@@ -1,17 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Tag > merges consumer styles with the colour styles 1`] = `
-<DocumentFragment>
-  <span
-    class="tag"
-    data-component="tag"
-    style="border: 1px solid red; background-color: rgb(210, 226, 241); color: rgb(15, 56, 92);"
-  >
-    Draft
-  </span>
-</DocumentFragment>
-`;
-
 exports[`Tag > passes through design-system modifier props and HTML attributes 1`] = `
 <DocumentFragment>
   <span
@@ -47,7 +35,7 @@ exports[`Tag > renders a remove action 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the blue colour variant 1`] = `
+exports[`Tag > renders the 'blue' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -59,7 +47,7 @@ exports[`Tag > renders the blue colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the green colour variant 1`] = `
+exports[`Tag > renders the 'green' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -71,7 +59,7 @@ exports[`Tag > renders the green colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the grey colour variant 1`] = `
+exports[`Tag > renders the 'grey' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -83,7 +71,7 @@ exports[`Tag > renders the grey colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the magenta colour variant 1`] = `
+exports[`Tag > renders the 'magenta' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -95,7 +83,7 @@ exports[`Tag > renders the magenta colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the orange colour variant 1`] = `
+exports[`Tag > renders the 'orange' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -107,7 +95,7 @@ exports[`Tag > renders the orange colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the purple colour variant 1`] = `
+exports[`Tag > renders the 'purple' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -119,7 +107,7 @@ exports[`Tag > renders the purple colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the red colour variant 1`] = `
+exports[`Tag > renders the 'red' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -131,7 +119,7 @@ exports[`Tag > renders the red colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the teal colour variant 1`] = `
+exports[`Tag > renders the 'teal' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -143,7 +131,7 @@ exports[`Tag > renders the teal colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the yellow colour variant 1`] = `
+exports[`Tag > renders the 'yellow' colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -151,22 +139,6 @@ exports[`Tag > renders the yellow colour variant 1`] = `
     style="background-color: rgb(255, 238, 128); color: rgb(122, 60, 28);"
   >
     Status
-  </span>
-</DocumentFragment>
-`;
-
-exports[`Tag > wraps the design-system tag when a className is supplied 1`] = `
-<DocumentFragment>
-  <span
-    class="additional-class"
-  >
-    <span
-      class="tag"
-      data-component="tag"
-      style="background-color: rgb(207, 228, 220); color: rgb(8, 61, 41);"
-    >
-      Active
-    </span>
   </span>
 </DocumentFragment>
 `;

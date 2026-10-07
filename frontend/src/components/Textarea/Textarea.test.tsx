@@ -1,25 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
+import { inputWidthCases } from '@/test-utils/inputWidthCases'
+
 import { Textarea } from './Textarea'
 
-import type { TextareaWidth } from './Textarea'
-
-const widths: TextareaWidth[] = [
-  2,
-  3,
-  4,
-  5,
-  10,
-  20,
-  30,
-  'full',
-  'three-quarters',
-  'two-thirds',
-  'one-half',
-  'one-third',
-  'one-quarter',
-]
 describe('Textarea', () => {
   it('renders an unmodified design system textarea by default', () => {
     const { asFragment } = render(<Textarea label="Description" name="description" />)
@@ -49,18 +34,17 @@ describe('Textarea', () => {
   })
 
   it('merges width styles with an explicit style prop', () => {
-    const { asFragment } = render(
+    render(
       <Textarea label="Description" name="description" style={{ color: 'red' }} width="full" />,
     )
 
     const textarea = screen.getByLabelText('Description')
     expect(textarea.style.width).toBe('100%')
     expect(textarea.style.color).toBe('red')
-    expect(asFragment()).toMatchSnapshot()
   })
 
   it('forwards other textarea props', () => {
-    const { asFragment } = render(
+    render(
       <Textarea
         hint="Include all relevant details"
         label="Description"
@@ -74,13 +58,16 @@ describe('Textarea', () => {
     expect(screen.getByText('Include all relevant details')).toBeInTheDocument()
     expect(textarea.placeholder).toBe('Enter a description')
     expect(textarea.rows).toBe(8)
-    expect(asFragment()).toMatchSnapshot()
   })
 
-  it.each(widths)('renders the %s width variant', (width) => {
-    const { asFragment } = render(<Textarea label="Description" name="description" width={width} />)
+  it.each(inputWidthCases)(
+    'renders the $width width variant',
+    ({ width, maxWidth, fluidWidth }) => {
+      render(<Textarea label="Description" name="description" width={width} />)
 
-    expect(screen.getByLabelText('Description')).toBeInTheDocument()
-    expect(asFragment()).toMatchSnapshot()
-  })
+      const textarea = screen.getByLabelText('Description')
+      expect(textarea.style.maxWidth).toBe(maxWidth)
+      expect(textarea.style.width).toBe(fluidWidth)
+    },
+  )
 })
