@@ -1,5 +1,6 @@
-# Accepted vulns flagged by `trivy fs`. Prefer an override in
-# pnpm-workspace.yaml when a fixed version exists; only list here when there's
+# Accepted vulns flagged by `trivy fs`. Lives at the repo root because Trivy
+# reads .trivyignore from the directory it is run in. Prefer an override in
+# frontend/pnpm-workspace.yaml when a fixed version exists; only list here when there's
 # no fix upstream. Each entry has an expiry so it gets re-reviewed.
 
 # braces 3.0.3: DoS via stack overflow from deeply nested patterns. No fixed
