@@ -271,6 +271,7 @@ describe('getUpdatedQueryWithoutFilter', () => {
       email: 'user@example.com',
       lastActive: '6months',
     }
+    const original = structuredClone(query)
 
     getUpdatedQueryWithoutFilter(query, {
       key: 'status',
@@ -278,7 +279,7 @@ describe('getUpdatedQueryWithoutFilter', () => {
       label: statusLabels.Active,
     })
 
-    expect(query).toEqual(query)
+    expect(query).toEqual(original)
   })
 })
 
