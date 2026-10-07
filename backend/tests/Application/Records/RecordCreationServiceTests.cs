@@ -146,7 +146,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
         {
             recordProductDetail.NamesAndIdentifiers.ShouldContain(x =>
                 x.Name == genericName.Value
-                && x.DisplayOrder == genericName.Index
+                && x.DisplayOrder == genericName.Index + 1
                 && x.NameType == NameAndIdentifierType.GenericName
             );
         }
@@ -155,7 +155,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
         {
             recordProductDetail.NamesAndIdentifiers.ShouldContain(x =>
                 x.Name == otherIdentifier.Value
-                && x.DisplayOrder == otherIdentifier.Index
+                && x.DisplayOrder == otherIdentifier.Index + 1
                 && x.NameType == NameAndIdentifierType.OtherIdentifier
             );
         }
