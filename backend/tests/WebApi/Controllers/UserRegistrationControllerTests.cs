@@ -44,7 +44,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
             .CreateClient();
 
         _mock
-            .ApproveRequest(Arg.Any<int>(), Guid.NewGuid(), Arg.Any<CancellationToken>())
+            .ApproveRequest(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Result<ApproveRequestError>.Err(new ApproveRequestError.RequestNotFound()));
         _mock
             .ApproveRequest(
@@ -55,7 +55,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
             .Returns(Result<ApproveRequestError>.Ok());
 
         _mock
-            .RejectRequest(Arg.Any<int>(), Guid.NewGuid(), Arg.Any<CancellationToken>())
+            .RejectRequest(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Result<RejectRequestError>.Err(new RejectRequestError.RequestNotFound()));
         _mock
             .RejectRequest(

@@ -212,14 +212,14 @@ public class UserEndpointTests : DatabaseTestBase
 
         HttpResponseMessage existingResponse = await _httpClient.GetAsync(
             new Uri(
-                $"/organisations/{request.OrganisationId}/membership-requests/{request.Id}",
+                $"/organisations/{request.OrganisationId}/membership-requests/{request.RequestGuid}",
                 UriKind.Relative
             ),
             TestContext.Current.CancellationToken
         );
         HttpResponseMessage guessedResponse = await _httpClient.GetAsync(
             new Uri(
-                $"/organisations/{request.OrganisationId}/membership-requests/999999",
+                $"/organisations/{request.OrganisationId}/membership-requests/{Guid.NewGuid()}",
                 UriKind.Relative
             ),
             TestContext.Current.CancellationToken
