@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fakeRegisterUserConfirmationDto } from '@/client/generated/@faker-js/faker.gen'
 import type { Client } from '@/client/generated/client'
 import {
   getUserDetailsWithinOrganisation,
@@ -32,7 +31,13 @@ const user: UserInformationDto = {
   userRole: 'Standard',
 }
 
-const registration: RegisterUserConfirmationDto = fakeRegisterUserConfirmationDto()
+const registration = {
+  id: 4,
+  organisationName: 'Example Pharma',
+  fullName: 'Jane Smith',
+  workEmail: 'jane.smith@example.com',
+  phoneNumber: '01234 567890',
+} satisfies RegisterUserConfirmationDto
 
 const apiClient = {} as Client
 

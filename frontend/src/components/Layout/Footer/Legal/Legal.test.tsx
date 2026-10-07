@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Legal } from './Legal'
 
@@ -19,6 +19,15 @@ const legalLinks = [
 ]
 
 describe('Legal', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-06-15T12:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders the legal menu navigation landmark', () => {
     const { asFragment } = render(<Legal />)
 
@@ -36,10 +45,9 @@ describe('Legal', () => {
   it('renders the copyright notice for the current year', () => {
     const { asFragment, container } = render(<Legal />)
 
-    const year = new Date().getFullYear()
     const copyright = container.querySelector('p')
     expect(copyright?.textContent?.replace(/\s+/g, ' ')).toContain(
-      `© NICE ${year}. All rights reserved.`,
+      '© NICE 2026. All rights reserved.',
     )
     expect(asFragment()).toMatchSnapshot()
   })
@@ -51,5 +59,14 @@ describe('Legal', () => {
       'https://www.nice.org.uk/terms-and-conditions#notice-of-rights',
     )
     expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('updates the copyright year when the clock advances', () => {
+    vi.setSystemTime(new Date('2030-06-15T12:00:00Z'))
+
+    render(<Legal />)
+
+    expect(screen.getByText(/2030\. All rights reserved\./)).toBeInTheDocument()
+    expect(screen.queryByText(/2026\. All rights reserved\./)).not.toBeInTheDocument()
   })
 })

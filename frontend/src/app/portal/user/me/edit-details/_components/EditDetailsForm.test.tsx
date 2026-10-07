@@ -2,8 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { UpdateUserDetailsCommand } from '@/client/generated'
-import { fakeUpdateUserDetailsCommand } from '@/client/generated/@faker-js/faker.gen'
+import type { UpdateUserDetailsCommand } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
@@ -41,7 +40,7 @@ const requiredErrors = [
 function renderForm(override?: Partial<EditDetailsFormProps>) {
   const defaults: EditDetailsFormProps = {
     userId: 123,
-    initialValues: fakeUpdateUserDetailsCommand(),
+    initialValues: { ...validFormValues },
   }
   const props = { ...defaults, ...override }
   render(<EditDetailsForm userId={props.userId} initialValues={props.initialValues} />)
@@ -61,7 +60,7 @@ const validFormValues = {
   fullName: 'Test User',
   workEmail: 'test@example.com',
   workTelephone: '01234567890',
-}
+} satisfies UpdateUserDetailsCommand
 
 async function fillValidForm() {
   await updateForm(validFormValues)
@@ -88,14 +87,17 @@ describe('EditDetailsForm', () => {
     renderForm()
 
     const fullName = screen.getByLabelText('Full name')
+    expect(fullName).toHaveValue(validFormValues.fullName)
     expect(fullName.getAttribute('type')).toBe('text')
     expect(fullName.getAttribute('autocomplete')).toBe('name')
 
     const workEmail = screen.getByLabelText('Work email address')
+    expect(workEmail).toHaveValue(validFormValues.workEmail)
     expect(workEmail.getAttribute('type')).toBe('email')
     expect(workEmail.getAttribute('autocomplete')).toBe('email')
 
     const contactNumber = screen.getByLabelText('Contact number')
+    expect(contactNumber).toHaveValue(validFormValues.workTelephone)
     expect(contactNumber.getAttribute('type')).toBe('tel')
     expect(contactNumber.getAttribute('autocomplete')).toBe('tel')
     expect(

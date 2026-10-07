@@ -1,10 +1,20 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { UserInformationDto } from '@/client/generated'
-import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
+import type { UserInformationDto } from '@/client/generated'
 
 import { UserDetails } from './UserDetails'
+
+const user = {
+  userId: 4,
+  fullName: 'Julie Brooks',
+  workTelephone: '01234 567890',
+  workEmail: 'julie.brooks@example.com',
+  organisationMembershipId: 9,
+  organisationId: 2,
+  organisationName: 'Example Pharma',
+  userRole: 'Standard',
+} satisfies UserInformationDto
 
 const expectDefinitionValue = (labelText: string, expectedValue: string) => {
   const label = screen.getByText(labelText)
@@ -25,7 +35,7 @@ describe('UserDetails', () => {
   })
 
   it("renders the current user's details", () => {
-    const currentUser: UserInformationDto = fakeUserInformationDto()
+    const currentUser = { ...user }
 
     render(<UserDetails currentUser={currentUser} />)
 
@@ -36,7 +46,7 @@ describe('UserDetails', () => {
   })
 
   it('renders the edit details link', () => {
-    const currentUser = fakeUserInformationDto()
+    const currentUser = { ...user }
 
     const { container } = render(<UserDetails currentUser={currentUser} />)
 
@@ -47,7 +57,7 @@ describe('UserDetails', () => {
   })
 
   it('renders the return to view and manage records link', () => {
-    const currentUser = fakeUserInformationDto()
+    const currentUser = { ...user }
 
     const { container } = render(<UserDetails currentUser={currentUser} />)
 

@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getOrganisationById, OrganisationDetailsDto } from '@/client/generated'
-import { fakeOrganisationDetailsDto } from '@/client/generated/@faker-js/faker.gen'
+import { getOrganisationById } from '@/client/generated'
+import type { OrganisationDetailsDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
 import OrganisationPageWrapper from './OrganisationPageWrapper'
@@ -25,7 +25,19 @@ const mockedCreateServerApiClient = vi.mocked(createServerApiClient)
 const mockedGetOrganisationById = vi.mocked(getOrganisationById)
 
 describe('OrganisationPageWrapper', () => {
-  const organisation: OrganisationDetailsDto = fakeOrganisationDetailsDto()
+  const organisation = {
+    id: 123,
+    organisationName: 'Example Pharma',
+    organisationType: 'PharmaCompany',
+    allowedPharmaceuticalEntity: 'Human',
+    countryOrRegion: 'United Kingdom',
+    headOfficeAddress: '1 Example Street, London',
+    headOfficeEmail: 'office@example.com',
+    headOfficeTelephone: '01234 567890',
+    status: 'Active',
+    lastActive: '2026-01-15T12:00:00Z',
+    createdAt: '2025-06-01T12:00:00Z',
+  } satisfies OrganisationDetailsDto
 
   beforeEach(() => {
     mockedCreateServerApiClient.mockResolvedValue(

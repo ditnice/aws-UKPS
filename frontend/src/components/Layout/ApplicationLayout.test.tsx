@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApplicationLayout } from './ApplicationLayout'
 
@@ -19,6 +19,15 @@ vi.mock('@nice-digital/nds-container', () => ({
   Container: ({ children }: MockComponentProps) => <div data-testid="container">{children}</div>,
 }))
 describe('ApplicationLayout', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-06-15T12:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders the application chrome around children', () => {
     const { asFragment } = render(<ApplicationLayout>Page content</ApplicationLayout>)
 
