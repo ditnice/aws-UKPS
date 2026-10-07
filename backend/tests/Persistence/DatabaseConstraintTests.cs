@@ -105,6 +105,41 @@ public class DatabaseConstraintTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SaveChangesAsync_UserRegistrationRequestWithNullCreatedUserId_Succeeds()
+    {
+        UserRegistrationRequest entity = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _organisationFaker.Generate())
+            .Generate();
+        Context.Add(entity);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Context.ChangeTracker.Clear();
+        var foundValue = await Context.UserRegistrationRequests.SingleAsync(
+            x => x.Id == entity.Id,
+            TestContext.Current.CancellationToken
+        );
+        foundValue.CreatedUserId.ShouldBeNull();
+        foundValue.CreatedUser.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_UserRegistrationRequestWithInvalidCreatedUserId_ThrowsDbUpdateException()
+    {
+        UserRegistrationRequest entity = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _organisationFaker.Generate())
+            .RuleFor(x => x.CreatedUserId, _ => int.MaxValue)
+            .Generate();
+        Context.Add(entity);
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        PostgresException postgresException =
+            exception.InnerException.ShouldBeOfType<PostgresException>();
+        postgresException.SqlState.ShouldBe("23503");
+    }
+
+    [Fact]
     public async Task SaveChangesAsync_WhenUserHasMultipleUserOrgMembershipsMarkedAsSelected_ShouldThrowDbUpdateException()
     {
         var user = new UserFaker().Generate();

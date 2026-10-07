@@ -161,17 +161,17 @@ internal class UserRegistrationService : IUserRegistrationService
         }
 
         var result = await _userOnboardingService.InitialiseNewUserSetup(
-            new OnboardUserCommandDto()
-            {
-                FullName = registrationRequest.FullName,
-                NewUserEmail = registrationRequest.WorkEmail,
-                OrganisationId = registrationRequest.OrganisationId,
-                ContactNumber = registrationRequest.PhoneNumber,
-            },
+            MapToOnboardUserCommandDto(registrationRequest),
             cancellationToken
         );
         return await result.Match(
-            targetUser => HandleOnboardingSuccess(transaction, targetUser, cancellationToken),
+            targetUser =>
+                HandleOnboardingSuccess(
+                    transaction,
+                    registrationRequest,
+                    targetUser,
+                    cancellationToken
+                ),
             err => HandleUserOnBoardingError(transaction, err, cancellationToken)
         );
     }
@@ -251,10 +251,14 @@ internal class UserRegistrationService : IUserRegistrationService
 
     private async Task<Result<ApproveRequestError>> HandleOnboardingSuccess(
         IDbContextTransaction transaction,
+        UserRegistrationRequest registrationRequest,
         User targetUser,
         CancellationToken cancellationToken
     )
     {
+        registrationRequest.CreatedUser = targetUser;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
         // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
         Uri link = _setupLinkCreator.GetSetupLink(targetUser.OnboardingRecord!.SetupToken);
         await _emailService.SendEmail(
@@ -299,6 +303,19 @@ internal class UserRegistrationService : IUserRegistrationService
             FullName = userRegistrationRequest.FullName,
             WorkEmail = userRegistrationRequest.WorkEmail,
             PhoneNumber = userRegistrationRequest.PhoneNumber,
+        };
+    }
+
+    private static OnboardUserCommandDto MapToOnboardUserCommandDto(
+        UserRegistrationRequest registrationRequest
+    )
+    {
+        return new()
+        {
+            FullName = registrationRequest.FullName,
+            NewUserEmail = registrationRequest.WorkEmail,
+            OrganisationId = registrationRequest.OrganisationId,
+            ContactNumber = registrationRequest.PhoneNumber,
         };
     }
 }

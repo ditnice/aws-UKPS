@@ -42,6 +42,12 @@ internal sealed class UserRegistrationRequestConfiguration
             .HasForeignKey(x => x.ApprovedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder
+            .HasOne(x => x.CreatedUser)
+            .WithMany()
+            .HasForeignKey(x => x.CreatedUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Property(x => x.Version).IsRowVersion();
     }
 }
