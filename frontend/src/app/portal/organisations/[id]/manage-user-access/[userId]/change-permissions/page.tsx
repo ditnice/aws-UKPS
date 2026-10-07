@@ -60,8 +60,8 @@ export default async function ChangeUserPermissions({ params }: Props) {
           <p>
             If you change this user’s role, they will{' '}
             {user.userRole === 'Standard'
-              ? 'gain access to additional capabilities in UK PharmaScan, including:'
-              : 'lose access to capabilities in UK PharmaScan, including:'}
+              ? 'gain access to the following capabilities in UK PharmaScan:'
+              : 'lose access to the following capabilities in UK PharmaScan:'}
           </p>
           <ul>
             <li>adding users to your organisation</li>

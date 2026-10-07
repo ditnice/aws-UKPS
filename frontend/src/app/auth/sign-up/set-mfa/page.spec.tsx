@@ -47,7 +47,7 @@ function renderPage() {
 }
 
 function enterSecurityCode(securityCode: string) {
-  fireEvent.change(screen.getByLabelText('Authentication code'), {
+  fireEvent.change(screen.getByLabelText('Enter your authentication code'), {
     target: { value: securityCode },
   })
 }
@@ -112,7 +112,7 @@ describe('SignUpSetMfa', () => {
     ).toBeDefined()
     expect(screen.getByLabelText('QR code for authenticator app setup')).toBeDefined()
     expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeDefined()
-    expect(screen.getByLabelText('Authentication code')).toBeDefined()
+    expect(screen.getByLabelText('Enter your authentication code')).toBeDefined()
     expect(
       screen.getByText('Enter the 6-digit authentication code shown in your authenticator app.'),
     ).toBeDefined()
@@ -122,9 +122,9 @@ describe('SignUpSetMfa', () => {
   it('sets autocomplete for a one-time code', async () => {
     renderPage()
 
-    expect((await screen.findByLabelText('Authentication code')).getAttribute('autocomplete')).toBe(
-      'one-time-code',
-    )
+    expect(
+      (await screen.findByLabelText('Enter your authentication code')).getAttribute('autocomplete'),
+    ).toBe('one-time-code')
   })
 
   it('shows a required validation error when submitted empty', async () => {
@@ -182,7 +182,7 @@ describe('SignUpSetMfa', () => {
     expect(await screen.findByText('Enter your security code')).toBeDefined()
 
     enterSecurityCode('123 456')
-    fireEvent.blur(screen.getByLabelText('Authentication code'))
+    fireEvent.blur(screen.getByLabelText('Enter your authentication code'))
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your security code')).toBeNull()
