@@ -2651,7 +2651,7 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{id}": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}": {
       "get": {
         "tags": [
           "UserRegistration"
@@ -2670,13 +2670,13 @@
             }
           },
           {
-            "name": "id",
+            "name": "requestGuid",
             "in": "path",
             "description": "The unique identifier of the user to retrieve.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2764,7 +2764,7 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}/approve": {
       "patch": {
         "tags": [
           "UserRegistration"
@@ -2783,13 +2783,13 @@
             }
           },
           {
-            "name": "registrationRequestId",
+            "name": "requestGuid",
             "in": "path",
             "description": "The identifier for the registration request.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2860,7 +2860,7 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}/reject": {
       "patch": {
         "tags": [
           "UserRegistration"
@@ -2879,13 +2879,13 @@
             }
           },
           {
-            "name": "registrationRequestId",
+            "name": "requestGuid",
             "in": "path",
             "description": "The identifier for the registration request.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -3582,7 +3582,6 @@
       },
       "RegisterUserConfirmationDto": {
         "required": [
-          "id",
           "requestGuid",
           "organisationName",
           "fullName",
@@ -3591,11 +3590,6 @@
         ],
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "description": "ID for the user.",
-            "format": "int32"
-          },
           "requestGuid": {
             "type": "string",
             "description": "Guid for the user.",

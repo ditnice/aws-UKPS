@@ -92,7 +92,7 @@ public class UserRegistrationController : ControllerBase
     /// <param name="organisationId">
     /// The identifier of the organisation containing the membership request.
     /// </param>
-    /// <param name="id">
+    /// <param name="requestGuid">
     /// The unique identifier of the user to retrieve.
     /// </param>
     /// <param name="cancellationToken">
@@ -115,16 +115,16 @@ public class UserRegistrationController : ControllerBase
     [ProducesResponseType<RegisterUserConfirmationDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [HttpGet("{id:int}", Name = nameof(GetUserRegistrationById))]
+    [HttpGet("{requestGuid:guid}", Name = nameof(GetUserRegistrationById))]
     public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserRegistrationById(
         int organisationId,
-        int id,
+        Guid requestGuid,
         CancellationToken cancellationToken
     )
     {
         var result = await _membershipRequestService.GetUserRegistrationById(
             organisationId,
-            id,
+            requestGuid,
             cancellationToken
         );
 
@@ -150,7 +150,7 @@ public class UserRegistrationController : ControllerBase
     /// <param name="organisationId">
     /// The identifier of the organisation containing the membership request.
     /// </param>
-    /// <param name="registrationRequestId">
+    /// <param name="requestGuid">
     /// The identifier for the registration request.
     /// </param>
     /// <param name="cancellationToken">
@@ -168,19 +168,19 @@ public class UserRegistrationController : ControllerBase
     /// <response code="404">
     /// The membership request could not be found.
     /// </response>
-    [HttpPatch("{registrationRequestId}/approve", Name = nameof(Approve))]
+    [HttpPatch("{requestGuid:guid}/approve", Name = nameof(Approve))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Approve(
         int organisationId,
-        int registrationRequestId,
+        Guid requestGuid,
         CancellationToken cancellationToken
     )
     {
         var result = await _membershipRequestService.ApproveRequest(
             organisationId,
-            registrationRequestId,
+            requestGuid,
             cancellationToken
         );
 
@@ -236,7 +236,7 @@ public class UserRegistrationController : ControllerBase
     /// <param name="organisationId">
     /// The identifier of the organisation containing the membership request.
     /// </param>
-    /// <param name="registrationRequestId">
+    /// <param name="requestGuid">
     /// The identifier for the registration request.
     /// </param>
     /// <param name="cancellationToken">
@@ -254,19 +254,19 @@ public class UserRegistrationController : ControllerBase
     /// <response code="404">
     /// The membership request could not be found.
     /// </response>
-    [HttpPatch("{registrationRequestId}/reject", Name = nameof(Reject))]
+    [HttpPatch("{requestGuid:guid}/reject", Name = nameof(Reject))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Reject(
         int organisationId,
-        int registrationRequestId,
+        Guid requestGuid,
         CancellationToken cancellationToken
     )
     {
         var result = await _membershipRequestService.RejectRequest(
             organisationId,
-            registrationRequestId,
+            requestGuid,
             cancellationToken
         );
 

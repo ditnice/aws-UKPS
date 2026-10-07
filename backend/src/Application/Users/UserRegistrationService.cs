@@ -82,7 +82,7 @@ internal class UserRegistrationService : IUserRegistrationService
 
     public async Task<GetUserRegistrationByIdResult> GetUserRegistrationById(
         int organisationId,
-        int id,
+        Guid requestGuid,
         CancellationToken cancellationToken
     )
     {
@@ -99,12 +99,14 @@ internal class UserRegistrationService : IUserRegistrationService
         var request = await _dbContext
             .UserRegistrationRequests.AsNoTracking()
             .Include(x => x.Organisation)
-            .Where(x => x.OrganisationId == organisationId && x.Id == id)
+            .Where(x => x.OrganisationId == organisationId && x.RequestGuid == requestGuid)
             .SingleOrDefaultAsync(cancellationToken);
 
         if (request is null)
         {
-            return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.IdNotFound(id));
+            return GetUserRegistrationByIdResult.Err(
+                new GetUserDetailsError.IdNotFound(requestGuid)
+            );
         }
         var dto = MapToDto(request);
         return GetUserRegistrationByIdResult.Ok(dto);
@@ -112,7 +114,7 @@ internal class UserRegistrationService : IUserRegistrationService
 
     public async Task<Result<ApproveRequestError>> ApproveRequest(
         int organisationId,
-        int registrationRequestId,
+        Guid requestGuid,
         CancellationToken cancellationToken
     )
     {
@@ -129,7 +131,7 @@ internal class UserRegistrationService : IUserRegistrationService
         );
         UserRegistrationRequest? registrationRequest =
             await _dbContext.UserRegistrationRequests.FirstOrDefaultAsync(
-                x => x.OrganisationId == organisationId && x.Id == registrationRequestId,
+                x => x.OrganisationId == organisationId && x.RequestGuid == requestGuid,
                 cancellationToken
             );
         if (registrationRequest is null)
@@ -176,7 +178,7 @@ internal class UserRegistrationService : IUserRegistrationService
 
     public async Task<Result<RejectRequestError>> RejectRequest(
         int organisationId,
-        int registrationRequestId,
+        Guid requestGuid,
         CancellationToken cancellationToken
     )
     {
@@ -189,7 +191,7 @@ internal class UserRegistrationService : IUserRegistrationService
             return Result<RejectRequestError>.Err(new RejectRequestError.NotAllowed());
         }
         var registrationRequest = await _dbContext.UserRegistrationRequests.FirstOrDefaultAsync(
-            x => x.OrganisationId == organisationId && x.Id == registrationRequestId,
+            x => x.OrganisationId == organisationId && x.RequestGuid == requestGuid,
             cancellationToken
         );
         if (registrationRequest is null)
@@ -292,7 +294,6 @@ internal class UserRegistrationService : IUserRegistrationService
     {
         return new()
         {
-            Id = userRegistrationRequest.Id,
             RequestGuid = userRegistrationRequest.RequestGuid,
             OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
             FullName = userRegistrationRequest.FullName,

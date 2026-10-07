@@ -441,10 +441,6 @@ export type RegisterUserCommandDto = {
  */
 export type RegisterUserConfirmationDto = {
     /**
-     * ID for the user.
-     */
-    id: number;
-    /**
      * Guid for the user.
      */
     requestGuid: string;
@@ -1791,10 +1787,10 @@ export type GetUserRegistrationByIdData = {
         /**
          * The unique identifier of the user to retrieve.
          */
-        id: number;
+        requestGuid: string;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{id}';
+    url: '/organisations/{organisationId}/membership-requests/{requestGuid}';
 };
 
 export type GetUserRegistrationByIdErrors = {
@@ -1833,10 +1829,10 @@ export type ApproveData = {
         /**
          * The identifier for the registration request.
          */
-        registrationRequestId: number;
+        requestGuid: string;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve';
+    url: '/organisations/{organisationId}/membership-requests/{requestGuid}/approve';
 };
 
 export type ApproveErrors = {
@@ -1873,10 +1869,10 @@ export type RejectData = {
         /**
          * The identifier for the registration request.
          */
-        registrationRequestId: number;
+        requestGuid: string;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject';
+    url: '/organisations/{organisationId}/membership-requests/{requestGuid}/reject';
 };
 
 export type RejectErrors = {

@@ -202,7 +202,6 @@ export const fakeRegisterUserCommandDto = (options?: Options): RegisterUserComma
 export const fakeRegisterUserConfirmationDto = (options?: Options): RegisterUserConfirmationDto => {
     const f = options?.faker ?? faker;
     return {
-        id: f.number.int(),
         requestGuid: f.string.uuid(),
         organisationName: f.string.sample(),
         fullName: f.person.fullName(),
@@ -808,7 +807,7 @@ export const fakeGetUserRegistrationByIdRequest = (options?: Options): Omit<GetU
     return {
         path: {
             organisationId: f.number.int(),
-            id: f.number.int()
+            requestGuid: f.string.uuid()
         }
     };
 };
@@ -826,7 +825,7 @@ export const fakeApproveRequest = (options?: Options): Omit<ApproveData, 'url'> 
     return {
         path: {
             organisationId: f.number.int(),
-            registrationRequestId: f.number.int()
+            requestGuid: f.string.uuid()
         }
     };
 };
@@ -844,7 +843,7 @@ export const fakeRejectRequest = (options?: Options): Omit<RejectData, 'url'> =>
     return {
         path: {
             organisationId: f.number.int(),
-            registrationRequestId: f.number.int()
+            requestGuid: f.string.uuid()
         }
     };
 };
