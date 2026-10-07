@@ -39,15 +39,36 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         ["DevelopmentNames null"] = x => x with { DevelopmentNames = null! },
         ["DevelopmentNames empty item"] = x => x with { DevelopmentNames = [""] },
         ["DevelopmentNames whitespace item"] = x => x with { DevelopmentNames = ["   "] },
+        ["DevelopmentNames duplicate items"] = x =>
+            x with
+            {
+                DevelopmentNames = ["not-distinct", "not-distinct"],
+            },
+        ["DevelopmentNames duplicate items differing by case"] = x =>
+            x with
+            {
+                DevelopmentNames = ["not-distinct", "NOT-DISTINCT"],
+            },
         ["GenericNames empty"] = x => x with { GenericNames = [] },
         ["GenericNames null"] = x => x with { GenericNames = null! },
         ["GenericNames empty item"] = x => x with { GenericNames = [""] },
         ["GenericNames whitespace item"] = x => x with { GenericNames = ["\n\n"] },
+        ["GenericNames duplicate items"] = x =>
+            x with
+            {
+                GenericNames = ["not-distinct", "not-distinct"],
+            },
+        ["GenericNames duplicate items differing by case"] = x =>
+            x with
+            {
+                GenericNames = ["not-distinct", "NOT-DISTINCT"],
+            },
         ["BrandedName empty"] = x => x with { BrandedName = "" },
         ["BrandedName whitespace"] = x => x with { BrandedName = "   " },
         ["RecordTitle empty"] = x => x with { RecordTitle = "" },
         ["RecordTitle whitespace"] = x => x with { RecordTitle = "   " },
         ["RecordTitle null"] = x => x with { RecordTitle = null! },
+        ["RecordTitle too long"] = x => x with { RecordTitle = new string('e', 101) },
     };
 
     public static TheoryData<string> InvalidCreateRecordCommandCases =>
