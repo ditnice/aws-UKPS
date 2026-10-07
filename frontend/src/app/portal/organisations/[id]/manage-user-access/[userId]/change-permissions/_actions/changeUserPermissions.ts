@@ -6,6 +6,8 @@ import { updateUserRole } from '@/client/generated/sdk.gen'
 import type { UserRole } from '@/client/generated/types.gen'
 import { createServerApiClient } from '@/client/server-api'
 
+import { changePermissionsSchema } from '../_lib/changePermissionsSchema'
+
 // Super users are managed via a different flow, so only standard and champion users
 // can be switched between roles from here.
 type SwitchableRole = Exclude<UserRole, 'Super'>
@@ -18,12 +20,29 @@ export async function changeUserPermissionsAction(
   membershipId: number,
   userRole: SwitchableRole,
 ): Promise<ChangeUserPermissionsResult> {
+  const parsed = changePermissionsSchema.safeParse({
+    organisationId,
+    userId,
+    membershipId,
+    userRole,
+  })
+
+  if (!parsed.success) {
+    return {
+      status: 'error',
+      message: "Check the user's permission details and try again.",
+    }
+  }
+
   const apiClient = await createServerApiClient()
 
   const { error } = await updateUserRole({
     client: apiClient,
-    path: { organisationId, membershipId },
-    body: { userRole },
+    path: {
+      organisationId: parsed.data.organisationId,
+      membershipId: parsed.data.membershipId,
+    },
+    body: { userRole: parsed.data.userRole },
   })
 
   if (error) {

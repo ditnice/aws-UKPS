@@ -1,10 +1,8 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
-import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { z } from 'zod'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
 
@@ -12,30 +10,16 @@ import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { Textarea } from '@/components/Textarea/Textarea'
-import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { OrganisationAction } from '../../_lib/organisationActionsAlert'
 import { updateOrganisationDetailsAction } from '../_actions/updateOrganisationDetails'
+import {
+  editOrganisationDetailsSchema,
+  type EditOrganisationDetailsFormValues,
+} from '../_lib/organisationDetailsSchema'
 
 import type { ChangeEvent } from 'react'
-
-const editOrganisationDetailsSchema = z.object({
-  organisationName: z.string().trim().min(1, errorMessages.organisationNameRequired),
-  headOfficeAddress: z.string().trim().min(1, errorMessages.addressRequired),
-  headOfficeEmail: z
-    .string()
-    .trim()
-    .min(1, errorMessages.organisationEmailRequired)
-    .pipe(z.email(errorMessages.emailFormat)),
-  headOfficeTelephone: z
-    .string()
-    .trim()
-    .min(1, errorMessages.phoneRequired)
-    .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
-})
-
-type EditOrganisationDetailsFormValues = z.input<typeof editOrganisationDetailsSchema>
 
 export type EditOrganisationDetailsFormProps = UpdateOrganisationDetailsDto & {
   organisationId: number
