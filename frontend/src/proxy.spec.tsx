@@ -10,12 +10,15 @@ function createRequest(url: string, cookie?: string) {
   return new NextRequest(url, cookie ? { headers: { cookie } } : undefined)
 }
 
-async function loadProxy() {
+async function loadProxy(
+  overrides: { authenticationMode?: string; issuer?: string; clientId?: string } = {},
+) {
   vi.resetModules()
   vi.doMock('jose', () => ({ createRemoteJWKSet, jwtVerify }))
-  vi.stubEnv('COGNITO_ISSUER', issuer)
-  vi.stubEnv('COGNITO_CLIENT_ID', clientId)
-  vi.stubEnv('AUTHENTICATION_MODE', undefined)
+  const config = { issuer, clientId, authenticationMode: undefined, ...overrides }
+  vi.stubEnv('COGNITO_ISSUER', config.issuer)
+  vi.stubEnv('COGNITO_CLIENT_ID', config.clientId)
+  vi.stubEnv('AUTHENTICATION_MODE', config.authenticationMode)
 
   return import('./proxy')
 }
@@ -25,6 +28,7 @@ afterEach(() => {
   createRemoteJWKSet.mockClear()
   jwtVerify.mockReset()
   vi.unstubAllEnvs()
+  vi.restoreAllMocks()
 })
 
 describe('proxy', () => {
@@ -45,6 +49,17 @@ describe('proxy', () => {
     expect(response.headers.get('location')).toBeNull()
     expect(response.headers.get('x-middleware-request-x-ukps-return-to')).toBe('/portal')
     expect(jwtVerify).toHaveBeenCalledWith('valid-token', 'jwks', { issuer })
+  })
+
+  it('allows portal requests without a token in development mode', async () => {
+    const { proxy } = await loadProxy({ authenticationMode: 'DEV' })
+    const response = await proxy(
+      createRequest('https://frontend.example/portal/organisations/1?page=2'),
+    )
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('location')).toBeNull()
+    expect(jwtVerify).not.toHaveBeenCalled()
   })
 
   it('forwards the portal path and query string for server-side returnTo redirects', async () => {
@@ -72,6 +87,48 @@ describe('proxy', () => {
     )
   })
 
+  it('logs a missing issuer and redirects requests with an access token', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { proxy } = await loadProxy({ issuer: undefined })
+    const response = await proxy(
+      createRequest(
+        'https://frontend.example/portal/organisations/1?page=2',
+        'access_token=test-token',
+      ),
+    )
+
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe(
+      'https://frontend.example/auth/sign-in?returnTo=%2Fportal%2Forganisations%2F1%3Fpage%3D2',
+    )
+    expect(jwtVerify).not.toHaveBeenCalled()
+    expect(consoleError).toHaveBeenCalledWith('Failed to verify Cognito access token', {
+      error: 'Cognito issuer is not configured',
+      path: '/portal/organisations/1',
+    })
+  })
+
+  it('logs a missing client ID and redirects requests with an access token', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { proxy } = await loadProxy({ clientId: undefined })
+    const response = await proxy(
+      createRequest(
+        'https://frontend.example/portal/organisations/1?page=2',
+        'access_token=test-token',
+      ),
+    )
+
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe(
+      'https://frontend.example/auth/sign-in?returnTo=%2Fportal%2Forganisations%2F1%3Fpage%3D2',
+    )
+    expect(jwtVerify).not.toHaveBeenCalled()
+    expect(consoleError).toHaveBeenCalledWith('Failed to verify Cognito access token', {
+      error: 'Cognito client ID is not configured',
+      path: '/portal/organisations/1',
+    })
+  })
+
   it('preserves the portal path and query string in returnTo', async () => {
     const { proxy } = await loadProxy()
     const response = await proxy(
@@ -95,6 +152,24 @@ describe('proxy', () => {
     expect(response.headers.get('location')).toBe(
       'https://frontend.example/auth/sign-in?returnTo=%2Fportal',
     )
+  })
+
+  it('logs string verification failures and redirects to sign in', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    jwtVerify.mockRejectedValue('verification failed')
+    const { proxy } = await loadProxy()
+    const response = await proxy(
+      createRequest('https://frontend.example/portal', 'access_token=test-token'),
+    )
+
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe(
+      'https://frontend.example/auth/sign-in?returnTo=%2Fportal',
+    )
+    expect(consoleError).toHaveBeenCalledWith('Failed to verify Cognito access token', {
+      error: 'verification failed',
+      path: '/portal',
+    })
   })
 
   it('redirects portal requests with an expired access token', async () => {

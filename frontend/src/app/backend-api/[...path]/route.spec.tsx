@@ -287,6 +287,15 @@ describe('backend API route', () => {
     expect(timeoutSpy).toHaveBeenCalledWith(2500)
   })
 
+  it.each(['abc', '0', '-1'])('uses the default upstream timeout for %s', async (timeout) => {
+    vi.stubEnv('BACKEND_API_TIMEOUT_MS', timeout)
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout')
+
+    await GET(request() as never, context('users'))
+
+    expect(timeoutSpy).toHaveBeenCalledWith(15_000)
+  })
+
   it('passes client cancellation to fetch and does not buffer the upstream response', async () => {
     const controller = new AbortController()
     const incoming = new Request('https://frontend.example/backend-api/download', {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseMulti } from './query'
+import { getNextSortDirection, parseMulti, parseSortDirection } from './query'
 
 const validValues = ['active', 'inactive'] as const
 
@@ -18,5 +18,44 @@ describe('parseMulti', () => {
       'active',
       'inactive',
     ])
+  })
+
+  it('returns an empty array for empty strings and invalid scalar values', () => {
+    expect(parseMulti('', validValues)).toEqual([])
+    expect(parseMulti('unknown', validValues)).toEqual([])
+  })
+})
+
+describe('parseSortDirection', () => {
+  it.each([
+    ['Ascending', 'Ascending'],
+    ['Descending', 'Descending'],
+  ])('accepts %s', (input, expected) => {
+    expect(parseSortDirection(input)).toBe(expected)
+  })
+
+  it.each([undefined, '', 'unknown', 'ascending', ' Ascending '])('rejects %s', (input) => {
+    expect(parseSortDirection(input)).toBeUndefined()
+  })
+})
+
+describe('getNextSortDirection', () => {
+  it.each([
+    ['Ascending', 'ascending'],
+    ['Descending', 'descending'],
+  ] as const)('returns %s display direction for a matching column', (sortDirection, expected) => {
+    expect(getNextSortDirection({ column: 'email', sortBy: 'email', sortDirection })).toBe(expected)
+  })
+
+  it('returns none for a different column or missing sort direction', () => {
+    expect(
+      getNextSortDirection({ column: 'email', sortBy: 'role', sortDirection: 'Ascending' }),
+    ).toBe('none')
+    expect(
+      getNextSortDirection({ column: 'email', sortBy: 'email', sortDirection: undefined }),
+    ).toBe('none')
+    expect(
+      getNextSortDirection({ column: 'email', sortBy: undefined, sortDirection: 'Ascending' }),
+    ).toBe('none')
   })
 })

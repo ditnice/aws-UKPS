@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import { lastActiveLabels, roleLabels, statusLabels } from './userLabels'
 import {
+  buildUserListHref,
+  buildUserListSearchParams,
   getActiveFilters,
   getNumberOfActiveFilters,
   getUpdatedQueryWithoutFilter,
+  parseUserListQuery,
   UserListQuery,
 } from './userListQuery'
 
@@ -276,5 +279,131 @@ describe('getUpdatedQueryWithoutFilter', () => {
     })
 
     expect(query).toEqual(query)
+  })
+})
+
+describe('parseUserListQuery', () => {
+  it('returns defaults for an empty query', () => {
+    expect(parseUserListQuery({})).toEqual({
+      page: 1,
+      pageSize: 10,
+      status: [],
+      role: [],
+      email: undefined,
+      lastActive: undefined,
+      sortBy: 'LastActive',
+      sortDirection: 'Descending',
+    })
+  })
+
+  it('parses valid filters, pagination, and sorting', () => {
+    expect(
+      parseUserListQuery({
+        page: '2',
+        pageSize: '25',
+        status: ['Active', 'Inactive'],
+        role: ['Champion', 'Standard'],
+        email: '  user@example.com  ',
+        lastActive: 'month',
+        sortBy: 'Email',
+        sortDirection: 'Ascending',
+      }),
+    ).toEqual({
+      page: 2,
+      pageSize: 25,
+      status: ['Active', 'Inactive'],
+      role: ['Champion', 'Standard'],
+      email: 'user@example.com',
+      lastActive: 'month',
+      sortBy: 'Email',
+      sortDirection: 'Ascending',
+    })
+  })
+
+  it('parses scalar status and all supported last-active presets and sort values', () => {
+    expect(parseUserListQuery({ status: 'Active' }).status).toEqual(['Active'])
+    for (const lastActive of ['week', 'month', '6months', 'year'] as const) {
+      expect(parseUserListQuery({ lastActive }).lastActive).toBe(lastActive)
+    }
+    for (const sortBy of ['Email', 'Role', 'Status', 'LastActive'] as const) {
+      expect(parseUserListQuery({ sortBy }).sortBy).toBe(sortBy)
+    }
+    expect(parseUserListQuery({ sortDirection: 'Ascending' }).sortDirection).toBe('Ascending')
+    expect(parseUserListQuery({ sortDirection: 'Descending' }).sortDirection).toBe('Descending')
+  })
+
+  it('ignores blank email and unknown last-active presets', () => {
+    for (const email of ['', '   ']) {
+      expect(parseUserListQuery({ email }).email).toBeUndefined()
+    }
+    expect(parseUserListQuery({ lastActive: 'unknown' }).lastActive).toBeUndefined()
+  })
+
+  it('filters unsupported values and defaults invalid pagination and sorting', () => {
+    expect(
+      parseUserListQuery({
+        status: ['Active', 'Rejected'],
+        role: ['Champion', 'Super'],
+        page: '0',
+        pageSize: '20',
+        sortBy: 'unknown',
+        sortDirection: 'unknown',
+      }),
+    ).toMatchObject({
+      status: ['Active'],
+      role: ['Champion'],
+      page: 1,
+      pageSize: 10,
+      sortBy: 'LastActive',
+      sortDirection: 'Descending',
+    })
+  })
+})
+
+describe('buildUserListSearchParams', () => {
+  it('always includes pagination and repeats status and role filters', () => {
+    const params = buildUserListSearchParams({
+      ...emptyQuery,
+      page: 2,
+      status: ['Active', 'Inactive'],
+      role: ['Champion', 'Standard'],
+    })
+
+    expect(params.get('page')).toBe('2')
+    expect(params.get('pageSize')).toBe('20')
+    expect(params.getAll('status')).toEqual(['Active', 'Inactive'])
+    expect(params.getAll('role')).toEqual(['Champion', 'Standard'])
+  })
+
+  it('includes optional values when set and omits them otherwise', () => {
+    const params = buildUserListSearchParams({
+      ...emptyQuery,
+      email: 'user@example.com',
+      lastActive: 'week',
+      sortBy: 'Email',
+      sortDirection: 'Ascending',
+    })
+    expect(params.get('email')).toBe('user@example.com')
+    expect(params.get('lastActive')).toBe('week')
+    expect(params.get('sortBy')).toBe('Email')
+    expect(params.get('sortDirection')).toBe('Ascending')
+
+    const absent = buildUserListSearchParams(emptyQuery)
+    for (const key of ['email', 'lastActive', 'sortBy', 'sortDirection']) {
+      expect(absent.has(key)).toBe(false)
+    }
+  })
+})
+
+describe('buildUserListHref', () => {
+  it('returns a leading question mark and URL-encodes email values', () => {
+    const href = buildUserListHref({
+      ...emptyQuery,
+      email: 'user+tag@example.com',
+    })
+
+    expect(href.startsWith('?')).toBe(true)
+    expect(href).toContain('email=user%2Btag%40example.com')
+    expect(new URLSearchParams(href.slice(1)).get('email')).toBe('user+tag@example.com')
   })
 })

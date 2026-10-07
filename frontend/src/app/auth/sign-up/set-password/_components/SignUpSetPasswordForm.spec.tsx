@@ -33,6 +33,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   sessionStorage.clear()
   vi.clearAllMocks()
 })
@@ -189,7 +190,7 @@ describe('SignUpSetPasswordForm', () => {
   })
 
   it('shows a specific error if MFA setup data cannot be stored', async () => {
-    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('Storage disabled')
     })
     renderForm()
@@ -203,7 +204,7 @@ describe('SignUpSetPasswordForm', () => {
       ),
     ).toBeDefined()
     expect(mockPush).not.toHaveBeenCalled()
-    setItem.mockRestore()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
 
   it('shows a password error for a 400 response', async () => {
@@ -221,6 +222,7 @@ describe('SignUpSetPasswordForm', () => {
       await screen.findByText('The password does not meet the expected standards.'),
     ).toBeDefined()
     expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
 
   it('shows a setup link error for a 410 response', async () => {
@@ -241,6 +243,7 @@ describe('SignUpSetPasswordForm', () => {
       await screen.findByText('The setup token has expired and can no longer be used.'),
     ).toBeDefined()
     expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
 
   it('shows a setup link error for a 409 response', async () => {
@@ -263,6 +266,7 @@ describe('SignUpSetPasswordForm', () => {
       ),
     ).toBeDefined()
     expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
 
   it('shows a setup link error for a 404 response', async () => {
@@ -281,6 +285,81 @@ describe('SignUpSetPasswordForm', () => {
 
     expect(await screen.findByText('The supplied setup token does not exist.')).toBeDefined()
     expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
+  })
+
+  it.each([
+    [410, 'This sign-up link has expired.'],
+    [409, 'This sign-up link has already been used.'],
+    [404, 'This sign-up link could not be found.'],
+    [500, 'We could not create your password. Try again later.'],
+  ] as const)(
+    'shows the fallback for a %i response without backend detail',
+    async (status, message) => {
+      vi.mocked(postAuthSetupUser).mockResolvedValue({
+        data: undefined,
+        error: { status },
+        response: new Response(null, { status }),
+      })
+      renderForm()
+
+      enterPassword('fourteen-chars')
+      submitForm()
+
+      expect(await screen.findByText(message)).toBeDefined()
+      expect(mockPush).not.toHaveBeenCalled()
+      expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
+    },
+  )
+
+  it('preserves backend detail for a 500 response', async () => {
+    vi.mocked(postAuthSetupUser).mockResolvedValue({
+      data: undefined,
+      error: { detail: 'Backend explanation.', status: 500 },
+      response: new Response(null, { status: 500 }),
+    })
+    renderForm()
+
+    enterPassword('fourteen-chars')
+    submitForm()
+
+    expect(await screen.findByText('Backend explanation.')).toBeDefined()
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
+  })
+
+  it('shows a generic error if password setup fails without a response', async () => {
+    vi.mocked(postAuthSetupUser).mockResolvedValue({
+      data: undefined,
+      error: { status: 500 },
+    })
+    renderForm()
+
+    enterPassword('fourteen-chars')
+    submitForm()
+
+    expect(
+      await screen.findByText('We could not create your password. Try again later.'),
+    ).toBeDefined()
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
+  })
+
+  it.each([
+    { authenticationSession: 'test-authentication-session', otpAuthUri: '' },
+    { authenticationSession: '', otpAuthUri: 'otpauth://totp/test' },
+  ])('shows a generic error when successful response data is incomplete', async (data) => {
+    vi.mocked(postAuthSetupUser).mockResolvedValue({ data, error: undefined })
+    renderForm()
+
+    enterPassword('fourteen-chars')
+    submitForm()
+
+    expect(
+      await screen.findByText('We could not create your password. Try again later.'),
+    ).toBeDefined()
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
 
   it('shows a generic error if password setup fails unexpectedly', async () => {
@@ -294,5 +373,6 @@ describe('SignUpSetPasswordForm', () => {
       await screen.findByText('We could not create your password. Try again later.'),
     ).toBeDefined()
     expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
 })

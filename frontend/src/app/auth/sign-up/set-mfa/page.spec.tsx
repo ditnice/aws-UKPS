@@ -217,6 +217,54 @@ describe('SignUpSetMfa', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
+  it('shows the backend detail for a 500 response without clearing setup details', async () => {
+    vi.mocked(postAuthVerifyMfa).mockResolvedValue({
+      data: undefined,
+      error: { status: 500, detail: 'The service is temporarily unavailable.' },
+      response: new Response(null, { status: 500 }),
+    })
+    renderPage()
+    enterSecurityCode('123456')
+    submitForm()
+
+    expect(await screen.findByText('The service is temporarily unavailable.')).toBeDefined()
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
+  })
+
+  it('shows the generic error for a 500 response without detail', async () => {
+    vi.mocked(postAuthVerifyMfa).mockResolvedValue({
+      data: undefined,
+      error: { status: 500 },
+      response: new Response(null, { status: 500 }),
+    })
+    renderPage()
+    enterSecurityCode('123456')
+    submitForm()
+
+    expect(
+      await screen.findByText('We could not verify your authentication code. Try again later.'),
+    ).toBeDefined()
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
+  })
+
+  it('shows the generic error when the API error has no response', async () => {
+    vi.mocked(postAuthVerifyMfa).mockResolvedValue({
+      data: undefined,
+      error: { status: 500 },
+    })
+    renderPage()
+    enterSecurityCode('123456')
+    submitForm()
+
+    expect(
+      await screen.findByText('We could not verify your authentication code. Try again later.'),
+    ).toBeDefined()
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
+  })
+
   it('shows a generic error if verification fails unexpectedly', async () => {
     vi.mocked(postAuthVerifyMfa).mockRejectedValue(new Error('Network error'))
     renderPage()

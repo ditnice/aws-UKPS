@@ -29,12 +29,6 @@ vi.mock('@/client/generated', () => ({
   patchUsersByUserId: mocks.patchUsersByUserId,
 }))
 
-mocks.patchUsersByUserId.mockResolvedValue({
-  response: {
-    ok: true,
-  },
-})
-
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -42,6 +36,10 @@ afterEach(() => {
 
 beforeEach(() => {
   mocks.phoneNumberValidationMock.mockReturnValue(true)
+  mocks.patchUsersByUserId.mockReset()
+  mocks.patchUsersByUserId.mockResolvedValue({
+    response: { ok: true },
+  })
 })
 
 const requiredErrors = [
@@ -268,5 +266,72 @@ describe('EditDetailsForm', () => {
     for (const { message } of requiredErrors) {
       expect(screen.queryByText(message)).toBeNull()
     }
+  })
+
+  it('shows a generic error without navigating when update fails', async () => {
+    mocks.patchUsersByUserId.mockResolvedValue({
+      response: { ok: false },
+      error: { title: 'Update failed' },
+    })
+
+    renderForm()
+    fillValidForm()
+    clickSubmit()
+
+    expect(await screen.findByText(errorMessages.updatingUserDetailsError)).toBeDefined()
+
+    expect(mocks.push).not.toHaveBeenCalled()
+    expect(mocks.patchUsersByUserId).toHaveBeenCalledOnce()
+
+    for (const label of ['Full name', 'Work email address', 'Contact number']) {
+      expect(screen.getByLabelText(label).getAttribute('aria-invalid')).toBeNull()
+    }
+  })
+
+  it('shows server validation errors against the corresponding fields', async () => {
+    mocks.patchUsersByUserId.mockResolvedValueOnce({
+      response: { ok: false },
+      error: {
+        errors: {
+          FullName: ['Server name error'],
+          WorkEmail: ['Server email error'],
+          WorkTelephone: ['Server telephone error'],
+        },
+      },
+    })
+
+    renderForm()
+    fillValidForm()
+    clickSubmit()
+
+    const expectedErrors = [
+      {
+        label: 'Full name',
+        message: 'Server name error',
+        errorId: 'fullName-error',
+      },
+      {
+        label: 'Work email address',
+        message: 'Server email error',
+        errorId: 'workEmail-error',
+      },
+      {
+        label: 'Contact number',
+        message: 'Server telephone error',
+        errorId: 'workTelephone-error',
+      },
+    ]
+
+    for (const { label, message, errorId } of expectedErrors) {
+      expect(await screen.findByText(message)).toBeDefined()
+
+      const input = screen.getByLabelText(label)
+      expect(input.getAttribute('aria-invalid')).toBe('true')
+      expect(input.getAttribute('aria-describedby')?.split(' ')).toContain(errorId)
+      expect(document.getElementById(errorId)?.textContent).toContain(message)
+    }
+
+    expect(screen.getByText(errorMessages.updatingUserDetailsError)).toBeDefined()
+    expect(mocks.push).not.toHaveBeenCalled()
   })
 })

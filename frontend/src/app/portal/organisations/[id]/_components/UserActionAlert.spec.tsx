@@ -90,6 +90,20 @@ describe('UserActionAlert', () => {
     expect(message).toBe('julie.brooks@example.com is now a champion user.')
   })
 
+  it.each(['deactivated', 'reactivated'] as const)(
+    'names the user after their account has been %s',
+    async (action) => {
+      const { heading, message } = await renderAlert({ type: 'user', action, userId: 4 })
+
+      expect(heading).toBe(`${user.workEmail}'s account has been ${action}`)
+      expect(message).toBe(
+        action === 'deactivated'
+          ? `We've sent an email to ${user.workEmail} notifying them.`
+          : `We’ve sent an email to ${user.workEmail} notifying them.`,
+      )
+    },
+  )
+
   it('names the user that put in the request after approval', async () => {
     const { heading, message } = await renderAlert({
       type: 'request',
@@ -133,6 +147,16 @@ describe('UserActionAlert', () => {
       { type: 'user', action: 'permissions-updated', userId: 4 },
       'Permissions changed',
       "The user's permissions have been updated.",
+    ],
+    [
+      { type: 'user', action: 'deactivated', userId: 4 },
+      "The user's account has been deactivated",
+      "We've sent an email to the user notifying them.",
+    ],
+    [
+      { type: 'user', action: 'reactivated', userId: 4 },
+      "The user's account has been reactivated",
+      'We’ve sent an email to the user notifying them.',
     ],
     [
       { type: 'request', action: 'approved-request', userRequestId: 4 },

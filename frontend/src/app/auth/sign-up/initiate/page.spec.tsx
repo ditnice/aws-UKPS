@@ -143,6 +143,54 @@ describe('SignUpInitiate', () => {
     expect(redirect).not.toHaveBeenCalled()
   })
 
+  it.each([
+    [404, 'This sign-up link could not be found.'],
+    [409, 'This sign-up link has already been used.'],
+    [500, 'We could not check your sign-up link. Try again later.'],
+  ] as const)(
+    'renders a status-specific fallback for a %i response without backend content',
+    async (status, detail) => {
+      vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+        data: undefined,
+        error: { status },
+        response: new Response(null, { status }),
+      })
+
+      render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
+
+      expect(screen.getByText('There is a problem with your sign-up link')).toBeDefined()
+      expect(screen.getByText(detail)).toBeDefined()
+      expect(redirect).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each([400, 500])('preserves backend content for a %i response', async (status) => {
+    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+      data: undefined,
+      error: { detail: 'Backend explanation.', status, title: 'Backend title.' },
+      response: new Response(null, { status }),
+    })
+
+    render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
+
+    expect(screen.getByText('Backend title.')).toBeDefined()
+    expect(screen.getByText('Backend explanation.')).toBeDefined()
+    expect(redirect).not.toHaveBeenCalled()
+  })
+
+  it('renders a generic fallback if validation fails without a response', async () => {
+    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+      data: undefined,
+      error: { status: 500 },
+    })
+
+    render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
+
+    expect(screen.getByText('There is a problem with your sign-up link')).toBeDefined()
+    expect(screen.getByText('We could not check your sign-up link. Try again later.')).toBeDefined()
+    expect(redirect).not.toHaveBeenCalled()
+  })
+
   it('renders a fallback error if validation fails unexpectedly', async () => {
     vi.mocked(getAuthValidateSetupToken).mockRejectedValue(new Error('Network error'))
 

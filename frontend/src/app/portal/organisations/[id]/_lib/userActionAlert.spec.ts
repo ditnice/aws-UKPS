@@ -27,6 +27,38 @@ describe('parseUserAction', () => {
     })
   })
 
+  it('reads a reactivated user id', () => {
+    expect(parseUserAction({ action: 'reactivated', userId: '4' })).toEqual({
+      type: 'user',
+      action: 'reactivated',
+      userId: 4,
+    })
+  })
+
+  it.each(['approved-request', 'rejected-request'] as const)('reads a %s request id', (action) => {
+    expect(parseUserAction({ action, userRequestId: '4' })).toEqual({
+      type: 'request',
+      action,
+      userRequestId: 4,
+    })
+  })
+
+  it.each(['approved-request', 'rejected-request'] as const)(
+    'ignores a %s action with an invalid request id',
+    (action) => {
+      for (const userRequestId of [undefined, '', ' ', 'invalid', '0', '-3', '1.5']) {
+        expect(parseUserAction({ action, userRequestId })).toBeUndefined()
+      }
+    },
+  )
+
+  it.each(['approved-request', 'rejected-request'] as const)(
+    'ignores a %s action with only a user id',
+    (action) => {
+      expect(parseUserAction({ action, userId: '4' })).toBeUndefined()
+    },
+  )
+
   it('ignores an action it does not recognise', () => {
     expect(parseUserAction({ action: 'never-going-to-be-an-action', userId: '4' })).toBeUndefined()
   })
@@ -55,4 +87,13 @@ describe('buildUserActionHref', () => {
       '/portal/organisations/2?action=permissions-updated&userId=4',
     )
   })
+
+  it.each(['approved-request', 'rejected-request'] as const)(
+    'links back to the organisation page after a %s',
+    (action) => {
+      expect(buildUserActionHref(2, { action, userRequestId: 4 })).toBe(
+        `/portal/organisations/2?action=${action}&userRequestId=4`,
+      )
+    },
+  )
 })

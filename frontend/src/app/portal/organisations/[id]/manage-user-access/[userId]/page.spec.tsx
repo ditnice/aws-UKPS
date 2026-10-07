@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 const notFound = vi.hoisted(() => vi.fn())
+const notFoundError = new Error('Not found')
 
 vi.mock('next/navigation', () => ({
   notFound,
@@ -82,6 +83,9 @@ const params = Promise.resolve({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  notFound.mockImplementation(() => {
+    throw notFoundError
+  })
 
   mockUserResponse()
   mockCurrentUserResponse()
@@ -167,14 +171,53 @@ describe('ManageUserAccess', () => {
     )
 
     expect(screen.getByText('Select an option - No answer provided')).toBeDefined()
+    expect(mocks.push).not.toHaveBeenCalled()
+  })
+
+  it('clears the selection error when an action is selected and navigates on Continue', async () => {
+    render(await ManageUserAccess({ params }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.getByText('Select an option - No answer provided')).toBeDefined()
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Change user permissions' }))
+    expect(screen.queryByText('Select an option - No answer provided')).toBeNull()
+    expect(mocks.push).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(mocks.push).toHaveBeenCalledExactlyOnceWith(
+      '/portal/organisations/2/manage-user-access/4/change-permissions',
+    )
   })
 
   it('calls notFound when the user is not a member of the organisation', async () => {
     mockErrorResponse(404)
 
-    await ManageUserAccess({ params })
+    await expect(ManageUserAccess({ params })).rejects.toBe(notFoundError)
 
-    expect(notFound).toHaveBeenCalled()
+    expect(notFound).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    { id: 'invalid', userId: '4' },
+    { id: '1.5', userId: '4' },
+    { id: '2', userId: 'invalid' },
+    { id: '2', userId: '1.5' },
+  ])('calls notFound for invalid route params %#', async (routeParams) => {
+    await expect(ManageUserAccess({ params: Promise.resolve(routeParams) })).rejects.toBe(
+      notFoundError,
+    )
+
+    expect(notFound).toHaveBeenCalledOnce()
+    expect(getUsersMe).not.toHaveBeenCalled()
+    expect(getUserDetailsWithinOrganisation).not.toHaveBeenCalled()
+  })
+
+  it('calls notFound when current-user data is missing', async () => {
+    vi.mocked(getUsersMe).mockResolvedValue({ data: undefined, error: { status: 404 } })
+
+    await expect(ManageUserAccess({ params })).rejects.toBe(notFoundError)
+
+    expect(notFound).toHaveBeenCalledOnce()
   })
 
   it('renders an error when the user cannot be retrieved', async () => {
