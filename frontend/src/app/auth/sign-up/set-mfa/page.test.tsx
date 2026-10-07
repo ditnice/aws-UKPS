@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
@@ -37,9 +37,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  cleanup()
   sessionStorage.clear()
-  vi.clearAllMocks()
 })
 
 function renderPage() {

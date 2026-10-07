@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthResendSetupToken } from '@/client/generated'
@@ -24,13 +24,9 @@ beforeEach(() => {
   })
 })
 
-afterAll(() => {
-  vi.unstubAllEnvs()
-})
+afterAll(() => {})
 
 afterEach(() => {
-  cleanup()
-  vi.clearAllMocks()
   vi.useRealTimers()
 })
 

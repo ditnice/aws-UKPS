@@ -37,8 +37,6 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  vi.unstubAllEnvs()
-  vi.unstubAllGlobals()
   vi.restoreAllMocks()
   if (originalBaseUrl === undefined) delete process.env.BACKEND_API_BASE_URL
   else process.env.BACKEND_API_BASE_URL = originalBaseUrl

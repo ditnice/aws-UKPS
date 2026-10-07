@@ -1,11 +1,7 @@
 import { render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import SignUpTermsAndConditions from './page'
-
-afterEach(() => {
-  vi.clearAllMocks()
-})
 
 describe('SignUpTermsAndConditions', () => {
   it('renders an error if the setup token is missing', async () => {

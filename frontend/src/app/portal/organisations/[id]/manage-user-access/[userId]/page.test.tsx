@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
 import type { UserInformationDto, UserRole } from '@/client/generated/types.gen'
@@ -82,7 +82,6 @@ const params = Promise.resolve({
 })
 
 beforeEach(() => {
-  vi.clearAllMocks()
   notFound.mockImplementation(() => {
     throw notFoundError
   })
@@ -90,9 +89,6 @@ beforeEach(() => {
   mockUserResponse()
   mockCurrentUserResponse()
 })
-
-afterEach(cleanup)
-
 describe('ManageUserAccess', () => {
   it('renders the change user permissions action', async () => {
     render(await ManageUserAccess({ params }))

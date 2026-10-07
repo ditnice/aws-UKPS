@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { Textarea } from './Textarea'
 
@@ -20,9 +20,6 @@ const widths: TextareaWidth[] = [
   'one-third',
   'one-quarter',
 ]
-
-afterEach(cleanup)
-
 describe('Textarea', () => {
   it('renders an unmodified design system textarea by default', () => {
     const { asFragment } = render(<Textarea label="Description" name="description" />)

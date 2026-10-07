@@ -1,9 +1,7 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { BackLink } from './BackLink'
-
-afterEach(cleanup)
 
 describe('BackLink', () => {
   it('renders the default link text', () => {

@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation } from '@/client/generated/sdk.gen'
 import type { UserInformationDto } from '@/client/generated/types.gen'
@@ -63,13 +63,6 @@ function mockErrorResponse(status: number) {
 }
 
 const params = Promise.resolve({ id: '2', userId: '4' })
-
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
-afterEach(cleanup)
-
 describe('ChangeUserPermissions', () => {
   it("requests the selected user's details within the organisation", async () => {
     mockResponse()

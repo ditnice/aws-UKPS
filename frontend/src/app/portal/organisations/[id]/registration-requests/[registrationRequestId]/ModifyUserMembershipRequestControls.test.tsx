@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import ModifyUserMembershipRequestControls, {
@@ -22,12 +22,7 @@ vi.mock('@/client/generated', () => ({
   approve: mocks.approve,
   reject: mocks.reject,
 }))
-
-afterEach(cleanup)
-
 beforeEach(() => {
-  vi.clearAllMocks()
-
   mocks.approve.mockResolvedValue({
     response: { ok: true },
   })

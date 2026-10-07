@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createServerApiClient } from './server-api'
 
@@ -31,12 +31,6 @@ const defaultClient = { interceptors: { error: { use: vi.fn() } } }
 beforeEach(() => {
   mocks.createClient.mockImplementation((config) => ({ ...config, ...defaultClient }))
 })
-
-afterEach(() => {
-  vi.clearAllMocks()
-  vi.unstubAllEnvs()
-})
-
 describe('createServerApiClient', () => {
   it('creates a no-store client with only the access token cookie', async () => {
     vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')

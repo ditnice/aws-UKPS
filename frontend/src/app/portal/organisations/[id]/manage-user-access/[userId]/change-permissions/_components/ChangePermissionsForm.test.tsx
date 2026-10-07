@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { changeUserPermissionsAction } from '../_actions/changeUserPermissions'
 
@@ -20,12 +20,8 @@ const props = {
 } as const
 
 beforeEach(() => {
-  vi.clearAllMocks()
   vi.mocked(changeUserPermissionsAction).mockResolvedValue({ status: 'success' })
 })
-
-afterEach(cleanup)
-
 describe('ChangePermissionsForm', () => {
   it('offers to promote a standard user', () => {
     render(<ChangePermissionsForm {...props} currentRole="Standard" />)

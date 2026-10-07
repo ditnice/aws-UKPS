@@ -1,5 +1,5 @@
-import { cleanup, render } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { render } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fakeRegisterUserConfirmationDto } from '@/client/generated/@faker-js/faker.gen'
 import type { Client } from '@/client/generated/client'
@@ -48,13 +48,9 @@ async function renderAlert(userAction: UserActionResult) {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks()
   vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({ data: user, error: undefined })
   vi.mocked(getUserRegistrationById).mockResolvedValue({ data: registration, error: undefined })
 })
-
-afterEach(cleanup)
-
 describe('UserActionAlert', () => {
   it('looks the user up in the organisation the alert belongs to', async () => {
     await renderAlert({ type: 'user', action: 'invited', userId: 4 })

@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { Input } from './Input'
 
@@ -20,9 +20,6 @@ const widths: InputWidth[] = [
   'one-third',
   'one-quarter',
 ]
-
-afterEach(cleanup)
-
 describe('Input', () => {
   it('renders an unmodified design system input by default', () => {
     const { asFragment } = render(<Input label="First name" name="firstname" />)

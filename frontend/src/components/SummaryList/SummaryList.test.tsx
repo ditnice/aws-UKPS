@@ -1,9 +1,7 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { SummaryList, SummaryListAction, SummaryListRow } from './SummaryList'
-
-afterEach(cleanup)
 
 describe('SummaryList', () => {
   it('renders row children as a description list and ignores empty children', () => {

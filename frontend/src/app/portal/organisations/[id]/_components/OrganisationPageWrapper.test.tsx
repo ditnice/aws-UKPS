@@ -32,8 +32,6 @@ describe('OrganisationPageWrapper', () => {
   const organisation: OrganisationDetailsDto = fakeOrganisationDetailsDto()
 
   beforeEach(() => {
-    vi.clearAllMocks()
-
     mockedCreateServerApiClient.mockResolvedValue(
       {} as Awaited<ReturnType<typeof createServerApiClient>>,
     )

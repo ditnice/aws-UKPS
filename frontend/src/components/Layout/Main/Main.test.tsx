@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { Main } from './Main'
 import styles from './Main.module.scss'
@@ -7,9 +7,6 @@ import styles from './Main.module.scss'
 vi.mock('./BackToTop/BackToTop', () => ({
   BackToTop: () => <div data-testid="back-to-top" />,
 }))
-
-afterEach(cleanup)
-
 describe('Main', () => {
   it('renders a main landmark with the main data-component attribute', () => {
     const { asFragment } = render(<Main />)

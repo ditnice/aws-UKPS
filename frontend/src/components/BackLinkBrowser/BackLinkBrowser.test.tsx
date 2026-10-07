@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { BackLinkBrowser } from './BackLinkBrowser'
 
@@ -10,12 +10,6 @@ vi.mock('next/navigation', () => ({
     back: mockBack,
   }),
 }))
-
-afterEach(() => {
-  cleanup()
-  vi.clearAllMocks()
-})
-
 describe('BackLinkBrowser', () => {
   it('renders the default link text', () => {
     const { asFragment } = render(<BackLinkBrowser />)

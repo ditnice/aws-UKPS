@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { createRef } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import type { InputWidth } from '@/components/Input/Input'
 
@@ -21,9 +21,6 @@ const widths: InputWidth[] = [
   'one-third',
   'one-quarter',
 ]
-
-afterEach(cleanup)
-
 describe('PasswordInput', () => {
   it('renders masked by default with a "Show" toggle', () => {
     const { asFragment } = render(<PasswordInput label="Password" name="password" />)

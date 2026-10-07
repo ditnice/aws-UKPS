@@ -1,9 +1,7 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { Legal } from './Legal'
-
-afterEach(cleanup)
 
 const legalLinks = [
   { name: 'Accessibility', href: 'https://www.nice.org.uk/accessibility' },

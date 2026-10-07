@@ -1,8 +1,11 @@
+// @vitest-environment jsdom
+
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { getCookie } from './cookies'
 
 afterEach(() => {
+  // Restore document before clearing cookies when a test simulates server execution.
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 

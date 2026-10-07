@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getAuthValidateSetupToken } from '@/client/generated/sdk.gen'
 
@@ -24,12 +24,6 @@ beforeEach(() => {
     error: undefined,
   })
 })
-
-afterEach(() => {
-  cleanup()
-  vi.clearAllMocks()
-})
-
 describe('SignUpInitiate', () => {
   it('renders an error if the setup token is missing', async () => {
     render(await SignUpInitiate({ searchParams: Promise.resolve({}) }))

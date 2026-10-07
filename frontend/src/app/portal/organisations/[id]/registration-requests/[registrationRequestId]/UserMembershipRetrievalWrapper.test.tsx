@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import { RegisterUserConfirmationDto } from '@/client/generated'
@@ -27,11 +27,7 @@ const testData: RegisterUserConfirmationDto = {
   id: 3,
   workEmail: 'example@email.com',
 } as RegisterUserConfirmationDto
-
-afterEach(cleanup)
-
 beforeEach(() => {
-  vi.clearAllMocks()
   mockGetMembership.mockResolvedValue({
     data: testData,
   })

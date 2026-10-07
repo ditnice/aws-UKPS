@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { UserInformationDto, getUsersMe } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
@@ -54,15 +54,6 @@ const exampleUser: UserInformationDto = {
   organisationName: 'Example Organisation',
   userRole: 'Standard',
 }
-
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
-afterEach(() => {
-  cleanup()
-})
-
 describe('EditDetails', () => {
   it('renders the page header', async () => {
     mockedGetUsersMe.mockResolvedValue({

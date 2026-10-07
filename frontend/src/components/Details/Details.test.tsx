@@ -1,9 +1,7 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { Details } from './Details'
-
-afterEach(cleanup)
 
 describe('Details', () => {
   it('renders closed by default with the given summary text and content', () => {

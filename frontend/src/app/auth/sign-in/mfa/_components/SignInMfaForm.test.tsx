@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthMfa } from '@/client/generated'
@@ -28,7 +28,6 @@ const exampleUserEmail = 'user@email.com'
 const exampleSession = 'session'
 
 afterEach(() => {
-  cleanup()
   vi.restoreAllMocks()
 })
 

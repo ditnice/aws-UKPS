@@ -30,10 +30,10 @@
     "test:e2e:dev": "cross-env PLAYWRIGHT_BASE_URL=https://dev.ukps.nice.org.uk pnpm run test:e2e",
     "test:e2e:dev:ui": "cross-env PLAYWRIGHT_BASE_URL=https://dev.ukps.nice.org.uk pnpm run test:e2e --ui",
     "test:e2e:ui": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts --ui",
-    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/int --config ./vitest.config.mts",
-    "test:unit": "cross-env NODE_OPTIONS=--no-deprecation vitest run src --config ./vitest.config.mts",
-    "test:coverage": "cross-env NODE_OPTIONS=--no-deprecation vitest run src --config ./vitest.config.mts --coverage",
-    "test:unit:refresh": "cross-env NODE_OPTIONS=--no-deprecation vitest run src --config ./vitest.config.mts -u"
+    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts --project integration",
+    "test:unit": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts --project unit --project component",
+    "test:coverage": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts --project unit --project component --coverage",
+    "test:unit:refresh": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts --project unit --project component -u"
   },
   "dependencies": {
     "@nice-digital/design-system": "5.6.1",

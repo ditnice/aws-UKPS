@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { OnboardUserCommandDto } from '@/client/generated'
 import { postUsersOnboard } from '@/client/generated/sdk.gen'
@@ -35,12 +35,6 @@ vi.mock('next/navigation', () => ({
 beforeEach(() => {
   mocks.phoneNumberValidationMock.mockReturnValue(true)
 })
-
-afterEach(() => {
-  cleanup()
-  vi.clearAllMocks()
-})
-
 type FormValues = Omit<OnboardUserCommandDto, 'organisationId'>
 const validFormValues: FormValues = {
   fullName: 'Test User',

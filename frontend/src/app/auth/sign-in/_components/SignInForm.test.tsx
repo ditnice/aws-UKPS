@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import { postAuthLogin } from '@/client/generated'
@@ -18,13 +18,6 @@ vi.mocked(postAuthLogin).mockResolvedValue({
   error: undefined,
   data: undefined,
 })
-
-afterEach(cleanup)
-
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
 describe('SignInForm', () => {
   it('renders the sign-in controls', () => {
     render(<SignInForm />)

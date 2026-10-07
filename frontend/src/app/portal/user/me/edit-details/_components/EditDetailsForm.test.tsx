@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { UpdateUserDetailsCommand } from '@/client/generated'
 import { fakeUpdateUserDetailsCommand } from '@/client/generated/@faker-js/faker.gen'
@@ -28,12 +28,6 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/client/generated', () => ({
   patchUsersByUserId: mocks.patchUsersByUserId,
 }))
-
-afterEach(() => {
-  cleanup()
-  vi.clearAllMocks()
-})
-
 beforeEach(() => {
   mocks.phoneNumberValidationMock.mockReturnValue(true)
   mocks.patchUsersByUserId.mockReset()

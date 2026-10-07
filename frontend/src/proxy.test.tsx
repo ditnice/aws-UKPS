@@ -27,7 +27,6 @@ afterEach(() => {
   vi.doUnmock('jose')
   createRemoteJWKSet.mockClear()
   jwtVerify.mockReset()
-  vi.unstubAllEnvs()
   vi.restoreAllMocks()
 })
 

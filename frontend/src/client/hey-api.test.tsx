@@ -21,7 +21,6 @@ beforeEach(() => {
 
 afterEach(() => {
   document.cookie = 'csrf_token=; Max-Age=0; path=/'
-  vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
 

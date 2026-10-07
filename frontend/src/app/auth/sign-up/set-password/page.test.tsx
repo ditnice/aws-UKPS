@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import SignUpSetPassword from './page'
 
@@ -8,11 +8,6 @@ vi.mock('./_components/SignUpSetPasswordForm', () => ({
     <div>Set password form for {setupToken}</div>
   ),
 }))
-
-afterEach(() => {
-  vi.clearAllMocks()
-})
-
 describe('SignUpSetPassword', () => {
   it('renders an error if the setup token is missing', async () => {
     render(await SignUpSetPassword({ searchParams: Promise.resolve({}) }))

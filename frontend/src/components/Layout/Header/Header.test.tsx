@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { Header } from './Header'
 
@@ -15,9 +15,6 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
   useRouter: () => ({ push: vi.fn() }),
 }))
-
-afterEach(cleanup)
-
 describe('Header', () => {
   it('renders collapsed by default', () => {
     const { asFragment } = render(<Header skipLinkId="content-start" />)

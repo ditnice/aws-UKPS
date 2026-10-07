@@ -1,5 +1,5 @@
-import { cleanup, render } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { Nav } from './Nav'
 
@@ -10,9 +10,6 @@ vi.mock('next/link', async () => ({
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }))
-
-afterEach(cleanup)
-
 describe('Nav', () => {
   it('renders collapsed', () => {
     const { asFragment } = render(<Nav isExpanded={false} />)

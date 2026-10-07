@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { updateCurrentOrganisation } from '@/client/generated'
 
@@ -26,13 +26,6 @@ const organisations = [
 
 const getManageButton = (organisationName: string) =>
   screen.getByRole('button', { name: `Manage Organisation - ${organisationName}` })
-
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
-afterEach(cleanup)
-
 describe('SelectOrganisationTable', () => {
   it('renders a row for each organisation', () => {
     render(<SelectOrganisationTable organisations={organisations} />)

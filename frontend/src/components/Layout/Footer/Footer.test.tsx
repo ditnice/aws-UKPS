@@ -1,14 +1,11 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { Footer } from './Footer'
 
 vi.mock('./Legal/Legal', () => ({
   Legal: () => <div data-testid="legal" />,
 }))
-
-afterEach(cleanup)
-
 describe('Footer', () => {
   it('renders a contentinfo landmark', () => {
     const { asFragment } = render(<Footer />)

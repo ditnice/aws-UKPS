@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import ReactivateUserControls, { ReactivateUserControlsProps } from './ReactivateUserControls'
@@ -25,13 +25,8 @@ vi.mock('@/client/generated', () => ({
 vi.mock('../../../_lib/userActionAlert', () => ({
   buildUserActionHref: mocks.buildUserActionHref,
 }))
-
-afterEach(cleanup)
-
 const mockHref = 'href'
 beforeEach(() => {
-  vi.clearAllMocks()
-
   mocks.reactivateMembership.mockReturnValue({})
   mocks.buildUserActionHref.mockReturnValue(mockHref)
 })

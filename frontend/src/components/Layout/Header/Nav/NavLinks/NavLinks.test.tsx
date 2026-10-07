@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { NavLinks } from './NavLinks'
@@ -17,7 +17,6 @@ vi.mock('next/navigation', () => ({
 
 afterEach(() => {
   navigationState.pathname = '/'
-  cleanup()
 })
 
 describe('NavLinks', () => {

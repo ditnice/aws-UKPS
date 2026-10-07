@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
@@ -27,7 +27,6 @@ vi.mock('@/client/generated', () => ({
 const organisationLabel = 'Select the organisation you are requesting access for'
 
 afterEach(() => {
-  cleanup()
   sessionStorage.clear()
 })
 
@@ -40,7 +39,6 @@ const confirmation: RegisterUserConfirmationDto = {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks()
   vi.mocked(getOrganisationsPublicOptions).mockResolvedValue({
     data: [{ id: 1, organisationName: 'Test Organisation' }],
     error: undefined,

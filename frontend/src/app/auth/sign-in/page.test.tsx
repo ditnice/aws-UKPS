@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import SignIn from './page'
 
@@ -8,9 +8,6 @@ vi.mock('./_components/SignInForm', () => ({
     <div>Sign in form returnTo: {returnTo ?? 'none'}</div>
   ),
 }))
-
-afterEach(cleanup)
-
 describe('SignIn', () => {
   it('passes a safe returnTo path to the sign-in form', async () => {
     render(

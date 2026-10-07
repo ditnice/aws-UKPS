@@ -1,9 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { Table } from './Table'
-
-afterEach(cleanup)
 
 const rows = (
   <>

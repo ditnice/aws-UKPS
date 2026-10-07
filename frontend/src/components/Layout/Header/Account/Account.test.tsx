@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthSignOut } from '@/client/generated'
 
@@ -20,14 +20,8 @@ vi.mock('@/client/generated', () => ({
 function clearCookies() {
   document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
 }
-
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
 afterEach(() => {
   clearCookies()
-  cleanup()
   vi.restoreAllMocks()
 })
 

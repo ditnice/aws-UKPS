@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getCurrentUserOrganisations } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
@@ -43,14 +43,10 @@ const mockOrganisations = (result: Partial<GetCurrentUserOrganisationsResult>) =
     .mockResolvedValue(result as GetCurrentUserOrganisationsResult)
 
 beforeEach(() => {
-  vi.clearAllMocks()
   vi.mocked(createServerApiClient).mockResolvedValue(
     {} as Awaited<ReturnType<typeof createServerApiClient>>,
   )
 })
-
-afterEach(cleanup)
-
 describe('SelectOrganisationPage', () => {
   it('renders the organisation table when the user has multiple organisations', async () => {
     mockOrganisations({

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { errorMessages } from '@/lib/form/errorMessages'
@@ -22,7 +22,6 @@ vi.mock('../_actions/updateOrganisationDetails', () => ({
 }))
 
 afterEach(() => {
-  cleanup()
   vi.resetAllMocks()
 })
 
