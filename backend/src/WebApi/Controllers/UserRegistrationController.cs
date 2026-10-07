@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
@@ -107,8 +106,11 @@ public class UserRegistrationController : ControllerBase
     /// <response code="200">
     /// The user's details were successfully retrieved.
     /// </response>
+    /// <response code="403">
+    /// The current user is not allowed to view membership requests for the organisation.
+    /// </response>
     /// <response code="404">
-    /// No user was found with the supplied identifier.
+    /// No membership request was found with the supplied identifier.
     /// </response>
     [ProducesResponseType<RegisterUserConfirmationDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
@@ -133,7 +135,9 @@ public class UserRegistrationController : ControllerBase
                 {
                     GetUserDetailsError.IdNotFound => NotFound(),
                     GetUserDetailsError.UserNotAuthorised => Problem(
-                        statusCode: (int)HttpStatusCode.Forbidden
+                        statusCode: StatusCodes.Status403Forbidden,
+                        title: "Forbidden",
+                        detail: "You are not authorised to view membership requests for this organisation."
                     ),
                     _ => throw new UnreachableException("Unhandled GetUserDetailsError"),
                 }

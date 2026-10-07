@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.Records.Dtos;
 
@@ -11,7 +12,7 @@ public record CreateRecordCommand
     /// Gets the identifier of the organisation for which the record will be created.
     /// </summary>
     [Required]
-    public int OrganisationId { get; init; }
+    public required int OrganisationId { get; init; }
 
     /// <summary>
     /// Gets the development name associated with the record.
@@ -22,21 +23,27 @@ public record CreateRecordCommand
     /// <summary>
     /// Gets the optional branded name associated with the record.
     /// </summary>
+    /// <remarks>
+    /// This field is optional, but when provided it cannot be empty or whitespace.
+    /// </remarks>
+    [NotEmptyOrWhitespace]
     public string? BrandedName { get; init; }
 
     /// <summary>
     /// Gets the generic names associated with the record.
     /// </summary>
     /// <remarks>
-    /// At least one generic name must be provided.
+    /// At least one generic name must be provided, and names cannot be empty or whitespace.
     /// </remarks>
     [Required]
     [MinLength(1)]
+    [NoEmptyOrWhitespaceItems]
     public required IReadOnlyCollection<string> GenericNames { get; init; }
 
     /// <summary>
     /// Gets the other names, codes, or synonyms associated with the record.
     /// </summary>
+    [NoEmptyOrWhitespaceItems]
     public IReadOnlyCollection<string> OtherIdentifiers { get; init; } = [];
 
     /// <summary>

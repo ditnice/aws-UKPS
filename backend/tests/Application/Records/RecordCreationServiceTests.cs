@@ -195,31 +195,4 @@ public class RecordCreationServiceTests : DatabaseTestBase
         CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
         result.ShouldBeError().ShouldBeOfType<CreateRecordError.NotAuthorised>();
     }
-
-    private sealed class CreateRecordCommandFaker : Faker<CreateRecordCommand>
-    {
-        public CreateRecordCommandFaker()
-        {
-            RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
-            RuleFor(x => x.DevelopmentName, f => f.Commerce.ProductName());
-            RuleFor(x => x.BrandedName, f => f.Commerce.ProductName());
-            RuleFor(
-                x => x.GenericNames,
-                f =>
-                    Enumerable
-                        .Range(0, f.Random.Int(1, 3))
-                        .Select(_ => f.Commerce.ProductName())
-                        .ToArray()
-            );
-            RuleFor(
-                x => x.OtherIdentifiers,
-                f =>
-                    Enumerable
-                        .Range(0, f.Random.Int(1, 3))
-                        .Select(_ => f.Commerce.ProductName())
-                        .ToArray()
-            );
-            RuleFor(x => x.RecordTitle, f => f.Lorem.Sentence());
-        }
-    }
 }

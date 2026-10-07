@@ -174,6 +174,47 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetUserRegistrationById_WhenAStandardUser_ReturnsNotAuthorised()
+    {
+        var request = await CreateRegistrationRequest();
+
+        GetUserDetails result = await _harness
+            .UpdateCurrentUser(_mockUserLookup[UserRole.Standard])
+            .Service.GetUserRegistrationById(
+                _organisation.Id,
+                request.Id,
+                TestContext.Current.CancellationToken
+            );
+
+        result.ShouldBeError().ShouldBeOfType<GetUserDetailsError.UserNotAuthorised>();
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_WhenNotAuthorisedForOrganisation_ReturnsNotAuthorisedWhetherOrNotRequestExists()
+    {
+        var otherOrg = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var existingRequest = await CreateRegistrationRequest(organisationOverride: otherOrg.Id);
+        var harness = _harness.UpdateCurrentUser(_mockUserLookup[UserRole.Champion]);
+
+        GetUserDetails existingResult = await harness.Service.GetUserRegistrationById(
+            otherOrg.Id,
+            existingRequest.Id,
+            TestContext.Current.CancellationToken
+        );
+        GetUserDetails guessedResult = await harness.Service.GetUserRegistrationById(
+            otherOrg.Id,
+            existingRequest.Id + 1000,
+            TestContext.Current.CancellationToken
+        );
+
+        existingResult.ShouldBeError().ShouldBeOfType<GetUserDetailsError.UserNotAuthorised>();
+        guessedResult.ShouldBeError().ShouldBeOfType<GetUserDetailsError.UserNotAuthorised>();
+    }
+
+    [Fact]
     public async Task ApproveRequest_ShouldMarkTheRequestAsApproved()
     {
         var request = await CreateRegistrationRequest();

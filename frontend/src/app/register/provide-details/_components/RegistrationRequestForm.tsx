@@ -18,7 +18,7 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 const RegistrationRequest = z.object({
-  organisationId: z.number().min(1, errorMessages.organisationRequired),
+  organisationId: z.string().min(1, errorMessages.organisationRequired).transform(Number),
   fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
   workEmail: z
     .string()
@@ -48,7 +48,7 @@ export function RegistrationRequestForm() {
   const router = useRouter()
   const form = useForm({
     defaultValues: {
-      organisationId: 0,
+      organisationId: '',
       fullName: '',
       workEmail: '',
       phoneNumber: '',
@@ -96,30 +96,26 @@ export function RegistrationRequestForm() {
           {(field) => {
             const errorMessage = getFieldErrorMessage(field.state.meta.errors)
             return (
-              <>
-                <Select
-                  defaultValue="choose"
-                  label="Select the organisation you are requesting access for"
-                  name="organisation"
-                  width="one-third"
-                  error={Boolean(errorMessage)}
-                  errorMessage={errorMessage}
-                  onChange={(event) => field.handleChange(Number(event.target.value))}
-                  onBlur={field.handleBlur}
-                >
-                  <SelectOption value="choose">Choose organisation</SelectOption>
-                  {organisations.map((organisation) => (
-                    <SelectOption key={organisation.organisationName} value={organisation.id}>
-                      {organisation.organisationName}
-                    </SelectOption>
-                  ))}
-                </Select>
-                <p>
-                  If your organisation is not registered, you must{' '}
-                  <a href="URL">register your organisation (opens in a new tab)</a> before you can
-                  set up your account.
-                </p>
-              </>
+              <Select
+                value={field.state.value}
+                label="Select the organisation you are requesting access for"
+                name={field.name}
+                width="one-third"
+                hint="If your organisation is not registered, you must
+                  register your organisation before you can
+                  set up your account."
+                error={Boolean(errorMessage)}
+                errorMessage={errorMessage}
+                onChange={(event) => field.handleChange(event.target.value)}
+                onBlur={field.handleBlur}
+              >
+                <SelectOption value="">Choose organisation</SelectOption>
+                {organisations.map((organisation) => (
+                  <SelectOption key={organisation.id} value={organisation.id}>
+                    {organisation.organisationName}
+                  </SelectOption>
+                ))}
+              </Select>
             )
           }}
         </form.Field>

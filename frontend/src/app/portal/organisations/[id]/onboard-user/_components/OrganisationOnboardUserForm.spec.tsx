@@ -112,9 +112,9 @@ describe('OrganisationOnboardUserForm', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
 
-    expect(await screen.findByText("Enter the user's full name")).toBeDefined()
-    expect(await screen.findByText("Enter the user's work email address")).toBeDefined()
-    expect(await screen.findByText("Enter the user's phone number")).toBeDefined()
+    expect(await screen.findByText('Enter their full name')).toBeDefined()
+    expect(await screen.findByText('Enter an email address')).toBeDefined()
+    expect(await screen.findByText('Enter their phone number')).toBeDefined()
     expect(postUsersOnboard).not.toHaveBeenCalled()
   })
 
@@ -159,9 +159,9 @@ describe('OrganisationOnboardUserForm', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
 
-    expect(await screen.findByText("Enter the user's full name")).toBeDefined()
-    expect(await screen.findByText("Enter the user's work email address")).toBeDefined()
-    expect(await screen.findByText("Enter the user's phone number")).toBeDefined()
+    expect(await screen.findByText('Enter their full name')).toBeDefined()
+    expect(await screen.findByText('Enter an email address')).toBeDefined()
+    expect(await screen.findByText('Enter their phone number')).toBeDefined()
 
     fireEvent.change(screen.getByLabelText('Full name'), {
       target: { value: 'Test User' },
@@ -177,9 +177,9 @@ describe('OrganisationOnboardUserForm', () => {
     fireEvent.blur(screen.getByLabelText('Phone number'))
 
     await waitFor(() => {
-      expect(screen.queryByText("Enter the user's full name")).toBeNull()
-      expect(screen.queryByText("Enter the user's work email address")).toBeNull()
-      expect(screen.queryByText("Enter the user's phone number")).toBeNull()
+      expect(screen.queryByText('Enter their full name')).toBeNull()
+      expect(screen.queryByText('Enter an email address')).toBeNull()
+      expect(screen.queryByText('Enter their phone number')).toBeNull()
     })
   })
 
