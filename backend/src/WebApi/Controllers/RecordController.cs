@@ -30,9 +30,13 @@ public class RecordController(
     /// <returns>A paginated list of record summaries.</returns>
     /// <response code="200">Returns the matching records.</response>
     /// <response code="400">The query parameters are invalid.</response>
+    /// <response code="403">The caller is not authorised to view the organisation's records.</response>
+    /// <response code="404">The specified organisation does not exist.</response>
     [HttpGet("organisations/{organisationId:int}", Name = nameof(GetOrganisationRecords))]
     [ProducesResponseType<PaginatedResponseDto<RecordListItemDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PaginatedResponseDto<RecordListItemDto>>> GetOrganisationRecords(
         [FromRoute] int organisationId,
         [FromQuery] GetRecordsQueryDto? getRecordQuery,
@@ -56,8 +60,8 @@ public class RecordController(
                 error switch
                 {
                     GetRecordsError.OrganisationNotFound => Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Bad Request",
+                        statusCode: StatusCodes.Status404NotFound,
+                        title: "Not Found",
                         detail: "Organisation not found."
                     ),
                     GetRecordsError.NotAllowed => Problem(
