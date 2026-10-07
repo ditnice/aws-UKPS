@@ -28,8 +28,8 @@ describe('SignUpInitiate', () => {
   it('renders an error if the setup token is missing', async () => {
     render(await SignUpInitiate({ searchParams: Promise.resolve({}) }))
 
-    expect(screen.getByText('There is a problem with your sign-up link')).toBeDefined()
-    expect(screen.getByText('This sign-up link is missing a setup token.')).toBeDefined()
+    expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
+    expect(screen.getByText('This sign-up link is missing a setup token.')).toBeInTheDocument()
     expect(getAuthValidateSetupToken).not.toHaveBeenCalled()
     expect(redirect).not.toHaveBeenCalled()
   })
@@ -73,13 +73,13 @@ describe('SignUpInitiate', () => {
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-    expect(screen.getByText('This link has expired')).toBeDefined()
+    expect(screen.getByText('This link has expired')).toBeInTheDocument()
     expect(
       screen.getByText(
         'Request a new link to continue setting up your account. A new link will be sent to your registered email address.',
       ),
-    ).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Send a new link' })).toBeDefined()
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send a new link' })).toBeInTheDocument()
     expect(redirect).not.toHaveBeenCalled()
   })
 
@@ -96,10 +96,10 @@ describe('SignUpInitiate', () => {
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-    expect(screen.getByText('Setup token has already been used.')).toBeDefined()
+    expect(screen.getByText('Setup token has already been used.')).toBeInTheDocument()
     expect(
       screen.getByText('The setup token has already been consumed and cannot be used again.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(redirect).not.toHaveBeenCalled()
   })
 
@@ -116,8 +116,8 @@ describe('SignUpInitiate', () => {
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-    expect(screen.getByText('Setup token not found.')).toBeDefined()
-    expect(screen.getByText('The supplied setup token does not exist.')).toBeDefined()
+    expect(screen.getByText('Setup token not found.')).toBeInTheDocument()
+    expect(screen.getByText('The supplied setup token does not exist.')).toBeInTheDocument()
     expect(redirect).not.toHaveBeenCalled()
   })
 
@@ -132,8 +132,8 @@ describe('SignUpInitiate', () => {
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-    expect(screen.getByText('There is a problem with your sign-up link')).toBeDefined()
-    expect(screen.getByText('This sign-up link is not valid.')).toBeDefined()
+    expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
+    expect(screen.getByText('This sign-up link is not valid.')).toBeInTheDocument()
     expect(redirect).not.toHaveBeenCalled()
   })
 
@@ -152,8 +152,8 @@ describe('SignUpInitiate', () => {
 
       render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-      expect(screen.getByText('There is a problem with your sign-up link')).toBeDefined()
-      expect(screen.getByText(detail)).toBeDefined()
+      expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
+      expect(screen.getByText(detail)).toBeInTheDocument()
       expect(redirect).not.toHaveBeenCalled()
     },
   )
@@ -167,8 +167,8 @@ describe('SignUpInitiate', () => {
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-    expect(screen.getByText('Backend title.')).toBeDefined()
-    expect(screen.getByText('Backend explanation.')).toBeDefined()
+    expect(screen.getByText('Backend title.')).toBeInTheDocument()
+    expect(screen.getByText('Backend explanation.')).toBeInTheDocument()
     expect(redirect).not.toHaveBeenCalled()
   })
 
@@ -180,8 +180,10 @@ describe('SignUpInitiate', () => {
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-    expect(screen.getByText('There is a problem with your sign-up link')).toBeDefined()
-    expect(screen.getByText('We could not check your sign-up link. Try again later.')).toBeDefined()
+    expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
+    expect(
+      screen.getByText('We could not check your sign-up link. Try again later.'),
+    ).toBeInTheDocument()
     expect(redirect).not.toHaveBeenCalled()
   })
 
@@ -190,8 +192,10 @@ describe('SignUpInitiate', () => {
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 
-    expect(screen.getByText('There is a problem with your sign-up link')).toBeDefined()
-    expect(screen.getByText('We could not check your sign-up link. Try again later.')).toBeDefined()
+    expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
+    expect(
+      screen.getByText('We could not check your sign-up link. Try again later.'),
+    ).toBeInTheDocument()
     expect(redirect).not.toHaveBeenCalled()
   })
 })

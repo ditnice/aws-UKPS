@@ -1,10 +1,12 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import { postAuthLogin } from '@/client/generated'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 import { router } from '@/test-utils/nextNavigation'
+import { fillInput } from '@/test-utils/userInteractions'
 
 import { SignInForm } from './SignInForm'
 
@@ -18,53 +20,51 @@ vi.mocked(postAuthLogin).mockResolvedValue({
   error: undefined,
   data: undefined,
 })
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('SignInForm', () => {
   it('renders the sign-in controls', () => {
     render(<SignInForm />)
 
-    expect(screen.getByLabelText('Email address')).toBeDefined()
-    expect(screen.getByLabelText('Password')).toBeDefined()
-    expect(screen.getByText('Forgotten your password?')).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDefined()
+    expect(screen.getByLabelText('Email address')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    expect(screen.getByText('Forgotten your password?')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })
 
   it('shows required validation errors when submitted empty', async () => {
     render(<SignInForm />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(await screen.findByText('Enter your email address')).toBeDefined()
-    expect(await screen.findByText('Enter your password')).toBeDefined()
+    expect(await screen.findByText('Enter your email address')).toBeInTheDocument()
+    expect(await screen.findByText('Enter your password')).toBeInTheDocument()
   })
 
   it('shows an email format validation error', async () => {
     render(<SignInForm />)
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'not-an-email-address' },
-    })
-    fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'secure-password' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await fillInput(user, screen.getByLabelText('Email address'), 'not-an-email-address')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(
       await screen.findByText(
         'Enter an email address in the correct format, like name@example.com',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('does not show validation errors for valid values', async () => {
     render(<SignInForm />)
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'name@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'secure-password' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your email address')).toBeNull()
@@ -78,20 +78,16 @@ describe('SignInForm', () => {
   it('revalidates fields on blur after a failed submit', async () => {
     render(<SignInForm />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(await screen.findByText('Enter your email address')).toBeDefined()
-    expect(await screen.findByText('Enter your password')).toBeDefined()
+    expect(await screen.findByText('Enter your email address')).toBeInTheDocument()
+    expect(await screen.findByText('Enter your password')).toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'name@example.com' },
-    })
-    fireEvent.blur(screen.getByLabelText('Email address'))
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await user.tab()
 
-    fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'secure-password' },
-    })
-    fireEvent.blur(screen.getByLabelText('Password'))
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
+    await user.tab()
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your email address')).toBeNull()
@@ -102,14 +98,10 @@ describe('SignInForm', () => {
   it('submits valid credentials and redirects to the portal', async () => {
     render(<SignInForm />)
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'name@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'secure-password' },
-    })
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
       expect(postAuthLogin).toHaveBeenCalledWith({
@@ -127,14 +119,10 @@ describe('SignInForm', () => {
   it('redirects to the returnTo path after successful authentication', async () => {
     render(<SignInForm returnTo="/portal/organisations/1?tab=users" />)
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'name@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'secure-password' },
-    })
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
       expect(router.push).toHaveBeenCalledWith('/portal/organisations/1?tab=users')
@@ -158,7 +146,7 @@ describe('SignInForm', () => {
     nativeInputValueSetter.call(emailInput, 'autofilled@example.com')
     nativeInputValueSetter.call(passwordInput, 'autofilled-password')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
       expect(postAuthLogin).toHaveBeenCalledWith({
@@ -185,14 +173,10 @@ describe('SignInForm', () => {
 
     render(<SignInForm />)
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'name@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'incorrect-password' },
-    })
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'incorrect-password')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     const errors = await screen.findAllByText(
       'The email address or password you entered is incorrect',
@@ -222,14 +206,10 @@ describe('SignInForm', () => {
 
     render(<SignInForm />)
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'name@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'secure-password' },
-    })
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
       expect(postAuthLogin).toHaveBeenCalledWith({
@@ -257,14 +237,10 @@ describe('SignInForm', () => {
 
     render(<SignInForm returnTo="/portal/organisations/1?tab=users" />)
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'name@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'secure-password' },
-    })
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
       expect(router.push).toHaveBeenCalledWith(

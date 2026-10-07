@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthResendSetupToken } from '@/client/generated'
@@ -39,40 +40,46 @@ function getSupportEmailLink() {
 }
 
 async function clickSend() {
-  fireEvent.click(getSendButton())
+  await user.click(getSendButton())
   await screen.findByText('Check your email')
 }
+
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+})
 
 describe('RequestNewLink', () => {
   it('renders the expired-link message with an enabled send button', () => {
     render(<RequestNewLink setupToken="test-token" />)
 
-    expect(screen.getByText('This link has expired')).toBeDefined()
+    expect(screen.getByText('This link has expired')).toBeInTheDocument()
     expect(
       screen.getByText(
         'Request a new link to continue setting up your account. A new link will be sent to your registered email address.',
       ),
-    ).toBeDefined()
-    expect(getSendButton().disabled).toBe(false)
+    ).toBeInTheDocument()
+    expect(getSendButton()).toBeEnabled()
   })
 
   it('sends the setup token and shows the check-your-email message on click', async () => {
     render(<RequestNewLink setupToken="test-token" />)
 
-    fireEvent.click(getSendButton())
+    await user.click(getSendButton())
 
     expect(postAuthResendSetupToken).toHaveBeenCalledWith({
       body: { setupToken: 'test-token' },
     })
 
-    expect(await screen.findByText('Check your email')).toBeDefined()
+    expect(await screen.findByText('Check your email')).toBeInTheDocument()
     expect(
       screen.getByText(/We've sent a new link to your email address\. It may take a few minutes/),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(
       screen.getByText(/If you cannot find the email, check your spam or junk folder\./),
-    ).toBeDefined()
-    expect(screen.getByText('60 seconds')).toBeDefined()
+    ).toBeInTheDocument()
+    expect(screen.getByText('60 seconds')).toBeInTheDocument()
   })
 
   it('sends the returned correlation id, instead of the stale setup token, on a subsequent click', async () => {
@@ -90,7 +97,7 @@ describe('RequestNewLink', () => {
     await act(async () => {
       vi.advanceTimersByTime(60 * 1000)
     })
-    fireEvent.click(getSendButton())
+    await user.click(getSendButton())
 
     expect(postAuthResendSetupToken).toHaveBeenNthCalledWith(2, {
       body: { correlationId: 'correlation-id-1' },
@@ -101,17 +108,17 @@ describe('RequestNewLink', () => {
     render(<RequestNewLink setupToken="test-token" />)
 
     await clickSend()
-    expect(screen.getByText('60 seconds')).toBeDefined()
+    expect(screen.getByText('60 seconds')).toBeInTheDocument()
 
     await act(async () => {
       vi.advanceTimersByTime(1000)
     })
-    expect(screen.getByText('59 seconds')).toBeDefined()
+    expect(screen.getByText('59 seconds')).toBeInTheDocument()
 
     await act(async () => {
       vi.advanceTimersByTime(58 * 1000)
     })
-    expect(screen.getByText('1 second')).toBeDefined()
+    expect(screen.getByText('1 second')).toBeInTheDocument()
   })
 
   it('disables the send button immediately after sending', async () => {
@@ -119,20 +126,20 @@ describe('RequestNewLink', () => {
 
     await clickSend()
 
-    expect(getSendButton().disabled).toBe(true)
+    expect(getSendButton()).toBeDisabled()
   })
 
   it('re-enables the send button once the cooldown has elapsed', async () => {
     render(<RequestNewLink setupToken="test-token" />)
 
     await clickSend()
-    expect(getSendButton().disabled).toBe(true)
+    expect(getSendButton()).toBeDisabled()
 
     await act(async () => {
       vi.advanceTimersByTime(60 * 1000)
     })
 
-    expect(getSendButton().disabled).toBe(false)
+    expect(getSendButton()).toBeEnabled()
   })
 
   it('shows a contact-support message with a working email link for an unexpected failure status', async () => {
@@ -144,10 +151,12 @@ describe('RequestNewLink', () => {
 
     render(<RequestNewLink setupToken="test-token" />)
 
-    fireEvent.click(getSendButton())
+    await user.click(getSendButton())
 
-    expect(await screen.findByText('Contact the support team')).toBeDefined()
-    expect(screen.getByText(/Please contact the UKPS support team for assistance/)).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Please contact the UKPS support team for assistance/),
+    ).toBeInTheDocument()
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
@@ -161,9 +170,9 @@ describe('RequestNewLink', () => {
 
     render(<RequestNewLink setupToken="test-token" />)
 
-    fireEvent.click(getSendButton())
+    await user.click(getSendButton())
 
-    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
@@ -177,9 +186,9 @@ describe('RequestNewLink', () => {
 
     render(<RequestNewLink setupToken="test-token" />)
 
-    fireEvent.click(getSendButton())
+    await user.click(getSendButton())
 
-    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
   })
 
   it('shows a contact-support message if the request throws, e.g. a network failure', async () => {
@@ -187,9 +196,9 @@ describe('RequestNewLink', () => {
 
     render(<RequestNewLink setupToken="test-token" />)
 
-    fireEvent.click(getSendButton())
+    await user.click(getSendButton())
 
-    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
   })
 
   it('allows up to three successful attempts', async () => {
@@ -203,15 +212,15 @@ describe('RequestNewLink', () => {
     }
 
     expect(postAuthResendSetupToken).toHaveBeenCalledTimes(3)
-    expect(screen.getByText('Check your email')).toBeDefined()
-    expect(getSendButton().disabled).toBe(false)
+    expect(screen.getByText('Check your email')).toBeInTheDocument()
+    expect(getSendButton()).toBeEnabled()
   })
 
   it('shows contact support text once the backend rejects a fourth attempt', async () => {
     render(<RequestNewLink setupToken="test-token" />)
 
     for (let attempt = 1; attempt <= 3; attempt++) {
-      fireEvent.click(getSendButton())
+      await user.click(getSendButton())
       await act(async () => {
         vi.advanceTimersByTime(60 * 1000)
       })
@@ -223,12 +232,12 @@ describe('RequestNewLink', () => {
       response: new Response(null, { status: 403 }),
     })
 
-    fireEvent.click(getSendButton())
+    await user.click(getSendButton())
 
-    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
     expect(
       screen.getByText(/You have reached the maximum number of attempts to request a new link\./),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
@@ -242,9 +251,9 @@ describe('RequestNewLink', () => {
 
     render(<RequestNewLink setupToken="test-token" />)
 
-    fireEvent.click(getSendButton())
+    await user.click(getSendButton())
 
-    expect(await screen.findByText('Contact the support team')).toBeDefined()
+    expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })

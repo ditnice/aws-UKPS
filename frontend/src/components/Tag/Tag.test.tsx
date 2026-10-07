@@ -21,7 +21,7 @@ describe('Tag', () => {
   it.each(colours)('renders the %s colour variant', (colour) => {
     const { asFragment } = render(<Tag colour={colour}>Status</Tag>)
 
-    expect(screen.getByText('Status')).toBeDefined()
+    expect(screen.getByText('Status')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -56,7 +56,7 @@ describe('Tag', () => {
       </Tag>,
     )
 
-    expect(screen.getByTestId('priority-tag')).toBeDefined()
+    expect(screen.getByTestId('priority-tag')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -65,7 +65,7 @@ describe('Tag', () => {
       <Tag remove={<button type="button">Remove status</button>}>Active</Tag>,
     )
 
-    expect(screen.getByRole('button', { name: 'Remove status' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Remove status' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 })

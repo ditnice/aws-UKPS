@@ -23,7 +23,7 @@ describe('Main', () => {
       </Main>,
     )
 
-    expect(screen.getByText('Page content')).toBeDefined()
+    expect(screen.getByText('Page content')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -58,7 +58,7 @@ describe('Main', () => {
   it('renders BackToTop as a child', () => {
     const { asFragment } = render(<Main />)
 
-    expect(screen.getByTestId('back-to-top')).toBeDefined()
+    expect(screen.getByTestId('back-to-top')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 })

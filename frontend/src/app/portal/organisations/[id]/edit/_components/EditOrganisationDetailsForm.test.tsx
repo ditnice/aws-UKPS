@@ -1,7 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { errorMessages } from '@/lib/form/errorMessages'
+import { fillInput } from '@/test-utils/userInteractions'
 
 import { EditOrganisationDetailsForm } from './EditOrganisationDetailsForm'
 
@@ -37,8 +39,8 @@ function renderForm(overrides: Partial<EditOrganisationDetailsFormProps> = {}) {
   render(<EditOrganisationDetailsForm {...defaultProps} {...overrides} />)
 }
 
-function submit() {
-  fireEvent.click(screen.getByRole('button', { name: 'Submit' }))
+async function submit() {
+  await user.click(screen.getByRole('button', { name: 'Submit' }))
 }
 
 const organisationNameLabel = 'Organisation name'
@@ -46,87 +48,83 @@ const organisationAddressLabel = 'Organisation address'
 const organisationEmailLabel = 'Head office email address'
 const organisationPhoneNumberLabel = 'Head office phone number'
 
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('EditOrganisationDetailsForm', () => {
   it('renders each field pre-filled with the given organisation details', () => {
     renderForm()
 
-    expect((screen.getByLabelText(organisationNameLabel) as HTMLInputElement).value).toBe(
-      'Acme Ltd',
-    )
-    expect((screen.getByLabelText(organisationAddressLabel) as HTMLTextAreaElement).value).toBe(
-      '1 Example Street',
-    )
-    expect((screen.getByLabelText(organisationEmailLabel) as HTMLInputElement).value).toBe(
-      'contact@example.com',
-    )
-    expect((screen.getByLabelText(organisationPhoneNumberLabel) as HTMLInputElement).value).toBe(
-      '0121 234 5678',
-    )
+    expect(screen.getByLabelText(organisationNameLabel)).toHaveValue('Acme Ltd')
+    expect(screen.getByLabelText(organisationAddressLabel)).toHaveValue('1 Example Street')
+    expect(screen.getByLabelText(organisationEmailLabel)).toHaveValue('contact@example.com')
+    expect(screen.getByLabelText(organisationPhoneNumberLabel)).toHaveValue('0121 234 5678')
   })
 
   it('shows a required error when the organisation name is left empty on submit', async () => {
     renderForm()
 
-    fireEvent.change(screen.getByLabelText(organisationNameLabel), { target: { value: '' } })
-    submit()
+    await fillInput(user, screen.getByLabelText(organisationNameLabel), '')
+    await submit()
 
     expect(
       await screen.findByText(errorMessages.organisationNameRequired, {
         selector: '.input__error',
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
   it('shows a required error when the organisation address is left empty on submit', async () => {
     renderForm()
 
-    fireEvent.change(screen.getByLabelText(organisationAddressLabel), { target: { value: '' } })
-    submit()
+    await fillInput(user, screen.getByLabelText(organisationAddressLabel), '')
+    await submit()
 
     expect(
       await screen.findByText(errorMessages.addressRequired, { selector: '.textarea__error' }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
   it('shows a required error when the email address is left empty on submit', async () => {
     renderForm()
 
-    fireEvent.change(screen.getByLabelText(organisationEmailLabel), { target: { value: '' } })
-    submit()
+    await fillInput(user, screen.getByLabelText(organisationEmailLabel), '')
+    await submit()
 
     expect(
       await screen.findByText(errorMessages.organisationEmailRequired, {
         selector: '.input__error',
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
   it('shows a required error when the phone number is left empty on submit', async () => {
     renderForm()
 
-    fireEvent.change(screen.getByLabelText(organisationPhoneNumberLabel), { target: { value: '' } })
-    submit()
+    await fillInput(user, screen.getByLabelText(organisationPhoneNumberLabel), '')
+    await submit()
 
     expect(
       await screen.findByText(errorMessages.phoneRequired, { selector: '.input__error' }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
   it('shows a format error when the email address is invalid on submit', async () => {
     renderForm()
 
-    fireEvent.change(screen.getByLabelText(organisationEmailLabel), {
-      target: { value: 'not-an-email' },
-    })
-    submit()
+    await fillInput(user, screen.getByLabelText(organisationEmailLabel), 'not-an-email')
+    await submit()
 
     expect(
       await screen.findByText(errorMessages.emailFormat, { selector: '.input__error' }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
@@ -146,14 +144,12 @@ describe('EditOrganisationDetailsForm', () => {
   ])('shows a format error when the phone number %s is invalid on submit', async (phoneNumber) => {
     renderForm()
 
-    fireEvent.change(screen.getByLabelText(organisationPhoneNumberLabel), {
-      target: { value: phoneNumber },
-    })
-    submit()
+    await fillInput(user, screen.getByLabelText(organisationPhoneNumberLabel), phoneNumber)
+    await submit()
 
     expect(
       await screen.findByText(errorMessages.phoneFormat, { selector: '.input__error' }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })
 
@@ -184,10 +180,8 @@ describe('EditOrganisationDetailsForm', () => {
     updateOrganisationDetailsActionMock.mockResolvedValue({ status: 'success' })
     renderForm()
 
-    fireEvent.change(screen.getByLabelText(organisationPhoneNumberLabel), {
-      target: { value: phoneNumber },
-    })
-    submit()
+    await fillInput(user, screen.getByLabelText(organisationPhoneNumberLabel), phoneNumber)
+    await submit()
 
     await waitFor(() => expect(updateOrganisationDetailsActionMock).toHaveBeenCalled())
     expect(screen.queryByText(errorMessages.phoneFormat, { selector: '.input__error' })).toBeNull()
@@ -197,10 +191,8 @@ describe('EditOrganisationDetailsForm', () => {
     updateOrganisationDetailsActionMock.mockResolvedValue({ status: 'success' })
     renderForm()
 
-    fireEvent.change(screen.getByLabelText(organisationNameLabel), {
-      target: { value: 'New Name Ltd' },
-    })
-    submit()
+    await fillInput(user, screen.getByLabelText(organisationNameLabel), 'New Name Ltd')
+    await submit()
 
     await waitFor(() =>
       expect(updateOrganisationDetailsActionMock).toHaveBeenCalledWith(1, {
@@ -222,7 +214,7 @@ describe('EditOrganisationDetailsForm', () => {
     })
     renderForm()
 
-    submit()
+    await submit()
 
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toBe(
@@ -231,10 +223,10 @@ describe('EditOrganisationDetailsForm', () => {
     expect(pushMock).not.toHaveBeenCalled()
   })
 
-  it('navigates back to the previous page when cancel is clicked', () => {
+  it('navigates back to the previous page when cancel is clicked', async () => {
     renderForm()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(backMock).toHaveBeenCalledOnce()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()

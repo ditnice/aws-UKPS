@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
@@ -48,9 +49,15 @@ const getActionButton = () => {
   return screen.getByTestId('action-button')
 }
 
-const clickActionButton = () => {
-  fireEvent.click(getActionButton())
+const clickActionButton = async () => {
+  await user.click(getActionButton())
 }
+
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
 
 describe('ModifyUserMembershipRequestControls', () => {
   it('renders the approve action', () => {
@@ -69,17 +76,17 @@ describe('ModifyUserMembershipRequestControls', () => {
     expect(screen.getByTestId('cancel-button').getAttribute('href')).toBe(backLink)
   })
 
-  it('sends the correct approve request for the approve action', () => {
+  it('sends the correct approve request for the approve action', async () => {
     const args = { organisationId: 14, registrationRequestId: 23 }
     renderComponent({ ...args, action: 'Approve' })
-    clickActionButton()
+    await clickActionButton()
     expect(mocks.approve).toHaveBeenCalledExactlyOnceWith({ path: args })
   })
 
-  it('sends the correct reject request for the reject action', () => {
+  it('sends the correct reject request for the reject action', async () => {
     const args = { organisationId: 67, registrationRequestId: 3 }
     renderComponent({ ...args, action: 'Reject' })
-    clickActionButton()
+    await clickActionButton()
     expect(mocks.reject).toHaveBeenCalledExactlyOnceWith({ path: args })
   })
 
@@ -87,7 +94,7 @@ describe('ModifyUserMembershipRequestControls', () => {
     mocks.approve.mockResolvedValue({ response: { ok: true } })
     const successLink = 'success/link'
     renderComponent({ action: 'Approve', successLink })
-    clickActionButton()
+    await clickActionButton()
     await waitFor(() => {
       expect(mocks.push).toHaveBeenCalledExactlyOnceWith(successLink)
     })
@@ -96,10 +103,10 @@ describe('ModifyUserMembershipRequestControls', () => {
   it('shows an error on the request fail and does not push a new route', async () => {
     mocks.approve.mockResolvedValue({ response: { ok: false } })
     renderComponent()
-    clickActionButton()
+    await clickActionButton()
     await waitFor(() => {
       expect(mocks.push).not.toHaveBeenCalled()
-      expect(screen.getByTestId('action-error')).toBeDefined()
+      expect(screen.getByTestId('action-error')).toBeInTheDocument()
     })
   })
 })

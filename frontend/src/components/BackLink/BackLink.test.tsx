@@ -7,7 +7,7 @@ describe('BackLink', () => {
   it('renders the default link text', () => {
     const { asFragment } = render(<BackLink href="/previous" />)
 
-    expect(screen.getByRole('link', { name: 'Back' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -21,7 +21,7 @@ describe('BackLink', () => {
   it('supports custom content', () => {
     const { asFragment } = render(<BackLink href="/components">Back to components</BackLink>)
 
-    expect(screen.getByRole('link', { name: 'Back to components' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Back to components' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 

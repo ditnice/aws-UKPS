@@ -59,7 +59,7 @@ describe('NavLinks', () => {
       <NavLinks rootLinks={[{ href: '/guidance', label: 'Guidance' }]} />,
     )
 
-    expect(screen.getByRole('link', { name: 'Guidance' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Guidance' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 

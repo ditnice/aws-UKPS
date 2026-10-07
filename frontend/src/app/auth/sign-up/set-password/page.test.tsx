@@ -12,8 +12,8 @@ describe('SignUpSetPassword', () => {
   it('renders an error if the setup token is missing', async () => {
     render(await SignUpSetPassword({ searchParams: Promise.resolve({}) }))
 
-    expect(screen.getByText('There is a problem with your sign-up link')).toBeDefined()
-    expect(screen.getByText('This sign-up link is missing a setup token.')).toBeDefined()
+    expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
+    expect(screen.getByText('This sign-up link is missing a setup token.')).toBeInTheDocument()
   })
 
   it('passes the setup token to the form', async () => {
@@ -23,10 +23,10 @@ describe('SignUpSetPassword', () => {
       }),
     )
 
-    expect(screen.getByText('Create a password')).toBeDefined()
+    expect(screen.getByText('Create a password')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
       '/auth/sign-up/terms-and-conditions?setupToken=test-setup-token',
     )
-    expect(screen.getByText('Set password form for test-setup-token')).toBeDefined()
+    expect(screen.getByText('Set password form for test-setup-token')).toBeInTheDocument()
   })
 })

@@ -1,5 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { updateCurrentOrganisation } from '@/client/generated'
 
@@ -26,6 +27,12 @@ const organisations = [
 
 const getManageButton = (organisationName: string) =>
   screen.getByRole('button', { name: `Manage Organisation - ${organisationName}` })
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('SelectOrganisationTable', () => {
   it('renders a row for each organisation', () => {
     render(<SelectOrganisationTable organisations={organisations} />)
@@ -43,7 +50,7 @@ describe('SelectOrganisationTable', () => {
 
     render(<SelectOrganisationTable organisations={organisations} />)
 
-    fireEvent.click(getManageButton('Second organisation'))
+    await user.click(getManageButton('Second organisation'))
 
     expect(updateCurrentOrganisation).toHaveBeenCalledWith({ body: { organisationId: 456 } })
     await waitFor(() => {
@@ -60,7 +67,7 @@ describe('SelectOrganisationTable', () => {
 
     render(<SelectOrganisationTable organisations={organisations} />)
 
-    fireEvent.click(getManageButton('First organisation'))
+    await user.click(getManageButton('First organisation'))
 
     expect(await screen.findByTestId('organisation-selection-error')).toBeTruthy()
     expect(mocks.push).not.toHaveBeenCalled()
@@ -71,7 +78,7 @@ describe('SelectOrganisationTable', () => {
 
     render(<SelectOrganisationTable organisations={organisations} />)
 
-    fireEvent.click(getManageButton('First organisation'))
+    await user.click(getManageButton('First organisation'))
 
     expect(await screen.findByTestId('organisation-selection-error')).toBeTruthy()
     expect(mocks.push).not.toHaveBeenCalled()
@@ -89,7 +96,7 @@ describe('SelectOrganisationTable', () => {
 
     render(<SelectOrganisationTable organisations={organisations} />)
 
-    fireEvent.click(getManageButton('First organisation'))
+    await user.click(getManageButton('First organisation'))
 
     await waitFor(() => {
       expect(getManageButton('First organisation').hasAttribute('disabled')).toBe(true)

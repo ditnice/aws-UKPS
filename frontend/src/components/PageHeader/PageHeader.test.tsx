@@ -9,7 +9,7 @@ describe('PageHeader', () => {
   it('renders the heading', () => {
     const { asFragment } = render(<PageHeader heading="Sign-in" />)
 
-    expect(screen.getByRole('heading', { name: 'Sign-in' })).toBeDefined()
+    expect(screen.getByRole('heading', { name: 'Sign-in' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -51,7 +51,7 @@ describe('PageHeader', () => {
       />,
     )
 
-    expect(screen.getByRole('link', { name: 'Back' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Breadcrumbs')).toBeNull()
     expect(asFragment()).toMatchSnapshot()
   })

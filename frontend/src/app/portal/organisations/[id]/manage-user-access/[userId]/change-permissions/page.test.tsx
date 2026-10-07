@@ -81,12 +81,12 @@ describe('ChangeUserPermissions', () => {
 
     expect(
       screen.getByText(`You are about to make ${user.workEmail} a champion user.`),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(
       screen.getByText(
         'If you change this user’s role, they will gain access to the following capabilities in UK PharmaScan:',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('explains what a champion user would lose', async () => {
@@ -96,12 +96,12 @@ describe('ChangeUserPermissions', () => {
 
     expect(
       screen.getByText(`You are about to make ${user.workEmail} a standard user.`),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(
       screen.getByText(
         'If you change this user’s role, they will lose access to the following capabilities in UK PharmaScan:',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it("passes the user's membership and role to the form", async () => {
@@ -109,7 +109,7 @@ describe('ChangeUserPermissions', () => {
 
     render(await ChangeUserPermissions({ params }))
 
-    expect(screen.getByText('Change permissions form: Champion 9 2 4')).toBeDefined()
+    expect(screen.getByText('Change permissions form: Champion 9 2 4')).toBeInTheDocument()
   })
 
   it('does not offer to change the role of a super user', async () => {
@@ -117,7 +117,7 @@ describe('ChangeUserPermissions', () => {
 
     render(await ChangeUserPermissions({ params }))
 
-    expect(screen.getByText('This user’s role cannot be changed from here.')).toBeDefined()
+    expect(screen.getByText('This user’s role cannot be changed from here.')).toBeInTheDocument()
     expect(screen.queryByText(/Change permissions form/)).toBeNull()
   })
 

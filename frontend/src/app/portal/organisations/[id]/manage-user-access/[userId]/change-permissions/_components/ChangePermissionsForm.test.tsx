@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { changeUserPermissionsAction } from '../_actions/changeUserPermissions'
@@ -22,23 +23,29 @@ const props = {
 beforeEach(() => {
   vi.mocked(changeUserPermissionsAction).mockResolvedValue({ status: 'success' })
 })
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('ChangePermissionsForm', () => {
   it('offers to promote a standard user', () => {
     render(<ChangePermissionsForm {...props} currentRole="Standard" />)
 
-    expect(screen.getByRole('button', { name: 'Make champion user' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Make champion user' })).toBeInTheDocument()
   })
 
   it('offers to demote a champion user', () => {
     render(<ChangePermissionsForm {...props} currentRole="Champion" />)
 
-    expect(screen.getByRole('button', { name: 'Make standard user' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Make standard user' })).toBeInTheDocument()
   })
 
   it('promotes a standard user to champion', async () => {
     render(<ChangePermissionsForm {...props} currentRole="Standard" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Make champion user' }))
+    await user.click(screen.getByRole('button', { name: 'Make champion user' }))
 
     await waitFor(() => {
       expect(changeUserPermissionsAction).toHaveBeenCalledWith(2, 4, 9, 'Champion')
@@ -48,7 +55,7 @@ describe('ChangePermissionsForm', () => {
   it('demotes a champion user to standard', async () => {
     render(<ChangePermissionsForm {...props} currentRole="Champion" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Make standard user' }))
+    await user.click(screen.getByRole('button', { name: 'Make standard user' }))
 
     await waitFor(() => {
       expect(changeUserPermissionsAction).toHaveBeenCalledWith(2, 4, 9, 'Standard')
@@ -58,7 +65,7 @@ describe('ChangePermissionsForm', () => {
   it('returns to the main manage-organisation page with the user id once the role has changed', async () => {
     render(<ChangePermissionsForm {...props} currentRole="Standard" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Make champion user' }))
+    await user.click(screen.getByRole('button', { name: 'Make champion user' }))
 
     await waitFor(() => {
       expect(push).toHaveBeenCalledWith(
@@ -75,19 +82,19 @@ describe('ChangePermissionsForm', () => {
 
     render(<ChangePermissionsForm {...props} currentRole="Standard" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Make champion user' }))
+    await user.click(screen.getByRole('button', { name: 'Make champion user' }))
 
     await waitFor(() => {
       expect(screen.getByRole('alert').textContent).toBe('Something went wrong.')
     })
     expect(push).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: 'Make champion user' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Make champion user' })).toBeInTheDocument()
   })
 
-  it('goes back when cancelled', () => {
+  it('goes back when cancelled', async () => {
     render(<ChangePermissionsForm {...props} currentRole="Standard" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(back).toHaveBeenCalled()
     expect(changeUserPermissionsAction).not.toHaveBeenCalled()

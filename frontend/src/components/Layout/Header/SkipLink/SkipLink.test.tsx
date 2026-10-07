@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { SkipLink } from './SkipLink'
 
@@ -7,8 +8,14 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('SkipLink', () => {
-  it('renders a hash link and focuses the target when clicked', () => {
+  it('renders a hash link and focuses the target when clicked', async () => {
     const target = document.createElement('main')
     target.id = 'content-start'
     target.scrollIntoView = vi.fn()
@@ -16,29 +23,35 @@ describe('SkipLink', () => {
 
     const { asFragment } = render(<SkipLink to="#content-start">Skip to content</SkipLink>)
 
-    fireEvent.click(screen.getByRole('link', { name: 'Skip to content' }))
+    await user.click(screen.getByRole('link', { name: 'Skip to content' }))
 
-    expect(document.activeElement).toBe(target)
+    expect(target).toHaveFocus()
     expect(target.tabIndex).toBe(-1)
     expect(target.scrollIntoView).toHaveBeenCalledWith({ block: 'start' })
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('renders a hash link without changing focus when the target is missing', () => {
+  it('renders a hash link without changing focus when the target is missing', async () => {
     const { asFragment } = render(<SkipLink to="#missing">Missing target</SkipLink>)
 
-    fireEvent.click(screen.getByRole('link', { name: 'Missing target' }))
+    const link = screen.getByRole('link', { name: 'Missing target' })
+    await user.tab()
+    expect(link).toHaveFocus()
+    await user.click(link)
 
-    expect(document.activeElement).toBe(document.body)
+    expect(link).toHaveFocus()
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('renders an empty hash link without changing focus when clicked', () => {
+  it('renders an empty hash link without changing focus when clicked', async () => {
     const { asFragment } = render(<SkipLink to="#">Empty target</SkipLink>)
 
-    fireEvent.click(screen.getByRole('link', { name: 'Empty target' }))
+    const link = screen.getByRole('link', { name: 'Empty target' })
+    await user.tab()
+    expect(link).toHaveFocus()
+    await user.click(link)
 
-    expect(document.activeElement).toBe(document.body)
+    expect(link).toHaveFocus()
     expect(asFragment()).toMatchSnapshot()
   })
 

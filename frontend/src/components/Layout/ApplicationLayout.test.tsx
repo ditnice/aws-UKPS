@@ -25,9 +25,9 @@ describe('ApplicationLayout', () => {
   it('renders the application chrome around children', () => {
     const { asFragment } = render(<ApplicationLayout>Page content</ApplicationLayout>)
 
-    expect(screen.getByText('Page content')).toBeDefined()
-    expect(screen.getByRole('main')).toBeDefined()
-    expect(screen.getByRole('contentinfo')).toBeDefined()
+    expect(screen.getByText('Page content')).toBeInTheDocument()
+    expect(screen.getByRole('main')).toBeInTheDocument()
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument()
     expect(document.getElementById('content-start')).not.toBeNull()
     expect(asFragment()).toMatchSnapshot()
   })

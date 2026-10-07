@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createRef } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { InputWidth } from '@/components/Input/Input'
 
@@ -21,6 +22,12 @@ const widths: InputWidth[] = [
   'one-third',
   'one-quarter',
 ]
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('Select', () => {
   it('renders a label and option children', () => {
     const { asFragment } = render(
@@ -32,8 +39,8 @@ describe('Select', () => {
     )
 
     const select = screen.getByLabelText('Sort by') as HTMLSelectElement
-    expect(select.value).toBe('updated')
-    expect(screen.getByRole('option', { name: 'Recently published' })).toBeDefined()
+    expect(select).toHaveValue('updated')
+    expect(screen.getByRole('option', { name: 'Recently published' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -80,7 +87,7 @@ describe('Select', () => {
     )
 
     const select = screen.getByLabelText('Choose location')
-    expect(screen.getByText('Select a location')).toBeDefined()
+    expect(screen.getByText('Select a location')).toBeInTheDocument()
     expect(select.getAttribute('aria-describedby')).toBe('location-error')
     expect(select.className).toMatch(/fieldError/)
     expect(asFragment()).toMatchSnapshot()
@@ -118,7 +125,7 @@ describe('Select', () => {
     )
 
     const select = screen.getByLabelText('Sort by') as HTMLSelectElement
-    expect(select.disabled).toBe(true)
+    expect(select).toBeDisabled()
     expect(select.required).toBe(true)
     expect(screen.getByRole('option', { name: 'Recently updated' }).hasAttribute('disabled')).toBe(
       true,
@@ -126,7 +133,7 @@ describe('Select', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('calls onChange when the selected option changes', () => {
+  it('calls onChange when the selected option changes', async () => {
     const handleChange = vi.fn()
     render(
       <Select label="Sort by" name="sort" onChange={handleChange}>
@@ -135,7 +142,7 @@ describe('Select', () => {
       </Select>,
     )
 
-    fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'updated' } })
+    await user.selectOptions(screen.getByLabelText('Sort by'), 'updated')
 
     expect(handleChange).toHaveBeenCalledTimes(1)
   })
@@ -229,7 +236,7 @@ describe('Select', () => {
       </Select>,
     )
 
-    expect(screen.getByLabelText('Sort by')).toBeDefined()
+    expect(screen.getByLabelText('Sort by')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 })

@@ -18,7 +18,7 @@ describe('SignIn', () => {
 
     expect(
       screen.getByText('Sign in form returnTo: /portal/organisations/1?tab=users'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('does not pass an unsafe returnTo URL to the sign-in form', async () => {
@@ -28,7 +28,7 @@ describe('SignIn', () => {
       }),
     )
 
-    expect(screen.getByText('Sign in form returnTo: none')).toBeDefined()
+    expect(screen.getByText('Sign in form returnTo: none')).toBeInTheDocument()
   })
 
   it('does not pass a protocol-relative returnTo URL to the sign-in form', async () => {
@@ -38,6 +38,6 @@ describe('SignIn', () => {
       }),
     )
 
-    expect(screen.getByText('Sign in form returnTo: none')).toBeDefined()
+    expect(screen.getByText('Sign in form returnTo: none')).toBeInTheDocument()
   })
 })

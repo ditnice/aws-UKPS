@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   TableSortHeaderButton,
@@ -54,6 +55,12 @@ const renderVariantHeader = (direction: TableSortDirection, variant: Variant) =>
   return variant === 'button' ? renderButtonHeader(direction) : renderLinkHeader(direction)
 }
 
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('TableSortHeader', () => {
   const dataWithVariant: [TableSortDirection, number, Variant][] = (
     [
@@ -77,7 +84,7 @@ describe('TableSortHeader', () => {
 
       expect(header.getAttribute('aria-sort')).toBe(direction)
       expect(header.getAttribute('scope')).toBe('col')
-      expect(screen.getByRole(variant, { name: 'Name' })).toBeDefined()
+      expect(screen.getByRole(variant, { name: 'Name' })).toBeInTheDocument()
       expect(screen.queryByRole('img')).toBeNull()
       expect(indicator?.getAttribute('aria-hidden')).toBe('true')
       expect(indicator?.getAttribute('fill')).toBe('currentColor')
@@ -91,14 +98,17 @@ describe('TableSortHeader', () => {
     ['ascending', 'descending'],
     ['descending', 'ascending'],
   ]
-  it.each(nextDirectionData)('button variant - requests %s → %s', (direction, nextDirection) => {
-    const { onSort } = renderButtonHeader(direction)
+  it.each(nextDirectionData)(
+    'button variant - requests %s → %s',
+    async (direction, nextDirection) => {
+      const { onSort } = renderButtonHeader(direction)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Name' }))
+      await user.click(screen.getByRole('button', { name: 'Name' }))
 
-    expect(onSort).toHaveBeenCalledOnce()
-    expect(onSort).toHaveBeenCalledWith(nextDirection)
-  })
+      expect(onSort).toHaveBeenCalledOnce()
+      expect(onSort).toHaveBeenCalledWith(nextDirection)
+    },
+  )
 
   it.each(nextDirectionData)('button variant - requests %s → %s', (direction, nextDirection) => {
     const {} = renderLinkHeader(direction)

@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { OnboardUserCommandDto } from '@/client/generated'
@@ -6,6 +7,7 @@ import { postUsersOnboard } from '@/client/generated/sdk.gen'
 import type { OnboardedUserDto } from '@/client/generated/types.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { NextLinkMock } from '@/test-utils/nextMocks'
+import { fillInput } from '@/test-utils/userInteractions'
 
 import { OrganisationOnboardUserForm } from './OrganisationOnboardUserForm'
 
@@ -46,24 +48,18 @@ function renderForm() {
   render(<OrganisationOnboardUserForm organisationId={123} />)
 }
 
-function enterValuesIntoForm(validFormValues: FormValues) {
-  fireEvent.change(screen.getByLabelText('Full name'), {
-    target: { value: validFormValues.fullName },
-  })
-  fireEvent.change(screen.getByLabelText('Work email address'), {
-    target: { value: validFormValues.newUserEmail },
-  })
-  fireEvent.change(screen.getByLabelText('Phone number'), {
-    target: { value: validFormValues.contactNumber },
-  })
+async function enterValuesIntoForm(validFormValues: FormValues) {
+  await fillInput(user, screen.getByLabelText('Full name'), validFormValues.fullName)
+  await fillInput(user, screen.getByLabelText('Work email address'), validFormValues.newUserEmail)
+  await fillInput(user, screen.getByLabelText('Phone number'), validFormValues.contactNumber)
 }
 
-function fillValidForm() {
-  enterValuesIntoForm(validFormValues)
+async function fillValidForm() {
+  await enterValuesIntoForm(validFormValues)
 }
 
-function submitForm() {
-  fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+async function submitForm() {
+  await user.click(screen.getByRole('button', { name: 'Send invite' }))
 }
 
 function mockSuccessfulOnboardResponse(userId: number) {
@@ -82,6 +78,12 @@ function mockOnboardResponse(status: number) {
   })
 }
 
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('OrganisationOnboardUserForm', () => {
   it('renders the onboarding controls', () => {
     renderForm()
@@ -90,12 +92,14 @@ describe('OrganisationOnboardUserForm', () => {
       screen.getByText(
         'New users will be assigned the standard user role by default. You can change the permissions later using user management.',
       ),
-    ).toBeDefined()
-    expect(screen.getByLabelText('Full name')).toBeDefined()
-    expect(screen.getByLabelText('Work email address')).toBeDefined()
-    expect(screen.getByLabelText('Phone number')).toBeDefined()
-    expect(screen.getByText('For international numbers include the country code.')).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Send invite' })).toBeDefined()
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Full name')).toBeInTheDocument()
+    expect(screen.getByLabelText('Work email address')).toBeInTheDocument()
+    expect(screen.getByLabelText('Phone number')).toBeInTheDocument()
+    expect(
+      screen.getByText('For international numbers include the country code.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send invite' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Cancel' }).getAttribute('href')).toBe(
       '/portal/organisations/123',
     )
@@ -104,11 +108,11 @@ describe('OrganisationOnboardUserForm', () => {
   it('shows required validation errors when submitted empty', async () => {
     renderForm()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
-    expect(await screen.findByText('Enter their full name')).toBeDefined()
-    expect(await screen.findByText('Enter an email address')).toBeDefined()
-    expect(await screen.findByText('Enter their phone number')).toBeDefined()
+    expect(await screen.findByText('Enter their full name')).toBeInTheDocument()
+    expect(await screen.findByText('Enter an email address')).toBeInTheDocument()
+    expect(await screen.findByText('Enter their phone number')).toBeInTheDocument()
     expect(postUsersOnboard).not.toHaveBeenCalled()
   })
 
@@ -117,58 +121,46 @@ describe('OrganisationOnboardUserForm', () => {
 
     const examplePhoneNumber = '63846484638'
     renderForm()
-    enterValuesIntoForm({ ...validFormValues, contactNumber: examplePhoneNumber })
-    submitForm()
+    await enterValuesIntoForm({ ...validFormValues, contactNumber: examplePhoneNumber })
+    await submitForm()
 
     await waitFor(async () => {
       expect(mocks.phoneNumberValidationMock).toHaveBeenCalledWith(examplePhoneNumber, 'GB')
-      expect(await screen.findByText(errorMessages.phoneFormat)).toBeDefined()
+      expect(await screen.findByText(errorMessages.phoneFormat)).toBeInTheDocument()
     })
   })
 
   it('shows an email format validation error', async () => {
     renderForm()
 
-    fireEvent.change(screen.getByLabelText('Full name'), {
-      target: { value: 'Test User' },
-    })
-    fireEvent.change(screen.getByLabelText('Work email address'), {
-      target: { value: 'not-an-email-address' },
-    })
-    fireEvent.change(screen.getByLabelText('Phone number'), {
-      target: { value: '01234567890' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillInput(user, screen.getByLabelText('Full name'), 'Test User')
+    await fillInput(user, screen.getByLabelText('Work email address'), 'not-an-email-address')
+    await fillInput(user, screen.getByLabelText('Phone number'), '01234567890')
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     expect(
       await screen.findByText(
         'Enter an email address in the correct format, like name@example.com',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(postUsersOnboard).not.toHaveBeenCalled()
   })
 
   it('revalidates fields on blur after a failed submit', async () => {
     renderForm()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
-    expect(await screen.findByText('Enter their full name')).toBeDefined()
-    expect(await screen.findByText('Enter an email address')).toBeDefined()
-    expect(await screen.findByText('Enter their phone number')).toBeDefined()
+    expect(await screen.findByText('Enter their full name')).toBeInTheDocument()
+    expect(await screen.findByText('Enter an email address')).toBeInTheDocument()
+    expect(await screen.findByText('Enter their phone number')).toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('Full name'), {
-      target: { value: 'Test User' },
-    })
-    fireEvent.blur(screen.getByLabelText('Full name'))
-    fireEvent.change(screen.getByLabelText('Work email address'), {
-      target: { value: 'test@test.com' },
-    })
-    fireEvent.blur(screen.getByLabelText('Work email address'))
-    fireEvent.change(screen.getByLabelText('Phone number'), {
-      target: { value: '01234567890' },
-    })
-    fireEvent.blur(screen.getByLabelText('Phone number'))
+    await fillInput(user, screen.getByLabelText('Full name'), 'Test User')
+    await user.tab()
+    await fillInput(user, screen.getByLabelText('Work email address'), 'test@test.com')
+    await user.tab()
+    await fillInput(user, screen.getByLabelText('Phone number'), '01234567890')
+    await user.tab()
 
     await waitFor(() => {
       expect(screen.queryByText('Enter their full name')).toBeNull()
@@ -181,8 +173,8 @@ describe('OrganisationOnboardUserForm', () => {
     mockSuccessfulOnboardResponse(456)
     renderForm()
 
-    fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillValidForm()
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     await waitFor(() => {
       expect(postUsersOnboard).toHaveBeenCalledWith({
@@ -202,8 +194,8 @@ describe('OrganisationOnboardUserForm', () => {
     mockSuccessfulOnboardResponse(456)
     renderForm()
 
-    fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillValidForm()
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     await waitFor(() => expect(mocks.push).toHaveBeenCalled())
     expect(mocks.push.mock.calls[0][0]).not.toContain('test')
@@ -219,8 +211,8 @@ describe('OrganisationOnboardUserForm', () => {
     })
     renderForm()
 
-    fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillValidForm()
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     await waitFor(() => {
       expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123')
@@ -231,48 +223,50 @@ describe('OrganisationOnboardUserForm', () => {
     mockOnboardResponse(500)
     renderForm()
 
-    fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillValidForm()
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     expect(
       await screen.findByText('There was a problem sending the invite. Please try again later.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('shows a background error for invalid invite details', async () => {
     mockOnboardResponse(400)
     renderForm()
 
-    fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillValidForm()
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     expect(
       await screen.findByText(
         'The invite details are invalid. Check the information and try again.',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('shows a background error when the user cannot invite users', async () => {
     mockOnboardResponse(403)
     renderForm()
 
-    fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillValidForm()
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     expect(
       await screen.findByText('You do not have permission to invite users to this organisation.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('shows username conflicts as an email field error', async () => {
     mockOnboardResponse(409)
     renderForm()
 
-    fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillValidForm()
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
-    expect(await screen.findByText('A user with this email address already exists.')).toBeDefined()
+    expect(
+      await screen.findByText('A user with this email address already exists.'),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
@@ -280,14 +274,14 @@ describe('OrganisationOnboardUserForm', () => {
     mockOnboardResponse(409)
     renderForm()
 
-    fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Send invite' }))
+    await fillValidForm()
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
-    expect(await screen.findByText('A user with this email address already exists.')).toBeDefined()
+    expect(
+      await screen.findByText('A user with this email address already exists.'),
+    ).toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('Work email address'), {
-      target: { value: 'different@test.com' },
-    })
+    await fillInput(user, screen.getByLabelText('Work email address'), 'different@test.com')
 
     await waitFor(() => {
       expect(screen.queryByText('A user with this email address already exists.')).toBeNull()

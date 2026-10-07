@@ -1,8 +1,15 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Button, ButtonGroup } from './Button'
 import styles from './Button.module.scss'
+
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
 
 describe('Button', () => {
   it('renders a design-system button by default', () => {
@@ -23,7 +30,7 @@ describe('Button', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('renders the link variant as a semantic button', () => {
+  it('renders the link variant as a semantic button', async () => {
     const handleClick = vi.fn()
     const { asFragment } = render(
       <Button className="custom-class" variant="link" onClick={handleClick}>
@@ -37,7 +44,7 @@ describe('Button', () => {
     expect(button.classList.contains('custom-class')).toBe(true)
     expect(screen.queryByRole('link', { name: 'Print page' })).toBeNull()
 
-    fireEvent.click(button)
+    await user.click(button)
     expect(handleClick).toHaveBeenCalledTimes(1)
     expect(asFragment()).toMatchSnapshot()
   })

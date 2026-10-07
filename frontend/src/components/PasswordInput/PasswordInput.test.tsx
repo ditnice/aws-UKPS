@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createRef } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { InputWidth } from '@/components/Input/Input'
 
@@ -21,6 +22,12 @@ const widths: InputWidth[] = [
   'one-third',
   'one-quarter',
 ]
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('PasswordInput', () => {
   it('renders masked by default with a "Show" toggle', () => {
     const { asFragment } = render(<PasswordInput label="Password" name="password" />)
@@ -33,14 +40,14 @@ describe('PasswordInput', () => {
     expect(toggle.getAttribute('type')).toBe('button')
     expect(toggle.getAttribute('aria-controls')).toBe('password')
 
-    expect(screen.getByText('Your password is hidden')).toBeDefined()
+    expect(screen.getByText('Your password is hidden')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('reveals the password when the toggle is clicked', () => {
+  it('reveals the password when the toggle is clicked', async () => {
     const { asFragment } = render(<PasswordInput label="Password" name="password" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
+    await user.click(screen.getByRole('button', { name: 'Show password' }))
 
     const input = screen.getByLabelText('Password')
     expect(input.getAttribute('type')).toBe('text')
@@ -48,18 +55,18 @@ describe('PasswordInput', () => {
     const toggle = screen.getByRole('button', { name: 'Hide password' })
     expect(toggle.textContent).toBe('Hide')
 
-    expect(screen.getByText('Your password is visible')).toBeDefined()
+    expect(screen.getByText('Your password is visible')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('masks the password again when the toggle is clicked a second time', () => {
+  it('masks the password again when the toggle is clicked a second time', async () => {
     const { asFragment } = render(<PasswordInput label="Password" name="password" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Hide password' }))
+    await user.click(screen.getByRole('button', { name: 'Show password' }))
+    await user.click(screen.getByRole('button', { name: 'Hide password' }))
 
     expect(screen.getByLabelText('Password').getAttribute('type')).toBe('password')
-    expect(screen.getByText('Your password is hidden')).toBeDefined()
+    expect(screen.getByText('Your password is hidden')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -88,7 +95,7 @@ describe('PasswordInput', () => {
       <PasswordInput hint="At least 8 characters" label="Password" name="password" />,
     )
 
-    expect(screen.getByText('At least 8 characters')).toBeDefined()
+    expect(screen.getByText('At least 8 characters')).toBeInTheDocument()
     expect(screen.getByLabelText('Password').getAttribute('aria-describedby')).toBe('password-hint')
     expect(asFragment()).toMatchSnapshot()
   })
@@ -98,7 +105,7 @@ describe('PasswordInput', () => {
       <PasswordInput error errorMessage="Enter your password" label="Password" name="password" />,
     )
 
-    expect(screen.getByText('Enter your password')).toBeDefined()
+    expect(screen.getByText('Enter your password')).toBeInTheDocument()
     expect(screen.getByLabelText('Password').getAttribute('aria-describedby')).toBe(
       'password-error',
     )
@@ -239,14 +246,14 @@ describe('PasswordInput', () => {
 
     const input = screen.getByLabelText('Password') as HTMLInputElement
     expect(input.placeholder).toBe('Enter password')
-    expect(input.disabled).toBe(true)
+    expect(input).toBeDisabled()
     expect(asFragment()).toMatchSnapshot()
   })
 
   it.each(widths)('renders the %s width variant', (width) => {
     const { asFragment } = render(<PasswordInput label="Password" name="password" width={width} />)
 
-    expect(screen.getByLabelText('Password')).toBeDefined()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 })

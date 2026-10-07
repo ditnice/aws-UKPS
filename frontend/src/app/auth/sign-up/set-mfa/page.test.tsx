@@ -1,9 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { fillInput } from '@/test-utils/userInteractions'
 
 import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
 
@@ -44,15 +46,19 @@ function renderPage() {
   render(<SignUpSetMfa />)
 }
 
-function enterSecurityCode(securityCode: string) {
-  fireEvent.change(screen.getByLabelText('Enter your authentication code'), {
-    target: { value: securityCode },
-  })
+async function enterSecurityCode(securityCode: string) {
+  await fillInput(user, screen.getByLabelText('Enter your authentication code'), securityCode)
 }
 
-function submitForm() {
-  fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+async function submitForm() {
+  await user.click(screen.getByRole('button', { name: 'Continue' }))
 }
+
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
 
 describe('SignUpSetMfa', () => {
   it('renders an error if setup details are missing', async () => {
@@ -64,12 +70,12 @@ describe('SignUpSetMfa', () => {
       await screen.findByRole('heading', {
         name: 'There is a problem setting up two-factor authentication',
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(
       screen.getByText(
         'We could not find your multi-factor authentication setup details. Return to your sign-up link and try again.',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('renders an error if setup details are invalid', async () => {
@@ -84,7 +90,7 @@ describe('SignUpSetMfa', () => {
       await screen.findByRole('heading', {
         name: 'There is a problem setting up two-factor authentication',
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('renders an error if setup details cannot be read from storage', async () => {
@@ -98,7 +104,7 @@ describe('SignUpSetMfa', () => {
       await screen.findByRole('heading', {
         name: 'There is a problem setting up two-factor authentication',
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     getItem.mockRestore()
   })
 
@@ -107,14 +113,14 @@ describe('SignUpSetMfa', () => {
 
     expect(
       await screen.findByRole('heading', { name: 'Set up two-factor authentication' }),
-    ).toBeDefined()
-    expect(screen.getByLabelText('QR code for authenticator app setup')).toBeDefined()
-    expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeDefined()
-    expect(screen.getByLabelText('Enter your authentication code')).toBeDefined()
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('QR code for authenticator app setup')).toBeInTheDocument()
+    expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeInTheDocument()
+    expect(screen.getByLabelText('Enter your authentication code')).toBeInTheDocument()
     expect(
       screen.getByText('Enter the 6-digit authentication code shown in your authenticator app.'),
-    ).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDefined()
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })
 
   it('sets autocomplete for a one-time code', async () => {
@@ -128,25 +134,25 @@ describe('SignUpSetMfa', () => {
   it('shows a required validation error when submitted empty', async () => {
     renderPage()
 
-    submitForm()
+    await submitForm()
 
-    expect(await screen.findByText('Enter your security code')).toBeDefined()
+    expect(await screen.findByText('Enter your security code')).toBeInTheDocument()
   })
 
   it('shows a format validation error for an invalid code', async () => {
     renderPage()
 
-    enterSecurityCode('12345')
-    submitForm()
+    await enterSecurityCode('12345')
+    await submitForm()
 
-    expect(await screen.findByText('Enter a 6-digit security code')).toBeDefined()
+    expect(await screen.findByText('Enter a 6-digit security code')).toBeInTheDocument()
   })
 
   it('does not show validation errors for a valid code', async () => {
     renderPage()
 
-    enterSecurityCode('123456')
-    submitForm()
+    await enterSecurityCode('123456')
+    await submitForm()
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your security code')).toBeNull()
@@ -157,8 +163,8 @@ describe('SignUpSetMfa', () => {
   it('submits grouped security codes using the normalised code', async () => {
     renderPage()
 
-    enterSecurityCode('12 324-6')
-    submitForm()
+    await enterSecurityCode('12 324-6')
+    await submitForm()
 
     await waitFor(() => {
       expect(postAuthVerifyMfa).toHaveBeenCalledWith({
@@ -175,12 +181,12 @@ describe('SignUpSetMfa', () => {
   it('revalidates fields on blur after a failed submit', async () => {
     renderPage()
 
-    submitForm()
+    await submitForm()
 
-    expect(await screen.findByText('Enter your security code')).toBeDefined()
+    expect(await screen.findByText('Enter your security code')).toBeInTheDocument()
 
-    enterSecurityCode('123 456')
-    fireEvent.blur(screen.getByLabelText('Enter your authentication code'))
+    await enterSecurityCode('123 456')
+    await user.tab()
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your security code')).toBeNull()
@@ -191,8 +197,8 @@ describe('SignUpSetMfa', () => {
   it('clears setup details and redirects to the portal after successful verification', async () => {
     renderPage()
 
-    enterSecurityCode('123456')
-    submitForm()
+    await enterSecurityCode('123456')
+    await submitForm()
 
     await waitFor(() => {
       expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
@@ -208,10 +214,10 @@ describe('SignUpSetMfa', () => {
     })
     renderPage()
 
-    enterSecurityCode('123456')
-    submitForm()
+    await enterSecurityCode('123456')
+    await submitForm()
 
-    expect(await screen.findByText(errorMessages.incorrectMfaCode)).toBeDefined()
+    expect(await screen.findByText(errorMessages.incorrectMfaCode)).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
   })
 
@@ -222,10 +228,10 @@ describe('SignUpSetMfa', () => {
       response: new Response(null, { status: 500 }),
     })
     renderPage()
-    enterSecurityCode('123456')
-    submitForm()
+    await enterSecurityCode('123456')
+    await submitForm()
 
-    expect(await screen.findByText('The service is temporarily unavailable.')).toBeDefined()
+    expect(await screen.findByText('The service is temporarily unavailable.')).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
@@ -237,12 +243,12 @@ describe('SignUpSetMfa', () => {
       response: new Response(null, { status: 500 }),
     })
     renderPage()
-    enterSecurityCode('123456')
-    submitForm()
+    await enterSecurityCode('123456')
+    await submitForm()
 
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
@@ -253,12 +259,12 @@ describe('SignUpSetMfa', () => {
       error: { status: 500 },
     })
     renderPage()
-    enterSecurityCode('123456')
-    submitForm()
+    await enterSecurityCode('123456')
+    await submitForm()
 
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
@@ -267,12 +273,12 @@ describe('SignUpSetMfa', () => {
     vi.mocked(postAuthVerifyMfa).mockRejectedValue(new Error('Network error'))
     renderPage()
 
-    enterSecurityCode('123456')
-    submitForm()
+    await enterSecurityCode('123456')
+    await submitForm()
 
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
   })
 })

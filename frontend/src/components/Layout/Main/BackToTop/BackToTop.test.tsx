@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { BackToTop } from './BackToTop'
@@ -49,6 +50,12 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('BackToTop', () => {
   it('renders a back to top link', () => {
     render(<BackToTop />)
@@ -56,7 +63,7 @@ describe('BackToTop', () => {
     expect(screen.getByRole('link', { name: 'Back to top' }).getAttribute('href')).toBe('#top')
   })
 
-  it('focuses the top target when clicked', () => {
+  it('focuses the top target when clicked', async () => {
     const target = document.createElement('div')
     target.id = 'top'
     target.scrollIntoView = vi.fn()
@@ -64,19 +71,22 @@ describe('BackToTop', () => {
 
     render(<BackToTop />)
 
-    fireEvent.click(screen.getByRole('link', { name: 'Back to top' }))
+    await user.click(screen.getByRole('link', { name: 'Back to top' }))
 
-    expect(document.activeElement).toBe(target)
+    expect(target).toHaveFocus()
     expect(target.tabIndex).toBe(-1)
     expect(target.scrollIntoView).toHaveBeenCalledWith({ block: 'start' })
   })
 
-  it('does not change focus when the top target is missing', () => {
+  it('does not change focus when the top target is missing', async () => {
     render(<BackToTop />)
 
-    fireEvent.click(screen.getByRole('link', { name: 'Back to top' }))
+    const link = screen.getByRole('link', { name: 'Back to top' })
+    await user.tab()
+    expect(link).toHaveFocus()
+    await user.click(link)
 
-    expect(document.activeElement).toBe(document.body)
+    expect(link).toHaveFocus()
   })
 
   it('stays visible when the page content overflows the viewport', () => {

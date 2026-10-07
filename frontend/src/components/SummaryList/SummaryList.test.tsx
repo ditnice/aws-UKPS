@@ -68,8 +68,8 @@ describe('SummaryList', () => {
       </SummaryList>,
     )
 
-    expect(screen.getByRole('link', { name: 'Add contact details' })).toBeDefined()
-    expect(screen.getByRole('link', { name: 'Change contact details' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Add contact details' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Change contact details' })).toBeInTheDocument()
     expect(container.querySelectorAll('dd').length).toBe(3)
 
     const actionsList = container.querySelector('ul')

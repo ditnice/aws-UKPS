@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Header } from './Header'
 
@@ -15,23 +16,29 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
   useRouter: () => ({ push: vi.fn() }),
 }))
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('Header', () => {
   it('renders collapsed by default', () => {
     const { asFragment } = render(<Header skipLinkId="content-start" />)
 
-    expect(screen.getByRole('button', { name: 'Expand site menu' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Expand site menu' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Skip to content' }).getAttribute('href')).toBe(
       '#content-start',
     )
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('renders expanded after the mobile menu button is clicked', () => {
+  it('renders expanded after the mobile menu button is clicked', async () => {
     const { asFragment } = render(<Header skipLinkId="content-start" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Expand site menu' }))
+    await user.click(screen.getByRole('button', { name: 'Expand site menu' }))
 
-    expect(screen.getByRole('button', { name: 'Close site menu' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Close site menu' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 })

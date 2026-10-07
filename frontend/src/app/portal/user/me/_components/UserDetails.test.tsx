@@ -21,7 +21,7 @@ const getLinkByContent = (container: HTMLElement, content: string) => {
 describe('UserDetails', () => {
   it('renders an error when the current user cannot be retrieved', () => {
     render(<UserDetails currentUser={undefined} />)
-    expect(screen.getByTestId('failed-user-retrieval')).toBeDefined()
+    expect(screen.getByTestId('failed-user-retrieval')).toBeInTheDocument()
   })
 
   it("renders the current user's details", () => {
@@ -42,7 +42,7 @@ describe('UserDetails', () => {
 
     const link = getLinkByContent(container, 'Edit Details')
 
-    expect(link).toBeDefined()
+    expect(link).toBeInTheDocument()
     expect(link!.getAttribute('href')).toBe('/portal/user/me/edit-details')
   })
 
@@ -53,7 +53,7 @@ describe('UserDetails', () => {
 
     const link = getLinkByContent(container, 'Return to view and manage records')
 
-    expect(link).toBeDefined()
+    expect(link).toBeInTheDocument()
     expect(link!.getAttribute('href')).toBe('/placeholder')
   })
 })

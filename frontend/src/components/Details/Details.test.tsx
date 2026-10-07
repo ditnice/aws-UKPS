@@ -1,7 +1,14 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { Details } from './Details'
+
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
 
 describe('Details', () => {
   it('renders closed by default with the given summary text and content', () => {
@@ -11,7 +18,7 @@ describe('Details', () => {
     const details = summary.closest('details')!
     expect(details.open).toBe(false)
 
-    expect(screen.getByText('Some content')).toBeDefined()
+    expect(screen.getByText('Some content')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -27,17 +34,17 @@ describe('Details', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('toggles open when the summary is clicked', () => {
+  it('toggles open when the summary is clicked', async () => {
     const { asFragment } = render(<Details summary="Help with nationality">Some content</Details>)
 
     const summary = screen.getByText('Help with nationality')
-    fireEvent.click(summary)
+    await user.click(summary)
 
     expect(summary.closest('details')!.open).toBe(true)
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('closes again when the summary is clicked a second time', () => {
+  it('closes again when the summary is clicked a second time', async () => {
     const { asFragment } = render(
       <Details open summary="Help with nationality">
         Some content
@@ -45,7 +52,7 @@ describe('Details', () => {
     )
 
     const summary = screen.getByText('Help with nationality')
-    fireEvent.click(summary)
+    await user.click(summary)
 
     expect(summary.closest('details')!.open).toBe(false)
     expect(asFragment()).toMatchSnapshot()

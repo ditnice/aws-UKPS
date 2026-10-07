@@ -22,7 +22,7 @@ describe('Legal', () => {
   it('renders the legal menu navigation landmark', () => {
     const { asFragment } = render(<Legal />)
 
-    expect(screen.getByRole('navigation', { name: 'Legal menu' })).toBeDefined()
+    expect(screen.getByRole('navigation', { name: 'Legal menu' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 

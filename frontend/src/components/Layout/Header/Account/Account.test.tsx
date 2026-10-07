@@ -1,5 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthSignOut } from '@/client/generated'
 
@@ -25,6 +26,12 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('Account', () => {
   it('renders a sign in link when there is no session cookie', async () => {
     render(<Account />)
@@ -44,10 +51,10 @@ describe('Account', () => {
     })
 
     render(<Account />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }))
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/'))
-    expect(await screen.findByRole('link', { name: 'Sign in' })).toBeDefined()
+    expect(await screen.findByRole('link', { name: 'Sign in' })).toBeInTheDocument()
     expect(postAuthSignOut).toHaveBeenCalledWith({
       credentials: 'include',
       headers: { 'X-CSRF-Token': 'abc 123' },
@@ -63,7 +70,7 @@ describe('Account', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     render(<Account />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }))
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }))
 
     await waitFor(() => expect(consoleError).toHaveBeenCalledOnce())
     expect(mockPush).not.toHaveBeenCalled()
@@ -75,7 +82,7 @@ describe('Account', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     render(<Account />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }))
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }))
 
     await waitFor(() => expect(consoleError).toHaveBeenCalledOnce())
     expect(mockPush).not.toHaveBeenCalled()

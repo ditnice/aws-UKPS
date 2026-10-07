@@ -60,7 +60,7 @@ describe('Input', () => {
   it('forwards other input props', () => {
     const { asFragment } = render(<Input label="Age" name="age" hint="Please enter in years" />)
 
-    expect(screen.getByText('Please enter in years')).toBeDefined()
+    expect(screen.getByText('Please enter in years')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -106,7 +106,7 @@ describe('Input', () => {
   it.each(widths)('renders the %s width variant', (width) => {
     const { asFragment } = render(<Input label="Age" name="age" width={width} />)
 
-    expect(screen.getByLabelText('Age')).toBeDefined()
+    expect(screen.getByLabelText('Age')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 })

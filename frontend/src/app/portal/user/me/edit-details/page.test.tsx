@@ -65,9 +65,9 @@ describe('EditDetails', () => {
 
     render(result)
 
-    expect(screen.getByRole('heading', { name: 'Edit your details' })).toBeDefined()
+    expect(screen.getByRole('heading', { name: 'Edit your details' })).toBeInTheDocument()
 
-    expect(screen.getByTestId('back-link')).toBeDefined()
+    expect(screen.getByTestId('back-link')).toBeInTheDocument()
   })
 
   it('renders the edit details form when editing the current user', async () => {
@@ -79,7 +79,7 @@ describe('EditDetails', () => {
 
     render(result)
 
-    expect(screen.getByTestId('edit-details-form')).toBeDefined()
+    expect(screen.getByTestId('edit-details-form')).toBeInTheDocument()
     const textContent = screen.getByTestId('user-id').textContent.trim()
     expect(textContent).toBe(exampleUser.userId.toString())
     expect(screen.getByTestId('initial-values').textContent).toBe(

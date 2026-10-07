@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
@@ -89,6 +90,12 @@ beforeEach(() => {
   mockUserResponse()
   mockCurrentUserResponse()
 })
+let interactions: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  interactions = userEvent.setup()
+})
+
 describe('ManageUserAccess', () => {
   it('renders the change user permissions action', async () => {
     render(await ManageUserAccess({ params }))
@@ -97,7 +104,7 @@ describe('ManageUserAccess', () => {
       screen.getByRole('radio', {
         name: 'Change user permissions',
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('renders the deactivate user action', async () => {
@@ -107,7 +114,7 @@ describe('ManageUserAccess', () => {
       screen.getByRole('radio', {
         name: 'Deactivate user',
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('renders the manage user details action', async () => {
@@ -117,7 +124,7 @@ describe('ManageUserAccess', () => {
       screen.getByRole('radio', {
         name: /Manage user details and sign in method/,
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('renders the remove user action when the current user is a Super user', async () => {
@@ -129,7 +136,7 @@ describe('ManageUserAccess', () => {
       screen.getByRole('radio', {
         name: 'Remove user - not implemented yet',
       }),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('does not render the remove user action when the current user is a Champion user', async () => {
@@ -160,26 +167,26 @@ describe('ManageUserAccess', () => {
   it('shows an error when Continue is clicked without selecting an action', async () => {
     render(await ManageUserAccess({ params }))
 
-    fireEvent.click(
+    await interactions.click(
       screen.getByRole('button', {
         name: 'Continue',
       }),
     )
 
-    expect(screen.getByText('Select an option - No answer provided')).toBeDefined()
+    expect(screen.getByText('Select an option - No answer provided')).toBeInTheDocument()
     expect(mocks.push).not.toHaveBeenCalled()
   })
 
   it('clears the selection error when an action is selected and navigates on Continue', async () => {
     render(await ManageUserAccess({ params }))
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(screen.getByText('Select an option - No answer provided')).toBeDefined()
+    await interactions.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.getByText('Select an option - No answer provided')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Change user permissions' }))
+    await interactions.click(screen.getByRole('radio', { name: 'Change user permissions' }))
     expect(screen.queryByText('Select an option - No answer provided')).toBeNull()
     expect(mocks.push).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await interactions.click(screen.getByRole('button', { name: 'Continue' }))
     expect(mocks.push).toHaveBeenCalledExactlyOnceWith(
       '/portal/organisations/2/manage-user-access/4/change-permissions',
     )
@@ -228,12 +235,12 @@ describe('ManageUserAccess', () => {
 
   it('navigates to change permissions when selected', async () => {
     render(await ManageUserAccess({ params }))
-    fireEvent.click(
+    await interactions.click(
       screen.getByRole('radio', {
         name: 'Change user permissions',
       }),
     )
-    fireEvent.click(
+    await interactions.click(
       screen.getByRole('button', {
         name: 'Continue',
       }),
@@ -245,12 +252,12 @@ describe('ManageUserAccess', () => {
 
   it('navigates to deactivate user when selected', async () => {
     render(await ManageUserAccess({ params }))
-    fireEvent.click(
+    await interactions.click(
       screen.getByRole('radio', {
         name: 'Deactivate user',
       }),
     )
-    fireEvent.click(
+    await interactions.click(
       screen.getByRole('button', {
         name: 'Continue',
       }),

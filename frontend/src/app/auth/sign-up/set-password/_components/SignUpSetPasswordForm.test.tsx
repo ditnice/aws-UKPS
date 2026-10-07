@@ -1,8 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthSetupUser } from '@/client/generated/sdk.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { fillInput } from '@/test-utils/userInteractions'
 
 import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
 
@@ -40,26 +42,30 @@ function renderForm() {
   render(<SignUpSetPasswordForm setupToken={setupToken} />)
 }
 
-function enterPassword(password: string) {
-  fireEvent.change(screen.getByLabelText('Password'), {
-    target: { value: password },
-  })
+async function enterPassword(password: string) {
+  await fillInput(user, screen.getByLabelText('Password'), password)
 }
 
-function submitForm() {
-  fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+async function submitForm() {
+  await user.click(screen.getByRole('button', { name: 'Continue' }))
 }
+
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
 
 describe('SignUpSetPasswordForm', () => {
   it('renders the set password controls', () => {
     renderForm()
 
-    expect(screen.getByText('Your password must:')).toBeDefined()
-    expect(screen.getByText('be at least 8 characters long')).toBeDefined()
-    expect(screen.getByText('be 256 characters or fewer')).toBeDefined()
-    expect(screen.getByText('not contain spaces or other whitespace')).toBeDefined()
-    expect(screen.getByLabelText('Password')).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDefined()
+    expect(screen.getByText('Your password must:')).toBeInTheDocument()
+    expect(screen.getByText('be at least 8 characters long')).toBeInTheDocument()
+    expect(screen.getByText('be 256 characters or fewer')).toBeInTheDocument()
+    expect(screen.getByText('not contain spaces or other whitespace')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })
 
   it('sets autocomplete for a new password', () => {
@@ -71,26 +77,28 @@ describe('SignUpSetPasswordForm', () => {
   it('shows a required validation error when submitted empty', async () => {
     renderForm()
 
-    submitForm()
+    await submitForm()
 
-    expect(await screen.findByText('Enter your password')).toBeDefined()
+    expect(await screen.findByText('Enter your password')).toBeInTheDocument()
   })
 
   it('shows a minimum length validation error for a short password', async () => {
     renderForm()
 
-    enterPassword('1234567')
-    submitForm()
+    await enterPassword('1234567')
+    await submitForm()
 
-    expect(await screen.findByText('Password must be at least 8 characters long')).toBeDefined()
+    expect(
+      await screen.findByText('Password must be at least 8 characters long'),
+    ).toBeInTheDocument()
     expect(postAuthSetupUser).not.toHaveBeenCalled()
   })
 
   it('accepts a password at the minimum length', async () => {
     renderForm()
 
-    enterPassword('12345678')
-    submitForm()
+    await enterPassword('12345678')
+    await submitForm()
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your password')).toBeNull()
@@ -102,8 +110,8 @@ describe('SignUpSetPasswordForm', () => {
   it('accepts a password at the maximum length', async () => {
     renderForm()
 
-    enterPassword('a'.repeat(256))
-    submitForm()
+    await enterPassword('a'.repeat(256))
+    await submitForm()
 
     await waitFor(() => {
       expect(postAuthSetupUser).toHaveBeenCalledOnce()
@@ -113,10 +121,10 @@ describe('SignUpSetPasswordForm', () => {
   it('shows a maximum length validation error for a password over 256 characters', async () => {
     renderForm()
 
-    enterPassword('a'.repeat(257))
-    submitForm()
+    await enterPassword('a'.repeat(257))
+    await submitForm()
 
-    expect(await screen.findByText(errorMessages.passwordTooLong)).toBeDefined()
+    expect(await screen.findByText(errorMessages.passwordTooLong)).toBeInTheDocument()
     expect(postAuthSetupUser).not.toHaveBeenCalled()
   })
 
@@ -128,18 +136,18 @@ describe('SignUpSetPasswordForm', () => {
   ])('rejects a password containing a %s', async (_description, password) => {
     renderForm()
 
-    enterPassword(password)
-    submitForm()
+    await enterPassword(password)
+    await submitForm()
 
-    expect(await screen.findByText(errorMessages.passwordWhitespace)).toBeDefined()
+    expect(await screen.findByText(errorMessages.passwordWhitespace)).toBeInTheDocument()
     expect(postAuthSetupUser).not.toHaveBeenCalled()
   })
 
   it('accepts special characters', async () => {
     renderForm()
 
-    enterPassword('^$*.[]{}')
-    submitForm()
+    await enterPassword('^$*.[]{}')
+    await submitForm()
 
     await waitFor(() => {
       expect(postAuthSetupUser).toHaveBeenCalledOnce()
@@ -149,13 +157,15 @@ describe('SignUpSetPasswordForm', () => {
   it('revalidates the password on blur after a failed submit', async () => {
     renderForm()
 
-    enterPassword('short')
-    submitForm()
+    await enterPassword('short')
+    await submitForm()
 
-    expect(await screen.findByText('Password must be at least 8 characters long')).toBeDefined()
+    expect(
+      await screen.findByText('Password must be at least 8 characters long'),
+    ).toBeInTheDocument()
 
-    enterPassword('fourteen-chars')
-    fireEvent.blur(screen.getByLabelText('Password'))
+    await enterPassword('fourteen-chars')
+    await user.tab()
 
     await waitFor(() => {
       expect(screen.queryByText('Password must be at least 8 characters long')).toBeNull()
@@ -165,8 +175,8 @@ describe('SignUpSetPasswordForm', () => {
   it('submits the setup token and password, stores MFA setup data, and redirects', async () => {
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
     await waitFor(() => {
       expect(postAuthSetupUser).toHaveBeenCalledWith({
@@ -193,14 +203,14 @@ describe('SignUpSetPasswordForm', () => {
     })
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
     expect(
       await screen.findByText(
         'Your password was created, but we could not continue to two-factor authentication setup. Return to your sign-up link and try again.',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
@@ -213,12 +223,12 @@ describe('SignUpSetPasswordForm', () => {
     })
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
     expect(
       await screen.findByText('The password does not meet the expected standards.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
@@ -234,12 +244,12 @@ describe('SignUpSetPasswordForm', () => {
     })
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
     expect(
       await screen.findByText('The setup token has expired and can no longer be used.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
@@ -255,14 +265,14 @@ describe('SignUpSetPasswordForm', () => {
     })
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
     expect(
       await screen.findByText(
         'The setup token has already been consumed and cannot be used again.',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
@@ -278,10 +288,10 @@ describe('SignUpSetPasswordForm', () => {
     })
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
-    expect(await screen.findByText('The supplied setup token does not exist.')).toBeDefined()
+    expect(await screen.findByText('The supplied setup token does not exist.')).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
@@ -301,10 +311,10 @@ describe('SignUpSetPasswordForm', () => {
       })
       renderForm()
 
-      enterPassword('fourteen-chars')
-      submitForm()
+      await enterPassword('fourteen-chars')
+      await submitForm()
 
-      expect(await screen.findByText(message)).toBeDefined()
+      expect(await screen.findByText(message)).toBeInTheDocument()
       expect(mockPush).not.toHaveBeenCalled()
       expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
     },
@@ -318,10 +328,10 @@ describe('SignUpSetPasswordForm', () => {
     })
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
-    expect(await screen.findByText('Backend explanation.')).toBeDefined()
+    expect(await screen.findByText('Backend explanation.')).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
@@ -333,12 +343,12 @@ describe('SignUpSetPasswordForm', () => {
     })
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
     expect(
       await screen.findByText('We could not create your password. Try again later.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
@@ -350,12 +360,12 @@ describe('SignUpSetPasswordForm', () => {
     vi.mocked(postAuthSetupUser).mockResolvedValue({ data, error: undefined })
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
     expect(
       await screen.findByText('We could not create your password. Try again later.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })
@@ -364,12 +374,12 @@ describe('SignUpSetPasswordForm', () => {
     vi.mocked(postAuthSetupUser).mockRejectedValue(new Error('Network error'))
     renderForm()
 
-    enterPassword('fourteen-chars')
-    submitForm()
+    await enterPassword('fourteen-chars')
+    await submitForm()
 
     expect(
       await screen.findByText('We could not create your password. Try again later.'),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
   })

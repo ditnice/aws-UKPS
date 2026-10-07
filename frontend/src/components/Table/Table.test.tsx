@@ -28,8 +28,8 @@ describe('Table', () => {
     expect(table).not.toBeNull()
     expect(table?.classList.contains('table')).toBe(true)
     expect(table?.parentElement).toBe(container)
-    expect(screen.getByRole('columnheader', { name: 'Ref' })).toBeDefined()
-    expect(screen.getByRole('cell', { name: 'ABC1' })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: 'Ref' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'ABC1' })).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 

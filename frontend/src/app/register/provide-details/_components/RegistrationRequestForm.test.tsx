@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
@@ -8,6 +9,7 @@ import {
   type RegisterUserConfirmationDto,
 } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { fillInput } from '@/test-utils/userInteractions'
 
 import { RegistrationRequestForm } from './RegistrationRequestForm'
 
@@ -49,13 +51,19 @@ beforeEach(() => {
   } as Awaited<ReturnType<typeof registerUser>>)
 })
 
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('RegistrationRequestForm', () => {
   it('shows the organisation required error when submitted without an organisation', async () => {
     render(<RegistrationRequestForm />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Submit request' }))
+    await user.click(screen.getByRole('button', { name: 'Submit request' }))
 
-    expect(await screen.findByText(errorMessages.organisationRequired)).toBeDefined()
+    expect(await screen.findByText(errorMessages.organisationRequired)).toBeInTheDocument()
   })
 
   it('shows the organisation required error when the placeholder is reselected', async () => {
@@ -64,11 +72,11 @@ describe('RegistrationRequestForm', () => {
     await screen.findByRole('option', { name: 'Test Organisation' })
     const select = screen.getByLabelText(organisationLabel)
 
-    fireEvent.change(select, { target: { value: '1' } })
-    fireEvent.change(select, { target: { value: '' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Submit request' }))
+    await user.selectOptions(select, '1')
+    await user.selectOptions(select, '')
+    await user.click(screen.getByRole('button', { name: 'Submit request' }))
 
-    expect(await screen.findByText(errorMessages.organisationRequired)).toBeDefined()
+    expect(await screen.findByText(errorMessages.organisationRequired)).toBeInTheDocument()
     expect(screen.queryByText(/expected number/)).toBeNull()
   })
 
@@ -77,13 +85,11 @@ describe('RegistrationRequestForm', () => {
 
     await screen.findByRole('option', { name: 'Test Organisation' })
 
-    fireEvent.change(screen.getByLabelText(organisationLabel), { target: { value: '1' } })
-    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Jane Smith' } })
-    fireEvent.change(screen.getByLabelText('Work email address'), {
-      target: { value: 'jane.smith@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '07400 123456' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Submit request' }))
+    await user.selectOptions(screen.getByLabelText(organisationLabel), '1')
+    await fillInput(user, screen.getByLabelText('Full name'), 'Jane Smith')
+    await fillInput(user, screen.getByLabelText('Work email address'), 'jane.smith@example.com')
+    await fillInput(user, screen.getByLabelText('Phone number'), '07400 123456')
+    await user.click(screen.getByRole('button', { name: 'Submit request' }))
 
     await waitFor(() =>
       expect(registerUser).toHaveBeenCalledWith({
@@ -102,13 +108,11 @@ describe('RegistrationRequestForm', () => {
 
     render(<RegistrationRequestForm />)
     await screen.findByRole('option', { name: 'Test Organisation' })
-    fireEvent.change(screen.getByLabelText(organisationLabel), { target: { value: '1' } })
-    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Jane Smith' } })
-    fireEvent.change(screen.getByLabelText('Work email address'), {
-      target: { value: 'jane.smith@example.com' },
-    })
-    fireEvent.change(screen.getByLabelText('Phone number'), { target: { value: '07400123456' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Submit request' }))
+    await user.selectOptions(screen.getByLabelText(organisationLabel), '1')
+    await fillInput(user, screen.getByLabelText('Full name'), 'Jane Smith')
+    await fillInput(user, screen.getByLabelText('Work email address'), 'jane.smith@example.com')
+    await fillInput(user, screen.getByLabelText('Phone number'), '07400123456')
+    await user.click(screen.getByRole('button', { name: 'Submit request' }))
 
     await waitFor(() => {
       expect(sessionStorage.getItem('request_42')).toBe(JSON.stringify(confirmation))
@@ -127,7 +131,7 @@ describe('RegistrationRequestForm', () => {
       await Promise.resolve()
     })
 
-    expect(screen.getByRole('option', { name: 'Choose organisation' })).toBeDefined()
+    expect(screen.getByRole('option', { name: 'Choose organisation' })).toBeInTheDocument()
     expect(screen.getAllByRole('option')).toHaveLength(1)
     expect(screen.queryByRole('option', { name: 'Test Organisation' })).toBeNull()
   })

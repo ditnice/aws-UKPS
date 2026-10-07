@@ -1,9 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { UpdateUserDetailsCommand } from '@/client/generated'
 import { fakeUpdateUserDetailsCommand } from '@/client/generated/@faker-js/faker.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { fillInput } from '@/test-utils/userInteractions'
 
 import { EditDetailsForm, EditDetailsFormProps } from './EditDetailsForm'
 
@@ -51,13 +53,13 @@ function renderForm(override?: Partial<EditDetailsFormProps>) {
   render(<EditDetailsForm userId={props.userId} initialValues={props.initialValues} />)
 }
 
-function setFieldValue(label: string, value: string) {
-  fireEvent.change(screen.getByLabelText(label), { target: { value } })
+async function setFieldValue(label: string, value: string) {
+  await fillInput(user, screen.getByLabelText(label), value)
 }
 
-function clearForm(value = '') {
+async function clearForm(value = '') {
   for (const { label } of requiredErrors) {
-    setFieldValue(label, value)
+    await setFieldValue(label, value)
   }
 }
 
@@ -67,19 +69,25 @@ const validFormValues = {
   workTelephone: '01234567890',
 }
 
-function fillValidForm() {
-  updateForm(validFormValues)
+async function fillValidForm() {
+  await updateForm(validFormValues)
 }
 
-function updateForm(validRequest: UpdateUserDetailsCommand) {
-  setFieldValue('Full name', validRequest.fullName)
-  setFieldValue('Work email address', validRequest.workEmail)
-  setFieldValue('Contact number', validRequest.workTelephone)
+async function updateForm(validRequest: UpdateUserDetailsCommand) {
+  await setFieldValue('Full name', validRequest.fullName)
+  await setFieldValue('Work email address', validRequest.workEmail)
+  await setFieldValue('Contact number', validRequest.workTelephone)
 }
 
-function clickSubmit() {
-  fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+async function clickSubmit() {
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 }
+
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
 
 describe('EditDetailsForm', () => {
   it('renders the edit details controls with appropriate input semantics', () => {
@@ -96,18 +104,21 @@ describe('EditDetailsForm', () => {
     const contactNumber = screen.getByLabelText('Contact number')
     expect(contactNumber.getAttribute('type')).toBe('tel')
     expect(contactNumber.getAttribute('autocomplete')).toBe('tel')
-    expect(screen.getByText('For international numbers include the country code.')).toBeDefined()
+    expect(
+      screen.getByText('For international numbers include the country code.'),
+    ).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: 'Save' }).getAttribute('type')).toBe('submit')
     expect(screen.getByRole('button', { name: 'Cancel' }).getAttribute('type')).toBe('button')
   })
 
-  it('does not validate fields on blur before the first submission', () => {
+  it('does not validate fields on blur before the first submission', async () => {
     renderForm()
 
-    clearForm()
+    await clearForm()
     for (const { label } of requiredErrors) {
-      fireEvent.blur(screen.getByLabelText(label))
+      await user.click(screen.getByLabelText(label))
+      await user.tab()
     }
 
     for (const { message } of requiredErrors) {
@@ -120,22 +131,22 @@ describe('EditDetailsForm', () => {
 
     const examplePhoneNumber = '63846484638'
     renderForm()
-    updateForm({ ...validFormValues, workTelephone: examplePhoneNumber })
-    clickSubmit()
+    await updateForm({ ...validFormValues, workTelephone: examplePhoneNumber })
+    await clickSubmit()
 
     await waitFor(async () => {
       expect(mocks.phoneNumberValidationMock).toHaveBeenCalledWith(examplePhoneNumber, 'GB')
-      expect(await screen.findByText(errorMessages.phoneFormat)).toBeDefined()
+      expect(await screen.findByText(errorMessages.phoneFormat)).toBeInTheDocument()
     })
   })
 
   it('shows required errors and associates them with invalid inputs', async () => {
     renderForm()
-    clearForm()
-    clickSubmit()
+    await clearForm()
+    await clickSubmit()
 
     for (const { message } of requiredErrors) {
-      expect(await screen.findByText(message)).toBeDefined()
+      expect(await screen.findByText(message)).toBeInTheDocument()
     }
 
     const expectedDescriptions = new Map([
@@ -158,26 +169,26 @@ describe('EditDetailsForm', () => {
   it('treats whitespace-only values as empty', async () => {
     renderForm()
 
-    clearForm('   ')
-    clickSubmit()
+    await clearForm('   ')
+    await clickSubmit()
 
     for (const { message } of requiredErrors) {
-      expect(await screen.findByText(message)).toBeDefined()
+      expect(await screen.findByText(message)).toBeInTheDocument()
     }
   })
 
   it('shows an email format error for an invalid work email address', async () => {
     renderForm()
 
-    fillValidForm()
-    setFieldValue('Work email address', 'not-an-email-address')
-    clickSubmit()
+    await fillValidForm()
+    await setFieldValue('Work email address', 'not-an-email-address')
+    await clickSubmit()
 
     expect(
       await screen.findByText(
         'Enter an email address in the correct format, like name@example.com',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(screen.queryByText('Enter your full name')).toBeNull()
     expect(screen.queryByText('Enter your phone number')).toBeNull()
   })
@@ -185,15 +196,15 @@ describe('EditDetailsForm', () => {
   it('revalidates an invalid field on blur after submission', async () => {
     renderForm()
 
-    clearForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await clearForm()
+    await user.click(screen.getByRole('button', { name: 'Save' }))
 
-    expect(await screen.findByText('Enter your full name')).toBeDefined()
+    expect(await screen.findByText('Enter your full name')).toBeInTheDocument()
 
-    setFieldValue('Full name', 'Test User')
-    expect(screen.getByText('Enter your full name')).toBeDefined()
+    await setFieldValue('Full name', 'Test User')
+    expect(screen.getByText('Enter your full name')).toBeInTheDocument()
 
-    fireEvent.blur(screen.getByLabelText('Full name'))
+    await user.tab()
 
     await waitFor(() => {
       expect(screen.queryByText('Enter your full name')).toBeNull()
@@ -205,8 +216,8 @@ describe('EditDetailsForm', () => {
   it('does not show validation errors for valid values', async () => {
     renderForm()
 
-    fillValidForm()
-    clickSubmit()
+    await fillValidForm()
+    await clickSubmit()
 
     await waitFor(() => {
       for (const { message } of requiredErrors) {
@@ -226,8 +237,8 @@ describe('EditDetailsForm', () => {
       workEmail: 'test@example.com',
       workTelephone: '01234567890',
     }
-    updateForm(validRequest)
-    clickSubmit()
+    await updateForm(validRequest)
+    await clickSubmit()
 
     await waitFor(() => {
       expect(mocks.patchUsersByUserId).toHaveBeenCalledWith({
@@ -239,22 +250,22 @@ describe('EditDetailsForm', () => {
 
   it('forwards you to your current user details on success', async () => {
     renderForm()
-    fillValidForm()
-    clickSubmit()
+    await fillValidForm()
+    await clickSubmit()
     await waitFor(() => {
       expect(mocks.push).toHaveBeenCalledWith('/portal/user/me?updated=true')
     })
   })
 
-  it('navigates back without submitting when Cancel is selected', () => {
+  it('navigates back without submitting when Cancel is selected', async () => {
     renderForm()
 
-    clearForm()
+    await clearForm()
 
     const cancel = screen.getByRole('button', { name: 'Cancel' })
     expect(cancel.getAttribute('type')).toBe('button')
 
-    fireEvent.click(cancel)
+    await user.click(cancel)
 
     expect(mocks.back).toHaveBeenCalledOnce()
     for (const { message } of requiredErrors) {
@@ -269,10 +280,10 @@ describe('EditDetailsForm', () => {
     })
 
     renderForm()
-    fillValidForm()
-    clickSubmit()
+    await fillValidForm()
+    await clickSubmit()
 
-    expect(await screen.findByText(errorMessages.updatingUserDetailsError)).toBeDefined()
+    expect(await screen.findByText(errorMessages.updatingUserDetailsError)).toBeInTheDocument()
 
     expect(mocks.push).not.toHaveBeenCalled()
     expect(mocks.patchUsersByUserId).toHaveBeenCalledOnce()
@@ -295,8 +306,8 @@ describe('EditDetailsForm', () => {
     })
 
     renderForm()
-    fillValidForm()
-    clickSubmit()
+    await fillValidForm()
+    await clickSubmit()
 
     const expectedErrors = [
       {
@@ -317,7 +328,7 @@ describe('EditDetailsForm', () => {
     ]
 
     for (const { label, message, errorId } of expectedErrors) {
-      expect(await screen.findByText(message)).toBeDefined()
+      expect(await screen.findByText(message)).toBeInTheDocument()
 
       const input = screen.getByLabelText(label)
       expect(input.getAttribute('aria-invalid')).toBe('true')
@@ -325,7 +336,7 @@ describe('EditDetailsForm', () => {
       expect(document.getElementById(errorId)?.textContent).toContain(message)
     }
 
-    expect(screen.getByText(errorMessages.updatingUserDetailsError)).toBeDefined()
+    expect(screen.getByText(errorMessages.updatingUserDetailsError)).toBeInTheDocument()
     expect(mocks.push).not.toHaveBeenCalled()
   })
 })

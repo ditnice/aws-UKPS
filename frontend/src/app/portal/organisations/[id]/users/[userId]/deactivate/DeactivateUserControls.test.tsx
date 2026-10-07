@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
@@ -44,13 +45,19 @@ const getActionButton = () => screen.getByTestId('action-button')
 const getCancelButton = () => screen.getByTestId('cancel-button')
 const getActionError = () => screen.queryByTestId('action-error')
 
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
 describe('DeactivateUserControls', () => {
   it('error is not rendered by deafult', () => {
     expect(getActionError()).toBeFalsy()
   })
   it('calls deactivate membership with the correct values', async () => {
     renderComponent()
-    fireEvent.click(getActionButton())
+    await user.click(getActionButton())
     await waitFor(() => {
       expect(mocks.deactivateMembership).toHaveBeenCalledExactlyOnceWith({
         path: {
@@ -62,7 +69,7 @@ describe('DeactivateUserControls', () => {
   })
   it('routes to the organisation page on success', async () => {
     renderComponent()
-    fireEvent.click(getActionButton())
+    await user.click(getActionButton())
     await waitFor(() => {
       expect(mocks.push).toHaveBeenCalledExactlyOnceWith(mockHref)
       expect(mocks.buildUserActionHref).toHaveBeenCalledWith(defaultProps.organisationId, {
@@ -75,7 +82,7 @@ describe('DeactivateUserControls', () => {
     mocks.deactivateMembership.mockReturnValue({ error: {} })
 
     renderComponent()
-    fireEvent.click(getActionButton())
+    await user.click(getActionButton())
     await waitFor(() => {
       expect(getActionError()).toBeTruthy()
       expect(mocks.push).not.toHaveBeenCalled()
@@ -84,7 +91,7 @@ describe('DeactivateUserControls', () => {
 
   it('call the router back function on cancel', async () => {
     renderComponent()
-    fireEvent.click(getCancelButton())
+    await user.click(getCancelButton())
     await waitFor(() => {
       expect(mocks.back).toHaveBeenCalledOnce()
     })

@@ -10,7 +10,7 @@ describe('Footer', () => {
   it('renders a contentinfo landmark', () => {
     const { asFragment } = render(<Footer />)
 
-    expect(screen.getByRole('contentinfo')).toBeDefined()
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -24,14 +24,14 @@ describe('Footer', () => {
   it('renders the placeholder content', () => {
     const { asFragment } = render(<Footer />)
 
-    expect(screen.getByText('Footer placeholder content')).toBeDefined()
+    expect(screen.getByText('Footer placeholder content')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
   it('renders Legal as a child', () => {
     const { asFragment } = render(<Footer />)
 
-    expect(screen.getByTestId('legal')).toBeDefined()
+    expect(screen.getByTestId('legal')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 })

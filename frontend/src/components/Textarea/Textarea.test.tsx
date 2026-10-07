@@ -71,7 +71,7 @@ describe('Textarea', () => {
     )
 
     const textarea = screen.getByLabelText('Description') as HTMLTextAreaElement
-    expect(screen.getByText('Include all relevant details')).toBeDefined()
+    expect(screen.getByText('Include all relevant details')).toBeInTheDocument()
     expect(textarea.placeholder).toBe('Enter a description')
     expect(textarea.rows).toBe(8)
     expect(asFragment()).toMatchSnapshot()
@@ -80,7 +80,7 @@ describe('Textarea', () => {
   it.each(widths)('renders the %s width variant', (width) => {
     const { asFragment } = render(<Textarea label="Description" name="description" width={width} />)
 
-    expect(screen.getByLabelText('Description')).toBeDefined()
+    expect(screen.getByLabelText('Description')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 })

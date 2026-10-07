@@ -20,7 +20,9 @@ describe('SignInMfa', () => {
       }),
     )
 
-    expect(screen.getByText('MFA form returnTo: /portal/organisations/1?tab=users')).toBeDefined()
+    expect(
+      screen.getByText('MFA form returnTo: /portal/organisations/1?tab=users'),
+    ).toBeInTheDocument()
   })
 
   it('does not pass an unsafe returnTo URL to the MFA form', async () => {
@@ -34,6 +36,6 @@ describe('SignInMfa', () => {
       }),
     )
 
-    expect(screen.getByText('MFA form returnTo: none')).toBeDefined()
+    expect(screen.getByText('MFA form returnTo: none')).toBeInTheDocument()
   })
 })

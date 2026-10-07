@@ -117,8 +117,8 @@ describe('OrganisationPageWrapper', () => {
 
     const { getByRole, getByTestId } = render(result)
 
-    expect(getByRole('heading', { name: 'Unable to load organisation' })).toBeDefined()
-    expect(getByTestId('organisation-retrieval-error')).toBeDefined()
+    expect(getByRole('heading', { name: 'Unable to load organisation' })).toBeInTheDocument()
+    expect(getByTestId('organisation-retrieval-error')).toBeInTheDocument()
 
     expect(children).not.toHaveBeenCalled()
   })
