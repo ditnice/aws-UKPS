@@ -4,16 +4,11 @@ import { vi } from 'vitest'
 
 import { postAuthLogin } from '@/client/generated'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { router } from '@/test-utils/nextNavigation'
 
 import { SignInForm } from './SignInForm'
 
-const mockPush = vi.fn()
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   postAuthLogin: vi.fn(),
@@ -132,7 +127,7 @@ describe('SignInForm', () => {
         credentials: 'include',
       })
 
-      expect(mockPush).toHaveBeenCalledWith(routeOnSuccessfulAuth)
+      expect(router.push).toHaveBeenCalledWith(routeOnSuccessfulAuth)
     })
   })
 
@@ -149,7 +144,7 @@ describe('SignInForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/portal/organisations/1?tab=users')
+      expect(router.push).toHaveBeenCalledWith('/portal/organisations/1?tab=users')
     })
   })
 
@@ -220,7 +215,7 @@ describe('SignInForm', () => {
       credentials: 'include',
     })
 
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(router.push).not.toHaveBeenCalled()
   })
 
   it('redirects to the MFA page if there is an MFA challenge', async () => {
@@ -252,7 +247,7 @@ describe('SignInForm', () => {
         credentials: 'include',
       })
 
-      expect(mockPush).toHaveBeenCalledWith(
+      expect(router.push).toHaveBeenCalledWith(
         '/auth/sign-in/mfa?username=name%40example.com&session=test-authentication-session',
       )
     })
@@ -279,7 +274,7 @@ describe('SignInForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(
+      expect(router.push).toHaveBeenCalledWith(
         '/auth/sign-in/mfa?username=name%40example.com&session=test-authentication-session&returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })

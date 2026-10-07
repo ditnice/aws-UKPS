@@ -7,7 +7,7 @@ import { cleanup } from '@testing-library/react'
 import 'dotenv/config'
 import { afterEach, vi } from 'vitest'
 
-// `globals` is off, so RTL can't register its own cleanup. Run it once here instead of in every spec.
+// `globals` is off, so RTL can't register its own cleanup. Run it once here instead of in every test.
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
