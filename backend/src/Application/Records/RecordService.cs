@@ -73,6 +73,7 @@ internal partial class RecordService(
                 Title = m.Title ?? string.Empty,
                 DevelopmentName = m.DevelopmentName,
                 ReviewedAt = m.ReviewedAt,
+                NextUpdateDue = m.NextUpdateDue,
             })
             .ToArray();
 
@@ -235,6 +236,7 @@ internal partial class RecordService(
             CurrentDraftRevisionId = x.Revisions.OrderBy(y => y.RevisionNo).Last().Id,
             NextUpdateDue =
                 x.ReviewedAt == null
+                || (x.RecordStatus != RecordStatus.Active && x.RecordStatus != RecordStatus.OnHold)
                     ? null
                     : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths), // TODO rules around this need to be reviewed, requires wider-team discussion
         });

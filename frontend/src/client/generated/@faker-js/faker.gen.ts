@@ -176,7 +176,8 @@ export const fakeRecordListItemDto = (options?: Options): RecordListItemDto => {
         recordStatus: fakeRecordStatus(options),
         title: f.lorem.words(),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { developmentName: f.datatype.boolean() ? f.string.sample() : null },
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null }
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null }
     };
 };
 

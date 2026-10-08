@@ -1,4 +1,6 @@
 import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
+import type { RecordListItemDto } from '@/client/generated/types.gen'
+import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
@@ -9,6 +11,19 @@ type RecordsTableProps = {
   data: PaginatedResponseDtoOfRecordListItemDto
   query: RecordsQuery
 }
+function renderNextUpdate(nextUpdateDue: RecordListItemDto['nextUpdateDue']) {
+  if (!nextUpdateDue) {
+    return null
+  }
+
+  const dueDate = new Date(nextUpdateDue)
+  if (dueDate < new Date()) {
+    return <Tag colour="red">Overdue</Tag>
+  }
+
+  return new Intl.DateTimeFormat('en-GB').format(dueDate)
+}
+
 const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
   return (
     <>
@@ -24,10 +39,11 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
           switch (key) {
             case 'id':
               return <>{data.developmentName}</>
+            case 'next-update':
+              return <>{renderNextUpdate(data.nextUpdateDue)}</>
             case 'record-status':
               return <>{recordStatusLabels[data.recordStatus]}</>
             case 'development-name':
-            case 'next-update':
             case 'records-title':
             case 'actions':
               return <>TODO</>

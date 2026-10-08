@@ -36,4 +36,9 @@ public sealed record RecordListItemDto
     /// Gets the date the record was last reviewed, when available.
     /// </summary>
     public DateTime? ReviewedAt { get; init; }
+
+    /// <summary>
+    /// Gets the date the record is next due for an update, when available.
+    /// </summary>
+    public DateTime? NextUpdateDue { get; init; }
 }
