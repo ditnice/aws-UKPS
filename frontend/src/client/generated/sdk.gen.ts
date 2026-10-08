@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveData, ApproveErrors, ApproveResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, CreateRecordData, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentUserOrganisationsData, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutData, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -38,6 +38,11 @@ export const postAuthLogin = <ThrowOnError extends boolean = false>(options: Opt
  * Requests with a missing or invalid CSRF token are rejected with an unauthorized response.
  */
 export const postAuthRefresh = <ThrowOnError extends boolean = false>(options?: Options<PostAuthRefreshData, ThrowOnError>): RequestResult<PostAuthRefreshResponses, PostAuthRefreshErrors, ThrowOnError> => (options?.client ?? client).post<PostAuthRefreshResponses, PostAuthRefreshErrors, ThrowOnError>({ url: '/auth/refresh', ...options });
+
+/**
+ * Ends the current authentication session and clears authentication cookies.
+ */
+export const postAuthSignOut = <ThrowOnError extends boolean = false>(options?: Options<PostAuthSignOutData, ThrowOnError>): RequestResult<PostAuthSignOutResponses, PostAuthSignOutErrors, ThrowOnError> => (options?.client ?? client).post<PostAuthSignOutResponses, PostAuthSignOutErrors, ThrowOnError>({ url: '/auth/sign-out', ...options });
 
 /**
  * Completes a multi-factor authentication challenge for an existing authentication session.
@@ -87,6 +92,23 @@ export const postAuthSetupUser = <ThrowOnError extends boolean = false>(options:
  */
 export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthVerifyMfaData, ThrowOnError>): RequestResult<PostAuthVerifyMfaResponses, PostAuthVerifyMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthVerifyMfaResponses, PostAuthVerifyMfaErrors, ThrowOnError>({
     url: '/auth/verify-mfa',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Retrieves the organisations the current user is permitted to manage.
+ */
+export const getCurrentUserOrganisations = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserOrganisationsData, ThrowOnError>): RequestResult<GetCurrentUserOrganisationsResponses, GetCurrentUserOrganisationsErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserOrganisationsResponses, GetCurrentUserOrganisationsErrors, ThrowOnError>({ url: '/users/me/organisations', ...options });
+
+/**
+ * Updates the current user's selected organisation.
+ */
+export const updateCurrentOrganisation = <ThrowOnError extends boolean = false>(options: Options<UpdateCurrentOrganisationData, ThrowOnError>): RequestResult<UpdateCurrentOrganisationResponses, UpdateCurrentOrganisationErrors, ThrowOnError> => (options.client ?? client).patch<UpdateCurrentOrganisationResponses, UpdateCurrentOrganisationErrors, ThrowOnError>({
+    url: '/users/me/current-organisation',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -154,6 +176,18 @@ export const getOrganisationsPublicOptions = <ThrowOnError extends boolean = fal
  * Retrieves a paginated list of records belonging to the user's organisation.
  */
 export const getOrganisationRecords = <ThrowOnError extends boolean = false>(options: Options<GetOrganisationRecordsData, ThrowOnError>): RequestResult<GetOrganisationRecordsResponses, GetOrganisationRecordsErrors, ThrowOnError> => (options.client ?? client).get<GetOrganisationRecordsResponses, GetOrganisationRecordsErrors, ThrowOnError>({ url: '/records/organisations/{organisationId}', ...options });
+
+/**
+ * Creates a new record.
+ */
+export const createRecord = <ThrowOnError extends boolean = false>(options: Options<CreateRecordData, ThrowOnError>): RequestResult<CreateRecordResponses, CreateRecordErrors, ThrowOnError> => (options.client ?? client).post<CreateRecordResponses, CreateRecordErrors, ThrowOnError>({
+    url: '/records',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Gets the information for the currently authenticated user.

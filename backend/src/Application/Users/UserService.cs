@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -6,6 +7,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
@@ -20,6 +22,7 @@ using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
 >;
+using UpdateCurrentOrganisationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.UpdateCurrentOrganisationError>;
 using UpdateUserDetailsResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.UserDetailsDto,
     UKPS.Api.Application.Users.Errors.UpdateUserDetailsError
@@ -32,6 +35,7 @@ internal partial class UserService(
     IOrganisationAuthoriser organisationAuthoriser,
     IDateTimeProvider timeProvider,
     IIdentityService identityService,
+    CurrentDbUserEntityService currentDbUserEntityService,
     ICurrentUserInfoService currentUserInfoService,
     ILogger<UserService> logger
 ) : IUserService
@@ -39,19 +43,11 @@ internal partial class UserService(
     public async Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
-        User? possibleUser = await dbContext
-            .Users.Include(x => x.UserOrgMemberships)!
-                .ThenInclude(x => x.Organisation)
-            .FirstOrDefaultAsync(
-                x => x.CognitoUsername == currentUser.CognitoUsername,
-                cancellationToken
-            );
-        User user =
-            possibleUser
-            ?? throw new InvalidOperationException(
-                "Could not find current user by email in the database as expected."
-            );
-        var membership =
+        User user = await currentDbUserEntityService.GetCurrentUser(
+            x => x.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
+            cancellationToken
+        );
+        UserOrgMembership membership =
             user.UserOrgMemberships!.FirstOrDefault(x =>
                 x.OrganisationId == currentUser.OrganisationId
             )
@@ -72,6 +68,65 @@ internal partial class UserService(
         };
     }
 
+    public async Task<UpdateCurrentOrganisationResult> UpdateCurrentOrganisation(
+        UpdateCurrentOrganisationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        User user = await currentDbUserEntityService.GetCurrentUser(
+            q => q.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
+            cancellationToken
+        );
+
+        if (!user.CanSelectAsCurrentOrganisation(command.OrganisationId))
+        {
+            return UpdateCurrentOrganisationResult.Err(
+                new UpdateCurrentOrganisationError.ProvidedOrganisationWasNotValid()
+            );
+        }
+
+        // Disposing the transaction without committing rolls back any changes.
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            cancellationToken
+        );
+
+        // Needs to be done in two separate operations so that the unique index on the
+        // selected organisation is not violated while the selection is changed.
+        user.ResetCurrentOrganisation();
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (!user.TryUpdateCurrentOrganisation(command.OrganisationId))
+        {
+            throw new UnreachableException(
+                "The organisation was validated as selectable but could not be selected."
+            );
+        }
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+        return UpdateCurrentOrganisationResult.Ok();
+    }
+
+    public async Task<IReadOnlyCollection<OrganisationListDto>> GetCurrentUserOrganisations(
+        CancellationToken cancellationToken
+    )
+    {
+        User user = await currentDbUserEntityService.GetCurrentUser(
+            q => q.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
+            cancellationToken
+        );
+
+        return user.UserOrgMemberships!.Where(x => x.IsSelectable())
+            .DistinctBy(x => x.OrganisationId)
+            .Select(x => new OrganisationListDto
+            {
+                Id = x.OrganisationId,
+                OrganisationName = x.Organisation!.OrganisationName,
+            })
+            .OrderBy(x => x.OrganisationName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     public async Task<GetUsersResult> GetUsers(
         GetUsersQueryDto getUsersQuery,
         CancellationToken cancellationToken
@@ -79,7 +134,7 @@ internal partial class UserService(
     {
         GetUsersError? organisationError = await ValidateOrganisationAsync(
             getUsersQuery.OrganisationId,
-            Operation.Read,
+            Operation.ElevatedRead,
             cancellationToken
         );
         if (organisationError is not null)
@@ -88,7 +143,7 @@ internal partial class UserService(
         }
 
         var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
-            Operation.Read
+            Operation.ElevatedRead
         );
         IQueryable<UserInformationTrackingProjection> unionQuery = GetProjectedUserInformation();
         IQueryable<UserInformationTrackingProjection> organisationMemberships = ApplyFilters(
@@ -315,7 +370,11 @@ internal partial class UserService(
     {
         if (!organisationId.HasValue)
         {
-            return null;
+            // No specific organisation requested, so the caller must be permitted the
+            // operation on at least one organisation.
+            return organisationAuthoriser.GetAuthorisedOrganisations(operation).IsNone
+                ? new GetUsersError.NotAllowed(null)
+                : null;
         }
 
         bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(

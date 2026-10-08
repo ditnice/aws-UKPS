@@ -206,7 +206,9 @@ describe('SignInForm', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
 
-    const errors = await screen.findAllByText('Invalid email or password')
+    const errors = await screen.findAllByText(
+      'The email address or password you entered is incorrect',
+    )
 
     expect(errors).toHaveLength(2)
 

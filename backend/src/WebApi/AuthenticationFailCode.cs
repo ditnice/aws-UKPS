@@ -34,4 +34,9 @@ public enum AuthenticationFailCode
     /// The user's membership is not in a valid state for authentication.
     /// </summary>
     MembershipNotInValidState = 5,
+
+    /// <summary>
+    /// The organisation for the user's membership is not active.
+    /// </summary>
+    OrganisationNotActive = 6,
 }

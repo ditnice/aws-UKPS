@@ -79,8 +79,8 @@ export function SignInForm({ returnTo }: SignInFormProps) {
         formApi.setErrorMap({
           onSubmit: {
             fields: {
-              email: 'Invalid email or password',
-              password: 'Invalid email or password',
+              email: 'The email address or password you entered is incorrect',
+              password: 'The email address or password you entered is incorrect',
             },
           },
         })

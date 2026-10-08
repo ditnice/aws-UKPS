@@ -18,9 +18,14 @@ export const errorMessages = {
   organisationRequired: 'Select an organisation',
 
   //// Onboarding
-  userNameRequired: "Enter the user's full name",
-  userEmailRequired: "Enter the user's work email address",
-  userPhoneNumberRequired: "Enter the user's phone number",
+  userNameRequired: 'Enter their full name',
+  userEmailRequired: 'Enter an email address',
+  userPhoneNumberRequired: 'Enter their phone number',
+
+  //// Records
+  developmentNameRequired: 'Enter development name',
+  genericNameRequired: 'Enter generic name',
+  recordTitleRequired: 'Enter record title',
 
   // Formatting
   emailFormat: 'Enter an email address in the correct format, like name@example.com',
@@ -31,10 +36,15 @@ export const errorMessages = {
   passwordTooLong: 'Your password must be 256 characters or less',
   passwordWhitespace: 'Your password cannot contain spaces',
 
+  developmentNamesDistinct: 'Development names must be distinct',
+  genericNamesDistinct: 'Generic names must be distinct',
+  recordTitleTooLong: 'Record title cannot be greater than 100 characters',
+
   // Data retrieval
   failedToRetrieveCurrentUser: 'Failed to retrieve the current user.',
   anErrorOccurredWhenTryingToRetrieveTheUserMembershipRequest:
     'An error occurred when trying to retrieve the user membership request',
 
   updatingUserDetailsError: 'An error occurred when updating user details.',
+  creatingNewRecordError: 'An error occurred when creating a new medicine record.',
 } as const

@@ -1,4 +1,3 @@
-using Amazon.SimpleSystemsManagement.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using UKPS.Api.Application.Common;
@@ -20,7 +19,7 @@ internal class UserRegistrationService : IUserRegistrationService
 {
     private readonly IOrganisationAuthoriser _organisationAuthoriser;
     private readonly UserOnboardingService _userOnboardingService;
-    private readonly ICurrentUserInfoService _currentUserService;
+    private readonly CurrentDbUserEntityService _currentDbUserEntityService;
     private readonly IEmailService _emailService;
     private readonly ISetupLinkCreator _setupLinkCreator;
     private readonly AppDbContext _dbContext;
@@ -31,7 +30,7 @@ internal class UserRegistrationService : IUserRegistrationService
         IDateTimeProvider dateTimeProvider,
         IOrganisationAuthoriser organisationAuthoriser,
         UserOnboardingService userOnboardingService,
-        ICurrentUserInfoService currentUserService,
+        CurrentDbUserEntityService currentDbUserEntityService,
         IEmailService emailService,
         ISetupLinkCreator setupLinkCreator
     )
@@ -40,7 +39,7 @@ internal class UserRegistrationService : IUserRegistrationService
         _dateTimeProvider = dateTimeProvider;
         _organisationAuthoriser = organisationAuthoriser;
         _userOnboardingService = userOnboardingService;
-        _currentUserService = currentUserService;
+        _currentDbUserEntityService = currentDbUserEntityService;
         _emailService = emailService;
         _setupLinkCreator = setupLinkCreator;
     }
@@ -87,6 +86,16 @@ internal class UserRegistrationService : IUserRegistrationService
         CancellationToken cancellationToken
     )
     {
+        // Authorise against the requested organisation before looking the request up, so an
+        // unauthorised caller gets the same response whether or not the request exists.
+        var authorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.SignUpUser,
+            organisationId
+        );
+        if (!authorised)
+        {
+            return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.UserNotAuthorised());
+        }
         var request = await _dbContext
             .UserRegistrationRequests.AsNoTracking()
             .Include(x => x.Organisation)
@@ -96,14 +105,6 @@ internal class UserRegistrationService : IUserRegistrationService
         if (request is null)
         {
             return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.IdNotFound(id));
-        }
-        var authorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
-            Operation.SignUpUser,
-            request.OrganisationId
-        );
-        if (!authorised)
-        {
-            return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.UserNotAuthorised());
         }
         var dto = MapToDto(request);
         return GetUserRegistrationByIdResult.Ok(dto);
@@ -145,7 +146,7 @@ internal class UserRegistrationService : IUserRegistrationService
             return validStateResult.Value;
         }
 
-        var currentUser = await GetCurrentUser(cancellationToken);
+        var currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
         registrationRequest.Approve(currentUser, _dateTimeProvider.GetUtcNow());
 
         try
@@ -209,7 +210,7 @@ internal class UserRegistrationService : IUserRegistrationService
             return validStateResult.Value;
         }
 
-        var currentUser = await GetCurrentUser(cancellationToken);
+        var currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
         registrationRequest.Reject(currentUser, _dateTimeProvider.GetUtcNow());
 
         try
@@ -283,19 +284,6 @@ internal class UserRegistrationService : IUserRegistrationService
             userAlreadyExists: _ =>
                 Result<ApproveRequestError>.Err(new ApproveRequestError.UserAlreadyExists())
         );
-    }
-
-    private async Task<User> GetCurrentUser(CancellationToken cancellationToken)
-    {
-        CurrentUser currentUserInfo = _currentUserService.GetCurrentUserInfo();
-        User? foundValue = await _dbContext.Users.FirstOrDefaultAsync(
-            x => x.CognitoUsername == currentUserInfo.CognitoUsername,
-            cancellationToken
-        );
-        return foundValue
-            ?? throw new InvalidOptionException(
-                $"Could not find specified current user in the database. [{currentUserInfo.CognitoUsername}]"
-            );
     }
 
     private static RegisterUserConfirmationDto MapToDto(

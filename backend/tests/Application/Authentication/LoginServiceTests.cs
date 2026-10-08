@@ -1,5 +1,8 @@
+using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
@@ -149,6 +152,54 @@ public class LoginServiceTests : DatabaseTestBase
         );
 
         result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task SignOut_ShouldRevokeTheRefreshToken()
+    {
+        AuthenticationCredentialsDto credentials = await CompleteFullLogin();
+
+        await _harness.Service.SignOut(
+            credentials.RefreshToken,
+            TestContext.Current.CancellationToken
+        );
+
+        var result = await _harness.Service.RefreshAuthenticationToken(
+            new RefreshAuthenticationTokenCommand() { RefreshToken = credentials.RefreshToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task SignOut_WhenRefreshTokenIsInvalid_ShouldCompleteSuccessfully()
+    {
+        Exception? exception = await Record.ExceptionAsync(() =>
+            _harness.Service.SignOut("invalid-token", TestContext.Current.CancellationToken)
+        );
+
+        exception.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SignOut_WhenCognitoIsThrottling_ShouldCompleteSuccessfully()
+    {
+        _harness
+            .Cognito.Mock.RevokeTokenAsync(
+                Arg.Any<RevokeTokenRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Throws(new TooManyRequestsException("Rate exceeded"));
+
+        Exception? exception = await Record.ExceptionAsync(() =>
+            _harness.Service.SignOut(
+                _harness.Cognito.RefreshToken,
+                TestContext.Current.CancellationToken
+            )
+        );
+
+        exception.ShouldBeNull();
     }
 
     private async Task<InitiateAuthenticationError.Challenge> AttemptLoginAndGetChallenge()

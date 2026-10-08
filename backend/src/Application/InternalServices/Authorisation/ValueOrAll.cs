@@ -22,6 +22,8 @@ internal readonly record struct ValueOrAll<T>
 
     public static ValueOrAll<T> None() => new(ValueOrAllState.None, default);
 
+    public bool IsNone => _state == ValueOrAllState.None;
+
     public bool Contains(T value) =>
         (_state, _value) switch
         {
