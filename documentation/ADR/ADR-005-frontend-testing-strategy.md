@@ -207,10 +207,10 @@ Generated code, type-only files, migrations, declarative framework
 configuration and framework glue containing no application decision may be
 excluded. Code is not excluded merely because it is difficult to test.
 
-Global statement, branch, function and line thresholds are set to the
-measured baseline when this ADR is adopted. They form a ratchet: thresholds
-are raised as meaningful coverage improves and are not lowered to make a
-build pass. Risk-based thresholds also apply:
+Global statement, branch, function and line thresholds start at an 80%
+baseline when this ADR is adopted. They form a ratchet: thresholds are raised
+as meaningful coverage improves and are not lowered to make a build pass.
+Risk-based thresholds also apply:
 
 - `src/access/**` has 100% lines and branches per file; and
 - pure business logic and Server Actions under `src/lib/**`, `**/_lib/**`

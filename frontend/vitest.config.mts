@@ -60,10 +60,18 @@ export default defineConfig({
       ],
       // Baseline ratchet (ADR-005): raise as coverage improves, never lower.
       thresholds: {
-        statements: 71,
-        branches: 67,
-        functions: 64,
-        lines: 71,
+        perFile: false,
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
+        // Aggregate 100% also requires 100% in every access file. Vitest's
+        // perFile flag applies globally, not independently to each glob.
+        'src/access/**': { lines: 100, branches: 100 },
+        // Independent aggregate gates for each ADR-005 risk scope.
+        'src/lib/**': { lines: 90, branches: 90 },
+        'src/**/_lib/**': { lines: 90, branches: 90 },
+        'src/**/_actions/**': { lines: 90, branches: 90 },
       },
     },
   },
