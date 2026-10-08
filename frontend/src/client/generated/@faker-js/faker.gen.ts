@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationFailCode, AuthenticationProblemDetails, CreateOrganisationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordsQuerySortValue, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordListItemDto, RecordStatus, RecordType, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationFailCode, AuthenticationProblemDetails, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordsQuerySortValue, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordListItemDto, RecordStatus, RecordType, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -44,6 +44,25 @@ export const fakeCreateOrganisationDto = (options?: Options): CreateOrganisation
         headOfficeAddress: f.string.sample(),
         headOfficeEmail: f.internet.email(),
         headOfficeTelephone: f.string.sample()
+    };
+};
+
+export const fakeCreateRecordCommand = (options?: Options): CreateRecordCommand => {
+    const f = options?.faker ?? faker;
+    return {
+        organisationId: f.number.int(),
+        developmentNames: f.helpers.multiple(() => f.string.sample(), { count: { min: 1, max: 100 } }),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { brandedName: f.datatype.boolean() ? f.string.sample() : null },
+        genericNames: f.helpers.multiple(() => f.string.sample(), { count: { min: 1, max: 100 } }),
+        recordTitle: f.string.alpha({ length: { min: 0, max: 100 } })
+    };
+};
+
+export const fakeCreateRecordDto = (options?: Options): CreateRecordDto => {
+    const f = options?.faker ?? faker;
+    return {
+        recordId: f.number.int(),
+        revisionId: f.number.int()
     };
 };
 
@@ -443,6 +462,10 @@ export const fakePostAuthRefreshResponse400 = (options?: Options): PostAuthRefre
 
 export const fakePostAuthRefreshResponse401 = (options?: Options): PostAuthRefreshErrors[401] => fakeAuthenticationProblemDetails(options);
 
+export const fakePostAuthSignOutResponse200 = (): PostAuthSignOutResponses[200] => undefined;
+
+export const fakePostAuthSignOutResponse401 = (options?: Options): PostAuthSignOutErrors[401] => fakeProblemDetails(options);
+
 export const fakePostAuthMfaRequest = (options?: Options): Omit<PostAuthMfaData, 'url'> => ({
     body: fakeRespondToMultiFactorAuthenticationChallengeCommand(options)
 });
@@ -540,6 +563,8 @@ export const fakeGetOrganisationByIdResponse200 = (options?: Options): GetOrgani
 
 export const fakeGetOrganisationByIdResponse401 = (options?: Options): GetOrganisationByIdErrors[401] => fakeAuthenticationProblemDetails(options);
 
+export const fakeGetOrganisationByIdResponse403 = (options?: Options): GetOrganisationByIdErrors[403] => fakeProblemDetails(options);
+
 export const fakeGetOrganisationByIdResponse404 = (options?: Options): GetOrganisationByIdErrors[404] => fakeProblemDetails(options);
 
 export const fakeUpdateOrganisationDetailsRequest = (options?: Options): Omit<UpdateOrganisationDetailsData, 'url'> => {
@@ -557,6 +582,8 @@ export const fakeUpdateOrganisationDetailsResponse200 = (options?: Options): Upd
 export const fakeUpdateOrganisationDetailsResponse400 = (options?: Options): UpdateOrganisationDetailsErrors[400] => fakeProblemDetails(options);
 
 export const fakeUpdateOrganisationDetailsResponse401 = (options?: Options): UpdateOrganisationDetailsErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeUpdateOrganisationDetailsResponse403 = (options?: Options): UpdateOrganisationDetailsErrors[403] => fakeProblemDetails(options);
 
 export const fakeUpdateOrganisationDetailsResponse404 = (options?: Options): UpdateOrganisationDetailsErrors[404] => fakeProblemDetails(options);
 
@@ -613,6 +640,8 @@ export const fakeUpdateUserRoleRequest = (options?: Options): Omit<UpdateUserRol
 
 export const fakeUpdateUserRoleResponse200 = (options?: Options): UpdateUserRoleResponses[200] => fakeOrganisationMembershipDto(options);
 
+export const fakeUpdateUserRoleResponse400 = (options?: Options): UpdateUserRoleErrors[400] => fakeProblemDetails(options);
+
 export const fakeUpdateUserRoleResponse401 = (options?: Options): UpdateUserRoleErrors[401] => fakeAuthenticationProblemDetails(options);
 
 export const fakeUpdateUserRoleResponse403 = (options?: Options): UpdateUserRoleErrors[403] => fakeProblemDetails(options);
@@ -661,6 +690,22 @@ export const fakeGetOrganisationRecordsResponse400 = (options?: Options): GetOrg
 
 export const fakeGetOrganisationRecordsResponse401 = (options?: Options): GetOrganisationRecordsErrors[401] => fakeAuthenticationProblemDetails(options);
 
+export const fakeGetOrganisationRecordsResponse403 = (options?: Options): GetOrganisationRecordsErrors[403] => fakeProblemDetails(options);
+
+export const fakeGetOrganisationRecordsResponse404 = (options?: Options): GetOrganisationRecordsErrors[404] => fakeProblemDetails(options);
+
+export const fakeCreateRecordRequest = (options?: Options): Omit<CreateRecordData, 'url'> => ({
+    body: fakeCreateRecordCommand(options)
+});
+
+export const fakeCreateRecordResponse200 = (options?: Options): CreateRecordResponses[200] => fakeCreateRecordDto(options);
+
+export const fakeCreateRecordResponse400 = (options?: Options): CreateRecordErrors[400] => fakeValidationProblemDetails(options);
+
+export const fakeCreateRecordResponse401 = (options?: Options): CreateRecordErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeCreateRecordResponse403 = (options?: Options): CreateRecordErrors[403] => fakeProblemDetails(options);
+
 export const fakeGetUsersMeResponse200 = (options?: Options): GetUsersMeResponses[200] => fakeUserInformationDto(options);
 
 export const fakeGetUsersMeResponse401 = (options?: Options): GetUsersMeErrors[401] => fakeAuthenticationProblemDetails(options);
@@ -689,7 +734,7 @@ export const fakeGetUsersResponse400 = (options?: Options): GetUsersErrors[400] 
 
 export const fakeGetUsersResponse401 = (options?: Options): GetUsersErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeGetUsersResponse404 = (options?: Options): GetUsersErrors[404] => fakeProblemDetails(options);
+export const fakeGetUsersResponse403 = (options?: Options): GetUsersErrors[403] => fakeProblemDetails(options);
 
 export const fakeGetUserDetailsWithinOrganisationRequest = (options?: Options): Omit<GetUserDetailsWithinOrganisationData, 'url'> => {
     const f = options?.faker ?? faker;
@@ -702,8 +747,6 @@ export const fakeGetUserDetailsWithinOrganisationRequest = (options?: Options): 
 };
 
 export const fakeGetUserDetailsWithinOrganisationResponse200 = (options?: Options): GetUserDetailsWithinOrganisationResponses[200] => fakeUserInformationDto(options);
-
-export const fakeGetUserDetailsWithinOrganisationResponse400 = (options?: Options): GetUserDetailsWithinOrganisationErrors[400] => fakeProblemDetails(options);
 
 export const fakeGetUserDetailsWithinOrganisationResponse401 = (options?: Options): GetUserDetailsWithinOrganisationErrors[401] => fakeAuthenticationProblemDetails(options);
 
@@ -726,8 +769,6 @@ export const fakePatchUsersByUserIdResponse200 = (options?: Options): PatchUsers
 export const fakePatchUsersByUserIdResponse400 = (options?: Options): PatchUsersByUserIdErrors[400] => fakeValidationProblemDetails(options);
 
 export const fakePatchUsersByUserIdResponse401 = (options?: Options): PatchUsersByUserIdErrors[401] => fakeAuthenticationProblemDetails(options);
-
-export const fakePatchUsersByUserIdResponse403 = (options?: Options): PatchUsersByUserIdErrors[403] => fakeProblemDetails(options);
 
 export const fakePatchUsersByUserIdResponse404 = (options?: Options): PatchUsersByUserIdErrors[404] => fakeProblemDetails(options);
 

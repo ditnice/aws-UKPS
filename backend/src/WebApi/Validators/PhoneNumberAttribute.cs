@@ -6,8 +6,10 @@ namespace UKPS.Api.WebApi.Validators;
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 internal sealed class PhoneNumberAttribute : ValidationAttribute
 {
+    private const string DefaultErrorMessage = "Value must be a valid phone number.";
+
     public PhoneNumberAttribute()
-        : base() { }
+        : base(DefaultErrorMessage) { }
 
     public PhoneNumberAttribute(string errorMessage)
         : base(errorMessage: errorMessage) { }
@@ -20,7 +22,7 @@ internal sealed class PhoneNumberAttribute : ValidationAttribute
         }
 
         return new ValidationResult(
-            ErrorMessage ?? "Value must be a valid phone number.",
+            FormatErrorMessage(validationContext.DisplayName),
             validationContext.MemberName is null ? null : [validationContext.MemberName]
         );
     }

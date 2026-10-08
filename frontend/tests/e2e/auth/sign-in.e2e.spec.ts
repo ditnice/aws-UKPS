@@ -27,7 +27,9 @@ test.describe('sign-in', () => {
 
     await signInPage.signIn('person@example.com', 'incorrect-password')
 
-    await expect(page.getByText('Invalid email or password')).toHaveCount(2)
+    await expect(
+      page.getByText('The email address or password you entered is incorrect'),
+    ).toHaveCount(2)
     await expect(signInPage.email).toHaveAttribute('aria-invalid', 'true')
     await expect(signInPage.password).toHaveAttribute('aria-invalid', 'true')
   })

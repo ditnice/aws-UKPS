@@ -1,9 +1,16 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthResendSetupToken } from '@/client/generated'
 
 import { RequestNewLink } from './RequestNewLink'
+
+const supportEmail = vi.hoisted(() => {
+  // The component reads this at module load, so it must be set before the import above runs
+  const email = 'support@example.com'
+  vi.stubEnv('NEXT_PUBLIC_QA_SUPPORT_EMAIL', email)
+  return email
+})
 
 vi.mock('@/client/generated', () => ({
   postAuthResendSetupToken: vi.fn(),
@@ -17,6 +24,10 @@ beforeEach(() => {
   })
 })
 
+afterAll(() => {
+  vi.unstubAllEnvs()
+})
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -28,7 +39,7 @@ function getSendButton() {
 }
 
 function getSupportEmailLink() {
-  return screen.getByRole('link', { name: 'QA@UKPS.com' }) as HTMLAnchorElement
+  return screen.getByRole('link', { name: supportEmail }) as HTMLAnchorElement
 }
 
 async function clickSend() {
@@ -141,7 +152,7 @@ describe('RequestNewLink', () => {
 
     expect(await screen.findByText('Contact the support team')).toBeDefined()
     expect(screen.getByText(/Please contact the UKPS support team for assistance/)).toBeDefined()
-    expect(getSupportEmailLink().getAttribute('href')).toBe('mailto:QA@UKPS.com')
+    expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 
@@ -157,7 +168,7 @@ describe('RequestNewLink', () => {
     fireEvent.click(getSendButton())
 
     expect(await screen.findByText('Contact the support team')).toBeDefined()
-    expect(getSupportEmailLink().getAttribute('href')).toBe('mailto:QA@UKPS.com')
+    expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 
@@ -222,7 +233,7 @@ describe('RequestNewLink', () => {
     expect(
       screen.getByText(/You have reached the maximum number of attempts to request a new link\./),
     ).toBeDefined()
-    expect(getSupportEmailLink().getAttribute('href')).toBe('mailto:QA@UKPS.com')
+    expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 
@@ -238,7 +249,7 @@ describe('RequestNewLink', () => {
     fireEvent.click(getSendButton())
 
     expect(await screen.findByText('Contact the support team')).toBeDefined()
-    expect(getSupportEmailLink().getAttribute('href')).toBe('mailto:QA@UKPS.com')
+    expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 })

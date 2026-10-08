@@ -99,6 +99,16 @@ internal class UserRegistrationService : IUserRegistrationService
         CancellationToken cancellationToken
     )
     {
+        // Authorise against the requested organisation before looking the request up, so an
+        // unauthorised caller gets the same response whether or not the request exists.
+        var authorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.SignUpUser,
+            organisationId
+        );
+        if (!authorised)
+        {
+            return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.UserNotAuthorised());
+        }
         var request = await _dbContext
             .UserRegistrationRequests.AsNoTracking()
             .Include(x => x.Organisation)
@@ -108,14 +118,6 @@ internal class UserRegistrationService : IUserRegistrationService
         if (request is null)
         {
             return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.IdNotFound(id));
-        }
-        var authorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
-            Operation.SignUpUser,
-            request.OrganisationId
-        );
-        if (!authorised)
-        {
-            return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.UserNotAuthorised());
         }
         var dto = MapToDto(request);
         return GetUserRegistrationByIdResult.Ok(dto);

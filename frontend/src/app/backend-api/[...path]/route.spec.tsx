@@ -227,8 +227,8 @@ describe('backend API route', () => {
       responseWithCookies([
         'access_token=a; Path=/; HttpOnly; Secure; SameSite=Lax',
         'csrf_token=c; Path=/; Secure; SameSite=Strict',
-        'refresh_token=r; Path=/auth/refresh; Max-Age=3600; HttpOnly; Secure',
-        'refresh_token=; Path=/auth/refresh; Max-Age=0; HttpOnly',
+        'refresh_token=r; Path=/auth; Max-Age=3600; HttpOnly; Secure',
+        'refresh_token=; Path=/auth; Max-Age=0; HttpOnly',
         'refresh_token=wrong; Path=/other; HttpOnly',
         'access_token=bad; Domain=example.com; Path=/; HttpOnly',
         'unknown=value; Path=/; HttpOnly',
@@ -244,9 +244,9 @@ describe('backend API route', () => {
     expect(cookies).toContain('access_token=a; Path=/; HttpOnly; Secure; SameSite=Lax')
     expect(cookies).toContain('csrf_token=c; Path=/; Secure; SameSite=Strict')
     expect(cookies).toContain(
-      'refresh_token=r; Path=/backend-api/auth/refresh; Max-Age=3600; HttpOnly; Secure',
+      'refresh_token=r; Path=/backend-api/auth; Max-Age=3600; HttpOnly; Secure',
     )
-    expect(cookies).toContain('refresh_token=; Path=/backend-api/auth/refresh; Max-Age=0; HttpOnly')
+    expect(cookies).toContain('refresh_token=; Path=/backend-api/auth; Max-Age=0; HttpOnly')
     expect(cookies).not.toContain('refresh_token=wrong; Path=/other; HttpOnly')
     expect(cookies).not.toContain('Domain=')
     expect(cookies).not.toContain('unknown=')

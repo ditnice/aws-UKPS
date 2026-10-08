@@ -209,18 +209,15 @@ function filterResponseCookie(cookieHeader: string): string | null {
     let hasExpectedPath = false
 
     for (let index = 1; index < parts.length; index += 1) {
-      if (/^\s*path\s*=\s*\/backend-api\/auth\/refresh\s*$/i.test(parts[index])) {
+      if (/^\s*path\s*=\s*\/backend-api\/auth\s*$/i.test(parts[index])) {
         hasExpectedPath = true
       }
 
-      if (/^\s*path\s*=\s*\/auth\/refresh\s*$/i.test(parts[index])) {
+      if (/^\s*path\s*=\s*\/auth\s*$/i.test(parts[index])) {
         hasExpectedPath = true
       }
 
-      parts[index] = parts[index].replace(
-        /^(\s*path\s*=\s*)\/auth\/refresh(\s*)$/i,
-        '$1/backend-api/auth/refresh$2',
-      )
+      parts[index] = parts[index].replace(/^(\s*path\s*=\s*)\/auth(\s*)$/i, '$1/backend-api/auth$2')
     }
 
     if (!hasExpectedPath) return null
