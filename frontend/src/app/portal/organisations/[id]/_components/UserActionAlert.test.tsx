@@ -7,6 +7,7 @@ import {
   getUserRegistrationById,
 } from '@/client/generated/sdk.gen'
 import type { RegisterUserConfirmationDto, UserInformationDto } from '@/client/generated/types.gen'
+import { createServerApiClient } from '@/client/server-api'
 
 import { UserActionAlert } from './UserActionAlert'
 
@@ -17,7 +18,7 @@ vi.mock('@/client/generated/sdk.gen', () => ({
   getUserRegistrationById: vi.fn(),
 }))
 vi.mock('@/client/server-api', () => ({
-  createServerApiClient: vi.fn().mockResolvedValue({}),
+  createServerApiClient: vi.fn(),
 }))
 
 const user: UserInformationDto = {
@@ -53,6 +54,7 @@ async function renderAlert(userAction: UserActionResult) {
 }
 
 beforeEach(() => {
+  vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
   vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({ data: user, error: undefined })
   vi.mocked(getUserRegistrationById).mockResolvedValue({ data: registration, error: undefined })
 })

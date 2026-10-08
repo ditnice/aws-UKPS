@@ -16,13 +16,10 @@ vi.mock('@/client/generated', () => ({
   postAuthLogin: vi.fn(),
 }))
 
-vi.mocked(postAuthLogin).mockResolvedValue({
-  error: undefined,
-  data: undefined,
-})
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
+  vi.mocked(postAuthLogin).mockResolvedValue({ error: undefined, data: undefined })
   user = userEvent.setup()
 })
 

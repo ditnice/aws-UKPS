@@ -51,6 +51,13 @@ describe('getPageByPath', () => {
     const page = await getPageByPath('/about-us')
 
     expect(page).toMatchObject({ id: 1, path: '/about-us', title: 'Title about-us' })
+    expect(payload.find).toHaveBeenCalledExactlyOnceWith({
+      collection: 'pages',
+      overrideAccess: false,
+      limit: 1,
+      pagination: false,
+      where: { parent: { exists: false }, slug: { equals: 'about-us' } },
+    })
   })
 
   it('resolves a nested page through its parent when slugs are not unique', async () => {
@@ -64,6 +71,9 @@ describe('getPageByPath', () => {
     const page = await getPageByPath('/medicines/resources')
 
     expect(page).toMatchObject({ id: 4, path: '/medicines/resources' })
+    for (const [options] of payload.find.mock.calls) {
+      expect(options).toMatchObject({ overrideAccess: false })
+    }
   })
 
   it('only matches top-level pages for the first slug', async () => {
@@ -115,7 +125,11 @@ describe('getHeaderNav', () => {
       { label: 'About', path: '/about-us' },
       { label: 'Help', path: '/help' },
     ])
-    expect(payload.findGlobal).toHaveBeenCalledWith({ slug: 'header', depth: 1 })
+    expect(payload.findGlobal).toHaveBeenCalledWith({
+      slug: 'header',
+      depth: 1,
+      overrideAccess: false,
+    })
   })
 
   it('skips links whose destination was not populated', async () => {

@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`TableSortHeader > renders the ascending state 1`] = `
+exports[`TableSortHeader > renders the ascending state > button 1`] = `
 <DocumentFragment>
   <table>
     <thead>
@@ -33,7 +33,7 @@ exports[`TableSortHeader > renders the ascending state 1`] = `
 </DocumentFragment>
 `;
 
-exports[`TableSortHeader > renders the ascending state 2`] = `
+exports[`TableSortHeader > renders the ascending state > link 1`] = `
 <DocumentFragment>
   <table>
     <thead>
@@ -66,7 +66,7 @@ exports[`TableSortHeader > renders the ascending state 2`] = `
 </DocumentFragment>
 `;
 
-exports[`TableSortHeader > renders the descending state 1`] = `
+exports[`TableSortHeader > renders the descending state > button 1`] = `
 <DocumentFragment>
   <table>
     <thead>
@@ -99,7 +99,7 @@ exports[`TableSortHeader > renders the descending state 1`] = `
 </DocumentFragment>
 `;
 
-exports[`TableSortHeader > renders the descending state 2`] = `
+exports[`TableSortHeader > renders the descending state > link 1`] = `
 <DocumentFragment>
   <table>
     <thead>
@@ -132,7 +132,7 @@ exports[`TableSortHeader > renders the descending state 2`] = `
 </DocumentFragment>
 `;
 
-exports[`TableSortHeader > renders the none state 1`] = `
+exports[`TableSortHeader > renders the none state > button 1`] = `
 <DocumentFragment>
   <table>
     <thead>
@@ -168,7 +168,7 @@ exports[`TableSortHeader > renders the none state 1`] = `
 </DocumentFragment>
 `;
 
-exports[`TableSortHeader > renders the none state 2`] = `
+exports[`TableSortHeader > renders the none state > link 1`] = `
 <DocumentFragment>
   <table>
     <thead>

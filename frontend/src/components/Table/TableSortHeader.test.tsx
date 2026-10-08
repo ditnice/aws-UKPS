@@ -89,7 +89,7 @@ describe('TableSortHeader', () => {
       expect(indicator?.getAttribute('aria-hidden')).toBe('true')
       expect(indicator?.getAttribute('fill')).toBe('currentColor')
       expect(indicator?.querySelectorAll('path')).toHaveLength(pathCount)
-      expect(asFragment()).toMatchSnapshot()
+      expect(asFragment()).toMatchSnapshot(variant)
     },
   )
 
@@ -110,7 +110,7 @@ describe('TableSortHeader', () => {
     },
   )
 
-  it.each(nextDirectionData)('button variant - requests %s → %s', (direction, nextDirection) => {
+  it.each(nextDirectionData)('link variant - requests %s → %s', (direction, nextDirection) => {
     const {} = renderLinkHeader(direction)
 
     const link = screen.getByRole('link', { name: 'Name' })

@@ -18,11 +18,6 @@ vi.mock('@/client/generated', () => ({
   postAuthMfa: vi.fn(),
 }))
 
-vi.mocked(postAuthMfa).mockResolvedValue({
-  error: undefined,
-  data: undefined,
-})
-
 const exampleUserEmail = 'user@email.com'
 const exampleSession = 'session'
 
@@ -45,6 +40,7 @@ const updateForm = async (formValues: FormValues) => {
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
+  vi.mocked(postAuthMfa).mockResolvedValue({ error: undefined, data: undefined })
   user = userEvent.setup()
 })
 
