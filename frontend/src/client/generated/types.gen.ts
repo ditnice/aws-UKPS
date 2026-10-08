@@ -107,7 +107,8 @@ export const GetRecordsQuerySortValue = {
     NEXT_UPDATE_DUE: 'NextUpdateDue',
     ID: 'Id',
     DEVELOPMENT_NAME: 'DevelopmentName',
-    RECORD_STATUS: 'RecordStatus'
+    RECORD_STATUS: 'RecordStatus',
+    RECORD_TITLE: 'RecordTitle'
 } as const;
 
 /**

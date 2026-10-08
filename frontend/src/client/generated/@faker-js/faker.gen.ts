@@ -72,7 +72,8 @@ export const fakeGetRecordsQuerySortValue = (options?: Options): GetRecordsQuery
         'NextUpdateDue',
         'Id',
         'DevelopmentName',
-        'RecordStatus'
+        'RecordStatus',
+        'RecordTitle'
     ]);
 };
 

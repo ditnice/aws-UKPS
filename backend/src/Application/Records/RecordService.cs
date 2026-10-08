@@ -183,6 +183,7 @@ internal partial class RecordService(
                 GetRecordsQuerySortValue.Id => m => m.Id,
                 GetRecordsQuerySortValue.DevelopmentName => m => m.DevelopmentName,
                 GetRecordsQuerySortValue.RecordStatus => m => m.RecordStatus,
+                GetRecordsQuerySortValue.RecordTitle => m => m.Title,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(sortBy),
                     $"Unexpected value: {sortBy}"

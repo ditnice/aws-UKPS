@@ -13,7 +13,7 @@ type RecordsTableProps = {
 }
 function renderNextUpdate(nextUpdateDue: RecordListItemDto['nextUpdateDue']) {
   if (!nextUpdateDue) {
-    return null
+    return 'Not applicable'
   }
 
   const dueDate = new Date(nextUpdateDue)
@@ -38,13 +38,15 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
         getData={(key, data) => {
           switch (key) {
             case 'id':
+              return <>{data.id}</>
+            case 'development-name':
               return <>{data.developmentName}</>
             case 'next-update':
               return <>{renderNextUpdate(data.nextUpdateDue)}</>
             case 'record-status':
               return <>{recordStatusLabels[data.recordStatus]}</>
-            case 'development-name':
-            case 'records-title':
+            case 'record-title':
+              return <>{data.title}</>
             case 'actions':
               return <>TODO</>
           }

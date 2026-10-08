@@ -3143,7 +3143,8 @@
           "NextUpdateDue",
           "Id",
           "DevelopmentName",
-          "RecordStatus"
+          "RecordStatus",
+          "RecordTitle"
         ],
         "type": "string",
         "description": "Specifies the fields by which records can be sorted."
