@@ -18,6 +18,9 @@ export default function PortalDashboard() {
         <li>
           <Link href="/portal/organisations/1">Organisation 1 example</Link>
         </li>
+        <li>
+          <Link href="/portal/organisations/1/records">Organisation 1 Records example</Link>
+        </li>
       </ul>
     </>
   )
