@@ -11,7 +11,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 type ModificationAction = 'Approve' | 'Reject'
 export type ModifyUserMembershipRequestControlsProps = {
   organisationId: number
-  registrationRequestId: number
+  requestGuid: string
   backLink: string
   successLink: string
   action: ModificationAction
@@ -19,7 +19,7 @@ export type ModifyUserMembershipRequestControlsProps = {
 const ModifyUserMembershipRequestControls = ({
   action,
   organisationId,
-  registrationRequestId,
+  requestGuid,
   backLink,
   successLink,
 }: ModifyUserMembershipRequestControlsProps) => {
@@ -27,7 +27,7 @@ const ModifyUserMembershipRequestControls = ({
   const [error, setError] = useState<boolean>(false)
 
   const sendRequest = async () => {
-    const path = { organisationId, registrationRequestId }
+    const path = { organisationId, requestGuid }
     switch (action) {
       case 'Approve':
         const approveResponse = await approve({

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
+import { isRequestGuid } from '../../../_lib/requestGuid'
 import { buildUserActionHref } from '../../../_lib/userActionAlert'
 import ModifyUserMembershipRequestControls from '../ModifyUserMembershipRequestControls'
 import UserMembershipRetrievalWrapper from '../UserMembershipRetrievalWrapper'
@@ -14,9 +15,12 @@ interface Props {
 export default async function ApproveUser({ params }: Props) {
   const { id, registrationRequestId } = await params
   const organisationId = Number(id)
-  const parsedRegistrationRequestId = Number(registrationRequestId)
 
-  if (!Number.isInteger(organisationId) || !Number.isInteger(parsedRegistrationRequestId)) {
+  if (
+    !Number.isInteger(organisationId) ||
+    organisationId <= 0 ||
+    !isRequestGuid(registrationRequestId)
+  ) {
     notFound()
   }
 
@@ -30,7 +34,7 @@ export default async function ApproveUser({ params }: Props) {
       />
       <UserMembershipRetrievalWrapper
         organisationId={organisationId}
-        registrationRequestId={parsedRegistrationRequestId}
+        requestGuid={registrationRequestId}
       >
         {(request) => (
           <>
@@ -40,10 +44,10 @@ export default async function ApproveUser({ params }: Props) {
             <ModifyUserMembershipRequestControls
               action="Approve"
               organisationId={organisationId}
-              registrationRequestId={parsedRegistrationRequestId}
+              requestGuid={registrationRequestId}
               successLink={buildUserActionHref(organisationId, {
                 action: 'approved-request',
-                userRequestId: parsedRegistrationRequestId,
+                userRequestId: registrationRequestId,
               })}
               backLink={organisationHref}
             />

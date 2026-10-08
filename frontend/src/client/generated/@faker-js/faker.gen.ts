@@ -202,7 +202,7 @@ export const fakeRegisterUserCommandDto = (options?: Options): RegisterUserComma
 export const fakeRegisterUserConfirmationDto = (options?: Options): RegisterUserConfirmationDto => {
     const f = options?.faker ?? faker;
     return {
-        id: f.number.int(),
+        requestGuid: f.string.uuid(),
         organisationName: f.string.sample(),
         fullName: f.person.fullName(),
         workEmail: f.internet.email(),
@@ -381,7 +381,7 @@ export const fakeUserListItemDto = (options?: Options): UserListItemDto => {
     const f = options?.faker ?? faker;
     return {
         userId: f.datatype.boolean() ? f.number.int() : null,
-        registrationRequestId: f.datatype.boolean() ? f.number.int() : null,
+        registrationRequestGuid: f.datatype.boolean() ? f.string.uuid() : null,
         emailAddress: f.internet.email(),
         role: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
@@ -807,7 +807,7 @@ export const fakeGetUserRegistrationByIdRequest = (options?: Options): Omit<GetU
     return {
         path: {
             organisationId: f.number.int(),
-            id: f.number.int()
+            requestGuid: f.string.uuid()
         }
     };
 };
@@ -825,12 +825,14 @@ export const fakeApproveRequest = (options?: Options): Omit<ApproveData, 'url'> 
     return {
         path: {
             organisationId: f.number.int(),
-            registrationRequestId: f.number.int()
+            requestGuid: f.string.uuid()
         }
     };
 };
 
 export const fakeApproveResponse200 = (): ApproveResponses[200] => undefined;
+
+export const fakeApproveResponse400 = (options?: Options): ApproveErrors[400] => fakeProblemDetails(options);
 
 export const fakeApproveResponse401 = (options?: Options): ApproveErrors[401] => fakeAuthenticationProblemDetails(options);
 
@@ -838,20 +840,26 @@ export const fakeApproveResponse403 = (options?: Options): ApproveErrors[403] =>
 
 export const fakeApproveResponse404 = (options?: Options): ApproveErrors[404] => fakeProblemDetails(options);
 
+export const fakeApproveResponse409 = (options?: Options): ApproveErrors[409] => fakeProblemDetails(options);
+
 export const fakeRejectRequest = (options?: Options): Omit<RejectData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
         path: {
             organisationId: f.number.int(),
-            registrationRequestId: f.number.int()
+            requestGuid: f.string.uuid()
         }
     };
 };
 
 export const fakeRejectResponse200 = (): RejectResponses[200] => undefined;
 
+export const fakeRejectResponse400 = (options?: Options): RejectErrors[400] => fakeProblemDetails(options);
+
 export const fakeRejectResponse401 = (options?: Options): RejectErrors[401] => fakeAuthenticationProblemDetails(options);
 
 export const fakeRejectResponse403 = (options?: Options): RejectErrors[403] => fakeProblemDetails(options);
 
 export const fakeRejectResponse404 = (options?: Options): RejectErrors[404] => fakeProblemDetails(options);
+
+export const fakeRejectResponse409 = (options?: Options): RejectErrors[409] => fakeProblemDetails(options);

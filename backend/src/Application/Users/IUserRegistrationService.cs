@@ -42,7 +42,7 @@ public interface IUserRegistrationService
     /// <param name="organisationId">
     /// The identifier of the organisation containing the membership request.
     /// </param>
-    /// <param name="id">
+    /// <param name="requestGuid">
     /// The unique identifier of the user whose details are being retrieved.
     /// </param>
     /// <param name="cancellationToken">
@@ -54,7 +54,7 @@ public interface IUserRegistrationService
     /// </returns>
     Task<GetUserRegistrationByIdResult> GetUserRegistrationById(
         int organisationId,
-        int id,
+        Guid requestGuid,
         CancellationToken cancellationToken
     );
 
@@ -64,7 +64,7 @@ public interface IUserRegistrationService
     /// <param name="organisationId">
     /// The unique identifier of the organisation associated with the membership request.
     /// </param>
-    /// <param name="registrationRequestId">
+    /// <param name="requestGuid">
     /// The unique identifier of the the membership request.
     /// </param>
     /// <param name="cancellationToken">
@@ -76,7 +76,7 @@ public interface IUserRegistrationService
     /// </returns>
     Task<Result<ApproveRequestError>> ApproveRequest(
         int organisationId,
-        int registrationRequestId,
+        Guid requestGuid,
         CancellationToken cancellationToken
     );
 
@@ -86,7 +86,7 @@ public interface IUserRegistrationService
     /// <param name="organisationId">
     /// The unique identifier of the organisation associated with the membership request.
     /// </param>
-    /// <param name="registrationRequestId">
+    /// <param name="requestGuid">
     /// The unique identifier of the the membership request.
     /// </param>
     /// <param name="cancellationToken">
@@ -98,7 +98,7 @@ public interface IUserRegistrationService
     /// </returns>
     Task<Result<RejectRequestError>> RejectRequest(
         int organisationId,
-        int registrationRequestId,
+        Guid requestGuid,
         CancellationToken cancellationToken
     );
 }

@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import { RegisterUserConfirmationDto } from '@/client/generated'
+import type { Client } from '@/client/generated/client'
+import { createServerApiClient } from '@/client/server-api'
 import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import UserMembershipRetrievalWrapper, {
@@ -22,13 +24,17 @@ vi.mock('@/client/server-api', () => ({
 }))
 
 const testData: RegisterUserConfirmationDto = {
-  id: 3,
+  requestGuid: 'e52c7f89-e182-41b2-bbdc-69a0fa9f034d',
   workEmail: 'example@email.com',
   fullName: 'Jane Smith',
   organisationName: 'Example Pharma',
   phoneNumber: '01234 567890',
 }
+
+const apiClient = {} as Client
+
 beforeEach(() => {
+  vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
   mockGetMembership.mockResolvedValue({
     data: testData,
   })
@@ -38,7 +44,7 @@ const renderComponent = async (overrides?: Partial<UserMembershipRetrievalWrappe
   const children = () => <div data-testid="children"></div>
   const defaults: UserMembershipRetrievalWrapperProps = {
     organisationId: 1,
-    registrationRequestId: 2,
+    requestGuid: testData.requestGuid,
     children,
   }
   const props = { ...defaults, ...overrides }
@@ -66,12 +72,13 @@ describe('UserMembershipRetrievalWrapper (direct invocation)', () => {
     expect(content.textContent).toBe(JSON.stringify(testData))
   })
   it('calls the request with the expected arguments', async () => {
-    const args = { organisationId: 4, registrationRequestId: 6 }
+    const args = { organisationId: 4, requestGuid: testData.requestGuid }
     await renderComponent({
       ...args,
     })
     expect(mockGetMembership).toHaveBeenCalledExactlyOnceWith({
-      path: { organisationId: args.organisationId, id: args.registrationRequestId },
+      client: apiClient,
+      path: args,
     })
   })
   it('calls notfound when the response is not found', async () => {
