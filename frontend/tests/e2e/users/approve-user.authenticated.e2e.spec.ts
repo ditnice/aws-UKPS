@@ -11,13 +11,16 @@ test('registering a user successfully', async ({ page }) => {
   const organisationSelect = page.getByLabel(
     'Select the organisation you are requesting access for',
   )
+  const organisationOptions = organisationSelect.locator('option:not([value=""])')
+
   await page.goto(`register/provide-details`)
   await expect(page.getByRole('heading', { name: 'Provide your details' })).toBeVisible()
+  await expect(organisationOptions.first()).toBeAttached()
 
   await page.getByLabel('Full name').fill(testUser.fullName)
   await page.getByLabel('Work email address').fill(testUser.workEmail)
   await page.getByLabel('Phone number').fill(testUser.phoneNumber)
-  await organisationSelect.selectOption({ label: 'Wisoky and Sons' })
+  await organisationSelect.selectOption({ index: 1 })
 
   await page.getByRole('button', { name: 'Submit request' }).click()
 
@@ -28,12 +31,15 @@ test('register a user - name not provided', async ({ page }) => {
   const organisationSelect = page.getByLabel(
     'Select the organisation you are requesting access for',
   )
+  const organisationOptions = organisationSelect.locator('option:not([value=""])')
+
   await page.goto(`register/provide-details`)
   await expect(page.getByRole('heading', { name: 'Provide your details' })).toBeVisible()
+  await expect(organisationOptions.first()).toBeAttached()
 
   await page.getByLabel('Work email address').fill(testUser.workEmail)
   await page.getByLabel('Phone number').fill(testUser.phoneNumber)
-  await organisationSelect.selectOption({ label: 'Wisoky and Sons' })
+  await organisationSelect.selectOption({ index: 1 })
 
   await page.getByRole('button', { name: 'Submit request' }).click()
 
@@ -47,10 +53,11 @@ test('approving a user', async ({ page }) => {
 
   await page.getByRole('textbox', { name: 'Filter users' }).fill(testUser.workEmail)
   await page.getByRole('button', { name: 'Apply filter', exact: true }).click()
-
-  await page.getByLabel('Approve').click()
+  const userRow = page.getByRole('row').filter({
+    has: page.getByText(testUser.workEmail, { exact: true }),
+  })
+  await expect(userRow).toBeVisible()
+  await userRow.getByRole('link', { name: 'Approve' }).click()
 
   await expect(page.getByRole('heading', { name: 'Approve user' })).toBeVisible()
 })
-
-// need a test for removing a user once implemented
