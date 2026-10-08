@@ -19,9 +19,11 @@ public record CreateRecordCommand
     /// </summary>
     /// <remarks>
     /// At least one development name must be provided, and names cannot be empty or whitespace.
+    /// Names must be distinct, ignoring case and leading or trailing whitespace.
     /// </remarks>
     [Required]
     [MinLength(1)]
+    [DistinctStrings(StringComparison.OrdinalIgnoreCase)]
     [NoEmptyOrWhitespaceItems]
     public required IReadOnlyCollection<string> DevelopmentNames { get; init; }
 
@@ -39,15 +41,18 @@ public record CreateRecordCommand
     /// </summary>
     /// <remarks>
     /// At least one generic name must be provided, and names cannot be empty or whitespace.
+    /// Names must be distinct, ignoring case and leading or trailing whitespace.
     /// </remarks>
     [Required]
     [MinLength(1)]
+    [DistinctStrings(StringComparison.OrdinalIgnoreCase)]
     [NoEmptyOrWhitespaceItems]
     public required IReadOnlyCollection<string> GenericNames { get; init; }
 
     /// <summary>
     /// Gets the title of the record.
     /// </summary>
-    [Required]
+    [Required(AllowEmptyStrings = false)]
+    [MaxLength(100)]
     public required string RecordTitle { get; init; }
 }
