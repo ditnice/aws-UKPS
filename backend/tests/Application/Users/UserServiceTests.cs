@@ -1678,7 +1678,10 @@ public class UserServiceTests : DatabaseTestBase
     public async Task RemoveUser_ShouldAnonymiseTheUsersPersonalDetails()
     {
         await AddCallerUser();
-        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        DateTime lastActive = _currentDateTime.AddDays(-1);
+        User target = _userFaker.Generate();
+        target.LastActive = lastActive;
+        await AddEntity(target, TestContext.Current.CancellationToken);
 
         _ = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
 
@@ -1687,12 +1690,12 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         databaseUser.ShouldNotBeNull();
-        databaseUser.Title.ShouldBeNull();
+        databaseUser.Title.ShouldBe("REMOVED");
         databaseUser.FullName.ShouldBe($"User-{target.Id}");
-        databaseUser.JobTitle.ShouldBeNull();
-        databaseUser.WorkTelephone.ShouldBeNull();
+        databaseUser.JobTitle.ShouldBe("REMOVED");
+        databaseUser.WorkTelephone.ShouldBe("REMOVED");
         databaseUser.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
-        databaseUser.LastActive.ShouldBeNull();
+        databaseUser.LastActive.ShouldBe(lastActive);
         databaseUser.UpdatedAt.ShouldBe(_currentDateTime);
     }
 
