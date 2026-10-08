@@ -241,7 +241,7 @@ export const registerUser = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
- * Retrieves the details of a user by their unique identifier.
+ * Retrieves a membership request by its public identifier.
  */
 export const getUserRegistrationById = <ThrowOnError extends boolean = false>(options: Options<GetUserRegistrationByIdData, ThrowOnError>): RequestResult<GetUserRegistrationByIdResponses, GetUserRegistrationByIdErrors, ThrowOnError> => (options.client ?? client).get<GetUserRegistrationByIdResponses, GetUserRegistrationByIdErrors, ThrowOnError>({ url: '/organisations/{organisationId}/membership-requests/{requestGuid}', ...options });
 

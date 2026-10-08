@@ -21,6 +21,7 @@ internal sealed class UserRegistrationRequestConfiguration
         );
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
+        builder.HasIndex(x => x.RequestGuid).IsUnique();
 
         builder.Property(x => x.RejectedAt).HasColumnType("timestamptz");
 

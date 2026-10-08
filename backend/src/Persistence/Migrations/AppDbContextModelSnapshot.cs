@@ -577,6 +577,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasIndex("RejectedBy")
                         .HasDatabaseName("ix_user_registration_requests_rejected_by");
 
+                    b.HasIndex("RequestGuid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_registration_requests_request_guid");
+
                     b.ToTable("user_registration_requests", "ukps", t =>
                         {
                             t.HasCheckConstraint("ck_membership_request_approved_at_rejected_at", "approved_at IS NULL OR rejected_at IS NULL");

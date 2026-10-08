@@ -2257,6 +2257,13 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "rejected_by");
 
             migrationBuilder.CreateIndex(
+                name: "ix_user_registration_requests_request_guid",
+                schema: "ukps",
+                table: "user_registration_requests",
+                column: "request_guid",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_vaccines_adjuvant_technology_id",
                 schema: "ukps",
                 table: "vaccines_adjuvants",

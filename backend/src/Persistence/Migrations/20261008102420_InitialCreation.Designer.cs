@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261007155719_InitialCreation")]
+    [Migration("20261008102420_InitialCreation")]
     partial class InitialCreation
     {
         /// <inheritdoc />
@@ -579,6 +579,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasIndex("RejectedBy")
                         .HasDatabaseName("ix_user_registration_requests_rejected_by");
+
+                    b.HasIndex("RequestGuid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_registration_requests_request_guid");
 
                     b.ToTable("user_registration_requests", "ukps", t =>
                         {

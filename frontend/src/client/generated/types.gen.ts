@@ -437,11 +437,11 @@ export type RegisterUserCommandDto = {
 };
 
 /**
- * Represents the details of a user who has been registered.
+ * Represents confirmation of a submitted membership request.
  */
 export type RegisterUserConfirmationDto = {
     /**
-     * Guid for the user.
+     * Gets the public identifier of the membership request, not a user ID or setup token.
      */
     requestGuid: string;
     /**
@@ -687,9 +687,9 @@ export type UserListItemDto = {
      */
     userId: null | number;
     /**
-     * The optional lasted active registration request associated with the user.
+     * Gets the public identifier of the latest active membership request, if available.
      */
-    registrationRequestId: null | number;
+    registrationRequestGuid: null | string;
     /**
      * Gets the email address of the user, if available.
      */
@@ -1785,7 +1785,7 @@ export type GetUserRegistrationByIdData = {
          */
         organisationId: number;
         /**
-         * The unique identifier of the user to retrieve.
+         * The public identifier of the membership request to retrieve.
          */
         requestGuid: string;
     };
@@ -1812,7 +1812,7 @@ export type GetUserRegistrationByIdError = GetUserRegistrationByIdErrors[keyof G
 
 export type GetUserRegistrationByIdResponses = {
     /**
-     * The user's details were successfully retrieved.
+     * The membership request's details were successfully retrieved.
      */
     200: RegisterUserConfirmationDto;
 };
@@ -1837,6 +1837,10 @@ export type ApproveData = {
 
 export type ApproveErrors = {
     /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
@@ -1848,6 +1852,10 @@ export type ApproveErrors = {
      * The membership request could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
 };
 
 export type ApproveError = ApproveErrors[keyof ApproveErrors];
@@ -1877,6 +1885,10 @@ export type RejectData = {
 
 export type RejectErrors = {
     /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
@@ -1888,6 +1900,10 @@ export type RejectErrors = {
      * The membership request could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
 };
 
 export type RejectError = RejectErrors[keyof RejectErrors];

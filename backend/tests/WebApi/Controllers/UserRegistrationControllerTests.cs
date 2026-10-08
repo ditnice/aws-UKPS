@@ -18,7 +18,7 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 public class UserRegistrationControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const int ExistingOrganisationId = 2;
-    private Guid _existingRegistrationRequestId = Guid.NewGuid();
+    private readonly Guid _existingRegistrationRequestId = Guid.NewGuid();
     private readonly IUserRegistrationService _mock = Substitute.For<IUserRegistrationService>();
     private readonly HttpClient _client;
 
@@ -316,6 +316,31 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [Theory]
+    [InlineData("GET", "", "123")]
+    [InlineData("GET", "", "not-a-guid")]
+    [InlineData("PATCH", "/approve", "123")]
+    [InlineData("PATCH", "/approve", "not-a-guid")]
+    [InlineData("PATCH", "/reject", "123")]
+    [InlineData("PATCH", "/reject", "not-a-guid")]
+    public async Task MembershipRequest_InvalidGuid_ReturnsNotFound(
+        string method,
+        string action,
+        string identifier
+    )
+    {
+        using var message = new HttpRequestMessage(
+            new HttpMethod(method),
+            $"/organisations/{ExistingOrganisationId}/membership-requests/{identifier}{action}"
+        );
+        using HttpResponseMessage response = await _client.SendAsync(
+            message,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        _mock.ReceivedCalls().ShouldBeEmpty();
+    }
+
     private async Task<HttpResponseMessage> SendRegisterUserRequest(
         int organisationId,
         RegisterUserCommandDto request
@@ -363,8 +388,11 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     private async Task<HttpResponseMessage> SendApproveRequest(int organisationId, Guid requestGuid)
     {
         using StringContent stringContent = new StringContent(string.Empty);
-        var x = new Uri($"{CreateBasedUrl(organisationId, requestGuid)}/approve", UriKind.Relative);
-        return await _client.PatchAsync(x, stringContent, TestContext.Current.CancellationToken);
+        var uri = new Uri(
+            $"{CreateBasedUrl(organisationId, requestGuid)}/approve",
+            UriKind.Relative
+        );
+        return await _client.PatchAsync(uri, stringContent, TestContext.Current.CancellationToken);
     }
 
     private async Task<HttpResponseMessage> SendRejectRequest(int organisationId, Guid requestGuid)

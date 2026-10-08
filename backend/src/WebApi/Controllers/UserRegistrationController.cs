@@ -87,24 +87,24 @@ public class UserRegistrationController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves the details of a user by their unique identifier.
+    /// Retrieves a membership request by its public identifier.
     /// </summary>
     /// <param name="organisationId">
     /// The identifier of the organisation containing the membership request.
     /// </param>
     /// <param name="requestGuid">
-    /// The unique identifier of the user to retrieve.
+    /// The public identifier of the membership request to retrieve.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// An <see cref="ActionResult{T}"/> containing the user's details.
-    /// Returns <see cref="OkObjectResult"/> if the user was found,
-    /// or <see cref="NotFoundResult"/> if no user exists with the supplied identifier.
+    /// An <see cref="ActionResult{T}"/> containing the membership request's details.
+    /// Returns <see cref="OkObjectResult"/> if the request was found and is accessible,
+    /// or <see cref="NotFoundResult"/> if no request exists with the supplied identifier.
     /// </returns>
     /// <response code="200">
-    /// The user's details were successfully retrieved.
+    /// The membership request's details were successfully retrieved.
     /// </response>
     /// <response code="403">
     /// The current user is not allowed to view membership requests for the organisation.
@@ -172,6 +172,8 @@ public class UserRegistrationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> Approve(
         int organisationId,
         Guid requestGuid,
@@ -258,6 +260,8 @@ public class UserRegistrationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> Reject(
         int organisationId,
         Guid requestGuid,
