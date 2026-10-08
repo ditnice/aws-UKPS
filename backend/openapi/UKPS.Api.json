@@ -3502,6 +3502,7 @@
           "id",
           "recordType",
           "recordStatus",
+          "workflowStatus",
           "title"
         ],
         "type": "object",
@@ -3518,6 +3519,10 @@
           "recordStatus": {
             "description": "Gets the record status.",
             "$ref": "#/components/schemas/RecordStatus"
+          },
+          "workflowStatus": {
+            "description": "Gets the workflow status of the latest revision.",
+            "$ref": "#/components/schemas/WorkflowStatus"
           },
           "title": {
             "type": "string",
@@ -4074,6 +4079,16 @@
           }
         },
         "description": "Represents the details required to verify a user's multi-factor authentication setup."
+      },
+      "WorkflowStatus": {
+        "enum": [
+          "Draft",
+          "InReview",
+          "Published",
+          "Rejected"
+        ],
+        "type": "string",
+        "description": "Represents the various statuses that a workflow can have."
       }
     }
   },

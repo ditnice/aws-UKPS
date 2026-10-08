@@ -4,7 +4,13 @@ import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
-import { organisationRecordsTableHeaders, recordStatusLabels } from './labels'
+import {
+  organisationRecordsTableHeaders,
+  recordStatusLabels,
+  recordStatusTagColours,
+  workflowStatusLabels,
+  workflowStatusTagColours,
+} from './labels'
 import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 type RecordsTableProps = {
@@ -22,6 +28,22 @@ function renderNextUpdate(nextUpdateDue: RecordListItemDto['nextUpdateDue']) {
   }
 
   return new Intl.DateTimeFormat('en-GB').format(dueDate)
+}
+
+function renderStatus(record: RecordListItemDto) {
+  if (record.recordStatus === 'OnHold' || record.recordStatus === 'Archived') {
+    return (
+      <Tag colour={recordStatusTagColours[record.recordStatus]}>
+        {recordStatusLabels[record.recordStatus]}
+      </Tag>
+    )
+  }
+
+  return (
+    <Tag colour={workflowStatusTagColours[record.workflowStatus]}>
+      {workflowStatusLabels[record.workflowStatus]}
+    </Tag>
+  )
 }
 
 const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
@@ -44,7 +66,7 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
             case 'next-update':
               return <>{renderNextUpdate(data.nextUpdateDue)}</>
             case 'record-status':
-              return <>{recordStatusLabels[data.recordStatus]}</>
+              return <>{renderStatus(data)}</>
             case 'record-title':
               return <>{data.title}</>
             case 'actions':

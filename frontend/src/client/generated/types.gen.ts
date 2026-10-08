@@ -381,6 +381,10 @@ export type RecordListItemDto = {
      */
     recordStatus: RecordStatus;
     /**
+     * Gets the workflow status of the latest revision.
+     */
+    workflowStatus: WorkflowStatus;
+    /**
      * Gets the human-readable record title.
      */
     title: string;
@@ -809,6 +813,21 @@ export type VerifyMultiFactorAuthenticationCommand = {
      */
     authenticationSession: string;
 };
+
+/**
+ * Represents the various statuses that a workflow can have.
+ */
+export const WorkflowStatus = {
+    DRAFT: 'Draft',
+    IN_REVIEW: 'InReview',
+    PUBLISHED: 'Published',
+    REJECTED: 'Rejected'
+} as const;
+
+/**
+ * Represents the various statuses that a workflow can have.
+ */
+export type WorkflowStatus = typeof WorkflowStatus[keyof typeof WorkflowStatus];
 
 export type PostAuthLoginData = {
     /**

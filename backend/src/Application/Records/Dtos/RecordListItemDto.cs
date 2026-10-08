@@ -23,6 +23,11 @@ public sealed record RecordListItemDto
     public required RecordStatus RecordStatus { get; init; }
 
     /// <summary>
+    /// Gets the workflow status of the latest revision.
+    /// </summary>
+    public required WorkflowStatus WorkflowStatus { get; init; }
+
+    /// <summary>
     /// Gets the human-readable record title.
     /// </summary>
     public required string Title { get; init; }

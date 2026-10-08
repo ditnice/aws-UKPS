@@ -70,6 +70,7 @@ internal partial class RecordService(
                 Id = m.Id,
                 RecordType = m.RecordType,
                 RecordStatus = m.RecordStatus,
+                WorkflowStatus = m.WorkflowStatus,
                 Title = m.Title ?? string.Empty,
                 DevelopmentName = m.DevelopmentName,
                 ReviewedAt = m.ReviewedAt,
@@ -209,6 +210,7 @@ internal partial class RecordService(
         public int OrganisationId { get; init; }
         public RecordType RecordType { get; init; }
         public RecordStatus RecordStatus { get; init; }
+        public WorkflowStatus WorkflowStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
         public string? Title { get; init; }
         public string? DevelopmentName { get; init; }
@@ -221,6 +223,7 @@ internal partial class RecordService(
         public int OrganisationId { get; init; }
         public RecordType RecordType { get; init; }
         public RecordStatus RecordStatus { get; init; }
+        public WorkflowStatus WorkflowStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
         public int? CurrentDraftRevisionId { get; init; }
         public DateTime? NextUpdateDue { get; init; }
@@ -233,6 +236,7 @@ internal partial class RecordService(
             OrganisationId = x.OrganisationId,
             RecordType = x.RecordType,
             RecordStatus = x.RecordStatus,
+            WorkflowStatus = x.Revisions.OrderBy(y => y.RevisionNo).Last().WorkflowStatus,
             ReviewedAt = x.ReviewedAt,
             CurrentDraftRevisionId = x.Revisions.OrderBy(y => y.RevisionNo).Last().Id,
             NextUpdateDue =
@@ -256,6 +260,7 @@ internal partial class RecordService(
                     OrganisationId = a.OrganisationId,
                     RecordType = a.RecordType,
                     RecordStatus = a.RecordStatus,
+                    WorkflowStatus = a.WorkflowStatus,
                     ReviewedAt = a.ReviewedAt,
                     NextUpdateDue = a.NextUpdateDue,
                     Title = b.RecordTitle,
@@ -280,6 +285,7 @@ internal partial class RecordService(
                     OrganisationId = x.OrganisationId,
                     RecordType = x.RecordType,
                     RecordStatus = x.RecordStatus,
+                    WorkflowStatus = x.WorkflowStatus,
                     ReviewedAt = x.ReviewedAt,
                     NextUpdateDue = x.NextUpdateDue,
                     Title = details.RecordTitle,

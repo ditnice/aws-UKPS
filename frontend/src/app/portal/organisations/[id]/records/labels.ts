@@ -1,10 +1,33 @@
 import { GetRecordsQuerySortValue, RecordStatus, UpdateStatus } from '@/client/generated'
+import type { RecordListItemDto } from '@/client/generated/types.gen'
+import type { TagColour } from '@/components/Tag/Tag'
 
 export const recordStatusLabels: Record<RecordStatus, string> = {
   Unpublished: 'Unpublished',
   Active: 'Active',
   OnHold: 'On Hold',
   Archived: 'Archived',
+}
+
+export const recordStatusTagColours: Record<RecordStatus, TagColour> = {
+  Unpublished: 'blue',
+  Active: 'green',
+  OnHold: 'orange',
+  Archived: 'grey',
+}
+
+export const workflowStatusLabels: Record<RecordListItemDto['workflowStatus'], string> = {
+  Draft: 'Draft',
+  InReview: 'QA review',
+  Published: 'Published',
+  Rejected: 'Draft',
+}
+
+export const workflowStatusTagColours: Record<RecordListItemDto['workflowStatus'], TagColour> = {
+  Draft: 'blue',
+  InReview: 'yellow',
+  Published: 'green',
+  Rejected: 'blue',
 }
 
 export const updateStatusLabels: Record<UpdateStatus, string> = {
