@@ -18,6 +18,7 @@ const ndsWrappers = [
   { dir: 'Tag', pkg: '@nice-digital/nds-tag', component: 'Tag' },
   { dir: 'PageHeader', pkg: '@nice-digital/nds-page-header', component: 'PageHeader' },
   { dir: 'Alert', pkg: '@nice-digital/nds-alert', component: 'Alert' },
+  { dir: 'ActionBanner', pkg: '@nice-digital/nds-action-banner', component: 'ActionBanner' },
 ]
 
 const restrictedImportPaths = ndsWrappers.map(({ pkg, dir, component }) => ({

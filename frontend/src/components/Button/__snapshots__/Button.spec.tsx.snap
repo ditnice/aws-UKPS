@@ -40,6 +40,7 @@ exports[`ButtonGroup > renders multiple buttons in a group 1`] = `
 <DocumentFragment>
   <div
     class="_buttonGroup_ee73f7 custom-class"
+    data-component="button-group"
   >
     <button
       class="btn"

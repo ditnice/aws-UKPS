@@ -6,6 +6,28 @@ import { SummaryList, SummaryListAction, SummaryListRow } from './SummaryList'
 afterEach(cleanup)
 
 describe('SummaryList', () => {
+  it('renders a title as a heading above the list', () => {
+    const { asFragment, container } = render(
+      <SummaryList title="Indication details">
+        <SummaryListRow label="Indication" value="Early rheumatoid arthritis" />
+      </SummaryList>,
+    )
+
+    const heading = screen.getByRole('heading', { level: 4, name: 'Indication details' })
+    expect(heading.nextElementSibling).toBe(container.querySelector('dl'))
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('renders the title at the given heading level', () => {
+    render(
+      <SummaryList title="Indication details" titleHeadingLevel={3}>
+        <SummaryListRow label="Indication" value="Early rheumatoid arthritis" />
+      </SummaryList>,
+    )
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Indication details' })).toBeDefined()
+  })
+
   it('renders row children as a description list and ignores empty children', () => {
     const showOptionalRow = false
     const { asFragment, container } = render(

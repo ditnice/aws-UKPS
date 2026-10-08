@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { PaginatedResponseDtoOfRecordListItemDto, RecordStatus } from '@/client/generated'
 import { Tag, TagColour } from '@/components/Tag/Tag'
 
@@ -7,10 +9,11 @@ import { organisationRecordsTableHeaders, recordStatusLabels } from './labels'
 import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 type RecordsTableProps = {
+  organisationId: number
   data: PaginatedResponseDtoOfRecordListItemDto
   query: RecordsQuery
 }
-const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
+const RecordsTable = async ({ organisationId, data: records, query }: RecordsTableProps) => {
   const recordStatusToTagLabelMap: Record<RecordStatus, TagColour> = {
     Unpublished: 'grey',
     Active: 'green',
@@ -42,9 +45,15 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
             case 'next-update':
               return <>TODO</>
             case 'records-title':
-              return <>TODO</>
+              return <>{data.title}</>
             case 'actions':
-              return <>TODO</>
+              return (
+                <Link
+                  href={`/portal/organisations/${organisationId}/records/${data.id}?recordType=${data.recordType}`}
+                >
+                  View<span className="visually-hidden"> record {data.id}</span>
+                </Link>
+              )
           }
         }}
       />
