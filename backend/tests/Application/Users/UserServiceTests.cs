@@ -1701,6 +1701,63 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task RemoveUser_ShouldAnonymiseOnlyTheLinkedApprovedRegistrationRequest()
+    {
+        User caller = await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        User other = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
+        UserRegistrationRequest otherRequest = await AddApprovedRegistrationRequest(other, caller);
+        string otherName = otherRequest.FullName;
+        string otherEmail = otherRequest.WorkEmail;
+        string otherPhone = otherRequest.PhoneNumber;
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeSuccess();
+        UserRegistrationRequest databaseRequest = await Context
+            .UserRegistrationRequests.AsNoTracking()
+            .SingleAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
+        databaseRequest.FullName.ShouldBe($"User-{target.Id}");
+        databaseRequest.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+        databaseRequest.PhoneNumber.ShouldBe("REMOVED");
+        databaseRequest.RequestGuid.ShouldBe(request.RequestGuid);
+        databaseRequest.OrganisationId.ShouldBe(request.OrganisationId);
+        databaseRequest.CreatedUserId.ShouldBe(target.Id);
+        databaseRequest.CreatedAt.ShouldBe(request.CreatedAt);
+        databaseRequest.ApprovedByUserId.ShouldBe(caller.Id);
+        databaseRequest.ApprovedAt.ShouldBe(request.ApprovedAt);
+        databaseRequest.RejectedBy.ShouldBeNull();
+        databaseRequest.RejectedAt.ShouldBeNull();
+        databaseRequest.GetState().ShouldBe(UserRegistrationRequest.State.Approved);
+
+        UserRegistrationRequest unchangedRequest = await Context
+            .UserRegistrationRequests.AsNoTracking()
+            .SingleAsync(x => x.Id == otherRequest.Id, TestContext.Current.CancellationToken);
+        unchangedRequest.FullName.ShouldBe(otherName);
+        unchangedRequest.WorkEmail.ShouldBe(otherEmail);
+        unchangedRequest.PhoneNumber.ShouldBe(otherPhone);
+    }
+
+    private async Task<UserRegistrationRequest> AddApprovedRegistrationRequest(
+        User user,
+        User approver
+    )
+    {
+        var organisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        UserRegistrationRequest request = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.OrganisationId, _ => organisation.Id)
+            .RuleFor(x => x.CreatedUserId, _ => user.Id)
+            .RuleFor(x => x.CreatedAt, _ => _currentDateTime.AddDays(-1))
+            .Generate();
+        request.Approve(approver, _currentDateTime);
+        return await AddEntity(request, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
     public async Task RemoveUser_ShouldReturnTheAnonymisedDisplayName()
     {
         await AddCallerUser();
@@ -1916,8 +1973,12 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task RemoveUser_WhenCognitoDeleteFails_ShouldRollBackTheAnonymisation()
     {
-        await AddCallerUser();
+        User caller = await AddCallerUser();
         User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
+        string originalName = request.FullName;
+        string originalEmail = request.WorkEmail;
+        string originalPhone = request.PhoneNumber;
         _harness
             .Cognito.Mock.WhenForAnyArgs(x => x.AdminDeleteUserAsync(default!, default!))
             .Throws(new TooManyRequestsException("Rate exceeded"));
@@ -1932,6 +1993,13 @@ public class UserServiceTests : DatabaseTestBase
         databaseUser.FullName.ShouldBe(target.FullName);
         databaseUser.WorkEmail.ShouldBe(target.WorkEmail);
 
+        UserRegistrationRequest databaseRequest = await Context
+            .UserRegistrationRequests.AsNoTracking()
+            .SingleAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
+        databaseRequest.FullName.ShouldBe(originalName);
+        databaseRequest.WorkEmail.ShouldBe(originalEmail);
+        databaseRequest.PhoneNumber.ShouldBe(originalPhone);
+
         bool hasRemovalAudit = await Context.UserAudits.AnyAsync(
             a => a.UserId == target.Id && a.EventType == IamEventType.Deleted,
             TestContext.Current.CancellationToken
@@ -1944,6 +2012,7 @@ public class UserServiceTests : DatabaseTestBase
     {
         User caller = await AddCallerUser();
         (User target, UserOrgMembership membership) = await AddUserWithMembership();
+        UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
         UserAudit personalAudit = await AddEntity(
             new UserAudit
             {
@@ -1989,6 +2058,12 @@ public class UserServiceTests : DatabaseTestBase
             .SingleAsync(u => u.Id == target.Id, TestContext.Current.CancellationToken);
         unchangedUser.FullName.ShouldBe(target.FullName);
         unchangedUser.WorkEmail.ShouldBe(target.WorkEmail);
+        UserRegistrationRequest unchangedRequest = await Context
+            .UserRegistrationRequests.AsNoTracking()
+            .SingleAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
+        unchangedRequest.FullName.ShouldBe(request.FullName);
+        unchangedRequest.WorkEmail.ShouldBe(request.WorkEmail);
+        unchangedRequest.PhoneNumber.ShouldBe(request.PhoneNumber);
         var unchangedMembership = await Context
             .UserOrgMemberships.AsNoTracking()
             .SingleAsync(m => m.Id == membership.Id, TestContext.Current.CancellationToken);
@@ -2013,6 +2088,12 @@ public class UserServiceTests : DatabaseTestBase
             .Users.AsNoTracking()
             .SingleAsync(u => u.Id == target.Id, TestContext.Current.CancellationToken);
         removedUser.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+        UserRegistrationRequest anonymisedRequest = await Context
+            .UserRegistrationRequests.AsNoTracking()
+            .SingleAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
+        anonymisedRequest.FullName.ShouldBe($"User-{target.Id}");
+        anonymisedRequest.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+        anonymisedRequest.PhoneNumber.ShouldBe("REMOVED");
         var removedMembership = await Context
             .UserOrgMemberships.AsNoTracking()
             .SingleAsync(m => m.Id == membership.Id, TestContext.Current.CancellationToken);

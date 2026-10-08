@@ -600,6 +600,13 @@ internal partial class UserService(
         DateTime now = timeProvider.GetUtcNow();
 
         user.Anonymise(now);
+        UserRegistrationRequest? registrationRequest = await dbContext
+            .UserRegistrationRequests.Where(x =>
+                x.CreatedUserId == user.Id && x.ApprovedAt != null && x.RejectedAt == null
+            )
+            .SingleOrDefaultAsync(cancellationToken);
+        registrationRequest?.Anonymise(user.Id);
+
         await AddUserRemovedAudit(user.Id, currentUser, now, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
