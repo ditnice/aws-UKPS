@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace UKPS.Api.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreation : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -534,6 +534,7 @@ namespace UKPS.Api.Persistence.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    request_guid = table.Column<Guid>(type: "uuid", nullable: false),
                     organisation_id = table.Column<int>(type: "integer", nullable: false),
                     full_name = table.Column<string>(type: "text", nullable: false),
                     work_email = table.Column<string>(type: "text", nullable: false),
@@ -541,6 +542,7 @@ namespace UKPS.Api.Persistence.Migrations
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     rejected_by = table.Column<int>(type: "integer", nullable: true),
                     approved_by_user_id = table.Column<int>(type: "integer", nullable: true),
+                    created_user_id = table.Column<int>(type: "integer", nullable: true),
                     rejected_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
                     approved_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
@@ -566,6 +568,13 @@ namespace UKPS.Api.Persistence.Migrations
                     table.ForeignKey(
                         name: "fk_user_registration_requests_users_approved_by_user_id",
                         column: x => x.approved_by_user_id,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_user_registration_requests_users_created_user_id",
+                        column: x => x.created_user_id,
                         principalSchema: "ukps",
                         principalTable: "app_user",
                         principalColumn: "id",
@@ -2230,6 +2239,12 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "approved_by_user_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_user_registration_requests_created_user_id",
+                schema: "ukps",
+                table: "user_registration_requests",
+                column: "created_user_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_user_registration_requests_organisation_id",
                 schema: "ukps",
                 table: "user_registration_requests",
@@ -2240,6 +2255,13 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "user_registration_requests",
                 column: "rejected_by");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_registration_requests_request_guid",
+                schema: "ukps",
+                table: "user_registration_requests",
+                column: "request_guid",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_vaccines_adjuvant_technology_id",
