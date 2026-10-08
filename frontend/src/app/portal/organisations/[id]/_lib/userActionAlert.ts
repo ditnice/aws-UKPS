@@ -1,3 +1,5 @@
+import { isRequestGuid } from './requestGuid'
+
 export const userActions = [
   'invited',
   'permissions-updated',
@@ -25,7 +27,7 @@ export type RegisteredUserResult = {
 export type RequestResult = {
   type: 'request'
   action: UserRequestAction
-  userRequestId: number
+  userRequestId: string
 }
 export type UserActionResult = RegisteredUserResult | RequestResult
 
@@ -43,17 +45,12 @@ export function parseUserAction({
   userRequestId,
 }: UserActionSearchParams): UserActionResult | undefined {
   const parsedUserId = Number(userId)
-  const parsedUserRequestId = Number(userRequestId)
 
   if (isUserAction(action) && Number.isInteger(parsedUserId) && parsedUserId > 0) {
     return { type: 'user', action, userId: parsedUserId }
   }
-  if (
-    isUserRequestAction(action) &&
-    Number.isInteger(parsedUserRequestId) &&
-    parsedUserRequestId > 0
-  ) {
-    return { type: 'request', action, userRequestId: parsedUserRequestId }
+  if (isUserRequestAction(action) && isRequestGuid(userRequestId)) {
+    return { type: 'request', action, userRequestId }
   }
   return undefined
 }
@@ -63,7 +60,7 @@ type UserHrefArgs =
       action: UserAction
       userId: number
     }
-  | { action: UserRequestAction; userRequestId: number }
+  | { action: UserRequestAction; userRequestId: string }
 export function buildUserActionHref(organisationId: number, args: UserHrefArgs): string {
   return 'userId' in args
     ? `/portal/organisations/${organisationId}?action=${args.action}&userId=${args.userId}`

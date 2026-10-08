@@ -8,8 +8,8 @@ public abstract record GetUserDetailsError
     /// <summary>
     /// Represents an error indicating that the specified email was not found.
     /// </summary>
-    /// <param name="Id">The identifier of the organisation that was not found.</param>
-    public sealed record IdNotFound(int Id) : GetUserDetailsError;
+    /// <param name="RegisterGuid">The identifier of the organisation that was not found.</param>
+    public sealed record IdNotFound(Guid RegisterGuid) : GetUserDetailsError;
 
     /// <summary>
     /// Represents an error indicating that the user is not authorized.
