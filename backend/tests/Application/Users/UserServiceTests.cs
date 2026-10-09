@@ -152,7 +152,7 @@ public class UserServiceTests : DatabaseTestBase
             .RuleFor(x => x.Organisation, _ => organisation)
             .RuleFor(x => x.WorkEmail, _ => userEmail)
             .RuleFor(x => x.RejectedAt, _ => null)
-            .RuleFor(x => x.RejectedBy, _ => null);
+            .RuleFor(x => x.RejectedByUserId, _ => null);
         var registrationRequests = await AddEntities(
             faker.Generate(5),
             TestContext.Current.CancellationToken
@@ -1093,7 +1093,14 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         IUserAdministrationService userAdministrationService =
-            new ServiceTestHarness<IUserAdministrationService>(_harness).Service;
+            new ServiceTestHarness<IUserAdministrationService>(_harness)
+                .UpdateCurrentUser(x =>
+                    x with
+                    {
+                        CognitoUsername = _seededUsers.First().CognitoUsername,
+                    }
+                )
+                .Service;
         Faker<OnboardUserCommandDto> onboardingUserFaker = new OnboardUserCommandDtoFaker().RuleFor(
             x => x.OrganisationId,
             _ => org.Id
@@ -1723,11 +1730,11 @@ public class UserServiceTests : DatabaseTestBase
         databaseRequest.PhoneNumber.ShouldBe("REMOVED");
         databaseRequest.RequestGuid.ShouldBe(request.RequestGuid);
         databaseRequest.OrganisationId.ShouldBe(request.OrganisationId);
-        databaseRequest.CreatedUserId.ShouldBe(target.Id);
+        databaseRequest.ResultingUserId.ShouldBe(target.Id);
         databaseRequest.CreatedAt.ShouldBe(request.CreatedAt);
         databaseRequest.ApprovedByUserId.ShouldBe(caller.Id);
         databaseRequest.ApprovedAt.ShouldBe(request.ApprovedAt);
-        databaseRequest.RejectedBy.ShouldBeNull();
+        databaseRequest.RejectedByUserId.ShouldBeNull();
         databaseRequest.RejectedAt.ShouldBeNull();
         databaseRequest.GetState().ShouldBe(UserRegistrationRequest.State.Approved);
 
@@ -1740,16 +1747,16 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task RemoveUser_ShouldAnonymiseOnlyMatchingOnboardingCreatorsAndPreserveMetadata()
+    public async Task RemoveUser_ShouldPreserveOnboardingCreatorReferencesAndMetadata()
     {
         User caller = await AddCallerUser();
         User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
-        UserOnboardingRecord pendingRecord = await AddOnboardingRecordCreatedBy(target.WorkEmail);
+        UserOnboardingRecord pendingRecord = await AddOnboardingRecordCreatedBy(target.Id);
         UserOnboardingRecord consumedRecord = await AddOnboardingRecordCreatedBy(
-            target.WorkEmail,
+            target.Id,
             consumed: true
         );
-        UserOnboardingRecord unrelatedRecord = await AddOnboardingRecordCreatedBy(caller.WorkEmail);
+        UserOnboardingRecord unrelatedRecord = await AddOnboardingRecordCreatedBy(caller.Id);
 
         var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
 
@@ -1758,13 +1765,17 @@ public class UserServiceTests : DatabaseTestBase
         {
             UserOnboardingRecord databaseRecord = await Context
                 .UserOnboardingRecords.AsNoTracking()
+                .Include(x => x.CreatedByUser)
                 .SingleAsync(
                     x => x.SetupToken == originalRecord.SetupToken,
                     TestContext.Current.CancellationToken
                 );
-            databaseRecord.CreatedBy.ShouldBe($"removed-user-{target.Id}@removed.invalid");
-            databaseRecord.UserId.ShouldBe(originalRecord.UserId);
-            databaseRecord.UserId.ShouldNotBe(target.Id);
+            databaseRecord.CreatedByUserId.ShouldBe(target.Id);
+            databaseRecord
+                .CreatedByUser.ShouldNotBeNull()
+                .WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+            databaseRecord.ResultingUserId.ShouldBe(originalRecord.ResultingUserId);
+            databaseRecord.ResultingUserId.ShouldNotBe(target.Id);
             databaseRecord.CorrelationId.ShouldBe(originalRecord.CorrelationId);
             databaseRecord.CreatedAt.ShouldBe(originalRecord.CreatedAt);
             databaseRecord.ConsumedAt.ShouldBe(originalRecord.ConsumedAt);
@@ -1777,11 +1788,11 @@ public class UserServiceTests : DatabaseTestBase
                 x => x.SetupToken == unrelatedRecord.SetupToken,
                 TestContext.Current.CancellationToken
             );
-        unchangedRecord.CreatedBy.ShouldBe(caller.WorkEmail);
+        unchangedRecord.CreatedByUserId.ShouldBe(caller.Id);
     }
 
     private async Task<UserOnboardingRecord> AddOnboardingRecordCreatedBy(
-        string createdBy,
+        int createdByUserId,
         bool consumed = false
     )
     {
@@ -1791,9 +1802,9 @@ public class UserServiceTests : DatabaseTestBase
             SetupToken = Guid.NewGuid(),
             CorrelationId = Guid.NewGuid(),
             CreatedAt = _currentDateTime.AddDays(-1),
-            CreatedBy = createdBy,
+            CreatedByUserId = createdByUserId,
             ResendCount = 2,
-            UserId = owner.Id,
+            ResultingUserId = owner.Id,
         };
         if (consumed)
         {
@@ -1814,7 +1825,7 @@ public class UserServiceTests : DatabaseTestBase
         );
         UserRegistrationRequest request = new UserRegistrationRequestFaker()
             .RuleFor(x => x.OrganisationId, _ => organisation.Id)
-            .RuleFor(x => x.CreatedUserId, _ => user.Id)
+            .RuleFor(x => x.ResultingUserId, _ => user.Id)
             .RuleFor(x => x.CreatedAt, _ => _currentDateTime.AddDays(-1))
             .Generate();
         request.Approve(approver, _currentDateTime);
@@ -2043,9 +2054,7 @@ public class UserServiceTests : DatabaseTestBase
         string originalName = request.FullName;
         string originalEmail = request.WorkEmail;
         string originalPhone = request.PhoneNumber;
-        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(
-            target.WorkEmail
-        );
+        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(target.Id);
         _harness
             .Cognito.Mock.WhenForAnyArgs(x => x.AdminDeleteUserAsync(default!, default!))
             .Throws(new TooManyRequestsException("Rate exceeded"));
@@ -2073,7 +2082,7 @@ public class UserServiceTests : DatabaseTestBase
                 x => x.SetupToken == onboardingRecord.SetupToken,
                 TestContext.Current.CancellationToken
             );
-        databaseOnboardingRecord.CreatedBy.ShouldBe(onboardingRecord.CreatedBy);
+        databaseOnboardingRecord.CreatedByUserId.ShouldBe(onboardingRecord.CreatedByUserId);
 
         bool hasRemovalAudit = await Context.UserAudits.AnyAsync(
             a => a.UserId == target.Id && a.EventType == IamEventType.Deleted,
@@ -2088,9 +2097,7 @@ public class UserServiceTests : DatabaseTestBase
         User caller = await AddCallerUser();
         (User target, UserOrgMembership membership) = await AddUserWithMembership();
         UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
-        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(
-            target.WorkEmail
-        );
+        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(target.Id);
         UserAudit personalAudit = await AddEntity(
             new UserAudit
             {
@@ -2148,7 +2155,7 @@ public class UserServiceTests : DatabaseTestBase
                 x => x.SetupToken == onboardingRecord.SetupToken,
                 TestContext.Current.CancellationToken
             );
-        unchangedOnboardingRecord.CreatedBy.ShouldBe(onboardingRecord.CreatedBy);
+        unchangedOnboardingRecord.CreatedByUserId.ShouldBe(onboardingRecord.CreatedByUserId);
         var unchangedMembership = await Context
             .UserOrgMemberships.AsNoTracking()
             .SingleAsync(m => m.Id == membership.Id, TestContext.Current.CancellationToken);
@@ -2185,7 +2192,7 @@ public class UserServiceTests : DatabaseTestBase
                 x => x.SetupToken == onboardingRecord.SetupToken,
                 TestContext.Current.CancellationToken
             );
-        anonymisedOnboardingRecord.CreatedBy.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+        anonymisedOnboardingRecord.CreatedByUserId.ShouldBe(target.Id);
         var removedMembership = await Context
             .UserOrgMemberships.AsNoTracking()
             .SingleAsync(m => m.Id == membership.Id, TestContext.Current.CancellationToken);

@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace UKPS.Api.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreation : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -352,17 +352,24 @@ namespace UKPS.Api.Persistence.Migrations
                     setup_token = table.Column<Guid>(type: "uuid", nullable: false),
                     correlation_id = table.Column<Guid>(type: "uuid", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    created_by = table.Column<string>(type: "text", nullable: false),
+                    created_by_user_id = table.Column<int>(type: "integer", nullable: false),
                     consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     resend_count = table.Column<int>(type: "integer", nullable: false),
-                    user_id = table.Column<int>(type: "integer", nullable: false)
+                    resulting_user_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_user_onboarding_records", x => x.setup_token);
                     table.ForeignKey(
-                        name: "fk_user_onboarding_records_users_user_id",
-                        column: x => x.user_id,
+                        name: "fk_user_onboarding_records_app_user_created_by_user_id",
+                        column: x => x.created_by_user_id,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_user_onboarding_records_app_user_resulting_user_id",
+                        column: x => x.resulting_user_id,
                         principalSchema: "ukps",
                         principalTable: "app_user",
                         principalColumn: "id",
@@ -540,9 +547,9 @@ namespace UKPS.Api.Persistence.Migrations
                     work_email = table.Column<string>(type: "text", nullable: false),
                     phone_number = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    rejected_by = table.Column<int>(type: "integer", nullable: true),
+                    rejected_by_user_id = table.Column<int>(type: "integer", nullable: true),
                     approved_by_user_id = table.Column<int>(type: "integer", nullable: true),
-                    created_user_id = table.Column<int>(type: "integer", nullable: true),
+                    resulting_user_id = table.Column<int>(type: "integer", nullable: true),
                     rejected_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
                     approved_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
@@ -551,13 +558,6 @@ namespace UKPS.Api.Persistence.Migrations
                 {
                     table.PrimaryKey("pk_user_registration_requests", x => x.id);
                     table.CheckConstraint("ck_membership_request_approved_at_rejected_at", "approved_at IS NULL OR rejected_at IS NULL");
-                    table.ForeignKey(
-                        name: "fk_user_registration_requests_app_user_rejected_by",
-                        column: x => x.rejected_by,
-                        principalSchema: "ukps",
-                        principalTable: "app_user",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_user_registration_requests_organisations_organisation_id",
                         column: x => x.organisation_id,
@@ -573,8 +573,15 @@ namespace UKPS.Api.Persistence.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "fk_user_registration_requests_users_created_user_id",
-                        column: x => x.created_user_id,
+                        name: "fk_user_registration_requests_users_rejected_by_user_id",
+                        column: x => x.rejected_by_user_id,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_user_registration_requests_users_resulting_user_id",
+                        column: x => x.resulting_user_id,
                         principalSchema: "ukps",
                         principalTable: "app_user",
                         principalColumn: "id",
@@ -2205,10 +2212,16 @@ namespace UKPS.Api.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ix_user_onboarding_records_user_id",
+                name: "ix_user_onboarding_records_created_by_user_id",
                 schema: "ukps",
                 table: "user_onboarding_records",
-                column: "user_id",
+                column: "created_by_user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_onboarding_records_resulting_user_id",
+                schema: "ukps",
+                table: "user_onboarding_records",
+                column: "resulting_user_id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -2239,22 +2252,16 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "approved_by_user_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_user_registration_requests_created_user_id",
-                schema: "ukps",
-                table: "user_registration_requests",
-                column: "created_user_id");
-
-            migrationBuilder.CreateIndex(
                 name: "ix_user_registration_requests_organisation_id",
                 schema: "ukps",
                 table: "user_registration_requests",
                 column: "organisation_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_user_registration_requests_rejected_by",
+                name: "ix_user_registration_requests_rejected_by_user_id",
                 schema: "ukps",
                 table: "user_registration_requests",
-                column: "rejected_by");
+                column: "rejected_by_user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_registration_requests_request_guid",
@@ -2262,6 +2269,12 @@ namespace UKPS.Api.Persistence.Migrations
                 table: "user_registration_requests",
                 column: "request_guid",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_registration_requests_resulting_user_id",
+                schema: "ukps",
+                table: "user_registration_requests",
+                column: "resulting_user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_vaccines_adjuvant_technology_id",

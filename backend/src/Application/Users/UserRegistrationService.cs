@@ -256,7 +256,7 @@ internal class UserRegistrationService : IUserRegistrationService
         CancellationToken cancellationToken
     )
     {
-        registrationRequest.CreatedUser = targetUser;
+        registrationRequest.ResultingUser = targetUser;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency

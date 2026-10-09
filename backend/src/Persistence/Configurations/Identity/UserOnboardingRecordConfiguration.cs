@@ -11,5 +11,10 @@ internal sealed class UserOnboardingRecordConfiguration
     {
         builder.HasKey(x => x.SetupToken);
         builder.HasIndex(x => x.CorrelationId).IsUnique();
+        builder
+            .HasOne(x => x.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

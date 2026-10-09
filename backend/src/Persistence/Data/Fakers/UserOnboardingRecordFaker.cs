@@ -12,6 +12,7 @@ internal sealed class UserOnboardingRecordFaker : Faker<UserOnboardingRecord>
         RuleFor(x => x.SetupToken, f => f.Random.Guid());
         RuleFor(x => x.CorrelationId, f => f.Random.Guid());
         RuleFor(x => x.CreatedAt, f => f.Date.RecentOffset(30).UtcDateTime);
-        RuleFor(x => x.CreatedBy, f => f.Internet.UserName());
+        RuleFor(x => x.CreatedByUser, _ => new UserFaker().Generate());
+        RuleFor(x => x.CreatedByUserId, _ => 0);
     }
 }

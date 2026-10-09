@@ -141,7 +141,7 @@ internal sealed class User
         var userOnboardingRecord = new UserOnboardingRecord()
         {
             SetupToken = Guid.CreateVersion7(),
-            CreatedBy = command.CurrentUserEmail,
+            CreatedByUserId = command.CurrentUserId,
             CreatedAt = command.Now,
         };
         var membership = new UserOrgMembership()
