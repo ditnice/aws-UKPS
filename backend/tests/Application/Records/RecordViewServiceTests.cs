@@ -251,6 +251,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         dto.RecordProductDetail.ShouldBeNull();
         dto.MedicinesIndicationDetail.ShouldBeNull();
         dto.MedicinesDevelopmentBackground.ShouldBeNull();
+        dto.RecordClinicalTrialInformation.ShouldBeNull();
         dto.MedicinesTreatmentDetail.ShouldBeNull();
         dto.MedicinesPatientIdentification.ShouldBeNull();
         dto.MedicinesLaboratoryTesting.ShouldBeNull();
@@ -672,7 +673,6 @@ public class RecordViewServiceTests : DatabaseTestBase
                 StudyName = "Study A",
                 ClinicalTrialsGovNumber = "NCT00000001",
                 BriefDescription = "Description A",
-                RecruitingInUk = YesNoUnknown.Yes,
                 TrialPhase = TrialPhase.PhaseIII,
                 OtherClinicalTrialNumbers =
                 [
@@ -693,6 +693,11 @@ public class RecordViewServiceTests : DatabaseTestBase
                 RevisionId = revision.Id,
                 StudyName = "Study B",
                 ClinicalTrialsGovNumber = "NCT00000002",
+            },
+            new RecordClinicalTrialInformation
+            {
+                RevisionId = revision.Id,
+                RecruitingInUk = YesNoUnknown.Yes,
             },
             new RecordHta
             {
@@ -724,12 +729,13 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
+        dto.RecordClinicalTrialInformation.ShouldNotBeNull()
+            .RecruitingInUk.ShouldBe(YesNoUnknown.Yes);
         dto.RecordClinicalTrials.Count.ShouldBe(2);
         var trialA = dto.RecordClinicalTrials.First();
         trialA.StudyName.ShouldBe("Study A");
         trialA.ClinicalTrialsGovNumber.ShouldBe("NCT00000001");
         trialA.BriefDescription.ShouldBe("Description A");
-        trialA.RecruitingInUk.ShouldBe(YesNoUnknown.Yes);
         trialA.TrialPhase.ShouldBe(TrialPhase.PhaseIII);
         trialA.OtherClinicalTrialNumbers.ShouldBe(["ISRCTN 1", "EudraCT 2"]);
         var trialB = dto.RecordClinicalTrials.Last();

@@ -4622,20 +4622,26 @@
               "string"
             ],
             "description": "Gets the brief description of key findings."
-          },
+          }
+        },
+        "description": "Represents a clinical trial on a record."
+      },
+      "RecordClinicalTrialInformationDto": {
+        "type": "object",
+        "properties": {
           "recruitingInUk": {
             "oneOf": [
               {
                 "type": "null"
               },
               {
-                "description": "Gets whether the trial is recruiting in the UK.",
+                "description": "Gets whether any of the record's clinical trials are recruiting in the UK.",
                 "$ref": "#/components/schemas/YesNoUnknown"
               }
             ]
           }
         },
-        "description": "Represents a clinical trial on a record."
+        "description": "Represents the answers about a record's clinical trials as a whole."
       },
       "RecordDisplayStatus": {
         "enum": [
@@ -4716,6 +4722,17 @@
               {
                 "description": "Gets the development background section.",
                 "$ref": "#/components/schemas/MedicinesDevelopmentBackgroundDto"
+              }
+            ]
+          },
+          "recordClinicalTrialInformation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the answers about the clinical trials as a whole.",
+                "$ref": "#/components/schemas/RecordClinicalTrialInformationDto"
               }
             ]
           },

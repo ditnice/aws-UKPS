@@ -12,14 +12,14 @@ public sealed class DataSeederInMemoryTests
     {
         SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
 
-        payload.Organisations.Count.ShouldBe(5);
-        payload.Users.Count.ShouldBe(80);
-        payload.Memberships.Count.ShouldBe(81); //Additional membership for dev user
-        payload.Records.Count.ShouldBe(20);
+        payload.Organisations.Count.ShouldBe(50);
+        payload.Users.Count.ShouldBe(800);
+        payload.Memberships.Count.ShouldBe(801); //Additional membership for dev user
+        payload.Records.Count.ShouldBe(500);
     }
 
     [Fact]
-    public void BuildPayload_WhenSeedUsersJsonHasSuperUser_ShouldAddSuperUserForOrganisationOne()
+    public void BuildPayload_WhenSeedUsersJsonHasSuperUser_ShouldAddSuperUserToInternalOrganisation()
     {
         const string email = "bootstrap.user@example.com";
         const string cognitoUsername = "00000000-0000-0000-0000-000000000001";
@@ -45,6 +45,7 @@ public sealed class DataSeederInMemoryTests
         user.FullName.ShouldBe("Bootstrap User");
         user.CognitoUsername.ShouldBe(CognitoUsername.Parse(cognitoUsername));
         user.UserType.ShouldBe(UserType.ItAdmin);
+        payload.Organisations.First().OrganisationType.ShouldBe(OrganisationType.Internal);
         payload.Organisations.First().Status.ShouldBe(UserOrgStatus.Active);
 
         UserOrgMembership membership = payload.Memberships.Single(m =>
@@ -57,7 +58,7 @@ public sealed class DataSeederInMemoryTests
     }
 
     [Fact]
-    public void BuildPayload_WhenSuperUserMatchesGeneratedEmail_ShouldReplaceGeneratedUser()
+    public void BuildPayload_WhenSuperUserMatchesGeneratedEmail_ShouldTakeOverEmailFromGeneratedUser()
     {
         SeedingDataPayload generatedPayload = DataSeederInMemory.BuildPayload(new SeedingOptions());
         string generatedEmail = generatedPayload.Users.First().WorkEmail;
@@ -83,6 +84,7 @@ public sealed class DataSeederInMemoryTests
         );
         user.FullName.ShouldBe("Configured User");
         user.CognitoUsername.ShouldBe(CognitoUsername.Parse(cognitoUsername));
+        payload.Users.Select(u => u.WorkEmail).ShouldBeUnique();
         payload.Memberships.Count(m => ReferenceEquals(m.User, user)).ShouldBe(1);
         payload
             .Memberships.Single(m => ReferenceEquals(m.User, user))
@@ -92,7 +94,7 @@ public sealed class DataSeederInMemoryTests
     [Theory]
     [InlineData("Standard", UserRole.Standard)]
     [InlineData("champion", UserRole.Champion)]
-    public void BuildPayload_WhenSeedUsersJsonHasNonSuperRole_ShouldAddPharmaUserToFourOrganisations(
+    public void BuildPayload_WhenSeedUsersJsonHasNonSuperRole_ShouldAddPharmaUserToFourPharmaOrganisations(
         string role,
         UserRole expectedRole
     )
@@ -120,7 +122,8 @@ public sealed class DataSeederInMemoryTests
         user.UserType.ShouldBe(UserType.PharmaUser);
 
         Organisation[] expectedOrganisations = payload
-            .Organisations.Take(DataSeederInMemory.NonSuperUserOrganisationCount)
+            .Organisations.Where(o => o.OrganisationType == OrganisationType.PharmaCompany)
+            .Take(DataSeederInMemory.NonSuperUserOrganisationCount)
             .ToArray();
         expectedOrganisations.Length.ShouldBe(4);
         expectedOrganisations.ShouldAllBe(o => o.Status == UserOrgStatus.Active);

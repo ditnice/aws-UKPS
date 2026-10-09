@@ -27,6 +27,11 @@ public sealed record MedicineRecordDto : RecordDto
     public MedicinesDevelopmentBackgroundDto? MedicinesDevelopmentBackground { get; init; }
 
     /// <summary>
+    /// Gets the answers about the clinical trials as a whole.
+    /// </summary>
+    public RecordClinicalTrialInformationDto? RecordClinicalTrialInformation { get; init; }
+
+    /// <summary>
     /// Gets the clinical trials.
     /// </summary>
     public required IReadOnlyCollection<RecordClinicalTrialDto> RecordClinicalTrials { get; init; }

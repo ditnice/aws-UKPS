@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261007084049_InitialCreate")]
+    [Migration("20261007090846_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1483,7 +1483,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("updated_at");
 
-                    b.Property<int>("UpdatedBy")
+                    b.Property<int?>("UpdatedBy")
                         .HasColumnType("integer")
                         .HasColumnName("updated_by");
 
@@ -2004,10 +2004,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("clinical_trials_gov_number");
 
-                    b.Property<int?>("RecruitingInUk")
-                        .HasColumnType("integer")
-                        .HasColumnName("recruiting_in_uk");
-
                     b.Property<int>("RevisionId")
                         .HasColumnType("integer")
                         .HasColumnName("revision_id");
@@ -2028,6 +2024,33 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasDatabaseName("ix_record_clinical_trial_revision_id");
 
                     b.ToTable("record_clinical_trials", "ukps");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrialInformation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("RecruitingInUk")
+                        .HasColumnType("integer")
+                        .HasColumnName("recruiting_in_uk");
+
+                    b.Property<int>("RevisionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("revision_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_record_clinical_trial_information");
+
+                    b.HasIndex("RevisionId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_record_clinical_trial_information_revision_id");
+
+                    b.ToTable("record_clinical_trial_information", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordHta", b =>
@@ -3136,7 +3159,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_record_status_histories_app_user_updated_by");
 
                     b.Navigation("Record");
@@ -3218,6 +3240,18 @@ namespace UKPS.Api.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_record_clinical_trials_record_revisions_revision_id");
+
+                    b.Navigation("Revision");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrialInformation", b =>
+                {
+                    b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", "Revision")
+                        .WithMany()
+                        .HasForeignKey("RevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_record_clinical_trial_information_record_revisions_revision");
 
                     b.Navigation("Revision");
                 });

@@ -4,18 +4,19 @@ using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
 namespace UKPS.Api.Persistence.Configurations.SharedRevisionContent;
 
-internal sealed class RecordClinicalTrialConfiguration
-    : IEntityTypeConfiguration<RecordClinicalTrial>
+internal sealed class RecordClinicalTrialInformationConfiguration
+    : IEntityTypeConfiguration<RecordClinicalTrialInformation>
 {
-    public void Configure(EntityTypeBuilder<RecordClinicalTrial> builder)
+    public void Configure(EntityTypeBuilder<RecordClinicalTrialInformation> builder)
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.StudyName).IsRequired();
-        builder.Property(x => x.ClinicalTrialsGovNumber).IsRequired();
-        builder.Property(x => x.TrialPhase);
+        builder.Property(x => x.RecruitingInUk);
 
-        builder.HasIndex(x => x.RevisionId).HasDatabaseName("ix_record_clinical_trial_revision_id");
+        builder
+            .HasIndex(x => x.RevisionId)
+            .IsUnique()
+            .HasDatabaseName("ix_record_clinical_trial_information_revision_id");
 
         builder
             .HasOne(x => x.Revision)

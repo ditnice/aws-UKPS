@@ -20,8 +20,6 @@ internal sealed class RecordClinicalTrial
     /// <summary>Brief description of key findings. Vaccines only. Null for medicine records.</summary>
     public string? BriefDescription { get; set; }
 
-    public YesNoUnknown? RecruitingInUk { get; set; }
-
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
     public ICollection<OtherClinicalTrialNumber> OtherClinicalTrialNumbers { get; set; } = [];
