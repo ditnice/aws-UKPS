@@ -289,12 +289,15 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldNotBeEmpty();
-        dto.Items.Select(x =>
-                x.ReviewedAt.HasValue ? x.ReviewedAt.Value.AddMonths(3) : (DateTime?)null
-            )
+        DateTime?[] nextUpdateDueDates = dto.Items.Select(x => x.NextUpdateDue).ToArray();
+        nextUpdateDueDates
             .Where(x => x.HasValue)
             .Select(x => x!.Value)
             .ShouldBeInOrder(SortDirection.Ascending);
+        nextUpdateDueDates
+            .TakeWhile(x => x.HasValue)
+            .Count()
+            .ShouldBe(nextUpdateDueDates.Count(x => x.HasValue));
     }
 
     [Fact]

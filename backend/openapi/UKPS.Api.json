@@ -3223,7 +3223,8 @@
           "NextUpdateDue",
           "Id",
           "DevelopmentName",
-          "RecordStatus"
+          "RecordStatus",
+          "RecordTitle"
         ],
         "type": "string",
         "description": "Specifies the fields by which records can be sorted."
@@ -3581,6 +3582,7 @@
           "id",
           "recordType",
           "recordStatus",
+          "workflowStatus",
           "title"
         ],
         "type": "object",
@@ -3597,6 +3599,10 @@
           "recordStatus": {
             "description": "Gets the record status.",
             "$ref": "#/components/schemas/RecordStatus"
+          },
+          "workflowStatus": {
+            "description": "Gets the workflow status of the latest revision.",
+            "$ref": "#/components/schemas/WorkflowStatus"
           },
           "title": {
             "type": "string",
@@ -3615,6 +3621,14 @@
               "string"
             ],
             "description": "Gets the date the record was last reviewed, when available.",
+            "format": "date-time"
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date the record is next due for an update, when available.",
             "format": "date-time"
           }
         },
@@ -4145,6 +4159,16 @@
           }
         },
         "description": "Represents the details required to verify a user's multi-factor authentication setup."
+      },
+      "WorkflowStatus": {
+        "enum": [
+          "Draft",
+          "InReview",
+          "Published",
+          "Rejected"
+        ],
+        "type": "string",
+        "description": "Represents the various statuses that a workflow can have."
       }
     }
   },

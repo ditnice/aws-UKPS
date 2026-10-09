@@ -43,9 +43,9 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
       <FilterByInput
         label="Search Records"
         name="search"
-        buttonLabel="Apply filter"
+        buttonLabel="Search"
         inputProps={{
-          placeholder: 'Enter an email address',
+          placeholder: 'Enter record identifier',
           defaultValue: query.search ?? '',
         }}
       ></FilterByInput>

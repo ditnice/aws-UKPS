@@ -23,6 +23,11 @@ public sealed record RecordListItemDto
     public required RecordStatus RecordStatus { get; init; }
 
     /// <summary>
+    /// Gets the workflow status of the latest revision.
+    /// </summary>
+    public required WorkflowStatus WorkflowStatus { get; init; }
+
+    /// <summary>
     /// Gets the human-readable record title.
     /// </summary>
     public required string Title { get; init; }
@@ -36,4 +41,9 @@ public sealed record RecordListItemDto
     /// Gets the date the record was last reviewed, when available.
     /// </summary>
     public DateTime? ReviewedAt { get; init; }
+
+    /// <summary>
+    /// Gets the date the record is next due for an update, when available.
+    /// </summary>
+    public DateTime? NextUpdateDue { get; init; }
 }

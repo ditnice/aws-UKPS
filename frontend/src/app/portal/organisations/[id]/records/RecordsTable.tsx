@@ -1,14 +1,51 @@
 import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
+import type { RecordListItemDto } from '@/client/generated/types.gen'
+import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
-import { organisationRecordsTableHeaders, recordStatusLabels } from './labels'
+import {
+  organisationRecordsTableHeaders,
+  recordStatusLabels,
+  recordStatusTagColours,
+  workflowStatusLabels,
+  workflowStatusTagColours,
+} from './labels'
 import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 type RecordsTableProps = {
   data: PaginatedResponseDtoOfRecordListItemDto
   query: RecordsQuery
 }
+function renderNextUpdate(nextUpdateDue: RecordListItemDto['nextUpdateDue']) {
+  if (!nextUpdateDue) {
+    return 'Not applicable'
+  }
+
+  const dueDate = new Date(nextUpdateDue)
+  if (dueDate < new Date()) {
+    return <Tag colour="red">Overdue</Tag>
+  }
+
+  return new Intl.DateTimeFormat('en-GB').format(dueDate)
+}
+
+function renderStatus(record: RecordListItemDto) {
+  if (record.recordStatus === 'OnHold' || record.recordStatus === 'Archived') {
+    return (
+      <Tag colour={recordStatusTagColours[record.recordStatus]}>
+        {recordStatusLabels[record.recordStatus]}
+      </Tag>
+    )
+  }
+
+  return (
+    <Tag colour={workflowStatusTagColours[record.workflowStatus]}>
+      {workflowStatusLabels[record.workflowStatus]}
+    </Tag>
+  )
+}
+
 const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
   return (
     <>
@@ -23,12 +60,15 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
         getData={(key, data) => {
           switch (key) {
             case 'id':
-              return <>{data.developmentName}</>
-            case 'record-status':
-              return <>{recordStatusLabels[data.recordStatus]}</>
+              return <>{data.id}</>
             case 'development-name':
+              return <>{data.developmentName}</>
             case 'next-update':
-            case 'records-title':
+              return <>{renderNextUpdate(data.nextUpdateDue)}</>
+            case 'record-status':
+              return <>{renderStatus(data)}</>
+            case 'record-title':
+              return <>{data.title}</>
             case 'actions':
               return <>TODO</>
           }
