@@ -36,6 +36,7 @@ export const errorMessages = {
   passwordTooLong: 'Your password must be 256 characters or less',
   passwordWhitespace: 'Your password cannot contain spaces',
 
+  developmentNamesDistinct: 'Development names must be distinct',
   genericNamesDistinct: 'Generic names must be distinct',
   recordTitleTooLong: 'Record title cannot be greater than 100 characters',
 

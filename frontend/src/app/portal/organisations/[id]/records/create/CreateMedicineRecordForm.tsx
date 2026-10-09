@@ -25,6 +25,7 @@ const isDistinctIgnoringCase = (values: string[]) =>
 export const createRecordCommandSchema = z.object({
   organisationId: z.number(),
   developmentName: z.string().trim().min(1, errorMessages.developmentNameRequired),
+  otherIdentifiers: z.array(z.string().trim().min(1)),
   brandedName: z
     .string()
     .nullish()
@@ -33,7 +34,6 @@ export const createRecordCommandSchema = z.object({
     .array(z.string().trim().min(1, errorMessages.genericNameRequired))
     .min(1, errorMessages.genericNameRequired)
     .refine(isDistinctIgnoringCase, errorMessages.genericNamesDistinct),
-  otherIdentifiers: z.array(z.string()),
   recordTitle: z
     .string()
     .trim()
@@ -51,9 +51,9 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
   const defaultValues: CreateRecordCommand = {
     organisationId,
     developmentName: '',
+    otherIdentifiers: [],
     brandedName: '',
     genericNames: [''],
-    otherIdentifiers: [],
     recordTitle: '',
   }
   const form = useForm({

@@ -43,6 +43,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         ["GenericNames null"] = x => x with { GenericNames = null! },
         ["GenericNames empty item"] = x => x with { GenericNames = [""] },
         ["GenericNames whitespace item"] = x => x with { GenericNames = ["\n\n"] },
+        ["OtherIdentifiers empty item"] = x => x with { OtherIdentifiers = [""] },
+        ["OtherIdentifiers whitespace item"] = x => x with { OtherIdentifiers = ["   "] },
         ["GenericNames duplicate items"] = x =>
             x with
             {
@@ -53,8 +55,6 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             {
                 GenericNames = ["not-distinct", "NOT-DISTINCT"],
             },
-        ["OtherIdentifiers empty item"] = x => x with { OtherIdentifiers = [""] },
-        ["OtherIdentifiers whitespace item"] = x => x with { OtherIdentifiers = ["   "] },
         ["BrandedName empty"] = x => x with { BrandedName = "" },
         ["BrandedName whitespace"] = x => x with { BrandedName = "   " },
         ["RecordTitle empty"] = x => x with { RecordTitle = "" },

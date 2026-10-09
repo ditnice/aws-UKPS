@@ -30,9 +30,9 @@ type FormValues = Omit<CreateRecordCommand, 'organisationId'>
 
 const validFormValues: FormValues = {
   developmentName: 'dn1',
+  otherIdentifiers: [],
   brandedName: 'test',
   genericNames: ['gn1', 'gn2', 'gn3'],
-  otherIdentifiers: [],
   recordTitle: 'record-title',
 }
 
@@ -132,10 +132,10 @@ describe('CreateMedicineRecordForm', () => {
       expect(mocks.createRecord).not.toHaveBeenCalled()
     })
 
-    it('rejects a whitespace development name', async () => {
+    it('rejects a whitespace-only development name', async () => {
       renderComponent()
+      fillInForm({ ...validFormValues, developmentName: '   ' })
 
-      setFieldValue('Development name', '   ')
       clickSubmitButton()
 
       await waitFor(() => {
@@ -320,9 +320,9 @@ describe('CreateMedicineRecordForm', () => {
 
       fillInForm({
         developmentName: '  dn1  ',
+        otherIdentifiers: [],
         brandedName: '  branded  ',
         genericNames: ['  gn1  '],
-        otherIdentifiers: [],
         recordTitle: '  record-title  ',
       })
       clickSubmitButton()
@@ -335,9 +335,9 @@ describe('CreateMedicineRecordForm', () => {
         body: {
           organisationId: 123,
           developmentName: 'dn1',
+          otherIdentifiers: [],
           brandedName: 'branded',
           genericNames: ['gn1'],
-          otherIdentifiers: [],
           recordTitle: 'record-title',
         },
       })
@@ -431,7 +431,10 @@ describe('CreateMedicineRecordForm', () => {
       ).toBe(false)
     })
 
-    it.each([['generic names', 'GenericNames', 'Generic name']])(
+    it.each([
+      ['development name', 'DevelopmentName', 'Development name'],
+      ['generic names', 'GenericNames', 'Generic name'],
+    ])(
       'allows resubmission after correcting %s rejected by the API',
       async (_, errorKey, label) => {
         const apiErrorMessage = 'The API rejected these names'
