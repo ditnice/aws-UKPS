@@ -1,0 +1,97 @@
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+
+import { inputWidthCases } from '@/test-utils/inputWidthCases'
+
+import { Input } from './Input'
+
+describe('Input', () => {
+  it('renders an unmodified design system input by default', () => {
+    const { asFragment } = render(<Input label="First name" name="firstname" />)
+
+    const input = screen.getByLabelText('First name')
+    expect(input.style.maxWidth).toBe('')
+    expect(input.style.width).toBe('')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('applies a max-width for a fixed width', () => {
+    const { asFragment } = render(<Input label="Age" name="age" width={10} />)
+
+    const input = screen.getByLabelText('Age')
+    expect(input.style.maxWidth).toBe('11.5em')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('applies a width for a fluid width', () => {
+    const { asFragment } = render(<Input label="Age" name="age" width="one-half" />)
+
+    const input = screen.getByLabelText('Age')
+    expect(input.style.width).toBe('50%')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('merges width styles with an explicit style prop', () => {
+    render(<Input label="Age" name="age" width="full" style={{ color: 'red' }} />)
+
+    const input = screen.getByLabelText('Age')
+    expect(input.style.width).toBe('100%')
+    expect(input.style.color).toBe('red')
+  })
+
+  it('forwards other input props', () => {
+    render(<Input label="Age" name="age" hint="Please enter in years" />)
+
+    expect(screen.getByText('Please enter in years')).toBeInTheDocument()
+  })
+
+  it('associates hint text with the input', () => {
+    const { asFragment } = render(<Input hint="Please enter in years" label="Age" name="age" />)
+
+    expect(screen.getByText('Please enter in years').getAttribute('id')).toBe('age-hint')
+    expect(screen.getByLabelText('Age').getAttribute('aria-describedby')).toBe('age-hint')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('marks an input as invalid and associates its error message', () => {
+    const { asFragment } = render(
+      <Input error errorMessage="Enter your age" label="Age" name="age" />,
+    )
+
+    const input = screen.getByLabelText('Age')
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.getAttribute('aria-describedby')).toBe('age-error')
+    expect(document.getElementById('age-error')?.textContent).toContain('Enter your age')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('merges consumer descriptions with hint and error ids', () => {
+    const { asFragment } = render(
+      <Input
+        aria-describedby="existing-description"
+        error
+        errorMessage="Enter your age"
+        hint="Please enter in years"
+        id="age-input"
+        label="Age"
+        name="age"
+      />,
+    )
+
+    expect(screen.getByLabelText('Age').getAttribute('aria-describedby')).toBe(
+      'existing-description age-input-hint age-input-error',
+    )
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it.each(inputWidthCases)(
+    'renders the $width width variant',
+    ({ width, maxWidth, fluidWidth }) => {
+      render(<Input label="Age" name="age" width={width} />)
+
+      const input = screen.getByLabelText('Age')
+      expect(input.style.maxWidth).toBe(maxWidth)
+      expect(input.style.width).toBe(fluidWidth)
+    },
+  )
+})

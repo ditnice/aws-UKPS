@@ -38,6 +38,7 @@
   },
   "ignoreFiles": [
     ".next/**",
+    "coverage/**",
     "node_modules/**",
     "playwright-report/**",
     "src/app/[(]payload[)]/**",

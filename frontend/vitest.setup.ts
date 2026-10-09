@@ -1,13 +1,17 @@
-// Any setup scripts you might need go here
-
-// Load .env files
 import 'dotenv/config'
+import { afterEach, beforeEach, vi } from 'vitest'
 
-// jsdom doesn't implement ResizeObserver
-if (typeof globalThis.ResizeObserver === 'undefined') {
-  globalThis.ResizeObserver = class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  }
-}
+import { resetNextNavigation } from './src/test-utils/nextNavigation'
+
+beforeEach(() => {
+  // Clear implementations and queued one-shot responses as well as call histories.
+  // vi.fn(initialImplementation) retains its original default after a reset.
+  vi.resetAllMocks()
+  resetNextNavigation()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+})

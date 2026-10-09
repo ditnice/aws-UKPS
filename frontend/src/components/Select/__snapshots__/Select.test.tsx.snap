@@ -1,0 +1,157 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Select > merges existing describedby with hint and error ids 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="location"
+    >
+      Choose location
+    </label>
+    <div
+      class="_hint_09c1ee"
+      id="location-hint"
+    >
+      This can be different to where you went before
+    </div>
+    <p
+      class="_error_09c1ee"
+      id="location-error"
+    >
+      <span
+        class="visually-hidden"
+      >
+        Error:
+      </span>
+       Select a location
+    </p>
+    <select
+      aria-describedby="existing-description location-hint location-error"
+      class="_field_09c1ee _fieldError_09c1ee"
+      id="location"
+      name="location"
+    >
+      <option
+        value="choose"
+      >
+        Choose location
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders a hint and describes the select with it 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <div
+      class="_hint_09c1ee"
+      id="sort-hint"
+    >
+      Choose the most relevant option
+    </div>
+    <select
+      aria-describedby="sort-hint"
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders a label and option children 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="sort"
+    >
+      Sort by
+    </label>
+    <select
+      class="_field_09c1ee"
+      id="sort"
+      name="sort"
+    >
+      <option
+        value="published"
+      >
+        Recently published
+      </option>
+      <option
+        selected=""
+        value="updated"
+      >
+        Recently updated
+      </option>
+      <option
+        value="views"
+      >
+        Most views
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Select > renders an error and describes the select with it 1`] = `
+<DocumentFragment>
+  <div
+    class="_select_09c1ee"
+    data-component="select"
+  >
+    <label
+      class="_label_09c1ee"
+      for="location"
+    >
+      Choose location
+    </label>
+    <p
+      class="_error_09c1ee"
+      id="location-error"
+    >
+      <span
+        class="visually-hidden"
+      >
+        Error:
+      </span>
+       Select a location
+    </p>
+    <select
+      aria-describedby="location-error"
+      class="_field_09c1ee _fieldError_09c1ee"
+      id="location"
+      name="location"
+    >
+      <option
+        value="choose"
+      >
+        Choose location
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;

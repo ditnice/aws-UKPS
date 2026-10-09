@@ -1,0 +1,108 @@
+import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { vi } from 'vitest'
+
+import { RegisterUserConfirmationDto } from '@/client/generated'
+import type { Client } from '@/client/generated/client'
+import { createServerApiClient } from '@/client/server-api'
+import { notFound, notFoundError } from '@/test-utils/nextNavigation'
+
+import UserMembershipRetrievalWrapper, {
+  UserMembershipRetrievalWrapperProps,
+} from './UserMembershipRetrievalWrapper'
+
+const { mockGetMembership } = vi.hoisted(() => ({
+  mockGetMembership: vi.fn(),
+}))
+
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
+vi.mock('@/client/generated', () => ({
+  getUserRegistrationById: mockGetMembership,
+}))
+vi.mock('@/client/server-api', () => ({
+  createServerApiClient: vi.fn(),
+}))
+
+const testData: RegisterUserConfirmationDto = {
+  requestGuid: 'e52c7f89-e182-41b2-bbdc-69a0fa9f034d',
+  workEmail: 'example@email.com',
+  fullName: 'Jane Smith',
+  organisationName: 'Example Pharma',
+  phoneNumber: '01234 567890',
+}
+
+const apiClient = {} as Client
+
+beforeEach(() => {
+  vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
+  mockGetMembership.mockResolvedValue({
+    data: testData,
+  })
+})
+
+const renderComponent = async (overrides?: Partial<UserMembershipRetrievalWrapperProps>) => {
+  const children = () => <div data-testid="children"></div>
+  const defaults: UserMembershipRetrievalWrapperProps = {
+    organisationId: 1,
+    requestGuid: testData.requestGuid,
+    children,
+  }
+  const props = { ...defaults, ...overrides }
+  render(await UserMembershipRetrievalWrapper(props))
+}
+
+const assertErrorMessageShown = () => {
+  const element = screen.queryByTestId('failure-message')
+  expect(element).toBeInTheDocument()
+}
+
+const confirmChildrenNotRendered = () => {
+  const element = screen.queryByTestId('children')
+  expect(element).not.toBeInTheDocument()
+}
+
+// Direct invocation checks retrieval and the returned synchronous child tree only.
+// It does not exercise Next.js async rendering or not-found handling.
+describe('UserMembershipRetrievalWrapper (direct invocation)', () => {
+  it('renders child content on success', async () => {
+    await renderComponent({
+      children: (request) => <div data-testid="data">{JSON.stringify(request)}</div>,
+    })
+    const content = screen.getByTestId('data')
+    expect(content.textContent).toBe(JSON.stringify(testData))
+  })
+  it('calls the request with the expected arguments', async () => {
+    const args = { organisationId: 4, requestGuid: testData.requestGuid }
+    await renderComponent({
+      ...args,
+    })
+    expect(mockGetMembership).toHaveBeenCalledExactlyOnceWith({
+      client: apiClient,
+      path: args,
+    })
+  })
+  it('calls notfound when the response is not found', async () => {
+    mockGetMembership.mockResolvedValue({
+      error: { status: 404 },
+    })
+    await expect(renderComponent()).rejects.toBe(notFoundError)
+    expect(notFound).toHaveBeenCalledOnce()
+    confirmChildrenNotRendered()
+  })
+  it('shows an error message when return data is undefined', async () => {
+    mockGetMembership.mockResolvedValue({
+      data: undefined,
+    })
+    await renderComponent()
+    assertErrorMessageShown()
+    confirmChildrenNotRendered()
+  })
+  it('shows an error messages when unrecognised error is returned', async () => {
+    mockGetMembership.mockResolvedValue({
+      error: { status: 400 },
+    })
+    await renderComponent()
+    assertErrorMessageShown()
+    confirmChildrenNotRendered()
+  })
+})
