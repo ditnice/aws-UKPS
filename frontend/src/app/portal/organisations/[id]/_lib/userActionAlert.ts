@@ -1,6 +1,13 @@
 import { isRequestGuid } from './requestGuid'
 
-export const userActions = ['invited', 'permissions-updated', 'deactivated', 'reactivated'] as const
+export const userActions = [
+  'invited',
+  'permissions-updated',
+  'deactivated',
+  'reactivated',
+  'removed',
+] as const
+
 export type UserAction = (typeof userActions)[number]
 
 export const userRequestActions = ['approved-request', 'rejected-request'] as const

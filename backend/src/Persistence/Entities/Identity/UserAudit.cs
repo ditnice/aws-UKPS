@@ -9,6 +9,8 @@ internal sealed class UserAudit
     public IamEventType EventType { get; set; }
     public int? UpdatedBy { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    // Field-level user changes use the canonical property names in UserAuditFieldPaths.
     public string? FieldPath { get; set; }
     public string? OldValue { get; set; }
     public string? NewValue { get; set; }

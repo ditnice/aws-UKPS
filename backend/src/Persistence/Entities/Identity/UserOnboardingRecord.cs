@@ -5,12 +5,13 @@ internal class UserOnboardingRecord
     public required Guid SetupToken { get; init; }
     public Guid? CorrelationId { get; init; }
     public required DateTime CreatedAt { get; init; }
-    public required string CreatedBy { get; init; }
+    public required int CreatedByUserId { get; init; }
     public DateTime? ConsumedAt { get; private set; }
     public int ResendCount { get; init; }
 
-    public User? User { get; init; }
-    public int UserId { get; init; }
+    public User? CreatedByUser { get; init; }
+    public User? ResultingUser { get; init; }
+    public int ResultingUserId { get; init; }
 
     internal void MarkAsConsumed(DateTime dateTime)
     {

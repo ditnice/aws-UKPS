@@ -53,6 +53,7 @@ const exampleUser: UserInformationDto = {
   organisationId: 100,
   organisationName: 'Example Organisation',
   userRole: 'Standard',
+  status: 'Active',
 }
 
 beforeEach(() => {

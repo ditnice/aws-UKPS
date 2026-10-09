@@ -45,6 +45,7 @@ const user: UserInformationDto = {
   organisationId: 2,
   organisationName: 'Example Pharma',
   userRole: 'Standard',
+  status: 'Active',
 }
 
 function mockResponse(overrides: Partial<UserInformationDto> = {}) {

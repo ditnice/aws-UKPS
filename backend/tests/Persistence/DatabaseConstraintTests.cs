@@ -124,7 +124,7 @@ public class DatabaseConstraintTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SaveChangesAsync_UserRegistrationRequestWithNullCreatedUserId_Succeeds()
+    public async Task SaveChangesAsync_UserRegistrationRequestWithNullResultingUserId_Succeeds()
     {
         UserRegistrationRequest entity = new UserRegistrationRequestFaker()
             .RuleFor(x => x.Organisation, _organisationFaker.Generate())
@@ -137,16 +137,16 @@ public class DatabaseConstraintTests : DatabaseTestBase
             x => x.Id == entity.Id,
             TestContext.Current.CancellationToken
         );
-        foundValue.CreatedUserId.ShouldBeNull();
-        foundValue.CreatedUser.ShouldBeNull();
+        foundValue.ResultingUserId.ShouldBeNull();
+        foundValue.ResultingUser.ShouldBeNull();
     }
 
     [Fact]
-    public async Task SaveChangesAsync_UserRegistrationRequestWithInvalidCreatedUserId_ThrowsDbUpdateException()
+    public async Task SaveChangesAsync_UserRegistrationRequestWithInvalidResultingUserId_ThrowsDbUpdateException()
     {
         UserRegistrationRequest entity = new UserRegistrationRequestFaker()
             .RuleFor(x => x.Organisation, _organisationFaker.Generate())
-            .RuleFor(x => x.CreatedUserId, _ => int.MaxValue)
+            .RuleFor(x => x.ResultingUserId, _ => int.MaxValue)
             .Generate();
         Context.Add(entity);
 
@@ -156,6 +156,67 @@ public class DatabaseConstraintTests : DatabaseTestBase
         PostgresException postgresException =
             exception.InnerException.ShouldBeOfType<PostgresException>();
         postgresException.SqlState.ShouldBe("23503");
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_UserOnboardingRecordWithCreatorAndResultingUser_Succeeds()
+    {
+        var creator = _userFaker.Generate();
+        var resultingUser = _userFaker.Generate();
+        UserOnboardingRecord entity = new UserOnboardingRecordFaker()
+            .RuleFor(x => x.CreatedByUser, creator)
+            .RuleFor(x => x.ResultingUser, resultingUser)
+            .Generate();
+        Context.Add(entity);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Context.ChangeTracker.Clear();
+        var foundValue = await Context
+            .UserOnboardingRecords.Include(x => x.CreatedByUser)
+            .Include(x => x.ResultingUser)
+            .SingleAsync(
+                x => x.SetupToken == entity.SetupToken,
+                TestContext.Current.CancellationToken
+            );
+        foundValue.CreatedByUserId.ShouldBe(creator.Id);
+        foundValue.CreatedByUser.ShouldNotBeNull().Id.ShouldBe(creator.Id);
+        foundValue.ResultingUserId.ShouldBe(resultingUser.Id);
+        foundValue.ResultingUser.ShouldNotBeNull().Id.ShouldBe(resultingUser.Id);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(int.MaxValue)]
+    public async Task SaveChangesAsync_UserOnboardingRecordWithInvalidCreator_ThrowsDbUpdateException(
+        int creatorId
+    )
+    {
+        UserOnboardingRecord entity = new UserOnboardingRecordFaker()
+            .RuleFor(x => x.CreatedByUser, _ => null)
+            .RuleFor(x => x.CreatedByUserId, _ => creatorId)
+            .RuleFor(x => x.ResultingUser, _userFaker.Generate())
+            .Generate();
+        Context.Add(entity);
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync(TestContext.Current.CancellationToken)
+        );
+        exception.InnerException.ShouldBeOfType<PostgresException>().SqlState.ShouldBe("23503");
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_UserRegistrationRequestWithInvalidRejector_ThrowsDbUpdateException()
+    {
+        UserRegistrationRequest entity = new UserRegistrationRequestFaker()
+            .RuleFor(x => x.Organisation, _organisationFaker.Generate())
+            .RuleFor(x => x.RejectedByUserId, _ => int.MaxValue)
+            .Generate();
+        Context.Add(entity);
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync(TestContext.Current.CancellationToken)
+        );
+        exception.InnerException.ShouldBeOfType<PostgresException>().SqlState.ShouldBe("23503");
     }
 
     [Fact]

@@ -5,6 +5,8 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal sealed class User
 {
+    private const string RemovedPersonalValue = "REMOVED";
+
     public IReadOnlyCollection<IUserDomainEvent> Events => _events;
     public int Id { get; set; }
     public required CognitoUsername CognitoUsername { get; init; }
@@ -124,12 +126,22 @@ internal sealed class User
         UpdatedAt = dateTime;
     }
 
+    internal void Anonymise(DateTime dateTime)
+    {
+        Title = RemovedPersonalValue;
+        FullName = $"User-{Id}";
+        JobTitle = RemovedPersonalValue;
+        WorkTelephone = RemovedPersonalValue;
+        WorkEmail = $"removed-user-{Id}@removed.invalid";
+        UpdatedAt = dateTime;
+    }
+
     public static User CreateInitialisedUser(CreateInitialisedUserCommand command)
     {
         var userOnboardingRecord = new UserOnboardingRecord()
         {
             SetupToken = Guid.CreateVersion7(),
-            CreatedBy = command.CurrentUserEmail,
+            CreatedByUserId = command.CurrentUserId,
             CreatedAt = command.Now,
         };
         var membership = new UserOrgMembership()

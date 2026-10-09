@@ -418,18 +418,17 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("created_by_user_id");
 
                     b.Property<int>("ResendCount")
                         .HasColumnType("integer")
                         .HasColumnName("resend_count");
 
-                    b.Property<int>("UserId")
+                    b.Property<int>("ResultingUserId")
                         .HasColumnType("integer")
-                        .HasColumnName("user_id");
+                        .HasColumnName("resulting_user_id");
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
@@ -438,9 +437,12 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_user_onboarding_records_correlation_id");
 
-                    b.HasIndex("UserId")
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("ix_user_onboarding_records_created_by_user_id");
+
+                    b.HasIndex("ResultingUserId")
                         .IsUnique()
-                        .HasDatabaseName("ix_user_onboarding_records_user_id");
+                        .HasDatabaseName("ix_user_onboarding_records_resulting_user_id");
 
                     b.ToTable("user_onboarding_records", "ukps");
                 });
@@ -521,10 +523,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<int?>("CreatedUserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("created_user_id");
-
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text")
@@ -543,13 +541,17 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("rejected_at");
 
-                    b.Property<int?>("RejectedBy")
+                    b.Property<int?>("RejectedByUserId")
                         .HasColumnType("integer")
-                        .HasColumnName("rejected_by");
+                        .HasColumnName("rejected_by_user_id");
 
                     b.Property<Guid>("RequestGuid")
                         .HasColumnType("uuid")
                         .HasColumnName("request_guid");
+
+                    b.Property<int?>("ResultingUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("resulting_user_id");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -568,18 +570,18 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasIndex("ApprovedByUserId")
                         .HasDatabaseName("ix_user_registration_requests_approved_by_user_id");
 
-                    b.HasIndex("CreatedUserId")
-                        .HasDatabaseName("ix_user_registration_requests_created_user_id");
-
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("ix_user_registration_requests_organisation_id");
 
-                    b.HasIndex("RejectedBy")
-                        .HasDatabaseName("ix_user_registration_requests_rejected_by");
+                    b.HasIndex("RejectedByUserId")
+                        .HasDatabaseName("ix_user_registration_requests_rejected_by_user_id");
 
                     b.HasIndex("RequestGuid")
                         .IsUnique()
                         .HasDatabaseName("ix_user_registration_requests_request_guid");
+
+                    b.HasIndex("ResultingUserId")
+                        .HasDatabaseName("ix_user_registration_requests_resulting_user_id");
 
                     b.ToTable("user_registration_requests", "ukps", t =>
                         {
@@ -2686,14 +2688,23 @@ namespace UKPS.Api.Persistence.Migrations
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", b =>
                 {
-                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "User")
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_onboarding_records_app_user_created_by_user_id");
+
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "ResultingUser")
                         .WithOne("OnboardingRecord")
-                        .HasForeignKey("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", "UserId")
+                        .HasForeignKey("UKPS.Api.Persistence.Entities.Identity.UserOnboardingRecord", "ResultingUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_onboarding_records_users_user_id");
+                        .HasConstraintName("fk_user_onboarding_records_app_user_resulting_user_id");
 
-                    b.Navigation("User");
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("ResultingUser");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserOrgMembership", b =>
@@ -2725,12 +2736,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_user_registration_requests_users_approved_by_user_id");
 
-                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "CreatedUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_user_registration_requests_users_created_user_id");
-
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "Organisation")
                         .WithMany()
                         .HasForeignKey("OrganisationId")
@@ -2740,17 +2745,23 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "RejectedByUser")
                         .WithMany()
-                        .HasForeignKey("RejectedBy")
+                        .HasForeignKey("RejectedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_user_registration_requests_app_user_rejected_by");
+                        .HasConstraintName("fk_user_registration_requests_users_rejected_by_user_id");
+
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "ResultingUser")
+                        .WithMany()
+                        .HasForeignKey("ResultingUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_user_registration_requests_users_resulting_user_id");
 
                     b.Navigation("ApprovedByUser");
-
-                    b.Navigation("CreatedUser");
 
                     b.Navigation("Organisation");
 
                     b.Navigation("RejectedByUser");
+
+                    b.Navigation("ResultingUser");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.MedicinesRevisionContent.MedicinesBudgetImpact", b =>

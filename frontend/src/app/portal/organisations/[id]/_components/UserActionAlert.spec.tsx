@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fakeRegisterUserConfirmationDto } from '@/client/generated/@faker-js/faker.gen'
@@ -30,6 +30,7 @@ const user: UserInformationDto = {
   organisationId: 2,
   organisationName: 'Example Pharma',
   userRole: 'Standard',
+  status: 'Active',
 }
 
 const registration: RegisterUserConfirmationDto = fakeRegisterUserConfirmationDto()
@@ -167,4 +168,65 @@ describe('UserActionAlert', () => {
       expect(message).toBe(expectedMessage)
     },
   )
+  it.each([
+    { type: 'user', action: 'invited', userId: 4 },
+    { type: 'user', action: 'deactivated', userId: 4 },
+    { type: 'user', action: 'reactivated', userId: 4 },
+    { type: 'user', action: 'permissions-updated', userId: 4 },
+    { type: 'request', action: 'approved-request', userRequestId: registration.requestGuid },
+    { type: 'request', action: 'rejected-request', userRequestId: registration.requestGuid },
+  ] as const)('shows no dismiss link for a %s action', async (userAction) => {
+    await renderAlert(userAction)
+    expect(screen.queryByRole('link', { name: 'Dismiss' })).toBeNull()
+  })
+
+  describe('removed', () => {
+    async function renderRemovedAlert(dismissHref?: string) {
+      render(
+        await UserActionAlert({
+          dismissHref,
+          organisationId: 2,
+          userAction: { type: 'user', action: 'removed', userId: 4 },
+        }),
+      )
+    }
+
+    it('tells the user what the removed user now appears as', async () => {
+      vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
+        data: { ...user, fullName: 'User-4' },
+        error: undefined,
+      })
+
+      await renderRemovedAlert()
+
+      expect(
+        screen.getByRole('heading', { name: 'User removed from UK PharmaScan' }),
+      ).not.toBeNull()
+      expect(screen.getByText(/they now appear as User-4\./)).not.toBeNull()
+    })
+
+    it('still confirms the removal when the user cannot be read back', async () => {
+      vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
+        data: undefined,
+        error: { status: 404 },
+      })
+
+      await renderRemovedAlert()
+
+      expect(screen.getByText(/they now appear as an anonymised user\./)).not.toBeNull()
+    })
+
+    it('shows a dismiss link back to the given href', async () => {
+      await renderRemovedAlert('/portal/organisations/2')
+
+      const dismiss = screen.getByRole('link', { name: 'Dismiss' })
+      expect(dismiss.getAttribute('href')).toBe('/portal/organisations/2')
+    })
+
+    it('shows no dismiss link when no href is given', async () => {
+      await renderRemovedAlert()
+
+      expect(screen.queryByRole('link', { name: 'Dismiss' })).toBeNull()
+    })
+  })
 })

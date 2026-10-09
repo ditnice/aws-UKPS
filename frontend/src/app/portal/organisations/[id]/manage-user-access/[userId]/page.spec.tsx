@@ -37,6 +37,7 @@ const user: UserInformationDto = {
   organisationId: 2,
   organisationName: 'Example Pharma',
   userRole: userRole,
+  status: 'Active',
 }
 const currentUserRole = 'Super' as UserRole
 const currentUser = {
@@ -60,6 +61,7 @@ function mockCurrentUserResponse(overrides = {}) {
       ...overrides,
       workTelephone: '',
       organisationMembershipId: 1,
+      status: 'Active',
       organisationId: 1,
       organisationName: '',
     },
@@ -127,7 +129,7 @@ describe('ManageUserAccess', () => {
 
     expect(
       screen.getByRole('radio', {
-        name: 'Remove user - not implemented yet',
+        name: 'Remove user',
       }),
     ).toBeDefined()
   })
@@ -139,7 +141,7 @@ describe('ManageUserAccess', () => {
 
     expect(
       screen.queryByRole('radio', {
-        name: 'Remove user - not implemented yet',
+        name: 'Remove user',
       }),
     ).toBeNull()
   })
@@ -152,7 +154,7 @@ describe('ManageUserAccess', () => {
 
     expect(
       screen.queryByRole('radio', {
-        name: 'Remove user - not implemented yet',
+        name: 'Remove user',
       }),
     ).toBeNull()
   })
@@ -218,5 +220,21 @@ describe('ManageUserAccess', () => {
     )
     expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/portal/organisations/2/users/4/deactivate')
   })
-  // add in tests for navigating to remove user and manage user access once it has been implemented
+
+  it('navigates to remove user when selected', async () => {
+    render(await ManageUserAccess({ params }))
+    fireEvent.click(
+      screen.getByRole('radio', {
+        name: 'Remove user',
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Continue',
+      }),
+    )
+    expect(mocks.push).toHaveBeenCalledExactlyOnceWith(
+      '/portal/organisations/2/manage-user-access/4/remove',
+    )
+  })
 })

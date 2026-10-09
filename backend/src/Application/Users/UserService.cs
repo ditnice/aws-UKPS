@@ -22,6 +22,10 @@ using GetUsersResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Users.Dtos.UserListItemDto>,
     UKPS.Api.Application.Users.Errors.GetUsersError
 >;
+using RemoveUserResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.RemovedUserDto,
+    UKPS.Api.Application.Users.Errors.RemoveUserError
+>;
 using UpdateCurrentOrganisationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.UpdateCurrentOrganisationError>;
 using UpdateUserDetailsResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.UserDetailsDto,
@@ -65,6 +69,7 @@ internal partial class UserService(
             OrganisationId = membership.Organisation!.Id,
             OrganisationName = membership.Organisation.OrganisationName,
             UserRole = currentUser.UserRole,
+            Status = membership.Status.ConvertToUserOrgStatus(),
         };
     }
 
@@ -218,6 +223,7 @@ internal partial class UserService(
                 OrganisationId = m.OrganisationId,
                 OrganisationName = m.Organisation!.OrganisationName,
                 UserRole = m.UserRole,
+                Status = (UserOrgStatus)m.Status,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -522,6 +528,129 @@ internal partial class UserService(
         }
     }
 
+    public async Task<RemoveUserResult> RemoveUser(int userId, CancellationToken cancellationToken)
+    {
+        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+
+        // Removal is global across all organisations, so only Super users may perform it.
+        if (currentUser.UserRole is not UserRole.Super)
+        {
+            return RemoveUserResult.Err(new RemoveUserError.NotAllowed(userId));
+        }
+
+        await using IDbContextTransaction transaction =
+            await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+            if (user is null)
+            {
+                return RemoveUserResult.Err(new RemoveUserError.UserNotFound(userId));
+            }
+
+            // Compare the stable Cognito identity so email changes cannot bypass the self-removal guard.
+            if (user.CognitoUsername == currentUser.CognitoUsername)
+            {
+                return RemoveUserResult.Err(new RemoveUserError.CannotRemoveSelf(userId));
+            }
+
+            List<UserOrgMembership> memberships = await dbContext
+                .UserOrgMemberships.Where(m => m.UserId == userId)
+                .ToListAsync(cancellationToken);
+
+            foreach (UserOrgMembership membership in memberships)
+            {
+                var transitionResult = membership.TryRemove();
+                if (!transitionResult.Success)
+                {
+                    return RemoveUserResult.Err(
+                        new RemoveUserError.NotAllowedInCurrentState(
+                            transitionResult.ConvertToUserOrgStatusTransitionResult()
+                        )
+                    );
+                }
+            }
+
+            await AnonymiseUserAndAuditHistory(user, currentUser, cancellationToken);
+
+            // A Cognito failure rolls back the DB changes. If deletion succeeds but commit fails,
+            // DB changes roll back and retry tolerates the absent Cognito user. Committing first
+            // blocks endpoint retries because Removed is terminal; reordering needs durable retries.
+            await identityService.DeleteUser(user.CognitoUsername, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return RemoveUserResult.Ok(new RemovedUserDto { DisplayName = user.FullName });
+        }
+        catch (Exception ex)
+        {
+            LogRemovingUserFailed(ex);
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    private async Task AnonymiseUserAndAuditHistory(
+        User user,
+        CurrentUser currentUser,
+        CancellationToken cancellationToken
+    )
+    {
+        DateTime now = timeProvider.GetUtcNow();
+        user.Anonymise(now);
+        UserRegistrationRequest? registrationRequest = await dbContext
+            .UserRegistrationRequests.Where(x =>
+                x.ResultingUserId == user.Id && x.ApprovedAt != null && x.RejectedAt == null
+            )
+            .SingleOrDefaultAsync(cancellationToken);
+        registrationRequest?.Anonymise(user.Id);
+
+        await AddUserRemovedAudit(user.Id, currentUser, now, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await AnonymiseUserAuditHistory(user, cancellationToken);
+    }
+
+    private async Task AddUserRemovedAudit(
+        int removedUserId,
+        CurrentUser currentUser,
+        DateTime now,
+        CancellationToken cancellationToken
+    )
+    {
+        int currentUserId = await dbContext
+            .Users.Where(u => u.CognitoUsername == currentUser.CognitoUsername)
+            .Select(u => u.Id)
+            .FirstAsync(cancellationToken);
+
+        dbContext.UserAudits.Add(
+            new UserAudit
+            {
+                UserId = removedUserId,
+                EventType = IamEventType.Deleted,
+                UpdatedBy = currentUserId,
+                UpdatedAt = now,
+            }
+        );
+    }
+
+    private async Task AnonymiseUserAuditHistory(User user, CancellationToken cancellationToken)
+    {
+        await dbContext
+            .UserAudits.Where(x =>
+                x.UserId == user.Id
+                && x.FieldPath != null
+                && UserAuditFieldPaths.PersonalFields.Contains(x.FieldPath)
+            )
+            .ExecuteUpdateAsync(
+                s =>
+                    s.SetProperty(x => x.OldValue, (string?)null)
+                        .SetProperty(x => x.NewValue, (string?)null),
+                cancellationToken
+            );
+    }
+
     private async Task HandleUserEvents(User user, CancellationToken cancellationToken)
     {
         foreach (var ev in user.Events)
@@ -566,6 +695,9 @@ internal partial class UserService(
         Message = "An error occur whilst updating user details."
     )]
     private partial void LogUpdatingUserDetailsFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred whilst removing a user.")]
+    private partial void LogRemovingUserFailed(Exception ex);
 
     public record UserInformationTrackingProjection()
     {

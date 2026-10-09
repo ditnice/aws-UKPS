@@ -56,3 +56,34 @@ describe('Alert', () => {
     expect(screen.getByTestId('deadline-alert').className).toMatch(/\balert--caution\b/)
   })
 })
+
+describe('Alert dismiss button', () => {
+  it('renders no dismiss button when no dismissHref is given', () => {
+    render(<Alert type="success">Invitation sent</Alert>)
+
+    expect(screen.queryByRole('link')).toBeNull()
+  })
+
+  it('renders a dismiss link pointing at the given href', () => {
+    const { asFragment } = render(
+      <Alert type="success" dismissHref="/portal/organisations/2">
+        User removed from organisation
+      </Alert>,
+    )
+
+    const dismiss = screen.getByRole('link', { name: 'Dismiss' })
+    expect(dismiss.getAttribute('href')).toBe('/portal/organisations/2')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('lets the dismiss link text be overridden', () => {
+    render(
+      <Alert type="success" dismissHref="/portal/organisations/2" dismissText="Got it">
+        User removed from organisation
+      </Alert>,
+    )
+
+    expect(screen.getByRole('link', { name: 'Got it' })).not.toBeNull()
+    expect(screen.queryByRole('link', { name: 'Dismiss' })).toBeNull()
+  })
+})

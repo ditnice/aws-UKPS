@@ -248,7 +248,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var foundValue = await _harness
             .GetClearedContext()
             .UserRegistrationRequests.Include(x => x.ApprovedByUser)
-            .Include(x => x.CreatedUser)
+            .Include(x => x.ResultingUser)
             .FirstOrDefaultAsync(
                 x => x.RequestGuid == request.RequestGuid,
                 TestContext.Current.CancellationToken
@@ -258,9 +258,9 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Approved);
         foundValue.ApprovedAt.ShouldNotBeNull().ShouldBe(_currentTime);
         foundValue.ApprovedByUser.ShouldNotBeNull().Id.ShouldBe(_defaultUser.Id);
-        var createdUser = foundValue.CreatedUser.ShouldNotBeNull();
+        var createdUser = foundValue.ResultingUser.ShouldNotBeNull();
         createdUser.WorkEmail.ShouldBe(request.Command.WorkEmail);
-        foundValue.CreatedUserId.ShouldBe(createdUser.Id);
+        foundValue.ResultingUserId.ShouldBe(createdUser.Id);
     }
 
     [Fact]
@@ -363,7 +363,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Pending);
         foundValue.ApprovedAt.ShouldBeNull();
         foundValue.ApprovedByUserId.ShouldBeNull();
-        foundValue.CreatedUserId.ShouldBeNull();
+        foundValue.ResultingUserId.ShouldBeNull();
     }
 
     [Fact]
@@ -450,7 +450,8 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Rejected);
         foundValue.RejectedAt.ShouldNotBeNull().ShouldBe(_currentTime);
         foundValue.RejectedByUser.ShouldNotBeNull().Id.ShouldBe(_defaultUser.Id);
-        foundValue.CreatedUserId.ShouldBeNull();
+        foundValue.RejectedByUserId.ShouldBe(_defaultUser.Id);
+        foundValue.ResultingUserId.ShouldBeNull();
     }
 
     [Fact]

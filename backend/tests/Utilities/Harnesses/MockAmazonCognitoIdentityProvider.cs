@@ -69,6 +69,23 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 }
             );
 
+        Mock.AdminDeleteUserAsync(Arg.Any<AdminDeleteUserRequest>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<AdminDeleteUserRequest>();
+                var user = _users.SingleOrDefault(x =>
+                    string.Equals(x.Username, request.Username, StringComparison.Ordinal)
+                );
+
+                if (user is null)
+                {
+                    throw new UserNotFoundException($"User '{request.Username}' not found.");
+                }
+
+                _users.Remove(user);
+                return Task.FromResult(new AdminDeleteUserResponse());
+            });
+
         Mock.AdminSetUserPasswordAsync(
                 Arg.Any<AdminSetUserPasswordRequest>(),
                 Arg.Any<CancellationToken>()

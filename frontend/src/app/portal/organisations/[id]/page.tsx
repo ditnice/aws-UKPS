@@ -60,9 +60,16 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
     <OrganisationPageWrapper organisationId={id}>
       {(organisation) => (
         <>
-          {userAction && (
-            <UserActionAlert organisationId={organisation.id} userAction={userAction} />
-          )}
+          {userAction &&
+            (userAction.type === 'user' && userAction.action === 'removed' ? (
+              <UserActionAlert
+                dismissHref={`/portal/organisations/${organisation.id}`}
+                organisationId={organisation.id}
+                userAction={{ ...userAction, action: 'removed' }}
+              />
+            ) : (
+              <UserActionAlert organisationId={organisation.id} userAction={userAction} />
+            ))}
           {organisationAction && (
             <OrganisationActionAlert organisationAction={organisationAction.action} />
           )}

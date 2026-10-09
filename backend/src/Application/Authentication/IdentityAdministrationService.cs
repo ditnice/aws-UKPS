@@ -67,7 +67,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     )
     {
         UserOnboardingRecord? userRecord = await _appDbContext
-            .UserOnboardingRecords.Include(x => x.User)
+            .UserOnboardingRecords.Include(x => x.ResultingUser)
                 .ThenInclude(x => x!.UserOrgMemberships)
             .FirstOrDefaultAsync(
                 x => x.SetupToken == command.SetupToken,
@@ -102,7 +102,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         await _appDbContext.SaveChangesAsync(cancellationToken);
 
         Result<UpdatePasswordError> updatePasswordResult = await _identityService.UpdatePassword(
-            userRecord.User!.CognitoUsername,
+            userRecord.ResultingUser!.CognitoUsername,
             command.NewPassword,
             cancellationToken
         );
@@ -116,8 +116,8 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         }
 
         return await InitiateAuthenticationAndGetOtp(
-            userRecord.User.CognitoUsername,
-            userRecord.User.WorkEmail,
+            userRecord.ResultingUser.CognitoUsername,
+            userRecord.ResultingUser.WorkEmail,
             command.NewPassword,
             cancellationToken
         );
@@ -130,7 +130,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     {
         UserOnboardingRecord? userRecord =
             await _appDbContext
-                .UserOnboardingRecords.Include(x => x.User)
+                .UserOnboardingRecords.Include(x => x.ResultingUser)
                     .ThenInclude(x => x!.UserOrgMemberships)
                 .FirstOrDefaultAsync(
                     x => x.SetupToken == command.SetupToken,
@@ -141,16 +141,16 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         try
         {
             AuthenticationCredentialsDto credentials = await _identityService.VerifySoftwareToken(
-                userRecord.User!.CognitoUsername,
+                userRecord.ResultingUser!.CognitoUsername,
                 command.AuthenticationSession,
                 command.Code,
                 cancellationToken
             );
             await _identityService.MarkEmailAsVerified(
-                userRecord.User.CognitoUsername,
+                userRecord.ResultingUser.CognitoUsername,
                 cancellationToken
             );
-            userRecord.User.FinaliseSetup();
+            userRecord.ResultingUser.FinaliseSetup();
             await _appDbContext.SaveChangesAsync(cancellationToken);
             return VerifyMultiFactorAuthenticationResult.Ok(credentials);
         }
@@ -259,7 +259,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         }
 
         IQueryable<UserOnboardingRecord> onboardingRecords =
-            _appDbContext.UserOnboardingRecords.Include(x => x.User);
+            _appDbContext.UserOnboardingRecords.Include(x => x.ResultingUser);
         UserOnboardingRecord? userRecord = hasCorrelationId
             ? await onboardingRecords.FirstOrDefaultAsync(
                 x => x.CorrelationId == command.CorrelationId,
@@ -285,7 +285,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             return ResendSetupTokenResult.Err(new ResendSetupTokenError.TooManyAttempts());
         }
 
-        User user = userRecord.User!;
+        User user = userRecord.ResultingUser!;
         UserOnboardingRecord newRecord = await ReplaceOnboardingRecord(
             userRecord,
             cancellationToken
@@ -309,9 +309,9 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         {
             SetupToken = Guid.CreateVersion7(),
             CorrelationId = Guid.CreateVersion7(),
-            CreatedBy = existingRecord.CreatedBy,
+            CreatedByUserId = existingRecord.CreatedByUserId,
             CreatedAt = _dateTimeProvider.GetUtcNow(),
-            UserId = existingRecord.UserId,
+            ResultingUserId = existingRecord.ResultingUserId,
             ResendCount = existingRecord.ResendCount + 1,
         };
 

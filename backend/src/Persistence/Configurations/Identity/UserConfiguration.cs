@@ -25,8 +25,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.LastActive).HasColumnType("timestamptz");
         builder
             .HasOne(x => x.OnboardingRecord)
-            .WithOne(x => x.User)
-            .HasForeignKey<UserOnboardingRecord>(x => x.UserId);
+            .WithOne(x => x.ResultingUser)
+            .HasForeignKey<UserOnboardingRecord>(x => x.ResultingUserId);
         builder.Ignore(x => x.Events);
     }
 }

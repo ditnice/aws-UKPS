@@ -36,6 +36,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     );
     private readonly string _targetUserEmail = "target.user@email.com";
     private readonly string _currentUserEmail = "current.user@email.com";
+    private readonly User _creator = new UserFaker().Generate();
     private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
     private readonly Faker<MockUser> _mockUserFaker =
         new MockAmazonCognitoIdentityProvider.MockUserFaker();
@@ -44,6 +45,12 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         : base(fixture)
     {
         _harness = GetTestHarness();
+    }
+
+    public override async ValueTask InitializeAsync()
+    {
+        await base.InitializeAsync();
+        await AddEntity(_creator, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -59,13 +66,14 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         var foundUserRecord = await _harness
             .GetClearedContext()
             .UserOnboardingRecords.SingleOrDefaultAsync(
-                x => x.User!.WorkEmail == command.NewUserEmail,
+                x => x.ResultingUser!.WorkEmail == command.NewUserEmail,
                 TestContext.Current.CancellationToken
             );
 
         foundUserRecord.ShouldNotBeNull();
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
-        foundUserRecord.CreatedBy.ShouldBe(_currentUserEmail);
+        foundUserRecord.CreatedByUserId.ShouldBe(_creator.Id);
+        foundUserRecord.ResultingUserId.ShouldBe(result.ShouldBeSuccess());
 
         _harness.Cognito.Users.ShouldContain(x => x.Email == command.NewUserEmail);
     }
@@ -217,7 +225,13 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
         var harness = new ServiceTestHarness<IUserAdministrationService>(Context)
-            .UpdateCurrentUser(x => x with { Email = _currentUserEmail })
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    CognitoUsername = _creator.CognitoUsername,
+                    Email = _currentUserEmail,
+                }
+            )
             .UpdateCurrentTime(_currentTime)
             .ConfigureServices(services => services.AddTransient(_ => _setupLinkCreator));
 
