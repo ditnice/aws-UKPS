@@ -1942,6 +1942,108 @@
         }
       }
     },
+    "/records/{recordId}/revisions/{revisionId}/pages/{pageId}": {
+      "get": {
+        "tags": [
+          "RecordForm"
+        ],
+        "summary": "Retrieves a page of a record revision's content form, with its rules, options and current\nanswers.",
+        "operationId": "GetRecordPage",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record's identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "description": "The revision's identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageId",
+            "in": "path",
+            "description": "The page's identifier.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the page. `readOnly` is true if the caller cannot edit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordPageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordPageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record, revision or page does not exist or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -3218,6 +3320,141 @@
         },
         "description": "Represents the result of creating a record."
       },
+      "FormOptionDto": {
+        "required": [
+          "value",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The value submitted when the option is chosen."
+          },
+          "label": {
+            "type": "string",
+            "description": "The option's display text."
+          }
+        },
+        "description": "A selectable option on a form question."
+      },
+      "FormPageDto": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The page's identifier, used in its URL."
+          },
+          "title": {
+            "type": "string",
+            "description": "A short page title, for the browser title."
+          }
+        },
+        "description": "A page of a record content form."
+      },
+      "FormQuestionDto": {
+        "required": [
+          "id",
+          "type",
+          "label",
+          "rules"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The question's stable identifier, used as its key in answers, save payloads and\nvalidation errors."
+          },
+          "type": {
+            "description": "The kind of input to render.",
+            "$ref": "#/components/schemas/QuestionType"
+          },
+          "label": {
+            "type": "string",
+            "description": "The question text."
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional hint text. Blank lines separate paragraphs."
+          },
+          "display": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional rendering hint, e.g. `combobox` for a searchable multi-select."
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormRuleDto"
+            },
+            "description": "Validation rules to apply before saving."
+          },
+          "options": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FormOptionDto"
+            },
+            "description": "The options to choose from, for radio, checkbox and select questions; otherwise `null`."
+          }
+        },
+        "description": "A question on a record content form page."
+      },
+      "FormRuleDto": {
+        "required": [
+          "kind",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "The kind of rule.",
+            "$ref": "#/components/schemas/RuleKind"
+          },
+          "value": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The rule's parameter, if it has one (e.g. the maximum length).",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string",
+            "description": "The error message to show when the rule fails."
+          }
+        },
+        "description": "A validation rule on a form question."
+      },
+      "FormSectionDto": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The section's stable identifier."
+          },
+          "title": {
+            "type": "string",
+            "description": "The section title, shown as the page caption."
+          }
+        },
+        "description": "A section of a record content form."
+      },
       "GetRecordsQuerySortValue": {
         "enum": [
           "NextUpdateDue",
@@ -3576,6 +3813,16 @@
           }
         }
       },
+      "QuestionType": {
+        "enum": [
+          "Textarea",
+          "Radio",
+          "Checkbox",
+          "Select"
+        ],
+        "type": "string",
+        "description": "The kind of input a form question renders as."
+      },
       "RecordListItemDto": {
         "required": [
           "id",
@@ -3619,6 +3866,72 @@
           }
         },
         "description": "Represents the record summary returned by the record list endpoint."
+      },
+      "RecordPageDto": {
+        "required": [
+          "formVersion",
+          "revisionVersion",
+          "readOnly",
+          "organisationId",
+          "section",
+          "page",
+          "previousPageId",
+          "questions",
+          "answers",
+          "context"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The form definition version. Echo it when saving; a save from an older version is rejected."
+          },
+          "revisionVersion": {
+            "type": "integer",
+            "description": "The revision's concurrency token. Echo it when saving; a save based on stale data is\nrejected.",
+            "format": "uint32"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "Whether the page must be shown read-only: the revision is not a draft, or the caller\ncannot edit the record's content."
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The identifier of the organisation that owns the record.",
+            "format": "int32"
+          },
+          "section": {
+            "description": "The section the page belongs to.",
+            "$ref": "#/components/schemas/FormSectionDto"
+          },
+          "page": {
+            "description": "The page itself.",
+            "$ref": "#/components/schemas/FormPageDto"
+          },
+          "previousPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The ID of the previous page in the form, or `null` on the first page."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormQuestionDto"
+            },
+            "description": "The page's questions, in display order."
+          },
+          "answers": {
+            "type": "object",
+            "description": "The current answer for every question on the page, keyed by question ID: a string or\n`null` for single-value questions, an array of option values for checkboxes."
+          },
+          "context": {
+            "type": "object",
+            "description": "Read-only answers from earlier pages that this page's conditions or rules refer to,\nkeyed by question ID."
+          }
+        },
+        "description": "One page of a record's content form: its structure, rules, options and current answers."
       },
       "RecordStatus": {
         "enum": [
@@ -3753,6 +4066,15 @@
           }
         },
         "description": "Represents the information required to respond to a multi-factor\nauthentication challenge."
+      },
+      "RuleKind": {
+        "enum": [
+          "Required",
+          "MaxLength",
+          "MaxItems"
+        ],
+        "type": "string",
+        "description": "The kind of a form validation rule. Clients mirror each kind; the server re-runs them all."
       },
       "SetupUserCommand": {
         "required": [
@@ -4163,6 +4485,9 @@
     },
     {
       "name": "Record"
+    },
+    {
+      "name": "RecordForm"
     },
     {
       "name": "User"

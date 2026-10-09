@@ -32,7 +32,7 @@ internal static class FormDefinitionFingerprint
                         question.Display,
                         Rules = question.Rules.Select(rule => new
                         {
-                            rule.Kind,
+                            Kind = JsonNamingPolicy.CamelCase.ConvertName(rule.Kind.ToString()),
                             rule.Value,
                             rule.Message,
                         }),

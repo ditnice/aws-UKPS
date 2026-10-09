@@ -14,6 +14,7 @@ internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<Rec
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz").IsRequired();
         builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
         builder.Property(x => x.SubmittedAt).HasColumnType("timestamptz");
+        builder.Property(x => x.Version).IsRowVersion();
 
         builder
             .HasIndex(x => new { x.RecordId, x.RevisionNo })

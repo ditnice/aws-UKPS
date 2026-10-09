@@ -10,7 +10,7 @@ namespace UKPS.Api.Application.Forms.Rules;
 /// </summary>
 internal abstract record QuestionRule(string Message)
 {
-    public abstract string Kind { get; }
+    public abstract RuleKind Kind { get; }
 
     /// <summary>The rule's parameter, if it has one (e.g. the maximum length).</summary>
     public virtual int? Value => null;

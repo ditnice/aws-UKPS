@@ -7,7 +7,7 @@ internal sealed record MaxLengthRule(int Max, string Message) : QuestionRule(Mes
 {
     private static readonly HashSet<QuestionType> _appliesTo = [QuestionType.Textarea];
 
-    public override string Kind => "maxLength";
+    public override RuleKind Kind => RuleKind.MaxLength;
 
     public override int? Value => Max;
 

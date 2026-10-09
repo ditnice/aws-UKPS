@@ -23,6 +23,12 @@ internal sealed class RecordRevision
     public int? SubmittedBy { get; set; }
     public DateTime? SubmittedAt { get; set; }
 
+    /// <summary>
+    /// Concurrency token (Postgres <c>xmin</c>). Clients echo it when saving record content so
+    /// that a save based on stale data is rejected.
+    /// </summary>
+    public uint Version { get; set; }
+
     // Navigation
     public Record? Record { get; set; }
     public RecordRevision? BasedOnRevision { get; set; }

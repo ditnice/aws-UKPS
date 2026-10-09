@@ -172,7 +172,7 @@ public class FormDefinitionValidatorTests
         );
 
         errors.ShouldContain(
-            "Question 'table.a': rule 'maxLength' does not apply to Radio questions."
+            "Question 'table.a': rule 'MaxLength' does not apply to Radio questions."
         );
     }
 
@@ -188,7 +188,7 @@ public class FormDefinitionValidatorTests
             )
         );
 
-        errors.ShouldContain("Question 'table.a': rule 'required' is declared more than once.");
+        errors.ShouldContain("Question 'table.a': rule 'Required' is declared more than once.");
     }
 
     [Fact]

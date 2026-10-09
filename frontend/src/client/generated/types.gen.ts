@@ -101,6 +101,101 @@ export type CreateRecordDto = {
 };
 
 /**
+ * A selectable option on a form question.
+ */
+export type FormOptionDto = {
+    /**
+     * The value submitted when the option is chosen.
+     */
+    value: string;
+    /**
+     * The option's display text.
+     */
+    label: string;
+};
+
+/**
+ * A page of a record content form.
+ */
+export type FormPageDto = {
+    /**
+     * The page's identifier, used in its URL.
+     */
+    id: string;
+    /**
+     * A short page title, for the browser title.
+     */
+    title: string;
+};
+
+/**
+ * A question on a record content form page.
+ */
+export type FormQuestionDto = {
+    /**
+     * The question's stable identifier, used as its key in answers, save payloads and
+     * validation errors.
+     */
+    id: string;
+    /**
+     * The kind of input to render.
+     */
+    type: QuestionType;
+    /**
+     * The question text.
+     */
+    label: string;
+    /**
+     * Optional hint text. Blank lines separate paragraphs.
+     */
+    hint?: null | string;
+    /**
+     * Optional rendering hint, e.g. `combobox` for a searchable multi-select.
+     */
+    display?: null | string;
+    /**
+     * Validation rules to apply before saving.
+     */
+    rules: Array<FormRuleDto>;
+    /**
+     * The options to choose from, for radio, checkbox and select questions; otherwise `null`.
+     */
+    options?: null | Array<FormOptionDto>;
+};
+
+/**
+ * A validation rule on a form question.
+ */
+export type FormRuleDto = {
+    /**
+     * The kind of rule.
+     */
+    kind: RuleKind;
+    /**
+     * The rule's parameter, if it has one (e.g. the maximum length).
+     */
+    value?: null | number;
+    /**
+     * The error message to show when the rule fails.
+     */
+    message: string;
+};
+
+/**
+ * A section of a record content form.
+ */
+export type FormSectionDto = {
+    /**
+     * The section's stable identifier.
+     */
+    id: string;
+    /**
+     * The section title, shown as the page caption.
+     */
+    title: string;
+};
+
+/**
  * Specifies the fields by which records can be sorted.
  */
 export const GetRecordsQuerySortValue = {
@@ -364,6 +459,21 @@ export type ProblemDetails = {
 };
 
 /**
+ * The kind of input a form question renders as.
+ */
+export const QuestionType = {
+    TEXTAREA: 'Textarea',
+    RADIO: 'Radio',
+    CHECKBOX: 'Checkbox',
+    SELECT: 'Select'
+} as const;
+
+/**
+ * The kind of input a form question renders as.
+ */
+export type QuestionType = typeof QuestionType[keyof typeof QuestionType];
+
+/**
  * Represents the record summary returned by the record list endpoint.
  */
 export type RecordListItemDto = {
@@ -391,6 +501,60 @@ export type RecordListItemDto = {
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
+};
+
+/**
+ * One page of a record's content form: its structure, rules, options and current answers.
+ */
+export type RecordPageDto = {
+    /**
+     * The form definition version. Echo it when saving; a save from an older version is rejected.
+     */
+    formVersion: string;
+    /**
+     * The revision's concurrency token. Echo it when saving; a save based on stale data is
+     * rejected.
+     */
+    revisionVersion: number;
+    /**
+     * Whether the page must be shown read-only: the revision is not a draft, or the caller
+     * cannot edit the record's content.
+     */
+    readOnly: boolean;
+    /**
+     * The identifier of the organisation that owns the record.
+     */
+    organisationId: number;
+    /**
+     * The section the page belongs to.
+     */
+    section: FormSectionDto;
+    /**
+     * The page itself.
+     */
+    page: FormPageDto;
+    /**
+     * The ID of the previous page in the form, or `null` on the first page.
+     */
+    previousPageId: null | string;
+    /**
+     * The page's questions, in display order.
+     */
+    questions: Array<FormQuestionDto>;
+    /**
+     * The current answer for every question on the page, keyed by question ID: a string or
+     * `null` for single-value questions, an array of option values for checkboxes.
+     */
+    answers: {
+        [key: string]: unknown;
+    };
+    /**
+     * Read-only answers from earlier pages that this page's conditions or rules refer to,
+     * keyed by question ID.
+     */
+    context: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -514,6 +678,20 @@ export type RespondToMultiFactorAuthenticationChallengeCommand = {
      */
     authenticationSession: string;
 };
+
+/**
+ * The kind of a form validation rule. Clients mirror each kind; the server re-runs them all.
+ */
+export const RuleKind = {
+    REQUIRED: 'Required',
+    MAX_LENGTH: 'MaxLength',
+    MAX_ITEMS: 'MaxItems'
+} as const;
+
+/**
+ * The kind of a form validation rule. Clients mirror each kind; the server re-runs them all.
+ */
+export type RuleKind = typeof RuleKind[keyof typeof RuleKind];
 
 /**
  * Represents the command used to complete user setup by validating a setup token
@@ -1509,6 +1687,48 @@ export type CreateRecordResponses = {
 };
 
 export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
+
+export type GetRecordPageData = {
+    body?: never;
+    path: {
+        /**
+         * The record's identifier.
+         */
+        recordId: number;
+        /**
+         * The revision's identifier.
+         */
+        revisionId: number;
+        /**
+         * The page's identifier.
+         */
+        pageId: string;
+    };
+    query?: never;
+    url: '/records/{recordId}/revisions/{revisionId}/pages/{pageId}';
+};
+
+export type GetRecordPageErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The record, revision or page does not exist or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+};
+
+export type GetRecordPageError = GetRecordPageErrors[keyof GetRecordPageErrors];
+
+export type GetRecordPageResponses = {
+    /**
+     * Returns the page. `readOnly` is true if the caller cannot edit it.
+     */
+    200: RecordPageDto;
+};
+
+export type GetRecordPageResponse = GetRecordPageResponses[keyof GetRecordPageResponses];
 
 export type GetUsersMeData = {
     body?: never;

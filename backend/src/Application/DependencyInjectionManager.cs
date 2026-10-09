@@ -38,6 +38,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped<IUserService, UserService>();
         services.TryAddScoped<IRecordCreationService, RecordCreationService>();
         services.TryAddSingleton(FormDefinitionRegistry.CreateDefault());
+        services.TryAddScoped<IRecordPageQueryService, RecordPageQueryService>();
         services.AddAuthenticationServices();
         services.AddEmailServices();
         services.TryAddScoped<IUserAdministrationService, UserAdministrationService>();

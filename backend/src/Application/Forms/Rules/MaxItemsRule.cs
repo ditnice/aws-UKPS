@@ -7,7 +7,7 @@ internal sealed record MaxItemsRule(int Max, string Message) : QuestionRule(Mess
 {
     private static readonly HashSet<QuestionType> _appliesTo = [QuestionType.Checkbox];
 
-    public override string Kind => "maxItems";
+    public override RuleKind Kind => RuleKind.MaxItems;
 
     public override int? Value => Max;
 

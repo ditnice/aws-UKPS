@@ -13,7 +13,7 @@ internal sealed record RequiredRule(string Message) : QuestionRule(Message)
         QuestionType.Select,
     ];
 
-    public override string Kind => "required";
+    public override RuleKind Kind => RuleKind.Required;
 
     public override IReadOnlySet<QuestionType> AppliesTo => _appliesTo;
 

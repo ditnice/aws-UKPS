@@ -115,7 +115,7 @@ internal static partial class FormDefinitionValidator
             yield return $"rule '{rule.Kind}' does not apply to {question.Type} questions.";
         }
 
-        foreach (var kind in Duplicates(question.Rules.Select(rule => rule.Kind)))
+        foreach (var kind in Duplicates(question.Rules.Select(rule => rule.Kind.ToString())))
         {
             yield return $"rule '{kind}' is declared more than once.";
         }
