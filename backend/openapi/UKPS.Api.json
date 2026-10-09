@@ -2783,12 +2783,12 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{id}": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}": {
       "get": {
         "tags": [
           "UserRegistration"
         ],
-        "summary": "Retrieves the details of a user by their unique identifier.",
+        "summary": "Retrieves a membership request by its public identifier.",
         "operationId": "GetUserRegistrationById",
         "parameters": [
           {
@@ -2802,19 +2802,19 @@
             }
           },
           {
-            "name": "id",
+            "name": "requestGuid",
             "in": "path",
-            "description": "The unique identifier of the user to retrieve.",
+            "description": "The public identifier of the membership request to retrieve.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "The user's details were successfully retrieved.",
+            "description": "The membership request's details were successfully retrieved.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2896,7 +2896,7 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}/approve": {
       "patch": {
         "tags": [
           "UserRegistration"
@@ -2915,13 +2915,13 @@
             }
           },
           {
-            "name": "registrationRequestId",
+            "name": "requestGuid",
             "in": "path",
             "description": "The identifier for the registration request.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2969,6 +2969,46 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -2992,7 +3032,7 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}/reject": {
       "patch": {
         "tags": [
           "UserRegistration"
@@ -3011,13 +3051,13 @@
             }
           },
           {
-            "name": "registrationRequestId",
+            "name": "requestGuid",
             "in": "path",
             "description": "The identifier for the registration request.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -3047,6 +3087,46 @@
           },
           "404": {
             "description": "The membership request could not be found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3256,6 +3336,7 @@
             "description": "Gets the other names, codes, or synonyms associated with the record."
           },
           "recordTitle": {
+            "maxLength": 100,
             "type": "string",
             "description": "Gets the title of the record."
           }
@@ -5131,7 +5212,7 @@
       },
       "RegisterUserConfirmationDto": {
         "required": [
-          "id",
+          "requestGuid",
           "organisationName",
           "fullName",
           "workEmail",
@@ -5139,10 +5220,10 @@
         ],
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "description": "ID for the user.",
-            "format": "int32"
+          "requestGuid": {
+            "type": "string",
+            "description": "Gets the public identifier of the membership request, not a user ID or setup token.",
+            "format": "uuid"
           },
           "organisationName": {
             "type": "string",
@@ -5161,7 +5242,7 @@
             "description": "Gets the user phone number."
           }
         },
-        "description": "Represents the details of a user who has been registered."
+        "description": "Represents confirmation of a submitted membership request."
       },
       "RegulatoryDateDto": {
         "required": [
@@ -5481,7 +5562,7 @@
       "UserListItemDto": {
         "required": [
           "userId",
-          "registrationRequestId",
+          "registrationRequestGuid",
           "emailAddress",
           "role",
           "status",
@@ -5498,13 +5579,13 @@
             "description": "Gets the unique identifier of the user.",
             "format": "int32"
           },
-          "registrationRequestId": {
+          "registrationRequestGuid": {
             "type": [
               "null",
-              "integer"
+              "string"
             ],
-            "description": "The optional lasted active registration request associated with the user.",
-            "format": "int32"
+            "description": "Gets the public identifier of the latest active membership request, if available.",
+            "format": "uuid"
           },
           "emailAddress": {
             "type": "string",

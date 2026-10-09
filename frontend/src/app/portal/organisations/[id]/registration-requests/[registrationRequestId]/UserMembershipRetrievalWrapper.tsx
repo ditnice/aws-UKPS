@@ -6,18 +6,18 @@ import { errorMessages } from '@/lib/form/errorMessages'
 
 export type UserMembershipRetrievalWrapperProps = {
   organisationId: number
-  registrationRequestId: number
+  requestGuid: string
   children: (request: RegisterUserConfirmationDto) => React.ReactNode
 }
 const UserMembershipRetrievalWrapper = async ({
   organisationId,
-  registrationRequestId,
+  requestGuid,
   children,
 }: UserMembershipRetrievalWrapperProps) => {
   const client = await createServerApiClient()
   const { data, error } = await getUserRegistrationById({
     client,
-    path: { organisationId, id: registrationRequestId },
+    path: { organisationId, requestGuid },
   })
   if (error?.status == 404) {
     notFound()

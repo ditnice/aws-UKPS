@@ -45,11 +45,22 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         ["GenericNames whitespace item"] = x => x with { GenericNames = ["\n\n"] },
         ["OtherIdentifiers empty item"] = x => x with { OtherIdentifiers = [""] },
         ["OtherIdentifiers whitespace item"] = x => x with { OtherIdentifiers = ["   "] },
+        ["GenericNames duplicate items"] = x =>
+            x with
+            {
+                GenericNames = ["not-distinct", "not-distinct"],
+            },
+        ["GenericNames duplicate items differing by case"] = x =>
+            x with
+            {
+                GenericNames = ["not-distinct", "NOT-DISTINCT"],
+            },
         ["BrandedName empty"] = x => x with { BrandedName = "" },
         ["BrandedName whitespace"] = x => x with { BrandedName = "   " },
         ["RecordTitle empty"] = x => x with { RecordTitle = "" },
         ["RecordTitle whitespace"] = x => x with { RecordTitle = "   " },
         ["RecordTitle null"] = x => x with { RecordTitle = null! },
+        ["RecordTitle too long"] = x => x with { RecordTitle = new string('e', 101) },
     };
 
     public static TheoryData<string> InvalidCreateRecordCommandCases =>
