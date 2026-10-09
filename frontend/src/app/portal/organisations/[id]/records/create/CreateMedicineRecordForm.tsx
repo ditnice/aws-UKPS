@@ -63,9 +63,11 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       setError(false)
       setIsSubmitting(true)
       const data = createRecordCommandSchema.parse(value)
-      const { error, response } = await createRecord({ body: data })
-      if (response?.ok) {
-        router.push(`/portal/organisations/${organisationId}/records`)
+      const { data: created, error, response } = await createRecord({ body: data })
+      if (response?.ok && created) {
+        router.push(
+          `/portal/records/${created.recordId}/revisions/${created.revisionId}/${created.firstPageId}`,
+        )
         return
       }
 

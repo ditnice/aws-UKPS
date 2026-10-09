@@ -69,6 +69,7 @@ const clickSubmitButton = () => {
 
 beforeEach(() => {
   mocks.createRecord.mockResolvedValue({
+    data: { recordId: 5, revisionId: 7, firstPageId: 'indication' },
     error: undefined,
     response: { ok: true },
   })
@@ -382,14 +383,14 @@ describe('CreateMedicineRecordForm', () => {
       })
     })
 
-    it('navigates to the records page after successful submission', async () => {
+    it("navigates to the new record's first form page after successful submission", async () => {
       renderComponent(123)
 
       fillInForm(validFormValues)
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/123/records')
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/revisions/7/indication')
       })
     })
 
@@ -443,7 +444,11 @@ describe('CreateMedicineRecordForm', () => {
         ).toBe(true)
       })
 
-      resolveRequest({ error: undefined, response: { ok: true } })
+      resolveRequest({
+        data: { recordId: 5, revisionId: 7, firstPageId: 'indication' },
+        error: undefined,
+        response: { ok: true },
+      })
 
       await waitFor(() => {
         expect(mocks.push).toHaveBeenCalled()

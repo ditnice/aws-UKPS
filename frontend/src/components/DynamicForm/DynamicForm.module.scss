@@ -1,0 +1,26 @@
+@use '@/styles/spacing';
+@use '@/styles/utils';
+@use '@/styles/visibility';
+
+// The question label duplicates the page heading, so hide it visually but keep it for
+// assistive technology.
+// Matches the field's own label or legend only, not the labels of radio or checkbox options,
+// which sit deeper inside the fieldset.
+.labelAsHeading {
+  > div > label,
+  > fieldset > legend {
+    @include visibility.invisible;
+  }
+}
+
+.hint {
+  margin-top: 0;
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$medium);
+  margin-top: utils.rem(spacing.$large);
+}
