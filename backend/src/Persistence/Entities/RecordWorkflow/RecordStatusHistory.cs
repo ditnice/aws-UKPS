@@ -16,7 +16,9 @@ internal sealed class RecordStatusHistory
     public RecordStatusChangeReason? Reason { get; set; }
 
     public string? Note { get; set; }
-    public int UpdatedBy { get; set; }
+
+    /// <summary>Null for system-triggered changes.</summary>
+    public int? UpdatedBy { get; set; }
     public DateTime UpdatedAt { get; set; }
 
     // Navigation

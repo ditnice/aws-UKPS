@@ -1,6 +1,7 @@
 @use '@nice-digital/nds-core/scss/media-queries';
 @use '@/styles/colours';
 @use '@/styles/spacing';
+@use '@/styles/typography';
 
 .summary-list {
   margin: 0 0 spacing.$large * 1px;
@@ -11,6 +12,13 @@
     table-layout: fixed;
     width: 100%;
   }
+}
+
+// The title uses the same text style as accordion titles.
+.summary-list__title {
+  @include typography.font-size(2);
+  font-family: typography.get-font-family(sans);
+  font-weight: bold;
 }
 
 .summary-list--two-column {

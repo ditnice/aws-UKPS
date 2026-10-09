@@ -2,7 +2,7 @@ namespace UKPS.Api.Persistence.Enums;
 
 /// <summary>
 /// Technology status types selected for a medicine record. Multi-select —
-/// see MedicinesProductDetail.MedicineTechnologyStatus.
+/// see MedicinesIndicationDetail.MedicineTechnologyStatus.
 /// </summary>
 [Flags]
 public enum MedicineTechnologyStatus

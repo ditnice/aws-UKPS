@@ -57,4 +57,21 @@ describe('PageHeader', () => {
     expect(screen.queryByLabelText('Breadcrumbs')).toBeNull()
     expect(asFragment()).toMatchSnapshot()
   })
+
+  it('renders a lead with a bold label', () => {
+    const { container } = render(
+      <PageHeader
+        heading="Record 42"
+        lead={
+          <>
+            <strong>Record title:</strong> Early rheumatoid arthritis in adults
+          </>
+        }
+      />,
+    )
+
+    const lead = container.querySelector('.page-header__lead')
+    expect(lead?.textContent).toBe('Record title: Early rheumatoid arthritis in adults')
+    expect(screen.getByText('Record title:').tagName).toBe('STRONG')
+  })
 })

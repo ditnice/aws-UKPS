@@ -1,7 +1,16 @@
 @use '@/styles/spacing';
+@use '@/styles/typography';
 @use '@/styles/utils';
 
 .page-header-wrapper {
-  margin-bottom: utils.rem(spacing.$large);
   margin-top: utils.rem(spacing.$large);
+
+  :global(.page-header__lead) {
+    @include typography.h2;
+    font-weight: normal;
+
+    strong {
+      font-weight: 600;
+    }
+  }
 }

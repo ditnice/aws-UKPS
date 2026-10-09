@@ -12,7 +12,6 @@ internal sealed class RegulatoryDateConfiguration : IEntityTypeConfiguration<Reg
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.DateEvent);
         builder.Property(x => x.DatePrecision);
-        builder.Property(x => x.ConditionalApprovalAnticipated);
         builder.Property(x => x.DateValue).IsRequired();
 
         builder

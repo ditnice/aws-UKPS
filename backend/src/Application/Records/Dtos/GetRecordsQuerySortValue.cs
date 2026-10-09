@@ -16,12 +16,12 @@ public enum GetRecordsQuerySortValue
     Id = 1,
 
     /// <summary>
-    /// Sorts records by their development name.
+    /// Sorts records by their company code.
     /// </summary>
-    DevelopmentName = 2,
+    CompanyCode = 2,
 
     /// <summary>
-    /// Sorts records by their record status.
+    /// Sorts records by their display status.
     /// </summary>
-    RecordStatus = 3,
+    DisplayStatus = 3,
 }

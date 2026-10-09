@@ -7,8 +7,8 @@ namespace UKPS.Api.Persistence.Data.Seeding;
 
 internal sealed class DataSeederInMemory : IDataSeeder
 {
-    // Champion and Standard users are members of several (but not all) organisations so that
-    // organisation selection can be exercised locally.
+    // Champion and Standard users are members of several (but not all) pharmaceutical
+    // organisations so that organisation selection can be exercised locally.
     internal const int NonSuperUserOrganisationCount = 4;
 
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
@@ -59,14 +59,20 @@ internal sealed class DataSeederInMemory : IDataSeeder
         ValidateConfiguredUsers(configuredUsers);
 
         List<Organisation> organisations = payload.Organisations.ToList();
-        if (organisations.Count < NonSuperUserOrganisationCount)
+        Organisation[] pharmaOrganisations =
+        [
+            .. organisations
+                .Where(o => o.OrganisationType == OrganisationType.PharmaCompany)
+                .Take(NonSuperUserOrganisationCount),
+        ];
+        if (pharmaOrganisations.Length < NonSuperUserOrganisationCount)
         {
             throw new InvalidOperationException(
-                $"Configured seed users require at least {NonSuperUserOrganisationCount} seeded organisations."
+                $"Configured seed users require at least {NonSuperUserOrganisationCount} seeded pharmaceutical organisations."
             );
         }
 
-        foreach (Organisation organisation in organisations.Take(NonSuperUserOrganisationCount))
+        foreach (Organisation organisation in pharmaOrganisations.Prepend(organisations[0]))
         {
             organisation.Status = UserOrgStatus.Active;
         }
@@ -76,7 +82,13 @@ internal sealed class DataSeederInMemory : IDataSeeder
 
         foreach (SeedUser configuredUser in configuredUsers)
         {
-            UpsertConfiguredUser(users, memberships, organisations, configuredUser);
+            UpsertConfiguredUser(
+                users,
+                memberships,
+                configuredUser,
+                superUserOrganisation: organisations[0],
+                pharmaOrganisations
+            );
         }
 
         return payload with
@@ -90,8 +102,9 @@ internal sealed class DataSeederInMemory : IDataSeeder
     private static void UpsertConfiguredUser(
         List<User> users,
         List<UserOrgMembership> memberships,
-        IReadOnlyList<Organisation> organisations,
-        SeedUser configuredUser
+        SeedUser configuredUser,
+        Organisation superUserOrganisation,
+        IReadOnlyList<Organisation> pharmaOrganisations
     )
     {
         User[] matchingUsers = users.Where(u => MatchesConfiguredUser(u, configuredUser)).ToArray();
@@ -103,33 +116,33 @@ internal sealed class DataSeederInMemory : IDataSeeder
             );
         }
 
+        UserRole role = Enum.Parse<UserRole>(configuredUser.Role, ignoreCase: true);
+        UserType userType = role == UserRole.Super ? UserType.ItAdmin : UserType.PharmaUser;
+
+        // A matching generated user may already be referenced by seeded records, so it is kept
+        // but moved out of the configured user's way.
         foreach (User matchingUser in matchingUsers)
         {
-            users.Remove(matchingUser);
+            matchingUser.WorkEmail = $"replaced.{matchingUser.WorkEmail}";
             memberships.RemoveAll(m => ReferenceEquals(m.User, matchingUser));
         }
 
-        UserRole role = Enum.Parse<UserRole>(configuredUser.Role, ignoreCase: true);
-        User user = CreateConfiguredUser(configuredUser, role);
-        users.Add(user);
-
-        int organisationCount = role == UserRole.Super ? 1 : NonSuperUserOrganisationCount;
-        memberships.AddRange(
-            organisations
-                .Take(organisationCount)
-                .Select(organisation => CreateMembership(user, role, organisation))
-        );
-    }
-
-    private static User CreateConfiguredUser(SeedUser configuredUser, UserRole role) =>
-        new()
+        User user = new()
         {
             CognitoUsername = CognitoUsername.Parse(configuredUser.CognitoUsername),
             FullName = configuredUser.FullName,
             WorkEmail = configuredUser.Email,
-            UserType = role == UserRole.Super ? UserType.ItAdmin : UserType.PharmaUser,
+            UserType = userType,
             CreatedAt = DateTime.UtcNow,
         };
+        users.Add(user);
+
+        IEnumerable<Organisation> userOrganisations =
+            role == UserRole.Super ? [superUserOrganisation] : pharmaOrganisations;
+        memberships.AddRange(
+            userOrganisations.Select(organisation => CreateMembership(user, role, organisation))
+        );
+    }
 
     private static UserOrgMembership CreateMembership(
         User user,

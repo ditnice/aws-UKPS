@@ -173,8 +173,8 @@ describe('UserActionAlert', () => {
     { type: 'user', action: 'deactivated', userId: 4 },
     { type: 'user', action: 'reactivated', userId: 4 },
     { type: 'user', action: 'permissions-updated', userId: 4 },
-    { type: 'request', action: 'approved-request', userRequestId: 4 },
-    { type: 'request', action: 'rejected-request', userRequestId: 4 },
+    { type: 'request', action: 'approved-request', userRequestId: registration.requestGuid },
+    { type: 'request', action: 'rejected-request', userRequestId: registration.requestGuid },
   ] as const)('shows no dismiss link for a %s action', async (userAction) => {
     await renderAlert(userAction)
     expect(screen.queryByRole('link', { name: 'Dismiss' })).toBeNull()

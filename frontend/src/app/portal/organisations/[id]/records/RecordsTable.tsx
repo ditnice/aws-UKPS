@@ -1,15 +1,23 @@
+import Link from 'next/link'
+
 import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
+import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
-import { organisationRecordsTableHeaders, recordStatusLabels } from './labels'
+import {
+  organisationRecordsTableHeaders,
+  recordStatusLabels,
+  recordStatusTagColours,
+} from './labels'
 import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 type RecordsTableProps = {
+  organisationId: number
   data: PaginatedResponseDtoOfRecordListItemDto
   query: RecordsQuery
 }
-const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
+const RecordsTable = async ({ organisationId, data: records, query }: RecordsTableProps) => {
   return (
     <>
       <ApplicationTableWithPagination
@@ -23,14 +31,27 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
         getData={(key, data) => {
           switch (key) {
             case 'id':
-              return <>{data.developmentName}</>
+              return <>{data.id}</>
             case 'record-status':
-              return <>{recordStatusLabels[data.recordStatus]}</>
-            case 'development-name':
+              return (
+                <Tag colour={recordStatusTagColours[data.displayStatus]}>
+                  {recordStatusLabels[data.displayStatus]}
+                </Tag>
+              )
+            case 'company-code':
+              return <>{data.companyCode}</>
             case 'next-update':
-            case 'records-title':
-            case 'actions':
               return <>TODO</>
+            case 'records-title':
+              return <>{data.title}</>
+            case 'actions':
+              return (
+                <Link
+                  href={`/portal/organisations/${organisationId}/records/${data.id}?recordType=${data.recordType}`}
+                >
+                  View<span className="visually-hidden"> record {data.id}</span>
+                </Link>
+              )
           }
         }}
       />

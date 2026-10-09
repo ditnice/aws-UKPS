@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationFailCode, AuthenticationProblemDetails, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordsQuerySortValue, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, LoginRequest, MultiFactorAuthenticationSetupDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordListItemDto, RecordStatus, RecordType, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, AuthenticationFailCode, AuthenticationProblemDetails, BiomarkerType, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DatePrecision, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DesignationStatus, EamsOpinionDecision, GenomicTestMandatoryStatus, GenomicTestNgtdRelationship, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordData, GetRecordErrors, GetRecordResponses, GetRecordsQuerySortValue, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, IndicationPaediatricStatus, LoginRequest, MedicineHtaAssessor, MedicinesBudgetImpactDto, MedicinesDevelopmentBackgroundDto, MedicinesEamsPimDto, MedicinesEuStatusDto, MedicinesGlobalSubmissionDto, MedicinesIndicationDetailDto, MedicinesIntlRecognitionDto, MedicinesLaboratoryTestingDto, MedicinesPatientIdentificationDto, MedicinesServiceImpactDto, MedicinesTreatmentDetailDto, MedicineTechnologyStatus, MultiFactorAuthenticationSetupDto, NameAndIdentifierType, NetUkBudgetImpactBand, NhsServiceChangesRequired, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PatientAccessSchemeRegion, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordClinicalTrialDto, RecordClinicalTrialInformationDto, RecordDisplayStatus, RecordDto, RecordDtoMedicineRecordDto, RecordDtoVaccineRecordDto, RecordHtaDto, RecordListItemDto, RecordMhraDateDto, RecordMhraProcedureDto, RecordNameAndIdentifierDto, RecordProductDetailDto, RecordStatus, RecordType, ReferenceDataDto, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RegulatoryDateDto, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, SetupUserCommand, SortDirection, TrialPhase, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand, YesNoUnknown } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -36,6 +36,15 @@ export const fakeAuthenticationFailCode = (options?: Options): AuthenticationFai
     ]);
 };
 
+export const fakeBiomarkerType = (options?: Options): BiomarkerType => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Unknown',
+        'NonGenomicBiomarker',
+        'GenomicBiomarker'
+    ]);
+};
+
 export const fakeCreateOrganisationDto = (options?: Options): CreateOrganisationDto => {
     const f = options?.faker ?? faker;
     return {
@@ -51,9 +60,10 @@ export const fakeCreateRecordCommand = (options?: Options): CreateRecordCommand 
     const f = options?.faker ?? faker;
     return {
         organisationId: f.number.int(),
-        developmentNames: f.helpers.multiple(() => f.string.sample(), { count: { min: 1, max: 100 } }),
+        companyCode: f.string.sample(),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { brandedName: f.datatype.boolean() ? f.string.sample() : null },
         genericNames: f.helpers.multiple(() => f.string.sample(), { count: { min: 1, max: 100 } }),
+        otherIdentifiers: f.helpers.multiple(() => f.string.sample()),
         recordTitle: f.string.alpha({ length: { min: 0, max: 100 } })
     };
 };
@@ -66,13 +76,58 @@ export const fakeCreateRecordDto = (options?: Options): CreateRecordDto => {
     };
 };
 
+export const fakeDatePrecision = (options?: Options): DatePrecision => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'EstimatedQuarter',
+        'EstimatedMonth',
+        'ActualDate'
+    ]);
+};
+
+export const fakeDesignationStatus = (options?: Options): DesignationStatus => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Granted',
+        'NotGranted',
+        'DecisionToSubmitOngoing',
+        'ApplicationSubmittedDecisionPending',
+        'NoSubmissionIntended'
+    ]);
+};
+
+export const fakeEamsOpinionDecision = (options?: Options): EamsOpinionDecision => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement(['Negative', 'Positive']);
+};
+
+export const fakeGenomicTestMandatoryStatus = (options?: Options): GenomicTestMandatoryStatus => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Unknown',
+        'RecommendedNotRequired',
+        'MandatoryAlternativesMayExist',
+        'MandatoryNoAlternatives'
+    ]);
+};
+
+export const fakeGenomicTestNgtdRelationship = (options?: Options): GenomicTestNgtdRelationship => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Unknown',
+        'NewTest',
+        'ExistingTestNewIndication',
+        'ExistingTestSameIndication'
+    ]);
+};
+
 export const fakeGetRecordsQuerySortValue = (options?: Options): GetRecordsQuerySortValue => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement([
         'NextUpdateDue',
         'Id',
-        'DevelopmentName',
-        'RecordStatus'
+        'CompanyCode',
+        'DisplayStatus'
     ]);
 };
 
@@ -86,6 +141,16 @@ export const fakeGetUsersQuerySortValue = (options?: Options): GetUsersQuerySort
     ]);
 };
 
+export const fakeIndicationPaediatricStatus = (options?: Options): IndicationPaediatricStatus => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Unknown',
+        'ExclusivelyChildren',
+        'ExclusivelyAdults',
+        'BothChildrenAndAdults'
+    ]);
+};
+
 export const fakeLoginRequest = (options?: Options): LoginRequest => {
     const f = options?.faker ?? faker;
     return {
@@ -94,12 +159,67 @@ export const fakeLoginRequest = (options?: Options): LoginRequest => {
     };
 };
 
+export const fakeMedicineHtaAssessor = (options?: Options): MedicineHtaAssessor => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Nice',
+        'Smc',
+        'Awmsg'
+    ]);
+};
+
+export const fakeMedicinesTreatmentDetailDto = (options?: Options): MedicinesTreatmentDetailDto => {
+    const f = options?.faker ?? faker;
+    return {
+        proposedPlaceInTherapy: f.string.sample(),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { estimatedDurationOfTreatment: f.datatype.boolean() ? f.string.sample() : null }
+    };
+};
+
+export const fakeMedicineTechnologyStatus = (options?: Options): MedicineTechnologyStatus => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Biosimilar',
+        'NewChemicalOrBiologicalEntity',
+        'NewDosingRegimen',
+        'NewFormulation',
+        'NewIndication',
+        'NewPresentation',
+        'SpcAmendmentWithoutIndicationChange'
+    ]);
+};
+
 export const fakeMultiFactorAuthenticationSetupDto = (options?: Options): MultiFactorAuthenticationSetupDto => {
     const f = options?.faker ?? faker;
     return {
         otpAuthUri: f.internet.url(),
         authenticationSession: f.string.sample()
     };
+};
+
+export const fakeNameAndIdentifierType = (options?: Options): NameAndIdentifierType => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement(['GenericName', 'OtherIdentifier']);
+};
+
+export const fakeNetUkBudgetImpactBand = (options?: Options): NetUkBudgetImpactBand => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Unknown',
+        'LessThan5M',
+        'Between5MAnd40M',
+        'FortyMOrMore'
+    ]);
+};
+
+export const fakeNhsServiceChangesRequired = (options?: Options): NhsServiceChangesRequired => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Unknown',
+        'NoChanges',
+        'SomeChange',
+        'CompleteTransformation'
+    ]);
 };
 
 export const fakeOnboardedUserDto = (options?: Options): OnboardedUserDto => {
@@ -137,9 +257,23 @@ export const fakeOrganisationType = (options?: Options): OrganisationType => {
     ]);
 };
 
+export const fakePatientAccessSchemeRegion = (options?: Options): PatientAccessSchemeRegion => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'England',
+        'Wales',
+        'Scotland',
+        'NorthernIreland'
+    ]);
+};
+
 export const fakePharmaceuticalEntity = (options?: Options): PharmaceuticalEntity => {
     const f = options?.faker ?? faker;
-    return f.string.sample();
+    return f.helpers.arrayElement([
+        'Medicines',
+        'Vaccines',
+        'Both'
+    ]);
 };
 
 export const fakeProblemDetails = (options?: Options): ProblemDetails => {
@@ -153,14 +287,56 @@ export const fakeProblemDetails = (options?: Options): ProblemDetails => {
     };
 };
 
+export const fakeRecordDisplayStatus = (options?: Options): RecordDisplayStatus => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Draft',
+        'QAReview',
+        'Published',
+        'OnHold',
+        'Archived'
+    ]);
+};
+
+export const fakeRecordNameAndIdentifierDto = (options?: Options): RecordNameAndIdentifierDto => {
+    const f = options?.faker ?? faker;
+    return {
+        name: f.string.sample(),
+        nameType: fakeNameAndIdentifierType(options)
+    };
+};
+
+export const fakeRecordProductDetailDto = (options?: Options): RecordProductDetailDto => {
+    const f = options?.faker ?? faker;
+    return {
+        companyCode: f.string.sample(),
+        namesAndIdentifiers: f.helpers.multiple(() => fakeRecordNameAndIdentifierDto(options)),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { brandedName: f.datatype.boolean() ? f.string.sample() : null },
+        recordTitle: f.string.sample()
+    };
+};
+
 export const fakeRecordStatus = (options?: Options): RecordStatus => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement([
         'Unpublished',
-        'Active',
+        'Published',
         'OnHold',
         'Archived'
     ]);
+};
+
+export const fakeRecordDtoVaccineRecordDto = (options?: Options): RecordDtoVaccineRecordDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { recordType: 'Vaccine' },
+        recordId: f.number.int(),
+        organisationId: f.number.int(),
+        recordStatus: fakeRecordStatus(options),
+        displayStatus: fakeRecordDisplayStatus(options),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
+        revisionId: f.number.int()
+    };
 };
 
 export const fakeRecordType = (options?: Options): RecordType => {
@@ -174,8 +350,9 @@ export const fakeRecordListItemDto = (options?: Options): RecordListItemDto => {
         id: f.number.int(),
         recordType: fakeRecordType(options),
         recordStatus: fakeRecordStatus(options),
+        displayStatus: fakeRecordDisplayStatus(options),
         title: f.lorem.words(),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { developmentName: f.datatype.boolean() ? f.string.sample() : null },
+        companyCode: f.string.sample(),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null }
     };
 };
@@ -187,6 +364,23 @@ export const fakePaginatedResponseDtoOfRecordListItemDto = (options?: Options): 
         totalCount: f.number.int(),
         page: f.number.int(),
         pageSize: f.number.int()
+    };
+};
+
+export const fakeReferenceDataDto = (options?: Options): ReferenceDataDto => {
+    const f = options?.faker ?? faker;
+    return {
+        id: f.number.int(),
+        label: f.string.sample()
+    };
+};
+
+export const fakeRecordMhraProcedureDto = (options?: Options): RecordMhraProcedureDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { mhraProcedureType: f.datatype.boolean() ? fakeReferenceDataDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { irpReferenceRegulator: f.datatype.boolean() ? fakeReferenceDataDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { procedureDetails: f.datatype.boolean() ? f.string.sample() : null }
     };
 };
 
@@ -207,6 +401,35 @@ export const fakeRegisterUserConfirmationDto = (options?: Options): RegisterUser
         fullName: f.person.fullName(),
         workEmail: f.internet.email(),
         phoneNumber: f.phone.number()
+    };
+};
+
+export const fakeRegulatoryDateDto = (options?: Options): RegulatoryDateDto => {
+    const f = options?.faker ?? faker;
+    return {
+        dateValue: f.date.recent().toISOString().slice(0, 10),
+        datePrecision: fakeDatePrecision(options),
+        isConfidential: f.datatype.boolean()
+    };
+};
+
+export const fakeMedicinesEuStatusDto = (options?: Options): MedicinesEuStatusDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { euOrphanStatus: f.datatype.boolean() ? fakeDesignationStatus(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { euOrphanStatusNumber: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { euOrphanGrantedDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { euAtmpClassificationStatus: f.datatype.boolean() ? fakeDesignationStatus(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { atmpRecommendationDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { atmpClassification: f.datatype.boolean() ? fakeReferenceDataDto(options) : null }
+    };
+};
+
+export const fakeMedicinesGlobalSubmissionDto = (options?: Options): MedicinesGlobalSubmissionDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { globalFirstSubmissionRegion: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { globalSubmissionActualDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null }
     };
 };
 
@@ -252,6 +475,30 @@ export const fakeSetupUserCommand = (options?: Options): SetupUserCommand => {
 export const fakeSortDirection = (options?: Options): SortDirection => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement(['Ascending', 'Descending']);
+};
+
+export const fakeTrialPhase = (options?: Options): TrialPhase => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Preclinical',
+        'PhaseI',
+        'PhaseIAndII',
+        'PhaseII',
+        'PhaseIII',
+        'PhaseIIIAndIV',
+        'PhaseIV'
+    ]);
+};
+
+export const fakeRecordClinicalTrialDto = (options?: Options): RecordClinicalTrialDto => {
+    const f = options?.faker ?? faker;
+    return {
+        studyName: f.string.sample(),
+        clinicalTrialsGovNumber: f.string.sample(),
+        otherClinicalTrialNumbers: f.helpers.multiple(() => f.string.sample()),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { trialPhase: f.datatype.boolean() ? fakeTrialPhase(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { briefDescription: f.datatype.boolean() ? f.string.sample() : null }
+    };
 };
 
 export const fakeUkpsChallengeType = (options?: Options): UkpsChallengeType => {
@@ -453,6 +700,189 @@ export const fakeVerifyMultiFactorAuthenticationCommand = (options?: Options): V
         code: f.string.sample(),
         authenticationSession: f.string.sample()
     };
+};
+
+export const fakeYesNoUnknown = (options?: Options): YesNoUnknown => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([
+        'Unknown',
+        'No',
+        'Yes'
+    ]);
+};
+
+export const fakeMedicinesBudgetImpactDto = (options?: Options): MedicinesBudgetImpactDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { estimatedUptake: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { compassionateAccessAvailable: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { compassionateAccessDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { patientAccessSchemePlanned: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { patientAccessSchemeRegions: f.datatype.boolean() ? f.helpers.multiple(() => fakePatientAccessSchemeRegion(options)) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { indicationSpecificPricingPlanned: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { indicationSpecificPricingDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { netUkBudgetImpactBand: f.datatype.boolean() ? fakeNetUkBudgetImpactBand(options) : null }
+    };
+};
+
+export const fakeMedicinesDevelopmentBackgroundDto = (options?: Options): MedicinesDevelopmentBackgroundDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { isRepurposedMedicine: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { repurposedMedicineDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { isOriginatorCompany: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { originatorCompanyName: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { isCoMarketed: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { coMarketingCompanyName: f.datatype.boolean() ? f.string.sample() : null }
+    };
+};
+
+export const fakeMedicinesEamsPimDto = (options?: Options): MedicinesEamsPimDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pimDesignationStatus: f.datatype.boolean() ? fakeDesignationStatus(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { willSubmitToEams: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { eamsSubmissionDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { eamsOpinionDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { eamsOpinionDecision: f.datatype.boolean() ? fakeEamsOpinionDecision(options) : null }
+    };
+};
+
+export const fakeMedicinesIndicationDetailDto = (options?: Options): MedicinesIndicationDetailDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { indication: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { bnfChapter: f.datatype.boolean() ? fakeReferenceDataDto(options) : null },
+        therapeuticAreas: f.helpers.multiple(() => fakeReferenceDataDto(options)),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { indicationIsPaediatric: f.datatype.boolean() ? fakeIndicationPaediatricStatus(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { indicationIsCancer: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { indicationIsRareDisease: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { formulationType: f.datatype.boolean() ? fakeReferenceDataDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { presentation: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { modeOfAction: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { proposedDoseRegimen: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { isPersonalisedMedicine: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicineTechnologyStatus: f.datatype.boolean() ? f.helpers.multiple(() => fakeMedicineTechnologyStatus(options)) : null }
+    };
+};
+
+export const fakeMedicinesIntlRecognitionDto = (options?: Options): MedicinesIntlRecognitionDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { irpRoute: f.datatype.boolean() ? fakeReferenceDataDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { intlSubmissionDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { intlLicenceDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { intlConditionalApprovalAnticipated: f.datatype.boolean() ? fakeYesNoUnknown(options) : null }
+    };
+};
+
+export const fakeMedicinesLaboratoryTestingDto = (options?: Options): MedicinesLaboratoryTestingDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { diagnosticTestRequired: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { biomarkerType: f.datatype.boolean() ? fakeBiomarkerType(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nonGenomicBiomarkerDescription: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicTarget: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicTestNgtdRelationship: f.datatype.boolean() ? fakeGenomicTestNgtdRelationship(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicSampleType: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicTurnaroundTimeDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { patientPathwayPoint: f.datatype.boolean() ? fakeReferenceDataDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicTestPathwayPointOther: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicAlterations: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { additionalGenomicFactors: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicTestUsedInTrials: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicTestSpecificitySensitivity: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicTestMandatoryStatus: f.datatype.boolean() ? fakeGenomicTestMandatoryStatus(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { genomicTestNotes: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { monitoringTestsDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { safetyTestsDetails: f.datatype.boolean() ? f.string.sample() : null }
+    };
+};
+
+export const fakeMedicinesPatientIdentificationDto = (options?: Options): MedicinesPatientIdentificationDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { screeningRequired: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { screeningDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { urgentIdentificationRequired: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { urgentIdentificationDetails: f.datatype.boolean() ? f.string.sample() : null }
+    };
+};
+
+export const fakeMedicinesServiceImpactDto = (options?: Options): MedicinesServiceImpactDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nhsServiceChangesRequired: f.datatype.boolean() ? fakeNhsServiceChangesRequired(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nhsServiceChangesDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { handlingStorageRequirements: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { handlingStorageDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { ukPatientPopulationRange: f.datatype.boolean() ? fakeReferenceDataDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { ukPatientPopulationNotes: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { estimatedEligiblePatientPopulation: f.datatype.boolean() ? f.string.sample() : null }
+    };
+};
+
+export const fakeRecordClinicalTrialInformationDto = (options?: Options): RecordClinicalTrialInformationDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { recruitingInUk: f.datatype.boolean() ? fakeYesNoUnknown(options) : null }
+    };
+};
+
+export const fakeRecordHtaDto = (options?: Options): RecordHtaDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicineHtaSubmissionIntended: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicineHtaBodies: f.datatype.boolean() ? f.helpers.multiple(() => fakeMedicineHtaAssessor(options)) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { htaAdditionalDetails: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { htaNiceAlignedPathway: f.datatype.boolean() ? fakeYesNoUnknown(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { niceTaDevelopmentId: f.datatype.boolean() ? f.string.uuid() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { ukLaunchDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null }
+    };
+};
+
+export const fakeRecordMhraDateDto = (options?: Options): RecordMhraDateDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { ukSubmissionDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { ukLicenceDate: f.datatype.boolean() ? fakeRegulatoryDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { ukConditionalApprovalAnticipated: f.datatype.boolean() ? fakeYesNoUnknown(options) : null }
+    };
+};
+
+export const fakeRecordDtoMedicineRecordDto = (options?: Options): RecordDtoMedicineRecordDto => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { recordType: 'Medicine' },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { recordProductDetail: f.datatype.boolean() ? fakeRecordProductDetailDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesIndicationDetail: f.datatype.boolean() ? fakeMedicinesIndicationDetailDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesDevelopmentBackground: f.datatype.boolean() ? fakeMedicinesDevelopmentBackgroundDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { recordClinicalTrialInformation: f.datatype.boolean() ? fakeRecordClinicalTrialInformationDto(options) : null },
+        recordClinicalTrials: f.helpers.multiple(() => fakeRecordClinicalTrialDto(options)),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { recordMhraProcedure: f.datatype.boolean() ? fakeRecordMhraProcedureDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { recordMhraDate: f.datatype.boolean() ? fakeRecordMhraDateDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesGlobalSubmission: f.datatype.boolean() ? fakeMedicinesGlobalSubmissionDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesIntlRecognition: f.datatype.boolean() ? fakeMedicinesIntlRecognitionDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { recordHta: f.datatype.boolean() ? fakeRecordHtaDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesEuStatus: f.datatype.boolean() ? fakeMedicinesEuStatusDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesEamsPim: f.datatype.boolean() ? fakeMedicinesEamsPimDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesLaboratoryTesting: f.datatype.boolean() ? fakeMedicinesLaboratoryTestingDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesPatientIdentification: f.datatype.boolean() ? fakeMedicinesPatientIdentificationDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesTreatmentDetail: f.datatype.boolean() ? fakeMedicinesTreatmentDetailDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesServiceImpact: f.datatype.boolean() ? fakeMedicinesServiceImpactDto(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { medicinesBudgetImpact: f.datatype.boolean() ? fakeMedicinesBudgetImpactDto(options) : null },
+        recordId: f.number.int(),
+        organisationId: f.number.int(),
+        recordStatus: fakeRecordStatus(options),
+        displayStatus: fakeRecordDisplayStatus(options),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
+        revisionId: f.number.int()
+    };
+};
+
+export const fakeRecordDto = (options?: Options): RecordDto => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement([fakeRecordDtoMedicineRecordDto(options), fakeRecordDtoVaccineRecordDto(options)]) as any;
 };
 
 export const fakePostAuthLoginRequest = (options?: Options): Omit<PostAuthLoginData, 'url'> => ({
@@ -683,7 +1113,7 @@ export const fakeGetOrganisationRecordsRequest = (options?: Options): Omit<GetOr
         query: {
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Search: f.string.sample() },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { RecordType: f.helpers.multiple(() => fakeRecordType(options)) },
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { RecordStatus: f.helpers.multiple(() => fakeRecordStatus(options)) },
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { DisplayStatus: f.helpers.multiple(() => fakeRecordDisplayStatus(options)) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { Page: f.number.int({ min: 1, max: 2147483647 }) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { PageSize: f.number.int({ min: 1, max: 100 }) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { SortBy: fakeGetRecordsQuerySortValue(options) },
@@ -702,6 +1132,28 @@ export const fakeGetOrganisationRecordsResponse401 = (options?: Options): GetOrg
 export const fakeGetOrganisationRecordsResponse403 = (options?: Options): GetOrganisationRecordsErrors[403] => fakeProblemDetails(options);
 
 export const fakeGetOrganisationRecordsResponse404 = (options?: Options): GetOrganisationRecordsErrors[404] => fakeProblemDetails(options);
+
+export const fakeGetRecordRequest = (options?: Options): Omit<GetRecordData, 'url'> => {
+    const f = options?.faker ?? faker;
+    return {
+        path: {
+            id: f.number.int()
+        },
+        query: {
+            recordType: fakeRecordType(options)
+        }
+    };
+};
+
+export const fakeGetRecordResponse200 = (options?: Options): GetRecordResponses[200] => fakeRecordDto(options);
+
+export const fakeGetRecordResponse400 = (options?: Options): GetRecordErrors[400] => fakeValidationProblemDetails(options);
+
+export const fakeGetRecordResponse401 = (options?: Options): GetRecordErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeGetRecordResponse403 = (options?: Options): GetRecordErrors[403] => fakeProblemDetails(options);
+
+export const fakeGetRecordResponse404 = (options?: Options): GetRecordErrors[404] => fakeProblemDetails(options);
 
 export const fakeCreateRecordRequest = (options?: Options): Omit<CreateRecordData, 'url'> => ({
     body: fakeCreateRecordCommand(options)
