@@ -74,6 +74,87 @@ describe('public content access with real Payload', () => {
     expect(await getPageByPath('/private-page')).toBeNull()
   })
 
+  it('allows direct anonymous reads of published pages but filters out drafts', async () => {
+    const result = await payload!.find({
+      collection: 'pages',
+      overrideAccess: false,
+      where: { id: { in: [published.id, draft.id] } },
+    })
+
+    expect(result.docs.map((page) => page.id)).toEqual([published.id])
+  })
+
+  it('denies anonymous page creation without creating a document', async () => {
+    const slug = 'anonymous-created-page'
+
+    await expect(
+      payload!.create({
+        collection: 'pages',
+        overrideAccess: false,
+        data: {
+          title: 'Anonymous page',
+          slug,
+          _status: 'published',
+          layout: [{ blockType: 'textSection', heading: 'Anonymous', body: 'Content' }],
+        },
+      }),
+    ).rejects.toMatchObject({ status: 403 })
+
+    const result = await payload!.find({
+      collection: 'pages',
+      overrideAccess: true,
+      where: { slug: { equals: slug } },
+    })
+    expect(result.docs).toEqual([])
+  })
+
+  it('denies anonymous page updates without changing the document', async () => {
+    const before = await payload!.findByID({
+      collection: 'pages',
+      id: published.id,
+      overrideAccess: true,
+    })
+
+    await expect(
+      payload!.update({
+        collection: 'pages',
+        id: published.id,
+        overrideAccess: false,
+        data: { title: 'Anonymous update' },
+      }),
+    ).rejects.toMatchObject({ status: 403 })
+
+    const after = await payload!.findByID({
+      collection: 'pages',
+      id: published.id,
+      overrideAccess: true,
+    })
+    expect(after).toEqual(before)
+  })
+
+  it('denies anonymous page deletion without removing the document', async () => {
+    const before = await payload!.findByID({
+      collection: 'pages',
+      id: published.id,
+      overrideAccess: true,
+    })
+
+    await expect(
+      payload!.delete({
+        collection: 'pages',
+        id: published.id,
+        overrideAccess: false,
+      }),
+    ).rejects.toMatchObject({ status: 403 })
+
+    const after = await payload!.findByID({
+      collection: 'pages',
+      id: published.id,
+      overrideAccess: true,
+    })
+    expect(after).toEqual(before)
+  })
+
   it('enforces publication access on every segment of a nested path', async () => {
     expect(await getPageByPath('/public-page/private-child')).toBeNull()
     expect(await getPageByPath('/private-page/public-child')).toBeNull()

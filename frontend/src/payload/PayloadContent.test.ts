@@ -1,3 +1,4 @@
+import { getPayload } from 'payload'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Page } from '@/payload-types'
@@ -100,7 +101,20 @@ describe('getPageByPath', () => {
     expect(await getPageByPath('/empty')).toBeNull()
   })
 
-  it('falls back to the default page and logs when Payload fails', async () => {
+  it('serves the default home page and logs when Payload initialisation fails', async () => {
+    const error = new Error('Database unavailable')
+    vi.mocked(getPayload).mockRejectedValueOnce(error)
+
+    expect(await getPageByPath('/')).toEqual(defaultPages[0])
+    expect(getPayload).toHaveBeenCalledOnce()
+    expect(payload.find).not.toHaveBeenCalled()
+    expect(console.error).toHaveBeenCalledWith(
+      'Failed to load page "/" from Payload, falling back to default page:',
+      error,
+    )
+  })
+
+  it('returns null and logs when Payload fails and no default page exists', async () => {
     const error = new Error('Database unavailable')
     payload.find.mockRejectedValue(error)
 
