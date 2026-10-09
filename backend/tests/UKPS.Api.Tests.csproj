@@ -36,6 +36,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Shared with the frontend's Vitest suite; see RuleFixtureTests. -->
+    <None
+      Update="Application/Forms/Fixtures/rule-cases.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\src\UKPS.Api.csproj" />
   </ItemGroup>
 </Project>

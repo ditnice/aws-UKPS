@@ -1,0 +1,31 @@
+{
+  "description": "Shared contract for form validation rules. Each case is run through the server (xUnit: RuleFixtureTests) and the client (Vitest: buildZodSchema). A value is normalised first (text trimmed, blank to null), then the question's rules run in order; 'error' is the first failing rule's message, or null if the value is valid. Add cases here for every new rule kind.",
+  "cases": [
+    { "name": "required textarea with text", "type": "Textarea", "rules": [{ "kind": "Required", "message": "Enter a value" }], "value": "text", "error": null },
+    { "name": "required textarea with padded text", "type": "Textarea", "rules": [{ "kind": "Required", "message": "Enter a value" }], "value": "  a  ", "error": null },
+    { "name": "required textarea null", "type": "Textarea", "rules": [{ "kind": "Required", "message": "Enter a value" }], "value": null, "error": "Enter a value" },
+    { "name": "required textarea empty", "type": "Textarea", "rules": [{ "kind": "Required", "message": "Enter a value" }], "value": "", "error": "Enter a value" },
+    { "name": "required textarea whitespace", "type": "Textarea", "rules": [{ "kind": "Required", "message": "Enter a value" }], "value": " \n\t ", "error": "Enter a value" },
+    { "name": "optional textarea null", "type": "Textarea", "rules": [], "value": null, "error": null },
+
+    { "name": "required radio chosen", "type": "Radio", "rules": [{ "kind": "Required", "message": "Select an option" }], "value": "Yes", "error": null },
+    { "name": "required radio null", "type": "Radio", "rules": [{ "kind": "Required", "message": "Select an option" }], "value": null, "error": "Select an option" },
+    { "name": "required select chosen", "type": "Select", "rules": [{ "kind": "Required", "message": "Select an option" }], "value": "12", "error": null },
+    { "name": "required select null", "type": "Select", "rules": [{ "kind": "Required", "message": "Select an option" }], "value": null, "error": "Select an option" },
+    { "name": "required checkbox with one", "type": "Checkbox", "rules": [{ "kind": "Required", "message": "Select at least one" }], "value": ["1"], "error": null },
+    { "name": "required checkbox empty", "type": "Checkbox", "rules": [{ "kind": "Required", "message": "Select at least one" }], "value": [], "error": "Select at least one" },
+
+    { "name": "maxLength at limit", "type": "Textarea", "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "value": "abcde", "error": null },
+    { "name": "maxLength over limit", "type": "Textarea", "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "value": "abcdef", "error": "Too long" },
+    { "name": "maxLength counts after trimming", "type": "Textarea", "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "value": "   abcde   ", "error": null },
+    { "name": "maxLength counts UTF-16 code units", "type": "Textarea", "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "value": "😀😀😀", "error": "Too long" },
+    { "name": "maxLength ignores null", "type": "Textarea", "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "value": null, "error": null },
+
+    { "name": "maxItems at limit", "type": "Checkbox", "rules": [{ "kind": "MaxItems", "value": 2, "message": "Too many" }], "value": ["1", "2"], "error": null },
+    { "name": "maxItems over limit", "type": "Checkbox", "rules": [{ "kind": "MaxItems", "value": 2, "message": "Too many" }], "value": ["1", "2", "3"], "error": "Too many" },
+    { "name": "maxItems empty", "type": "Checkbox", "rules": [{ "kind": "MaxItems", "value": 2, "message": "Too many" }], "value": [], "error": null },
+
+    { "name": "first failing rule wins: required", "type": "Textarea", "rules": [{ "kind": "Required", "message": "Enter a value" }, { "kind": "MaxLength", "value": 3, "message": "Too long" }], "value": "   ", "error": "Enter a value" },
+    { "name": "first failing rule wins: maxLength", "type": "Textarea", "rules": [{ "kind": "Required", "message": "Enter a value" }, { "kind": "MaxLength", "value": 3, "message": "Too long" }], "value": "abcd", "error": "Too long" }
+  ]
+}
