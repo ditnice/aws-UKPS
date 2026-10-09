@@ -88,3 +88,22 @@ test('successfully edits the phone number', async ({ page }) => {
   await expect(page.getByText(testOrganisation.phoneNumber)).toBeVisible()
   await expect(page.getByText('Organisation Details Updated')).toBeVisible()
 })
+
+test('error messages for empty inputs', async ({ page }) => {
+  const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+  await page.goto(`/portal/organisations/${organisationId}/edit`)
+
+  await expect(
+    page.getByRole('heading', { name: "Edit your organisation's details" }),
+  ).toBeVisible()
+  await page.getByLabel('Organisation name').fill('')
+  await page.getByLabel('Organisation address').fill('')
+  await page.getByLabel('Head office email address').fill('')
+  await page.getByLabel('Head office phone number').fill('')
+  await page.getByRole('button', { name: 'Submit' }).click()
+
+  await expect(page.getByText('Enter the organisation name')).toBeVisible()
+  await expect(page.getByText('Enter organisation address')).toBeVisible()
+  await expect(page.getByText('Enter an email address')).toBeVisible()
+  await expect(page.getByText('Enter a phone number')).toBeVisible()
+})
