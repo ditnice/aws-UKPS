@@ -410,6 +410,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                     Title = "Test Record",
                     DevelopmentName = null,
                     ReviewedAt = null,
+                    WorkflowStatus = WorkflowStatus.InReview,
                 },
             ],
             TotalCount = 1,

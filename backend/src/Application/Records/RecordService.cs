@@ -183,7 +183,16 @@ internal partial class RecordService(
                     m.NextUpdateDue == null ? DateTime.MaxValue : m.NextUpdateDue.Value,
                 GetRecordsQuerySortValue.Id => m => m.Id,
                 GetRecordsQuerySortValue.DevelopmentName => m => m.DevelopmentName,
-                GetRecordsQuerySortValue.RecordStatus => m => m.RecordStatus,
+                GetRecordsQuerySortValue.RecordStatus => m =>
+                    m.RecordStatus == RecordStatus.OnHold ? 3
+                    : m.RecordStatus == RecordStatus.Archived ? 4
+                    : (
+                        m.WorkflowStatus == WorkflowStatus.Draft
+                        || m.WorkflowStatus == WorkflowStatus.Rejected
+                    )
+                        ? 0
+                    : m.WorkflowStatus == WorkflowStatus.InReview ? 1
+                    : 2,
                 GetRecordsQuerySortValue.RecordTitle => m => m.Title,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(sortBy),
