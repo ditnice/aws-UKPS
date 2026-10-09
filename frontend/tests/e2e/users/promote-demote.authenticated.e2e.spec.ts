@@ -1,7 +1,7 @@
 import { expect, test } from '../fixtures/test'
 import { requireEnvironmentVariable } from '../helpers/test-environment'
 
-test('deactivate an active user', async ({ page }) => {
+test('promoting a standard user', async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
 
   await page.goto(`/portal/organisations/${organisationId}`)
@@ -10,7 +10,7 @@ test('deactivate an active user', async ({ page }) => {
     .getByRole('row')
     .filter({
       has: page.getByRole('cell', {
-        name: 'Active',
+        name: 'Standard user',
         exact: true,
       }),
     })
@@ -25,11 +25,11 @@ test('deactivate an active user', async ({ page }) => {
   const userEmail = (await activeUserRow.getByRole('cell').first().innerText()).trim()
   await activeUserRow.getByRole('link', { name: 'Edit' }).click()
   await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
-  await page.getByText('Deactivate user', { exact: true }).click()
+  await page.getByText('Change user permissions', { exact: true }).click()
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Deactivate user' })).toBeVisible()
-  await page.getByRole('button', { name: 'Deactivate User' }).click()
+  await expect(page.getByRole('heading', { name: 'Change user permissions' })).toBeVisible()
+  await page.getByRole('button', { name: 'Make champion user' }).click()
 
   await expect(page.getByText('Organisation details')).toBeVisible()
   await page.getByRole('textbox', { name: 'Filter users' }).fill(userEmail)
@@ -49,13 +49,13 @@ test('deactivate an active user', async ({ page }) => {
   await expect(userRow).toBeVisible()
   await expect(
     userRow.getByRole('cell', {
-      name: 'Deactivated',
+      name: 'Champion user',
       exact: true,
     }),
   ).toBeVisible()
 })
 
-test('reactivate a deactive user', async ({ page }) => {
+test('demoting a champion user', async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
 
   await page.goto(`/portal/organisations/${organisationId}`)
@@ -64,22 +64,26 @@ test('reactivate a deactive user', async ({ page }) => {
     .getByRole('row')
     .filter({
       has: page.getByRole('cell', {
-        name: 'Deactivated',
+        name: 'Champion user',
         exact: true,
       }),
     })
     .filter({
       has: page.getByRole('link', {
-        name: 'Reactivate',
+        name: 'Edit',
         exact: true,
       }),
     })
     .first()
   await expect(activeUserRow).toBeVisible()
   const userEmail = (await activeUserRow.getByRole('cell').first().innerText()).trim()
-  await activeUserRow.getByRole('link', { name: 'Reactivate' }).click()
-  await expect(page.getByRole('heading', { name: 'Reactivate user' })).toBeVisible()
-  await page.getByRole('button', { name: 'Reactivate user' }).click()
+  await activeUserRow.getByRole('link', { name: 'Edit' }).click()
+  await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+  await page.getByText('Change user permissions', { exact: true }).click()
+  await page.getByRole('button', { name: 'Continue' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Change user permissions' })).toBeVisible()
+  await page.getByRole('button', { name: 'Make standard user' }).click()
 
   await expect(page.getByText('Organisation details')).toBeVisible()
   await page.getByRole('textbox', { name: 'Filter users' }).fill(userEmail)
@@ -99,28 +103,8 @@ test('reactivate a deactive user', async ({ page }) => {
   await expect(userRow).toBeVisible()
   await expect(
     userRow.getByRole('cell', {
-      name: 'Active',
+      name: 'Standard user',
       exact: true,
     }),
   ).toBeVisible()
-})
-
-test('search for a user', async ({ page }) => {
-  const userEmail = requireEnvironmentVariable('E2E_USER_EMAIL')
-  const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-  await page.goto(`/portal/organisations/${organisationId}`)
-
-  await page.getByRole('textbox', { name: 'Filter users' }).fill(userEmail)
-  await page.getByRole('button', { name: 'Apply filter', exact: true }).click()
-
-  await expect(page.getByText(userEmail, { exact: true })).toBeVisible()
-})
-
-test('filter standard user', async ({ page }) => {
-  const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-  await page.goto(`/portal/organisations/${organisationId}`)
-
-  await page.getByLabel('Standard user').check()
-
-  await expect(page.getByText('Champion user')).toHaveCount(1)
 })
