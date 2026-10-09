@@ -98,6 +98,10 @@ export type CreateRecordDto = {
      * Gets the identifier of the initial revision created for the record.
      */
     revisionId: number;
+    /**
+     * Gets the identifier of the first page of the record's content form, where editing starts.
+     */
+    firstPageId: string;
 };
 
 /**
@@ -692,6 +696,37 @@ export const RuleKind = {
  * The kind of a form validation rule. Clients mirror each kind; the server re-runs them all.
  */
 export type RuleKind = typeof RuleKind[keyof typeof RuleKind];
+
+/**
+ * Saves every answer on a page of a record's content form.
+ */
+export type SaveRecordPageCommand = {
+    /**
+     * The `formVersion` the page was loaded with.
+     */
+    formVersion: string;
+    /**
+     * The `revisionVersion` the page was loaded with.
+     */
+    revisionVersion: number;
+    /**
+     * An answer for every question on the page, keyed by question ID. Unanswered optional
+     * questions are `null` (or an empty array for checkboxes).
+     */
+    answers: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * The result of saving a page of a record's content form.
+ */
+export type SaveRecordPageDto = {
+    /**
+     * The page to show next, or `null` when the saved page was the last one.
+     */
+    nextPageId: null | string;
+};
 
 /**
  * Represents the command used to complete user setup by validating a setup token
@@ -1729,6 +1764,64 @@ export type GetRecordPageResponses = {
 };
 
 export type GetRecordPageResponse = GetRecordPageResponses[keyof GetRecordPageResponses];
+
+export type SaveRecordPageData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: SaveRecordPageCommand;
+    path: {
+        /**
+         * The record's identifier.
+         */
+        recordId: number;
+        /**
+         * The revision's identifier.
+         */
+        revisionId: number;
+        /**
+         * The page's identifier.
+         */
+        pageId: string;
+    };
+    query?: never;
+    url: '/records/{recordId}/revisions/{revisionId}/pages/{pageId}';
+};
+
+export type SaveRecordPageErrors = {
+    /**
+     * One or more answers are invalid. Errors are keyed by question ID.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can view the record but not edit its content.
+     */
+    403: ProblemDetails;
+    /**
+     * The record, revision or page does not exist or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The page cannot be saved as loaded. `code` is `revision_not_draft`,
+     * `revision_changed` or `form_version_changed`; reload the page.
+     */
+    409: ProblemDetails;
+};
+
+export type SaveRecordPageError = SaveRecordPageErrors[keyof SaveRecordPageErrors];
+
+export type SaveRecordPageResponses = {
+    /**
+     * The page was saved (or nothing changed).
+     */
+    200: SaveRecordPageDto;
+};
+
+export type SaveRecordPageResponse = SaveRecordPageResponses[keyof SaveRecordPageResponses];
 
 export type GetUsersMeData = {
     body?: never;

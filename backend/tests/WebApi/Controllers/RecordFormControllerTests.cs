@@ -16,6 +16,10 @@ using GetRecordPageResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Forms.Dtos.RecordPageDto,
     UKPS.Api.Application.Forms.Errors.GetRecordPageError
 >;
+using SaveRecordPageResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Forms.Dtos.SaveRecordPageDto,
+    UKPS.Api.Application.Forms.Errors.SaveRecordPageError
+>;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -28,6 +32,8 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
 
     private readonly IRecordPageQueryService _mockQueryService =
         Substitute.For<IRecordPageQueryService>();
+    private readonly IRecordPageSaveService _mockSaveService =
+        Substitute.For<IRecordPageSaveService>();
     private readonly HttpClient _client;
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -43,6 +49,8 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 {
                     services.RemoveAll<IRecordPageQueryService>();
                     services.AddSingleton(_mockQueryService);
+                    services.RemoveAll<IRecordPageSaveService>();
+                    services.AddSingleton(_mockSaveService);
                 });
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
@@ -141,5 +149,138 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var json = JsonNode.Parse(await response.Content.ReadAsStringAsync(Ct))!;
         json["detail"]!.GetValue<string>().ShouldBe("The specified page could not be found.");
+    }
+
+    private const string SaveBody =
+        """{"formVersion":"2026.10.1","revisionVersion":4711,"answers":{"medicines_product_detail.indication_is_cancer":"Yes","medicines_product_detail.indication":null}}""";
+
+    private void SaveReturns(SaveRecordPageResult result) =>
+        _mockSaveService
+            .SavePage(
+                1,
+                2,
+                "cancer",
+                Arg.Any<SaveRecordPageCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(result);
+
+    private async Task<(HttpStatusCode Status, JsonNode Body)> PutPage()
+    {
+        using var content = new StringContent(
+            SaveBody,
+            System.Text.Encoding.UTF8,
+            "application/json"
+        );
+        var response = await _client.PutAsync(_pageUrl, content, Ct);
+        return (response.StatusCode, JsonNode.Parse(await response.Content.ReadAsStringAsync(Ct))!);
+    }
+
+    [Fact]
+    public async Task SaveRecordPage_PassesTheAnswersThroughAndReturnsTheNextPage()
+    {
+        SaveReturns(SaveRecordPageResult.Ok(new SaveRecordPageDto { NextPageId = null }));
+
+        var (status, body) = await PutPage();
+
+        status.ShouldBe(HttpStatusCode.OK);
+        body.AsObject().ContainsKey("nextPageId").ShouldBeTrue();
+        body["nextPageId"].ShouldBeNull();
+        await _mockSaveService
+            .Received(1)
+            .SavePage(
+                1,
+                2,
+                "cancer",
+                Arg.Is<SaveRecordPageCommand>(c =>
+                    c.FormVersion == "2026.10.1"
+                    && c.RevisionVersion == 4711
+                    && c.Answers.Count == 2
+                    && c.Answers[
+                        "medicines_product_detail.indication_is_cancer"
+                    ]!.GetValue<string>() == "Yes"
+                    && c.Answers["medicines_product_detail.indication"] == null
+                ),
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task SaveRecordPage_Invalid_ReturnsErrorsKeyedByQuestionId()
+    {
+        SaveReturns(
+            SaveRecordPageResult.Err(
+                new SaveRecordPageError.Invalid(
+                    new Dictionary<string, string[]>(StringComparer.Ordinal)
+                    {
+                        ["medicines_product_detail.indication_is_cancer"] = ["Select one"],
+                    }
+                )
+            )
+        );
+
+        var (status, body) = await PutPage();
+
+        status.ShouldBe(HttpStatusCode.BadRequest);
+        var errors = body["errors"]!.AsObject();
+        errors.Select(x => x.Key).ShouldBe(["medicines_product_detail.indication_is_cancer"]);
+        errors["medicines_product_detail.indication_is_cancer"]![0]!
+            .GetValue<string>()
+            .ShouldBe("Select one");
+    }
+
+    [Fact]
+    public async Task SaveRecordPage_EditNotAllowed_Is403()
+    {
+        SaveReturns(SaveRecordPageResult.Err(new SaveRecordPageError.EditNotAllowed()));
+
+        (await PutPage()).Status.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    public static TheoryData<string> SaveNotFoundCases =>
+        new() { "RecordNotFound", "NotAllowed", "PageNotFound" };
+
+    [Theory]
+    [MemberData(nameof(SaveNotFoundCases))]
+    public async Task SaveRecordPage_NotFoundOrNotReadable_IsANeutral404(string errorCase)
+    {
+        SaveRecordPageError error = errorCase switch
+        {
+            "RecordNotFound" => new SaveRecordPageError.RecordNotFound(),
+            "NotAllowed" => new SaveRecordPageError.NotAllowed(),
+            _ => new SaveRecordPageError.PageNotFound(),
+        };
+        SaveReturns(SaveRecordPageResult.Err(error));
+
+        var (status, body) = await PutPage();
+
+        status.ShouldBe(HttpStatusCode.NotFound);
+        body["detail"]!.GetValue<string>().ShouldBe("The specified page could not be found.");
+    }
+
+    public static TheoryData<string, string> ConflictCases =>
+        new()
+        {
+            { "RevisionNotDraft", "revision_not_draft" },
+            { "RevisionChanged", "revision_changed" },
+            { "FormVersionChanged", "form_version_changed" },
+        };
+
+    [Theory]
+    [MemberData(nameof(ConflictCases))]
+    public async Task SaveRecordPage_Conflict_Is409WithACode(string errorCase, string expectedCode)
+    {
+        SaveRecordPageError error = errorCase switch
+        {
+            "RevisionNotDraft" => new SaveRecordPageError.RevisionNotDraft(),
+            "RevisionChanged" => new SaveRecordPageError.RevisionChanged(),
+            _ => new SaveRecordPageError.FormVersionChanged(),
+        };
+        SaveReturns(SaveRecordPageResult.Err(error));
+
+        var (status, body) = await PutPage();
+
+        status.ShouldBe(HttpStatusCode.Conflict);
+        body["code"]!.GetValue<string>().ShouldBe(expectedCode);
     }
 }

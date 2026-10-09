@@ -32,11 +32,18 @@ internal static class QuestionTypeExtensions
     }
 
     /// <summary>
-    /// Normalises a shape-checked answer: free text is trimmed and whitespace-only becomes
-    /// <c>null</c>.
+    /// Normalises a shape-checked answer so equal answers compare equal: free text is trimmed
+    /// and whitespace-only becomes <c>null</c>; multi-value answers are sorted (ordinal).
     /// </summary>
     public static JsonNode? Normalise(this QuestionType type, JsonNode? value)
     {
+        if (type.IsMultiValue())
+        {
+            return AnswerValues.ToArray(
+                AnswerValues.GetStrings(value).Order(StringComparer.Ordinal)
+            );
+        }
+
         if (type != QuestionType.Textarea || !AnswerValues.TryGetString(value, out var text))
         {
             return value?.DeepClone();

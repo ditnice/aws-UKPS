@@ -2042,6 +2042,187 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "RecordForm"
+        ],
+        "summary": "Validates and saves every answer on a page of a draft revision, and returns the page to\nshow next.",
+        "operationId": "SaveRecordPage",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record's identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "description": "The revision's identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageId",
+            "in": "path",
+            "description": "The page's identifier.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecordPageCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecordPageCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecordPageCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The page was saved (or nothing changed).",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveRecordPageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveRecordPageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveRecordPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more answers are invalid. Errors are keyed by question ID.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can view the record but not edit its content.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record, revision or page does not exist or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The page cannot be saved as loaded. `code` is `revision_not_draft`,\n`revision_changed` or `form_version_changed`; reload the page.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/users/me": {
@@ -3303,7 +3484,8 @@
       "CreateRecordDto": {
         "required": [
           "recordId",
-          "revisionId"
+          "revisionId",
+          "firstPageId"
         ],
         "type": "object",
         "properties": {
@@ -3316,6 +3498,10 @@
             "type": "integer",
             "description": "Gets the identifier of the initial revision created for the record.",
             "format": "int32"
+          },
+          "firstPageId": {
+            "type": "string",
+            "description": "Gets the identifier of the first page of the record's content form, where editing starts."
           }
         },
         "description": "Represents the result of creating a record."
@@ -4075,6 +4261,46 @@
         ],
         "type": "string",
         "description": "The kind of a form validation rule. Clients mirror each kind; the server re-runs them all."
+      },
+      "SaveRecordPageCommand": {
+        "required": [
+          "formVersion",
+          "revisionVersion",
+          "answers"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The `formVersion` the page was loaded with."
+          },
+          "revisionVersion": {
+            "type": "integer",
+            "description": "The `revisionVersion` the page was loaded with.",
+            "format": "uint32"
+          },
+          "answers": {
+            "type": "object",
+            "description": "An answer for every question on the page, keyed by question ID. Unanswered optional\nquestions are `null` (or an empty array for checkboxes)."
+          }
+        },
+        "description": "Saves every answer on a page of a record's content form."
+      },
+      "SaveRecordPageDto": {
+        "required": [
+          "nextPageId"
+        ],
+        "type": "object",
+        "properties": {
+          "nextPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The page to show next, or `null` when the saved page was the last one."
+          }
+        },
+        "description": "The result of saving a page of a record's content form."
       },
       "SetupUserCommand": {
         "required": [

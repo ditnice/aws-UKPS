@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Application.Forms;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
@@ -18,18 +19,21 @@ internal class RecordCreationService : IRecordCreationService
     private readonly AppDbContext _dbContext;
     private readonly IOrganisationAuthoriser _organisationAuthoriser;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly FormDefinitionRegistry _formDefinitions;
 
     public RecordCreationService(
         CurrentDbUserEntityService currentDbUserEntityService,
         AppDbContext dbContext,
         IOrganisationAuthoriser organisationAuthoriser,
-        IDateTimeProvider dateTimeProvider
+        IDateTimeProvider dateTimeProvider,
+        FormDefinitionRegistry formDefinitions
     )
     {
         _currentDbUserEntityService = currentDbUserEntityService;
         _dbContext = dbContext;
         _organisationAuthoriser = organisationAuthoriser;
         _dateTimeProvider = dateTimeProvider;
+        _formDefinitions = formDefinitions;
     }
 
     public async Task<CreateRecordResult> CreateRecord(
@@ -73,7 +77,12 @@ internal class RecordCreationService : IRecordCreationService
         await _dbContext.AddAsync(medicinesProductDetail, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return CreateRecordResult.Ok(
-            new CreateRecordDto() { RecordId = record.Id, RevisionId = revision.Id }
+            new CreateRecordDto()
+            {
+                RecordId = record.Id,
+                RevisionId = revision.Id,
+                FirstPageId = GetFirstPageId(record.RecordType),
+            }
         );
     }
 
@@ -101,4 +110,10 @@ internal class RecordCreationService : IRecordCreationService
         );
         return developmentNames.Concat(genericNames).ToArray();
     }
+
+    private string GetFirstPageId(RecordType recordType) =>
+        _formDefinitions.Get(recordType)?.FirstPage.Id
+        ?? throw new InvalidOperationException(
+            $"There is no content form for {recordType} records."
+        );
 }
