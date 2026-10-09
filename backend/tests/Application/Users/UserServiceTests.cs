@@ -1739,6 +1739,70 @@ public class UserServiceTests : DatabaseTestBase
         unchangedRequest.PhoneNumber.ShouldBe(otherPhone);
     }
 
+    [Fact]
+    public async Task RemoveUser_ShouldAnonymiseOnlyMatchingOnboardingCreatorsAndPreserveMetadata()
+    {
+        User caller = await AddCallerUser();
+        User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        UserOnboardingRecord pendingRecord = await AddOnboardingRecordCreatedBy(target.WorkEmail);
+        UserOnboardingRecord consumedRecord = await AddOnboardingRecordCreatedBy(
+            target.WorkEmail,
+            consumed: true
+        );
+        UserOnboardingRecord unrelatedRecord = await AddOnboardingRecordCreatedBy(caller.WorkEmail);
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeSuccess();
+        foreach (UserOnboardingRecord originalRecord in new[] { pendingRecord, consumedRecord })
+        {
+            UserOnboardingRecord databaseRecord = await Context
+                .UserOnboardingRecords.AsNoTracking()
+                .SingleAsync(
+                    x => x.SetupToken == originalRecord.SetupToken,
+                    TestContext.Current.CancellationToken
+                );
+            databaseRecord.CreatedBy.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+            databaseRecord.UserId.ShouldBe(originalRecord.UserId);
+            databaseRecord.UserId.ShouldNotBe(target.Id);
+            databaseRecord.CorrelationId.ShouldBe(originalRecord.CorrelationId);
+            databaseRecord.CreatedAt.ShouldBe(originalRecord.CreatedAt);
+            databaseRecord.ConsumedAt.ShouldBe(originalRecord.ConsumedAt);
+            databaseRecord.ResendCount.ShouldBe(originalRecord.ResendCount);
+        }
+
+        UserOnboardingRecord unchangedRecord = await Context
+            .UserOnboardingRecords.AsNoTracking()
+            .SingleAsync(
+                x => x.SetupToken == unrelatedRecord.SetupToken,
+                TestContext.Current.CancellationToken
+            );
+        unchangedRecord.CreatedBy.ShouldBe(caller.WorkEmail);
+    }
+
+    private async Task<UserOnboardingRecord> AddOnboardingRecordCreatedBy(
+        string createdBy,
+        bool consumed = false
+    )
+    {
+        User owner = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        var record = new UserOnboardingRecord
+        {
+            SetupToken = Guid.NewGuid(),
+            CorrelationId = Guid.NewGuid(),
+            CreatedAt = _currentDateTime.AddDays(-1),
+            CreatedBy = createdBy,
+            ResendCount = 2,
+            UserId = owner.Id,
+        };
+        if (consumed)
+        {
+            record.MarkAsConsumed(_currentDateTime);
+        }
+
+        return await AddEntity(record, TestContext.Current.CancellationToken);
+    }
+
     private async Task<UserRegistrationRequest> AddApprovedRegistrationRequest(
         User user,
         User approver
@@ -1979,6 +2043,9 @@ public class UserServiceTests : DatabaseTestBase
         string originalName = request.FullName;
         string originalEmail = request.WorkEmail;
         string originalPhone = request.PhoneNumber;
+        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(
+            target.WorkEmail
+        );
         _harness
             .Cognito.Mock.WhenForAnyArgs(x => x.AdminDeleteUserAsync(default!, default!))
             .Throws(new TooManyRequestsException("Rate exceeded"));
@@ -2000,6 +2067,14 @@ public class UserServiceTests : DatabaseTestBase
         databaseRequest.WorkEmail.ShouldBe(originalEmail);
         databaseRequest.PhoneNumber.ShouldBe(originalPhone);
 
+        UserOnboardingRecord databaseOnboardingRecord = await Context
+            .UserOnboardingRecords.AsNoTracking()
+            .SingleAsync(
+                x => x.SetupToken == onboardingRecord.SetupToken,
+                TestContext.Current.CancellationToken
+            );
+        databaseOnboardingRecord.CreatedBy.ShouldBe(onboardingRecord.CreatedBy);
+
         bool hasRemovalAudit = await Context.UserAudits.AnyAsync(
             a => a.UserId == target.Id && a.EventType == IamEventType.Deleted,
             TestContext.Current.CancellationToken
@@ -2013,6 +2088,9 @@ public class UserServiceTests : DatabaseTestBase
         User caller = await AddCallerUser();
         (User target, UserOrgMembership membership) = await AddUserWithMembership();
         UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
+        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(
+            target.WorkEmail
+        );
         UserAudit personalAudit = await AddEntity(
             new UserAudit
             {
@@ -2064,6 +2142,13 @@ public class UserServiceTests : DatabaseTestBase
         unchangedRequest.FullName.ShouldBe(request.FullName);
         unchangedRequest.WorkEmail.ShouldBe(request.WorkEmail);
         unchangedRequest.PhoneNumber.ShouldBe(request.PhoneNumber);
+        UserOnboardingRecord unchangedOnboardingRecord = await Context
+            .UserOnboardingRecords.AsNoTracking()
+            .SingleAsync(
+                x => x.SetupToken == onboardingRecord.SetupToken,
+                TestContext.Current.CancellationToken
+            );
+        unchangedOnboardingRecord.CreatedBy.ShouldBe(onboardingRecord.CreatedBy);
         var unchangedMembership = await Context
             .UserOrgMemberships.AsNoTracking()
             .SingleAsync(m => m.Id == membership.Id, TestContext.Current.CancellationToken);
@@ -2094,6 +2179,13 @@ public class UserServiceTests : DatabaseTestBase
         anonymisedRequest.FullName.ShouldBe($"User-{target.Id}");
         anonymisedRequest.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
         anonymisedRequest.PhoneNumber.ShouldBe("REMOVED");
+        UserOnboardingRecord anonymisedOnboardingRecord = await Context
+            .UserOnboardingRecords.AsNoTracking()
+            .SingleAsync(
+                x => x.SetupToken == onboardingRecord.SetupToken,
+                TestContext.Current.CancellationToken
+            );
+        anonymisedOnboardingRecord.CreatedBy.ShouldBe($"removed-user-{target.Id}@removed.invalid");
         var removedMembership = await Context
             .UserOrgMemberships.AsNoTracking()
             .SingleAsync(m => m.Id == membership.Id, TestContext.Current.CancellationToken);

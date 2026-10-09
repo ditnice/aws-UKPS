@@ -598,6 +598,7 @@ internal partial class UserService(
     )
     {
         DateTime now = timeProvider.GetUtcNow();
+        string originalEmail = user.WorkEmail;
 
         user.Anonymise(now);
         UserRegistrationRequest? registrationRequest = await dbContext
@@ -611,6 +612,11 @@ internal partial class UserService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await AnonymiseUserAuditHistory(user, cancellationToken);
+        await AnonymiseOnboardingCreatorReferences(
+            originalEmail,
+            user.WorkEmail,
+            cancellationToken
+        );
     }
 
     private async Task AddUserRemovedAudit(
@@ -648,6 +654,20 @@ internal partial class UserService(
                 s =>
                     s.SetProperty(x => x.OldValue, (string?)null)
                         .SetProperty(x => x.NewValue, (string?)null),
+                cancellationToken
+            );
+    }
+
+    private async Task AnonymiseOnboardingCreatorReferences(
+        string originalEmail,
+        string anonymisedEmail,
+        CancellationToken cancellationToken
+    )
+    {
+        await dbContext
+            .UserOnboardingRecords.Where(x => x.CreatedBy == originalEmail)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(x => x.CreatedBy, anonymisedEmail),
                 cancellationToken
             );
     }
