@@ -28,6 +28,7 @@ export type Field = {
 export type ArrayInputProps<T extends string> = {
   addItemLabel: string
   removeItemLabel: string
+  allowRemoveFirstItem?: boolean
   labelPrefix: string
   hint: string
   field: ArrayField<T>
@@ -37,6 +38,9 @@ export type ArrayInputProps<T extends string> = {
     renderer: (subfield: Field) => React.ReactElement,
   ) => React.ReactElement
 }
+
+const OptionalErrorState = ({ children }: React.PropsWithChildren) =>
+  children ? <ErrorState>{children}</ErrorState> : null
 
 /**
  * Renders an array-backed form field as a list of editable input items.
@@ -61,6 +65,7 @@ export type ArrayInputProps<T extends string> = {
 const ArrayInput = <T extends string>({
   addItemLabel,
   removeItemLabel,
+  allowRemoveFirstItem = false,
   labelPrefix,
   hint,
   width,
@@ -74,38 +79,42 @@ const ArrayInput = <T extends string>({
       {errorMessage ? <ErrorState>{errorMessage}</ErrorState> : <></>}
       {field.state.value.map((_, i) => {
         const subfieldName = `${field.name}[${i}]` as const
+        const canRemoveItem = i > 0 || (allowRemoveFirstItem && field.state.value.length > 1)
         return (
-          <div key={i}>
-            {getSubfield(subfieldName, (subfield) => {
-              const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
-              return (
-                <Input
-                  error={Boolean(errorMessage)}
-                  errorMessage={errorMessage}
-                  label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
-                  className={styles.multiValuesInput}
-                  name={subfield.name}
-                  onBlur={subfield.handleBlur}
-                  value={subfield.state.value}
-                  hint={i === 0 ? hint : undefined}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                    subfield.handleChange(event.target.value)
-                    field.setMeta(clearFormApiErrors())
-                  }}
-                  width={width}
-                />
-              )
-            })}
-            {i > 0 && (
-              <Button
-                data-testid={`remove-button-${i}`}
-                type="button"
-                variant="secondary"
-                onClick={() => field.removeValue(i)}
-              >
-                {removeItemLabel} <span className="visually-hidden">{i + 1}</span>
-              </Button>
-            )}
+          <div className={styles.item} key={i}>
+            <div className={canRemoveItem ? styles.inputRowWithRemove : styles.inputRow}>
+              {getSubfield(subfieldName, (subfield) => {
+                const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
+                return (
+                  <Input
+                    error={Boolean(errorMessage)}
+                    errorMessage={errorMessage}
+                    label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
+                    className={styles.multiValuesInput}
+                    name={subfield.name}
+                    onBlur={subfield.handleBlur}
+                    value={subfield.state.value}
+                    hint={i === 0 ? hint : undefined}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      subfield.handleChange(event.target.value)
+                      field.setMeta(clearFormApiErrors())
+                    }}
+                    width={canRemoveItem ? undefined : width}
+                  />
+                )
+              })}
+              {canRemoveItem && (
+                <Button
+                  className={styles.removeButton}
+                  data-testid={`remove-button-${i}`}
+                  type="button"
+                  variant="secondary"
+                  onClick={() => field.removeValue(i)}
+                >
+                  {removeItemLabel} <span className="visually-hidden">{i + 1}</span>
+                </Button>
+              )}
+            </div>
           </div>
         )
       })}
