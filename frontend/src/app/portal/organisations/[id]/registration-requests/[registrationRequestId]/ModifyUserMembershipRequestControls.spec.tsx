@@ -41,7 +41,7 @@ const renderComponent = (overrides?: Partial<ModifyUserMembershipRequestControls
   const defaultProps: ModifyUserMembershipRequestControlsProps = {
     action: 'Approve',
     organisationId: 1,
-    registrationRequestId: 2,
+    requestGuid: 'e52c7f89-e182-41b2-bbdc-69a0fa9f034d',
     backLink: 'backLink',
     successLink: 'successLink',
   }
@@ -75,14 +75,14 @@ describe('ModifyUserMembershipRequestControls', () => {
   })
 
   it('sends the correct approve request for the approve action', () => {
-    const args = { organisationId: 14, registrationRequestId: 23 }
+    const args = { organisationId: 14, requestGuid: 'e52c7f89-e182-41b2-bbdc-69a0fa9f034d' }
     renderComponent({ ...args, action: 'Approve' })
     clickActionButton()
     expect(mocks.approve).toHaveBeenCalledExactlyOnceWith({ path: args })
   })
 
   it('sends the correct reject request for the reject action', () => {
-    const args = { organisationId: 67, registrationRequestId: 3 }
+    const args = { organisationId: 67, requestGuid: 'e52c7f89-e182-41b2-bbdc-69a0fa9f034d' }
     renderComponent({ ...args, action: 'Reject' })
     clickActionButton()
     expect(mocks.reject).toHaveBeenCalledExactlyOnceWith({ path: args })

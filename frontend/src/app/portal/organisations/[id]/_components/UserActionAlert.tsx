@@ -73,7 +73,7 @@ type UserRequestActionProps = {
 const renderUserRequestAction = async ({ organisationId, userAction }: UserRequestActionProps) => {
   const { data: request } = await getUserRegistrationById({
     client: await createServerApiClient(),
-    path: { organisationId, id: userAction.userRequestId },
+    path: { organisationId, requestGuid: userAction.userRequestId },
   })
   switch (userAction.action) {
     case 'approved-request':
