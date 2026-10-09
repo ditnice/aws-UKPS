@@ -155,6 +155,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
           )
         }}
       </form.Field>
+      <h2>Active substance</h2>
       <form.Field name="genericNames" mode="array">
         {(field) => (
           <ArrayInput
@@ -162,6 +163,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
             addItemLabel="Add another active substance"
             removeItemLabel="Remove active substance"
+            allowRemoveFirstItem
             width={inputWidth}
             field={field}
             getSubfield={(name, renderInputs) => (

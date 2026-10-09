@@ -2,5 +2,20 @@
 @use '@/styles/utils';
 
 .multiValuesInput > input {
+  font-family: inherit;
   margin-bottom: utils.rem(spacing.$xx-small);
+}
+
+.inputRowWithRemove {
+  align-items: flex-end;
+  display: flex;
+  gap: utils.rem(spacing.$large);
+
+  > :first-child {
+    flex: 0 0 66.6667%;
+  }
+}
+
+.removeButton {
+  transform: translateY(utils.rem(spacing.$small) * -1);
 }
