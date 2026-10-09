@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.PublishedRecord;
+using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Enums;
 
@@ -80,48 +80,40 @@ public class RecordController(
     }
 
     /// <summary>
-    /// Retrieves the data held on the latest published revision of an active or on hold record.
+    /// Retrieves the data held on the latest revision of a record, whatever its status.
     /// </summary>
     /// <param name="id">The identifier of the record to retrieve.</param>
     /// <param name="recordType">The expected type of the record.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>The published record data.</returns>
-    /// <response code="200">Returns the published record data.</response>
+    /// <returns>The record data.</returns>
+    /// <response code="200">Returns the record data.</response>
     /// <response code="400">The record type is missing or invalid.</response>
     /// <response code="403">The caller is not authorised to view the record.</response>
     /// <response code="404">
-    /// No record of the requested type exists with the specified identifier, or it has no
-    /// published data.
+    /// No record of the requested type exists with the specified identifier.
     /// </response>
-    [HttpGet("{id:int}", Name = nameof(GetPublishedRecord))]
-    [ProducesResponseType<PublishedRecordDto>(StatusCodes.Status200OK)]
+    [HttpGet("{id:int}", Name = nameof(GetRecord))]
+    [ProducesResponseType<RecordDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PublishedRecordDto>> GetPublishedRecord(
+    public async Task<ActionResult<RecordDto>> GetRecord(
         int id,
         [FromQuery, Required] RecordType? recordType,
         CancellationToken cancellationToken
     )
     {
-        var result = await recordViewService.GetPublishedRecord(
-            id,
-            recordType!.Value,
-            cancellationToken
-        );
+        var result = await recordViewService.GetRecord(id, recordType!.Value, cancellationToken);
 
         // Returned directly rather than via Ok() so it serialises with its recordType.
-        return result.Match<ActionResult<PublishedRecordDto>>(
+        return result.Match<ActionResult<RecordDto>>(
             record => record,
             error =>
                 error switch
                 {
-                    GetPublishedRecordError.NotAllowed => Forbid(),
-                    GetPublishedRecordError.NotFound
-                    or GetPublishedRecordError.RecordTypeMismatch => NotFound(),
-                    _ => throw new UnreachableException(
-                        "Unhandled GetPublishedRecordError variant."
-                    ),
+                    GetRecordError.NotAllowed => Forbid(),
+                    GetRecordError.NotFound or GetRecordError.RecordTypeMismatch => NotFound(),
+                    _ => throw new UnreachableException("Unhandled GetRecordError variant."),
                 }
         );
     }

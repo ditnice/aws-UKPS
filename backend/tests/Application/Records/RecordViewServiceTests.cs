@@ -1,7 +1,8 @@
 using Bogus;
 using Shouldly;
 using UKPS.Api.Application.Records;
-using UKPS.Api.Application.Records.Dtos.PublishedRecord;
+using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -13,9 +14,9 @@ using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
-using GetPublishedRecordResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Records.Dtos.PublishedRecord.PublishedRecordDto,
-    UKPS.Api.Application.Records.Errors.GetPublishedRecordError
+using GetRecordResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Records.Dtos.RecordDetails.RecordDto,
+    UKPS.Api.Application.Records.Errors.GetRecordError
 >;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
 
@@ -56,38 +57,40 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(RecordStatus.Active)]
-    [InlineData(RecordStatus.OnHold)]
-    public async Task GetPublishedRecord_ActiveOrOnHold_ReturnsRecordHeader(RecordStatus status)
+    [InlineData(RecordStatus.Unpublished, WorkflowStatus.Draft)]
+    [InlineData(RecordStatus.Published, WorkflowStatus.Published)]
+    [InlineData(RecordStatus.OnHold, WorkflowStatus.Published)]
+    [InlineData(RecordStatus.Archived, WorkflowStatus.Published)]
+    public async Task GetRecord_AnyRecordStatus_ReturnsRecordHeader(
+        RecordStatus recordStatus,
+        WorkflowStatus workflowStatus
+    )
     {
-        Record record = await AddRecord(status);
-        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
+        Record record = await AddRecord(recordStatus);
+        RecordRevision revision = await AddRevision(record, 1, workflowStatus);
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+        GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
+        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.RecordId.ShouldBe(record.Id);
         dto.OrganisationId.ShouldBe(_organisation.Id);
-        dto.RecordStatus.ShouldBe(status);
+        dto.RecordStatus.ShouldBe(recordStatus);
         dto.ReviewedAt.ShouldBe(_reviewedAt);
         dto.RevisionId.ShouldBe(revision.Id);
     }
 
     [Fact]
-    public async Task GetPublishedRecord_MultipleRevisions_ReturnsLatestPublishedRevision()
+    public async Task GetRecord_DraftAfterPublishedRevision_ReturnsDraftRevisionContent()
     {
-        Record record = await AddRecord(RecordStatus.Active);
-        RecordRevision first = await AddRevision(record, 1, WorkflowStatus.Published);
-        RecordRevision second = await AddRevision(record, 2, WorkflowStatus.Published);
-        RecordRevision rejected = await AddRevision(record, 3, WorkflowStatus.Rejected);
-        RecordRevision inReview = await AddRevision(record, 4, WorkflowStatus.InReview);
-        RecordRevision draft = await AddRevision(record, 5, WorkflowStatus.Draft);
+        Record record = await AddRecord(RecordStatus.Published);
+        RecordRevision published = await AddRevision(record, 1, WorkflowStatus.Published);
+        RecordRevision draft = await AddRevision(record, 2, WorkflowStatus.Draft);
         await AddEntities(
-            new[] { first, second, rejected, inReview, draft }.Select(r =>
+            new[] { published, draft }.Select(r =>
                 new RecordProductDetailFaker(RecordType.Medicine)
                     .RuleFor(x => x.RevisionId, r.Id)
                     .RuleFor(x => x.RecordTitle, $"Title {r.Id}")
@@ -96,95 +99,116 @@ public class RecordViewServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+        GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
-        dto.RevisionId.ShouldBe(second.Id);
-        dto.RecordProductDetail.ShouldNotBeNull().RecordTitle.ShouldBe($"Title {second.Id}");
+        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
+        dto.RecordStatus.ShouldBe(RecordStatus.Published);
+        dto.DisplayStatus.ShouldBe(RecordDisplayStatus.Draft);
+        dto.RevisionId.ShouldBe(draft.Id);
+        dto.RecordProductDetail.ShouldNotBeNull().RecordTitle.ShouldBe($"Title {draft.Id}");
     }
 
     [Theory]
-    [InlineData(RecordStatus.Unpublished, WorkflowStatus.Draft)]
-    [InlineData(RecordStatus.Archived, WorkflowStatus.Published)]
-    public async Task GetPublishedRecord_NotActiveOrOnHold_ReturnsNotFound(
+    [InlineData(RecordStatus.Unpublished, WorkflowStatus.Draft, RecordDisplayStatus.Draft)]
+    [InlineData(RecordStatus.Unpublished, WorkflowStatus.QAReview, RecordDisplayStatus.QAReview)]
+    [InlineData(RecordStatus.Unpublished, WorkflowStatus.Rejected, RecordDisplayStatus.Draft)]
+    [InlineData(RecordStatus.Published, WorkflowStatus.Draft, RecordDisplayStatus.Draft)]
+    [InlineData(RecordStatus.Published, WorkflowStatus.QAReview, RecordDisplayStatus.QAReview)]
+    [InlineData(RecordStatus.Published, WorkflowStatus.Published, RecordDisplayStatus.Published)]
+    [InlineData(RecordStatus.Published, WorkflowStatus.Rejected, RecordDisplayStatus.Draft)]
+    [InlineData(RecordStatus.OnHold, WorkflowStatus.Draft, RecordDisplayStatus.OnHold)]
+    [InlineData(RecordStatus.OnHold, WorkflowStatus.Published, RecordDisplayStatus.OnHold)]
+    [InlineData(RecordStatus.Archived, WorkflowStatus.Draft, RecordDisplayStatus.Archived)]
+    [InlineData(RecordStatus.Archived, WorkflowStatus.Published, RecordDisplayStatus.Archived)]
+    public async Task GetRecord_ReturnsLatestRevisionWithDisplayStatus(
         RecordStatus recordStatus,
-        WorkflowStatus workflowStatus
+        WorkflowStatus latestWorkflowStatus,
+        RecordDisplayStatus expectedDisplayStatus
     )
     {
         Record record = await AddRecord(recordStatus);
-        await AddRevision(record, 1, workflowStatus);
+        await AddRevision(
+            record,
+            1,
+            recordStatus == RecordStatus.Unpublished
+                ? WorkflowStatus.Rejected
+                : WorkflowStatus.Published
+        );
+        RecordRevision latest = await AddRevision(record, 2, latestWorkflowStatus);
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+        GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeError().ShouldBeOfType<GetPublishedRecordError.NotFound>();
+        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
+        dto.RecordStatus.ShouldBe(recordStatus);
+        dto.RevisionId.ShouldBe(latest.Id);
+        dto.DisplayStatus.ShouldBe(expectedDisplayStatus);
     }
 
     [Fact]
-    public async Task GetPublishedRecord_NoPublishedRevision_ReturnsNotFound()
+    public async Task GetRecord_NoRevisions_ReturnsNotFound()
     {
-        Record record = await AddRecord(RecordStatus.OnHold);
-        await AddRevision(record, 1, WorkflowStatus.Draft);
+        Record record = await AddRecord(RecordStatus.Unpublished);
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+        GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeError().ShouldBeOfType<GetPublishedRecordError.NotFound>();
+        result.ShouldBeError().ShouldBeOfType<GetRecordError.NotFound>();
     }
 
     [Fact]
-    public async Task GetPublishedRecord_RecordDoesNotExist_ReturnsNotFound()
+    public async Task GetRecord_RecordDoesNotExist_ReturnsNotFound()
     {
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+        GetRecordResult result = await Service.GetRecord(
             999_999,
             RecordType.Medicine,
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeError().ShouldBeOfType<GetPublishedRecordError.NotFound>();
+        result.ShouldBeError().ShouldBeOfType<GetRecordError.NotFound>();
     }
 
     [Fact]
-    public async Task GetPublishedRecord_UserInAnotherOrganisation_ReturnsNotAllowed()
+    public async Task GetRecord_UserInAnotherOrganisation_ReturnsNotAllowed()
     {
-        Record record = await AddRecord(RecordStatus.Active);
+        Record record = await AddRecord(RecordStatus.Published);
         await AddRevision(record, 1, WorkflowStatus.Published);
         var service = _harness
             .UpdateCurrentUser(x => x with { OrganisationId = _organisation.Id + 1 })
             .Service;
 
-        GetPublishedRecordResult result = await service.GetPublishedRecord(
+        GetRecordResult result = await service.GetRecord(
             record.Id,
             RecordType.Medicine,
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeError().ShouldBeOfType<GetPublishedRecordError.NotAllowed>();
+        result.ShouldBeError().ShouldBeOfType<GetRecordError.NotAllowed>();
     }
 
     [Fact]
-    public async Task GetPublishedRecord_VaccineRecord_ReturnsVaccineRecord()
+    public async Task GetRecord_VaccineRecord_ReturnsVaccineRecord()
     {
-        Record record = await AddRecord(RecordStatus.Active, RecordType.Vaccine);
+        Record record = await AddRecord(RecordStatus.Published, RecordType.Vaccine);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+        GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Vaccine,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedVaccineRecordDto>();
+        var dto = result.ShouldBeSuccess().ShouldBeOfType<VaccineRecordDto>();
         dto.RecordId.ShouldBe(record.Id);
         dto.RevisionId.ShouldBe(revision.Id);
     }
@@ -192,40 +216,38 @@ public class RecordViewServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(RecordType.Medicine, RecordType.Vaccine)]
     [InlineData(RecordType.Vaccine, RecordType.Medicine)]
-    public async Task GetPublishedRecord_RequestedTypeDiffers_ReturnsRecordTypeMismatch(
+    public async Task GetRecord_RequestedTypeDiffers_ReturnsRecordTypeMismatch(
         RecordType actualRecordType,
         RecordType requestedRecordType
     )
     {
-        Record record = await AddRecord(RecordStatus.Active, actualRecordType);
+        Record record = await AddRecord(RecordStatus.Published, actualRecordType);
         await AddRevision(record, 1, WorkflowStatus.Published);
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+        GetRecordResult result = await Service.GetRecord(
             record.Id,
             requestedRecordType,
             TestContext.Current.CancellationToken
         );
 
-        var error = result
-            .ShouldBeError()
-            .ShouldBeOfType<GetPublishedRecordError.RecordTypeMismatch>();
+        var error = result.ShouldBeError().ShouldBeOfType<GetRecordError.RecordTypeMismatch>();
         error.RequestedRecordType.ShouldBe(requestedRecordType);
         error.ActualRecordType.ShouldBe(actualRecordType);
     }
 
     [Fact]
-    public async Task GetPublishedRecord_NoSectionData_ReturnsEmptySections()
+    public async Task GetRecord_NoSectionData_ReturnsEmptySections()
     {
-        Record record = await AddRecord(RecordStatus.Active);
+        Record record = await AddRecord(RecordStatus.Published);
         await AddRevision(record, 1, WorkflowStatus.Published);
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
+        GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
+        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.RecordProductDetail.ShouldBeNull();
         dto.MedicinesIndicationDetail.ShouldBeNull();
         dto.MedicinesDevelopmentBackground.ShouldBeNull();
@@ -246,10 +268,10 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetPublishedRecord_ProductDetail_MapsAllFields()
+    public async Task GetRecord_ProductDetail_MapsAllFields()
     {
         var ct = TestContext.Current.CancellationToken;
-        Record record = await AddRecord(RecordStatus.Active);
+        Record record = await AddRecord(RecordStatus.Published);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
         await AddEntity(
             new RecordProductDetail
@@ -277,15 +299,11 @@ public class RecordViewServiceTests : DatabaseTestBase
             ct
         );
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
-            record.Id,
-            RecordType.Medicine,
-            ct
-        );
+        GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
 
         var dto = result
             .ShouldBeSuccess()
-            .ShouldBeOfType<PublishedMedicineRecordDto>()
+            .ShouldBeOfType<MedicineRecordDto>()
             .RecordProductDetail.ShouldNotBeNull();
         dto.CompanyCode.ShouldBe("ABC-123");
         dto.BrandedName.ShouldBe("Brand");
@@ -305,10 +323,10 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetPublishedRecord_IndicationDetail_MapsAllFields()
+    public async Task GetRecord_IndicationDetail_MapsAllFields()
     {
         var ct = TestContext.Current.CancellationToken;
-        Record record = await AddRecord(RecordStatus.Active);
+        Record record = await AddRecord(RecordStatus.Published);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
         var bnfChapter = await AddEntity(new BnfChapter { Code = "1.1", Label = "Dyspepsia" }, ct);
         var formulationType = await AddEntity(new FormulationType { Label = "Tablet" }, ct);
@@ -345,15 +363,11 @@ public class RecordViewServiceTests : DatabaseTestBase
             ct
         );
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
-            record.Id,
-            RecordType.Medicine,
-            ct
-        );
+        GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
 
         var dto = result
             .ShouldBeSuccess()
-            .ShouldBeOfType<PublishedMedicineRecordDto>()
+            .ShouldBeOfType<MedicineRecordDto>()
             .MedicinesIndicationDetail.ShouldNotBeNull();
         dto.Indication.ShouldBe("Hepatitis C");
         dto.BnfChapter.ShouldBe(new ReferenceDataDto { Id = bnfChapter.Id, Label = "Dyspepsia" });
@@ -378,10 +392,10 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetPublishedRecord_MedicineSections_MapsAllFields()
+    public async Task GetRecord_MedicineSections_MapsAllFields()
     {
         var ct = TestContext.Current.CancellationToken;
-        Record record = await AddRecord(RecordStatus.Active);
+        Record record = await AddRecord(RecordStatus.Published);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
         var pathwayPoint = await AddEntity(new PatientPathwayPoint { Label = "Diagnosis" }, ct);
         var populationRange = await AddEntity(
@@ -511,13 +525,9 @@ public class RecordViewServiceTests : DatabaseTestBase
         );
         await Context.SaveChangesAsync(ct);
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
-            record.Id,
-            RecordType.Medicine,
-            ct
-        );
+        GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
+        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.MedicinesDevelopmentBackground.ShouldBe(
             new MedicinesDevelopmentBackgroundDto
             {
@@ -645,10 +655,10 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetPublishedRecord_SharedSections_MapsAllFields()
+    public async Task GetRecord_SharedSections_MapsAllFields()
     {
         var ct = TestContext.Current.CancellationToken;
-        Record record = await AddRecord(RecordStatus.Active);
+        Record record = await AddRecord(RecordStatus.Published);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
         var procedureType = await AddEntity(new MhraProcedureType { Label = "IRP" }, ct);
         var regulator = await AddEntity(new IrpReferenceRegulator { Label = "FDA" }, ct);
@@ -716,13 +726,9 @@ public class RecordViewServiceTests : DatabaseTestBase
         );
         await Context.SaveChangesAsync(ct);
 
-        GetPublishedRecordResult result = await Service.GetPublishedRecord(
-            record.Id,
-            RecordType.Medicine,
-            ct
-        );
+        GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
+        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.RecordClinicalTrialInformation.ShouldNotBeNull()
             .RecruitingInUk.ShouldBe(YesNoUnknown.Yes);
         dto.RecordClinicalTrials.Count.ShouldBe(2);

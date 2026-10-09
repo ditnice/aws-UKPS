@@ -1,4 +1,4 @@
-import { PublishedRecordDtoPublishedMedicineRecordDto } from '@/client/generated'
+import { RecordDtoMedicineRecordDto } from '@/client/generated'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 
 import {
@@ -27,13 +27,13 @@ import {
 import { Accordion, AccordionGroup } from './RecordAccordion'
 
 type MedicineRecordDetailsProps = {
-  record: PublishedRecordDtoPublishedMedicineRecordDto
+  record: RecordDtoMedicineRecordDto
 }
 
 type SectionProps = MedicineRecordDetailsProps
 
 /**
- * Renders a published medicine record's data, grouped into sections.
+ * Renders a medicine record's data, grouped into sections.
  */
 export const MedicineRecordDetails = ({ record }: MedicineRecordDetailsProps) => {
   return (

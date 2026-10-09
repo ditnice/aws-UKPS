@@ -1,11 +1,15 @@
 import Link from 'next/link'
 
-import { PaginatedResponseDtoOfRecordListItemDto, RecordStatus } from '@/client/generated'
-import { Tag, TagColour } from '@/components/Tag/Tag'
+import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
+import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
-import { organisationRecordsTableHeaders, recordStatusLabels } from './labels'
+import {
+  organisationRecordsTableHeaders,
+  recordStatusLabels,
+  recordStatusTagColours,
+} from './labels'
 import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 type RecordsTableProps = {
@@ -14,12 +18,6 @@ type RecordsTableProps = {
   query: RecordsQuery
 }
 const RecordsTable = async ({ organisationId, data: records, query }: RecordsTableProps) => {
-  const recordStatusToTagLabelMap: Record<RecordStatus, TagColour> = {
-    Unpublished: 'grey',
-    Active: 'green',
-    OnHold: 'orange',
-    Archived: 'grey',
-  }
   return (
     <>
       <ApplicationTableWithPagination
@@ -36,8 +34,8 @@ const RecordsTable = async ({ organisationId, data: records, query }: RecordsTab
               return <>{data.id}</>
             case 'record-status':
               return (
-                <Tag colour={recordStatusToTagLabelMap[data.recordStatus]}>
-                  {recordStatusLabels[data.recordStatus]}
+                <Tag colour={recordStatusTagColours[data.displayStatus]}>
+                  {recordStatusLabels[data.displayStatus]}
                 </Tag>
               )
             case 'company-code':

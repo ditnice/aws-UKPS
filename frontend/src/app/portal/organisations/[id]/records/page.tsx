@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button } from '@/components/Button/Button'
@@ -24,7 +26,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
       {(organisation) => (
         <>
           <PageHeader heading={`${organisation.organisationName}`} />
-          <CreateMedicineRecordActionBanner />
+          <CreateMedicineRecordActionBanner organisationId={organisationId} />
           <TableAndFiltersGrid
             title="Search and filter records"
             filters={<RecordsTablesFilters query={query} />}
@@ -45,14 +47,19 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
   )
 }
 
-const CreateMedicineRecordActionBanner = () => {
+const CreateMedicineRecordActionBanner = ({ organisationId }: { organisationId: string }) => {
   return (
     <ActionBanner
       variant="subtle"
       title="Create Record"
       cta={
         <>
-          <Button>Create medicine record (TODO)</Button>
+          <Button
+            elementType={Link}
+            href={`/portal/organisations/${organisationId}/records/create`}
+          >
+            Create medicine record
+          </Button>
         </>
       }
     >

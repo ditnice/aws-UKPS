@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 
 import { FilterByInput, FilterPanel } from '@nice-digital/nds-filters'
 
-import { RecordStatus, UpdateStatus } from '@/client/generated'
+import { RecordDisplayStatus, UpdateStatus } from '@/client/generated'
 
 import { FilterOptionsGroup } from '../_components/OrganisationFilters'
 
@@ -52,9 +52,9 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
       <FilterOptionsGroup
         heading="Record status"
         id="record-status-filter"
-        options={Object.values(RecordStatus)}
+        options={Object.values(RecordDisplayStatus)}
         labels={recordStatusLabels}
-        isSelected={(recordStatus: RecordStatus) =>
+        isSelected={(recordStatus: RecordDisplayStatus) =>
           query.recordStatus?.includes(recordStatus) ?? false
         }
         onChanged={(recordStatus, isSelected) =>

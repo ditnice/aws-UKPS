@@ -140,7 +140,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
         recordProductDetail.ShouldNotBeNull();
         recordProductDetail.RecordTitle.ShouldBe(_validCommand.RecordTitle);
         recordProductDetail.BrandedName.ShouldBe(_validCommand.BrandedName);
-        recordProductDetail.CompanyCode.ShouldBe(_validCommand.DevelopmentName);
+        recordProductDetail.CompanyCode.ShouldBe(_validCommand.CompanyCode);
 
         foreach (var genericName in _validCommand.GenericNames.Enumerate())
         {

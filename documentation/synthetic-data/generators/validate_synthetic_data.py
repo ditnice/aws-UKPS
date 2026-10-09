@@ -188,9 +188,9 @@ def main():
                     error("automatic archives happen after the last review", record)
             elif not changed == updated == reviewed:
                 error("manual status changes are the latest update and review", record)
-        if status == "Active" and date.fromisoformat(record["reviewedAt"]) <= today - timedelta(
+        if status == "Published" and date.fromisoformat(record["reviewedAt"]) <= today - timedelta(
                 days=NOT_UPDATED_ARCHIVE_DAYS):
-            error("active records were reviewed within the archiving period", record)
+            error("published records were reviewed within the archiving period", record)
         if record["organisationName"] not in organisations:
             error("organisation exists", record)
         elif date.fromisoformat(organisations[record["organisationName"]]["createdAt"]) > created:

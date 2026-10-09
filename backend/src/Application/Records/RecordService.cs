@@ -72,6 +72,7 @@ internal partial class RecordService(
                 Id = m.Id,
                 RecordType = m.RecordType,
                 RecordStatus = m.RecordStatus,
+                DisplayStatus = m.DisplayStatus,
                 Title = m.Title ?? string.Empty,
                 CompanyCode = m.CompanyCode,
                 ReviewedAt = m.ReviewedAt,
@@ -123,9 +124,9 @@ internal partial class RecordService(
             input = input.Where(m => getRecordsQuery.RecordType.Contains(m.RecordType));
         }
 
-        if (getRecordsQuery.RecordStatus.Count > 0)
+        if (getRecordsQuery.DisplayStatus.Count > 0)
         {
-            input = input.Where(m => getRecordsQuery.RecordStatus.Contains(m.RecordStatus));
+            input = input.Where(m => getRecordsQuery.DisplayStatus.Contains(m.DisplayStatus));
         }
 
         if (getRecordsQuery.UpdateStatus.HasValue)
@@ -172,7 +173,7 @@ internal partial class RecordService(
                     m.NextUpdateDue == null ? DateTime.MaxValue : m.NextUpdateDue.Value,
                 GetRecordsQuerySortValue.Id => m => m.Id,
                 GetRecordsQuerySortValue.CompanyCode => m => m.CompanyCode,
-                GetRecordsQuerySortValue.RecordStatus => m => m.RecordStatus,
+                GetRecordsQuerySortValue.DisplayStatus => m => m.DisplayStatus,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(sortBy),
                     $"Unexpected value: {sortBy}"
@@ -198,6 +199,7 @@ internal partial class RecordService(
         public int OrganisationId { get; init; }
         public RecordType RecordType { get; init; }
         public RecordStatus RecordStatus { get; init; }
+        public RecordDisplayStatus DisplayStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
         public string? Title { get; init; }
         public required string CompanyCode { get; init; }
@@ -211,31 +213,35 @@ internal partial class RecordService(
         public RecordType RecordType { get; init; }
         public RecordStatus RecordStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
-        public int? CurrentDraftRevisionId { get; init; }
+        public int? LatestRevisionId { get; init; }
+        public RecordDisplayStatus DisplayStatus { get; init; }
         public DateTime? NextUpdateDue { get; init; }
     }
 
     private IQueryable<BaseRecordProjection> GetBaseRecordProjection() =>
-        dbContext.Records.Select(x => new BaseRecordProjection
-        {
-            Id = x.Id,
-            OrganisationId = x.OrganisationId,
-            RecordType = x.RecordType,
-            RecordStatus = x.RecordStatus,
-            ReviewedAt = x.ReviewedAt,
-            CurrentDraftRevisionId = x.Revisions.OrderBy(y => y.CreatedAt).Last().Id,
-            NextUpdateDue =
-                x.ReviewedAt == null
-                    ? null
-                    : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths), // TODO rules around this need to be reviewed, requires wider-team discussion
-        });
+        dbContext
+            .Records.SelectLatestRevision()
+            .Select(x => new BaseRecordProjection
+            {
+                Id = x.Record.Id,
+                OrganisationId = x.Record.OrganisationId,
+                RecordType = x.Record.RecordType,
+                RecordStatus = x.Record.RecordStatus,
+                ReviewedAt = x.Record.ReviewedAt,
+                LatestRevisionId = x.LatestRevisionId,
+                DisplayStatus = x.DisplayStatus,
+                NextUpdateDue =
+                    x.Record.ReviewedAt == null
+                        ? null
+                        : x.Record.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths), // TODO rules around this need to be reviewed, requires wider-team discussion
+            });
 
     private IQueryable<RecordInformationTrackingProjection> JoinProductDetails(
         IQueryable<BaseRecordProjection> input
     ) =>
         input.Join(
             dbContext.RecordProductDetails,
-            x => x.CurrentDraftRevisionId,
+            x => x.LatestRevisionId,
             y => y.RevisionId,
             (a, b) =>
                 new RecordInformationTrackingProjection
@@ -244,6 +250,7 @@ internal partial class RecordService(
                     OrganisationId = a.OrganisationId,
                     RecordType = a.RecordType,
                     RecordStatus = a.RecordStatus,
+                    DisplayStatus = a.DisplayStatus,
                     ReviewedAt = a.ReviewedAt,
                     NextUpdateDue = a.NextUpdateDue,
                     Title = b.RecordTitle,

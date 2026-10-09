@@ -1,17 +1,18 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { PublishedRecordDtoPublishedMedicineRecordDto } from '@/client/generated'
+import { RecordDtoMedicineRecordDto } from '@/client/generated'
 
 import { MedicineRecordDetails } from './MedicineRecordDetails'
 
 afterEach(cleanup)
 
-const record: PublishedRecordDtoPublishedMedicineRecordDto = {
+const record: RecordDtoMedicineRecordDto = {
   recordType: 'Medicine',
   recordId: 42,
   organisationId: 7,
-  recordStatus: 'Active',
+  recordStatus: 'Published',
+  displayStatus: 'Published',
   revisionId: 3,
   recordClinicalTrialInformation: { recruitingInUk: 'Yes' },
   recordClinicalTrials: [
@@ -53,7 +54,7 @@ describe('MedicineRecordDetails', () => {
       />,
     )
 
-    expect(rowValue('Clinical trials')).toBe('Not provided')
-    expect(rowValue('Any trials recruiting in the UK')).toBe('Not provided')
+    expect(rowValue('Clinical trials')).toBe('Not yet provided')
+    expect(rowValue('Any trials recruiting in the UK')).toBe('Not yet provided')
   })
 })

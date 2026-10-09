@@ -142,10 +142,11 @@ internal sealed class RecordHistoryBuilder
                     version,
                     []
                 );
+                QaReview approval = publishedRevision.QaReviews.Last();
                 _record.ChangeStatus(
-                    RecordStatus.Active,
-                    _record.ReviewedAt!.Value,
-                    publishedRevision.QaReviews.Last().ReviewedByUser
+                    RecordStatus.Published,
+                    approval.ReviewedAt!.Value,
+                    approval.ReviewedByUser
                 );
                 published = version;
                 continue;
@@ -154,7 +155,7 @@ internal sealed class RecordHistoryBuilder
             var changes = RecordContentHistory.Changes(published, version);
             if (changes.Count == 0)
             {
-                ReviewWithoutChange(At(publishDays[index], 10, 16), publishedRevision);
+                ConfirmAsCurrent(At(publishDays[index], 10, 16), publishedRevision);
                 continue;
             }
 
@@ -179,13 +180,13 @@ internal sealed class RecordHistoryBuilder
         }
         else if (_source.ReviewedAt is { } reviewed && reviewed > _source.LastUpdatedAt)
         {
-            ReviewWithoutChange(At(reviewed, 10, 16), publishedRevision);
+            ConfirmAsCurrent(At(reviewed, 10, 16), publishedRevision);
         }
 
         DateOnly lastActivity = DateOnly.FromDateTime(_record.ReviewedAt!.Value);
         bool hasTimeForDraft = _today.DayNumber - lastActivity.DayNumber >= 7;
         if (
-            _source.RecordStatus == RecordStatus.Active
+            _source.RecordStatus == RecordStatus.Published
             && hasTimeForDraft
             && _random.Double() < PendingDraftChance
         )
@@ -324,7 +325,7 @@ internal sealed class RecordHistoryBuilder
     {
         revision.SubmittedAt = at;
         revision.SubmittedByUser = _author;
-        revision.WorkflowStatus = WorkflowStatus.InReview;
+        revision.WorkflowStatus = WorkflowStatus.QAReview;
         AddEvent(RecordEventType.SubmittedToQa, at, _author, revision);
     }
 
@@ -369,7 +370,8 @@ internal sealed class RecordHistoryBuilder
                 }
             );
         }
-        _record.ReviewedAt = at;
+        // The organisation confirmed the record was current when they submitted it.
+        _record.ReviewedAt = revision.SubmittedAt;
     }
 
     private QaReview Review(RecordRevision revision, DateTime at, QaOutcome outcome, string? note)
@@ -386,7 +388,7 @@ internal sealed class RecordHistoryBuilder
         return review;
     }
 
-    private void ReviewWithoutChange(DateTime at, RecordRevision publishedRevision)
+    private void ConfirmAsCurrent(DateTime at, RecordRevision publishedRevision)
     {
         AddEvent(RecordEventType.RecordReviewedNoChange, at, _author, publishedRevision);
         _record.ReviewedAt = at;

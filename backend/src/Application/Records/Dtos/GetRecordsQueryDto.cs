@@ -20,9 +20,9 @@ public sealed record GetRecordsQueryDto
     public ICollection<RecordType> RecordType { get; init; } = [];
 
     /// <summary>
-    /// Gets or initialises the record statuses to include.
+    /// Gets or initialises the display statuses to include.
     /// </summary>
-    public ICollection<RecordStatus> RecordStatus { get; init; } = [];
+    public ICollection<RecordDisplayStatus> DisplayStatus { get; init; } = [];
 
     /// <summary>
     /// Gets or initialises the 1-based page number.

@@ -1,10 +1,20 @@
-import { GetRecordsQuerySortValue, RecordStatus, UpdateStatus } from '@/client/generated'
+import { GetRecordsQuerySortValue, RecordDisplayStatus, UpdateStatus } from '@/client/generated'
+import { TagColour } from '@/components/Tag/Tag'
 
-export const recordStatusLabels: Record<RecordStatus, string> = {
-  Unpublished: 'Unpublished',
-  Active: 'Active',
+export const recordStatusLabels: Record<RecordDisplayStatus, string> = {
+  Draft: 'Draft',
+  QAReview: 'QA review',
+  Published: 'Published',
   OnHold: 'On Hold',
   Archived: 'Archived',
+}
+
+export const recordStatusTagColours: Record<RecordDisplayStatus, TagColour> = {
+  Draft: 'blue',
+  QAReview: 'yellow',
+  Published: 'green',
+  OnHold: 'orange',
+  Archived: 'grey',
 }
 
 export const updateStatusLabels: Record<UpdateStatus, string> = {
@@ -30,7 +40,7 @@ export const organisationRecordsTableHeaders: RecordsTableHeader[] = [
   { key: 'id', label: 'ID', sortColumn: 'Id' },
   { key: 'company-code', label: 'Company code', sortColumn: 'CompanyCode' },
   { key: 'records-title', label: 'Records title', sortColumn: null },
-  { key: 'record-status', label: 'Record status', sortColumn: 'RecordStatus' },
+  { key: 'record-status', label: 'Record status', sortColumn: 'DisplayStatus' },
   { key: 'next-update', label: 'Next update', sortColumn: 'NextUpdateDue' },
   { key: 'actions', label: 'Action', sortColumn: null },
 ] as const

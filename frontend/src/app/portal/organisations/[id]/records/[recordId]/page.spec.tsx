@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getPublishedRecord, PublishedRecordDto } from '@/client/generated'
+import { getRecord, RecordDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
 import RecordPage from './page'
@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/client/generated', () => ({
-  getPublishedRecord: vi.fn(),
+  getRecord: vi.fn(),
 }))
 
 vi.mock('@/client/server-api', () => ({
@@ -56,13 +56,14 @@ vi.mock('./_components/MedicineRecordDetails', () => ({
   MedicineRecordDetails: () => <div data-testid="medicine-record-details" />,
 }))
 
-type GetPublishedRecordResult = Awaited<ReturnType<typeof getPublishedRecord>>
+type GetRecordResult = Awaited<ReturnType<typeof getRecord>>
 
-const medicineRecord: PublishedRecordDto = {
+const medicineRecord: RecordDto = {
   recordType: 'Medicine',
   recordId: 42,
   organisationId: 7,
-  recordStatus: 'Active',
+  recordStatus: 'Published',
+  displayStatus: 'QAReview',
   revisionId: 3,
   recordClinicalTrials: [],
   recordProductDetail: {
@@ -72,8 +73,8 @@ const medicineRecord: PublishedRecordDto = {
   },
 }
 
-const mockRecord = (result: Partial<GetPublishedRecordResult>) =>
-  vi.mocked(getPublishedRecord).mockResolvedValue(result as GetPublishedRecordResult)
+const mockRecord = (result: Partial<GetRecordResult>) =>
+  vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
 
 const renderPage = async (recordId = '42', recordType: string | undefined = 'Medicine') => {
   const page = await RecordPage({
@@ -101,7 +102,7 @@ describe('RecordPage', () => {
 
     await renderPage()
 
-    expect(getPublishedRecord).toHaveBeenCalledWith(
+    expect(getRecord).toHaveBeenCalledWith(
       expect.objectContaining({ path: { id: 42 }, query: { recordType: 'Medicine' } }),
     )
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Record 42: GC22')
@@ -109,7 +110,7 @@ describe('RecordPage', () => {
       'Record title: Early rheumatoid arthritis in adults',
     )
     expect(screen.getByText('Record title:').tagName).toBe('STRONG')
-    expect(screen.getByText('Active')).toBeDefined()
+    expect(screen.getByText('QA review')).toBeDefined()
     expect(screen.getByTestId('manage-record-banner')).toBeDefined()
     expect(screen.getByTestId('medicine-record-details')).toBeDefined()
   })

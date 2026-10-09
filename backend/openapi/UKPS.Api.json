@@ -1669,13 +1669,13 @@
             }
           },
           {
-            "name": "RecordStatus",
+            "name": "DisplayStatus",
             "in": "query",
-            "description": "Gets or initialises the record statuses to include.",
+            "description": "Gets or initialises the display statuses to include.",
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/RecordStatus"
+                "$ref": "#/components/schemas/RecordDisplayStatus"
               }
             }
           },
@@ -1835,8 +1835,8 @@
         "tags": [
           "Record"
         ],
-        "summary": "Retrieves the data held on the latest published revision of an active or on hold record.",
-        "operationId": "GetPublishedRecord",
+        "summary": "Retrieves the data held on the latest revision of a record, whatever its status.",
+        "operationId": "GetRecord",
         "parameters": [
           {
             "name": "id",
@@ -1860,21 +1860,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the published record data.",
+            "description": "Returns the record data.",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublishedRecordDto"
+                  "$ref": "#/components/schemas/RecordDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublishedRecordDto"
+                  "$ref": "#/components/schemas/RecordDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublishedRecordDto"
+                  "$ref": "#/components/schemas/RecordDto"
                 }
               }
             }
@@ -1920,7 +1920,7 @@
             }
           },
           "404": {
-            "description": "No record of the requested type exists with the specified identifier, or it has no\npublished data.",
+            "description": "No record of the requested type exists with the specified identifier.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2783,12 +2783,12 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{id}": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}": {
       "get": {
         "tags": [
           "UserRegistration"
         ],
-        "summary": "Retrieves the details of a user by their unique identifier.",
+        "summary": "Retrieves a membership request by its public identifier.",
         "operationId": "GetUserRegistrationById",
         "parameters": [
           {
@@ -2802,19 +2802,19 @@
             }
           },
           {
-            "name": "id",
+            "name": "requestGuid",
             "in": "path",
-            "description": "The unique identifier of the user to retrieve.",
+            "description": "The public identifier of the membership request to retrieve.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "The user's details were successfully retrieved.",
+            "description": "The membership request's details were successfully retrieved.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2896,7 +2896,7 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}/approve": {
       "patch": {
         "tags": [
           "UserRegistration"
@@ -2915,13 +2915,13 @@
             }
           },
           {
-            "name": "registrationRequestId",
+            "name": "requestGuid",
             "in": "path",
             "description": "The identifier for the registration request.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2969,6 +2969,46 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -2992,7 +3032,7 @@
         }
       }
     },
-    "/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject": {
+    "/organisations/{organisationId}/membership-requests/{requestGuid}/reject": {
       "patch": {
         "tags": [
           "UserRegistration"
@@ -3011,13 +3051,13 @@
             }
           },
           {
-            "name": "registrationRequestId",
+            "name": "requestGuid",
             "in": "path",
             "description": "The identifier for the registration request.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -3047,6 +3087,46 @@
           },
           "404": {
             "description": "The membership request could not be found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3217,7 +3297,7 @@
       "CreateRecordCommand": {
         "required": [
           "organisationId",
-          "developmentName",
+          "companyCode",
           "genericNames",
           "recordTitle",
           "otherIdentifiers"
@@ -3229,9 +3309,9 @@
             "description": "Gets the identifier of the organisation for which the record will be created.",
             "format": "int32"
           },
-          "developmentName": {
+          "companyCode": {
             "type": "string",
-            "description": "Gets the development name associated with the record."
+            "description": "Gets the company's internal code or working name for the product, e.g. ABC-123."
           },
           "brandedName": {
             "type": [
@@ -3256,6 +3336,7 @@
             "description": "Gets the other names, codes, or synonyms associated with the record."
           },
           "recordTitle": {
+            "maxLength": 100,
             "type": "string",
             "description": "Gets the title of the record."
           }
@@ -3335,7 +3416,7 @@
           "NextUpdateDue",
           "Id",
           "CompanyCode",
-          "RecordStatus"
+          "DisplayStatus"
         ],
         "type": "string",
         "description": "Specifies the fields by which records can be sorted."
@@ -4501,34 +4582,107 @@
           }
         }
       },
-      "PublishedRecordDto": {
+      "RecordClinicalTrialDto": {
+        "required": [
+          "studyName",
+          "clinicalTrialsGovNumber",
+          "otherClinicalTrialNumbers"
+        ],
+        "type": "object",
+        "properties": {
+          "studyName": {
+            "type": "string",
+            "description": "Gets the study name."
+          },
+          "clinicalTrialsGovNumber": {
+            "type": "string",
+            "description": "Gets the ClinicalTrials.gov number."
+          },
+          "otherClinicalTrialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order."
+          },
+          "trialPhase": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the trial phase.",
+                "$ref": "#/components/schemas/TrialPhase"
+              }
+            ]
+          },
+          "briefDescription": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the brief description of key findings."
+          }
+        },
+        "description": "Represents a clinical trial on a record."
+      },
+      "RecordClinicalTrialInformationDto": {
+        "type": "object",
+        "properties": {
+          "recruitingInUk": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether any of the record's clinical trials are recruiting in the UK.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          }
+        },
+        "description": "Represents the answers about a record's clinical trials as a whole."
+      },
+      "RecordDisplayStatus": {
+        "enum": [
+          "Draft",
+          "QAReview",
+          "Published",
+          "OnHold",
+          "Archived"
+        ],
+        "type": "string",
+        "description": "Represents the status shown to users for a record. On hold and archived records show their\nrecord status; otherwise the workflow status of the latest revision is shown."
+      },
+      "RecordDto": {
         "required": [
           "recordType"
         ],
         "type": "object",
         "anyOf": [
           {
-            "$ref": "#/components/schemas/PublishedRecordDtoPublishedMedicineRecordDto"
+            "$ref": "#/components/schemas/RecordDtoMedicineRecordDto"
           },
           {
-            "$ref": "#/components/schemas/PublishedRecordDtoPublishedVaccineRecordDto"
+            "$ref": "#/components/schemas/RecordDtoVaccineRecordDto"
           }
         ],
-        "description": "Represents the data held on the latest published revision of a record. The\n`recordType` property identifies the concrete type.",
+        "description": "Represents the data held on the latest revision of a record, whatever its workflow status.\nThe `recordType` property identifies the concrete type.",
         "discriminator": {
           "propertyName": "recordType",
           "mapping": {
-            "Medicine": "#/components/schemas/PublishedRecordDtoPublishedMedicineRecordDto",
-            "Vaccine": "#/components/schemas/PublishedRecordDtoPublishedVaccineRecordDto"
+            "Medicine": "#/components/schemas/RecordDtoMedicineRecordDto",
+            "Vaccine": "#/components/schemas/RecordDtoVaccineRecordDto"
           }
         }
       },
-      "PublishedRecordDtoPublishedMedicineRecordDto": {
+      "RecordDtoMedicineRecordDto": {
         "required": [
           "recordClinicalTrials",
           "recordId",
           "organisationId",
           "recordStatus",
+          "displayStatus",
           "revisionId"
         ],
         "properties": {
@@ -4735,6 +4889,10 @@
             "description": "Gets the record status.",
             "$ref": "#/components/schemas/RecordStatus"
           },
+          "displayStatus": {
+            "description": "Gets the status shown to users for the record.",
+            "$ref": "#/components/schemas/RecordDisplayStatus"
+          },
           "reviewedAt": {
             "type": [
               "null",
@@ -4745,17 +4903,18 @@
           },
           "revisionId": {
             "type": "integer",
-            "description": "Gets the identifier of the published revision.",
+            "description": "Gets the identifier of the latest revision.",
             "format": "int32"
           }
         },
-        "description": "Represents the data held on the latest published revision of a medicine record."
+        "description": "Represents the data held on the latest revision of a medicine record."
       },
-      "PublishedRecordDtoPublishedVaccineRecordDto": {
+      "RecordDtoVaccineRecordDto": {
         "required": [
           "recordId",
           "organisationId",
           "recordStatus",
+          "displayStatus",
           "revisionId"
         ],
         "properties": {
@@ -4779,6 +4938,10 @@
             "description": "Gets the record status.",
             "$ref": "#/components/schemas/RecordStatus"
           },
+          "displayStatus": {
+            "description": "Gets the status shown to users for the record.",
+            "$ref": "#/components/schemas/RecordDisplayStatus"
+          },
           "reviewedAt": {
             "type": [
               "null",
@@ -4789,72 +4952,11 @@
           },
           "revisionId": {
             "type": "integer",
-            "description": "Gets the identifier of the published revision.",
+            "description": "Gets the identifier of the latest revision.",
             "format": "int32"
           }
         },
-        "description": "Represents the data held on the latest published revision of a vaccine record."
-      },
-      "RecordClinicalTrialDto": {
-        "required": [
-          "studyName",
-          "clinicalTrialsGovNumber",
-          "otherClinicalTrialNumbers"
-        ],
-        "type": "object",
-        "properties": {
-          "studyName": {
-            "type": "string",
-            "description": "Gets the study name."
-          },
-          "clinicalTrialsGovNumber": {
-            "type": "string",
-            "description": "Gets the ClinicalTrials.gov number."
-          },
-          "otherClinicalTrialNumbers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order."
-          },
-          "trialPhase": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the trial phase.",
-                "$ref": "#/components/schemas/TrialPhase"
-              }
-            ]
-          },
-          "briefDescription": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the brief description of key findings."
-          }
-        },
-        "description": "Represents a clinical trial on a record."
-      },
-      "RecordClinicalTrialInformationDto": {
-        "type": "object",
-        "properties": {
-          "recruitingInUk": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether any of the record's clinical trials are recruiting in the UK.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          }
-        },
-        "description": "Represents the answers about a record's clinical trials as a whole."
+        "description": "Represents the data held on the latest revision of a vaccine record."
       },
       "RecordHtaDto": {
         "type": "object",
@@ -4924,6 +5026,7 @@
           "id",
           "recordType",
           "recordStatus",
+          "displayStatus",
           "title",
           "companyCode"
         ],
@@ -4941,6 +5044,10 @@
           "recordStatus": {
             "description": "Gets the record status.",
             "$ref": "#/components/schemas/RecordStatus"
+          },
+          "displayStatus": {
+            "description": "Gets the status shown to users for the record.",
+            "$ref": "#/components/schemas/RecordDisplayStatus"
           },
           "title": {
             "type": "string",
@@ -5089,7 +5196,7 @@
       "RecordStatus": {
         "enum": [
           "Unpublished",
-          "Active",
+          "Published",
           "OnHold",
           "Archived"
         ],
@@ -5148,7 +5255,7 @@
       },
       "RegisterUserConfirmationDto": {
         "required": [
-          "id",
+          "requestGuid",
           "organisationName",
           "fullName",
           "workEmail",
@@ -5156,10 +5263,10 @@
         ],
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "description": "ID for the user.",
-            "format": "int32"
+          "requestGuid": {
+            "type": "string",
+            "description": "Gets the public identifier of the membership request, not a user ID or setup token.",
+            "format": "uuid"
           },
           "organisationName": {
             "type": "string",
@@ -5178,7 +5285,7 @@
             "description": "Gets the user phone number."
           }
         },
-        "description": "Represents the details of a user who has been registered."
+        "description": "Represents confirmation of a submitted membership request."
       },
       "RegulatoryDateDto": {
         "required": [
@@ -5498,7 +5605,7 @@
       "UserListItemDto": {
         "required": [
           "userId",
-          "registrationRequestId",
+          "registrationRequestGuid",
           "emailAddress",
           "role",
           "status",
@@ -5515,13 +5622,13 @@
             "description": "Gets the unique identifier of the user.",
             "format": "int32"
           },
-          "registrationRequestId": {
+          "registrationRequestGuid": {
             "type": [
               "null",
-              "integer"
+              "string"
             ],
-            "description": "The optional lasted active registration request associated with the user.",
-            "format": "int32"
+            "description": "Gets the public identifier of the latest active membership request, if available.",
+            "format": "uuid"
           },
           "emailAddress": {
             "type": "string",

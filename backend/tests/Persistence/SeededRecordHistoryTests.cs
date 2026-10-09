@@ -127,7 +127,7 @@ public sealed class SeededRecordHistoryTests
             {
                 QaOutcome.Approved => WorkflowStatus.Published,
                 QaOutcome.Rejected => WorkflowStatus.Rejected,
-                _ when revision.SubmittedAt is not null => WorkflowStatus.InReview,
+                _ when revision.SubmittedAt is not null => WorkflowStatus.QAReview,
                 _ => WorkflowStatus.Draft,
             };
             revision.WorkflowStatus.ShouldBe(expected);
@@ -151,8 +151,8 @@ public sealed class SeededRecordHistoryTests
             }
 
             published.ShouldNotBeEmpty();
-            DateTime lastPublished = published.Max(r => r.QaReviews.Single().ReviewedAt!.Value);
-            record.ReviewedAt.ShouldNotBeNull().ShouldBeGreaterThanOrEqualTo(lastPublished);
+            DateTime lastSubmitted = published.Max(r => r.SubmittedAt!.Value);
+            record.ReviewedAt.ShouldNotBeNull().ShouldBeGreaterThanOrEqualTo(lastSubmitted);
         }
     }
 

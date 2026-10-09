@@ -1,25 +1,18 @@
 import { notFound } from 'next/navigation'
 
-import { getPublishedRecord, RecordStatus, RecordType } from '@/client/generated'
+import { getRecord, RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
-import { Tag, TagColour } from '@/components/Tag/Tag'
+import { Tag } from '@/components/Tag/Tag'
 
 import OrganisationPageWrapper from '../../_components/OrganisationPageWrapper'
-import { recordStatusLabels } from '../labels'
+import { recordStatusLabels, recordStatusTagColours } from '../labels'
 
 import { ManageRecordActionBanner } from './_components/ManageRecordActionBanner'
 import { MedicineRecordDetails } from './_components/MedicineRecordDetails'
-
-const recordStatusTagColours: Record<RecordStatus, TagColour> = {
-  Unpublished: 'grey',
-  Active: 'green',
-  OnHold: 'orange',
-  Archived: 'grey',
-}
 
 const parseRecordId = (value: string): number | null =>
   /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null
@@ -44,32 +37,24 @@ const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
       {(organisation) => (
-        <PublishedRecordView
-          organisationId={organisation.id}
-          recordId={recordId}
-          recordType={recordType}
-        />
+        <RecordView organisationId={organisation.id} recordId={recordId} recordType={recordType} />
       )}
     </OrganisationPageWrapper>
   )
 }
 
-type PublishedRecordViewProps = {
+type RecordViewProps = {
   organisationId: number
   recordId: number
   recordType: RecordType
 }
 
-const PublishedRecordView = async ({
-  organisationId,
-  recordId,
-  recordType,
-}: PublishedRecordViewProps) => {
+const RecordView = async ({ organisationId, recordId, recordType }: RecordViewProps) => {
   const {
     data: record,
     error,
     response,
-  } = await getPublishedRecord({
+  } = await getRecord({
     client: await createServerApiClient(),
     path: { id: recordId },
     query: { recordType },
@@ -106,8 +91,8 @@ const PublishedRecordView = async ({
           </>
         }
         metadata={[
-          <Tag key="status" colour={recordStatusTagColours[record.recordStatus]}>
-            {recordStatusLabels[record.recordStatus]}
+          <Tag key="status" colour={recordStatusTagColours[record.displayStatus]}>
+            {recordStatusLabels[record.displayStatus]}
           </Tag>,
         ]}
       />

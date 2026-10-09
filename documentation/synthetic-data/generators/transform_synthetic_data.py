@@ -39,7 +39,7 @@ PHARMA_ORGANISATION_COUNT = 35
 UNPUBLISHED_RECORD_COUNT = 20
 # Matches RecordService: medicine records are due an update 3 months after review, or 6 months
 # when on hold.
-UPDATE_DUE_DAYS = {"Active": 91, "OnHold": 182}
+UPDATE_DUE_DAYS = {"Published": 91, "OnHold": 182}
 MONTHS = {name: number for number, name in enumerate(calendar.month_name) if name}
 
 # --- Helpers ----------------------------------------------------------------------------------
@@ -628,8 +628,8 @@ class RecordBuilder:
         if status_reason == "ArchivedAutomatically":
             return self.automatic_archive_dates(rng, status_note)
 
-        due_days = UPDATE_DUE_DAYS.get(status, UPDATE_DUE_DAYS["Active"])
-        overdue = status == "Active" and rng.random() < 0.2
+        due_days = UPDATE_DUE_DAYS.get(status, UPDATE_DUE_DAYS["Published"])
+        overdue = status == "Published" and rng.random() < 0.2
         if overdue:
             # Records left unreviewed for longer would have been archived automatically.
             reviewed = TODAY - days(rng, due_days + 5, NOT_UPDATED_ARCHIVE_DAYS - 5)
@@ -1313,7 +1313,7 @@ def record_status(row):
             rng = random.Random(f"ukps-hold-{metadata['id']}")
             reason = weighted(rng, {"AwaitingExternalClarification": 60, "Other": 40})
         return "OnHold", reason, None
-    return "Active", None, None
+    return "Published", None, None
 
 
 def read_json(path):
@@ -1351,8 +1351,8 @@ def main():
     reassigned = {name: rng.choice(pharma_names) for name in partner_names}
 
     statuses = {row["metadata"]["id"]: record_status(row) for row in rows}
-    active_ids = [row_id for row_id, status in statuses.items() if status[0] == "Active"]
-    unpublished_ids = set(rng.sample(active_ids, UNPUBLISHED_RECORD_COUNT))
+    published_ids = [row_id for row_id, status in statuses.items() if status[0] == "Published"]
+    unpublished_ids = set(rng.sample(published_ids, UNPUBLISHED_RECORD_COUNT))
 
     # A minority of automatic archives are for records that stopped being updated.
     automatic_ids = [row_id for row_id, status in statuses.items()
