@@ -3297,7 +3297,7 @@
       "CreateRecordCommand": {
         "required": [
           "organisationId",
-          "developmentName",
+          "companyCode",
           "genericNames",
           "recordTitle",
           "otherIdentifiers"
@@ -3309,9 +3309,9 @@
             "description": "Gets the identifier of the organisation for which the record will be created.",
             "format": "int32"
           },
-          "developmentName": {
+          "companyCode": {
             "type": "string",
-            "description": "Gets the development name associated with the record."
+            "description": "Gets the company's internal code or working name for the product, e.g. ABC-123."
           },
           "brandedName": {
             "type": [

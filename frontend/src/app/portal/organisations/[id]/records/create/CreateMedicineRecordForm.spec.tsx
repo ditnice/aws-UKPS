@@ -29,7 +29,7 @@ const renderComponent = (organisationId = 1) => {
 type FormValues = Omit<CreateRecordCommand, 'organisationId'>
 
 const validFormValues: FormValues = {
-  developmentName: 'dn1',
+  companyCode: 'cc1',
   otherIdentifiers: [],
   brandedName: 'test',
   genericNames: ['gn1', 'gn2', 'gn3'],
@@ -55,7 +55,7 @@ const fillArrayField = (addButtonLabel: string, labelPrefix: string, values: str
 }
 
 const fillInForm = (formValues: FormValues) => {
-  setFieldValue('Development name', formValues.developmentName)
+  setFieldValue('Company code', formValues.companyCode)
 
   setFieldValue('Branded name (Optional)', formValues.brandedName ?? '')
 
@@ -88,10 +88,10 @@ describe('CreateMedicineRecordForm', () => {
       expect(screen.getByRole('button', { name: 'Save and continue' })).toBeDefined()
     })
 
-    it('renders the default development name field', () => {
+    it('renders the default company code field', () => {
       renderComponent()
 
-      expect(screen.getByLabelText('Development name')).toBeDefined()
+      expect(screen.getByLabelText('Company code')).toBeDefined()
     })
 
     it('renders the default generic name field', () => {
@@ -119,27 +119,27 @@ describe('CreateMedicineRecordForm', () => {
     })
   })
 
-  describe('development name', () => {
-    it('requires a development name', async () => {
+  describe('company code', () => {
+    it('requires a company code', async () => {
       renderComponent()
 
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(screen.getByText(errorMessages.developmentNameRequired)).toBeDefined()
+        expect(screen.getByText(errorMessages.companyCodeRequired)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
     })
 
-    it('rejects a whitespace-only development name', async () => {
+    it('rejects a whitespace-only company code', async () => {
       renderComponent()
-      fillInForm({ ...validFormValues, developmentName: '   ' })
+      fillInForm({ ...validFormValues, companyCode: '   ' })
 
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(screen.getByText(errorMessages.developmentNameRequired)).toBeDefined()
+        expect(screen.getByText(errorMessages.companyCodeRequired)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
@@ -319,7 +319,7 @@ describe('CreateMedicineRecordForm', () => {
       renderComponent(123)
 
       fillInForm({
-        developmentName: '  dn1  ',
+        companyCode: '  cc1  ',
         otherIdentifiers: [],
         brandedName: '  branded  ',
         genericNames: ['  gn1  '],
@@ -334,7 +334,7 @@ describe('CreateMedicineRecordForm', () => {
       expect(mocks.createRecord).toHaveBeenCalledWith({
         body: {
           organisationId: 123,
-          developmentName: 'dn1',
+          companyCode: 'cc1',
           otherIdentifiers: [],
           brandedName: 'branded',
           genericNames: ['gn1'],
@@ -432,7 +432,7 @@ describe('CreateMedicineRecordForm', () => {
     })
 
     it.each([
-      ['development name', 'DevelopmentName', 'Development name'],
+      ['company code', 'CompanyCode', 'Company code'],
       ['generic names', 'GenericNames', 'Generic name'],
     ])(
       'allows resubmission after correcting %s rejected by the API',

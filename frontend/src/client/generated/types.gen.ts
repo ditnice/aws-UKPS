@@ -77,9 +77,9 @@ export type CreateRecordCommand = {
      */
     organisationId: number;
     /**
-     * Gets the development name associated with the record.
+     * Gets the company's internal code or working name for the product, e.g. ABC-123.
      */
-    developmentName: string;
+    companyCode: string;
     /**
      * Gets the optional branded name associated with the record.
      */

@@ -24,7 +24,7 @@ const isDistinctIgnoringCase = (values: string[]) =>
 
 export const createRecordCommandSchema = z.object({
   organisationId: z.number(),
-  developmentName: z.string().trim().min(1, errorMessages.developmentNameRequired),
+  companyCode: z.string().trim().min(1, errorMessages.companyCodeRequired),
   otherIdentifiers: z.array(z.string().trim().min(1)),
   brandedName: z
     .string()
@@ -50,7 +50,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
   const [isSubmitting, setIsSubmitting] = useState(false)
   const defaultValues: CreateRecordCommand = {
     organisationId,
-    developmentName: '',
+    companyCode: '',
     otherIdentifiers: [],
     brandedName: '',
     genericNames: [''],
@@ -72,7 +72,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       setError(true)
 
       if (isValidationProblemDetails(error)) {
-        formApi.setFieldMeta('developmentName', updateFormApiErrors(error, 'DevelopmentName'))
+        formApi.setFieldMeta('companyCode', updateFormApiErrors(error, 'CompanyCode'))
         formApi.setFieldMeta('brandedName', updateFormApiErrors(error, 'BrandedName'))
         formApi.setFieldMeta('genericNames', updateFormApiErrors(error, 'GenericNames'))
         formApi.setFieldMeta('recordTitle', updateFormApiErrors(error, 'RecordTitle'))
@@ -96,15 +96,15 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       }}
     >
       {error && <ErrorState>{errorMessages.creatingNewRecordError}</ErrorState>}
-      <form.Field name="developmentName">
+      <form.Field name="companyCode">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
             <Input
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              label="Development name"
-              hint="Enter the name this medicine is known by in development (also called a synonym). This can include code names, historical names, abbreviations or alternate spellings."
+              label="Company code"
+              hint="Enter the internal code or working name your company uses for this medicine. For example, ABC-123."
               name={field.name}
               onBlur={field.handleBlur}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>

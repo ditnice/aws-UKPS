@@ -60,7 +60,7 @@ export const fakeCreateRecordCommand = (options?: Options): CreateRecordCommand 
     const f = options?.faker ?? faker;
     return {
         organisationId: f.number.int(),
-        developmentName: f.string.sample(),
+        companyCode: f.string.sample(),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { brandedName: f.datatype.boolean() ? f.string.sample() : null },
         genericNames: f.helpers.multiple(() => f.string.sample(), { count: { min: 1, max: 100 } }),
         otherIdentifiers: f.helpers.multiple(() => f.string.sample()),

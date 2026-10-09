@@ -36,9 +36,9 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         Func<CreateRecordCommand, CreateRecordCommand>
     > _invalidCreateRecordCommandModifiers = new(StringComparer.Ordinal)
     {
-        ["DevelopmentName empty"] = x => x with { DevelopmentName = "" },
-        ["DevelopmentName null"] = x => x with { DevelopmentName = null! },
-        ["DevelopmentName whitespace"] = x => x with { DevelopmentName = "   " },
+        ["CompanyCode empty"] = x => x with { CompanyCode = "" },
+        ["CompanyCode null"] = x => x with { CompanyCode = null! },
+        ["CompanyCode whitespace"] = x => x with { CompanyCode = "   " },
         ["GenericNames empty"] = x => x with { GenericNames = [] },
         ["GenericNames null"] = x => x with { GenericNames = null! },
         ["GenericNames empty item"] = x => x with { GenericNames = [""] },
@@ -255,7 +255,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .CreateRecord(
                 Arg.Is<CreateRecordCommand>(x =>
                     x.OrganisationId == command.OrganisationId
-                    && x.DevelopmentName == command.DevelopmentName
+                    && x.CompanyCode == command.CompanyCode
                     && x.OtherIdentifiers.SequenceEqual(command.OtherIdentifiers)
                     && x.BrandedName == command.BrandedName
                     && x.GenericNames.SequenceEqual(command.GenericNames)

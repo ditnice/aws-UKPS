@@ -15,10 +15,10 @@ public record CreateRecordCommand
     public required int OrganisationId { get; init; }
 
     /// <summary>
-    /// Gets the development name associated with the record.
+    /// Gets the company's internal code or working name for the product, e.g. ABC-123.
     /// </summary>
     [Required]
-    public required string DevelopmentName { get; init; }
+    public required string CompanyCode { get; init; }
 
     /// <summary>
     /// Gets the optional branded name associated with the record.
