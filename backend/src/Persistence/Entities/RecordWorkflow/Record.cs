@@ -17,16 +17,18 @@ internal sealed class Record
     public int? CreatedBy { get; set; }
 
     /// <summary>
-    /// Last time the submitting organisation confirmed the record is current.
-    /// Set from the triggering revision's SubmittedAt (the pharma submission
-    /// timestamp, not the QA reviewer's decision timestamp) on RecordPublished,
-    /// and to the current time on RecordReviewedNoChange. Not touched by any
-    /// other event, including QA rejection (QA tracks data validity, not
-    /// currency).
+    /// Last time the submitting organisation confirmed the record is current. Set on:
+    ///   RecordPublished        -> the published revision's SubmittedAt (the pharma
+    ///                             submission timestamp, not the QA decision timestamp)
+    ///   RecordReviewedNoChange -> the current time
+    ///   RecordStatusChanged    -> the current time, when a user changes the status
+    ///                             (not when the record is archived automatically)
+    /// Not touched by any other event, including QA rejection (QA tracks data
+    /// validity, not currency).
     /// Next review due:
-    ///   medicine + active  -> reviewed_at + 3 months
-    ///   medicine + on_hold -> reviewed_at + 6 months
-    ///   vaccine + active   -> reviewed_at + 6 months
+    ///   medicine + published -> reviewed_at + 3 months
+    ///   medicine + on_hold   -> reviewed_at + 6 months
+    ///   vaccine + published  -> reviewed_at + 6 months
     /// </summary>
     public DateTime? ReviewedAt { get; set; }
 

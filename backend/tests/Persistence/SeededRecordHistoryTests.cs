@@ -151,8 +151,8 @@ public sealed class SeededRecordHistoryTests
             }
 
             published.ShouldNotBeEmpty();
-            DateTime lastPublished = published.Max(r => r.QaReviews.Single().ReviewedAt!.Value);
-            record.ReviewedAt.ShouldNotBeNull().ShouldBeGreaterThanOrEqualTo(lastPublished);
+            DateTime lastSubmitted = published.Max(r => r.SubmittedAt!.Value);
+            record.ReviewedAt.ShouldNotBeNull().ShouldBeGreaterThanOrEqualTo(lastSubmitted);
         }
     }
 
