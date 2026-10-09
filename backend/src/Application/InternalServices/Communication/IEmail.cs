@@ -15,6 +15,7 @@ namespace UKPS.Api.Application.InternalServices.Communication;
     typeof(UserMembershipRequestApprovedNotificationEmail),
     "UserMembershipRequestApprovedNotification"
 )]
+[JsonDerivedType(typeof(UserRegisterEmail), "userRegisterEmail")]
 [JsonDerivedType(
     typeof(UserMembershipRequestRejectedNotificationEmail),
     "UserMembershipRequestRejectedNotification"

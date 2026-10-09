@@ -7,6 +7,7 @@ using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.InternalServices.UserOnboarding;
+using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
@@ -72,6 +73,18 @@ internal class UserRegistrationService : IUserRegistrationService
                 .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
 
             var dto = MapToDto(request);
+            await _emailService.SendEmail(
+                new SendEmailCommand()
+                {
+                    PersonIdentifier = PersonIdentifier.FromRegistrationId(userRegister.Id),
+                    RecipientAddress = userRegister.WorkEmail,
+                    Email = new UserRegisterEmail()
+                    {
+                        OrganisationName = request.Organisation!.OrganisationName,
+                    },
+                },
+                cancellationToken
+            );
 
             return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
         }
