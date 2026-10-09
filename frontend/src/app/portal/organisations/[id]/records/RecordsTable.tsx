@@ -1,23 +1,23 @@
-import { PaginatedResponseDtoOfRecordListItemDto, RecordDisplayStatus } from '@/client/generated'
-import { Tag, TagColour } from '@/components/Tag/Tag'
+import Link from 'next/link'
+
+import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
+import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
-import { organisationRecordsTableHeaders, recordStatusLabels } from './labels'
+import {
+  organisationRecordsTableHeaders,
+  recordStatusLabels,
+  recordStatusTagColours,
+} from './labels'
 import { convertQueryToSearchParams, RecordsQuery } from './recordsQuery'
 
 type RecordsTableProps = {
+  organisationId: number
   data: PaginatedResponseDtoOfRecordListItemDto
   query: RecordsQuery
 }
-const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
-  const recordStatusToTagLabelMap: Record<RecordDisplayStatus, TagColour> = {
-    Draft: 'blue',
-    QAReview: 'yellow',
-    Published: 'green',
-    OnHold: 'orange',
-    Archived: 'grey',
-  }
+const RecordsTable = async ({ organisationId, data: records, query }: RecordsTableProps) => {
   return (
     <>
       <ApplicationTableWithPagination
@@ -34,7 +34,7 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
               return <>{data.id}</>
             case 'record-status':
               return (
-                <Tag colour={recordStatusToTagLabelMap[data.displayStatus]}>
+                <Tag colour={recordStatusTagColours[data.displayStatus]}>
                   {recordStatusLabels[data.displayStatus]}
                 </Tag>
               )
@@ -43,9 +43,15 @@ const RecordsTable = async ({ data: records, query }: RecordsTableProps) => {
             case 'next-update':
               return <>TODO</>
             case 'records-title':
-              return <>TODO</>
+              return <>{data.title}</>
             case 'actions':
-              return <>TODO</>
+              return (
+                <Link
+                  href={`/portal/organisations/${organisationId}/records/${data.id}?recordType=${data.recordType}`}
+                >
+                  View<span className="visually-hidden"> record {data.id}</span>
+                </Link>
+              )
           }
         }}
       />

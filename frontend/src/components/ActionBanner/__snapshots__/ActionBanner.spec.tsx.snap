@@ -1,0 +1,44 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ActionBanner > renders the title, content and call to action 1`] = `
+<DocumentFragment>
+  <section
+    class="action-banner action-banner--subtle _banner_a77ad3"
+    data-component="action-banner--subtle"
+  >
+    <div
+      class="action-banner__container"
+    >
+      <div
+        class="action-banner__inner"
+      >
+        <div
+          class="action-banner__text"
+        >
+          <h2
+            class="action-banner__title"
+          >
+            Manage record
+          </h2>
+          <div
+            class="action-banner__intro"
+          >
+            Update record information.
+          </div>
+        </div>
+        <div
+          class="action-banner__actions"
+        >
+          <button
+            class="btn"
+            data-component="button--primary--button"
+            type="button"
+          >
+            Update record
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</DocumentFragment>
+`;

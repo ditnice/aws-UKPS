@@ -1,4 +1,5 @@
 import { GetRecordsQuerySortValue, RecordDisplayStatus, UpdateStatus } from '@/client/generated'
+import { TagColour } from '@/components/Tag/Tag'
 
 export const recordStatusLabels: Record<RecordDisplayStatus, string> = {
   Draft: 'Draft',
@@ -6,6 +7,14 @@ export const recordStatusLabels: Record<RecordDisplayStatus, string> = {
   Published: 'Published',
   OnHold: 'On Hold',
   Archived: 'Archived',
+}
+
+export const recordStatusTagColours: Record<RecordDisplayStatus, TagColour> = {
+  Draft: 'blue',
+  QAReview: 'yellow',
+  Published: 'green',
+  OnHold: 'orange',
+  Archived: 'grey',
 }
 
 export const updateStatusLabels: Record<UpdateStatus, string> = {
