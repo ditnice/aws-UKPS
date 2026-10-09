@@ -63,7 +63,6 @@ internal sealed class Record
         };
         RecordRevision revision = new RecordRevision()
         {
-            RevisionNo = 1,
             CreatedAt = time,
             CreatedByUser = currentUser,
             WorkflowStatus = WorkflowStatus.Draft,

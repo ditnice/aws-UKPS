@@ -8,15 +8,7 @@ internal sealed class CreateRecordCommandFaker : Faker<CreateRecordCommand>
     public CreateRecordCommandFaker()
     {
         RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
-        RuleFor(
-            x => x.DevelopmentNames,
-            f =>
-                Enumerable
-                    .Range(0, f.Random.Int(1, 3))
-                    .Select(_ => f.Commerce.ProductName())
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToArray()
-        );
+        RuleFor(x => x.CompanyCode, f => f.Random.Replace("???-###"));
         RuleFor(x => x.BrandedName, f => f.Commerce.ProductName());
         RuleFor(
             x => x.GenericNames,
@@ -25,6 +17,14 @@ internal sealed class CreateRecordCommandFaker : Faker<CreateRecordCommand>
                     .Range(0, f.Random.Int(1, 3))
                     .Select(_ => f.Commerce.ProductName())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray()
+        );
+        RuleFor(
+            x => x.OtherIdentifiers,
+            f =>
+                Enumerable
+                    .Range(0, f.Random.Int(1, 3))
+                    .Select(_ => f.Commerce.ProductName())
                     .ToArray()
         );
         RuleFor(x => x.RecordTitle, f => f.Lorem.Sentence());

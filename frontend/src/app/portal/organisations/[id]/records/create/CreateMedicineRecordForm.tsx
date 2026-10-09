@@ -24,10 +24,11 @@ const isDistinctIgnoringCase = (values: string[]) =>
 
 export const createRecordCommandSchema = z.object({
   organisationId: z.number(),
-  developmentNames: z
-    .array(z.string().trim().min(1, errorMessages.developmentNameRequired))
-    .min(1, errorMessages.developmentNameRequired)
-    .refine(isDistinctIgnoringCase, errorMessages.developmentNamesDistinct),
+  companyCode: z.string().trim().min(1, errorMessages.companyCodeRequired),
+  // Other identifiers are optional, so blank entries are dropped rather than rejected.
+  otherIdentifiers: z
+    .array(z.string())
+    .transform((values) => values.map((value) => value.trim()).filter(Boolean)),
   brandedName: z
     .string()
     .nullish()
@@ -52,7 +53,8 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
   const [isSubmitting, setIsSubmitting] = useState(false)
   const defaultValues: CreateRecordCommand = {
     organisationId,
-    developmentNames: [''],
+    companyCode: '',
+    otherIdentifiers: [''],
     brandedName: '',
     genericNames: [''],
     recordTitle: '',
@@ -73,9 +75,10 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       setError(true)
 
       if (isValidationProblemDetails(error)) {
-        formApi.setFieldMeta('developmentNames', updateFormApiErrors(error, 'DevelopmentNames'))
+        formApi.setFieldMeta('companyCode', updateFormApiErrors(error, 'CompanyCode'))
         formApi.setFieldMeta('brandedName', updateFormApiErrors(error, 'BrandedName'))
         formApi.setFieldMeta('genericNames', updateFormApiErrors(error, 'GenericNames'))
+        formApi.setFieldMeta('otherIdentifiers', updateFormApiErrors(error, 'OtherIdentifiers'))
         formApi.setFieldMeta('recordTitle', updateFormApiErrors(error, 'RecordTitle'))
       }
     },
@@ -97,13 +100,33 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       }}
     >
       {error && <ErrorState>{errorMessages.creatingNewRecordError}</ErrorState>}
-      <form.Field name="developmentNames" mode="array">
+      <form.Field name="companyCode">
+        {(field) => {
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+          return (
+            <Input
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label="Company code"
+              hint="Enter the primary internal code or working name your company uses for this product seeking market access."
+              name={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              value={field.state.value}
+              width={inputWidth}
+            />
+          )
+        }}
+      </form.Field>
+      <form.Field name="otherIdentifiers" mode="array">
         {(field) => (
           <ArrayInput
-            labelPrefix="Development name"
-            hint="Enter the name this medicine is known by in development (also called a synonym). This can include code names, historical names, abbreviations or alternate spellings."
-            addItemLabel="Add additional development name"
-            removeItemLabel="Remove development name"
+            labelPrefix="Other names and identifiers (optional)"
+            hint="Enter any other development names, synonyms, or identifiers that you want to associate with this product."
+            addItemLabel="Add another identifier"
+            removeItemLabel="Remove identifier"
             width={inputWidth}
             field={field}
             getSubfield={(name, renderInputs) => (
@@ -119,7 +142,8 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
             <Input
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              label="Branded name (Optional)"
+              label="Branded name (optional)"
+              hint="Enter the name this medicine is sold under. For example, Humira, Lipitor."
               name={field.name}
               onBlur={field.handleBlur}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -136,7 +160,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
           <ArrayInput
             labelPrefix="Generic name"
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
-            addItemLabel="Add additional active substance"
+            addItemLabel="Add another active substance"
             removeItemLabel="Remove active substance"
             width={inputWidth}
             field={field}

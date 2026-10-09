@@ -1,23 +1,28 @@
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.WebApi.Controllers;
 
 /// <summary>
 /// Provides endpoints for retrieving and creating records.
 /// </summary>
-/// <param name="recordService">The service used to retrieve records.</param>
-/// <param name="recordCreationService">The service used to create records.</param>
+/// <param name="recordService">Service used to search and filter records.</param>
+/// <param name="recordViewService">Service used to retrieve record data for viewing.</param>
+/// <param name="recordCreationService">Service used to create records.</param>
 [Authorize]
 [ApiController]
 [Route("records")]
 public class RecordController(
     IRecordService recordService,
+    IRecordViewService recordViewService,
     IRecordCreationService recordCreationService
 ) : ControllerBase
 {
@@ -70,6 +75,45 @@ public class RecordController(
                         detail: "You are not authorised to view records."
                     ),
                     _ => throw new UnreachableException("Unhandled GetRecordsError variant."),
+                }
+        );
+    }
+
+    /// <summary>
+    /// Retrieves the data held on the latest revision of a record, whatever its status.
+    /// </summary>
+    /// <param name="id">The identifier of the record to retrieve.</param>
+    /// <param name="recordType">The expected type of the record.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>The record data.</returns>
+    /// <response code="200">Returns the record data.</response>
+    /// <response code="400">The record type is missing or invalid.</response>
+    /// <response code="403">The caller is not authorised to view the record.</response>
+    /// <response code="404">
+    /// No record of the requested type exists with the specified identifier.
+    /// </response>
+    [HttpGet("{id:int}", Name = nameof(GetRecord))]
+    [ProducesResponseType<RecordDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RecordDto>> GetRecord(
+        int id,
+        [FromQuery, Required] RecordType? recordType,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await recordViewService.GetRecord(id, recordType!.Value, cancellationToken);
+
+        // Returned directly rather than via Ok() so it serialises with its recordType.
+        return result.Match<ActionResult<RecordDto>>(
+            record => record,
+            error =>
+                error switch
+                {
+                    GetRecordError.NotAllowed => Forbid(),
+                    GetRecordError.NotFound or GetRecordError.RecordTypeMismatch => NotFound(),
+                    _ => throw new UnreachableException("Unhandled GetRecordError variant."),
                 }
         );
     }
