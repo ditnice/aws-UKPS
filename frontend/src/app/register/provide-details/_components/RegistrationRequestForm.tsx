@@ -74,9 +74,9 @@ export function RegistrationRequestForm() {
         },
       })
       if (response.data) {
-        const key = `request_${response.data.id}`
-        sessionStorage.setItem(key, JSON.stringify(response.data))
-        router.push(`/register/request-submitted/${key}`)
+        const REQUEST_STORAGE_KEY = 'registrationRequest'
+        sessionStorage.setItem(REQUEST_STORAGE_KEY, JSON.stringify(response.data))
+        router.push(`/register/request-submitted`)
         // TODO URP-312: Add the email being sent to request access to UKPS
       }
     },
