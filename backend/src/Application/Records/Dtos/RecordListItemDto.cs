@@ -23,6 +23,11 @@ public sealed record RecordListItemDto
     public required RecordStatus RecordStatus { get; init; }
 
     /// <summary>
+    /// Gets the status shown to users for the record.
+    /// </summary>
+    public required RecordDisplayStatus DisplayStatus { get; init; }
+
+    /// <summary>
     /// Gets the human-readable record title.
     /// </summary>
     public required string Title { get; init; }

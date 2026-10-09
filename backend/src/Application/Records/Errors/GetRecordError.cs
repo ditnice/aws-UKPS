@@ -3,26 +3,26 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Application.Records.Errors;
 
 /// <summary>
-/// Represents the base class for errors that can occur when retrieving a published record.
+/// Represents the base class for errors that can occur when retrieving a record.
 /// </summary>
-public abstract record GetPublishedRecordError
+public abstract record GetRecordError
 {
     /// <summary>
-    /// Initialises a new instance of the <see cref="GetPublishedRecordError"/> class.
+    /// Initialises a new instance of the <see cref="GetRecordError"/> class.
     /// </summary>
-    private protected GetPublishedRecordError() { }
+    private protected GetRecordError() { }
 
     /// <summary>
-    /// Represents an error that occurs when the record does not exist or has no published data.
+    /// Represents an error that occurs when the record does not exist.
     /// </summary>
     /// <param name="RecordId">The ID of the record.</param>
-    public sealed record NotFound(int RecordId) : GetPublishedRecordError;
+    public sealed record NotFound(int RecordId) : GetRecordError;
 
     /// <summary>
     /// Represents an error that occurs when the caller cannot read the record.
     /// </summary>
     /// <param name="RecordId">The ID of the record.</param>
-    internal sealed record NotAllowed(int RecordId) : GetPublishedRecordError;
+    internal sealed record NotAllowed(int RecordId) : GetRecordError;
 
     /// <summary>
     /// Represents an error that occurs when the record is not of the requested type.
@@ -34,5 +34,5 @@ public abstract record GetPublishedRecordError
         int RecordId,
         RecordType RequestedRecordType,
         RecordType ActualRecordType
-    ) : GetPublishedRecordError;
+    ) : GetRecordError;
 }

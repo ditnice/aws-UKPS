@@ -1,4 +1,4 @@
-namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
+namespace UKPS.Api.Application.Records.Dtos.RecordDetails;
 
 /// <summary>
 /// Represents a selected reference data value.

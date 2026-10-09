@@ -1669,13 +1669,13 @@
             }
           },
           {
-            "name": "RecordStatus",
+            "name": "DisplayStatus",
             "in": "query",
-            "description": "Gets or initialises the record statuses to include.",
+            "description": "Gets or initialises the display statuses to include.",
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/RecordStatus"
+                "$ref": "#/components/schemas/RecordDisplayStatus"
               }
             }
           },
@@ -1835,8 +1835,8 @@
         "tags": [
           "Record"
         ],
-        "summary": "Retrieves the data held on the latest published revision of an active or on hold record.",
-        "operationId": "GetPublishedRecord",
+        "summary": "Retrieves the data held on the latest revision of a record, whatever its status.",
+        "operationId": "GetRecord",
         "parameters": [
           {
             "name": "id",
@@ -1860,21 +1860,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the published record data.",
+            "description": "Returns the record data.",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublishedRecordDto"
+                  "$ref": "#/components/schemas/RecordDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublishedRecordDto"
+                  "$ref": "#/components/schemas/RecordDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublishedRecordDto"
+                  "$ref": "#/components/schemas/RecordDto"
                 }
               }
             }
@@ -1920,7 +1920,7 @@
             }
           },
           "404": {
-            "description": "No record of the requested type exists with the specified identifier, or it has no\npublished data.",
+            "description": "No record of the requested type exists with the specified identifier.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3416,7 +3416,7 @@
           "NextUpdateDue",
           "Id",
           "CompanyCode",
-          "RecordStatus"
+          "DisplayStatus"
         ],
         "type": "string",
         "description": "Specifies the fields by which records can be sorted."
@@ -4582,34 +4582,101 @@
           }
         }
       },
-      "PublishedRecordDto": {
+      "RecordClinicalTrialDto": {
+        "required": [
+          "studyName",
+          "clinicalTrialsGovNumber",
+          "otherClinicalTrialNumbers"
+        ],
+        "type": "object",
+        "properties": {
+          "studyName": {
+            "type": "string",
+            "description": "Gets the study name."
+          },
+          "clinicalTrialsGovNumber": {
+            "type": "string",
+            "description": "Gets the ClinicalTrials.gov number."
+          },
+          "otherClinicalTrialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order."
+          },
+          "trialPhase": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the trial phase.",
+                "$ref": "#/components/schemas/TrialPhase"
+              }
+            ]
+          },
+          "briefDescription": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the brief description of key findings."
+          },
+          "recruitingInUk": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets whether the trial is recruiting in the UK.",
+                "$ref": "#/components/schemas/YesNoUnknown"
+              }
+            ]
+          }
+        },
+        "description": "Represents a clinical trial on a record."
+      },
+      "RecordDisplayStatus": {
+        "enum": [
+          "Draft",
+          "QAReview",
+          "Published",
+          "OnHold",
+          "Archived"
+        ],
+        "type": "string",
+        "description": "Represents the status shown to users for a record. On hold and archived records show their\nrecord status; otherwise the workflow status of the latest revision is shown."
+      },
+      "RecordDto": {
         "required": [
           "recordType"
         ],
         "type": "object",
         "anyOf": [
           {
-            "$ref": "#/components/schemas/PublishedRecordDtoPublishedMedicineRecordDto"
+            "$ref": "#/components/schemas/RecordDtoMedicineRecordDto"
           },
           {
-            "$ref": "#/components/schemas/PublishedRecordDtoPublishedVaccineRecordDto"
+            "$ref": "#/components/schemas/RecordDtoVaccineRecordDto"
           }
         ],
-        "description": "Represents the data held on the latest published revision of a record. The\n`recordType` property identifies the concrete type.",
+        "description": "Represents the data held on the latest revision of a record, whatever its workflow status.\nThe `recordType` property identifies the concrete type.",
         "discriminator": {
           "propertyName": "recordType",
           "mapping": {
-            "Medicine": "#/components/schemas/PublishedRecordDtoPublishedMedicineRecordDto",
-            "Vaccine": "#/components/schemas/PublishedRecordDtoPublishedVaccineRecordDto"
+            "Medicine": "#/components/schemas/RecordDtoMedicineRecordDto",
+            "Vaccine": "#/components/schemas/RecordDtoVaccineRecordDto"
           }
         }
       },
-      "PublishedRecordDtoPublishedMedicineRecordDto": {
+      "RecordDtoMedicineRecordDto": {
         "required": [
           "recordClinicalTrials",
           "recordId",
           "organisationId",
           "recordStatus",
+          "displayStatus",
           "revisionId"
         ],
         "properties": {
@@ -4805,6 +4872,10 @@
             "description": "Gets the record status.",
             "$ref": "#/components/schemas/RecordStatus"
           },
+          "displayStatus": {
+            "description": "Gets the status shown to users for the record.",
+            "$ref": "#/components/schemas/RecordDisplayStatus"
+          },
           "reviewedAt": {
             "type": [
               "null",
@@ -4815,17 +4886,18 @@
           },
           "revisionId": {
             "type": "integer",
-            "description": "Gets the identifier of the published revision.",
+            "description": "Gets the identifier of the latest revision.",
             "format": "int32"
           }
         },
-        "description": "Represents the data held on the latest published revision of a medicine record."
+        "description": "Represents the data held on the latest revision of a medicine record."
       },
-      "PublishedRecordDtoPublishedVaccineRecordDto": {
+      "RecordDtoVaccineRecordDto": {
         "required": [
           "recordId",
           "organisationId",
           "recordStatus",
+          "displayStatus",
           "revisionId"
         ],
         "properties": {
@@ -4849,6 +4921,10 @@
             "description": "Gets the record status.",
             "$ref": "#/components/schemas/RecordStatus"
           },
+          "displayStatus": {
+            "description": "Gets the status shown to users for the record.",
+            "$ref": "#/components/schemas/RecordDisplayStatus"
+          },
           "reviewedAt": {
             "type": [
               "null",
@@ -4859,66 +4935,11 @@
           },
           "revisionId": {
             "type": "integer",
-            "description": "Gets the identifier of the published revision.",
+            "description": "Gets the identifier of the latest revision.",
             "format": "int32"
           }
         },
-        "description": "Represents the data held on the latest published revision of a vaccine record."
-      },
-      "RecordClinicalTrialDto": {
-        "required": [
-          "studyName",
-          "clinicalTrialsGovNumber",
-          "otherClinicalTrialNumbers"
-        ],
-        "type": "object",
-        "properties": {
-          "studyName": {
-            "type": "string",
-            "description": "Gets the study name."
-          },
-          "clinicalTrialsGovNumber": {
-            "type": "string",
-            "description": "Gets the ClinicalTrials.gov number."
-          },
-          "otherClinicalTrialNumbers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order."
-          },
-          "trialPhase": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the trial phase.",
-                "$ref": "#/components/schemas/TrialPhase"
-              }
-            ]
-          },
-          "briefDescription": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the brief description of key findings."
-          },
-          "recruitingInUk": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the trial is recruiting in the UK.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          }
-        },
-        "description": "Represents a clinical trial on a record."
+        "description": "Represents the data held on the latest revision of a vaccine record."
       },
       "RecordHtaDto": {
         "type": "object",
@@ -4988,6 +5009,7 @@
           "id",
           "recordType",
           "recordStatus",
+          "displayStatus",
           "title",
           "companyCode"
         ],
@@ -5005,6 +5027,10 @@
           "recordStatus": {
             "description": "Gets the record status.",
             "$ref": "#/components/schemas/RecordStatus"
+          },
+          "displayStatus": {
+            "description": "Gets the status shown to users for the record.",
+            "$ref": "#/components/schemas/RecordDisplayStatus"
           },
           "title": {
             "type": "string",
@@ -5153,7 +5179,7 @@
       "RecordStatus": {
         "enum": [
           "Unpublished",
-          "Active",
+          "Published",
           "OnHold",
           "Archived"
         ],

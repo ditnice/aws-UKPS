@@ -1,4 +1,4 @@
-namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
+namespace UKPS.Api.Application.Records.Dtos.RecordDetails;
 
 /// <summary>
 /// Represents the treatment detail section of a medicine record.

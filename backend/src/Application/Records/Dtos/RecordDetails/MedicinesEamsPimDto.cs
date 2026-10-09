@@ -1,6 +1,6 @@
 using UKPS.Api.Persistence.Enums;
 
-namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
+namespace UKPS.Api.Application.Records.Dtos.RecordDetails;
 
 /// <summary>
 /// Represents the Early Access to Medicines Scheme and Promising Innovative Medicine section of a

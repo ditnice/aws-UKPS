@@ -1,6 +1,6 @@
 using UKPS.Api.Persistence.Enums;
 
-namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
+namespace UKPS.Api.Application.Records.Dtos.RecordDetails;
 
 /// <summary>
 /// Represents the health technology assessment and launch section of a record.

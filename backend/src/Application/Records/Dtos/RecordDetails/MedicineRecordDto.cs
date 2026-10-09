@@ -1,7 +1,7 @@
-namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
+namespace UKPS.Api.Application.Records.Dtos.RecordDetails;
 
 /// <summary>
-/// Represents the data held on the latest published revision of a medicine record.
+/// Represents the data held on the latest revision of a medicine record.
 /// </summary>
 /// <remarks>
 /// Each section property corresponds to a revision data table, so a field's JSON path maps to its
@@ -9,7 +9,7 @@ namespace UKPS.Api.Application.Records.Dtos.PublishedRecord;
 /// <c>medicines_indication_detail.indication</c>. A section is <c>null</c> when the revision has no
 /// data for it.
 /// </remarks>
-public sealed record PublishedMedicineRecordDto : PublishedRecordDto
+public sealed record MedicineRecordDto : RecordDto
 {
     /// <summary>
     /// Gets the names and identifiers section.
