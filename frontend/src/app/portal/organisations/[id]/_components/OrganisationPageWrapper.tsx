@@ -4,20 +4,7 @@ import { getOrganisationById, OrganisationDetailsDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
-
-const parsePositiveInteger = (value: string): number | null => {
-  if (!/^[1-9]\d*$/.test(value)) {
-    return null
-  }
-
-  const num = Number(value)
-
-  if (!Number.isSafeInteger(num)) {
-    return null
-  }
-
-  return num
-}
+import { parsePositiveInteger } from '@/lib/valueParsing'
 
 /**
  * Props for the {@link OrganisationPageWrapper} component.

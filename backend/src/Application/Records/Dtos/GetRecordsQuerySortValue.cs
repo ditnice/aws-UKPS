@@ -21,7 +21,7 @@ public enum GetRecordsQuerySortValue
     CompanyCode = 2,
 
     /// <summary>
-    /// Sorts records by their record status.
+    /// Sorts records by their display status.
     /// </summary>
-    RecordStatus = 3,
+    DisplayStatus = 3,
 }

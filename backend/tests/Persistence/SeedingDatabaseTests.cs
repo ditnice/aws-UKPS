@@ -3,7 +3,7 @@ using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.PublishedRecord;
+using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -50,7 +50,7 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
                 }
             );
             await ShouldListEveryRecord(organisationRecords, ct);
-            await ShouldShowEveryPublishedRecord(viewHarness.Service, organisationRecords, ct);
+            await ShouldShowEveryRecord(viewHarness.Service, organisationRecords, ct);
         }
     }
 
@@ -78,25 +78,26 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
         result.ShouldBeSuccess().TotalCount.ShouldBe(organisationRecords.Count());
     }
 
-    private static async Task ShouldShowEveryPublishedRecord(
+    private static async Task ShouldShowEveryRecord(
         IRecordViewService service,
         IEnumerable<Record> records,
         CancellationToken ct
     )
     {
-        foreach (
-            Record record in records.Where(r =>
-                r.RecordStatus is RecordStatus.Active or RecordStatus.OnHold
-            )
-        )
+        foreach (Record record in records)
         {
-            Result<PublishedRecordDto, GetPublishedRecordError> result =
-                await service.GetPublishedRecord(record.Id, RecordType.Medicine, ct);
+            Result<RecordDto, GetRecordError> result = await service.GetRecord(
+                record.Id,
+                RecordType.Medicine,
+                ct
+            );
 
-            var dto = result.ShouldBeSuccess().ShouldBeOfType<PublishedMedicineRecordDto>();
+            var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
+            dto.RevisionId.ShouldBe(
+                record.Revisions.OrderBy(r => r.CreatedAt).ThenBy(r => r.Id).Last().Id
+            );
             dto.RecordProductDetail.ShouldNotBeNull();
             dto.MedicinesIndicationDetail.ShouldNotBeNull().TherapeuticAreas.ShouldNotBeEmpty();
-            dto.RecordMhraDate.ShouldNotBeNull().UkSubmissionDate.ShouldNotBeNull();
         }
     }
 }

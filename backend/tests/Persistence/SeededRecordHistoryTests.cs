@@ -127,7 +127,7 @@ public sealed class SeededRecordHistoryTests
             {
                 QaOutcome.Approved => WorkflowStatus.Published,
                 QaOutcome.Rejected => WorkflowStatus.Rejected,
-                _ when revision.SubmittedAt is not null => WorkflowStatus.InReview,
+                _ when revision.SubmittedAt is not null => WorkflowStatus.QAReview,
                 _ => WorkflowStatus.Draft,
             };
             revision.WorkflowStatus.ShouldBe(expected);

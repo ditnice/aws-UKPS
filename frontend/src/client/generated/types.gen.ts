@@ -77,9 +77,9 @@ export type CreateRecordCommand = {
      */
     organisationId: number;
     /**
-     * Gets the development name associated with the record.
+     * Gets the company's internal code or working name for the product, e.g. ABC-123.
      */
-    developmentName: string;
+    companyCode: string;
     /**
      * Gets the optional branded name associated with the record.
      */
@@ -165,7 +165,7 @@ export const GetRecordsQuerySortValue = {
     NEXT_UPDATE_DUE: 'NextUpdateDue',
     ID: 'Id',
     COMPANY_CODE: 'CompanyCode',
-    RECORD_STATUS: 'RecordStatus'
+    DISPLAY_STATUS: 'DisplayStatus'
 } as const;
 
 /**
@@ -770,19 +770,67 @@ export type ProblemDetails = {
 };
 
 /**
- * Represents the data held on the latest published revision of a record. The
- * `recordType` property identifies the concrete type.
+ * Represents a clinical trial on a record.
  */
-export type PublishedRecordDto = ({
-    recordType: 'Medicine';
-} & PublishedRecordDtoPublishedMedicineRecordDto) | ({
-    recordType: 'Vaccine';
-} & PublishedRecordDtoPublishedVaccineRecordDto);
+export type RecordClinicalTrialDto = {
+    /**
+     * Gets the study name.
+     */
+    studyName: string;
+    /**
+     * Gets the ClinicalTrials.gov number.
+     */
+    clinicalTrialsGovNumber: string;
+    /**
+     * Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order.
+     */
+    otherClinicalTrialNumbers: Array<string>;
+    trialPhase?: null | TrialPhase;
+    /**
+     * Gets the brief description of key findings.
+     */
+    briefDescription?: null | string;
+};
 
 /**
- * Represents the data held on the latest published revision of a medicine record.
+ * Represents the answers about a record's clinical trials as a whole.
  */
-export type PublishedRecordDtoPublishedMedicineRecordDto = {
+export type RecordClinicalTrialInformationDto = {
+    recruitingInUk?: null | YesNoUnknown;
+};
+
+/**
+ * Represents the status shown to users for a record. On hold and archived records show their
+ * record status; otherwise the workflow status of the latest revision is shown.
+ */
+export const RecordDisplayStatus = {
+    DRAFT: 'Draft',
+    QA_REVIEW: 'QAReview',
+    PUBLISHED: 'Published',
+    ON_HOLD: 'OnHold',
+    ARCHIVED: 'Archived'
+} as const;
+
+/**
+ * Represents the status shown to users for a record. On hold and archived records show their
+ * record status; otherwise the workflow status of the latest revision is shown.
+ */
+export type RecordDisplayStatus = typeof RecordDisplayStatus[keyof typeof RecordDisplayStatus];
+
+/**
+ * Represents the data held on the latest revision of a record, whatever its workflow status.
+ * The `recordType` property identifies the concrete type.
+ */
+export type RecordDto = ({
+    recordType: 'Medicine';
+} & RecordDtoMedicineRecordDto) | ({
+    recordType: 'Vaccine';
+} & RecordDtoVaccineRecordDto);
+
+/**
+ * Represents the data held on the latest revision of a medicine record.
+ */
+export type RecordDtoMedicineRecordDto = {
     recordType?: 'Medicine';
     recordProductDetail?: null | RecordProductDetailDto;
     medicinesIndicationDetail?: null | MedicinesIndicationDetailDto;
@@ -817,19 +865,23 @@ export type PublishedRecordDtoPublishedMedicineRecordDto = {
      */
     recordStatus: RecordStatus;
     /**
+     * Gets the status shown to users for the record.
+     */
+    displayStatus: RecordDisplayStatus;
+    /**
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
     /**
-     * Gets the identifier of the published revision.
+     * Gets the identifier of the latest revision.
      */
     revisionId: number;
 };
 
 /**
- * Represents the data held on the latest published revision of a vaccine record.
+ * Represents the data held on the latest revision of a vaccine record.
  */
-export type PublishedRecordDtoPublishedVaccineRecordDto = {
+export type RecordDtoVaccineRecordDto = {
     recordType?: 'Vaccine';
     /**
      * Gets the record identifier.
@@ -844,43 +896,17 @@ export type PublishedRecordDtoPublishedVaccineRecordDto = {
      */
     recordStatus: RecordStatus;
     /**
+     * Gets the status shown to users for the record.
+     */
+    displayStatus: RecordDisplayStatus;
+    /**
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
     /**
-     * Gets the identifier of the published revision.
+     * Gets the identifier of the latest revision.
      */
     revisionId: number;
-};
-
-/**
- * Represents a clinical trial on a record.
- */
-export type RecordClinicalTrialDto = {
-    /**
-     * Gets the study name.
-     */
-    studyName: string;
-    /**
-     * Gets the ClinicalTrials.gov number.
-     */
-    clinicalTrialsGovNumber: string;
-    /**
-     * Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order.
-     */
-    otherClinicalTrialNumbers: Array<string>;
-    trialPhase?: null | TrialPhase;
-    /**
-     * Gets the brief description of key findings.
-     */
-    briefDescription?: null | string;
-};
-
-/**
- * Represents the answers about a record's clinical trials as a whole.
- */
-export type RecordClinicalTrialInformationDto = {
-    recruitingInUk?: null | YesNoUnknown;
 };
 
 /**
@@ -920,6 +946,10 @@ export type RecordListItemDto = {
      * Gets the record status.
      */
     recordStatus: RecordStatus;
+    /**
+     * Gets the status shown to users for the record.
+     */
+    displayStatus: RecordDisplayStatus;
     /**
      * Gets the human-readable record title.
      */
@@ -996,7 +1026,7 @@ export type RecordProductDetailDto = {
  */
 export const RecordStatus = {
     UNPUBLISHED: 'Unpublished',
-    ACTIVE: 'Active',
+    PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
     ARCHIVED: 'Archived'
 } as const;
@@ -1049,13 +1079,13 @@ export type RegisterUserCommandDto = {
 };
 
 /**
- * Represents the details of a user who has been registered.
+ * Represents confirmation of a submitted membership request.
  */
 export type RegisterUserConfirmationDto = {
     /**
-     * ID for the user.
+     * Gets the public identifier of the membership request, not a user ID or setup token.
      */
-    id: number;
+    requestGuid: string;
     /**
      * Gets the name of the user's organisation.
      */
@@ -1329,9 +1359,9 @@ export type UserListItemDto = {
      */
     userId: null | number;
     /**
-     * The optional lasted active registration request associated with the user.
+     * Gets the public identifier of the latest active membership request, if available.
      */
-    registrationRequestId: null | number;
+    registrationRequestGuid: null | string;
     /**
      * Gets the email address of the user, if available.
      */
@@ -2066,9 +2096,9 @@ export type GetOrganisationRecordsData = {
          */
         RecordType?: Array<RecordType>;
         /**
-         * Gets or initialises the record statuses to include.
+         * Gets or initialises the display statuses to include.
          */
-        RecordStatus?: Array<RecordStatus>;
+        DisplayStatus?: Array<RecordDisplayStatus>;
         /**
          * Gets or initialises the 1-based page number.
          */
@@ -2124,7 +2154,7 @@ export type GetOrganisationRecordsResponses = {
 
 export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
 
-export type GetPublishedRecordData = {
+export type GetRecordData = {
     body?: never;
     path: {
         /**
@@ -2141,7 +2171,7 @@ export type GetPublishedRecordData = {
     url: '/records/{id}';
 };
 
-export type GetPublishedRecordErrors = {
+export type GetRecordErrors = {
     /**
      * The record type is missing or invalid.
      */
@@ -2155,22 +2185,21 @@ export type GetPublishedRecordErrors = {
      */
     403: ProblemDetails;
     /**
-     * No record of the requested type exists with the specified identifier, or it has no
-     * published data.
+     * No record of the requested type exists with the specified identifier.
      */
     404: ProblemDetails;
 };
 
-export type GetPublishedRecordError = GetPublishedRecordErrors[keyof GetPublishedRecordErrors];
+export type GetRecordError = GetRecordErrors[keyof GetRecordErrors];
 
-export type GetPublishedRecordResponses = {
+export type GetRecordResponses = {
     /**
-     * Returns the published record data.
+     * Returns the record data.
      */
-    200: PublishedRecordDto;
+    200: RecordDto;
 };
 
-export type GetPublishedRecordResponse = GetPublishedRecordResponses[keyof GetPublishedRecordResponses];
+export type GetRecordResponse = GetRecordResponses[keyof GetRecordResponses];
 
 export type CreateRecordData = {
     /**
@@ -2483,12 +2512,12 @@ export type GetUserRegistrationByIdData = {
          */
         organisationId: number;
         /**
-         * The unique identifier of the user to retrieve.
+         * The public identifier of the membership request to retrieve.
          */
-        id: number;
+        requestGuid: string;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{id}';
+    url: '/organisations/{organisationId}/membership-requests/{requestGuid}';
 };
 
 export type GetUserRegistrationByIdErrors = {
@@ -2510,7 +2539,7 @@ export type GetUserRegistrationByIdError = GetUserRegistrationByIdErrors[keyof G
 
 export type GetUserRegistrationByIdResponses = {
     /**
-     * The user's details were successfully retrieved.
+     * The membership request's details were successfully retrieved.
      */
     200: RegisterUserConfirmationDto;
 };
@@ -2527,13 +2556,17 @@ export type ApproveData = {
         /**
          * The identifier for the registration request.
          */
-        registrationRequestId: number;
+        requestGuid: string;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve';
+    url: '/organisations/{organisationId}/membership-requests/{requestGuid}/approve';
 };
 
 export type ApproveErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
     /**
      * Unauthorized
      */
@@ -2546,6 +2579,10 @@ export type ApproveErrors = {
      * The membership request could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
 };
 
 export type ApproveError = ApproveErrors[keyof ApproveErrors];
@@ -2567,13 +2604,17 @@ export type RejectData = {
         /**
          * The identifier for the registration request.
          */
-        registrationRequestId: number;
+        requestGuid: string;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject';
+    url: '/organisations/{organisationId}/membership-requests/{requestGuid}/reject';
 };
 
 export type RejectErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
     /**
      * Unauthorized
      */
@@ -2586,6 +2627,10 @@ export type RejectErrors = {
      * The membership request could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: ProblemDetails;
 };
 
 export type RejectError = RejectErrors[keyof RejectErrors];

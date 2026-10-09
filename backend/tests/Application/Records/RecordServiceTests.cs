@@ -3,6 +3,7 @@ using Shouldly;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Common;
@@ -212,20 +213,25 @@ public class RecordServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecords_FiltersByRecordStatus_WhenStatusesProvided()
+    public async Task GetRecords_FiltersByDisplayStatus_WhenStatusesProvided()
     {
-        RecordStatus[] statuses = [OrganisationRecords[0].RecordStatus];
+        RecordDisplayStatus[] statuses = [GetExpectedDisplayStatus(OrganisationRecords[0])];
 
         GetRecordsResult result = await Service.GetOrganisationRecords(
             _organisationId,
-            new GetRecordsQueryDto { RecordStatus = statuses, PageSize = 1000 },
+            new GetRecordsQueryDto { DisplayStatus = statuses, PageSize = 1000 },
             TestContext.Current.CancellationToken
         );
 
         var dto = result.ShouldBeSuccess();
 
-        dto.Items.ShouldNotBeEmpty();
-        dto.Items.ShouldAllBe(x => statuses.Contains(x.RecordStatus));
+        dto.Items.Select(x => x.Id)
+            .ShouldBe(
+                OrganisationRecords
+                    .Where(r => statuses.Contains(GetExpectedDisplayStatus(r)))
+                    .Select(r => r.Id),
+                ignoreOrder: true
+            );
     }
 
     [Fact]
@@ -245,20 +251,19 @@ public class RecordServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecords_FiltersByMultipleRecordStatuses_WhenStatusesProvided()
+    public async Task GetRecords_FiltersByMultipleDisplayStatuses_WhenStatusesProvided()
     {
-        RecordStatus[] statuses = Enum.GetValues<RecordStatus>().ToArray();
+        RecordDisplayStatus[] statuses = Enum.GetValues<RecordDisplayStatus>().ToArray();
 
         GetRecordsResult result = await Service.GetOrganisationRecords(
             _organisationId,
-            new GetRecordsQueryDto { RecordStatus = statuses, PageSize = 1000 },
+            new GetRecordsQueryDto { DisplayStatus = statuses, PageSize = 1000 },
             TestContext.Current.CancellationToken
         );
 
         var dto = result.ShouldBeSuccess();
 
-        dto.Items.ShouldNotBeEmpty();
-        dto.Items.ShouldAllBe(x => statuses.Contains(x.RecordStatus));
+        dto.Items.Count.ShouldBe(OrganisationRecords.Count);
     }
 
     [Fact]
@@ -274,6 +279,34 @@ public class RecordServiceTests : DatabaseTestBase
 
         dto.Items.ShouldBeEmpty();
         dto.TotalCount.ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData(SortDirection.Ascending)]
+    [InlineData(SortDirection.Descending)]
+    public async Task GetRecords_SortsByDisplayStatus_WhenRequested(SortDirection sortDirection)
+    {
+        var querySortDirection = sortDirection switch
+        {
+            SortDirection.Ascending => UKPS.Api.Application.Common.SortDirection.Ascending,
+            _ => UKPS.Api.Application.Common.SortDirection.Descending,
+        };
+
+        GetRecordsResult result = await Service.GetOrganisationRecords(
+            _organisationId,
+            new GetRecordsQueryDto
+            {
+                SortBy = GetRecordsQuerySortValue.DisplayStatus,
+                SortDirection = querySortDirection,
+                PageSize = 1000,
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        var dto = result.ShouldBeSuccess();
+
+        dto.Items.ShouldNotBeEmpty();
+        dto.Items.Select(x => x.DisplayStatus).ShouldBeInOrder(sortDirection);
     }
 
     [Fact]
@@ -316,6 +349,7 @@ public class RecordServiceTests : DatabaseTestBase
             item.RecordType.ShouldBe(record.RecordType);
             item.RecordStatus.ShouldBe(record.RecordStatus);
             item.CompanyCode.ShouldBe(companyCode);
+            item.DisplayStatus.ShouldBe(GetExpectedDisplayStatus(record));
 
             if (record.ReviewedAt.HasValue)
             {
@@ -332,9 +366,22 @@ public class RecordServiceTests : DatabaseTestBase
         }
     }
 
+    private static RecordRevision GetLatestRevision(Record record) =>
+        record.Revisions.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id).Last();
+
+    private static RecordDisplayStatus GetExpectedDisplayStatus(Record record) =>
+        (record.RecordStatus, GetLatestRevision(record).WorkflowStatus) switch
+        {
+            (RecordStatus.OnHold, _) => RecordDisplayStatus.OnHold,
+            (RecordStatus.Archived, _) => RecordDisplayStatus.Archived,
+            (_, WorkflowStatus.QAReview) => RecordDisplayStatus.QAReview,
+            (_, WorkflowStatus.Published) => RecordDisplayStatus.Published,
+            _ => RecordDisplayStatus.Draft,
+        };
+
     private string GetExpectedCompanyCode(Record record)
     {
-        var relevantRevision = record.Revisions.OrderBy(x => x.CreatedAt).Last();
+        var relevantRevision = GetLatestRevision(record);
         var productDetails =
             record.RecordType == RecordType.Medicine
                 ? _medicineProductDetailsData

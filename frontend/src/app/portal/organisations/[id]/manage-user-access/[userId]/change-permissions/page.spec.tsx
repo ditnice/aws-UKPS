@@ -91,7 +91,7 @@ describe('ChangeUserPermissions', () => {
     ).toBeDefined()
     expect(
       screen.getByText(
-        'If you change this user’s role, they will gain access to additional capabilities in UK PharmaScan, including:',
+        'If you change this user’s role, they will gain access to the following capabilities in UK PharmaScan:',
       ),
     ).toBeDefined()
   })
@@ -106,7 +106,7 @@ describe('ChangeUserPermissions', () => {
     ).toBeDefined()
     expect(
       screen.getByText(
-        'If you change this user’s role, they will lose access to capabilities in UK PharmaScan, including:',
+        'If you change this user’s role, they will lose access to the following capabilities in UK PharmaScan:',
       ),
     ).toBeDefined()
   })

@@ -13,9 +13,9 @@ public sealed record UserListItemDto
     public required int? UserId { get; init; }
 
     /// <summary>
-    /// The optional lasted active registration request associated with the user.
+    /// Gets the public identifier of the latest active membership request, if available.
     /// </summary>
-    public required int? RegistrationRequestId { get; init; }
+    public required Guid? RegistrationRequestGuid { get; init; }
 
     /// <summary>
     /// Gets the email address of the user, if available.

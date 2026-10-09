@@ -1,14 +1,14 @@
 namespace UKPS.Api.Application.Users.Dtos;
 
 /// <summary>
-/// Represents the details of a user who has been registered.
+/// Represents confirmation of a submitted membership request.
 /// </summary>
 public sealed record RegisterUserConfirmationDto
 {
     /// <summary>
-    /// ID for the user.
+    /// Gets the public identifier of the membership request, not a user ID or setup token.
     /// </summary>
-    public required int Id { get; init; }
+    public required Guid RequestGuid { get; init; }
 
     /// <summary>
     /// Gets the name of the user's organisation.

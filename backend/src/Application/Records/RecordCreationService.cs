@@ -64,7 +64,7 @@ internal class RecordCreationService : IRecordCreationService
         );
         RecordProductDetail recordProductDetail = new RecordProductDetail()
         {
-            CompanyCode = command.DevelopmentName,
+            CompanyCode = command.CompanyCode,
             RecordTitle = command.RecordTitle,
             BrandedName = command.BrandedName,
             NamesAndIdentifiers = CreateNamesAndIdentifiersArray(command),

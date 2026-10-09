@@ -2,7 +2,8 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
-using UKPS.Api.Application.Records.Dtos.PublishedRecord;
+using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.ReferenceData;
@@ -12,14 +13,14 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Application.Records;
 
 // Type aliases for Result
-using GetPublishedRecordResult = Result<PublishedRecordDto, GetPublishedRecordError>;
+using GetRecordResult = Result<RecordDto, GetRecordError>;
 
 internal sealed class RecordViewService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser
 ) : IRecordViewService
 {
-    public async Task<GetPublishedRecordResult> GetPublishedRecord(
+    public async Task<GetRecordResult> GetRecord(
         int recordId,
         RecordType recordType,
         CancellationToken cancellationToken
@@ -29,7 +30,7 @@ internal sealed class RecordViewService(
 
         if (record is null)
         {
-            return GetPublishedRecordResult.Err(new GetPublishedRecordError.NotFound(recordId));
+            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }
 
         if (
@@ -39,40 +40,34 @@ internal sealed class RecordViewService(
             )
         )
         {
-            return GetPublishedRecordResult.Err(new GetPublishedRecordError.NotAllowed(recordId));
+            return GetRecordResult.Err(new GetRecordError.NotAllowed(recordId));
         }
 
-        if (
-            record.RecordStatus is not (RecordStatus.Active or RecordStatus.OnHold)
-            || record.PublishedRevisionId is null
-        )
+        // Every record is created with a revision, so this only guards against bad data.
+        if (record.LatestRevisionId is null)
         {
-            return GetPublishedRecordResult.Err(new GetPublishedRecordError.NotFound(recordId));
+            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }
 
         if (record.RecordType != recordType)
         {
-            return GetPublishedRecordResult.Err(
-                new GetPublishedRecordError.RecordTypeMismatch(
-                    recordId,
-                    recordType,
-                    record.RecordType
-                )
+            return GetRecordResult.Err(
+                new GetRecordError.RecordTypeMismatch(recordId, recordType, record.RecordType)
             );
         }
 
-        int revisionId = record.PublishedRevisionId.Value;
+        int revisionId = record.LatestRevisionId.Value;
 
-        return GetPublishedRecordResult.Ok(
+        return GetRecordResult.Ok(
             recordType switch
             {
-                RecordType.Medicine => await GetPublishedMedicineRecord(
+                RecordType.Medicine => await GetMedicineRecord(
                     recordId,
                     record,
                     revisionId,
                     cancellationToken
                 ),
-                RecordType.Vaccine => GetPublishedVaccineRecord(recordId, record, revisionId),
+                RecordType.Vaccine => GetVaccineRecord(recordId, record, revisionId),
                 _ => throw new UnreachableException($"Unhandled record type {recordType}."),
             }
         );
@@ -85,30 +80,30 @@ internal sealed class RecordViewService(
         dbContext
             .Records.AsNoTracking()
             .Where(r => r.Id == recordId)
-            .Select(r => new RecordHeader(
-                r.OrganisationId,
-                r.RecordType,
-                r.RecordStatus,
-                r.ReviewedAt,
-                r.Revisions.Where(rev => rev.WorkflowStatus == WorkflowStatus.Published)
-                    .OrderByDescending(rev => rev.CreatedAt)
-                    .Select(rev => (int?)rev.Id)
-                    .FirstOrDefault()
+            .SelectLatestRevision()
+            .Select(x => new RecordHeader(
+                x.Record.OrganisationId,
+                x.Record.RecordType,
+                x.Record.RecordStatus,
+                x.Record.ReviewedAt,
+                x.LatestRevisionId,
+                x.DisplayStatus
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
-    private async Task<PublishedMedicineRecordDto> GetPublishedMedicineRecord(
+    private async Task<MedicineRecordDto> GetMedicineRecord(
         int recordId,
         RecordHeader record,
         int revisionId,
         CancellationToken cancellationToken
     )
     {
-        return new PublishedMedicineRecordDto
+        return new MedicineRecordDto
         {
             RecordId = recordId,
             OrganisationId = record.OrganisationId,
             RecordStatus = record.RecordStatus,
+            DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
@@ -156,17 +151,18 @@ internal sealed class RecordViewService(
     }
 
     // TODO: Populate the vaccine record sections.
-    private static PublishedVaccineRecordDto GetPublishedVaccineRecord(
+    private static VaccineRecordDto GetVaccineRecord(
         int recordId,
         RecordHeader record,
         int revisionId
     )
     {
-        return new PublishedVaccineRecordDto
+        return new VaccineRecordDto
         {
             RecordId = recordId,
             OrganisationId = record.OrganisationId,
             RecordStatus = record.RecordStatus,
+            DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
         };
@@ -523,6 +519,7 @@ internal sealed class RecordViewService(
         RecordType RecordType,
         RecordStatus RecordStatus,
         DateTime? ReviewedAt,
-        int? PublishedRevisionId
+        int? LatestRevisionId,
+        RecordDisplayStatus DisplayStatus
     );
 }

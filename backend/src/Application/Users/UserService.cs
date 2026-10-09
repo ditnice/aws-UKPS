@@ -169,7 +169,7 @@ internal partial class UserService(
             .Select(m => new UserListItemDto
             {
                 UserId = m.UserId,
-                RegistrationRequestId = m.RegistrationRequestId,
+                RegistrationRequestGuid = m.RegistrationRequestGuid,
                 EmailAddress = m.WorkEmail,
                 Role = m.UserRole,
                 Status = m.Status,
@@ -232,6 +232,7 @@ internal partial class UserService(
         {
             UserId = (int?)x.User!.Id,
             RegistrationRequestId = (int?)null,
+            RegistrationRequestGuid = (Guid?)null,
             x.User.WorkEmail,
             x.UserRole,
             Status = (UserOrgStatus)x.Status,
@@ -246,6 +247,7 @@ internal partial class UserService(
         {
             UserId = (int?)null,
             RegistrationRequestId = (int?)x.Id,
+            RegistrationRequestGuid = (Guid?)x.RequestGuid,
             x.WorkEmail,
             UserRole = UserRole.Standard,
             Status = x.RejectedAt == null ? UserOrgStatus.RequestedAccess : UserOrgStatus.Rejected,
@@ -272,6 +274,7 @@ internal partial class UserService(
                     {
                         UserId = a.x.UserId,
                         RegistrationRequestId = a.x.RegistrationRequestId,
+                        RegistrationRequestGuid = a.x.RegistrationRequestGuid,
                         WorkEmail = a.x.WorkEmail,
                         UserRole = a.x.UserRole,
                         Status = a.x.Status,
@@ -568,6 +571,7 @@ internal partial class UserService(
     {
         public required int? UserId { get; init; }
         public required int? RegistrationRequestId { get; init; }
+        public required Guid? RegistrationRequestGuid { get; init; }
         public required int OrganisationId { get; internal set; }
         public required UserOrgStatus Status { get; internal set; }
         public required UserOrgMembershipStatus? MembershipStatus { get; init; }

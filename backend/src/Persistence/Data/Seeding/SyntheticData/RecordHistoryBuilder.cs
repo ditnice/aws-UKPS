@@ -143,7 +143,7 @@ internal sealed class RecordHistoryBuilder
                     []
                 );
                 _record.ChangeStatus(
-                    RecordStatus.Active,
+                    RecordStatus.Published,
                     _record.ReviewedAt!.Value,
                     publishedRevision.QaReviews.Last().ReviewedByUser
                 );
@@ -185,7 +185,7 @@ internal sealed class RecordHistoryBuilder
         DateOnly lastActivity = DateOnly.FromDateTime(_record.ReviewedAt!.Value);
         bool hasTimeForDraft = _today.DayNumber - lastActivity.DayNumber >= 7;
         if (
-            _source.RecordStatus == RecordStatus.Active
+            _source.RecordStatus == RecordStatus.Published
             && hasTimeForDraft
             && _random.Double() < PendingDraftChance
         )
@@ -324,7 +324,7 @@ internal sealed class RecordHistoryBuilder
     {
         revision.SubmittedAt = at;
         revision.SubmittedByUser = _author;
-        revision.WorkflowStatus = WorkflowStatus.InReview;
+        revision.WorkflowStatus = WorkflowStatus.QAReview;
         AddEvent(RecordEventType.SubmittedToQa, at, _author, revision);
     }
 
