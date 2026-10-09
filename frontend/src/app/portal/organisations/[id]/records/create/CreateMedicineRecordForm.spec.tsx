@@ -30,11 +30,13 @@ type FormValues = Omit<CreateRecordCommand, 'organisationId'>
 
 const validFormValues: FormValues = {
   companyCode: 'cc1',
-  otherIdentifiers: [],
   brandedName: 'test',
   genericNames: ['gn1', 'gn2', 'gn3'],
+  otherIdentifiers: ['oi1', 'oi2'],
   recordTitle: 'record-title',
 }
+
+const otherIdentifiersLabel = 'Other names and identifiers (optional)'
 
 const setFieldValue = (label: string, value: string) => {
   fireEvent.change(screen.getByLabelText(label), {
@@ -57,9 +59,11 @@ const fillArrayField = (addButtonLabel: string, labelPrefix: string, values: str
 const fillInForm = (formValues: FormValues) => {
   setFieldValue('Company code', formValues.companyCode)
 
-  setFieldValue('Branded name (Optional)', formValues.brandedName ?? '')
+  setFieldValue('Branded name (optional)', formValues.brandedName ?? '')
 
-  fillArrayField('Add additional active substance', 'Generic name', formValues.genericNames)
+  fillArrayField('Add another active substance', 'Generic name', formValues.genericNames)
+
+  fillArrayField('Add another identifier', otherIdentifiersLabel, formValues.otherIdentifiers)
 
   setFieldValue('Record title', formValues.recordTitle)
 }
@@ -103,7 +107,7 @@ describe('CreateMedicineRecordForm', () => {
     it('renders the branded name field', () => {
       renderComponent()
 
-      expect(screen.getByLabelText('Branded name (Optional)')).toBeDefined()
+      expect(screen.getByLabelText('Branded name (optional)')).toBeDefined()
     })
 
     it('renders the record title field', () => {
@@ -150,7 +154,7 @@ describe('CreateMedicineRecordForm', () => {
     it('allows additional generic names to be added', () => {
       renderComponent()
 
-      fireEvent.click(screen.getByText('Add additional active substance'))
+      fireEvent.click(screen.getByText('Add another active substance'))
 
       expect(screen.getByLabelText('Generic name')).toBeDefined()
       expect(screen.getByLabelText('Generic name 2')).toBeDefined()
@@ -159,7 +163,7 @@ describe('CreateMedicineRecordForm', () => {
     it('allows additional generic names to be removed', () => {
       renderComponent()
 
-      fireEvent.click(screen.getByText('Add additional active substance'))
+      fireEvent.click(screen.getByText('Add another active substance'))
 
       expect(screen.getByLabelText('Generic name 2')).toBeDefined()
 
@@ -183,7 +187,7 @@ describe('CreateMedicineRecordForm', () => {
     it('rejects duplicate generic names that differ only by case', async () => {
       renderComponent()
 
-      fillArrayField('Add additional active substance', 'Generic name', ['duplicate', 'DUPLICATE'])
+      fillArrayField('Add another active substance', 'Generic name', ['duplicate', 'DUPLICATE'])
 
       clickSubmitButton()
 
@@ -197,7 +201,7 @@ describe('CreateMedicineRecordForm', () => {
     it('rejects duplicate generic names', async () => {
       renderComponent()
 
-      fillArrayField('Add additional active substance', 'Generic name', ['duplicate', 'duplicate'])
+      fillArrayField('Add another active substance', 'Generic name', ['duplicate', 'duplicate'])
 
       clickSubmitButton()
 
@@ -206,6 +210,43 @@ describe('CreateMedicineRecordForm', () => {
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('other names and identifiers', () => {
+    it('renders an empty other names and identifiers field', () => {
+      renderComponent()
+
+      expect((screen.getByLabelText(otherIdentifiersLabel) as HTMLInputElement).value).toBe('')
+    })
+
+    it('allows additional other names and identifiers to be added and removed', () => {
+      renderComponent()
+
+      fireEvent.click(screen.getByText('Add another identifier'))
+
+      expect(screen.getByLabelText(`${otherIdentifiersLabel} 2`)).toBeDefined()
+
+      fireEvent.click(screen.getByText('Remove identifier'))
+
+      expect(screen.queryByLabelText(`${otherIdentifiersLabel} 2`)).toBeNull()
+    })
+
+    it('sends no other names and identifiers when left blank', async () => {
+      renderComponent(123)
+
+      fillInForm({ ...validFormValues, otherIdentifiers: [] })
+      fireEvent.click(screen.getByText('Add another identifier'))
+      setFieldValue(`${otherIdentifiersLabel} 2`, '   ')
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(mocks.createRecord).toHaveBeenCalled()
+      })
+
+      expect(mocks.createRecord).toHaveBeenCalledWith({
+        body: { organisationId: 123, ...validFormValues, otherIdentifiers: [] },
+      })
     })
   })
 
@@ -320,7 +361,7 @@ describe('CreateMedicineRecordForm', () => {
 
       fillInForm({
         companyCode: '  cc1  ',
-        otherIdentifiers: [],
+        otherIdentifiers: ['  oi1  '],
         brandedName: '  branded  ',
         genericNames: ['  gn1  '],
         recordTitle: '  record-title  ',
@@ -335,7 +376,7 @@ describe('CreateMedicineRecordForm', () => {
         body: {
           organisationId: 123,
           companyCode: 'cc1',
-          otherIdentifiers: [],
+          otherIdentifiers: ['oi1'],
           brandedName: 'branded',
           genericNames: ['gn1'],
           recordTitle: 'record-title',
@@ -434,6 +475,7 @@ describe('CreateMedicineRecordForm', () => {
     it.each([
       ['company code', 'CompanyCode', 'Company code'],
       ['generic names', 'GenericNames', 'Generic name'],
+      ['other names and identifiers', 'OtherIdentifiers', otherIdentifiersLabel],
     ])(
       'allows resubmission after correcting %s rejected by the API',
       async (_, errorKey, label) => {

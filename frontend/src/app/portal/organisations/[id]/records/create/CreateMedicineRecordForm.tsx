@@ -25,7 +25,10 @@ const isDistinctIgnoringCase = (values: string[]) =>
 export const createRecordCommandSchema = z.object({
   organisationId: z.number(),
   companyCode: z.string().trim().min(1, errorMessages.companyCodeRequired),
-  otherIdentifiers: z.array(z.string().trim().min(1)),
+  // Other identifiers are optional, so blank entries are dropped rather than rejected.
+  otherIdentifiers: z
+    .array(z.string())
+    .transform((values) => values.map((value) => value.trim()).filter(Boolean)),
   brandedName: z
     .string()
     .nullish()
@@ -51,7 +54,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
   const defaultValues: CreateRecordCommand = {
     organisationId,
     companyCode: '',
-    otherIdentifiers: [],
+    otherIdentifiers: [''],
     brandedName: '',
     genericNames: [''],
     recordTitle: '',
@@ -75,6 +78,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         formApi.setFieldMeta('companyCode', updateFormApiErrors(error, 'CompanyCode'))
         formApi.setFieldMeta('brandedName', updateFormApiErrors(error, 'BrandedName'))
         formApi.setFieldMeta('genericNames', updateFormApiErrors(error, 'GenericNames'))
+        formApi.setFieldMeta('otherIdentifiers', updateFormApiErrors(error, 'OtherIdentifiers'))
         formApi.setFieldMeta('recordTitle', updateFormApiErrors(error, 'RecordTitle'))
       }
     },
@@ -104,7 +108,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
               label="Company code"
-              hint="Enter the internal code or working name your company uses for this medicine. For example, ABC-123."
+              hint="Enter the primary internal code or working name your company uses for this product seeking market access."
               name={field.name}
               onBlur={field.handleBlur}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -116,6 +120,21 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
           )
         }}
       </form.Field>
+      <form.Field name="otherIdentifiers" mode="array">
+        {(field) => (
+          <ArrayInput
+            labelPrefix="Other names and identifiers (optional)"
+            hint="Enter any other development names, synonyms, or identifiers that you want to associate with this product."
+            addItemLabel="Add another identifier"
+            removeItemLabel="Remove identifier"
+            width={inputWidth}
+            field={field}
+            getSubfield={(name, renderInputs) => (
+              <form.Field name={name}>{renderInputs}</form.Field>
+            )}
+          />
+        )}
+      </form.Field>
       <form.Field name="brandedName">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
@@ -123,7 +142,8 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
             <Input
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              label="Branded name (Optional)"
+              label="Branded name (optional)"
+              hint="Enter the name this medicine is sold under. For example, Humira, Lipitor."
               name={field.name}
               onBlur={field.handleBlur}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -140,7 +160,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
           <ArrayInput
             labelPrefix="Generic name"
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
-            addItemLabel="Add additional active substance"
+            addItemLabel="Add another active substance"
             removeItemLabel="Remove active substance"
             width={inputWidth}
             field={field}
