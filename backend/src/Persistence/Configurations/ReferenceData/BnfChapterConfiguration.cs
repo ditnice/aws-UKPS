@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using UKPS.Api.Persistence.Data.ReferenceData;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 
 namespace UKPS.Api.Persistence.Configurations.ReferenceData;
@@ -18,5 +19,15 @@ internal sealed class BnfChapterConfiguration : IEntityTypeConfiguration<BnfChap
             .WithMany(x => x.Children)
             .HasForeignKey(x => x.ParentId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasData(
+            BnfChapterSeedData.Chapters.Select(chapter => new BnfChapter
+            {
+                Id = chapter.Id,
+                Code = chapter.Code,
+                Label = chapter.Label,
+                DisplayOrder = chapter.Id,
+            })
+        );
     }
 }

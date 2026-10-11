@@ -1640,6 +1640,128 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasDatabaseName("ix_bnf_chapters_parent_id");
 
                     b.ToTable("bnf_chapters", "ukps");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "1",
+                            DisplayOrder = 1,
+                            IsArchived = false,
+                            Label = "Gastro-intestinal system"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "2",
+                            DisplayOrder = 2,
+                            IsArchived = false,
+                            Label = "Cardiovascular system"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = "3",
+                            DisplayOrder = 3,
+                            IsArchived = false,
+                            Label = "Respiratory system"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Code = "4",
+                            DisplayOrder = 4,
+                            IsArchived = false,
+                            Label = "Central nervous system"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Code = "5",
+                            DisplayOrder = 5,
+                            IsArchived = false,
+                            Label = "Infections"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Code = "6",
+                            DisplayOrder = 6,
+                            IsArchived = false,
+                            Label = "Endocrine system"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = "7",
+                            DisplayOrder = 7,
+                            IsArchived = false,
+                            Label = "Obstetrics, gynaecology, and urinary-tract disorders"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Code = "8",
+                            DisplayOrder = 8,
+                            IsArchived = false,
+                            Label = "Malignant disease and immunosuppression"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Code = "9",
+                            DisplayOrder = 9,
+                            IsArchived = false,
+                            Label = "Nutrition and blood"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Code = "10",
+                            DisplayOrder = 10,
+                            IsArchived = false,
+                            Label = "Musculoskeletal and joint diseases"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Code = "11",
+                            DisplayOrder = 11,
+                            IsArchived = false,
+                            Label = "Eye"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Code = "12",
+                            DisplayOrder = 12,
+                            IsArchived = false,
+                            Label = "Ear, nose, and oropharynx"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Code = "13",
+                            DisplayOrder = 13,
+                            IsArchived = false,
+                            Label = "Skin"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Code = "14",
+                            DisplayOrder = 14,
+                            IsArchived = false,
+                            Label = "Immunological products and vaccines"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Code = "15",
+                            DisplayOrder = 15,
+                            IsArchived = false,
+                            Label = "Anaesthesia"
+                        });
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.ReferenceData.FormulationType", b =>
@@ -1799,6 +1921,148 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasDatabaseName("ix_therapeutic_areas_parent_id");
 
                     b.ToTable("therapeutic_areas", "ukps");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DisplayOrder = 1,
+                            IsArchived = false,
+                            Label = "1: Addiction"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DisplayOrder = 2,
+                            IsArchived = false,
+                            Label = "2: Allergy"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            DisplayOrder = 3,
+                            IsArchived = false,
+                            Label = "3: Analgesia, Anesthesiology, or Anti-inflammatory"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            DisplayOrder = 4,
+                            IsArchived = false,
+                            Label = "4: Cardiovascular Disease"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            DisplayOrder = 5,
+                            IsArchived = false,
+                            Label = "5: Dermatology"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            DisplayOrder = 6,
+                            IsArchived = false,
+                            Label = "6: Endocrinology, Metabolism, or Bone"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            DisplayOrder = 7,
+                            IsArchived = false,
+                            Label = "7: Gastroenterology"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            DisplayOrder = 8,
+                            IsArchived = false,
+                            Label = "8: Hematology/Coagulation"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            DisplayOrder = 9,
+                            IsArchived = false,
+                            Label = "9: Immunomodulators"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            DisplayOrder = 10,
+                            IsArchived = false,
+                            Label = "10: Viral infectious disease"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            DisplayOrder = 11,
+                            IsArchived = false,
+                            Label = "11: Non-viral infectious Disease"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            DisplayOrder = 12,
+                            IsArchived = false,
+                            Label = "12: Medical Imaging"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            DisplayOrder = 13,
+                            IsArchived = false,
+                            Label = "13: Neurology"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            DisplayOrder = 14,
+                            IsArchived = false,
+                            Label = "14: Oncology"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            DisplayOrder = 15,
+                            IsArchived = false,
+                            Label = "15: Ophthalmology"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            DisplayOrder = 16,
+                            IsArchived = false,
+                            Label = "16: Psychiatry"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            DisplayOrder = 17,
+                            IsArchived = false,
+                            Label = "17: Pulmonary"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            DisplayOrder = 18,
+                            IsArchived = false,
+                            Label = "18: Renal disease"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            DisplayOrder = 19,
+                            IsArchived = false,
+                            Label = "19: Rheumatology"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            DisplayOrder = 20,
+                            IsArchived = false,
+                            Label = "20: Urologic"
+                        });
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.ReferenceData.UkPatientPopulationRange", b =>
