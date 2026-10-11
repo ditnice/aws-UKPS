@@ -505,6 +505,15 @@ export type RecordListItemDto = {
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
+    /**
+     * Gets the identifier of the record's latest revision, whose content is shown and edited.
+     */
+    latestRevisionId: number;
+    /**
+     * Gets the identifier of the first page of the record's content form, or `null` if
+     * the record type has no form yet.
+     */
+    firstPageId?: null | string;
 };
 
 /**

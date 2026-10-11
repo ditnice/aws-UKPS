@@ -17,6 +17,7 @@ import { buildPayload, toFormValues } from '@/lib/dynamic-form/answers'
 import type { FormValues } from '@/lib/dynamic-form/answers'
 import { applyServerErrors } from '@/lib/dynamic-form/applyServerErrors'
 import { buildZodSchema } from '@/lib/dynamic-form/buildZodSchema'
+import { recordPageHref } from '@/lib/dynamic-form/links'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
@@ -30,9 +31,6 @@ type FormPageProps = {
 }
 
 type SaveFailure = 'conflict' | 'error' | undefined
-
-export const recordPageHref = (recordId: number, revisionId: number, pageId: string) =>
-  `/portal/records/${recordId}/revisions/${revisionId}/${pageId}`
 
 /**
  * Renders one page of a record's content form from its server definition, validates it with

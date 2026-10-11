@@ -317,6 +317,11 @@ public class RecordServiceTests : DatabaseTestBase
             item.RecordType.ShouldBe(record.RecordType);
             item.RecordStatus.ShouldBe(record.RecordStatus);
             item.DevelopmentName.ShouldBe(developmentName);
+            item.LatestRevisionId.ShouldBe(record.Revisions.OrderBy(x => x.RevisionNo).Last().Id);
+            // Only medicines have a content form so far.
+            item.FirstPageId.ShouldBe(
+                record.RecordType == RecordType.Medicine ? "indication" : null
+            );
 
             if (record.ReviewedAt.HasValue)
             {

@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Forms;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
@@ -17,7 +18,8 @@ namespace UKPS.Api.Application.Records;
 internal partial class RecordService(
     AppDbContext dbContext,
     IDateTimeProvider timeProvider,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    FormDefinitionRegistry formDefinitions
 ) : IRecordService
 {
     private readonly IDateTimeProvider _timeProvider = timeProvider;
@@ -73,6 +75,8 @@ internal partial class RecordService(
                 Title = m.Title ?? string.Empty,
                 DevelopmentName = m.DevelopmentName,
                 ReviewedAt = m.ReviewedAt,
+                LatestRevisionId = m.RevisionId,
+                FirstPageId = formDefinitions.Get(m.RecordType)?.FirstPage.Id,
             })
             .ToArray();
 
@@ -205,6 +209,7 @@ internal partial class RecordService(
     {
         public int Id { get; init; }
         public int OrganisationId { get; init; }
+        public int RevisionId { get; init; }
         public RecordType RecordType { get; init; }
         public RecordStatus RecordStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
@@ -251,6 +256,7 @@ internal partial class RecordService(
                 {
                     Id = a.Id,
                     OrganisationId = a.OrganisationId,
+                    RevisionId = b.RevisionId,
                     RecordType = a.RecordType,
                     RecordStatus = a.RecordStatus,
                     ReviewedAt = a.ReviewedAt,
@@ -275,6 +281,7 @@ internal partial class RecordService(
                 {
                     Id = x.Id,
                     OrganisationId = x.OrganisationId,
+                    RevisionId = details.RevisionId,
                     RecordType = x.RecordType,
                     RecordStatus = x.RecordStatus,
                     ReviewedAt = x.ReviewedAt,

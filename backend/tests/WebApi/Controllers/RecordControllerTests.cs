@@ -411,6 +411,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                     Title = "Test Record",
                     DevelopmentName = null,
                     ReviewedAt = null,
+                    LatestRevisionId = 2,
+                    FirstPageId = "indication",
                 },
             ],
             TotalCount = 1,

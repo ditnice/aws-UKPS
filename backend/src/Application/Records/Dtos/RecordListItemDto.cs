@@ -36,4 +36,15 @@ public sealed record RecordListItemDto
     /// Gets the date the record was last reviewed, when available.
     /// </summary>
     public DateTime? ReviewedAt { get; init; }
+
+    /// <summary>
+    /// Gets the identifier of the record's latest revision, whose content is shown and edited.
+    /// </summary>
+    public required int LatestRevisionId { get; init; }
+
+    /// <summary>
+    /// Gets the identifier of the first page of the record's content form, or <c>null</c> if
+    /// the record type has no form yet.
+    /// </summary>
+    public string? FirstPageId { get; init; }
 }

@@ -4014,7 +4014,8 @@
           "id",
           "recordType",
           "recordStatus",
-          "title"
+          "title",
+          "latestRevisionId"
         ],
         "type": "object",
         "properties": {
@@ -4049,6 +4050,18 @@
             ],
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
+          },
+          "latestRevisionId": {
+            "type": "integer",
+            "description": "Gets the identifier of the record's latest revision, whose content is shown and edited.",
+            "format": "int32"
+          },
+          "firstPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the identifier of the first page of the record's content form, or `null` if\nthe record type has no form yet."
           }
         },
         "description": "Represents the record summary returned by the record list endpoint."
