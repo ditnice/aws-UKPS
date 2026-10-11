@@ -11,3 +11,4 @@ section for ideas that were discussed but not adopted.
 | [ADR-002](ADR-002-acting-organisation-and-organisation-switching.md) | Acting organisation and organisation switching | Accepted |
 | [ADR-003](ADR-003-handling-global-authrorisation-scenarios.md) | Handling organisation context authentication failures | Accepted |
 | [ADR-004](ADR-004-authorisation-failures-and-resource-concealment.md) | Authorisation failures and resource concealment | Accepted |
+| [ADR-005](ADR-005-dynamic-record-content-forms.md) | Dynamic record content forms | Accepted |
