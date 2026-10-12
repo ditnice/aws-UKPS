@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261007090846_InitialCreate")]
+    [Migration("20261012112506_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -548,10 +548,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rejected_by_user_id");
 
-                    b.Property<Guid>("RequestGuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("request_guid");
-
                     b.Property<int?>("ResultingUserId")
                         .HasColumnType("integer")
                         .HasColumnName("resulting_user_id");
@@ -578,10 +574,6 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasIndex("RejectedByUserId")
                         .HasDatabaseName("ix_user_registration_requests_rejected_by_user_id");
-
-                    b.HasIndex("RequestGuid")
-                        .IsUnique()
-                        .HasDatabaseName("ix_user_registration_requests_request_guid");
 
                     b.HasIndex("ResultingUserId")
                         .HasDatabaseName("ix_user_registration_requests_resulting_user_id");

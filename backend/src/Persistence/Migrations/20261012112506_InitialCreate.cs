@@ -541,7 +541,6 @@ namespace UKPS.Api.Persistence.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    request_guid = table.Column<Guid>(type: "uuid", nullable: false),
                     organisation_id = table.Column<int>(type: "integer", nullable: false),
                     full_name = table.Column<string>(type: "text", nullable: false),
                     work_email = table.Column<string>(type: "text", nullable: false),
@@ -2242,13 +2241,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "user_registration_requests",
                 column: "rejected_by_user_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_user_registration_requests_request_guid",
-                schema: "ukps",
-                table: "user_registration_requests",
-                column: "request_guid",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_registration_requests_resulting_user_id",

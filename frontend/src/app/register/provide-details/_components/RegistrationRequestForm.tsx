@@ -74,7 +74,7 @@ export function RegistrationRequestForm() {
         },
       })
       if (response.data) {
-        const key = `request_${response.data.requestGuid}`
+        const key = `request_${response.data.id}`
         sessionStorage.setItem(key, JSON.stringify(response.data))
         router.push(`/register/request-submitted/${key}`)
       }

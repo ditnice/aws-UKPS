@@ -252,16 +252,16 @@ export const registerUser = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
- * Retrieves a membership request by its public identifier.
+ * Retrieves a membership request by its public identifier
  */
-export const getUserRegistrationById = <ThrowOnError extends boolean = false>(options: Options<GetUserRegistrationByIdData, ThrowOnError>): RequestResult<GetUserRegistrationByIdResponses, GetUserRegistrationByIdErrors, ThrowOnError> => (options.client ?? client).get<GetUserRegistrationByIdResponses, GetUserRegistrationByIdErrors, ThrowOnError>({ url: '/organisations/{organisationId}/membership-requests/{requestGuid}', ...options });
+export const getUserRegistrationById = <ThrowOnError extends boolean = false>(options: Options<GetUserRegistrationByIdData, ThrowOnError>): RequestResult<GetUserRegistrationByIdResponses, GetUserRegistrationByIdErrors, ThrowOnError> => (options.client ?? client).get<GetUserRegistrationByIdResponses, GetUserRegistrationByIdErrors, ThrowOnError>({ url: '/organisations/{organisationId}/membership-requests/{id}', ...options });
 
 /**
  * Approves the membership request for the specified user within the specified organisation.
  */
-export const approve = <ThrowOnError extends boolean = false>(options: Options<ApproveData, ThrowOnError>): RequestResult<ApproveResponses, ApproveErrors, ThrowOnError> => (options.client ?? client).patch<ApproveResponses, ApproveErrors, ThrowOnError>({ url: '/organisations/{organisationId}/membership-requests/{requestGuid}/approve', ...options });
+export const approve = <ThrowOnError extends boolean = false>(options: Options<ApproveData, ThrowOnError>): RequestResult<ApproveResponses, ApproveErrors, ThrowOnError> => (options.client ?? client).patch<ApproveResponses, ApproveErrors, ThrowOnError>({ url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve', ...options });
 
 /**
  * Rejects the membership request for the specified user within the specified organisation.
  */
-export const reject = <ThrowOnError extends boolean = false>(options: Options<RejectData, ThrowOnError>): RequestResult<RejectResponses, RejectErrors, ThrowOnError> => (options.client ?? client).patch<RejectResponses, RejectErrors, ThrowOnError>({ url: '/organisations/{organisationId}/membership-requests/{requestGuid}/reject', ...options });
+export const reject = <ThrowOnError extends boolean = false>(options: Options<RejectData, ThrowOnError>): RequestResult<RejectResponses, RejectErrors, ThrowOnError> => (options.client ?? client).patch<RejectResponses, RejectErrors, ThrowOnError>({ url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject', ...options });

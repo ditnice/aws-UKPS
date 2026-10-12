@@ -45,19 +45,19 @@ function renderActions(user: UserListItemDto, organisationId: number) {
 
   const links: { key: string; label: string; href: string }[] = []
 
-  if (user.actions.includes('ApproveMembership') && user.registrationRequestGuid) {
+  if (user.actions.includes('ApproveMembership') && user.registrationRequestId) {
     links.push({
       key: 'approve',
       label: 'Approve',
-      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestGuid}/approve`,
+      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestId}/approve`,
     })
   }
 
-  if (user.actions.includes('RejectMembership') && user.registrationRequestGuid) {
+  if (user.actions.includes('RejectMembership') && user.registrationRequestId) {
     links.push({
       key: 'reject',
       label: 'Reject',
-      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestGuid}/reject`,
+      href: `/portal/organisations/${organisationId}/registration-requests/${user.registrationRequestId}/reject`,
     })
   }
 
@@ -132,7 +132,7 @@ export async function OrganisationUsersTable({
       ) : (
         <ApplicationTableWithPagination
           result={users}
-          getItemKey={(x) => x.userId ?? x.registrationRequestGuid}
+          getItemKey={(x) => x.userId}
           headers={organisationUserTableHeaders}
           captionName={'Organisation Users'}
           query={query}

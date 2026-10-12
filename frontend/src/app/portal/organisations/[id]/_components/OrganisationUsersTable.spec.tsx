@@ -34,7 +34,7 @@ const query = {
 
 const removedUser: UserListItemDto = {
   userId: 5,
-  registrationRequestGuid: null,
+  registrationRequestId: null,
   emailAddress: 'removed-user-5@removed.invalid',
   role: 'Standard',
   status: 'Removed',
@@ -77,14 +77,14 @@ describe('OrganisationUsersTable', () => {
     expect(row?.textContent).toContain('Not applicable')
   })
 
-  it('uses the public request GUID for approval and rejection links', async () => {
-    const requestGuid = 'e52c7f89-e182-41b2-bbdc-69a0fa9f034d'
+  it('uses the registration request ID for approval and rejection links', async () => {
+    const requestId = 42
     vi.mocked(getUsers).mockResolvedValue({
       data: {
         items: [
           {
             userId: null,
-            registrationRequestGuid: requestGuid,
+            registrationRequestId: requestId,
             emailAddress: 'test@example.com',
             role: 'Standard',
             status: 'RequestedAccess',
@@ -108,10 +108,10 @@ describe('OrganisationUsersTable', () => {
     )
 
     expect(screen.getByRole('link', { name: 'Approve' }).getAttribute('href')).toBe(
-      `/portal/organisations/2/registration-requests/${requestGuid}/approve`,
+      `/portal/organisations/2/registration-requests/${requestId}/approve`,
     )
     expect(screen.getByRole('link', { name: 'Reject' }).getAttribute('href')).toBe(
-      `/portal/organisations/2/registration-requests/${requestGuid}/reject`,
+      `/portal/organisations/2/registration-requests/${requestId}/reject`,
     )
   })
 })

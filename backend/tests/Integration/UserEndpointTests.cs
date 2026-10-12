@@ -214,13 +214,13 @@ public class UserEndpointTests : DatabaseTestBase
             "GET",
             "",
             request.OrganisationId,
-            request.RequestGuid
+            request.Id
         );
         using HttpResponseMessage guessedResponse = await SendMembershipRequest(
             "GET",
             "",
             request.OrganisationId,
-            Guid.NewGuid()
+            request.Id + 1000
         );
 
         existingResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -228,7 +228,7 @@ public class UserEndpointTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUserRegistrationById_Authorised_ReturnsRequestGuid()
+    public async Task GetUserRegistrationById_Authorised_ReturnsRequestId()
     {
         UserRegistrationRequest request = _userRegistrationRequests[0];
         AuthenticateAs(UserRole.Champion, request.OrganisationId);
@@ -237,21 +237,21 @@ public class UserEndpointTests : DatabaseTestBase
             "GET",
             "",
             request.OrganisationId,
-            request.RequestGuid
+            request.Id
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var dto = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
             TestContext.Current.CancellationToken
         );
-        dto.ShouldNotBeNull().RequestGuid.ShouldBe(request.RequestGuid);
+        dto.ShouldNotBeNull().Id.ShouldBe(request.Id);
     }
 
     [Theory]
     [InlineData("GET", "")]
     [InlineData("PATCH", "/approve")]
     [InlineData("PATCH", "/reject")]
-    public async Task MembershipRequest_GuidFromAnotherOrganisation_ReturnsNotFound(
+    public async Task MembershipRequest_IdFromAnotherOrganisation_ReturnsNotFound(
         string method,
         string action
     )
@@ -266,7 +266,7 @@ public class UserEndpointTests : DatabaseTestBase
             method,
             action,
             otherOrganisationId,
-            request.RequestGuid
+            request.Id
         );
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -275,12 +275,12 @@ public class UserEndpointTests : DatabaseTestBase
         string method,
         string action,
         int organisationId,
-        Guid requestGuid
+        int id
     )
     {
         using var message = new HttpRequestMessage(
             new HttpMethod(method),
-            $"/organisations/{organisationId}/membership-requests/{requestGuid}{action}"
+            $"/organisations/{organisationId}/membership-requests/{id}{action}"
         );
         return await _httpClient.SendAsync(message, TestContext.Current.CancellationToken);
     }

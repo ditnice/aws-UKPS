@@ -163,8 +163,7 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         var data = result.ShouldBeSuccess();
-        data.Items.ShouldHaveSingleItem()
-            .RegistrationRequestGuid.ShouldBe(latestRequest.RequestGuid);
+        data.Items.ShouldHaveSingleItem().RegistrationRequestId.ShouldBe(latestRequest.Id);
     }
 
     [Fact]
@@ -324,7 +323,7 @@ public class UserServiceTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
             PaginatedResponseDto<UserListItemDto> data = result.ShouldBeSuccess();
-            data.Items.ShouldHaveSingleItem().RegistrationRequestGuid.ShouldBe(item.RequestGuid);
+            data.Items.ShouldHaveSingleItem().RegistrationRequestId.ShouldBe(item.Id);
         }
     }
 
@@ -1728,7 +1727,7 @@ public class UserServiceTests : DatabaseTestBase
         databaseRequest.FullName.ShouldBe($"User-{target.Id}");
         databaseRequest.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
         databaseRequest.PhoneNumber.ShouldBe("REMOVED");
-        databaseRequest.RequestGuid.ShouldBe(request.RequestGuid);
+        databaseRequest.Id.ShouldBe(request.Id);
         databaseRequest.OrganisationId.ShouldBe(request.OrganisationId);
         databaseRequest.ResultingUserId.ShouldBe(target.Id);
         databaseRequest.CreatedAt.ShouldBe(request.CreatedAt);
