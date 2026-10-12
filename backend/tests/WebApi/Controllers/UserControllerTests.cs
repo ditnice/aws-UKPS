@@ -532,7 +532,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task RemoveUser_WhenNotAllowed_ShouldReturnForbiddenResponse()
+    public async Task RemoveUser_WhenNotAllowed_ShouldReturnNotFoundResponse()
     {
         _mockUserService
             .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -543,7 +543,49 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
         var response = await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenDeniedOrMissing_ShouldReturnTheSameProblemDetails()
+    {
+        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
+        _mockUserService
+            .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RemovedUserDto, RemoveUserError>.Err(new RemoveUserError.NotAllowed(1))
+            );
+        using HttpResponseMessage deniedResponse = await _client.DeleteAsync(
+            url,
+            TestContext.Current.CancellationToken
+        );
+
+        _mockUserService
+            .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RemovedUserDto, RemoveUserError>.Err(new RemoveUserError.UserNotFound(1))
+            );
+        using HttpResponseMessage missingResponse = await _client.DeleteAsync(
+            url,
+            TestContext.Current.CancellationToken
+        );
+
+        deniedResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        missingResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        ProblemDetails? deniedProblem =
+            await deniedResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+                TestContext.Current.CancellationToken
+            );
+        ProblemDetails? missingProblem =
+            await missingResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+                TestContext.Current.CancellationToken
+            );
+        deniedProblem.ShouldNotBeNull();
+        missingProblem.ShouldNotBeNull();
+        deniedProblem.Status.ShouldBe(missingProblem.Status);
+        deniedProblem.Type.ShouldBe(missingProblem.Type);
+        deniedProblem.Title.ShouldBe(missingProblem.Title);
+        deniedProblem.Detail.ShouldBe(missingProblem.Detail);
     }
 
     [Fact]

@@ -558,7 +558,8 @@ export const fakeUserMembershipAction = (options?: Options): UserMembershipActio
         'RejectMembership',
         'DeactivateMembership',
         'ReactivateMembership',
-        'EditUserRole'
+        'EditUserRole',
+        'RemoveUser'
     ]);
 };
 

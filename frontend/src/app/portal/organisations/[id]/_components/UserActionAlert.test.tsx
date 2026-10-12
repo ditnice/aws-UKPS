@@ -205,6 +205,13 @@ describe('UserActionAlert (direct invocation)', () => {
   })
 
   describe('removed', () => {
+    beforeEach(() => {
+      vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
+        data: { ...user, fullName: 'User-4', status: 'Removed' },
+        error: undefined,
+      })
+    })
+
     async function renderRemovedAlert(dismissHref?: string) {
       render(
         await UserActionAlert({
@@ -217,7 +224,7 @@ describe('UserActionAlert (direct invocation)', () => {
 
     it('tells the user what the removed user now appears as', async () => {
       vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
-        data: { ...user, fullName: 'User-4' },
+        data: { ...user, fullName: 'User-4', status: 'Removed' },
         error: undefined,
       })
 
@@ -229,16 +236,40 @@ describe('UserActionAlert (direct invocation)', () => {
       expect(screen.getByText(/they now appear as User-4\./)).not.toBeNull()
     })
 
-    it('still confirms the removal when the user cannot be read back', async () => {
-      vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
-        data: undefined,
-        error: { status: 404 },
-      })
+    it.each([404, 500])(
+      'does not confirm removal when the lookup fails with %s',
+      async (status) => {
+        vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
+          data: undefined,
+          error: { status },
+        })
 
-      await renderRemovedAlert()
+        await renderRemovedAlert()
 
-      expect(screen.getByText(/they now appear as an anonymised user\./)).not.toBeNull()
-    })
+        expect(
+          screen.queryByRole('heading', { name: 'User removed from UK PharmaScan' }),
+        ).not.toBeInTheDocument()
+        expect(screen.queryByRole('link', { name: 'Dismiss' })).not.toBeInTheDocument()
+      },
+    )
+
+    it.each(['AwaitingSetup', 'Active', 'Inactive', 'Deactivated'] as const)(
+      'does not confirm removal for a %s user despite the URL action',
+      async (status) => {
+        vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
+          data: { ...user, status },
+          error: undefined,
+        })
+
+        await renderRemovedAlert('/portal/organisations/2')
+
+        expect(
+          screen.queryByRole('heading', { name: 'User removed from UK PharmaScan' }),
+        ).not.toBeInTheDocument()
+        expect(screen.queryByText(/Julie Brooks/)).not.toBeInTheDocument()
+        expect(screen.queryByRole('link', { name: 'Dismiss' })).not.toBeInTheDocument()
+      },
+    )
 
     it('shows a dismiss link back to the given href', async () => {
       await renderRemovedAlert('/portal/organisations/2')

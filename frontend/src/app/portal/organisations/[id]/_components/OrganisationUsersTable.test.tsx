@@ -61,6 +61,59 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('OrganisationUsersTable', () => {
+  it.each(['AwaitingSetup', 'Active', 'Inactive', 'Deactivated'] as const)(
+    'links a %s user to manage access when removal is permitted',
+    async (status) => {
+      mockUsersResponse([
+        {
+          ...removedUser,
+          emailAddress: 'user@example.com',
+          status,
+          actions: ['RemoveUser'],
+        },
+      ])
+
+      render(await OrganisationUsersTable({ apiClient, organisationId: 2, query }))
+
+      expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute(
+        'href',
+        '/portal/organisations/2/manage-user-access/5',
+      )
+      expect(screen.queryByRole('link', { name: 'Remove user' })).not.toBeInTheDocument()
+    },
+  )
+
+  it('does not offer Edit for a user who can only be reactivated', async () => {
+    mockUsersResponse([
+      { ...removedUser, status: 'Deactivated', actions: ['ReactivateMembership'] },
+    ])
+
+    render(await OrganisationUsersTable({ apiClient, organisationId: 2, query }))
+
+    expect(screen.queryByRole('link', { name: 'Remove user' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Reactivate' })).toBeInTheDocument()
+  })
+
+  it('renders a single Edit link when several manage-access actions are permitted', async () => {
+    mockUsersResponse([
+      {
+        ...removedUser,
+        status: 'Active',
+        actions: ['EditUserRole', 'DeactivateMembership', 'RemoveUser'],
+      },
+    ])
+
+    render(await OrganisationUsersTable({ apiClient, organisationId: 2, query }))
+
+    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute(
+      'href',
+      '/portal/organisations/2/manage-user-access/5',
+    )
+    expect(screen.getAllByRole('link', { name: 'Edit' })).toHaveLength(1)
+    expect(screen.queryByRole('link', { name: 'Remove user' })).not.toBeInTheDocument()
+  })
+
   it('renders Not applicable in the actions column for a removed user', async () => {
     mockUsersResponse([removedUser])
 
@@ -75,6 +128,7 @@ describe('OrganisationUsersTable', () => {
     const row = screen.getByText(removedUser.emailAddress).closest('tr')
     expect(row).not.toBeNull()
     expect(row?.textContent).toContain('Not applicable')
+    expect(screen.queryByRole('link', { name: 'Remove user' })).not.toBeInTheDocument()
   })
 
   it('uses the registration request ID for approval and rejection links', async () => {

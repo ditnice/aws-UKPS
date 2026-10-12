@@ -327,7 +327,13 @@ internal partial class UserService(
 
         if (m.MembershipStatus.HasValue)
         {
-            return UserOrgMembership.GetPermittedActions(m.MembershipStatus.Value).ToArray();
+            return UserOrgMembership
+                .GetPermittedActions(m.MembershipStatus.Value)
+                .Where(action =>
+                    action != UserMembershipAction.RemoveUser
+                    || currentUserInfo.UserRole == UserRole.Super
+                )
+                .ToArray();
         }
 
         throw new InvalidOperationException(
@@ -595,12 +601,15 @@ internal partial class UserService(
     {
         DateTime now = timeProvider.GetUtcNow();
         user.Anonymise(now);
-        UserRegistrationRequest? registrationRequest = await dbContext
+        List<UserRegistrationRequest> registrationRequests = await dbContext
             .UserRegistrationRequests.Where(x =>
                 x.ResultingUserId == user.Id && x.ApprovedAt != null && x.RejectedAt == null
             )
-            .SingleOrDefaultAsync(cancellationToken);
-        registrationRequest?.Anonymise(user.Id);
+            .ToListAsync(cancellationToken);
+        foreach (UserRegistrationRequest registrationRequest in registrationRequests)
+        {
+            registrationRequest.Anonymise(user.Id);
+        }
 
         UserOnboardingRecord? onboardingRecord = await dbContext
             .UserOnboardingRecords.Where(x => x.ResultingUserId == user.Id)

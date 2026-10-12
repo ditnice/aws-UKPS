@@ -193,8 +193,8 @@ public class UserController(IUserService userService) : ControllerBase
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <response code="200">The user was removed. Returns the name they now appear under.</response>
     /// <response code="400">One of the user's organisation memberships is not in a state that allows removal.</response>
-    /// <response code="403">The caller is not authorised to remove this user, or attempted to remove themselves.</response>
-    /// <response code="404">The specified user does not exist.</response>
+    /// <response code="403">The caller attempted to remove themselves.</response>
+    /// <response code="404">The specified user does not exist or is not accessible to the caller.</response>
     [ProducesResponseType<RemovedUserDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -211,18 +211,9 @@ public class UserController(IUserService userService) : ControllerBase
             removedUser => Ok(removedUser),
             err =>
                 err.Match<ActionResult<RemovedUserDto>>(
-                    notAllowed: () =>
-                        Problem(
-                            statusCode: StatusCodes.Status403Forbidden,
-                            title: "Forbidden",
-                            detail: "You are not authorised to remove this user."
-                        ),
-                    userNotFound: () =>
-                        Problem(
-                            statusCode: StatusCodes.Status404NotFound,
-                            title: "Not Found",
-                            detail: "The specified user does not exist."
-                        ),
+                    // Conceal inaccessible users using the same response as missing users (ADR-004).
+                    notAllowed: () => UserNotFound(),
+                    userNotFound: () => UserNotFound(),
                     cannotRemoveSelf: () =>
                         Problem(
                             statusCode: StatusCodes.Status403Forbidden,

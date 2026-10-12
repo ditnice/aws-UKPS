@@ -19,10 +19,11 @@ const renderRegisteredUserAction = async ({
   userAction,
   dismissHref,
 }: RegisteredUserActionProps) => {
-  const { data: user } = await getUserDetailsWithinOrganisation({
+  const { data: user, error } = await getUserDetailsWithinOrganisation({
     client: await createServerApiClient(),
     path: { organisationId, userId: userAction.userId },
   })
+
   switch (userAction.action) {
     case 'invited':
       return (
@@ -62,12 +63,16 @@ const renderRegisteredUserAction = async ({
         </Alert>
       )
     case 'removed':
+      // URL parameters are not proof that a removal succeeded.
+      if (error || user?.status !== 'Removed') {
+        return null
+      }
       return (
         <Alert type="success" dismissHref={dismissHref}>
           <h3>User removed from UK PharmaScan</h3>
           <p>
             This user&apos;s personal information is no longer available. In a record&apos;s
-            timeline, they now appear as {user?.fullName ?? 'an anonymised user'}.
+            timeline, they now appear as {user.fullName}.
             <br />
             Records they created can still be accessed and are not affected by removing this user.
           </p>

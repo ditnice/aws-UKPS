@@ -1399,18 +1399,19 @@ export type UserListItemDto = {
 };
 
 /**
- * Defines the actions that can be performed on a user's membership.
+ * Defines the actions that can be performed on a user or their membership.
  */
 export const UserMembershipAction = {
     APPROVE_MEMBERSHIP: 'ApproveMembership',
     REJECT_MEMBERSHIP: 'RejectMembership',
     DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
     REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
-    EDIT_USER_ROLE: 'EditUserRole'
+    EDIT_USER_ROLE: 'EditUserRole',
+    REMOVE_USER: 'RemoveUser'
 } as const;
 
 /**
- * Defines the actions that can be performed on a user's membership.
+ * Defines the actions that can be performed on a user or their membership.
  */
 export type UserMembershipAction = typeof UserMembershipAction[keyof typeof UserMembershipAction];
 
@@ -2422,11 +2423,11 @@ export type RemoveUserErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The caller is not authorised to remove this user, or attempted to remove themselves.
+     * The caller attempted to remove themselves.
      */
     403: ProblemDetails;
     /**
-     * The specified user does not exist.
+     * The specified user does not exist or is not accessible to the caller.
      */
     404: ProblemDetails;
 };

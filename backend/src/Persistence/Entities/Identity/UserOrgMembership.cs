@@ -106,6 +106,7 @@ internal sealed class UserOrgMembership
                 UserMembershipAction.DeactivateMembership,
             UserOrgMembershipStateMachine.Command.Reactivate =>
                 UserMembershipAction.ReactivateMembership,
+            UserOrgMembershipStateMachine.Command.Remove => UserMembershipAction.RemoveUser,
             _ => null,
         };
     }

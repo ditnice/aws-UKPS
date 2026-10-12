@@ -2627,7 +2627,7 @@
             }
           },
           "403": {
-            "description": "The caller is not authorised to remove this user, or attempted to remove themselves.",
+            "description": "The caller attempted to remove themselves.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2647,7 +2647,7 @@
             }
           },
           "404": {
-            "description": "The specified user does not exist.",
+            "description": "The specified user does not exist or is not accessible to the caller.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -5725,10 +5725,11 @@
           "RejectMembership",
           "DeactivateMembership",
           "ReactivateMembership",
-          "EditUserRole"
+          "EditUserRole",
+          "RemoveUser"
         ],
         "type": "string",
-        "description": "Defines the actions that can be performed on a user's membership."
+        "description": "Defines the actions that can be performed on a user or their membership."
       },
       "UserOrgStatus": {
         "enum": [

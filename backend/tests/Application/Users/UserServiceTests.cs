@@ -866,7 +866,9 @@ public class UserServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(UserRole.Super)]
     [InlineData(UserRole.Champion)]
-    public async Task GetUsers_WhenChampionOrSuperUserShouldReturnAllActions(UserRole userRoles)
+    public async Task GetUsers_WhenChampionOrSuperUser_ShouldReturnAllRolePermittedActions(
+        UserRole userRoles
+    )
     {
         var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
             x with
@@ -875,7 +877,11 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationId = 1,
             }
         );
-        var allActions = Enum.GetValues<UserMembershipAction>();
+        var allActions = Enum.GetValues<UserMembershipAction>()
+            .Where(action =>
+                action != UserMembershipAction.RemoveUser || userRoles == UserRole.Super
+            )
+            .ToArray();
         var result = await harness.Service.GetUsers(
             _getAllUserQuery,
             TestContext.Current.CancellationToken
@@ -884,6 +890,47 @@ public class UserServiceTests : DatabaseTestBase
         var actions = users.SelectMany(x => x.Actions).Distinct();
         var intersection = allActions.Intersect(actions);
         intersection.Count().ShouldBe(allActions.Length);
+        if (userRoles != UserRole.Super)
+        {
+            actions.ShouldNotContain(UserMembershipAction.RemoveUser);
+        }
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, UserOrgStatus.AwaitingSetup, true)]
+    [InlineData(UserRole.Super, UserOrgStatus.Active, true)]
+    [InlineData(UserRole.Super, UserOrgStatus.Inactive, true)]
+    [InlineData(UserRole.Super, UserOrgStatus.Deactivated, true)]
+    [InlineData(UserRole.Super, UserOrgStatus.Removed, false)]
+    [InlineData(UserRole.Champion, UserOrgStatus.AwaitingSetup, false)]
+    [InlineData(UserRole.Champion, UserOrgStatus.Active, false)]
+    [InlineData(UserRole.Champion, UserOrgStatus.Inactive, false)]
+    [InlineData(UserRole.Champion, UserOrgStatus.Deactivated, false)]
+    [InlineData(UserRole.Champion, UserOrgStatus.Removed, false)]
+    public async Task GetUsers_ShouldOfferRemovalOnlyToSuperUsersInRemovableStates(
+        UserRole callerRole,
+        UserOrgStatus status,
+        bool shouldOfferRemoval
+    )
+    {
+        (User target, UserOrgMembership membership) = await AddUserWithMembership(
+            status: (UserOrgMembershipStatus)status
+        );
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = callerRole,
+                OrganisationId = membership.OrganisationId,
+            }
+        );
+
+        var result = await Service.GetUsers(
+            CreateGetUsersQuery(organisationId: membership.OrganisationId, email: target.WorkEmail),
+            TestContext.Current.CancellationToken
+        );
+
+        UserListItemDto user = result.ShouldBeSuccess().Items.Single();
+        user.Actions.Contains(UserMembershipAction.RemoveUser).ShouldBe(shouldOfferRemoval);
     }
 
     [Fact]
@@ -1707,12 +1754,16 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task RemoveUser_ShouldAnonymiseOnlyTheLinkedApprovedRegistrationRequest()
+    public async Task RemoveUser_ShouldAnonymiseAllLinkedApprovedRegistrationRequests()
     {
         User caller = await AddCallerUser();
         User target = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
         User other = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
-        UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
+        UserRegistrationRequest[] requests =
+        [
+            await AddApprovedRegistrationRequest(target, caller),
+            await AddApprovedRegistrationRequest(target, caller),
+        ];
         UserRegistrationRequest otherRequest = await AddApprovedRegistrationRequest(other, caller);
         string otherName = otherRequest.FullName;
         string otherEmail = otherRequest.WorkEmail;
@@ -1721,21 +1772,24 @@ public class UserServiceTests : DatabaseTestBase
         var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
 
         result.ShouldBeSuccess();
-        UserRegistrationRequest databaseRequest = await Context
-            .UserRegistrationRequests.AsNoTracking()
-            .SingleAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
-        databaseRequest.FullName.ShouldBe($"User-{target.Id}");
-        databaseRequest.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
-        databaseRequest.PhoneNumber.ShouldBe("REMOVED");
-        databaseRequest.Id.ShouldBe(request.Id);
-        databaseRequest.OrganisationId.ShouldBe(request.OrganisationId);
-        databaseRequest.ResultingUserId.ShouldBe(target.Id);
-        databaseRequest.CreatedAt.ShouldBe(request.CreatedAt);
-        databaseRequest.ApprovedByUserId.ShouldBe(caller.Id);
-        databaseRequest.ApprovedAt.ShouldBe(request.ApprovedAt);
-        databaseRequest.RejectedByUserId.ShouldBeNull();
-        databaseRequest.RejectedAt.ShouldBeNull();
-        databaseRequest.GetState().ShouldBe(UserRegistrationRequest.State.Approved);
+        foreach (UserRegistrationRequest request in requests)
+        {
+            UserRegistrationRequest databaseRequest = await Context
+                .UserRegistrationRequests.AsNoTracking()
+                .SingleAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
+            databaseRequest.FullName.ShouldBe($"User-{target.Id}");
+            databaseRequest.WorkEmail.ShouldBe($"removed-user-{target.Id}@removed.invalid");
+            databaseRequest.PhoneNumber.ShouldBe("REMOVED");
+            databaseRequest.Id.ShouldBe(request.Id);
+            databaseRequest.OrganisationId.ShouldBe(request.OrganisationId);
+            databaseRequest.ResultingUserId.ShouldBe(target.Id);
+            databaseRequest.CreatedAt.ShouldBe(request.CreatedAt);
+            databaseRequest.ApprovedByUserId.ShouldBe(caller.Id);
+            databaseRequest.ApprovedAt.ShouldBe(request.ApprovedAt);
+            databaseRequest.RejectedByUserId.ShouldBeNull();
+            databaseRequest.RejectedAt.ShouldBeNull();
+            databaseRequest.GetState().ShouldBe(UserRegistrationRequest.State.Approved);
+        }
 
         UserRegistrationRequest unchangedRequest = await Context
             .UserRegistrationRequests.AsNoTracking()
