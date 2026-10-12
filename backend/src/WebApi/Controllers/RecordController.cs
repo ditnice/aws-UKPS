@@ -88,14 +88,12 @@ public class RecordController(
     /// <returns>The record data.</returns>
     /// <response code="200">Returns the record data.</response>
     /// <response code="400">The record type is missing or invalid.</response>
-    /// <response code="403">The caller is not authorised to view the record.</response>
     /// <response code="404">
-    /// No record of the requested type exists with the specified identifier.
+    /// The requested record was not found or is not accessible to the caller.
     /// </response>
     [HttpGet("{id:int}", Name = nameof(GetRecord))]
     [ProducesResponseType<RecordDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RecordDto>> GetRecord(
         int id,
@@ -111,8 +109,9 @@ public class RecordController(
             error =>
                 error switch
                 {
-                    GetRecordError.NotAllowed => Forbid(),
-                    GetRecordError.NotFound or GetRecordError.RecordTypeMismatch => NotFound(),
+                    GetRecordError.NotAllowed
+                    or GetRecordError.NotFound
+                    or GetRecordError.RecordTypeMismatch => NotFound(),
                     _ => throw new UnreachableException("Unhandled GetRecordError variant."),
                 }
         );

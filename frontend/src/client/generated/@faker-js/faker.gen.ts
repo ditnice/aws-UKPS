@@ -1151,8 +1151,6 @@ export const fakeGetRecordResponse400 = (options?: Options): GetRecordErrors[400
 
 export const fakeGetRecordResponse401 = (options?: Options): GetRecordErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeGetRecordResponse403 = (options?: Options): GetRecordErrors[403] => fakeProblemDetails(options);
-
 export const fakeGetRecordResponse404 = (options?: Options): GetRecordErrors[404] => fakeProblemDetails(options);
 
 export const fakeCreateRecordRequest = (options?: Options): Omit<CreateRecordData, 'url'> => ({

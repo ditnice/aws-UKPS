@@ -1899,28 +1899,8 @@
               }
             }
           },
-          "403": {
-            "description": "The caller is not authorised to view the record.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "No record of the requested type exists with the specified identifier.",
+            "description": "The requested record was not found or is not accessible to the caller.",
             "content": {
               "text/plain": {
                 "schema": {

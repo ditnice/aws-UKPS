@@ -2196,11 +2196,7 @@ export type GetRecordErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The caller is not authorised to view the record.
-     */
-    403: ProblemDetails;
-    /**
-     * No record of the requested type exists with the specified identifier.
+     * The requested record was not found or is not accessible to the caller.
      */
     404: ProblemDetails;
 };
