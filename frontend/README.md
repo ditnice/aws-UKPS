@@ -46,6 +46,17 @@ COGNITO_CLIENT_ID=ioihsfd49fj09wj3f
 AUTHENTICATION_MODE=DEV
 ```
 
+### Public content access integration tests
+
+Set `PAYLOAD_TEST_DATABASE_URL` to a disposable PostgreSQL database before running
+the public-content access suite. It uses the real collection and global
+definitions in a uniquely named schema, then drops only that schema and closes Payload.
+It never falls back to the application's `DATABASE_URL`.
+
+```sh
+PAYLOAD_TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/ukps_test pnpm test:int publicContent
+```
+
 ### End-to-end tests
 
 Run the Playwright tests against a local instance. Playwright starts `pnpm dev` when an
