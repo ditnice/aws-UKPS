@@ -75,7 +75,7 @@ describe('UserMembershipRetrievalWrapper', () => {
       ...args,
     })
     expect(mockGetMembership).toHaveBeenCalledExactlyOnceWith({
-      path: args,
+      path: { organisationId: args.organisationId, id: args.registrationRequestId },
     })
   })
   it('calls notfound when the response is not found', async () => {
