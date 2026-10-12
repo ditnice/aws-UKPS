@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { PaginatedResponseDtoOfRecordListItemDto } from '@/client/generated'
+import { PaginatedResponseDtoOfRecordListItemDto, RecordListItemDto } from '@/client/generated'
 import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
@@ -17,6 +17,19 @@ type RecordsTableProps = {
   data: PaginatedResponseDtoOfRecordListItemDto
   query: RecordsQuery
 }
+function renderNextUpdate(nextUpdateDue: RecordListItemDto['nextUpdateDue']) {
+  if (!nextUpdateDue) {
+    return 'Not applicable'
+  }
+
+  const dueDate = new Date(nextUpdateDue)
+  if (dueDate < new Date()) {
+    return <Tag colour="red">Overdue</Tag>
+  }
+
+  return new Intl.DateTimeFormat('en-GB').format(dueDate)
+}
+
 const RecordsTable = async ({ organisationId, data: records, query }: RecordsTableProps) => {
   return (
     <>
@@ -41,7 +54,7 @@ const RecordsTable = async ({ organisationId, data: records, query }: RecordsTab
             case 'company-code':
               return <>{data.companyCode}</>
             case 'next-update':
-              return <>TODO</>
+              return <>{renderNextUpdate(data.nextUpdateDue)}</>
             case 'records-title':
               return <>{data.title}</>
             case 'actions':

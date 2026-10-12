@@ -127,7 +127,8 @@ export const fakeGetRecordsQuerySortValue = (options?: Options): GetRecordsQuery
         'NextUpdateDue',
         'Id',
         'CompanyCode',
-        'DisplayStatus'
+        'DisplayStatus',
+        'RecordTitle'
     ]);
 };
 
@@ -353,7 +354,8 @@ export const fakeRecordListItemDto = (options?: Options): RecordListItemDto => {
         displayStatus: fakeRecordDisplayStatus(options),
         title: f.lorem.words(),
         companyCode: f.string.sample(),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null }
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null }
     };
 };
 

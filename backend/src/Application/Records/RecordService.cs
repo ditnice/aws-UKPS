@@ -76,6 +76,7 @@ internal partial class RecordService(
                 Title = m.Title ?? string.Empty,
                 CompanyCode = m.CompanyCode,
                 ReviewedAt = m.ReviewedAt,
+                NextUpdateDue = m.NextUpdateDue,
             })
             .ToArray();
 
@@ -174,6 +175,7 @@ internal partial class RecordService(
                 GetRecordsQuerySortValue.Id => m => m.Id,
                 GetRecordsQuerySortValue.CompanyCode => m => m.CompanyCode,
                 GetRecordsQuerySortValue.DisplayStatus => m => m.DisplayStatus,
+                GetRecordsQuerySortValue.RecordTitle => m => m.Title,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(sortBy),
                     $"Unexpected value: {sortBy}"

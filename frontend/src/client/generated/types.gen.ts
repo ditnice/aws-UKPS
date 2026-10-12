@@ -165,7 +165,8 @@ export const GetRecordsQuerySortValue = {
     NEXT_UPDATE_DUE: 'NextUpdateDue',
     ID: 'Id',
     COMPANY_CODE: 'CompanyCode',
-    DISPLAY_STATUS: 'DisplayStatus'
+    DISPLAY_STATUS: 'DisplayStatus',
+    RECORD_TITLE: 'RecordTitle'
 } as const;
 
 /**
@@ -962,6 +963,10 @@ export type RecordListItemDto = {
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
+    /**
+     * Gets the date the record is next due for an update, when available.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**

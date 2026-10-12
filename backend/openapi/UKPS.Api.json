@@ -3336,7 +3336,8 @@
           "NextUpdateDue",
           "Id",
           "CompanyCode",
-          "DisplayStatus"
+          "DisplayStatus",
+          "RecordTitle"
         ],
         "type": "string",
         "description": "Specifies the fields by which records can be sorted."
@@ -4983,6 +4984,14 @@
               "string"
             ],
             "description": "Gets the date the record was last reviewed, when available.",
+            "format": "date-time"
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date the record is next due for an update, when available.",
             "format": "date-time"
           }
         },
