@@ -1079,13 +1079,13 @@ export type RegisterUserCommandDto = {
 };
 
 /**
- * Represents confirmation of a submitted membership request.
+ * Represents the details of a user who has been registered.
  */
 export type RegisterUserConfirmationDto = {
     /**
-     * Gets the public identifier of the membership request, not a user ID or setup token.
+     * ID for the user.
      */
-    requestGuid: string;
+    id: number;
     /**
      * Gets the name of the user's organisation.
      */
@@ -1361,7 +1361,7 @@ export type UserListItemDto = {
     /**
      * Gets the public identifier of the latest active membership request, if available.
      */
-    registrationRequestGuid: null | string;
+    registrationRequestId: null | number;
     /**
      * Gets the email address of the user, if available.
      */
@@ -2512,12 +2512,12 @@ export type GetUserRegistrationByIdData = {
          */
         organisationId: number;
         /**
-         * The public identifier of the membership request to retrieve.
+         * The unique identifier of the membership request to retrieve.
          */
-        requestGuid: string;
+        id: number;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{requestGuid}';
+    url: '/organisations/{organisationId}/membership-requests/{id}';
 };
 
 export type GetUserRegistrationByIdErrors = {
@@ -2556,17 +2556,13 @@ export type ApproveData = {
         /**
          * The identifier for the registration request.
          */
-        requestGuid: string;
+        registrationRequestId: number;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{requestGuid}/approve';
+    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/approve';
 };
 
 export type ApproveErrors = {
-    /**
-     * Bad Request
-     */
-    400: ProblemDetails;
     /**
      * Unauthorized
      */
@@ -2579,10 +2575,6 @@ export type ApproveErrors = {
      * The membership request could not be found.
      */
     404: ProblemDetails;
-    /**
-     * Conflict
-     */
-    409: ProblemDetails;
 };
 
 export type ApproveError = ApproveErrors[keyof ApproveErrors];
@@ -2604,17 +2596,13 @@ export type RejectData = {
         /**
          * The identifier for the registration request.
          */
-        requestGuid: string;
+        registrationRequestId: number;
     };
     query?: never;
-    url: '/organisations/{organisationId}/membership-requests/{requestGuid}/reject';
+    url: '/organisations/{organisationId}/membership-requests/{registrationRequestId}/reject';
 };
 
 export type RejectErrors = {
-    /**
-     * Bad Request
-     */
-    400: ProblemDetails;
     /**
      * Unauthorized
      */
@@ -2627,10 +2615,6 @@ export type RejectErrors = {
      * The membership request could not be found.
      */
     404: ProblemDetails;
-    /**
-     * Conflict
-     */
-    409: ProblemDetails;
 };
 
 export type RejectError = RejectErrors[keyof RejectErrors];

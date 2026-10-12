@@ -24,7 +24,7 @@ vi.mock('@/client/server-api', () => ({
 }))
 
 const testData: RegisterUserConfirmationDto = {
-  requestGuid: 'e52c7f89-e182-41b2-bbdc-69a0fa9f034d',
+  id: 3,
   workEmail: 'example@email.com',
   fullName: 'Jane Smith',
   organisationName: 'Example Pharma',
@@ -44,7 +44,7 @@ const renderComponent = async (overrides?: Partial<UserMembershipRetrievalWrappe
   const children = () => <div data-testid="children"></div>
   const defaults: UserMembershipRetrievalWrapperProps = {
     organisationId: 1,
-    requestGuid: testData.requestGuid,
+    registrationRequestId: 2,
     children,
   }
   const props = { ...defaults, ...overrides }
@@ -72,13 +72,13 @@ describe('UserMembershipRetrievalWrapper (direct invocation)', () => {
     expect(content.textContent).toBe(JSON.stringify(testData))
   })
   it('calls the request with the expected arguments', async () => {
-    const args = { organisationId: 4, requestGuid: testData.requestGuid }
+    const args = { organisationId: 4, registrationRequestId: 6 }
     await renderComponent({
       ...args,
     })
     expect(mockGetMembership).toHaveBeenCalledExactlyOnceWith({
       client: apiClient,
-      path: args,
+      path: { organisationId: args.organisationId, id: args.registrationRequestId },
     })
   })
   it('calls notfound when the response is not found', async () => {

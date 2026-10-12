@@ -33,7 +33,7 @@ const user: UserInformationDto = {
 }
 
 const registration = {
-  requestGuid: 'e52c7f89-e182-41b2-bbdc-69a0fa9f034d',
+  id: 4,
   organisationName: 'Example Pharma',
   fullName: 'Jane Smith',
   workEmail: 'jane.smith@example.com',
@@ -113,15 +113,10 @@ describe('UserActionAlert (direct invocation)', () => {
     const { heading, message } = await renderAlert({
       type: 'request',
       action: 'approved-request',
-      userRequestId: registration.requestGuid,
+      userRequestId: 4,
     })
 
     expect(heading).toBe('Approval Email Sent')
-    expect(getUserRegistrationById).toHaveBeenCalledWith(
-      expect.objectContaining({
-        path: { organisationId: 2, requestGuid: registration.requestGuid },
-      }),
-    )
     expect(message).toBe(
       `We’ve sent an email to ${registration.workEmail} notifying them that their request has been approved and instructions to set up an account.`,
     )
@@ -131,7 +126,7 @@ describe('UserActionAlert (direct invocation)', () => {
     const { heading, message } = await renderAlert({
       type: 'request',
       action: 'rejected-request',
-      userRequestId: registration.requestGuid,
+      userRequestId: 4,
     })
 
     expect(heading).toBe('Rejection Email Sent')
@@ -169,12 +164,12 @@ describe('UserActionAlert (direct invocation)', () => {
       'We’ve sent an email to the user notifying them.',
     ],
     [
-      { type: 'request', action: 'approved-request', userRequestId: registration.requestGuid },
+      { type: 'request', action: 'approved-request', userRequestId: 4 },
       'Approval Email Sent',
       'We’ve sent an email to the new user notifying them that their request has been approved and instructions to set up an account.',
     ],
     [
-      { type: 'request', action: 'rejected-request', userRequestId: registration.requestGuid },
+      { type: 'request', action: 'rejected-request', userRequestId: 4 },
       'Rejection Email Sent',
       'We’ve sent an email to the user notifying them that their request has been rejected.',
     ],
