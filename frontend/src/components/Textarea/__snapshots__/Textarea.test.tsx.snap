@@ -1,0 +1,66 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Textarea > applies a max-width for a fixed width 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="max-width: 11.5em;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > applies a width for a fluid width 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+      style="width: 50%;"
+    />
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Textarea > renders an unmodified design system textarea by default 1`] = `
+<DocumentFragment>
+  <div
+    class="textarea"
+    data-component="textarea"
+  >
+    <label
+      class="textarea__label"
+      for="description"
+    >
+      Description
+    </label>
+    <textarea
+      class="textarea__textarea"
+      id="description"
+      name="description"
+    />
+  </div>
+</DocumentFragment>
+`;

@@ -27,7 +27,8 @@ export const getHeaderNav = cache(async (): Promise<HeaderNavItem[]> => {
     const payload = await getPayloadClient()
     // depth: 1 is enough — the `destination` relationship is restricted to top-level pages,
     // so never has a parent.
-    const header = await payload.findGlobal({ slug: 'header', depth: 1 })
+    // Public reads must also enforce access on populated page relationships.
+    const header = await payload.findGlobal({ slug: 'header', depth: 1, overrideAccess: false })
 
     return (header.headerLinks ?? [])
       .map((item) => {
@@ -61,6 +62,7 @@ export const getPageByPath = cache(async (path: string): Promise<SitePage | null
     for (const slug of slugs) {
       const result = await payload.find({
         collection: 'pages',
+        overrideAccess: false,
         limit: 1,
         pagination: false,
         where: {
