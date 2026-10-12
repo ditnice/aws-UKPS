@@ -21,7 +21,7 @@ beforeEach(() => {
 const query: RecordsQuery = {
   search: 'medicine',
   recordType: ['Medicine'],
-  recordStatus: ['Active', 'OnHold'],
+  recordStatus: ['Published', 'OnHold'],
   updateStatus: 'Overdue',
   page: 3,
   pageSize: 25,
@@ -59,7 +59,7 @@ describe('RecordsTablesFilters', () => {
     render(<RecordsTablesFilters query={query} />)
 
     expect(screen.getByRole('textbox', { name: 'Search Records' })).toHaveValue('medicine')
-    expect(screen.getByRole('checkbox', { name: 'Active' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Published' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'On Hold' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Overdue' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Not overdue' })).not.toBeChecked()
@@ -71,14 +71,14 @@ describe('RecordsTablesFilters', () => {
 
     await user.click(screen.getByRole('checkbox', { name: 'Archived' }))
 
-    expectNavigation({ ...query, recordStatus: ['Active', 'OnHold', 'Archived'], page: 1 })
+    expectNavigation({ ...query, recordStatus: ['Published', 'OnHold', 'Archived'], page: 1 })
     expect(query).toEqual(original)
   })
 
   it('removes only the unchecked record status', async () => {
     render(<RecordsTablesFilters query={query} />)
 
-    await user.click(screen.getByRole('checkbox', { name: 'Active' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Published' }))
 
     expectNavigation({ ...query, recordStatus: ['OnHold'], page: 1 })
   })
@@ -86,9 +86,9 @@ describe('RecordsTablesFilters', () => {
   it('starts a new status selection when no statuses exist', async () => {
     render(<RecordsTablesFilters query={{}} />)
 
-    await user.click(screen.getByRole('checkbox', { name: 'Unpublished' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Draft' }))
 
-    expectNavigation({ recordStatus: ['Unpublished'], page: 1 })
+    expectNavigation({ recordStatus: ['Draft'], page: 1 })
   })
 
   it('replaces the update status when a different option is selected', async () => {
@@ -121,9 +121,9 @@ describe('RecordsTablesFilters', () => {
   })
 
   it('removes the last status from the URL when it is unchecked', async () => {
-    render(<RecordsTablesFilters query={{ recordStatus: ['Active'] }} />)
+    render(<RecordsTablesFilters query={{ recordStatus: ['Published'] }} />)
 
-    await user.click(screen.getByRole('checkbox', { name: 'Active' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Published' }))
 
     expectNavigation({ page: 1 })
   })

@@ -27,7 +27,7 @@ beforeEach(() => {
       ...details,
       id: 7,
       organisationType: 'PharmaCompany',
-      allowedPharmaceuticalEntity: 'test-entity',
+      allowedPharmaceuticalEntity: 'Medicines',
       status: 'Active',
     },
     error: undefined,

@@ -101,7 +101,7 @@ describe('ApplicationTable', () => {
         items={[{ id: 42 }]}
         captionName="Organisation records"
         headers={[{ key: 'id', label: 'ID', sortColumn: 'Id' }]}
-        query={{ sortBy: 'Id', sortDirection: 'Ascending', recordStatus: ['Active'], page: 2 }}
+        query={{ sortBy: 'Id', sortDirection: 'Ascending', recordStatus: ['Published'], page: 2 }}
         queryToSearchParams={convertQueryToSearchParams}
         getData={(_key, item) => <>{item.id}</>}
         getItemKey={(item) => item.id}
@@ -113,7 +113,7 @@ describe('ApplicationTable', () => {
     const params = new URL(href, 'https://example.test').searchParams
     expect(params.getAll('sortBy')).toEqual(['Id'])
     expect(params.getAll('sortDirection')).toEqual(['Descending'])
-    expect(params.getAll('recordStatus')).toEqual(['Active'])
+    expect(params.getAll('recordStatus')).toEqual(['Published'])
     expect(params.has('SortBy')).toBe(false)
     expect(params.has('SortDirection')).toBe(false)
   })

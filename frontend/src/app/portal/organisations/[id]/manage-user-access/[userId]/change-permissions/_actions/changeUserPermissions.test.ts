@@ -21,7 +21,7 @@ beforeEach(() => {
       organisationId: 7,
       userRole: 'Champion',
       status: 'Active',
-      allowedPharmaceuticalEntity: 'test-entity',
+      allowedPharmaceuticalEntity: 'Medicines',
       createdAt: '2026-01-01T00:00:00Z',
     },
     error: undefined,

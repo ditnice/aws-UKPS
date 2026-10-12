@@ -27,7 +27,7 @@ describe('OrganisationPageWrapper (direct invocation)', () => {
     id: 123,
     organisationName: 'Example Pharma',
     organisationType: 'PharmaCompany',
-    allowedPharmaceuticalEntity: 'Human',
+    allowedPharmaceuticalEntity: 'Medicines',
     countryOrRegion: 'United Kingdom',
     headOfficeAddress: '1 Example Street, London',
     headOfficeEmail: 'office@example.com',

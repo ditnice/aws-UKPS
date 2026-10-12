@@ -12,11 +12,11 @@ import type { RecordsQuery } from './recordsQuery'
 const query: RecordsQuery = {
   search: 'medicine & vaccine',
   recordType: ['Medicine', 'Vaccine'],
-  recordStatus: ['Active', 'OnHold'],
+  recordStatus: ['Published', 'OnHold'],
   updateStatus: 'NotOverdue',
   page: 3,
   pageSize: 25,
-  sortBy: 'DevelopmentName',
+  sortBy: 'CompanyCode',
   sortDirection: 'Descending',
 }
 
@@ -38,11 +38,11 @@ describe('records query parsing', () => {
     const params = {
       search: query.search,
       recordType: ['Medicine', 'Vaccine'],
-      recordStatus: ['Active', 'OnHold'],
+      recordStatus: ['Published', 'OnHold'],
       updateStatus: 'NotOverdue',
       page: '3',
       pageSize: '25',
-      sortBy: 'DevelopmentName',
+      sortBy: 'CompanyCode',
       sortDirection: 'Descending',
     }
     const original = structuredClone(params)
@@ -61,7 +61,7 @@ describe('records query parsing', () => {
     expect(
       parseQueryFromSearchParams({
         recordType: ['unknown', 'Medicine', 'vaccine'],
-        recordStatus: ['active', 'OnHold', 'unknown'],
+        recordStatus: ['published', 'OnHold', 'unknown'],
         updateStatus: 'overdue',
         sortBy: 'unknown',
         sortDirection: 'ascending',
@@ -79,7 +79,7 @@ describe('records query parsing', () => {
     })
   })
 
-  it.each(['Id', 'DevelopmentName', 'RecordStatus', 'NextUpdateDue'])(
+  it.each(['Id', 'CompanyCode', 'DisplayStatus', 'NextUpdateDue'])(
     'accepts the %s sort column',
     (sortBy) => {
       expect(parseQueryFromSearchParams({ sortBy }).sortBy).toBe(sortBy)
@@ -100,7 +100,7 @@ describe('active records filters', () => {
   it('labels search, record statuses and update status in display order', () => {
     expect(getActiveFilters(query)).toEqual([
       { key: 'search', value: 'medicine & vaccine', label: 'medicine & vaccine' },
-      { key: 'record-status', value: 'Active', label: 'Active' },
+      { key: 'record-status', value: 'Published', label: 'Published' },
       { key: 'record-status', value: 'OnHold', label: 'On Hold' },
       { key: 'update-status', value: 'NotOverdue', label: 'Not overdue' },
     ])
@@ -108,7 +108,7 @@ describe('active records filters', () => {
 
   it('rebuilds remaining filters while preserving type, sorting and pagination', () => {
     const original = structuredClone(query)
-    const remaining = getActiveFilters(query).filter((filter) => filter.value !== 'Active')
+    const remaining = getActiveFilters(query).filter((filter) => filter.value !== 'Published')
 
     expect(buildQueryFromFilters(remaining, query)).toEqual({ ...query, recordStatus: ['OnHold'] })
     expect(query).toEqual(original)
@@ -131,11 +131,11 @@ describe('records query serialization', () => {
 
     expect(params.toString()).toContain('search=medicine+%26+vaccine')
     expect(params.getAll('recordType')).toEqual(['Medicine', 'Vaccine'])
-    expect(params.getAll('recordStatus')).toEqual(['Active', 'OnHold'])
+    expect(params.getAll('recordStatus')).toEqual(['Published', 'OnHold'])
     expect(params.get('updateStatus')).toBe('NotOverdue')
     expect(params.get('page')).toBe('3')
     expect(params.get('pageSize')).toBe('25')
-    expect(params.get('sortBy')).toBe('DevelopmentName')
+    expect(params.get('sortBy')).toBe('CompanyCode')
     expect(params.get('sortDirection')).toBe('Descending')
     expect(query).toEqual(original)
   })
