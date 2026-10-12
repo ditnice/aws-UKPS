@@ -155,8 +155,7 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         var data = result.ShouldBeSuccess();
-        data.Items.ShouldHaveSingleItem()
-            .RegistrationRequestGuid.ShouldBe(latestRequest.RequestGuid);
+        data.Items.ShouldHaveSingleItem().RegistrationRequestId.ShouldBe(latestRequest.Id);
     }
 
     [Fact]
@@ -316,7 +315,7 @@ public class UserServiceTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
             PaginatedResponseDto<UserListItemDto> data = result.ShouldBeSuccess();
-            data.Items.ShouldHaveSingleItem().RegistrationRequestGuid.ShouldBe(item.RequestGuid);
+            data.Items.ShouldHaveSingleItem().RegistrationRequestId.ShouldBe(item.Id);
         }
     }
 

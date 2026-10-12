@@ -547,10 +547,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rejected_by");
 
-                    b.Property<Guid>("RequestGuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("request_guid");
-
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -576,10 +572,6 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasIndex("RejectedBy")
                         .HasDatabaseName("ix_user_registration_requests_rejected_by");
-
-                    b.HasIndex("RequestGuid")
-                        .IsUnique()
-                        .HasDatabaseName("ix_user_registration_requests_request_guid");
 
                     b.ToTable("user_registration_requests", "ukps", t =>
                         {
@@ -2728,7 +2720,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "CreatedUser")
                         .WithMany()
                         .HasForeignKey("CreatedUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_user_registration_requests_users_created_user_id");
 
                     b.HasOne("UKPS.Api.Persistence.Entities.Identity.Organisation", "Organisation")
