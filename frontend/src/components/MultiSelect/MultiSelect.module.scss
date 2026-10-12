@@ -1,0 +1,188 @@
+@use '@/styles/colours';
+@use '@/styles/focus';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.multiSelect {
+  @include typography.font-size(p);
+  color: colours.$text;
+  margin-bottom: utils.rem(spacing.$medium);
+  overflow-wrap: anywhere;
+
+  p {
+    margin-bottom: utils.rem(spacing.$small);
+    margin-top: utils.rem(spacing.$small);
+  }
+
+  button {
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+
+    &:focus-visible {
+      @include focus.default-focus-style;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+}
+
+.label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: utils.rem(spacing.$small);
+}
+
+.error {
+  color: colours.$error;
+  font-weight: bold;
+}
+
+.control {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.inputRow {
+  position: relative;
+}
+
+.field {
+  background: colours.$fill-white-background;
+  border: utils.rem(spacing.$xx-small) solid colours.$border-dark;
+  box-sizing: border-box;
+  color: colours.$text;
+  font: inherit;
+  margin: 0;
+  min-height: utils.rem(48);
+  padding: utils.rem(spacing.$small);
+  padding-right: utils.rem(52);
+  width: 100%;
+
+  &:focus {
+    @include focus.default-focus-style;
+  }
+}
+
+.fieldError {
+  @include typography.default-error-style;
+}
+
+.toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  display: flex;
+  justify-content: center;
+  min-height: utils.rem(44);
+  position: absolute;
+  right: utils.rem(spacing.$xx-small);
+  top: utils.rem(spacing.$xx-small);
+  width: utils.rem(44);
+}
+
+.expandedIcon {
+  transform: rotate(180deg);
+}
+
+.options {
+  background: colours.$fill-white-background;
+  border: utils.rem(spacing.$xx-small) solid colours.$border-dark;
+  list-style: none;
+  margin: 0;
+  max-height: min(18rem, 50vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: utils.rem(spacing.$xx-small);
+}
+
+.option {
+  align-items: center;
+  border-bottom: 1px solid colours.$border;
+  cursor: pointer;
+  display: flex;
+  gap: utils.rem(spacing.$small);
+  margin: 0;
+  min-height: utils.rem(44);
+  overflow-wrap: anywhere;
+  padding: utils.rem(spacing.$small);
+
+  &:hover {
+    background: colours.$filter-option-hover;
+  }
+
+  &[aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.active {
+  background: colours.$filter-option-hover;
+  outline: 2px solid colours.$border-dark;
+  outline-offset: -2px;
+}
+
+.selectionIndicator {
+  align-items: center;
+  border: 2px solid colours.$border-dark;
+  display: flex;
+  flex: 0 0 utils.rem(24);
+  height: utils.rem(24);
+  justify-content: center;
+}
+
+.empty {
+  padding: utils.rem(spacing.$small);
+}
+
+.selections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$small);
+  list-style: none;
+  margin: utils.rem(spacing.$small) 0 0;
+  padding: 0;
+}
+
+.selection {
+  align-items: center;
+  border: 1px solid colours.$border-dark;
+  display: flex;
+  gap: utils.rem(spacing.$small);
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding-left: utils.rem(spacing.$small);
+}
+
+.remove {
+  align-items: center;
+  background: colours.$fill-white-background;
+  border: 0;
+  display: flex;
+  flex: 0 0 utils.rem(44);
+  justify-content: center;
+  min-height: utils.rem(44);
+}
+
+.visuallyHidden {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@media (forced-colors: active) {
+  .active {
+    outline-color: Highlight;
+  }
+}

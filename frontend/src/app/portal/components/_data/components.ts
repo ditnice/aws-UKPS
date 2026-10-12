@@ -71,6 +71,11 @@ export const componentDefinitions = [
     slug: 'in-page-nav',
   },
   {
+    description: 'Let users search for and select multiple options from a long list.',
+    label: 'Multi-select',
+    slug: 'multi-select',
+  },
+  {
     description: 'Provide the principal introduction to a page.',
     label: 'Page Header',
     slug: 'page-header',
