@@ -18,7 +18,7 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 public class UserRegistrationControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const int ExistingOrganisationId = 2;
-    private readonly Guid _existingRegistrationRequestId = Guid.NewGuid();
+    private const int ExistingRegistrationRequestId = 3;
     private readonly IUserRegistrationService _mock = Substitute.For<IUserRegistrationService>();
     private readonly HttpClient _client;
 
@@ -44,23 +44,23 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
             .CreateClient();
 
         _mock
-            .ApproveRequest(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .ApproveRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<ApproveRequestError>.Err(new ApproveRequestError.RequestNotFound()));
         _mock
             .ApproveRequest(
                 ExistingOrganisationId,
-                _existingRegistrationRequestId,
+                ExistingRegistrationRequestId,
                 Arg.Any<CancellationToken>()
             )
             .Returns(Result<ApproveRequestError>.Ok());
 
         _mock
-            .RejectRequest(Arg.Any<int>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .RejectRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<RejectRequestError>.Err(new RejectRequestError.RequestNotFound()));
         _mock
             .RejectRequest(
                 ExistingOrganisationId,
-                _existingRegistrationRequestId,
+                ExistingRegistrationRequestId,
                 Arg.Any<CancellationToken>()
             )
             .Returns(Result<RejectRequestError>.Ok());
@@ -131,7 +131,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     public async Task GetUserRegistrationById_UserExists_ReturnsDto()
     {
         var orgId = 1;
-        var registrationId = Guid.NewGuid();
+        var registrationId = 2;
         RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
         _mock
             .GetUserRegistrationById(orgId, registrationId, Arg.Any<CancellationToken>())
@@ -152,30 +152,28 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     [Fact]
     public async Task GetUserRegistrationById_UserDoesNotExist_ReturnsNotFound()
     {
-        Guid requestGuid = Guid.NewGuid();
         _mock
-            .GetUserRegistrationById(Arg.Any<int>(), requestGuid, Arg.Any<CancellationToken>())
+            .GetUserRegistrationById(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(
                 Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
-                    new GetUserDetailsError.IdNotFound(requestGuid)
+                    new GetUserDetailsError.IdNotFound(1)
                 )
             );
-        HttpResponseMessage response = await SendGetUserMembershipRequestById(1, requestGuid);
+        HttpResponseMessage response = await SendGetUserMembershipRequestById(1, 1);
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task GetUserRegistrationById_UserNotAuthorised_ReturnsForbidden()
     {
-        Guid requestId = Guid.NewGuid();
         _mock
-            .GetUserRegistrationById(Arg.Any<int>(), requestId, Arg.Any<CancellationToken>())
+            .GetUserRegistrationById(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(
                 Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
                     new GetUserDetailsError.UserNotAuthorised()
                 )
             );
-        HttpResponseMessage response = await SendGetUserMembershipRequestById(1, requestId);
+        HttpResponseMessage response = await SendGetUserMembershipRequestById(1, 1);
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
@@ -184,7 +182,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     {
         HttpResponseMessage response = await SendApproveRequest(
             ExistingOrganisationId,
-            _existingRegistrationRequestId
+            ExistingRegistrationRequestId
         );
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
@@ -192,12 +190,12 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     [Fact]
     public async Task ApproveRequest_OnValidRequest_CallsServiceWithId()
     {
-        _ = await SendApproveRequest(ExistingOrganisationId, _existingRegistrationRequestId);
+        _ = await SendApproveRequest(ExistingOrganisationId, ExistingRegistrationRequestId);
         await _mock
             .Received(1)
             .ApproveRequest(
                 ExistingOrganisationId,
-                _existingRegistrationRequestId,
+                ExistingRegistrationRequestId,
                 Arg.Any<CancellationToken>()
             );
     }
@@ -205,7 +203,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     [Fact]
     public async Task ApproveRequest_OnRequestNotFound_ReturnsNotFound()
     {
-        HttpResponseMessage response = await SendApproveRequest(999, Guid.NewGuid());
+        HttpResponseMessage response = await SendApproveRequest(999, 999);
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
@@ -213,15 +211,11 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     public async Task ApproveRequest_OnNotAllowed_ReturnsForbidden()
     {
         _mock
-            .ApproveRequest(
-                ExistingOrganisationId,
-                _existingRegistrationRequestId,
-                Arg.Any<CancellationToken>()
-            )
+            .ApproveRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<ApproveRequestError>.Err(new ApproveRequestError.NotAllowed()));
         HttpResponseMessage response = await SendApproveRequest(
             ExistingOrganisationId,
-            _existingRegistrationRequestId
+            ExistingRegistrationRequestId
         );
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
@@ -238,15 +232,11 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
         foreach (var result in badRequestResults)
         {
             _mock
-                .ApproveRequest(
-                    ExistingOrganisationId,
-                    _existingRegistrationRequestId,
-                    Arg.Any<CancellationToken>()
-                )
+                .ApproveRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                 .Returns(Result<ApproveRequestError>.Err(result));
             HttpResponseMessage response = await SendApproveRequest(
                 ExistingOrganisationId,
-                _existingRegistrationRequestId
+                ExistingRegistrationRequestId
             );
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         }
@@ -257,7 +247,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     {
         HttpResponseMessage response = await SendRejectRequest(
             ExistingOrganisationId,
-            _existingRegistrationRequestId
+            ExistingRegistrationRequestId
         );
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
@@ -265,12 +255,12 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     [Fact]
     public async Task RejectRequest_OnValidRequest_CallsServiceWithId()
     {
-        _ = await SendRejectRequest(ExistingOrganisationId, _existingRegistrationRequestId);
+        _ = await SendRejectRequest(ExistingOrganisationId, ExistingRegistrationRequestId);
         await _mock
             .Received(1)
             .RejectRequest(
                 ExistingOrganisationId,
-                _existingRegistrationRequestId,
+                ExistingRegistrationRequestId,
                 Arg.Any<CancellationToken>()
             );
     }
@@ -278,7 +268,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     [Fact]
     public async Task RejectRequest_OnRequestNotFound_ReturnsNotFound()
     {
-        HttpResponseMessage response = await SendRejectRequest(999, Guid.NewGuid());
+        HttpResponseMessage response = await SendRejectRequest(999, 999);
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
@@ -286,15 +276,11 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     public async Task RejectRequest_OnNotAllowed_ReturnsForbidden()
     {
         _mock
-            .RejectRequest(
-                ExistingOrganisationId,
-                _existingRegistrationRequestId,
-                Arg.Any<CancellationToken>()
-            )
+            .RejectRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<RejectRequestError>.Err(new RejectRequestError.NotAllowed()));
         HttpResponseMessage response = await SendRejectRequest(
             ExistingOrganisationId,
-            _existingRegistrationRequestId
+            ExistingRegistrationRequestId
         );
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
@@ -303,42 +289,13 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     public async Task RejectRequest_RegistrationAlreadyApproved_ReturnsBadRequest()
     {
         _mock
-            .RejectRequest(
-                ExistingOrganisationId,
-                _existingRegistrationRequestId,
-                Arg.Any<CancellationToken>()
-            )
+            .RejectRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Result<RejectRequestError>.Err(new RejectRequestError.RegistrationApproved()));
         HttpResponseMessage response = await SendRejectRequest(
             ExistingOrganisationId,
-            _existingRegistrationRequestId
+            ExistingRegistrationRequestId
         );
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Theory]
-    [InlineData("GET", "", "123")]
-    [InlineData("GET", "", "not-a-guid")]
-    [InlineData("PATCH", "/approve", "123")]
-    [InlineData("PATCH", "/approve", "not-a-guid")]
-    [InlineData("PATCH", "/reject", "123")]
-    [InlineData("PATCH", "/reject", "not-a-guid")]
-    public async Task MembershipRequest_InvalidGuid_ReturnsNotFound(
-        string method,
-        string action,
-        string identifier
-    )
-    {
-        using var message = new HttpRequestMessage(
-            new HttpMethod(method),
-            $"/organisations/{ExistingOrganisationId}/membership-requests/{identifier}{action}"
-        );
-        using HttpResponseMessage response = await _client.SendAsync(
-            message,
-            TestContext.Current.CancellationToken
-        );
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        _mock.ReceivedCalls().ShouldBeEmpty();
     }
 
     private async Task<HttpResponseMessage> SendRegisterUserRequest(
@@ -355,14 +312,11 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
 
     private async Task<HttpResponseMessage> SendGetUserMembershipRequestById(
         int organisationId,
-        Guid registrationId
+        int id
     )
     {
         return await _client.GetAsync(
-            new Uri(
-                $"organisations/{organisationId}/membership-requests/{registrationId}",
-                UriKind.Relative
-            ),
+            new Uri($"organisations/{organisationId}/membership-requests/{id}", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
     }
@@ -378,35 +332,47 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     private static RegisterUserConfirmationDto RegisterUserConfirmationDto() =>
         new()
         {
-            RequestGuid = Guid.NewGuid(),
+            Id = 1,
             OrganisationName = "Test",
             FullName = "Test2",
             PhoneNumber = "07845796823",
             WorkEmail = "user@example.com",
         };
 
-    private async Task<HttpResponseMessage> SendApproveRequest(int organisationId, Guid requestGuid)
-    {
-        using StringContent stringContent = new StringContent(string.Empty);
-        var uri = new Uri(
-            $"{CreateBasedUrl(organisationId, requestGuid)}/approve",
-            UriKind.Relative
-        );
-        return await _client.PatchAsync(uri, stringContent, TestContext.Current.CancellationToken);
-    }
-
-    private async Task<HttpResponseMessage> SendRejectRequest(int organisationId, Guid requestGuid)
+    private async Task<HttpResponseMessage> SendApproveRequest(
+        int organisationId,
+        int registrationRequestId
+    )
     {
         using StringContent stringContent = new StringContent(string.Empty);
         return await _client.PatchAsync(
-            new Uri($"{CreateBasedUrl(organisationId, requestGuid)}/reject", UriKind.Relative),
+            new Uri(
+                $"{CreateBasedUrl(organisationId, registrationRequestId)}/approve",
+                UriKind.Relative
+            ),
             stringContent,
             TestContext.Current.CancellationToken
         );
     }
 
-    private static string CreateBasedUrl(int organisationId, Guid requestGuid)
+    private async Task<HttpResponseMessage> SendRejectRequest(
+        int organisationId,
+        int registrationRequestId
+    )
     {
-        return $"/organisations/{organisationId}/membership-requests/{requestGuid}";
+        using StringContent stringContent = new StringContent(string.Empty);
+        return await _client.PatchAsync(
+            new Uri(
+                $"{CreateBasedUrl(organisationId, registrationRequestId)}/reject",
+                UriKind.Relative
+            ),
+            stringContent,
+            TestContext.Current.CancellationToken
+        );
+    }
+
+    private static string CreateBasedUrl(int organisationId, int registrationRequestId)
+    {
+        return $"/organisations/{organisationId}/membership-requests/{registrationRequestId}";
     }
 }

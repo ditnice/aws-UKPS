@@ -95,7 +95,7 @@ internal class UserRegistrationService : IUserRegistrationService
 
     public async Task<GetUserRegistrationByIdResult> GetUserRegistrationById(
         int organisationId,
-        Guid requestGuid,
+        int id,
         CancellationToken cancellationToken
     )
     {
@@ -112,14 +112,12 @@ internal class UserRegistrationService : IUserRegistrationService
         var request = await _dbContext
             .UserRegistrationRequests.AsNoTracking()
             .Include(x => x.Organisation)
-            .Where(x => x.OrganisationId == organisationId && x.RequestGuid == requestGuid)
+            .Where(x => x.OrganisationId == organisationId && x.Id == id)
             .SingleOrDefaultAsync(cancellationToken);
 
         if (request is null)
         {
-            return GetUserRegistrationByIdResult.Err(
-                new GetUserDetailsError.IdNotFound(requestGuid)
-            );
+            return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.IdNotFound(id));
         }
         var dto = MapToDto(request);
         return GetUserRegistrationByIdResult.Ok(dto);
@@ -127,7 +125,7 @@ internal class UserRegistrationService : IUserRegistrationService
 
     public async Task<Result<ApproveRequestError>> ApproveRequest(
         int organisationId,
-        Guid requestGuid,
+        int registrationRequestId,
         CancellationToken cancellationToken
     )
     {
@@ -144,7 +142,7 @@ internal class UserRegistrationService : IUserRegistrationService
         );
         UserRegistrationRequest? registrationRequest =
             await _dbContext.UserRegistrationRequests.FirstOrDefaultAsync(
-                x => x.OrganisationId == organisationId && x.RequestGuid == requestGuid,
+                x => x.OrganisationId == organisationId && x.Id == registrationRequestId,
                 cancellationToken
             );
         if (registrationRequest is null)
@@ -174,24 +172,24 @@ internal class UserRegistrationService : IUserRegistrationService
         }
 
         var result = await _userOnboardingService.InitialiseNewUserSetup(
-            MapToOnboardUserCommandDto(registrationRequest),
+            new OnboardUserCommandDto()
+            {
+                FullName = registrationRequest.FullName,
+                NewUserEmail = registrationRequest.WorkEmail,
+                OrganisationId = registrationRequest.OrganisationId,
+                ContactNumber = registrationRequest.PhoneNumber,
+            },
             cancellationToken
         );
         return await result.Match(
-            targetUser =>
-                HandleOnboardingSuccess(
-                    transaction,
-                    registrationRequest,
-                    targetUser,
-                    cancellationToken
-                ),
+            targetUser => HandleOnboardingSuccess(transaction, targetUser, cancellationToken),
             err => HandleUserOnBoardingError(transaction, err, cancellationToken)
         );
     }
 
     public async Task<Result<RejectRequestError>> RejectRequest(
         int organisationId,
-        Guid requestGuid,
+        int registrationRequestId,
         CancellationToken cancellationToken
     )
     {
@@ -204,7 +202,7 @@ internal class UserRegistrationService : IUserRegistrationService
             return Result<RejectRequestError>.Err(new RejectRequestError.NotAllowed());
         }
         var registrationRequest = await _dbContext.UserRegistrationRequests.FirstOrDefaultAsync(
-            x => x.OrganisationId == organisationId && x.RequestGuid == requestGuid,
+            x => x.OrganisationId == organisationId && x.Id == registrationRequestId,
             cancellationToken
         );
         if (registrationRequest is null)
@@ -264,14 +262,10 @@ internal class UserRegistrationService : IUserRegistrationService
 
     private async Task<Result<ApproveRequestError>> HandleOnboardingSuccess(
         IDbContextTransaction transaction,
-        UserRegistrationRequest registrationRequest,
         User targetUser,
         CancellationToken cancellationToken
     )
     {
-        registrationRequest.CreatedUser = targetUser;
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
         // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
         Uri link = _setupLinkCreator.GetSetupLink(targetUser.OnboardingRecord!.SetupToken);
         await _emailService.SendEmail(
@@ -311,24 +305,11 @@ internal class UserRegistrationService : IUserRegistrationService
     {
         return new()
         {
-            RequestGuid = userRegistrationRequest.RequestGuid,
+            Id = userRegistrationRequest.Id,
             OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
             FullName = userRegistrationRequest.FullName,
             WorkEmail = userRegistrationRequest.WorkEmail,
             PhoneNumber = userRegistrationRequest.PhoneNumber,
-        };
-    }
-
-    private static OnboardUserCommandDto MapToOnboardUserCommandDto(
-        UserRegistrationRequest registrationRequest
-    )
-    {
-        return new()
-        {
-            FullName = registrationRequest.FullName,
-            NewUserEmail = registrationRequest.WorkEmail,
-            OrganisationId = registrationRequest.OrganisationId,
-            ContactNumber = registrationRequest.PhoneNumber,
         };
     }
 }

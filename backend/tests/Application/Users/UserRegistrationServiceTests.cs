@@ -92,7 +92,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         user.ShouldBe(
             new RegisterUserConfirmationDto
             {
-                RequestGuid = user.RequestGuid,
+                Id = user.Id,
                 OrganisationName = user.OrganisationName,
                 FullName = registerUserCommandDto.FullName,
                 WorkEmail = registerUserCommandDto.WorkEmail,
@@ -125,10 +125,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var data = result.ShouldBeSuccess();
         var entity = await _harness
             .GetClearedContext()
-            .UserRegistrationRequests.SingleOrDefaultAsync(
-                x => x.RequestGuid == data.RequestGuid,
-                TestContext.Current.CancellationToken
-            );
+            .UserRegistrationRequests.FindAsync([data.Id], TestContext.Current.CancellationToken);
         entity.ShouldNotBeNull();
         entity.CreatedAt.ShouldBe(_currentTime);
     }
@@ -160,7 +157,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
 
         GetUserDetails result = await _harness.Service.GetUserRegistrationById(
             _organisation.Id,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -169,7 +166,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         user.ShouldBe(
             new RegisterUserConfirmationDto
             {
-                RequestGuid = request.RequestGuid,
+                Id = request.Id,
                 OrganisationName = request.Organisation!.OrganisationName,
                 FullName = request.FullName,
                 WorkEmail = request.WorkEmail,
@@ -182,11 +179,11 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     public async Task GetUserRegistrationById_UserDoesNotExist_ReturnsIdNotFound()
     {
         int organisationId = 999;
-        Guid requestGuid = Guid.NewGuid();
+        int id = 999;
 
         GetUserDetails result = await _harness.Service.GetUserRegistrationById(
             organisationId,
-            requestGuid,
+            id,
             TestContext.Current.CancellationToken
         );
 
@@ -202,7 +199,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             .UpdateCurrentUser(_mockUserLookup[UserRole.Standard])
             .Service.GetUserRegistrationById(
                 _organisation.Id,
-                request.RequestGuid,
+                request.Id,
                 TestContext.Current.CancellationToken
             );
 
@@ -221,12 +218,12 @@ public class UserRegistrationServiceTests : DatabaseTestBase
 
         GetUserDetails existingResult = await harness.Service.GetUserRegistrationById(
             otherOrg.Id,
-            existingRequest.RequestGuid,
+            existingRequest.Id,
             TestContext.Current.CancellationToken
         );
         GetUserDetails guessedResult = await harness.Service.GetUserRegistrationById(
             otherOrg.Id,
-            Guid.NewGuid(),
+            existingRequest.Id + 1000,
             TestContext.Current.CancellationToken
         );
 
@@ -240,7 +237,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var request = await CreateRegistrationRequest();
         var result = await _harness.Service.ApproveRequest(
             _organisation.Id,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
         result.ShouldBeSuccess();
@@ -248,19 +245,12 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var foundValue = await _harness
             .GetClearedContext()
             .UserRegistrationRequests.Include(x => x.ApprovedByUser)
-            .Include(x => x.CreatedUser)
-            .FirstOrDefaultAsync(
-                x => x.RequestGuid == request.RequestGuid,
-                TestContext.Current.CancellationToken
-            );
+            .FirstOrDefaultAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
 
         foundValue.ShouldNotBeNull();
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Approved);
         foundValue.ApprovedAt.ShouldNotBeNull().ShouldBe(_currentTime);
         foundValue.ApprovedByUser.ShouldNotBeNull().Id.ShouldBe(_defaultUser.Id);
-        var createdUser = foundValue.CreatedUser.ShouldNotBeNull();
-        createdUser.WorkEmail.ShouldBe(request.Command.WorkEmail);
-        foundValue.CreatedUserId.ShouldBe(createdUser.Id);
     }
 
     [Fact]
@@ -271,7 +261,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             .UpdateCurrentUser(_mockUserLookup[UserRole.Standard])
             .Service.ApproveRequest(
                 _organisation.Id,
-                request.RequestGuid,
+                request.Id,
                 TestContext.Current.CancellationToken
             );
         result.ShouldBeError().ShouldBeOfType<ApproveRequestError.NotAllowed>();
@@ -287,7 +277,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             var request = await CreateRegistrationRequest();
             var result = await harness.Service.ApproveRequest(
                 _organisation.Id,
-                request.RequestGuid,
+                request.Id,
                 TestContext.Current.CancellationToken
             );
             result.ShouldBeSuccess();
@@ -302,7 +292,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             var request = await CreateRegistrationRequest(organisationOverride: otherOrg.Id);
             var result = await harness.Service.ApproveRequest(
                 otherOrg.Id,
-                request.RequestGuid,
+                request.Id,
                 TestContext.Current.CancellationToken
             );
             result.ShouldBeError().ShouldBeOfType<ApproveRequestError.NotAllowed>();
@@ -318,7 +308,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var request = await CreateRegistrationRequest();
         var result = await _harness.Service.ApproveRequest(
             _organisation.Id,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
         result.ShouldBeSuccess();
@@ -339,40 +329,12 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task ApproveRequest_WhenUserAlreadyExists_ShouldRollBackRequestApproval()
-    {
-        var request = await CreateRegistrationRequest();
-        await AddEntity(
-            new UserFaker().RuleFor(x => x.WorkEmail, _ => request.Command.WorkEmail).Generate(),
-            TestContext.Current.CancellationToken
-        );
-
-        var result = await _harness.Service.ApproveRequest(
-            _organisation.Id,
-            request.RequestGuid,
-            TestContext.Current.CancellationToken
-        );
-        result.ShouldBeError().ShouldBeOfType<ApproveRequestError.UserAlreadyExists>();
-
-        var foundValue = await _harness
-            .GetClearedContext()
-            .UserRegistrationRequests.SingleAsync(
-                x => x.RequestGuid == request.RequestGuid,
-                TestContext.Current.CancellationToken
-            );
-        foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Pending);
-        foundValue.ApprovedAt.ShouldBeNull();
-        foundValue.ApprovedByUserId.ShouldBeNull();
-        foundValue.CreatedUserId.ShouldBeNull();
-    }
-
-    [Fact]
     public async Task ApproveRequest_ShouldSendTheUserAnEmailNotifyingThemThatTheirRequestHasBeenApproved()
     {
         var request = await CreateRegistrationRequest();
         _ = await _harness.Service.ApproveRequest(
             _organisation.Id,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -390,7 +352,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var request = await CreateRegistrationRequest();
         var result = await _harness.Service.ApproveRequest(
             999,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
         result.ShouldBeError().ShouldBeOfType<ApproveRequestError.RequestNotFound>();
@@ -401,7 +363,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     {
         var result = await _harness.Service.ApproveRequest(
             _organisation.Id,
-            Guid.NewGuid(),
+            999,
             TestContext.Current.CancellationToken
         );
         result.ShouldBeError().ShouldBeOfType<ApproveRequestError.RequestNotFound>();
@@ -413,12 +375,12 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var request = await CreateRegistrationRequest();
         var resultA = await _harness.Service.ApproveRequest(
             _organisation.Id,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
         var resultB = await _harness.Service.ApproveRequest(
             _organisation.Id,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -434,23 +396,19 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var request = await CreateRegistrationRequest();
         await _harness.Service.RejectRequest(
             _organisation.Id,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
 
         var foundValue = await _harness
             .GetClearedContext()
             .UserRegistrationRequests.Include(x => x.RejectedByUser)
-            .FirstOrDefaultAsync(
-                x => x.RequestGuid == request.RequestGuid,
-                TestContext.Current.CancellationToken
-            );
+            .FirstOrDefaultAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
 
         foundValue.ShouldNotBeNull();
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Rejected);
         foundValue.RejectedAt.ShouldNotBeNull().ShouldBe(_currentTime);
         foundValue.RejectedByUser.ShouldNotBeNull().Id.ShouldBe(_defaultUser.Id);
-        foundValue.CreatedUserId.ShouldBeNull();
     }
 
     [Fact]
@@ -459,7 +417,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var request = await CreateRegistrationRequest();
         _ = await _harness.Service.RejectRequest(
             _organisation.Id,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -477,7 +435,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var request = await CreateRegistrationRequest();
         var result = await _harness.Service.RejectRequest(
             999,
-            request.RequestGuid,
+            request.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -489,7 +447,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     {
         var result = await _harness.Service.RejectRequest(
             _organisation.Id,
-            Guid.NewGuid(),
+            999,
             TestContext.Current.CancellationToken
         );
 
@@ -504,7 +462,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             .UpdateCurrentUser(_mockUserLookup[UserRole.Standard])
             .Service.RejectRequest(
                 _organisation.Id,
-                request.RequestGuid,
+                request.Id,
                 TestContext.Current.CancellationToken
             );
         result.ShouldBeError().ShouldBeOfType<RejectRequestError.NotAllowed>();
@@ -520,7 +478,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             var request = await CreateRegistrationRequest();
             var result = await harness.Service.RejectRequest(
                 _organisation.Id,
-                request.RequestGuid,
+                request.Id,
                 TestContext.Current.CancellationToken
             );
             result.ShouldBeSuccess();
@@ -535,7 +493,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             var request = await CreateRegistrationRequest(organisationOverride: otherOrg.Id);
             var result = await harness.Service.RejectRequest(
                 otherOrg.Id,
-                request.RequestGuid,
+                request.Id,
                 TestContext.Current.CancellationToken
             );
             result.ShouldBeError().ShouldBeOfType<RejectRequestError.NotAllowed>();
@@ -559,7 +517,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             modified,
             TestContext.Current.CancellationToken
         );
-        return new(result.ShouldBeSuccess().RequestGuid, originalCommand);
+        return new(result.ShouldBeSuccess().Id, originalCommand);
     }
 
     private sealed class RegisterUserCommandDtoFaker : Faker<RegisterUserCommandDto>
@@ -572,5 +530,5 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         }
     }
 
-    private sealed record RegistrationContext(Guid RequestGuid, RegisterUserCommandDto Command);
+    private sealed record RegistrationContext(int Id, RegisterUserCommandDto Command);
 }
