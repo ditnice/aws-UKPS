@@ -18,7 +18,7 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@/client/generated', async (importOriginal) => {
-  const original = await importOriginal
+  const original = await importOriginal<typeof import('@/client/generated')>()
   return { ...original, createRecord: mocks.createRecord }
 })
 
