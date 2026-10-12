@@ -2788,7 +2788,7 @@
         "tags": [
           "UserRegistration"
         ],
-        "summary": "Retrieves the details of a user by their unique identifier.",
+        "summary": "Retrieves a membership request by its public identifier",
         "operationId": "GetUserRegistrationById",
         "parameters": [
           {
@@ -2804,7 +2804,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "The unique identifier of the user to retrieve.",
+            "description": "The unique identifier of the membership request to retrieve.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -2814,7 +2814,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The user's details were successfully retrieved.",
+            "description": "The membership request's details were successfully retrieved.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -5547,7 +5547,7 @@
               "null",
               "integer"
             ],
-            "description": "The optional lasted active registration request associated with the user.",
+            "description": "Gets the public identifier of the latest active membership request, if available.",
             "format": "int32"
           },
           "emailAddress": {

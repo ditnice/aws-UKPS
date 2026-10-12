@@ -1359,7 +1359,7 @@ export type UserListItemDto = {
      */
     userId: null | number;
     /**
-     * The optional lasted active registration request associated with the user.
+     * Gets the public identifier of the latest active membership request, if available.
      */
     registrationRequestId: null | number;
     /**
@@ -2512,7 +2512,7 @@ export type GetUserRegistrationByIdData = {
          */
         organisationId: number;
         /**
-         * The unique identifier of the user to retrieve.
+         * The unique identifier of the membership request to retrieve.
          */
         id: number;
     };
@@ -2539,7 +2539,7 @@ export type GetUserRegistrationByIdError = GetUserRegistrationByIdErrors[keyof G
 
 export type GetUserRegistrationByIdResponses = {
     /**
-     * The user's details were successfully retrieved.
+     * The membership request's details were successfully retrieved.
      */
     200: RegisterUserConfirmationDto;
 };

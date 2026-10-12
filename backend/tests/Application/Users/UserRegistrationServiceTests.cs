@@ -245,12 +245,16 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var foundValue = await _harness
             .GetClearedContext()
             .UserRegistrationRequests.Include(x => x.ApprovedByUser)
+            .Include(x => x.CreatedUser)
             .FirstOrDefaultAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
 
         foundValue.ShouldNotBeNull();
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Approved);
         foundValue.ApprovedAt.ShouldNotBeNull().ShouldBe(_currentTime);
         foundValue.ApprovedByUser.ShouldNotBeNull().Id.ShouldBe(_defaultUser.Id);
+        var createdUser = foundValue.CreatedUser.ShouldNotBeNull();
+        createdUser.WorkEmail.ShouldBe(request.Command.WorkEmail);
+        foundValue.CreatedUserId.ShouldBe(createdUser.Id);
     }
 
     [Fact]
@@ -326,6 +330,34 @@ public class UserRegistrationServiceTests : DatabaseTestBase
 
         membership.Status.ShouldBe(UserOrgMembershipStatus.AwaitingSetup);
         membership.OrganisationId.ShouldBe(_organisation.Id);
+    }
+
+    [Fact]
+    public async Task ApproveRequest_WhenUserAlreadyExists_ShouldRollBackRequestApproval()
+    {
+        var request = await CreateRegistrationRequest();
+        await AddEntity(
+            new UserFaker().RuleFor(x => x.WorkEmail, _ => request.Command.WorkEmail).Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        var result = await _harness.Service.ApproveRequest(
+            _organisation.Id,
+            request.Id,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<ApproveRequestError.UserAlreadyExists>();
+
+        var foundValue = await _harness
+            .GetClearedContext()
+            .UserRegistrationRequests.SingleAsync(
+                x => x.Id == request.Id,
+                TestContext.Current.CancellationToken
+            );
+        foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Pending);
+        foundValue.ApprovedAt.ShouldBeNull();
+        foundValue.ApprovedByUserId.ShouldBeNull();
+        foundValue.CreatedUserId.ShouldBeNull();
     }
 
     [Fact]
@@ -409,6 +441,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Rejected);
         foundValue.RejectedAt.ShouldNotBeNull().ShouldBe(_currentTime);
         foundValue.RejectedByUser.ShouldNotBeNull().Id.ShouldBe(_defaultUser.Id);
+        foundValue.CreatedUserId.ShouldBeNull();
     }
 
     [Fact]

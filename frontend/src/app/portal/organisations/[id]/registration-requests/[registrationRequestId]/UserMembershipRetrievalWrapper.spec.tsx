@@ -25,8 +25,11 @@ vi.mock('@/client/server-api', () => ({
 
 const testData: RegisterUserConfirmationDto = {
   id: 3,
+  organisationName: 'Test organisation',
+  fullName: 'Test user',
+  phoneNumber: '07845796823',
   workEmail: 'example@email.com',
-} as RegisterUserConfirmationDto
+}
 
 afterEach(cleanup)
 
@@ -72,7 +75,7 @@ describe('UserMembershipRetrievalWrapper', () => {
       ...args,
     })
     expect(mockGetMembership).toHaveBeenCalledExactlyOnceWith({
-      path: { organisationId: args.organisationId, id: args.registrationRequestId },
+      path: args,
     })
   })
   it('calls notfound when the response is not found', async () => {

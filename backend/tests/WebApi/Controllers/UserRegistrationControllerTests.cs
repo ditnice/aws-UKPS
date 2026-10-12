@@ -345,14 +345,12 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     )
     {
         using StringContent stringContent = new StringContent(string.Empty);
-        return await _client.PatchAsync(
-            new Uri(
-                $"{CreateBasedUrl(organisationId, registrationRequestId)}/approve",
-                UriKind.Relative
-            ),
-            stringContent,
-            TestContext.Current.CancellationToken
+        var uri = new Uri(
+            $"{CreateBasedUrl(organisationId, registrationRequestId)}/approve",
+            UriKind.Relative
         );
+
+        return await _client.PatchAsync(uri, stringContent, TestContext.Current.CancellationToken);
     }
 
     private async Task<HttpResponseMessage> SendRejectRequest(
