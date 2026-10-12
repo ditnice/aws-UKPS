@@ -46,19 +46,20 @@ internal sealed class MedicinesLaboratoryTesting
     /// <summary>What genomic alterations determine patient eligibility?</summary>
     public string? GenomicAlterations { get; set; }
 
-    public string? GenomicTestUsedInTrials { get; set; }
-    public string? GenomicTestSpecificitySensitivity { get; set; }
-    public string? GenomicTestNotes { get; set; }
-
-    /// <summary>Conditional on DiagnosticTestRequired = Yes.</summary>
-    public GenomicTestMandatoryStatus? GenomicTestMandatoryStatus { get; set; }
-
     /// <summary>
     /// Additional genomic factors that affect treatment selection or sequencing
     /// beyond the primary eligibility alteration.
     /// Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
     public string? AdditionalGenomicFactors { get; set; }
+
+    public string? GenomicTestUsedInTrials { get; set; }
+    public string? GenomicTestSpecificitySensitivity { get; set; }
+
+    /// <summary>Conditional on DiagnosticTestRequired = Yes.</summary>
+    public GenomicTestMandatoryStatus? GenomicTestMandatoryStatus { get; set; }
+
+    public string? GenomicTestNotes { get; set; }
 
     /// <summary>
     /// Tests needed to monitor response to treatment beyond current NHS practice.

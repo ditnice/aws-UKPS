@@ -1,6 +1,6 @@
 import {
   GetRecordsQuerySortValue,
-  RecordStatus,
+  RecordDisplayStatus,
   RecordType,
   SortDirection,
   UpdateStatus,
@@ -14,7 +14,7 @@ type Filter = (
   | { key: 'search'; value: string }
   | {
       key: 'record-status'
-      value: RecordStatus
+      value: RecordDisplayStatus
     }
   | { key: 'update-status'; value: UpdateStatus }
 ) & { label: string }
@@ -33,7 +33,7 @@ export type OrganisationRecordsSearchParams = {
 export type RecordsQuery = {
   search?: string
   recordType?: Array<RecordType>
-  recordStatus?: Array<RecordStatus>
+  recordStatus?: Array<RecordDisplayStatus>
   updateStatus?: UpdateStatus
   page?: number
   pageSize?: number
@@ -79,7 +79,7 @@ export const parseQueryFromSearchParams = (
 ): RecordsQuery => {
   return {
     search: searchParams.search,
-    recordStatus: parseMulti(searchParams.recordStatus, Object.values(RecordStatus)),
+    recordStatus: parseMulti(searchParams.recordStatus, Object.values(RecordDisplayStatus)),
     updateStatus: Object.values(UpdateStatus).includes(searchParams.updateStatus as UpdateStatus)
       ? (searchParams.updateStatus as UpdateStatus)
       : undefined,

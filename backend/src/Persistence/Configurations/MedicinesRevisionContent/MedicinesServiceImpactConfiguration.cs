@@ -13,7 +13,6 @@ internal sealed class MedicinesServiceImpactConfiguration
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.NhsServiceChangesRequired);
         builder.Property(x => x.HandlingStorageRequirements);
-        builder.Property(x => x.CompassionateAccessAvailable);
 
         builder
             .HasIndex(x => x.RevisionId)

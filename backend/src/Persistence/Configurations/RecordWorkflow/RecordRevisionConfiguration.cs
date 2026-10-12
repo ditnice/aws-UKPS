@@ -16,11 +16,6 @@ internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<Rec
         builder.Property(x => x.SubmittedAt).HasColumnType("timestamptz");
 
         builder
-            .HasIndex(x => new { x.RecordId, x.RevisionNo })
-            .IsUnique()
-            .HasDatabaseName("ix_record_revision_record_id_revision_no");
-
-        builder
             .HasOne(x => x.Record)
             .WithMany(x => x.Revisions)
             .HasForeignKey(x => x.RecordId)

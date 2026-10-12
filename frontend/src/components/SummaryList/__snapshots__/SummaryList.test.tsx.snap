@@ -39,6 +39,35 @@ exports[`SummaryList > adds hidden context to a row action child 1`] = `
 </DocumentFragment>
 `;
 
+exports[`SummaryList > renders a title as a heading above the list 1`] = `
+<DocumentFragment>
+  <h4
+    class="_summary-list__title_1509a2"
+  >
+    Indication details
+  </h4>
+  <dl
+    class="_summary-list_1509a2"
+    data-component="summary-list"
+  >
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Indication
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        Early rheumatoid arthritis
+      </dd>
+    </div>
+  </dl>
+</DocumentFragment>
+`;
+
 exports[`SummaryList > renders row children as a description list and ignores empty children 1`] = `
 <DocumentFragment>
   <dl

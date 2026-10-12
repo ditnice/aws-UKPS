@@ -12,6 +12,7 @@ using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Records;
@@ -35,24 +36,15 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         Func<CreateRecordCommand, CreateRecordCommand>
     > _invalidCreateRecordCommandModifiers = new(StringComparer.Ordinal)
     {
-        ["DevelopmentNames empty"] = x => x with { DevelopmentNames = [] },
-        ["DevelopmentNames null"] = x => x with { DevelopmentNames = null! },
-        ["DevelopmentNames empty item"] = x => x with { DevelopmentNames = [""] },
-        ["DevelopmentNames whitespace item"] = x => x with { DevelopmentNames = ["   "] },
-        ["DevelopmentNames duplicate items"] = x =>
-            x with
-            {
-                DevelopmentNames = ["not-distinct", "not-distinct"],
-            },
-        ["DevelopmentNames duplicate items differing by case"] = x =>
-            x with
-            {
-                DevelopmentNames = ["not-distinct", "NOT-DISTINCT"],
-            },
+        ["CompanyCode empty"] = x => x with { CompanyCode = "" },
+        ["CompanyCode null"] = x => x with { CompanyCode = null! },
+        ["CompanyCode whitespace"] = x => x with { CompanyCode = "   " },
         ["GenericNames empty"] = x => x with { GenericNames = [] },
         ["GenericNames null"] = x => x with { GenericNames = null! },
         ["GenericNames empty item"] = x => x with { GenericNames = [""] },
         ["GenericNames whitespace item"] = x => x with { GenericNames = ["\n\n"] },
+        ["OtherIdentifiers empty item"] = x => x with { OtherIdentifiers = [""] },
+        ["OtherIdentifiers whitespace item"] = x => x with { OtherIdentifiers = ["   "] },
         ["GenericNames duplicate items"] = x =>
             x with
             {
@@ -75,6 +67,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         new(_invalidCreateRecordCommandModifiers.Keys);
 
     private readonly IRecordService _mockRecordService = Substitute.For<IRecordService>();
+    private readonly IRecordViewService _mockRecordViewService =
+        Substitute.For<IRecordViewService>();
     private readonly IRecordCreationService _mockRecordCreationService =
         Substitute.For<IRecordCreationService>();
     private readonly HttpClient _client;
@@ -96,6 +90,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                 {
                     services.RemoveAll<IRecordService>();
                     services.AddSingleton(_mockRecordService);
+                    services.RemoveAll<IRecordViewService>();
+                    services.AddSingleton(_mockRecordViewService);
                     services.RemoveAll<IRecordCreationService>();
                     services.AddSingleton(_mockRecordCreationService);
                 });
@@ -259,7 +255,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .CreateRecord(
                 Arg.Is<CreateRecordCommand>(x =>
                     x.OrganisationId == command.OrganisationId
-                    && x.DevelopmentNames.SequenceEqual(command.DevelopmentNames)
+                    && x.CompanyCode == command.CompanyCode
+                    && x.OtherIdentifiers.SequenceEqual(command.OtherIdentifiers)
                     && x.BrandedName == command.BrandedName
                     && x.GenericNames.SequenceEqual(command.GenericNames)
                     && x.RecordTitle == command.RecordTitle
@@ -357,6 +354,111 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .CreateRecord(Arg.Any<CreateRecordCommand>(), Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task GetRecord_ReturnsOk_WhenRecordExists()
+    {
+        MedicineRecordDto expected = new()
+        {
+            RecordId = 1,
+            OrganisationId = OrganisationId,
+            RecordStatus = RecordStatus.Published,
+            DisplayStatus = RecordDisplayStatus.Draft,
+            RevisionId = 3,
+            RecordClinicalTrials = [],
+        };
+        _mockRecordViewService
+            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDto, GetRecordError>.Ok(expected));
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RecordDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        var record = content.ShouldBeOfType<MedicineRecordDto>();
+        record.RecordId.ShouldBe(expected.RecordId);
+        record.OrganisationId.ShouldBe(expected.OrganisationId);
+        record.RecordStatus.ShouldBe(expected.RecordStatus);
+        record.DisplayStatus.ShouldBe(expected.DisplayStatus);
+        record.RevisionId.ShouldBe(expected.RevisionId);
+    }
+
+    [Fact]
+    public async Task GetRecord_ReturnsNotFound_WhenRecordNotFound()
+    {
+        _mockRecordViewService
+            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotFound(1)));
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetRecord_ReturnsNotFound_WhenRecordTypeDoesNotMatch()
+    {
+        _mockRecordViewService
+            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RecordDto, GetRecordError>.Err(
+                    new GetRecordError.RecordTypeMismatch(
+                        1,
+                        RecordType.Medicine,
+                        RecordType.Vaccine
+                    )
+                )
+            );
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetRecord_ReturnsForbidden_WhenNotAllowed()
+    {
+        _mockRecordViewService
+            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("?recordType=")]
+    [InlineData("?recordType=Banana")]
+    [InlineData("?recordType=5")]
+    public async Task GetRecord_ReturnsBadRequest_WhenRecordTypeMissingOrInvalid(string query)
+    {
+        var response = await _client.GetAsync(
+            new Uri($"/records/1{query}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await _mockRecordViewService
+            .DidNotReceiveWithAnyArgs()
+            .GetRecord(default, default, TestContext.Current.CancellationToken);
+    }
+
     private static Uri AppendQueryParams(string url, GetRecordsQueryDto query)
     {
         var queryParams = new List<string>
@@ -367,8 +469,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             $"sortDirection={Uri.EscapeDataString(query.SortDirection.ToString())}",
         };
 
-        foreach (var status in query.RecordStatus)
-            queryParams.Add($"recordStatus={Uri.EscapeDataString(status.ToString())}");
+        foreach (var status in query.DisplayStatus)
+            queryParams.Add($"displayStatus={Uri.EscapeDataString(status.ToString())}");
 
         foreach (var type in query.RecordType)
             queryParams.Add($"recordType={Uri.EscapeDataString(type.ToString())}");
@@ -406,9 +508,10 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                 {
                     Id = 1,
                     RecordType = RecordType.Medicine,
-                    RecordStatus = RecordStatus.Active,
+                    RecordStatus = RecordStatus.Published,
+                    DisplayStatus = RecordDisplayStatus.Draft,
                     Title = "Test Record",
-                    DevelopmentName = null,
+                    CompanyCode = "ABC-123",
                     ReviewedAt = null,
                 },
             ],
@@ -432,7 +535,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             actualItem.RecordType.ShouldBe(expectedItem.RecordType);
             actualItem.RecordStatus.ShouldBe(expectedItem.RecordStatus);
             actualItem.Title.ShouldBe(expectedItem.Title);
-            actualItem.DevelopmentName.ShouldBe(expectedItem.DevelopmentName);
+            actualItem.CompanyCode.ShouldBe(expectedItem.CompanyCode);
             actualItem.ReviewedAt.ShouldBe(expectedItem.ReviewedAt);
         }
     }
@@ -446,8 +549,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             RuleFor(x => x.SortBy, f => f.PickRandom<GetRecordsQuerySortValue>());
             RuleFor(x => x.SortDirection, f => f.PickRandom<SortDirection>());
             RuleFor(
-                x => x.RecordStatus,
-                f => f.Make(f.Random.Int(0, 3), () => f.PickRandom<RecordStatus>())
+                x => x.DisplayStatus,
+                f => f.Make(f.Random.Int(0, 3), () => f.PickRandom<RecordDisplayStatus>())
             );
             RuleFor(
                 x => x.RecordType,

@@ -1,6 +1,7 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
+using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -130,6 +131,22 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             );
         entity.ShouldNotBeNull();
         entity.CreatedAt.ShouldBe(_currentTime);
+    }
+
+    [Fact]
+    public async Task RegisterUser_ShouldSendEmail()
+    {
+        RegisterUserCommandDto registerUserCommandDto = _registerUserCommandDtoFaker.Generate();
+
+        var result = await _harness.Service.RegisterUser(
+            _organisation.Id,
+            registerUserCommandDto,
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Emails.Sent.Single().ShouldBeOfType<UserRegisterEmail>();
     }
 
     [Fact]
@@ -359,8 +376,11 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
+        _harness.Emails.Sent.Count.ShouldBe(2);
+        _harness.Emails.Sent.First().ShouldBeOfType<UserRegisterEmail>();
         _harness
-            .Emails.Sent.ShouldHaveSingleItem()
+            .Emails.Sent.Skip(1)
+            .First()
             .ShouldBeOfType<UserMembershipRequestApprovedNotificationEmail>();
     }
 
@@ -405,7 +425,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         resultA.ShouldBeSuccess();
         resultB.ShouldBeSuccess();
 
-        _harness.Emails.Sent.Count.ShouldBe(1);
+        _harness.Emails.Sent.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -443,8 +463,11 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
+        _harness.Emails.Sent.Count.ShouldBe(2);
+        _harness.Emails.Sent.First().ShouldBeOfType<UserRegisterEmail>();
         _harness
-            .Emails.Sent.ShouldHaveSingleItem()
+            .Emails.Sent.Skip(1)
+            .First()
             .ShouldBeOfType<UserMembershipRequestRejectedNotificationEmail>();
     }
 

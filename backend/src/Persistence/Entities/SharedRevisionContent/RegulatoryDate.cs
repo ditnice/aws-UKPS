@@ -15,9 +15,6 @@ internal sealed class RegulatoryDate
     /// <summary>True for all estimated precision dates.</summary>
     public bool IsConfidential { get; set; }
 
-    /// <summary>Relevant only for uk_licence and intl_licence events.</summary>
-    public YesNoUnknown? ConditionalApprovalAnticipated { get; set; }
-
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
 }
