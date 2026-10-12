@@ -1753,6 +1753,10 @@ export type PostAuthVerifyMfaErrors = {
      * verification could not be completed.
      */
     400: ProblemDetails;
+    /**
+     * The multi-factor authentication onboarding record was not found.
+     */
+    404: ProblemDetails;
 };
 
 export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerifyMfaErrors];

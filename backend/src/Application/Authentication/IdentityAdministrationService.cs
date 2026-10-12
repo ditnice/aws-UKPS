@@ -128,15 +128,20 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord =
-            await _appDbContext
-                .UserOnboardingRecords.Include(x => x.ResultingUser)
-                    .ThenInclude(x => x!.UserOrgMemberships)
-                .FirstOrDefaultAsync(
-                    x => x.SetupToken == command.SetupToken,
-                    cancellationToken: cancellationToken
-                )
-            ?? throw new InvalidOperationException();
+        UserOnboardingRecord? userRecord = await _appDbContext
+            .UserOnboardingRecords.Include(x => x.ResultingUser)
+                .ThenInclude(x => x!.UserOrgMemberships)
+            .FirstOrDefaultAsync(
+                x => x.SetupToken == command.SetupToken,
+                cancellationToken: cancellationToken
+            );
+
+        if (userRecord is null)
+        {
+            return VerifyMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.DoesNotExist()
+            );
+        }
 
         try
         {

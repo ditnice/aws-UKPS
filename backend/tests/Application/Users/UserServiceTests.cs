@@ -1791,12 +1791,42 @@ public class UserServiceTests : DatabaseTestBase
         unchangedRecord.CreatedByUserId.ShouldBe(caller.Id);
     }
 
-    private async Task<UserOnboardingRecord> AddOnboardingRecordCreatedBy(
-        int createdByUserId,
-        bool consumed = false
+    [Theory]
+    [InlineData(UserOrgStatus.AwaitingSetup, false)]
+    [InlineData(UserOrgStatus.Active, true)]
+    public async Task RemoveUser_ShouldDeleteTheTargetsOnboardingRecord(
+        UserOrgStatus status,
+        bool consumed
     )
     {
-        User owner = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
+        User caller = await AddCallerUser();
+        (User target, _) = await AddUserWithMembership(status: (UserOrgMembershipStatus)status);
+        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(
+            caller.Id,
+            consumed,
+            target.Id
+        );
+
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        result.ShouldBeSuccess();
+        (
+            await Context.UserOnboardingRecords.AnyAsync(
+                x => x.SetupToken == onboardingRecord.SetupToken,
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldBeFalse();
+    }
+
+    private async Task<UserOnboardingRecord> AddOnboardingRecordCreatedBy(
+        int createdByUserId,
+        bool consumed = false,
+        int? resultingUserId = null
+    )
+    {
+        int ownerId =
+            resultingUserId
+            ?? (await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken)).Id;
         var record = new UserOnboardingRecord
         {
             SetupToken = Guid.NewGuid(),
@@ -1804,7 +1834,7 @@ public class UserServiceTests : DatabaseTestBase
             CreatedAt = _currentDateTime.AddDays(-1),
             CreatedByUserId = createdByUserId,
             ResendCount = 2,
-            ResultingUserId = owner.Id,
+            ResultingUserId = ownerId,
         };
         if (consumed)
         {
@@ -2054,7 +2084,10 @@ public class UserServiceTests : DatabaseTestBase
         string originalName = request.FullName;
         string originalEmail = request.WorkEmail;
         string originalPhone = request.PhoneNumber;
-        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(target.Id);
+        UserOnboardingRecord onboardingRecord = await AddOnboardingRecordCreatedBy(
+            caller.Id,
+            resultingUserId: target.Id
+        );
         _harness
             .Cognito.Mock.WhenForAnyArgs(x => x.AdminDeleteUserAsync(default!, default!))
             .Throws(new TooManyRequestsException("Rate exceeded"));

@@ -574,7 +574,6 @@ internal partial class UserService(
             }
 
             await AnonymiseUserAndAuditHistory(user, currentUser, cancellationToken);
-
             // A Cognito failure rolls back the DB changes. If deletion succeeds but commit fails,
             // DB changes roll back and retry tolerates the absent Cognito user. Committing first
             // blocks endpoint retries because Removed is terminal; reordering needs durable retries.
@@ -605,6 +604,15 @@ internal partial class UserService(
             )
             .SingleOrDefaultAsync(cancellationToken);
         registrationRequest?.Anonymise(user.Id);
+
+        UserOnboardingRecord? onboardingRecord = await dbContext
+            .UserOnboardingRecords.Where(x => x.ResultingUserId == user.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (onboardingRecord is not null)
+        {
+            dbContext.UserOnboardingRecords.Remove(onboardingRecord);
+        }
 
         await AddUserRemovedAudit(user.Id, currentUser, now, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);

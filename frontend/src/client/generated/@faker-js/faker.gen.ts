@@ -972,6 +972,8 @@ export const fakePostAuthVerifyMfaResponse200 = (): PostAuthVerifyMfaResponses[2
 
 export const fakePostAuthVerifyMfaResponse400 = (options?: Options): PostAuthVerifyMfaErrors[400] => fakeProblemDetails(options);
 
+export const fakePostAuthVerifyMfaResponse404 = (options?: Options): PostAuthVerifyMfaErrors[404] => fakeProblemDetails(options);
+
 export const fakeGetCurrentUserOrganisationsResponse200 = (options?: Options): GetCurrentUserOrganisationsResponses[200] => {
     const f = options?.faker ?? faker;
     return f.helpers.multiple(() => fakeOrganisationListDto(options));
