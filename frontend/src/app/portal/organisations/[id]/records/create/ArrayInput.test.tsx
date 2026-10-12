@@ -41,6 +41,14 @@ const getInputByLabelText = (labelText: string): HTMLInputElement => {
 afterEach(cleanup)
 
 describe('ArrayInput', () => {
+  it('renders without React prop warnings when there is no field error', () => {
+    const consoleError = vi.spyOn(console, 'error')
+
+    renderComponent()
+
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+
   it('should render', () => {
     renderComponent()
 
