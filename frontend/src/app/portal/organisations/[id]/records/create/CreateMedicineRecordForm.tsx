@@ -126,7 +126,8 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
             labelPrefix="Other names and identifiers (optional)"
             hint="Enter any other development names, synonyms, or identifiers that you want to associate with this product."
             addItemLabel="Add another identifier"
-            removeItemLabel="Remove identifier"
+            removeItemLabel="Remove additional identifier"
+            allowRemoveFirstItem
             width={inputWidth}
             field={field}
             getSubfield={(name, renderInputs) => (
@@ -155,19 +156,23 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
           )
         }}
       </form.Field>
-      <h2>Active substance</h2>
       <form.Field name="genericNames" mode="array">
         {(field) => (
           <ArrayInput
             labelPrefix="Generic name"
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
             addItemLabel="Add another active substance"
-            removeItemLabel="Remove active substance"
+            removeItemLabel="Remove additional active substance"
             allowRemoveFirstItem
             width={inputWidth}
             field={field}
             getSubfield={(name, renderInputs) => (
-              <form.Field name={name}>{renderInputs}</form.Field>
+              <form.Field
+                name={name}
+                validators={{ onDynamic: createRecordCommandSchema.shape.genericNames.element }}
+              >
+                {renderInputs}
+              </form.Field>
             )}
           />
         )}

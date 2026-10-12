@@ -75,8 +75,7 @@ const ArrayInput = <T extends string>({
   const errorMessage = getFieldErrorMessage(field.state.meta.errors)
   return (
     <FormGroup>
-      {/* FormGroup clones each child, so empty slots must be elements rather than null */}
-      {errorMessage ? <ErrorState>{errorMessage}</ErrorState> : <></>}
+      <OptionalErrorState>{errorMessage}</OptionalErrorState>
       {field.state.value.map((_, i) => {
         const subfieldName = `${field.name}[${i}]` as const
         const canRemoveItem = i > 0 || (allowRemoveFirstItem && field.state.value.length > 1)
