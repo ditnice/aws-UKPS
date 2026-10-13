@@ -92,13 +92,13 @@ repos:
         files: ^frontend/.*\.(css|scss)$
         pass_filenames: false
 
-      # TODO - to be uncommented once development starts
-      # - id: frontend-fallow
-      #   name: Fallow dead-code check (frontend)
-      #   language: system
-      #   entry: bash -c 'cd frontend && pnpm fallow'
-      #   files: ^frontend/.*\.(js|jsx|ts|tsx|mjs)$
-      #   pass_filenames: false
+      - id: frontend-fallow
+        name: Fallow dead-code check (frontend)
+        language: system
+        entry: bash -c 'cd frontend && pnpm fallow'
+        # Run even for deletion-only commits; analyze the complete dependency graph.
+        always_run: true
+        pass_filenames: false
 
   # Backend
   - repo: local

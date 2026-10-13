@@ -1,4 +1,50 @@
 {
-  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "ignorePatterns": ["src/app/(payload)/**"]
+  "$schema": "./node_modules/fallow/schema.json",
+  "minimumVersion": "3.31.0",
+  "entry": ["src/payload.config.ts", "openapi-ts.config.ts"],
+  "ignoreFindings": ["src/client/generated/**", "src/payload-types.ts", "src/migrations/**"],
+  "ignoreDependencies": ["payload", "@payloadcms/*"],
+  "ignoreExports": [
+    { "file": "next.config.ts", "exports": ["default"] },
+    { "file": "openapi-ts.config.ts", "exports": ["default"] },
+    { "file": "playwright.config.ts", "exports": ["default"] }
+  ],
+  "overrides": [{ "files": ["**/*.module.scss"], "rules": { "unused-exports": "off" } }],
+  "includeEntryExports": true,
+  "rules": {
+    "unresolved-imports": "error",
+    "unlisted-dependencies": "error",
+    "unused-files": "error",
+    "unused-dependencies": "error",
+    "unused-exports": "error",
+    "unused-types": "error",
+    "unused-server-actions": "error",
+    "invalid-client-export": "error",
+    "misplaced-directive": "error",
+    "mixed-client-server-barrel": "warn",
+    "boundary-violation": "off",
+    "policy-violation": "off",
+    "complexity-cyclomatic": "warn",
+    "complexity-cognitive": "warn",
+    "complexity-crap": "warn"
+  },
+  "health": {
+    "ignore": [
+      "src/app/(payload)/**",
+      "src/client/generated/**",
+      "src/payload-types.ts",
+      "src/migrations/**"
+    ]
+  },
+  "duplicates": {
+    "ignore": [
+      "src/app/(payload)/**",
+      "src/client/generated/**",
+      "src/payload-types.ts",
+      "src/migrations/**"
+    ],
+    "threshold": 0
+  },
+  "audit": { "gate": "new-only" },
+  "production": false
 }
