@@ -1,7 +1,7 @@
 namespace UKPS.Api.Persistence.Enums;
 
 /// <summary>
-/// Defines the actions that can be performed on a user's membership.
+/// Defines the actions that can be performed on a user or their membership.
 /// </summary>
 public enum UserMembershipAction
 {
@@ -29,4 +29,9 @@ public enum UserMembershipAction
     /// Allows the user's role to be edited.
     /// </summary>
     EditUserRole = 4,
+
+    /// <summary>
+    /// Removes the user globally across all organisations. Only Super users may perform it.
+    /// </summary>
+    RemoveUser = 5,
 }

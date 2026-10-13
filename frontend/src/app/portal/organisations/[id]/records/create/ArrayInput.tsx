@@ -70,53 +70,55 @@ const ArrayInput = <T extends string>({
   const errorMessage = getFieldErrorMessage(field.state.meta.errors)
   return (
     <FormGroup>
-      {/* FormGroup clones each child, so empty slots must be elements rather than null */}
-      {errorMessage ? <ErrorState>{errorMessage}</ErrorState> : <></>}
-      {field.state.value.map((_, i) => {
-        const subfieldName = `${field.name}[${i}]` as const
-        return (
-          <div key={i}>
-            {getSubfield(subfieldName, (subfield) => {
-              const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
-              return (
-                <Input
-                  error={Boolean(errorMessage)}
-                  errorMessage={errorMessage}
-                  label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
-                  className={styles.multiValuesInput}
-                  name={subfield.name}
-                  onBlur={subfield.handleBlur}
-                  value={subfield.state.value}
-                  hint={i === 0 ? hint : undefined}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                    subfield.handleChange(event.target.value)
-                    field.setMeta(clearFormApiErrors())
-                  }}
-                  width={width}
-                />
-              )
-            })}
-            {i > 0 && (
-              <Button
-                data-testid={`remove-button-${i}`}
-                type="button"
-                variant="secondary"
-                onClick={() => field.removeValue(i)}
-              >
-                {removeItemLabel} <span className="visually-hidden">{i + 1}</span>
-              </Button>
-            )}
-          </div>
-        )
-      })}
-      <Button
-        data-testid="add-item-button"
-        type="button"
-        variant="secondary"
-        onClick={() => field.pushValue('')}
-      >
-        {addItemLabel}
-      </Button>
+      {/* FormGroup clones direct children; keep conditional content inside a DOM element. */}
+      <div>
+        {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
+        {field.state.value.map((_, i) => {
+          const subfieldName = `${field.name}[${i}]` as const
+          return (
+            <div key={i}>
+              {getSubfield(subfieldName, (subfield) => {
+                const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
+                return (
+                  <Input
+                    error={Boolean(errorMessage)}
+                    errorMessage={errorMessage}
+                    label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
+                    className={styles.multiValuesInput}
+                    name={subfield.name}
+                    onBlur={subfield.handleBlur}
+                    value={subfield.state.value}
+                    hint={i === 0 ? hint : undefined}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      subfield.handleChange(event.target.value)
+                      field.setMeta(clearFormApiErrors())
+                    }}
+                    width={width}
+                  />
+                )
+              })}
+              {i > 0 && (
+                <Button
+                  data-testid={`remove-button-${i}`}
+                  type="button"
+                  variant="secondary"
+                  onClick={() => field.removeValue(i)}
+                >
+                  {removeItemLabel} <span className="visually-hidden">{i + 1}</span>
+                </Button>
+              )}
+            </div>
+          )
+        })}
+        <Button
+          data-testid="add-item-button"
+          type="button"
+          variant="secondary"
+          onClick={() => field.pushValue('')}
+        >
+          {addItemLabel}
+        </Button>
+      </div>
     </FormGroup>
   )
 }

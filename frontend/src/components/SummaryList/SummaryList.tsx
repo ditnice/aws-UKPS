@@ -29,6 +29,9 @@ type ValidSummaryListRow = ReactElement<InternalSummaryListRowProps> | boolean |
 type SummaryListProps = {
   children: ValidSummaryListRow | readonly ValidSummaryListRow[]
   className?: string
+  title?: ReactNode
+  /* Defaults to 4. */
+  titleHeadingLevel?: 2 | 3 | 4 | 5 | 6
   variant?: SummaryListVariant
 }
 
@@ -86,7 +89,13 @@ export function SummaryListRow({
   )
 }
 
-export function SummaryList({ children, className, variant = 'default' }: SummaryListProps) {
+export function SummaryList({
+  children,
+  className,
+  title,
+  titleHeadingLevel = 4,
+  variant = 'default',
+}: SummaryListProps) {
   const rows = Children.toArray(children).filter(
     (child): child is ReactElement<InternalSummaryListRowProps> => isValidElement(child),
   )
@@ -97,9 +106,21 @@ export function SummaryList({ children, className, variant = 'default' }: Summar
     className,
   )
 
-  return (
+  const TitleHeading = `h${titleHeadingLevel}` as const
+  const list = (
     <dl className={rootClassName} data-component="summary-list">
       {rows.map((row) => cloneElement(row, { listHasActions: hasActions, variant }))}
     </dl>
+  )
+
+  if (!title) {
+    return list
+  }
+
+  return (
+    <>
+      <TitleHeading className={styles['summary-list__title']}>{title}</TitleHeading>
+      {list}
+    </>
   )
 }

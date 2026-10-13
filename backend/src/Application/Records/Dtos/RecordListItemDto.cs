@@ -23,14 +23,19 @@ public sealed record RecordListItemDto
     public required RecordStatus RecordStatus { get; init; }
 
     /// <summary>
+    /// Gets the status shown to users for the record.
+    /// </summary>
+    public required RecordDisplayStatus DisplayStatus { get; init; }
+
+    /// <summary>
     /// Gets the human-readable record title.
     /// </summary>
     public required string Title { get; init; }
 
     /// <summary>
-    /// Gets the development name of the active substance, when available.
+    /// Gets the company code.
     /// </summary>
-    public string? DevelopmentName { get; init; }
+    public required string CompanyCode { get; init; }
 
     /// <summary>
     /// Gets the date the record was last reviewed, when available.

@@ -130,32 +130,33 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task CreateRecord_OnValidCommand_ShouldCreateMedicineProductDetails()
+    public async Task CreateRecord_OnValidCommand_ShouldCreateRecordProductDetails()
     {
         var context = _harness.GetClearedContext();
-        var medicinesProductDetail = await context
-            .MedicinesProductDetails.Include(x => x.ActiveSubstances)
+        var recordProductDetail = await context
+            .RecordProductDetails.Include(x => x.NamesAndIdentifiers)
             .FirstOrDefaultAsync(x => x.RevisionId == _validResponse.RevisionId, Ct);
 
-        medicinesProductDetail.ShouldNotBeNull();
-        medicinesProductDetail.RecordTitle.ShouldBe(_validCommand.RecordTitle);
-        medicinesProductDetail.BrandedName.ShouldBe(_validCommand.BrandedName);
+        recordProductDetail.ShouldNotBeNull();
+        recordProductDetail.RecordTitle.ShouldBe(_validCommand.RecordTitle);
+        recordProductDetail.BrandedName.ShouldBe(_validCommand.BrandedName);
+        recordProductDetail.CompanyCode.ShouldBe(_validCommand.CompanyCode);
 
         foreach (var genericName in _validCommand.GenericNames.Enumerate())
         {
-            medicinesProductDetail.ActiveSubstances.ShouldContain(x =>
+            recordProductDetail.NamesAndIdentifiers.ShouldContain(x =>
                 x.Name == genericName.Value
-                && x.DisplayOrder == genericName.Index
-                && x.NameType == SubstanceNameType.GenericName
+                && x.DisplayOrder == genericName.Index + 1
+                && x.NameType == NameAndIdentifierType.GenericName
             );
         }
 
-        foreach (var developmentName in _validCommand.DevelopmentNames.Enumerate())
+        foreach (var otherIdentifier in _validCommand.OtherIdentifiers.Enumerate())
         {
-            medicinesProductDetail.ActiveSubstances.ShouldContain(x =>
-                x.Name == developmentName.Value
-                && x.DisplayOrder == developmentName.Index
-                && x.NameType == SubstanceNameType.DevelopmentName
+            recordProductDetail.NamesAndIdentifiers.ShouldContain(x =>
+                x.Name == otherIdentifier.Value
+                && x.DisplayOrder == otherIdentifier.Index + 1
+                && x.NameType == NameAndIdentifierType.OtherIdentifier
             );
         }
     }

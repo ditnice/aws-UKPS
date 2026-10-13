@@ -11,6 +11,7 @@ internal sealed class MedicinesBudgetImpactConfiguration
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
+        builder.Property(x => x.CompassionateAccessAvailable);
         builder.Property(x => x.PatientAccessSchemePlanned);
         builder.Property(x => x.IndicationSpecificPricingPlanned);
         builder.Property(x => x.NetUkBudgetImpactBand);

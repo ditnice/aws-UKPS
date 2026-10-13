@@ -12,9 +12,9 @@ internal sealed class MedicinesEamsPim
     /// <summary>Conditional on PimDesignationStatus = Granted.</summary>
     public YesNoUnknown? WillSubmitToEams { get; set; }
 
-    public EamsOpinionDecision? EamsOpinionDecision { get; set; }
     public int? EamsSubmissionDateId { get; set; }
     public int? EamsOpinionDateId { get; set; }
+    public EamsOpinionDecision? EamsOpinionDecision { get; set; }
 
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }

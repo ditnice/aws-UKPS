@@ -1,6 +1,7 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
+using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -130,6 +131,22 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task RegisterUser_ShouldSendEmail()
+    {
+        RegisterUserCommandDto registerUserCommandDto = _registerUserCommandDtoFaker.Generate();
+
+        var result = await _harness.Service.RegisterUser(
+            _organisation.Id,
+            registerUserCommandDto,
+            CancellationToken.None
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Emails.Sent.Single().ShouldBeOfType<UserRegisterEmail>();
+    }
+
+    [Fact]
     public async Task GetUserRegistrationById_UserExists_ReturnsDto()
     {
         UserRegistrationRequest request = new UserRegistrationRequestFaker()
@@ -228,12 +245,16 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var foundValue = await _harness
             .GetClearedContext()
             .UserRegistrationRequests.Include(x => x.ApprovedByUser)
+            .Include(x => x.ResultingUser)
             .FirstOrDefaultAsync(x => x.Id == request.Id, TestContext.Current.CancellationToken);
 
         foundValue.ShouldNotBeNull();
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Approved);
         foundValue.ApprovedAt.ShouldNotBeNull().ShouldBe(_currentTime);
         foundValue.ApprovedByUser.ShouldNotBeNull().Id.ShouldBe(_defaultUser.Id);
+        var createdUser = foundValue.ResultingUser.ShouldNotBeNull();
+        createdUser.WorkEmail.ShouldBe(request.Command.WorkEmail);
+        foundValue.ResultingUserId.ShouldBe(createdUser.Id);
     }
 
     [Fact]
@@ -312,6 +333,34 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ApproveRequest_WhenUserAlreadyExists_ShouldRollBackRequestApproval()
+    {
+        var request = await CreateRegistrationRequest();
+        await AddEntity(
+            new UserFaker().RuleFor(x => x.WorkEmail, _ => request.Command.WorkEmail).Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        var result = await _harness.Service.ApproveRequest(
+            _organisation.Id,
+            request.Id,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<ApproveRequestError.UserAlreadyExists>();
+
+        var foundValue = await _harness
+            .GetClearedContext()
+            .UserRegistrationRequests.SingleAsync(
+                x => x.Id == request.Id,
+                TestContext.Current.CancellationToken
+            );
+        foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Pending);
+        foundValue.ApprovedAt.ShouldBeNull();
+        foundValue.ApprovedByUserId.ShouldBeNull();
+        foundValue.ResultingUserId.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task ApproveRequest_ShouldSendTheUserAnEmailNotifyingThemThatTheirRequestHasBeenApproved()
     {
         var request = await CreateRegistrationRequest();
@@ -321,8 +370,11 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
+        _harness.Emails.Sent.Count.ShouldBe(2);
+        _harness.Emails.Sent.First().ShouldBeOfType<UserRegisterEmail>();
         _harness
-            .Emails.Sent.ShouldHaveSingleItem()
+            .Emails.Sent.Skip(1)
+            .First()
             .ShouldBeOfType<UserMembershipRequestApprovedNotificationEmail>();
     }
 
@@ -367,7 +419,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         resultA.ShouldBeSuccess();
         resultB.ShouldBeSuccess();
 
-        _harness.Emails.Sent.Count.ShouldBe(1);
+        _harness.Emails.Sent.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -389,6 +441,8 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         foundValue.GetState().ShouldBe(UserRegistrationRequest.State.Rejected);
         foundValue.RejectedAt.ShouldNotBeNull().ShouldBe(_currentTime);
         foundValue.RejectedByUser.ShouldNotBeNull().Id.ShouldBe(_defaultUser.Id);
+        foundValue.RejectedByUserId.ShouldBe(_defaultUser.Id);
+        foundValue.ResultingUserId.ShouldBeNull();
     }
 
     [Fact]
@@ -401,8 +455,11 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
+        _harness.Emails.Sent.Count.ShouldBe(2);
+        _harness.Emails.Sent.First().ShouldBeOfType<UserRegisterEmail>();
         _harness
-            .Emails.Sent.ShouldHaveSingleItem()
+            .Emails.Sent.Skip(1)
+            .First()
             .ShouldBeOfType<UserMembershipRequestRejectedNotificationEmail>();
     }
 
