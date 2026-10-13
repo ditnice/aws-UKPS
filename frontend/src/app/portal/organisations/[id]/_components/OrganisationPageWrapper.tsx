@@ -9,7 +9,7 @@ import { parsePositiveInteger } from '@/lib/valueParsing'
 /**
  * Props for the {@link OrganisationPageWrapper} component.
  */
-export type OrganisationPageWrapperProps = {
+type OrganisationPageWrapperProps = {
   /**
    * The organisation identifier from the route.
    */

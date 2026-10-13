@@ -11,21 +11,8 @@
   "identity": "dc1",
   "scope_reasons": ["include-entry-exports"],
   "unused_files": [],
-  "unused_exports": [
-    "unused-export:src/app/portal/organisations/[id]/_lib/userActionAlert.ts:userActions",
-    "unused-export:src/app/portal/organisations/[id]/_lib/userActionAlert.ts:userRequestActions",
-    "unused-export:src/app/portal/organisations/[id]/records/create/CreateMedicineRecordForm.tsx:createRecordCommandSchema",
-    "unused-export:src/test-utils/nextMocks.tsx:NextImageMock",
-    "unused-export:src/test-utils/nextNavigation.ts:RedirectType"
-  ],
-  "unused_types": [
-    "unused-type:src/app/portal/organisations/[id]/_components/OrganisationPageWrapper.tsx:OrganisationPageWrapperProps",
-    "unused-type:src/components/SummaryList/SummaryList.tsx:SummaryListRowProps",
-    "unused-type:src/components/Textarea/Textarea.tsx:TextareaFixedWidth",
-    "unused-type:src/components/Textarea/Textarea.tsx:TextareaFluidWidth",
-    "unused-type:src/payload/DefaultPages.ts:MediaAsset",
-    "unused-type:src/payload/PayloadContent.ts:HeaderNavItem"
-  ],
+  "unused_exports": [],
+  "unused_types": [],
   "private_type_leaks": [],
   "deprecated_exports_in_use": [],
   "unused_dependencies": [],
@@ -48,13 +35,9 @@
   "unused_load_data_keys": [],
   "unresolved_imports": [],
   "unlisted_dependencies": [],
-  "duplicate_exports": [
-    "duplicate-export:UserActionResult:src/app/portal/organisations/[id]/_lib/organisationActionsAlert.ts|src/app/portal/organisations/[id]/_lib/userActionAlert.ts",
-    "duplicate-export:buildQueryFromFilters:src/app/portal/organisations/[id]/_lib/userListQuery.ts|src/app/portal/organisations/[id]/records/recordsQuery.ts",
-    "duplicate-export:getActiveFilters:src/app/portal/organisations/[id]/_lib/userListQuery.ts|src/app/portal/organisations/[id]/records/recordsQuery.ts"
-  ],
+  "duplicate_exports": [],
   "type_only_dependencies": [],
-  "test_only_dependencies": ["test-only-dependency:package.json:dotenv"],
+  "test_only_dependencies": [],
   "dev_dependencies_in_production": [],
   "boundary_violations": [],
   "boundary_coverage_violations": [],

@@ -4,7 +4,7 @@ import { lastActiveLabels, roleLabels, statusLabels } from './userLabels'
 import {
   buildUserListHref,
   buildUserListSearchParams,
-  getActiveFilters,
+  getActiveUserFilters as getActiveFilters,
   getNumberOfActiveFilters,
   getUpdatedQueryWithoutFilter,
   parseUserListQuery,

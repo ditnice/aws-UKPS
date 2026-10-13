@@ -91,7 +91,7 @@ type Filter = (
       value: LastActivePreset
     }
 ) & { label: string }
-export const getActiveFilters = (query: UserListQuery): Filter[] => {
+export const getActiveUserFilters = (query: UserListQuery): Filter[] => {
   return [
     ...query.status.map((s) => ({ key: 'status', value: s, label: statusLabels[s] }) as const),
     ...query.role.map((r) => ({ key: 'role', value: r, label: roleLabels[r] }) as const),
@@ -112,14 +112,14 @@ export const getUpdatedQueryWithoutFilter = (
   query: UserListQuery,
   filter: Filter,
 ): UserListQuery => {
-  const activeFilters = getActiveFilters(query)
+  const activeFilters = getActiveUserFilters(query)
   const remainingFilters = activeFilters.filter(
     (x) => x.key !== filter.key || x.value !== filter.value,
   )
-  return buildQueryFromFilters(remainingFilters, query)
+  return buildUserQueryFromFilters(remainingFilters, query)
 }
 
-export const buildQueryFromFilters = (
+export const buildUserQueryFromFilters = (
   filters: Filter[],
   initialQuery: UserListQuery,
 ): UserListQuery => ({
@@ -131,7 +131,7 @@ export const buildQueryFromFilters = (
 })
 
 export const getNumberOfActiveFilters = (query: UserListQuery): number => {
-  return getActiveFilters(query).length
+  return getActiveUserFilters(query).length
 }
 
 export function buildUserListSearchParams({

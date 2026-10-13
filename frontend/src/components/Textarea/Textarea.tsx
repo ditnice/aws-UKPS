@@ -2,12 +2,10 @@ import { Textarea as NdsTextarea } from '@nice-digital/nds-textarea'
 import type { TextareaProps as NdsTextareaProps } from '@nice-digital/nds-textarea'
 
 import { inputWidthStyles } from '@/components/Input/Input'
-import type { InputFixedWidth, InputFluidWidth, InputWidth } from '@/components/Input/Input'
+import type { InputWidth } from '@/components/Input/Input'
 
 import type { CSSProperties } from 'react'
 
-export type TextareaFixedWidth = InputFixedWidth
-export type TextareaFluidWidth = InputFluidWidth
 export type TextareaWidth = InputWidth
 
 export type TextareaProps = NdsTextareaProps & {

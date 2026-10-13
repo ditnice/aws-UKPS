@@ -3,9 +3,9 @@
 import { PaginatedResponseDtoOfUserListItemDto } from '@/client/generated'
 
 import {
-  buildQueryFromFilters,
+  buildUserQueryFromFilters,
   buildUserListSearchParams,
-  getActiveFilters,
+  getActiveUserFilters,
   UserListQuery,
 } from '../_lib/userListQuery'
 
@@ -20,8 +20,8 @@ export const UserFilterSummary = ({ query, users }: UserFilterSummaryProps) => {
     <PaginatedResultsAndFilterSummary
       query={query}
       result={users}
-      getActiveFilters={getActiveFilters}
-      convertFiltersToQuery={buildQueryFromFilters}
+      getActiveFilters={getActiveUserFilters}
+      convertFiltersToQuery={buildUserQueryFromFilters}
       convertQueryToSearchParams={buildUserListSearchParams}
     />
   )

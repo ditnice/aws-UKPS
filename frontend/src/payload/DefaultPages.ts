@@ -34,15 +34,6 @@ export type ListLayoutBlock = {
   }[]
 }
 
-export type MediaAsset = {
-  alt: string
-  filename?: string
-  height: number
-  id?: number | string
-  url: string
-  width: number
-}
-
 export type SitePageBlock =
   TextSectionLayoutBlock | TabsLayoutBlock | AccordionLayoutBlock | ListLayoutBlock
 

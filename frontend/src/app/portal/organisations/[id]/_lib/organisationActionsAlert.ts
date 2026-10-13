@@ -5,7 +5,7 @@ export type OrganisationActionSearchParams = {
   action?: string
 }
 
-export type UserActionResult = {
+type OrganisationActionResult = {
   action: OrganisationAction
 }
 
@@ -15,6 +15,6 @@ const isOrganisationAction = (value: string | undefined): value is OrganisationA
 
 export function parseOrganisationAction({
   action,
-}: OrganisationActionSearchParams): UserActionResult | undefined {
+}: OrganisationActionSearchParams): OrganisationActionResult | undefined {
   return isOrganisationAction(action) ? { action } : undefined
 }

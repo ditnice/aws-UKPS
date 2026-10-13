@@ -1,7 +1,7 @@
-export const userActions = ['invited', 'permissions-updated', 'deactivated', 'reactivated'] as const
+const userActions = ['invited', 'permissions-updated', 'deactivated', 'reactivated'] as const
 export type UserAction = (typeof userActions)[number]
 
-export const userRequestActions = ['approved-request', 'rejected-request'] as const
+const userRequestActions = ['approved-request', 'rejected-request'] as const
 export type UserRequestAction = (typeof userRequestActions)[number]
 
 export interface UserActionSearchParams {

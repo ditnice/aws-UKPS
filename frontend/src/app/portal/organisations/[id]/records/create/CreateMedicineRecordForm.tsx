@@ -22,7 +22,7 @@ const inputWidth = 'two-thirds'
 const isDistinctIgnoringCase = (values: string[]) =>
   new Set(values.map((value) => value.toLowerCase())).size === values.length
 
-export const createRecordCommandSchema = z.object({
+const createRecordCommandSchema = z.object({
   organisationId: z.number(),
   companyCode: z.string().trim().min(1, errorMessages.companyCodeRequired),
   // Other identifiers are optional, so blank entries are dropped rather than rejected.

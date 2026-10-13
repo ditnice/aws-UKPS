@@ -32,6 +32,7 @@ export const usePathname = () => navigationState.pathname
 export const useSearchParams = () => navigationState.searchParams
 export const useParams = () => navigationState.params
 
+// fallow-ignore-next-line unused-export -- next/navigation mock consumers read this at runtime
 export const RedirectType = { push: 'push', replace: 'replace' } as const
 
 class NavigationError extends Error {}

@@ -14,6 +14,7 @@ export function NextLinkMock({
   )
 }
 
+// fallow-ignore-next-line unused-export -- consumed through async vi.mock factories for next/image
 export function NextImageMock({
   priority: _priority,
   ...props

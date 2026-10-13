@@ -13,7 +13,7 @@ export type SummaryListActionProps = {
 
 type ValidSummaryListAction = ReactElement<SummaryListActionProps> | boolean | null | undefined
 
-export type SummaryListRowProps = {
+type SummaryListRowProps = {
   children?: ValidSummaryListAction | readonly ValidSummaryListAction[]
   label: ReactNode
   value: ReactNode

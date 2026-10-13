@@ -17,7 +17,7 @@ function splitPathIntoSlugs(path: string): string[] {
   return path.split('/').filter(Boolean)
 }
 
-export type HeaderNavItem = {
+type HeaderNavItem = {
   label: string
   path: string
 }
