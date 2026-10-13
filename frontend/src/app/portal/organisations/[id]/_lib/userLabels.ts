@@ -35,6 +35,7 @@ export const statusLabels: Record<UserOrgStatus, string> = {
   Inactive: 'Inactive',
   Rejected: 'Rejected',
   RequestedAccess: 'Requested',
+  Removed: 'Removed',
 }
 
 export const statusTagColours: Record<UserOrgStatus, TagColour> = {
@@ -44,6 +45,7 @@ export const statusTagColours: Record<UserOrgStatus, TagColour> = {
   Inactive: 'red',
   Rejected: 'grey',
   RequestedAccess: 'yellow',
+  Removed: 'magenta',
 }
 
 // Rejected is not filterable as the backend never returns it

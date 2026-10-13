@@ -13,4 +13,7 @@ internal enum UserOrgMembershipStatus
 
     /// <summary>User has been deactivated.</summary>
     Deactivated = 5,
+
+    /// <summary>User has been removed from the organisation; a terminal state.</summary>
+    Removed = 6,
 }

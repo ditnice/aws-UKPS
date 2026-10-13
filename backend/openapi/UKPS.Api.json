@@ -677,6 +677,26 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "The multi-factor authentication onboarding record was not found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1899,28 +1919,8 @@
               }
             }
           },
-          "403": {
-            "description": "The caller is not authorised to view the record.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "No record of the requested type exists with the specified identifier.",
+            "description": "The requested record was not found or is not accessible to the caller.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2527,6 +2527,127 @@
           },
           "409": {
             "description": "The request conflicts with the existing data such as another users email.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Removes access and anonymises the user's profile and linked approved registration requests.\nPersonal details in user-change audit history are cleared. Records created by the user are\nkept; other registration requests, communications, logs and backups are not deleted.",
+        "operationId": "RemoveUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The unique identifier of the user to remove.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user was removed. Returns the name they now appear under.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedUserDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedUserDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedUserDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One of the user's organisation memberships is not in a state that allows removal.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller attempted to remove themselves.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified user does not exist or is not accessible to the caller.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -5254,6 +5375,19 @@
         },
         "description": "Represents a regulatory milestone date."
       },
+      "RemovedUserDto": {
+        "required": [
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "description": "The name the removed user now appears under, for example in a record's timeline."
+          }
+        },
+        "description": "The result of removing a user."
+      },
       "ResendSetupTokenCommand": {
         "type": "object",
         "properties": {
@@ -5503,7 +5637,8 @@
           "organisationMembershipId",
           "organisationId",
           "organisationName",
-          "userRole"
+          "userRole",
+          "status"
         ],
         "type": "object",
         "properties": {
@@ -5541,6 +5676,10 @@
           "userRole": {
             "description": "Gets the role assigned to the user within the organisation.",
             "$ref": "#/components/schemas/UserRole"
+          },
+          "status": {
+            "description": "Gets the user's membership status within the organisation.",
+            "$ref": "#/components/schemas/UserOrgStatus"
           }
         },
         "description": "Represents information about a user and their membership within an organisation."
@@ -5609,10 +5748,11 @@
           "RejectMembership",
           "DeactivateMembership",
           "ReactivateMembership",
-          "EditUserRole"
+          "EditUserRole",
+          "RemoveUser"
         ],
         "type": "string",
-        "description": "Defines the actions that can be performed on a user's membership."
+        "description": "Defines the actions that can be performed on a user or their membership."
       },
       "UserOrgStatus": {
         "enum": [
@@ -5621,7 +5761,8 @@
           "Active",
           "Rejected",
           "Inactive",
-          "Deactivated"
+          "Deactivated",
+          "Removed"
         ],
         "type": "string",
         "description": "Represents the status of a user's association with an organisation."

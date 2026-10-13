@@ -8,6 +8,15 @@ namespace UKPS.Api.Tests.Persistence;
 public sealed class DataSeederInMemoryTests
 {
     [Fact]
+    public void BuildPayload_WhenGeneratingMemberships_ShouldExcludeRemovedStatus()
+    {
+        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
+
+        payload.Memberships.ShouldNotBeEmpty();
+        payload.Memberships.ShouldNotContain(m => m.Status == UserOrgMembershipStatus.Removed);
+    }
+
+    [Fact]
     public void BuildPayload_WhenSeedUsersJsonIsEmpty_ShouldKeepGeneratedSeedData()
     {
         SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());

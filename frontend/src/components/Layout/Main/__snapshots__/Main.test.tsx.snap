@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Main > renders a main landmark with the main data-component attribute 1`] = `
+<DocumentFragment>
+  <main
+    class="_main_fdaf76 _withPadding_fdaf76"
+    data-component="main"
+  >
+    <div
+      data-testid="back-to-top"
+    />
+  </main>
+</DocumentFragment>
+`;

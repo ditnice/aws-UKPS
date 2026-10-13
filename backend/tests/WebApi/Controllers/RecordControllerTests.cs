@@ -427,7 +427,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
-    public async Task GetRecord_ReturnsForbidden_WhenNotAllowed()
+    public async Task GetRecord_ReturnsNotFound_WhenNotAllowed()
     {
         _mockRecordViewService
             .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
@@ -438,7 +438,46 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetRecord_InaccessibleAndMissingRecords_ReturnIdenticalResponses()
+    {
+        _mockRecordViewService
+            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
+        _mockRecordViewService
+            .GetRecord(2, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotFound(2)));
+
+        var inaccessibleResponse = await _client.GetAsync(
+            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+        var missingResponse = await _client.GetAsync(
+            new Uri("/records/2?recordType=Medicine", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        inaccessibleResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        missingResponse.StatusCode.ShouldBe(inaccessibleResponse.StatusCode);
+
+        var inaccessibleBody = (
+            await inaccessibleResponse.Content.ReadFromJsonAsync<JsonObject>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldNotBeNull();
+        var missingBody = (
+            await missingResponse.Content.ReadFromJsonAsync<JsonObject>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldNotBeNull();
+
+        // Request-specific tracing metadata does not describe the resource's existence.
+        inaccessibleBody.Remove("traceId");
+        missingBody.Remove("traceId");
+        JsonNode.DeepEquals(inaccessibleBody, missingBody).ShouldBeTrue();
     }
 
     [Theory]

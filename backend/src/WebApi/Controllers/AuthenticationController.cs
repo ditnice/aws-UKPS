@@ -456,9 +456,13 @@ public class AuthenticationController : ControllerBase
     /// The request contained invalid data or the multi-factor authentication
     /// verification could not be completed.
     /// </response>
+    /// <response code="404">
+    /// The multi-factor authentication onboarding record was not found.
+    /// </response>
     [HttpPost("verify-mfa")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> VerifyMultiFactorAuthentication(
         [FromBody] VerifyMultiFactorAuthenticationCommand command,
         CancellationToken cancellationToken
@@ -473,15 +477,18 @@ public class AuthenticationController : ControllerBase
         return result.Match(
             HandleLoginSuccess,
             err =>
-                err.Match<ActionResult>(invalidCode: _ =>
-                    BadRequest(
-                        new ProblemDetails
-                        {
-                            Title = "Invalid multi-factor authentication code.",
-                            Detail = "The supplied authentication code is invalid or has expired.",
-                            Status = StatusCodes.Status400BadRequest,
-                        }
-                    )
+                err.Match<ActionResult>(
+                    invalidCode: _ =>
+                        BadRequest(
+                            new ProblemDetails
+                            {
+                                Title = "Invalid multi-factor authentication code.",
+                                Detail =
+                                    "The supplied authentication code is invalid or has expired.",
+                                Status = StatusCodes.Status400BadRequest,
+                            }
+                        ),
+                    doesNotExist: _ => NotFound()
                 )
         );
     }

@@ -42,6 +42,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     private readonly IServiceTestHarness<IIdentityAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
+    private readonly User _creator = new UserFaker().Generate();
     private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
 
     private TimeSpan _testExpiryTokenTime = TimeSpan.FromMinutes(15);
@@ -55,6 +56,12 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         : base(fixture)
     {
         _harness = CreateTestHarness();
+    }
+
+    public override async ValueTask InitializeAsync()
+    {
+        await base.InitializeAsync();
+        await AddEntity(_creator, TestContext.Current.CancellationToken);
     }
 
     [Theory]
@@ -171,7 +178,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         oldTokenStillExists.ShouldBeFalse();
 
         UserOnboardingRecord? newRecord = await context.UserOnboardingRecords.FirstOrDefaultAsync(
-            x => x.UserId == entity.UserId,
+            x => x.ResultingUserId == entity.ResultingUserId,
             TestContext.Current.CancellationToken
         );
         newRecord.ShouldNotBeNull();
@@ -179,6 +186,8 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         newRecord.CreatedAt.ShouldBe(_testTime);
         newRecord.ConsumedAt.ShouldBeNull();
         newRecord.ResendCount.ShouldBe(1);
+        newRecord.CreatedByUserId.ShouldBe(entity.CreatedByUserId);
+        newRecord.ResultingUserId.ShouldBe(entity.ResultingUserId);
     }
 
     [Fact]
@@ -217,7 +226,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
                 await _harness
                     .GetClearedContext()
                     .UserOnboardingRecords.FirstOrDefaultAsync(
-                        x => x.UserId == entity.UserId,
+                        x => x.ResultingUserId == entity.ResultingUserId,
                         TestContext.Current.CancellationToken
                     )
                 ?? throw new InvalidOperationException("Expected a replacement record.");
@@ -244,7 +253,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
                 await _harness
                     .GetClearedContext()
                     .UserOnboardingRecords.FirstOrDefaultAsync(
-                        x => x.UserId == entity.UserId,
+                        x => x.ResultingUserId == entity.ResultingUserId,
                         TestContext.Current.CancellationToken
                     )
                 ?? throw new InvalidOperationException("Expected a replacement record.");
@@ -320,7 +329,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         UserOnboardingRecord? newRecord = await _harness
             .GetClearedContext()
             .UserOnboardingRecords.FirstOrDefaultAsync(
-                x => x.UserId == entity.UserId,
+                x => x.ResultingUserId == entity.ResultingUserId,
                 TestContext.Current.CancellationToken
             );
         newRecord.ShouldNotBeNull();
@@ -359,7 +368,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             await _harness
                 .GetClearedContext()
                 .UserOnboardingRecords.FirstOrDefaultAsync(
-                    x => x.UserId == entity.UserId,
+                    x => x.ResultingUserId == entity.ResultingUserId,
                     TestContext.Current.CancellationToken
                 )
             ?? throw new InvalidOperationException("Expected a replacement record.");
@@ -651,6 +660,94 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         _harness.Cognito.GetUser(userIdentityId).ShouldNotBeNull().MfaSetup.ShouldBeFalse();
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RemovedUser_ShouldNotBeAbleToContinueOnboarding(bool setupStarted)
+    {
+        UserOnboardingRecord originalRecord = await OnboardUserWithTimeOffset(minutesInPast: 5);
+        var resendResult = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand { SetupToken = originalRecord.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+        Guid correlationId = resendResult.ShouldBeSuccess();
+        UserOnboardingRecord onboardingRecord = await _harness
+            .GetClearedContext()
+            .UserOnboardingRecords.AsNoTracking()
+            .SingleAsync(
+                x => x.CorrelationId == correlationId,
+                TestContext.Current.CancellationToken
+            );
+        string session = "authentication-session";
+        if (setupStarted)
+        {
+            var setupResult = await SetupUserWithTimeOffset(onboardingRecord.SetupToken, 0);
+            session = setupResult.AuthenticationSession;
+        }
+
+        var userHarness = new ServiceTestHarness<IUserService>(_harness)
+            .UpdateCurrentTime(_testTime)
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    CognitoUsername = _creator.CognitoUsername,
+                    UserRole = UserRole.Super,
+                }
+            );
+        var removalResult = await userHarness.Service.RemoveUser(
+            onboardingRecord.ResultingUserId,
+            TestContext.Current.CancellationToken
+        );
+        removalResult.ShouldBeSuccess();
+        _harness.Cognito.Mock.ClearReceivedCalls();
+        _harness.Emails.Mock.ClearReceivedCalls();
+
+        var validationResult = await _harness.Service.Validate(
+            onboardingRecord.SetupToken,
+            TestContext.Current.CancellationToken
+        );
+        validationResult.ShouldBeError().ShouldBeOfType<SetupTokenValidationError.DoesNotExist>();
+
+        var setupAttempt = await _harness.Service.SetupUser(
+            _validSetupUserCommand with
+            {
+                SetupToken = onboardingRecord.SetupToken,
+            },
+            TestContext.Current.CancellationToken
+        );
+        setupAttempt.ShouldBeError().ShouldBeOfType<UserSetupError.DoesNotExist>();
+
+        foreach (
+            ResendSetupTokenCommand command in new[]
+            {
+                new ResendSetupTokenCommand { SetupToken = onboardingRecord.SetupToken },
+                new ResendSetupTokenCommand { CorrelationId = correlationId },
+            }
+        )
+        {
+            var resendAttempt = await _harness.Service.ResendSetupToken(
+                command,
+                TestContext.Current.CancellationToken
+            );
+            resendAttempt.ShouldBeError().ShouldBeOfType<ResendSetupTokenError.DoesNotExist>();
+        }
+
+        var mfaResult = await _harness.Service.VerifyMultiFactorAuthentication(
+            new VerifyMultiFactorAuthenticationCommand
+            {
+                SetupToken = onboardingRecord.SetupToken,
+                Code = _harness.Cognito.ValidMfaCode,
+                AuthenticationSession = session,
+            },
+            TestContext.Current.CancellationToken
+        );
+        mfaResult
+            .ShouldBeError()
+            .ShouldBeOfType<VerifyMultiFactorAuthenticationError.DoesNotExist>();
+        _harness.Cognito.Mock.ReceivedCalls().ShouldBeEmpty();
+        _harness.Emails.Mock.ReceivedCalls().ShouldBeEmpty();
+    }
+
     private async Task<(
         Guid SetupToken,
         string Session,
@@ -665,7 +762,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         return (
             onboardingRecord.SetupToken,
             setupResult.AuthenticationSession,
-            onboardingRecord.User!.CognitoUsername
+            onboardingRecord.ResultingUser!.CognitoUsername
         );
     }
 
@@ -678,9 +775,9 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         );
 
         DateTime createdAtTime = _testTime - TimeSpan.FromMinutes(minutesInPast);
-        var userAdminHarness = new ServiceTestHarness<IUserAdministrationService>(
-            _harness
-        ).UpdateCurrentTime(createdAtTime);
+        var userAdminHarness = new ServiceTestHarness<IUserAdministrationService>(_harness)
+            .UpdateCurrentUser(x => x with { CognitoUsername = _creator.CognitoUsername })
+            .UpdateCurrentTime(createdAtTime);
         OnboardUserCommandDtoFaker onboardUserCommandDtoFaker = new OnboardUserCommandDtoFaker();
         Result<int, OnboardUserError> result = await userAdminHarness.Service.OnboardUser(
             onboardUserCommandDtoFaker.Generate() with
@@ -748,7 +845,13 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     {
         return harness
             .UpdateCurrentTime(_testTime)
-            .UpdateCurrentUser(x => x with { Email = _currentUser })
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    CognitoUsername = _creator.CognitoUsername,
+                    Email = _currentUser,
+                }
+            )
             .ConfigureServices(services =>
             {
                 services
