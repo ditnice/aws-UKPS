@@ -57,7 +57,7 @@ describe('EditDetails (direct invocation)', () => {
 
     render(result)
 
-    expect(screen.getByRole('heading', { name: 'Edit your details' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Edit personal details' })).toBeInTheDocument()
 
     expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
   })

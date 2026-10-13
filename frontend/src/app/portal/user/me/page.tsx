@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
 
+import { UserAuthenticationDetails } from './_components/UserAuthenticationDetails'
 import { UserDetails } from './_components/UserDetails'
 
 export const dynamic = 'force-dynamic'
@@ -26,14 +27,18 @@ export default async function Me({
     <>
       {updated && (
         <Alert type="success">
-          <h3>Your details have been updated</h3>
+          <h3>Details changed successfully</h3>
+          <p>You can update your details at any time from manage my details.</p>
         </Alert>
       )}
-      <PageHeader backLink={<BackLinkBrowser />} heading="Your details" />
+      <PageHeader backLink={<BackLinkBrowser />} heading="Manage details" />
       {!me || error ? (
         <ErrorState>{errorMessages.failedToRetrieveCurrentUser}</ErrorState>
       ) : (
-        <UserDetails currentUser={me}></UserDetails>
+        <>
+          <UserAuthenticationDetails currentUser={me} />
+          <UserDetails currentUser={me} />
+        </>
       )}
     </>
   )

@@ -53,6 +53,16 @@ describe('NavLinks', () => {
     )
   })
 
+  it('renders the manage my details link', () => {
+    navigationState.pathname = '/portal/user/me/edit-details'
+
+    render(<NavLinks />)
+
+    const link = screen.getByRole('link', { name: 'Manage my details' })
+    expect(link).toHaveAttribute('href', '/portal/user/me')
+    expect(link.getAttribute('aria-current')).toBe('page')
+  })
+
   it('renders custom root links', () => {
     render(<NavLinks rootLinks={[{ href: '/guidance', label: 'Guidance' }]} />)
 

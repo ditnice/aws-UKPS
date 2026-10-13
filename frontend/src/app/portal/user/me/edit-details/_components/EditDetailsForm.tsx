@@ -133,7 +133,7 @@ export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps)
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 field.handleChange(event.target.value)
               }
-              hint="For international numbers include the country code."
+              hint="This number will be visible to horizon scanning organisations. For international numbers include the country code."
               type="tel"
               width="one-third"
               value={field.state.value}
