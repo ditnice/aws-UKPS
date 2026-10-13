@@ -104,8 +104,9 @@ public interface IUserService
     );
 
     /// <summary>
-    /// Removes a user's personally identifiable information across the system, replacing it
-    /// with anonymised values so that records and audit history are kept.
+    /// Removes access and anonymises the user's profile and linked approved registration requests.
+    /// Personal details in user-change audit history are cleared. Records created by the user are
+    /// kept; other registration requests, communications, logs and backups are not deleted.
     /// </summary>
     /// <param name="userId">The unique identifier of the user to remove.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>

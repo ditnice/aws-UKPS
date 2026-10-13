@@ -186,8 +186,9 @@ public class UserController(IUserService userService) : ControllerBase
     }
 
     /// <summary>
-    /// Removes the specified user's personally identifiable information, replacing it with
-    /// anonymised values. Records and audit history created by the user are kept.
+    /// Removes access and anonymises the user's profile and linked approved registration requests.
+    /// Personal details in user-change audit history are cleared. Records created by the user are
+    /// kept; other registration requests, communications, logs and backups are not deleted.
     /// </summary>
     /// <param name="userId">The unique identifier of the user to remove.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>

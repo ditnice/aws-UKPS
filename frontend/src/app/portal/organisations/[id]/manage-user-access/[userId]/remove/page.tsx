@@ -32,7 +32,12 @@ export default async function RemoveUser({ params }: Props) {
     path: { userId: selectedUserId, organisationId },
   })
 
-  if (response?.status === 404 || user?.status === 'Removed') {
+  if (
+    response?.status === 404 ||
+    user?.status === 'Removed' ||
+    (user && !['Active', 'Inactive', 'AwaitingSetup', 'Deactivated'].includes(user.status)) ||
+    selectedUserId === currentUser.userId
+  ) {
     notFound()
   }
 

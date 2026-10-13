@@ -129,6 +129,32 @@ describe('ManageUserAccess (direct invocation)', () => {
   })
 
   it.each([
+    ['Active', 3],
+    ['Inactive', 3],
+    ['AwaitingSetup', 1],
+    ['Deactivated', 2],
+  ] as const)('offers state-appropriate options for a %s user', async (status, actionCount) => {
+    mockUserResponse({ status })
+    render(await ManageUserAccess({ params }))
+    expect(screen.getAllByRole('radio')).toHaveLength(actionCount)
+    expect(screen.getByRole('radio', { name: 'Remove user' })).toBeInTheDocument()
+  })
+
+  it('rejects direct navigation to a removed user', async () => {
+    mockUserResponse({ status: 'Removed' })
+    await expect(ManageUserAccess({ params })).rejects.toBe(notFoundError)
+  })
+
+  it('does not offer self-management', async () => {
+    mockCurrentUserResponse({ userId: user.userId })
+    render(await ManageUserAccess({ params }))
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+    expect(
+      screen.getByText('You cannot manage your own access from this page.'),
+    ).toBeInTheDocument()
+  })
+
+  it.each([
     { id: 'invalid', userId: '4' },
     { id: '1.5', userId: '4' },
     { id: '2', userId: 'invalid' },

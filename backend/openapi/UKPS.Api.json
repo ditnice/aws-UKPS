@@ -2571,7 +2571,7 @@
         "tags": [
           "User"
         ],
-        "summary": "Removes the specified user's personally identifiable information, replacing it with\nanonymised values. Records and audit history created by the user are kept.",
+        "summary": "Removes access and anonymises the user's profile and linked approved registration requests.\nPersonal details in user-change audit history are cleared. Records created by the user are\nkept; other registration requests, communications, logs and backups are not deleted.",
         "operationId": "RemoveUser",
         "parameters": [
           {

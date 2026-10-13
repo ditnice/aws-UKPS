@@ -210,8 +210,9 @@ export const getUsers = <ThrowOnError extends boolean = false>(options?: Options
 export const getUserDetailsWithinOrganisation = <ThrowOnError extends boolean = false>(options: Options<GetUserDetailsWithinOrganisationData, ThrowOnError>): RequestResult<GetUserDetailsWithinOrganisationResponses, GetUserDetailsWithinOrganisationErrors, ThrowOnError> => (options.client ?? client).get<GetUserDetailsWithinOrganisationResponses, GetUserDetailsWithinOrganisationErrors, ThrowOnError>({ url: '/users/{userId}/organisations/{organisationId}', ...options });
 
 /**
- * Removes the specified user's personally identifiable information, replacing it with
- * anonymised values. Records and audit history created by the user are kept.
+ * Removes access and anonymises the user's profile and linked approved registration requests.
+ * Personal details in user-change audit history are cleared. Records created by the user are
+ * kept; other registration requests, communications, logs and backups are not deleted.
  */
 export const removeUser = <ThrowOnError extends boolean = false>(options: Options<RemoveUserData, ThrowOnError>): RequestResult<RemoveUserResponses, RemoveUserErrors, ThrowOnError> => (options.client ?? client).delete<RemoveUserResponses, RemoveUserErrors, ThrowOnError>({ url: '/users/{userId}', ...options });
 

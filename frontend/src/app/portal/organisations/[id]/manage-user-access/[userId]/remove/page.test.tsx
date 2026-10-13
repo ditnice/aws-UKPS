@@ -1,8 +1,9 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
 import type { UserInformationDto } from '@/client/generated/types.gen'
+import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import RemoveUser from './page'
 
@@ -15,8 +16,7 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(() => Promise.resolve({})),
 }))
 
-const notFound = vi.hoisted(() => vi.fn())
-vi.mock('next/navigation', () => ({ notFound }))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('./RemoveUserControls', () => ({
   default: ({ organisationId, userId }: { organisationId: number; userId: number }) => (
@@ -58,10 +58,6 @@ function mockErrorResponse(status: number) {
 const params = Promise.resolve({ id: '2', userId: '4' })
 
 beforeEach(() => {
-  vi.clearAllMocks()
-  notFound.mockImplementation(() => {
-    throw new Error('NEXT_NOT_FOUND')
-  })
   vi.mocked(getUsersMe).mockResolvedValue({
     data: { ...user, userId: 1, userRole: 'Super' },
     error: undefined,
@@ -69,9 +65,8 @@ beforeEach(() => {
   mockResponse()
 })
 
-afterEach(cleanup)
-
-describe('RemoveUser', () => {
+// Direct invocation tests orchestration, not Next.js routing or hydration.
+describe('RemoveUser (direct invocation)', () => {
   it("requests the selected user's details within the organisation", async () => {
     render(await RemoveUser({ params }))
 
@@ -95,12 +90,12 @@ describe('RemoveUser', () => {
       screen.getByText(
         'You are about to permanently remove julie.brooks@example.com from UK PharmaScan and all organisations they belong to.',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
     expect(
       screen.getByText(
         'This will permanently remove their personal information from UK PharmaScan. Any records created by them will not be affected.',
       ),
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('passes the organisation and user IDs to the controls', async () => {
@@ -115,7 +110,7 @@ describe('RemoveUser', () => {
   it('calls notFound when the user is not a member of the organisation', async () => {
     mockErrorResponse(404)
 
-    await expect(RemoveUser({ params })).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(RemoveUser({ params })).rejects.toBe(notFoundError)
 
     expect(notFound).toHaveBeenCalled()
   })
@@ -123,7 +118,7 @@ describe('RemoveUser', () => {
   it.each(['Standard', 'Champion'] as const)('rejects a %s caller', async (userRole) => {
     vi.mocked(getUsersMe).mockResolvedValue({ data: { ...user, userRole }, error: undefined })
 
-    await expect(RemoveUser({ params })).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(RemoveUser({ params })).rejects.toBe(notFoundError)
 
     expect(getUserDetailsWithinOrganisation).not.toHaveBeenCalled()
   })
@@ -131,7 +126,7 @@ describe('RemoveUser', () => {
   it('calls notFound when the current user cannot be retrieved', async () => {
     vi.mocked(getUsersMe).mockResolvedValue({ data: undefined, error: { status: 500 } })
 
-    await expect(RemoveUser({ params })).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(RemoveUser({ params })).rejects.toBe(notFoundError)
   })
 
   it('calls notFound for an already-removed user', async () => {
@@ -140,7 +135,23 @@ describe('RemoveUser', () => {
       error: undefined,
     })
 
-    await expect(RemoveUser({ params })).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(RemoveUser({ params })).rejects.toBe(notFoundError)
+  })
+
+  it('rejects direct removal navigation for a non-removable state', async () => {
+    vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({
+      data: { ...user, status: 'RequestedAccess' },
+      error: undefined,
+    })
+    await expect(RemoveUser({ params })).rejects.toBe(notFoundError)
+  })
+
+  it('rejects self-removal', async () => {
+    vi.mocked(getUsersMe).mockResolvedValue({
+      data: { ...user, userRole: 'Super' },
+      error: undefined,
+    })
+    await expect(RemoveUser({ params })).rejects.toBe(notFoundError)
   })
 
   it('uses the parsed user ID in the back link', async () => {

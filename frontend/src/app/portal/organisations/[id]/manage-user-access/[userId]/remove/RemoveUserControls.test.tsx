@@ -1,21 +1,19 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { router } from '@/test-utils/nextNavigation'
 
 import RemoveUserControls, { RemoveUserControlsProps } from './RemoveUserControls'
 
 import type { ComponentPropsWithoutRef } from 'react'
 
 const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
   removeUser: vi.fn(),
   buildUserActionHref: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mocks.push,
-  }),
-}))
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 // Use a plain anchor so Next's own navigation handler cannot mask a missing Cancel guard.
 vi.mock('next/link', () => ({
@@ -30,11 +28,10 @@ vi.mock('../../../_lib/userActionAlert', () => ({
   buildUserActionHref: mocks.buildUserActionHref,
 }))
 
-afterEach(cleanup)
-
+let user: ReturnType<typeof userEvent.setup>
 const mockHref = 'href'
 beforeEach(() => {
-  vi.clearAllMocks()
+  user = userEvent.setup()
 
   mocks.removeUser.mockReturnValue({})
   mocks.buildUserActionHref.mockReturnValue(mockHref)
@@ -48,9 +45,9 @@ const renderComponent = () => {
   render(<RemoveUserControls {...defaultProps} />)
 }
 
-const getActionButton = () => screen.getByTestId('action-button')
+const getActionButton = () => screen.getByRole('button', { name: 'Remove user' })
 const getCancelLink = () => screen.getByRole('link', { name: 'Cancel' })
-const getActionError = () => screen.queryByTestId('action-error')
+const getActionError = () => screen.queryByRole('alert')
 
 describe('RemoveUserControls', () => {
   it('does not render the error by default', () => {
@@ -61,7 +58,7 @@ describe('RemoveUserControls', () => {
 
   it('calls remove user with the correct user id', async () => {
     renderComponent()
-    fireEvent.click(getActionButton())
+    await user.click(getActionButton())
     await waitFor(() => {
       expect(mocks.removeUser).toHaveBeenCalledExactlyOnceWith({
         path: { userId: defaultProps.userId },
@@ -71,9 +68,9 @@ describe('RemoveUserControls', () => {
 
   it('routes to the organisation page on success', async () => {
     renderComponent()
-    fireEvent.click(getActionButton())
+    await user.click(getActionButton())
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledExactlyOnceWith(mockHref)
+      expect(router.push).toHaveBeenCalledExactlyOnceWith(mockHref)
       expect(mocks.buildUserActionHref).toHaveBeenCalledWith(defaultProps.organisationId, {
         action: 'removed',
         userId: defaultProps.userId,
@@ -85,10 +82,10 @@ describe('RemoveUserControls', () => {
     mocks.removeUser.mockReturnValue({ error: {} })
 
     renderComponent()
-    fireEvent.click(getActionButton())
+    await user.click(getActionButton())
     await waitFor(() => {
       expect(getActionError()).toBeTruthy()
-      expect(mocks.push).not.toHaveBeenCalled()
+      expect(router.push).not.toHaveBeenCalled()
     })
   })
 
@@ -109,7 +106,7 @@ describe('RemoveUserControls', () => {
     )
     renderComponent()
 
-    fireEvent.click(getActionButton())
+    await user.click(getActionButton())
 
     expect(getCancelLink().getAttribute('aria-disabled')).toBe('true')
     const pendingClick = new MouseEvent('click', { bubbles: true, cancelable: true })
