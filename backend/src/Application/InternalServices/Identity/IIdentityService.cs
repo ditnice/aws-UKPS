@@ -22,6 +22,8 @@ internal interface IIdentityService
         CancellationToken cancellationToken
     );
 
+    Task DeleteUser(CognitoUsername cognitoUsername, CancellationToken cancellationToken);
+
     Task<InitiatedAuthenticationResult> InitiateAuthentication(
         CognitoUsername cognitoUsername,
         string newPassword,

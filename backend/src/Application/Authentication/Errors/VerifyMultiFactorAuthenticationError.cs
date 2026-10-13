@@ -18,17 +18,29 @@ public abstract record VerifyMultiFactorAuthenticationError
     public sealed record InvalidCode : VerifyMultiFactorAuthenticationError;
 
     /// <summary>
+    /// Indicates that the multi-factor authentication onboarding record does not exist.
+    /// </summary>
+    public sealed record DoesNotExist : VerifyMultiFactorAuthenticationError;
+
+    /// <summary>
     /// Executes the delegate corresponding to the concrete error type.
     /// </summary>
     /// <typeparam name="TResult">The type of the value returned by the delegate.</typeparam>
     /// <param name="invalidCode">
     /// The delegate to execute when the error is an <see cref="InvalidCode"/>.
     /// </param>
+    /// <param name="doesNotExist">
+    /// The delegate to execute when the error is a <see cref="DoesNotExist"/>.
+    /// </param>
     /// <returns>The value returned by the matching delegate.</returns>
-    internal TResult Match<TResult>(Func<InvalidCode, TResult> invalidCode) =>
+    internal TResult Match<TResult>(
+        Func<InvalidCode, TResult> invalidCode,
+        Func<DoesNotExist, TResult> doesNotExist
+    ) =>
         this switch
         {
             InvalidCode x => invalidCode(x),
+            DoesNotExist x => doesNotExist(x),
             _ => throw new UnreachableException(
                 $"Unhandled {nameof(VerifyMultiFactorAuthenticationError)} type: {GetType().Name}."
             ),

@@ -1,8 +1,7 @@
 import Link from 'next/link'
 
-import { ActionBanner } from '@nice-digital/nds-action-banner'
-
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
+import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
@@ -36,7 +35,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
                 {(data) => (
                   <>
                     <RecordsQueryResultsSummary query={query} data={data} />
-                    <RecordsTable data={data} query={query} />
+                    <RecordsTable organisationId={organisation.id} data={data} query={query} />
                   </>
                 )}
               </RecordsFetch>
@@ -64,7 +63,9 @@ const CreateMedicineRecordActionBanner = ({ organisationId }: { organisationId: 
         </>
       }
     >
-      To create a new record select the record type you want to create.
+      To create a new record select the record type you want to create.{' '}
+      <a>View a record template (opens in new tab)</a> to check what information you will need to
+      provide.
     </ActionBanner>
   )
 }

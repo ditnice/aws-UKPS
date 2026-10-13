@@ -1,0 +1,103 @@
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { router } from '@/test-utils/nextNavigation'
+
+import { changeUserPermissionsAction } from '../_actions/changeUserPermissions'
+
+import { ChangePermissionsForm } from './ChangePermissionsForm'
+
+vi.mock('../_actions/changeUserPermissions', () => ({
+  changeUserPermissionsAction: vi.fn(),
+}))
+
+const { push, back } = router
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
+
+const props = {
+  organisationId: 2,
+  userId: 4,
+  membershipId: 9,
+} as const
+
+beforeEach(() => {
+  vi.mocked(changeUserPermissionsAction).mockResolvedValue({ status: 'success' })
+})
+let user: ReturnType<typeof userEvent.setup>
+
+beforeEach(() => {
+  user = userEvent.setup()
+})
+
+describe('ChangePermissionsForm', () => {
+  it('offers to promote a standard user', () => {
+    render(<ChangePermissionsForm {...props} currentRole="Standard" />)
+
+    expect(screen.getByRole('button', { name: 'Make champion user' })).toBeInTheDocument()
+  })
+
+  it('offers to demote a champion user', () => {
+    render(<ChangePermissionsForm {...props} currentRole="Champion" />)
+
+    expect(screen.getByRole('button', { name: 'Make standard user' })).toBeInTheDocument()
+  })
+
+  it('promotes a standard user to champion', async () => {
+    render(<ChangePermissionsForm {...props} currentRole="Standard" />)
+
+    await user.click(screen.getByRole('button', { name: 'Make champion user' }))
+
+    await waitFor(() => {
+      expect(changeUserPermissionsAction).toHaveBeenCalledWith(2, 4, 9, 'Champion')
+    })
+  })
+
+  it('demotes a champion user to standard', async () => {
+    render(<ChangePermissionsForm {...props} currentRole="Champion" />)
+
+    await user.click(screen.getByRole('button', { name: 'Make standard user' }))
+
+    await waitFor(() => {
+      expect(changeUserPermissionsAction).toHaveBeenCalledWith(2, 4, 9, 'Standard')
+    })
+  })
+
+  it('returns to the main manage-organisation page with the user id once the role has changed', async () => {
+    render(<ChangePermissionsForm {...props} currentRole="Standard" />)
+
+    await user.click(screen.getByRole('button', { name: 'Make champion user' }))
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith(
+        '/portal/organisations/2?action=permissions-updated&userId=4',
+      )
+    })
+  })
+
+  it('shows an error and stays on the page when the change fails', async () => {
+    vi.mocked(changeUserPermissionsAction).mockResolvedValue({
+      status: 'error',
+      message: 'Something went wrong.',
+    })
+
+    render(<ChangePermissionsForm {...props} currentRole="Standard" />)
+
+    await user.click(screen.getByRole('button', { name: 'Make champion user' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toBe('Something went wrong.')
+    })
+    expect(push).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Make champion user' })).toBeInTheDocument()
+  })
+
+  it('goes back when cancelled', async () => {
+    render(<ChangePermissionsForm {...props} currentRole="Standard" />)
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(back).toHaveBeenCalled()
+    expect(changeUserPermissionsAction).not.toHaveBeenCalled()
+  })
+})

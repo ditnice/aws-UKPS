@@ -11,14 +11,14 @@ internal sealed class RecordClinicalTrial
     /// <summary>8-digit NCT identifier; system auto-links to ClinicalTrials.gov. Mandatory for both record types.</summary>
     public required string ClinicalTrialsGovNumber { get; set; }
 
-    public string? BriefDescription { get; set; }
-    public YesNoUnknown? RecruitingInUk { get; set; }
-
     /// <summary>
     /// Vaccines only, where it is mandatory. Null for medicine records.
     /// Preclinical / Phase I / Phase I/II / Phase II / Phase III / Phase III/IV / Phase IV.
     /// </summary>
     public TrialPhase? TrialPhase { get; set; }
+
+    /// <summary>Brief description of key findings. Vaccines only. Null for medicine records.</summary>
+    public string? BriefDescription { get; set; }
 
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }

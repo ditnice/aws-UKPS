@@ -1,7 +1,6 @@
 'use client'
 
-import { ActionBanner } from '@nice-digital/nds-action-banner'
-
+import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button } from '@/components/Button/Button'
 
 import { Example } from '../../_components/Example'

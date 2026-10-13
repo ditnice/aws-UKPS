@@ -41,7 +41,7 @@ export function Button({
 
 export function ButtonGroup({ children, className, ...props }: ButtonGroupProps) {
   return (
-    <div {...props} className={clsx(styles.buttonGroup, className)}>
+    <div {...props} className={clsx(styles.buttonGroup, className)} data-component="button-group">
       {children}
     </div>
   )

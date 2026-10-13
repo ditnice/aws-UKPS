@@ -79,8 +79,8 @@ export const ApplicationTable = <
     return (sortDirection: ActiveSortDirection) => {
       const searchParams = queryToSearchParams({
         ...query,
-        SortBy: sortValue,
-        SortDirection: sortDirection == 'ascending' ? 'Ascending' : 'Descending',
+        sortBy: sortValue,
+        sortDirection: sortDirection == 'ascending' ? 'Ascending' : 'Descending',
       })
       return `?${searchParams.toString()}`
     }
