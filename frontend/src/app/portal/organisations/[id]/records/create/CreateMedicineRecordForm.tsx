@@ -100,7 +100,10 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       }}
     >
       {error && <ErrorState>{errorMessages.creatingNewRecordError}</ErrorState>}
-      <form.Field name="companyCode">
+      <form.Field
+        name="companyCode"
+        validators={{ onDynamic: createRecordCommandSchema.shape.companyCode }}
+      >
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
