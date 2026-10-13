@@ -41,7 +41,11 @@ function renderStatus(status: UserListItemDto['status']) {
 }
 
 function renderActions(user: UserListItemDto, organisationId: number) {
-  const editActivities: UserMembershipAction[] = ['EditUserRole', 'DeactivateMembership']
+  const editActivities: UserMembershipAction[] = [
+    'EditUserRole',
+    'DeactivateMembership',
+    'RemoveUser',
+  ]
 
   const links: { key: string; label: string; href: string }[] = []
 

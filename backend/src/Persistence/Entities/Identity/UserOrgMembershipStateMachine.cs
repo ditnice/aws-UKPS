@@ -13,6 +13,7 @@ internal sealed class UserOrgMembershipStateMachine
             x =>
             {
                 x.On(Command.FinaliseSetup, UserOrgMembershipStatus.Active);
+                x.On(Command.Remove, UserOrgMembershipStatus.Removed);
             }
         );
 
@@ -22,6 +23,7 @@ internal sealed class UserOrgMembershipStateMachine
             {
                 x.On(Command.MarkedAsInactive, UserOrgMembershipStatus.Inactive);
                 x.On(Command.Deactivate, UserOrgMembershipStatus.Deactivated);
+                x.On(Command.Remove, UserOrgMembershipStatus.Removed);
                 x.Ignore(Command.Reactivate);
             }
         );
@@ -32,6 +34,7 @@ internal sealed class UserOrgMembershipStateMachine
             {
                 x.On(Command.Deactivate, UserOrgMembershipStatus.Deactivated);
                 x.On(Command.MarkedAsActive, UserOrgMembershipStatus.Active);
+                x.On(Command.Remove, UserOrgMembershipStatus.Removed);
             }
         );
 
@@ -40,9 +43,14 @@ internal sealed class UserOrgMembershipStateMachine
             x =>
             {
                 x.On(Command.Reactivate, UserOrgMembershipStatus.Active);
+                x.On(Command.Remove, UserOrgMembershipStatus.Removed);
                 x.Ignore(Command.Deactivate);
             }
         );
+
+        // Removed is terminal: no transitions are defined out of it, so any command
+        // sent while in this state (including Remove itself) is rejected.
+        ForState(UserOrgMembershipStatus.Removed, x => { });
     }
 
     internal enum Command
@@ -54,5 +62,6 @@ internal sealed class UserOrgMembershipStateMachine
         Reactivate = 4,
         MarkedAsInactive = 5,
         MarkedAsActive = 6,
+        Remove = 7,
     }
 }

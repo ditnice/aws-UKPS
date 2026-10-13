@@ -637,6 +637,30 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task VerifyMultiFactorAuthentication_ShouldReturnNotFoundWhenTokenDoesNotExist()
+    {
+        _mockedAuthorisationService
+            .VerifyMultiFactorAuthentication(
+                Arg.Any<VerifyMultiFactorAuthenticationCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                VerifyMultiFactorAuthenticationResult.Err(
+                    new VerifyMultiFactorAuthenticationError.DoesNotExist()
+                )
+            );
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(VerifyMultiFactorAuthenticationUrl, UriKind.Relative),
+            _defaultVerifyMultiFactorAuthenticationCommand,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
+    [Fact]
     public async Task VerifyMultiFactorAuthentication_ShouldReturnPassDataToTheService()
     {
         _mockedAuthorisationService

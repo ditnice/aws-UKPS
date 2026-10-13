@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import { router } from '@/test-utils/nextNavigation'
 
 import ManageUserAccessActions from './ManageUserAccessActions'
@@ -14,12 +15,18 @@ beforeEach(() => {
   user = userEvent.setup()
 })
 
-function renderActions(currentUserRole = 'Super') {
+function renderActions(
+  status: UserOrgStatus = 'Active',
+  currentUserRole: UserRole = 'Super',
+  selectedUserRole: UserRole = 'Standard',
+) {
   render(
     <ManageUserAccessActions
       organisationId={2}
       selectedUserId={4}
+      status={status}
       currentUserRole={currentUserRole}
+      selectedUserRole={selectedUserRole}
     />,
   )
 }
@@ -28,27 +35,47 @@ describe('ManageUserAccessActions', () => {
   it('offers the available actions without selecting one by default', () => {
     renderActions()
 
-    for (const name of [
-      'Change user permissions',
-      'Deactivate user',
-      /Manage user details and sign in method/,
-    ]) {
+    for (const name of ['Change user permissions', 'Deactivate user', 'Remove user']) {
       expect(screen.getByRole('radio', { name })).not.toBeChecked()
     }
   })
 
-  it('offers the remove action to a Super user', () => {
-    renderActions('Super')
-    expect(
-      screen.getByRole('radio', { name: 'Remove user - not implemented yet' }),
-    ).toBeInTheDocument()
+  it('offers only removal for an awaiting-setup user managed by a Super user', () => {
+    renderActions('AwaitingSetup')
+    expect(screen.getAllByRole('radio')).toHaveLength(1)
+    expect(screen.getByRole('radio', { name: 'Remove user' })).toBeInTheDocument()
   })
 
-  it.each(['Champion', 'Standard'])('does not offer the remove action to a %s user', (role) => {
-    renderActions(role)
-    expect(
-      screen.queryByRole('radio', { name: 'Remove user - not implemented yet' }),
-    ).not.toBeInTheDocument()
+  it('offers only reactivation for a deactivated user managed by a Champion', () => {
+    renderActions('Deactivated', 'Champion')
+    expect(screen.queryByRole('radio', { name: 'Remove user' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'Deactivate user' })).not.toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Reactivate user' })).toBeInTheDocument()
+  })
+
+  it.each(['Removed', 'RequestedAccess', 'Rejected'] as const)(
+    'does not render a form for %s users',
+    (status) => {
+      renderActions(status)
+      expect(screen.getByText('No actions are available for this user.')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument()
+    },
+  )
+
+  it('does not offer management to Standard users', () => {
+    renderActions('Active', 'Standard')
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+  })
+
+  it('does not offer removal to Champion users', () => {
+    renderActions('Active', 'Champion')
+    expect(screen.queryByRole('radio', { name: 'Remove user' })).not.toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Deactivate user' })).toBeInTheDocument()
+  })
+
+  it('does not offer role changes for a Super user', () => {
+    renderActions('Active', 'Super', 'Super')
+    expect(screen.queryByRole('radio', { name: 'Change user permissions' })).not.toBeInTheDocument()
   })
 
   it('shows a selection error without navigating when Continue is clicked without an action', async () => {
@@ -79,8 +106,10 @@ describe('ManageUserAccessActions', () => {
   it.each([
     ['Change user permissions', '/portal/organisations/2/manage-user-access/4/change-permissions'],
     ['Deactivate user', '/portal/organisations/2/users/4/deactivate'],
+    ['Remove user', '/portal/organisations/2/manage-user-access/4/remove'],
+    ['Reactivate user', '/portal/organisations/2/users/4/reactivate'],
   ])('requests navigation to the selected %s action', async (action, href) => {
-    renderActions()
+    renderActions(action === 'Reactivate user' ? 'Deactivated' : 'Active')
 
     await user.click(screen.getByRole('radio', { name: action }))
     await user.click(screen.getByRole('button', { name: 'Continue' }))
@@ -88,5 +117,5 @@ describe('ManageUserAccessActions', () => {
     expect(router.push).toHaveBeenCalledExactlyOnceWith(href)
   })
 
-  // Navigation to the placeholder remove/manage-details routes remains deferred.
+  // Navigation to the placeholder manage-details route remains deferred.
 })

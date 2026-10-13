@@ -14,6 +14,7 @@ const user = {
   organisationId: 2,
   organisationName: 'Example Pharma',
   userRole: 'Standard',
+  status: 'Active',
 } satisfies UserInformationDto
 
 const expectDefinitionValue = (labelText: string, expectedValue: string) => {

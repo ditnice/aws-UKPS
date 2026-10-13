@@ -1123,6 +1123,16 @@ export type RegulatoryDateDto = {
 };
 
 /**
+ * The result of removing a user.
+ */
+export type RemovedUserDto = {
+    /**
+     * The name the removed user now appears under, for example in a record's timeline.
+     */
+    displayName: string;
+};
+
+/**
  * Represents the command used to request that a new setup link be sent for an
  * expired setup token.
  */
@@ -1348,6 +1358,10 @@ export type UserInformationDto = {
      * Gets the role assigned to the user within the organisation.
      */
     userRole: UserRole;
+    /**
+     * Gets the user's membership status within the organisation.
+     */
+    status: UserOrgStatus;
 };
 
 /**
@@ -1385,18 +1399,19 @@ export type UserListItemDto = {
 };
 
 /**
- * Defines the actions that can be performed on a user's membership.
+ * Defines the actions that can be performed on a user or their membership.
  */
 export const UserMembershipAction = {
     APPROVE_MEMBERSHIP: 'ApproveMembership',
     REJECT_MEMBERSHIP: 'RejectMembership',
     DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
     REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
-    EDIT_USER_ROLE: 'EditUserRole'
+    EDIT_USER_ROLE: 'EditUserRole',
+    REMOVE_USER: 'RemoveUser'
 } as const;
 
 /**
- * Defines the actions that can be performed on a user's membership.
+ * Defines the actions that can be performed on a user or their membership.
  */
 export type UserMembershipAction = typeof UserMembershipAction[keyof typeof UserMembershipAction];
 
@@ -1409,7 +1424,8 @@ export const UserOrgStatus = {
     ACTIVE: 'Active',
     REJECTED: 'Rejected',
     INACTIVE: 'Inactive',
-    DEACTIVATED: 'Deactivated'
+    DEACTIVATED: 'Deactivated',
+    REMOVED: 'Removed'
 } as const;
 
 /**
@@ -1738,6 +1754,10 @@ export type PostAuthVerifyMfaErrors = {
      * verification could not be completed.
      */
     400: ProblemDetails;
+    /**
+     * The multi-factor authentication onboarding record was not found.
+     */
+    404: ProblemDetails;
 };
 
 export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerifyMfaErrors];
@@ -2181,11 +2201,7 @@ export type GetRecordErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The caller is not authorised to view the record.
-     */
-    403: ProblemDetails;
-    /**
-     * No record of the requested type exists with the specified identifier.
+     * The requested record was not found or is not accessible to the caller.
      */
     404: ProblemDetails;
 };
@@ -2384,6 +2400,48 @@ export type GetUserDetailsWithinOrganisationResponses = {
 };
 
 export type GetUserDetailsWithinOrganisationResponse = GetUserDetailsWithinOrganisationResponses[keyof GetUserDetailsWithinOrganisationResponses];
+
+export type RemoveUserData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to remove.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}';
+};
+
+export type RemoveUserErrors = {
+    /**
+     * One of the user's organisation memberships is not in a state that allows removal.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller attempted to remove themselves.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified user does not exist or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+};
+
+export type RemoveUserError = RemoveUserErrors[keyof RemoveUserErrors];
+
+export type RemoveUserResponses = {
+    /**
+     * The user was removed. Returns the name they now appear under.
+     */
+    200: RemovedUserDto;
+};
+
+export type RemoveUserResponse = RemoveUserResponses[keyof RemoveUserResponses];
 
 export type PatchUsersByUserIdData = {
     /**
