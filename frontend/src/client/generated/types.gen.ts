@@ -1083,13 +1083,31 @@ export type RegisterUserCommandDto = {
  */
 export type RegisterUserConfirmationDto = {
     /**
-     * ID for the user.
-     */
-    id: number;
-    /**
      * Gets the name of the user's organisation.
      */
     organisationName: string;
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
+};
+
+/**
+ * Represents the details of a user who has been registered.
+ */
+export type RegisterUserDetailsDto = {
+    /**
+     * The Id to identify the registration details.
+     */
+    id: number;
     /**
      * Gets the user's full name.
      */
@@ -2541,7 +2559,7 @@ export type GetUserRegistrationByIdResponses = {
     /**
      * The membership request's details were successfully retrieved.
      */
-    200: RegisterUserConfirmationDto;
+    200: RegisterUserDetailsDto;
 };
 
 export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];

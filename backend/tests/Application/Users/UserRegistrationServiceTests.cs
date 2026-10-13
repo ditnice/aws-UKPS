@@ -12,7 +12,7 @@ using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
 using GetUserDetails = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
+    UKPS.Api.Application.Users.Dtos.RegisterUserDetailsDto,
     UKPS.Api.Application.Users.Errors.GetUserDetailsError
 >;
 using RegisterUserConfirmation = UKPS.Api.Application.Common.Result<
@@ -92,7 +92,6 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         user.ShouldBe(
             new RegisterUserConfirmationDto
             {
-                Id = user.Id,
                 OrganisationName = user.OrganisationName,
                 FullName = registerUserCommandDto.FullName,
                 WorkEmail = registerUserCommandDto.WorkEmail,
@@ -122,10 +121,15 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             registerUserCommandDto,
             TestContext.Current.CancellationToken
         );
-        var data = result.ShouldBeSuccess();
+        result.ShouldBeSuccess();
         var entity = await _harness
             .GetClearedContext()
-            .UserRegistrationRequests.FindAsync([data.Id], TestContext.Current.CancellationToken);
+            .UserRegistrationRequests.FirstOrDefaultAsync(
+                x =>
+                    x.WorkEmail == registerUserCommandDto.WorkEmail
+                    && x.OrganisationId == _organisation.Id,
+                TestContext.Current.CancellationToken
+            );
         entity.ShouldNotBeNull();
         entity.CreatedAt.ShouldBe(_currentTime);
     }
@@ -161,13 +165,12 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        RegisterUserConfirmationDto user = result.ShouldBeSuccess();
+        RegisterUserDetailsDto user = result.ShouldBeSuccess();
 
         user.ShouldBe(
-            new RegisterUserConfirmationDto
+            new RegisterUserDetailsDto
             {
                 Id = request.Id,
-                OrganisationName = request.Organisation!.OrganisationName,
                 FullName = request.FullName,
                 WorkEmail = request.WorkEmail,
                 PhoneNumber = request.PhoneNumber,
@@ -550,7 +553,16 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             modified,
             TestContext.Current.CancellationToken
         );
-        return new(result.ShouldBeSuccess().Id, originalCommand);
+
+        result.ShouldBeSuccess();
+        var savedRequest = await _harness
+            .GetClearedContext()
+            .UserRegistrationRequests.SingleAsync(
+                x => x.WorkEmail == modified.WorkEmail,
+                TestContext.Current.CancellationToken
+            );
+
+        return new(savedRequest.Id, modified);
     }
 
     private sealed class RegisterUserCommandDtoFaker : Faker<RegisterUserCommandDto>

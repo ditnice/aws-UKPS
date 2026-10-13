@@ -228,7 +228,7 @@ public class UserEndpointTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUserRegistrationById_Authorised_ReturnsRequestGuid()
+    public async Task GetUserRegistrationById_Authorised_ReturnsId()
     {
         UserRegistrationRequest request = _userRegistrationRequests[0];
         AuthenticateAs(UserRole.Champion, request.OrganisationId);
@@ -241,7 +241,7 @@ public class UserEndpointTests : DatabaseTestBase
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+        var dto = await response.Content.ReadFromJsonAsync<RegisterUserDetailsDto>(
             TestContext.Current.CancellationToken
         );
         dto.ShouldNotBeNull().Id.ShouldBe(request.Id);
