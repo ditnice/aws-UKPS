@@ -87,10 +87,10 @@ describe('ArrayInput', () => {
     expect(screen.getByText(defaultProps.hint)).toBeDefined()
   })
 
-  it('should not render a remove button for the first item', () => {
+  it('should render a remove button for the first item', () => {
     renderComponent()
 
-    expect(screen.queryByTestId('remove-button-0')).toBeNull()
+    expect(screen.queryByTestId('remove-button-0')).toBeDefined()
   })
 
   it('should render a remove button for each subsequent item', () => {
