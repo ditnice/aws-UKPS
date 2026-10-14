@@ -185,6 +185,52 @@ public class UserController(IUserService userService) : ControllerBase
         );
     }
 
+    /// <summary>
+    /// Removes access and anonymises the user's profile and linked approved registration requests.
+    /// Personal details in user-change audit history are cleared. Records created by the user are
+    /// kept; other registration requests, communications, logs and backups are not deleted.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to remove.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <response code="200">The user was removed. Returns the name they now appear under.</response>
+    /// <response code="400">One of the user's organisation memberships is not in a state that allows removal.</response>
+    /// <response code="403">The caller attempted to remove themselves.</response>
+    /// <response code="404">The specified user does not exist or is not accessible to the caller.</response>
+    [ProducesResponseType<RemovedUserDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [HttpDelete("{userId:int}", Name = nameof(RemoveUser))]
+    public async Task<ActionResult<RemovedUserDto>> RemoveUser(
+        [FromRoute] int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await userService.RemoveUser(userId, cancellationToken);
+
+        return result.Match<ActionResult<RemovedUserDto>>(
+            removedUser => Ok(removedUser),
+            err =>
+                err.Match<ActionResult<RemovedUserDto>>(
+                    // Conceal inaccessible users using the same response as missing users (ADR-004).
+                    notAllowed: () => UserNotFound(),
+                    userNotFound: () => UserNotFound(),
+                    cannotRemoveSelf: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Forbidden",
+                            detail: "You cannot remove yourself."
+                        ),
+                    notAllowedInCurrentState: x =>
+                        Problem(
+                            title: "Invalid membership state",
+                            statusCode: StatusCodes.Status400BadRequest,
+                            detail: $"The user's organisation membership is not in a state that allows this action. Current state [{x.TransitionResult.CurrentState}]"
+                        )
+                )
+        );
+    }
+
     private ObjectResult UserNotFound() =>
         Problem(
             statusCode: StatusCodes.Status404NotFound,

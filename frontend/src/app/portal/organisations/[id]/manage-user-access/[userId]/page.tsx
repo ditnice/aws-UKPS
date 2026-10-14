@@ -35,7 +35,7 @@ export default async function ManageUserAccess({ params }: Props) {
     notFound()
   }
 
-  if (response?.status === 404) {
+  if (response?.status === 404 || user?.status === 'Removed') {
     notFound()
   }
   const backLink = <BackLink href={`/portal/organisations/${organisationId}`}>Back</BackLink>
@@ -55,11 +55,17 @@ export default async function ManageUserAccess({ params }: Props) {
       <p>
         {user.workEmail} is a {user.userRole.toLowerCase()} user.
       </p>
-      <ManageUserAccessActions
-        organisationId={organisationId}
-        selectedUserId={selectedUserId}
-        currentUserRole={currentUser.userRole}
-      />
+      {user.userId === currentUser.userId ? (
+        <p>You cannot manage your own access from this page.</p>
+      ) : (
+        <ManageUserAccessActions
+          organisationId={organisationId}
+          selectedUserId={selectedUserId}
+          currentUserRole={currentUser.userRole}
+          selectedUserRole={user.userRole}
+          status={user.status}
+        />
+      )}
     </>
   )
 }
