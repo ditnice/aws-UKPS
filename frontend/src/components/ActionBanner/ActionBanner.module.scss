@@ -1,0 +1,48 @@
+@use '@/styles/colours';
+@use '@/styles/media-queries';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.banner {
+  &:global(.action-banner) {
+    padding: utils.rem(spacing.$x-large 0);
+
+    @include media-queries.mq($from: md) {
+      padding: utils.rem(spacing.$x-large spacing.$large);
+    }
+  }
+
+  // The title and intro run the full width of the banner, rather than wrapping at the
+  // heading and lead text's usual 66 characters.
+  :global(.action-banner__title) {
+    @include typography.h2;
+    margin-top: 0;
+    max-width: none;
+  }
+
+  // The subtle variant uses the full width subtle variant's colours.
+  &:global(.action-banner--subtle) {
+    background: colours.$action-banner-full-width-subtle-background;
+  }
+
+  :global(.action-banner__intro) {
+    margin-top: 0;
+    max-width: none;
+  }
+
+  :global(.action-banner__text) {
+    flex-basis: 100%;
+    margin: 0;
+  }
+
+  :global(.action-banner__actions) {
+    margin-top: utils.rem(spacing.$medium);
+  }
+
+  [data-component='button-group'] {
+    display: flex;
+    gap: utils.rem(spacing.$large);
+    margin-top: 0;
+  }
+}

@@ -4,7 +4,7 @@ This document describes how record content pages (the questions a company answer
 medicine or vaccine) are defined, rendered, validated and saved. For a step-by-step guide to
 adding a page, see [Creating form pages](creating-form-pages.md). For reference data such as BNF
 chapters, see [Reference data](reference-data.md). The key decisions are recorded in
-[ADR-005](../ADR/ADR-005-dynamic-record-content-forms.md).
+[ADR-006](../ADR/ADR-006-dynamic-record-content-forms.md).
 
 The original plan is the [form builder brief](ukps-form-builder.md). Where it and this
 document disagree, this document and the code are correct.
@@ -19,7 +19,7 @@ again, writes each changed answer to its typed column or table, audits the chang
 the next page.
 
 There is no generic answers table. Answers live in the existing typed content tables (for
-example `medicines_product_details`), and **bindings** map each question onto its column or table.
+example `medicines_indication_details`), and **bindings** map each question onto its column or table.
 
 ### What is built today
 
@@ -29,7 +29,7 @@ example `medicines_product_details`), and **bindings** map each question onto it
 | Question types | `Textarea`, `Radio`, `Select`, `Checkbox` (with an optional `combobox` display hint) |
 | Rules | `Required`, `MaxLength`, `MaxItems` |
 | Bindings | Column (string, enum, reference ID) and junction table |
-| Entry points | Record creation redirects to the first page; the organisation records table has a **View or edit** link |
+| Entry points | Record creation redirects to the first page; **Update record** on the record details page opens the first page |
 | Audit | One event per save, one row per changed answer |
 | Not built yet | Conditional pages and questions, add-another groups, precision dates, vaccine forms, tasklist |
 
@@ -46,7 +46,7 @@ flowchart LR
         FP["FormPage<br/>(TanStack Form)"]
         QR["questionRegistry<br/>Textarea / Select / Radio / Checkbox / ComboboxSlot"]
         DF["lib/dynamic-form<br/>toFormValues, buildPayload,<br/>firstRuleError, buildZodSchema,<br/>applyServerErrors"]
-        RT["Organisation records table<br/>View or edit link"]
+        RT["Record details page<br/>Update record button"]
     end
 
     subgraph Backend["Backend (.NET API)"]
@@ -62,7 +62,7 @@ flowchart LR
     end
 
     subgraph DB["Postgres (ukps schema)"]
-        T[("Content tables<br/>medicines_product_details,<br/>medicines_product_detail_therapeutic_areas")]
+        T[("Content tables<br/>medicines_indication_details,<br/>medicines_indication_detail_therapeutic_areas")]
         RD[("Reference data<br/>bnf_chapters, therapeutic_areas")]
         AU[("Audit<br/>record_events,<br/>record_event_field_changes")]
         RV[("record_revisions<br/>(xmin concurrency token)")]
@@ -124,7 +124,7 @@ saving the last page returns to the organisation's records list.
 
 ### Question IDs are a public contract
 
-A question ID such as `medicines_product_detail.indication` is used, unchanged, as:
+A question ID such as `medicines_indication_detail.indication` is used, unchanged, as:
 
 - the key in the page's `answers`,
 - the key in the save payload,
@@ -144,8 +144,10 @@ Bindings are the only form code that touches EF entities. Each one reads and wri
 - `JunctionBinding` maps a multi-select to a junction table. Writing compares the submitted set
   with the stored rows and inserts or deletes only the difference.
 
-Content rows are found by `RevisionId` through `ContentRows`. `MedicinesProductDetail` is created
-by record creation, so a missing row is treated as a bug, never created by the form.
+Content rows are found by `RevisionId` through `ContentRows`. Record creation does not insert a
+`MedicinesIndicationDetail` row, so until the first save its questions read as unanswered, and
+the first save that writes to it creates it. Rows can only be created this way if their
+`ContentRows` entry has a factory that sets every required column.
 
 ### Options
 
@@ -168,11 +170,11 @@ The server is authoritative; the client mirrors it so users see errors without a
 
 The message for each rule is written in the C# definition and shown verbatim on both sides. The
 shared fixture `rule-cases.json` is run by both `RuleFixtureTests` (xUnit) and
-`ruleFixture.spec.ts` (Vitest), so the two implementations cannot drift apart.
+`ruleFixture.test.ts` (Vitest), so the two implementations cannot drift apart.
 
 ### Versions and concurrency
 
-- **`formVersion`**: the definition's version string (for example `2026.10.1`). The client echoes
+- **`formVersion`**: the definition's version string (for example `2026.10.2`). The client echoes
   it on save; a mismatch returns 409 `form_version_changed`. `MedicineFormDefinitionTests` pins a
   fingerprint of the definition, so changing the definition without bumping the version fails
   the build.
@@ -209,8 +211,9 @@ sequenceDiagram
     F->>F: router.push(/portal/records/{recordId}/revisions/{revisionId}/{firstPageId})
 ```
 
-The organisation records table links to the same URL using each record's `latestRevisionId` and
-`firstPageId`, so users can return to a record and change their answers.
+The record details page (`/portal/organisations/{id}/records/{recordId}`) links its **Update
+record** button to the same URL, using the record's `revisionId` and `firstPageId` from
+`GET /records/{id}`, so users can return to a record and change their answers.
 
 ### Loading a page
 
@@ -309,7 +312,7 @@ The examples below use the therapeutic area page of record 5, revision 7.
 
 ```json
 {
-  "formVersion": "2026.10.1",
+  "formVersion": "2026.10.2",
   "revisionVersion": 4711,
   "readOnly": false,
   "organisationId": 3,
@@ -318,7 +321,7 @@ The examples below use the therapeutic area page of record 5, revision 7.
   "previousPageId": "bnf-chapter",
   "questions": [
     {
-      "id": "medicines_product_detail_therapeutic_area",
+      "id": "medicines_indication_detail_therapeutic_area",
       "type": "Checkbox",
       "label": "Select the most appropriate therapeutic area for this product (optional)",
       "hint": "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.",
@@ -335,7 +338,7 @@ The examples below use the therapeutic area page of record 5, revision 7.
     }
   ],
   "answers": {
-    "medicines_product_detail_therapeutic_area": ["14"]
+    "medicines_indication_detail_therapeutic_area": ["14"]
   },
   "context": {}
 }
@@ -349,7 +352,7 @@ and a `Textarea` has no options (`null`):
 {
   "questions": [
     {
-      "id": "medicines_product_detail.indication",
+      "id": "medicines_indication_detail.indication",
       "type": "Textarea",
       "label": "What is the indication this product is seeking a licence for?",
       "hint": "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups.\n\nYou can edit these details at any time throughout product development.",
@@ -362,7 +365,7 @@ and a `Textarea` has no options (`null`):
     }
   ],
   "answers": {
-    "medicines_product_detail.indication": null
+    "medicines_indication_detail.indication": null
   }
 }
 ```
@@ -388,10 +391,10 @@ Send `null` for an unanswered single-value question and `[]` for an unanswered c
 
 ```json
 {
-  "formVersion": "2026.10.1",
+  "formVersion": "2026.10.2",
   "revisionVersion": 4711,
   "answers": {
-    "medicines_product_detail_therapeutic_area": ["14", "2"]
+    "medicines_indication_detail_therapeutic_area": ["14", "2"]
   }
 }
 ```
@@ -418,8 +421,8 @@ under their own key:
   "title": "One or more validation errors occurred.",
   "status": 400,
   "errors": {
-    "medicines_product_detail_therapeutic_area": ["Select up to 3 therapeutic areas"],
-    "medicines_product_detail.indication": ["This is not a question on this page."]
+    "medicines_indication_detail_therapeutic_area": ["Select up to 3 therapeutic areas"],
+    "medicines_indication_detail.indication": ["This is not a question on this page."]
   },
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 }

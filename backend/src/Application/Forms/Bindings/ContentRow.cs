@@ -4,14 +4,15 @@ namespace UKPS.Api.Application.Forms.Bindings;
 
 /// <inheritdoc cref="IContentRow"/>
 /// <remarks>
-/// Only rows created by record creation are supported so far: a missing row is an invariant
-/// failure rather than something the form creates. Rows created on first write (and the
-/// startup check that their non-nullable columns are bound) come with the first page that
-/// needs them.
+/// A row with a <c>create</c> factory is created by the first save that writes to it; until
+/// then its questions read as unanswered. The factory must set every required column, which
+/// the compiler enforces for <c>required</c> members. A row without a factory must already
+/// exist (for example, because record creation inserts it); a missing one is an error.
 /// </remarks>
 internal sealed class ContentRow<TEntity>(
     Expression<Func<TEntity, int>> revisionId,
-    Expression<Func<TEntity, int>> id
+    Expression<Func<TEntity, int>> id,
+    Func<int, TEntity>? create = null
 ) : IContentRow
     where TEntity : class
 {
@@ -20,6 +21,9 @@ internal sealed class ContentRow<TEntity>(
     public Type EntityType => typeof(TEntity);
 
     public int GetId(TEntity entity) => _getId(entity);
+
+    /// <summary>Creates a new row for a revision, or <c>null</c> if rows cannot be created.</summary>
+    public TEntity? Create(int revisionIdValue) => create?.Invoke(revisionIdValue);
 
     /// <summary>A predicate matching the row for <paramref name="revisionIdValue"/>.</summary>
     public Expression<Func<TEntity, bool>> ForRevision(int revisionIdValue)

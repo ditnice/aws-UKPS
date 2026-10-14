@@ -3,7 +3,7 @@ import {
   getUserRegistrationById,
 } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
-import { Alert } from '@/components/Alert/Alert'
+import { Alert, type AlertProps } from '@/components/Alert/Alert'
 
 import { roleLabels } from '../_lib/userLabels'
 
@@ -12,15 +12,18 @@ import type { RegisteredUserResult, RequestResult, UserActionResult } from '../_
 type RegisteredUserActionProps = {
   organisationId: number
   userAction: RegisteredUserResult
+  dismissHref?: AlertProps['dismissHref']
 }
 const renderRegisteredUserAction = async ({
   organisationId,
   userAction,
+  dismissHref,
 }: RegisteredUserActionProps) => {
-  const { data: user } = await getUserDetailsWithinOrganisation({
+  const { data: user, error } = await getUserDetailsWithinOrganisation({
     client: await createServerApiClient(),
     path: { organisationId, userId: userAction.userId },
   })
+
   switch (userAction.action) {
     case 'invited':
       return (
@@ -34,21 +37,17 @@ const renderRegisteredUserAction = async ({
       )
     case 'deactivated':
       return (
-        <>
-          <Alert type="success">
-            <h3>{user?.workEmail ?? 'The user'}&apos;s account has been deactivated</h3>
-            <p>We&#39;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
-          </Alert>
-        </>
+        <Alert type="success">
+          <h3>{user?.workEmail ?? 'The user'}&apos;s account has been deactivated</h3>
+          <p>We&#39;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
+        </Alert>
       )
     case 'reactivated':
       return (
-        <>
-          <Alert type="success">
-            <h3>{user?.workEmail ?? 'The user'}&apos;s account has been reactivated</h3>
-            <p>We&rsquo;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
-          </Alert>
-        </>
+        <Alert type="success">
+          <h3>{user?.workEmail ?? 'The user'}&apos;s account has been reactivated</h3>
+          <p>We&rsquo;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
+        </Alert>
       )
     case 'permissions-updated':
       return (
@@ -63,6 +62,22 @@ const renderRegisteredUserAction = async ({
           </p>
         </Alert>
       )
+    case 'removed':
+      // URL parameters are not proof that a removal succeeded.
+      if (error || user?.status !== 'Removed') {
+        return null
+      }
+      return (
+        <Alert type="success" dismissHref={dismissHref}>
+          <h3>User removed from UK PharmaScan</h3>
+          <p>
+            This user&apos;s personal information is no longer available. In a record&apos;s
+            timeline, they now appear as {user.fullName}.
+            <br />
+            Records they created can still be accessed and are not affected by removing this user.
+          </p>
+        </Alert>
+      )
   }
 }
 
@@ -73,7 +88,7 @@ type UserRequestActionProps = {
 const renderUserRequestAction = async ({ organisationId, userAction }: UserRequestActionProps) => {
   const { data: request } = await getUserRegistrationById({
     client: await createServerApiClient(),
-    path: { organisationId, requestGuid: userAction.userRequestId },
+    path: { organisationId, id: userAction.userRequestId },
   })
   switch (userAction.action) {
     case 'approved-request':
@@ -99,12 +114,20 @@ const renderUserRequestAction = async ({ organisationId, userAction }: UserReque
   }
 }
 
-interface UserActionAlertProps {
+type UserActionAlertProps = {
   organisationId: number
-  userAction: UserActionResult
-}
-export function UserActionAlert({ organisationId, userAction }: UserActionAlertProps) {
+} & (
+  | {
+      userAction: Omit<RegisteredUserResult, 'action'> & { action: 'removed' }
+      dismissHref?: AlertProps['dismissHref']
+    }
+  | {
+      userAction: UserActionResult
+      dismissHref?: never
+    }
+)
+export function UserActionAlert({ organisationId, userAction, dismissHref }: UserActionAlertProps) {
   return userAction.type === 'user'
-    ? renderRegisteredUserAction({ organisationId: organisationId, userAction: userAction })
+    ? renderRegisteredUserAction({ organisationId, userAction, dismissHref })
     : renderUserRequestAction({ organisationId, userAction })
 }

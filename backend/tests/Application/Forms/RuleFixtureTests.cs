@@ -91,7 +91,7 @@ public class RuleFixtureTests
     // The binding and options only need to satisfy the type; rules never touch them.
     private static PageDefinition CreatePage(QuestionType type, IReadOnlyList<QuestionRule> rules)
     {
-        IQuestionBinding binding = Bind.Column((MedicinesProductDetail x) => x.Indication);
+        IQuestionBinding binding = Bind.Column((MedicinesIndicationDetail x) => x.Indication);
         QuestionOptions? options = type.HasOptions()
             ? Choices.Enum((YesNoUnknown.Yes, "Yes"))
             : null;

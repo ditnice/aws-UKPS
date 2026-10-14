@@ -11,17 +11,17 @@ namespace UKPS.Api.Tests.Application.Forms;
 public class FormDefinitionValidatorTests
 {
     private static readonly IQuestionBinding _textBinding = Bind.Column(
-        (MedicinesProductDetail x) => x.Indication
+        (MedicinesIndicationDetail x) => x.Indication
     );
 
     private static readonly IQuestionBinding _enumBinding = Bind.Column(
-        (MedicinesProductDetail x) => x.IndicationIsCancer
+        (MedicinesIndicationDetail x) => x.IndicationIsCancer
     );
 
     private static readonly IQuestionBinding _junctionBinding = Bind.Junction<
-        MedicinesProductDetail,
-        MedicinesProductDetailTherapeuticArea
-    >(x => x.MedicinesProductDetailId, x => x.TherapeuticAreaId);
+        MedicinesIndicationDetail,
+        MedicinesIndicationDetailTherapeuticArea
+    >(x => x.MedicinesIndicationDetailId, x => x.TherapeuticAreaId);
 
     private static readonly QuestionOptions _yesNoOptions = Choices.Enum(
         (YesNoUnknown.Yes, "Yes"),

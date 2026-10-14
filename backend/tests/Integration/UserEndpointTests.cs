@@ -204,6 +204,43 @@ public class UserEndpointTests : DatabaseTestBase
         otherUserProblem.Detail.ShouldBe(missingUserProblem.Detail);
     }
 
+    [Theory]
+    [InlineData(UserRole.Standard)]
+    [InlineData(UserRole.Champion)]
+    public async Task RemoveUser_NotAuthorised_ReturnsIndistinguishableNotFoundForExistingAndGuessedIds(
+        UserRole role
+    )
+    {
+        User target = _seededUsers.First();
+        AuthenticateAs(role, target.UserOrgMemberships!.First().OrganisationId);
+
+        using HttpResponseMessage existingResponse = await _httpClient.DeleteAsync(
+            new Uri($"/users/{target.Id}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+        using HttpResponseMessage guessedResponse = await _httpClient.DeleteAsync(
+            new Uri("/users/999999", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        existingResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        guessedResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        ProblemDetails? existingProblem =
+            await existingResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+                TestContext.Current.CancellationToken
+            );
+        ProblemDetails? guessedProblem =
+            await guessedResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+                TestContext.Current.CancellationToken
+            );
+        existingProblem.ShouldNotBeNull();
+        guessedProblem.ShouldNotBeNull();
+        existingProblem.Status.ShouldBe(guessedProblem.Status);
+        existingProblem.Type.ShouldBe(guessedProblem.Type);
+        existingProblem.Title.ShouldBe(guessedProblem.Title);
+        existingProblem.Detail.ShouldBe(guessedProblem.Detail);
+    }
+
     [Fact]
     public async Task GetUserRegistrationById_NotAuthorisedForOrganisation_ReturnsForbiddenWhetherOrNotRequestExists()
     {
@@ -214,13 +251,13 @@ public class UserEndpointTests : DatabaseTestBase
             "GET",
             "",
             request.OrganisationId,
-            request.RequestGuid
+            request.Id
         );
         using HttpResponseMessage guessedResponse = await SendMembershipRequest(
             "GET",
             "",
             request.OrganisationId,
-            Guid.NewGuid()
+            request.Id + 1000
         );
 
         existingResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -228,7 +265,7 @@ public class UserEndpointTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUserRegistrationById_Authorised_ReturnsRequestGuid()
+    public async Task GetUserRegistrationById_Authorised_ReturnsRequestId()
     {
         UserRegistrationRequest request = _userRegistrationRequests[0];
         AuthenticateAs(UserRole.Champion, request.OrganisationId);
@@ -237,21 +274,21 @@ public class UserEndpointTests : DatabaseTestBase
             "GET",
             "",
             request.OrganisationId,
-            request.RequestGuid
+            request.Id
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var dto = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
             TestContext.Current.CancellationToken
         );
-        dto.ShouldNotBeNull().RequestGuid.ShouldBe(request.RequestGuid);
+        dto.ShouldNotBeNull().Id.ShouldBe(request.Id);
     }
 
     [Theory]
     [InlineData("GET", "")]
     [InlineData("PATCH", "/approve")]
     [InlineData("PATCH", "/reject")]
-    public async Task MembershipRequest_GuidFromAnotherOrganisation_ReturnsNotFound(
+    public async Task MembershipRequest_IdFromAnotherOrganisation_ReturnsNotFound(
         string method,
         string action
     )
@@ -266,7 +303,7 @@ public class UserEndpointTests : DatabaseTestBase
             method,
             action,
             otherOrganisationId,
-            request.RequestGuid
+            request.Id
         );
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -275,12 +312,12 @@ public class UserEndpointTests : DatabaseTestBase
         string method,
         string action,
         int organisationId,
-        Guid requestGuid
+        int id
     )
     {
         using var message = new HttpRequestMessage(
             new HttpMethod(method),
-            $"/organisations/{organisationId}/membership-requests/{requestGuid}{action}"
+            $"/organisations/{organisationId}/membership-requests/{id}{action}"
         );
         return await _httpClient.SendAsync(message, TestContext.Current.CancellationToken);
     }

@@ -6,8 +6,8 @@ export type AnswerValue = string | string[] | null
 
 /**
  * Form values are nested by the dots in question IDs, because TanStack Form treats a dotted
- * field name as a path: `medicines_product_detail.indication` is stored at
- * `values.medicines_product_detail.indication`.
+ * field name as a path: `medicines_indication_detail.indication` is stored at
+ * `values.medicines_indication_detail.indication`.
  */
 export type FormValues = Record<string, unknown>
 

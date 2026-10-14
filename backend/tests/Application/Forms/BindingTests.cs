@@ -14,21 +14,21 @@ namespace UKPS.Api.Tests.Application.Forms;
 public class BindingTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
 {
     private static readonly IQuestionBinding _indication = Bind.Column(
-        (MedicinesProductDetail x) => x.Indication
+        (MedicinesIndicationDetail x) => x.Indication
     );
 
     private static readonly IQuestionBinding _isCancer = Bind.Column(
-        (MedicinesProductDetail x) => x.IndicationIsCancer
+        (MedicinesIndicationDetail x) => x.IndicationIsCancer
     );
 
     private static readonly IQuestionBinding _bnfChapter = Bind.Column(
-        (MedicinesProductDetail x) => x.BnfChapterId
+        (MedicinesIndicationDetail x) => x.BnfChapterId
     );
 
     private static readonly IQuestionBinding _therapeuticAreas = Bind.Junction<
-        MedicinesProductDetail,
-        MedicinesProductDetailTherapeuticArea
-    >(x => x.MedicinesProductDetailId, x => x.TherapeuticAreaId);
+        MedicinesIndicationDetail,
+        MedicinesIndicationDetailTherapeuticArea
+    >(x => x.MedicinesIndicationDetailId, x => x.TherapeuticAreaId);
 
     private static readonly string[] _areaLabels = ["Addiction", "Allergy", "Oncology"];
 
@@ -69,7 +69,7 @@ public class BindingTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
         await WriteAndSaveAsync(_isCancer, record.Revision.Id, JsonValue.Create("Unknown"));
 
         await using var context = Fixture.CreateContext();
-        var stored = await context.MedicinesProductDetails.SingleAsync(
+        var stored = await context.MedicinesIndicationDetails.SingleAsync(
             x => x.RevisionId == record.Revision.Id,
             Ct
         );
@@ -107,11 +107,48 @@ public class BindingTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
     }
 
     [Fact]
-    public async Task Column_MissingContentRow_Throws()
+    public async Task Column_RowNotCreatedYet_ReadsAsUnanswered()
     {
-        await Should.ThrowAsync<InvalidOperationException>(() =>
-            ReadFreshAsync(_indication, 999_999)
+        var record = await MedicineRecordTestData.CreateAsync(Context, Ct);
+
+        (await ReadFreshAsync(_indication, record.Revision.Id)).ShouldBeNull();
+        (await ReadFreshAsync(_isCancer, record.Revision.Id)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Column_FirstWrite_CreatesTheRow()
+    {
+        var record = await MedicineRecordTestData.CreateAsync(Context, Ct);
+
+        await WriteAndSaveAsync(_indication, record.Revision.Id, JsonValue.Create("Hepatitis C"));
+
+        await using var context = Fixture.CreateContext();
+        var row = await context.MedicinesIndicationDetails.SingleAsync(
+            x => x.RevisionId == record.Revision.Id,
+            Ct
         );
+        row.Indication.ShouldBe("Hepatitis C");
+        row.IndicationIsCancer.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Column_ExistingRow_IsUpdatedNotDuplicated()
+    {
+        var record = await MedicineRecordTestData.CreateAsync(
+            Context,
+            Ct,
+            withIndicationDetail: true
+        );
+
+        await WriteAndSaveAsync(_indication, record.Revision.Id, JsonValue.Create("Hepatitis C"));
+
+        await using var context = Fixture.CreateContext();
+        (
+            await context.MedicinesIndicationDetails.CountAsync(
+                x => x.RevisionId == record.Revision.Id,
+                Ct
+            )
+        ).ShouldBe(1);
     }
 
     [Fact]
@@ -138,10 +175,15 @@ public class BindingTests(PostgresFixture fixture) : DatabaseTestBase(fixture)
         var stored = await ReadFreshAsync(_therapeuticAreas, record.Revision.Id);
         stored!.AsArray().Select(node => node!.GetValue<string>()).ShouldBe([ids[1], ids[2]]);
 
+        // The first write created the parent row and linked the junction rows to it.
         await using var context = Fixture.CreateContext();
+        var parent = await context.MedicinesIndicationDetails.SingleAsync(
+            x => x.RevisionId == record.Revision.Id,
+            Ct
+        );
         (
-            await context.MedicinesProductDetailTherapeuticAreas.CountAsync(
-                x => x.MedicinesProductDetailId == record.ProductDetail.Id,
+            await context.MedicinesIndicationDetailTherapeuticAreas.CountAsync(
+                x => x.MedicinesIndicationDetailId == parent.Id,
                 Ct
             )
         ).ShouldBe(2);

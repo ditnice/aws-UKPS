@@ -9,7 +9,7 @@ namespace UKPS.Api.Application.Forms.Bindings;
 internal static class Bind
 {
     /// <summary>Binds to a property on a revision's content row, e.g.
-    /// <c>Bind.Column((MedicinesProductDetail x) => x.Indication)</c>.</summary>
+    /// <c>Bind.Column((MedicinesIndicationDetail x) => x.Indication)</c>.</summary>
     public static IQuestionBinding Column<TEntity, TValue>(
         Expression<Func<TEntity, TValue>> property
     )

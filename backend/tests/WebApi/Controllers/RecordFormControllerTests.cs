@@ -65,7 +65,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     private static RecordPageDto CreatePage() =>
         new()
         {
-            FormVersion = "2026.10.1",
+            FormVersion = "2026.10.2",
             RevisionVersion = 4711,
             ReadOnly = false,
             OrganisationId = 3,
@@ -80,7 +80,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             [
                 new FormQuestionDto
                 {
-                    Id = "medicines_product_detail.indication_is_cancer",
+                    Id = "medicines_indication_detail.indication_is_cancer",
                     Type = QuestionType.Radio,
                     Label = "Is this a product intended to treat cancer?",
                     Rules = [new FormRuleDto { Kind = RuleKind.Required, Message = "Select one" }],
@@ -89,9 +89,9 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             ],
             Answers = new Dictionary<string, JsonNode?>(StringComparer.Ordinal)
             {
-                ["medicines_product_detail.indication_is_cancer"] = JsonValue.Create("Yes"),
-                ["medicines_product_detail_therapeutic_area"] = new JsonArray("4", "7"),
-                ["medicines_product_detail.indication"] = null,
+                ["medicines_indication_detail.indication_is_cancer"] = JsonValue.Create("Yes"),
+                ["medicines_indication_detail_therapeutic_area"] = new JsonArray("4", "7"),
+                ["medicines_indication_detail.indication"] = null,
             },
             Context = new Dictionary<string, JsonNode?>(StringComparer.Ordinal),
         };
@@ -107,7 +107,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var json = JsonNode.Parse(await response.Content.ReadAsStringAsync(Ct))!;
-        json["formVersion"]!.GetValue<string>().ShouldBe("2026.10.1");
+        json["formVersion"]!.GetValue<string>().ShouldBe("2026.10.2");
         json["revisionVersion"]!.GetValue<uint>().ShouldBe(4711u);
         json["previousPageId"]!.GetValue<string>().ShouldBe("paediatric");
 
@@ -117,14 +117,14 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
 
         // Question IDs are used as answer keys verbatim, not camel-cased.
         var answers = json["answers"]!.AsObject();
-        answers["medicines_product_detail.indication_is_cancer"]!
+        answers["medicines_indication_detail.indication_is_cancer"]!
             .GetValue<string>()
             .ShouldBe("Yes");
-        answers["medicines_product_detail_therapeutic_area"]!
+        answers["medicines_indication_detail_therapeutic_area"]!
             .ToJsonString()
             .ShouldBe("[\"4\",\"7\"]");
-        answers.ContainsKey("medicines_product_detail.indication").ShouldBeTrue();
-        answers["medicines_product_detail.indication"].ShouldBeNull();
+        answers.ContainsKey("medicines_indication_detail.indication").ShouldBeTrue();
+        answers["medicines_indication_detail.indication"].ShouldBeNull();
     }
 
     public static TheoryData<string> ErrorCases =>
@@ -152,7 +152,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     private const string SaveBody =
-        """{"formVersion":"2026.10.1","revisionVersion":4711,"answers":{"medicines_product_detail.indication_is_cancer":"Yes","medicines_product_detail.indication":null}}""";
+        """{"formVersion":"2026.10.2","revisionVersion":4711,"answers":{"medicines_indication_detail.indication_is_cancer":"Yes","medicines_indication_detail.indication":null}}""";
 
     private void SaveReturns(SaveRecordPageResult result) =>
         _mockSaveService
@@ -193,13 +193,13 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 2,
                 "cancer",
                 Arg.Is<SaveRecordPageCommand>(c =>
-                    c.FormVersion == "2026.10.1"
+                    c.FormVersion == "2026.10.2"
                     && c.RevisionVersion == 4711
                     && c.Answers.Count == 2
                     && c.Answers[
-                        "medicines_product_detail.indication_is_cancer"
+                        "medicines_indication_detail.indication_is_cancer"
                     ]!.GetValue<string>() == "Yes"
-                    && c.Answers["medicines_product_detail.indication"] == null
+                    && c.Answers["medicines_indication_detail.indication"] == null
                 ),
                 Arg.Any<CancellationToken>()
             );
@@ -213,7 +213,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 new SaveRecordPageError.Invalid(
                     new Dictionary<string, string[]>(StringComparer.Ordinal)
                     {
-                        ["medicines_product_detail.indication_is_cancer"] = ["Select one"],
+                        ["medicines_indication_detail.indication_is_cancer"] = ["Select one"],
                     }
                 )
             )
@@ -223,8 +223,8 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
 
         status.ShouldBe(HttpStatusCode.BadRequest);
         var errors = body["errors"]!.AsObject();
-        errors.Select(x => x.Key).ShouldBe(["medicines_product_detail.indication_is_cancer"]);
-        errors["medicines_product_detail.indication_is_cancer"]![0]!
+        errors.Select(x => x.Key).ShouldBe(["medicines_indication_detail.indication_is_cancer"]);
+        errors["medicines_indication_detail.indication_is_cancer"]![0]!
             .GetValue<string>()
             .ShouldBe("Select one");
     }

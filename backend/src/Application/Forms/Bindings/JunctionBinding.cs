@@ -10,7 +10,8 @@ namespace UKPS.Api.Application.Forms.Bindings;
 /// <summary>
 /// Binds a multi-value question to a junction table linking a content row to reference data.
 /// The answer is the set of selected reference IDs as strings, in ascending ID order. Writing
-/// diffs against the stored rows and inserts/deletes only what changed.
+/// diffs against the stored rows and inserts/deletes only what changed. If the parent row does
+/// not exist yet, the answer is empty and the first write creates it.
 /// </summary>
 internal sealed class JunctionBinding<TParent, TJunction> : IQuestionBinding
     where TParent : class
@@ -47,7 +48,8 @@ internal sealed class JunctionBinding<TParent, TJunction> : IQuestionBinding
         CancellationToken cancellationToken
     )
     {
-        var rows = await LoadRowsAsync(context, cancellationToken);
+        var parent = await context.FindRowAsync(_parentRow, cancellationToken);
+        var rows = await LoadRowsAsync(context, parent, cancellationToken);
         return AnswerValues.ToArray(
             rows.Select(_getReferenceId)
                 .Order()
@@ -61,33 +63,40 @@ internal sealed class JunctionBinding<TParent, TJunction> : IQuestionBinding
         CancellationToken cancellationToken
     )
     {
-        var parent = await context.GetRowAsync(_parentRow, cancellationToken);
-        var parentId = _parentRow.GetId(parent);
+        var parent = await context.GetOrCreateRowAsync(_parentRow, cancellationToken);
         var selected = AnswerValues
             .GetStrings(value)
             .Select(s => int.Parse(s, NumberStyles.None, CultureInfo.InvariantCulture))
             .ToHashSet();
 
-        var existing = await LoadRowsAsync(context, cancellationToken);
+        var existing = await LoadRowsAsync(context, parent, cancellationToken);
         var set = context.DbContext.Set<TJunction>();
         set.RemoveRange(existing.Where(row => !selected.Contains(_getReferenceId(row))));
 
         var existingIds = existing.Select(_getReferenceId).ToHashSet();
+        var parentNavigation = GetParentNavigation(context);
         foreach (var referenceId in selected.Where(id => !existingIds.Contains(id)))
         {
             var row = new TJunction();
-            _parentIdProperty.SetValue(row, parentId);
             _referenceIdProperty.SetValue(row, referenceId);
             set.Add(row);
+            // Link through the navigation rather than the foreign key, so this also works for a
+            // parent created in this save, whose ID is not known until it is inserted.
+            context.DbContext.Entry(row).Navigation(parentNavigation).CurrentValue = parent;
         }
     }
 
     private async Task<List<TJunction>> LoadRowsAsync(
         BindingContext context,
+        TParent? parent,
         CancellationToken cancellationToken
     )
     {
-        var parent = await context.GetRowAsync(_parentRow, cancellationToken);
+        if (parent is null || context.IsNew(parent))
+        {
+            return [];
+        }
+
         var parentId = _parentRow.GetId(parent);
         Expression<Func<int>> parentIdValue = () => parentId;
         var predicate = Expression.Lambda<Func<TJunction, bool>>(
@@ -100,6 +109,16 @@ internal sealed class JunctionBinding<TParent, TJunction> : IQuestionBinding
             .Where(predicate)
             .ToListAsync(cancellationToken);
     }
+
+    private static string GetParentNavigation(BindingContext context) =>
+        context
+            .DbContext.Model.FindEntityType(typeof(TJunction))
+            ?.GetNavigations()
+            .SingleOrDefault(navigation => navigation.TargetEntityType.ClrType == typeof(TParent))
+            ?.Name
+        ?? throw new InvalidOperationException(
+            $"{typeof(TJunction).Name} has no navigation to {typeof(TParent).Name}."
+        );
 
     private static PropertyInfo GetProperty(
         Expression<Func<TJunction, int>> expression,

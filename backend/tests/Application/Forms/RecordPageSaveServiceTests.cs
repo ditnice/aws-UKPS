@@ -21,10 +21,10 @@ namespace UKPS.Api.Tests.Application.Forms;
 [Collection(DatabaseCollection.Name)]
 public class RecordPageSaveServiceTests : DatabaseTestBase
 {
-    private const string IndicationId = "medicines_product_detail.indication";
-    private const string CancerId = "medicines_product_detail.indication_is_cancer";
-    private const string BnfChapterId = "medicines_product_detail.bnf_chapter_id";
-    private const string TherapeuticAreaId = "medicines_product_detail_therapeutic_area";
+    private const string IndicationId = "medicines_indication_detail.indication";
+    private const string CancerId = "medicines_indication_detail.indication_is_cancer";
+    private const string BnfChapterId = "medicines_indication_detail.bnf_chapter_id";
+    private const string TherapeuticAreaId = "medicines_indication_detail_therapeutic_area";
 
     private static readonly DateTime _now = new(2026, 10, 9, 12, 0, 0, DateTimeKind.Utc);
 
@@ -67,7 +67,7 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
     private async Task<Result<SaveRecordPageDto, SaveRecordPageError>> Save(
         string pageId,
         Dictionary<string, JsonNode?> answers,
-        string formVersion = "2026.10.1",
+        string formVersion = "2026.10.2",
         uint? revisionVersion = null
     ) =>
         await _harness.Service.SavePage(
@@ -86,10 +86,14 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
     private static Dictionary<string, JsonNode?> Answer(string questionId, JsonNode? value) =>
         new(StringComparer.Ordinal) { [questionId] = value };
 
-    private async Task<MedicinesProductDetail> GetProductDetail() =>
+    /// <summary>The revision's indication row, or <c>null</c> before the first save creates it.</summary>
+    private async Task<MedicinesIndicationDetail?> GetIndicationDetail() =>
         await _harness
             .GetClearedContext()
-            .MedicinesProductDetails.SingleAsync(x => x.Id == _record.ProductDetail.Id, Ct);
+            .MedicinesIndicationDetails.SingleOrDefaultAsync(
+                x => x.RevisionId == _record.Revision.Id,
+                Ct
+            );
 
     private async Task<
         List<(string FieldPath, string? OldValue, string? NewValue)>
@@ -117,7 +121,8 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
         );
 
         result.ShouldBeSuccess().NextPageId.ShouldBe("bnf-chapter");
-        (await GetProductDetail()).Indication.ShouldBe("Hepatitis C");
+        // Record creation does not insert the indication row; the first save creates it.
+        (await GetIndicationDetail())!.Indication.ShouldBe("Hepatitis C");
     }
 
     [Fact]
@@ -126,7 +131,7 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
         var result = await Save("cancer", Answer(CancerId, JsonValue.Create("No")));
 
         result.ShouldBeSuccess().NextPageId.ShouldBeNull();
-        (await GetProductDetail()).IndicationIsCancer.ShouldBe(YesNoUnknown.No);
+        (await GetIndicationDetail())!.IndicationIsCancer.ShouldBe(YesNoUnknown.No);
     }
 
     [Fact]
@@ -211,8 +216,8 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
         (
             await _harness
                 .GetClearedContext()
-                .MedicinesProductDetailTherapeuticAreas.CountAsync(
-                    x => x.MedicinesProductDetailId == _record.ProductDetail.Id,
+                .MedicinesIndicationDetailTherapeuticAreas.CountAsync(
+                    x => x.MedicinesIndicationDetail!.RevisionId == _record.Revision.Id,
                     Ct
                 )
         ).ShouldBe(0);
@@ -272,19 +277,19 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
         {
             { "{}", PageAnswerValidator.MissingAnswer },
             {
-                "{\"medicines_product_detail.indication_is_cancer\": 2}",
+                "{\"medicines_indication_detail.indication_is_cancer\": 2}",
                 PageAnswerValidator.WrongFormat
             },
             {
-                "{\"medicines_product_detail.indication_is_cancer\": [\"Yes\"]}",
+                "{\"medicines_indication_detail.indication_is_cancer\": [\"Yes\"]}",
                 PageAnswerValidator.WrongFormat
             },
             {
-                "{\"medicines_product_detail.indication_is_cancer\": \"Maybe\"}",
+                "{\"medicines_indication_detail.indication_is_cancer\": \"Maybe\"}",
                 PageAnswerValidator.InvalidOption
             },
             {
-                "{\"medicines_product_detail.indication_is_cancer\": \"yes\"}",
+                "{\"medicines_indication_detail.indication_is_cancer\": \"yes\"}",
                 PageAnswerValidator.InvalidOption
             },
         };
@@ -320,7 +325,7 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
             .ShouldBeOfType<SaveRecordPageError.Invalid>()
             .Errors[IndicationId]
             .ShouldBe([PageAnswerValidator.UnknownQuestion]);
-        (await GetProductDetail()).IndicationIsCancer.ShouldBeNull();
+        (await GetIndicationDetail()).ShouldBeNull();
     }
 
     [Fact]
@@ -342,10 +347,14 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
             .Errors[BnfChapterId]
             .ShouldBe([PageAnswerValidator.InvalidOption]);
 
-        var context = _harness.GetClearedContext();
-        await context
-            .MedicinesProductDetails.Where(x => x.Id == _record.ProductDetail.Id)
-            .ExecuteUpdateAsync(x => x.SetProperty(d => d.BnfChapterId, archived.Id), Ct);
+        await AddEntity(
+            new MedicinesIndicationDetail
+            {
+                RevisionId = _record.Revision.Id,
+                BnfChapterId = archived.Id,
+            },
+            Ct
+        );
 
         (
             await Save("bnf-chapter", Answer(BnfChapterId, JsonValue.Create($"{archived.Id}")))
@@ -365,7 +374,7 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
         );
 
         result.ShouldBeError().ShouldBeOfType<SaveRecordPageError.RevisionChanged>();
-        (await GetProductDetail()).IndicationIsCancer.ShouldBe(YesNoUnknown.Yes);
+        (await GetIndicationDetail())!.IndicationIsCancer.ShouldBe(YesNoUnknown.Yes);
     }
 
     [Fact]
@@ -428,7 +437,7 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(WorkflowStatus.InReview)]
+    [InlineData(WorkflowStatus.QAReview)]
     [InlineData(WorkflowStatus.Published)]
     [InlineData(WorkflowStatus.Rejected)]
     public async Task SavePage_RevisionNotDraft_IsRejected(WorkflowStatus status)
@@ -487,7 +496,7 @@ public class RecordPageSaveServiceTests : DatabaseTestBase
             "cancer",
             new SaveRecordPageCommand
             {
-                FormVersion = "2026.10.1",
+                FormVersion = "2026.10.2",
                 RevisionVersion = 0,
                 Answers = Answer(CancerId, JsonValue.Create("Yes")),
             },

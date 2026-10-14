@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
-import { isRequestGuid } from '../../../_lib/requestGuid'
 import { buildUserActionHref } from '../../../_lib/userActionAlert'
 import ModifyUserMembershipRequestControls from '../ModifyUserMembershipRequestControls'
 import UserMembershipRetrievalWrapper from '../UserMembershipRetrievalWrapper'
@@ -15,12 +14,9 @@ interface Props {
 export default async function RejectUser({ params }: Props) {
   const { id, registrationRequestId } = await params
   const organisationId = Number(id)
+  const parsedRegistrationRequestId = Number(registrationRequestId)
 
-  if (
-    !Number.isInteger(organisationId) ||
-    organisationId <= 0 ||
-    !isRequestGuid(registrationRequestId)
-  ) {
+  if (!Number.isInteger(organisationId) || !Number.isInteger(parsedRegistrationRequestId)) {
     notFound()
   }
 
@@ -33,7 +29,7 @@ export default async function RejectUser({ params }: Props) {
       />
       <UserMembershipRetrievalWrapper
         organisationId={organisationId}
-        requestGuid={registrationRequestId}
+        registrationRequestId={parsedRegistrationRequestId}
       >
         {(request) => (
           <>
@@ -42,10 +38,10 @@ export default async function RejectUser({ params }: Props) {
             <ModifyUserMembershipRequestControls
               action="Reject"
               organisationId={organisationId}
-              requestGuid={registrationRequestId}
+              registrationRequestId={parsedRegistrationRequestId}
               successLink={buildUserActionHref(organisationId, {
                 action: 'rejected-request',
-                userRequestId: registrationRequestId,
+                userRequestId: parsedRegistrationRequestId,
               })}
               backLink={organisationHref}
             />

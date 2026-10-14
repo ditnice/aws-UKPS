@@ -16,7 +16,7 @@ export const RecordsFetch = async ({ organisationId, query, children }: RecordsF
     query: {
       Search: query.search,
       RecordType: query.recordType,
-      RecordStatus: query.recordStatus,
+      DisplayStatus: query.recordStatus,
       UpdateStatus: query.updateStatus,
       Page: query.page,
       PageSize: query.pageSize,

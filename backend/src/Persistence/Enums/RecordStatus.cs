@@ -6,14 +6,14 @@ namespace UKPS.Api.Persistence.Enums;
 public enum RecordStatus
 {
     /// <summary>
-    /// The record is unpublished and not visible to users.
+    /// The record is unpublished and not visible to horizon scanners.
     /// </summary>
     Unpublished = 0,
 
     /// <summary>
-    /// The record is active and available for use.
+    /// The record is published and available for use.
     /// </summary>
-    Active = 1,
+    Published = 1,
 
     /// <summary>
     /// The record is temporarily on hold and not currently in use.

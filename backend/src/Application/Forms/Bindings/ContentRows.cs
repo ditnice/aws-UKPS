@@ -5,12 +5,18 @@ namespace UKPS.Api.Application.Forms.Bindings;
 /// <summary>The content rows that form questions may bind to.</summary>
 internal static class ContentRows
 {
-    public static ContentRow<MedicinesProductDetail> MedicinesProductDetail { get; } =
-        new(x => x.RevisionId, x => x.Id);
+    // Record creation does not insert this row, so the first save that writes to it does.
+    // Every column is nullable, so a new row needs only its revision.
+    public static ContentRow<MedicinesIndicationDetail> MedicinesIndicationDetail { get; } =
+        new(
+            x => x.RevisionId,
+            x => x.Id,
+            revisionId => new MedicinesIndicationDetail { RevisionId = revisionId }
+        );
 
     private static readonly Dictionary<Type, IContentRow> _rows = new[]
     {
-        (IContentRow)MedicinesProductDetail,
+        (IContentRow)MedicinesIndicationDetail,
     }.ToDictionary(row => row.EntityType);
 
     public static ContentRow<TEntity> Get<TEntity>()

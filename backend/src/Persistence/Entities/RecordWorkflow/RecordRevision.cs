@@ -12,9 +12,6 @@ internal sealed class RecordRevision
     /// </summary>
     public int? BasedOnRevisionId { get; set; }
 
-    /// <summary>Global autoincrement per record.</summary>
-    public int RevisionNo { get; set; }
-
     public WorkflowStatus WorkflowStatus { get; set; }
     public int CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }

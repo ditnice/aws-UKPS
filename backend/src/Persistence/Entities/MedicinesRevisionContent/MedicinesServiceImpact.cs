@@ -27,16 +27,13 @@ internal sealed class MedicinesServiceImpact
     /// <summary>Conditional on HandlingStorageRequirements = Yes.</summary>
     public string? HandlingStorageDetails { get; set; }
 
-    /// <summary>Estimated uptake based on expected adoption patterns. CiC.</summary>
-    public string? EstimatedUptake { get; set; }
-
     public int? UkPatientPopulationRangeId { get; set; }
     public string? UkPatientPopulationNotes { get; set; }
-    public string? EstimatedEligiblePatientPopulation { get; set; }
-    public YesNoUnknown? CompassionateAccessAvailable { get; set; }
 
-    /// <summary>Conditional on CompassionateAccessAvailable = Yes.</summary>
-    public string? CompassionateAccessDetails { get; set; }
+    /// <summary>
+    /// Free text. Expected to contain a range along with supporting references and calculations.
+    /// </summary>
+    public string? EstimatedEligiblePatientPopulation { get; set; }
 
     // Navigation
     public RecordWorkflow.RecordRevision? Revision { get; set; }

@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
-using UKPS.Api.Application.Forms;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
@@ -18,8 +17,7 @@ namespace UKPS.Api.Application.Records;
 internal partial class RecordService(
     AppDbContext dbContext,
     IDateTimeProvider timeProvider,
-    IOrganisationAuthoriser organisationAuthoriser,
-    FormDefinitionRegistry formDefinitions
+    IOrganisationAuthoriser organisationAuthoriser
 ) : IRecordService
 {
     private readonly IDateTimeProvider _timeProvider = timeProvider;
@@ -45,7 +43,9 @@ internal partial class RecordService(
             return GetRecordsResult.Err(organisationError);
         }
 
-        IQueryable<RecordInformationTrackingProjection> query = GetProjectedRecordInformation()
+        IQueryable<RecordInformationTrackingProjection> query = JoinProductDetails(
+                GetBaseRecordProjection()
+            )
             .Where(x => x.OrganisationId == organisationId);
 
         IQueryable<RecordInformationTrackingProjection> filteredRecords = ApplyFilters(
@@ -72,11 +72,10 @@ internal partial class RecordService(
                 Id = m.Id,
                 RecordType = m.RecordType,
                 RecordStatus = m.RecordStatus,
+                DisplayStatus = m.DisplayStatus,
                 Title = m.Title ?? string.Empty,
-                DevelopmentName = m.DevelopmentName,
+                CompanyCode = m.CompanyCode,
                 ReviewedAt = m.ReviewedAt,
-                LatestRevisionId = m.RevisionId,
-                FirstPageId = formDefinitions.Get(m.RecordType)?.FirstPage.Id,
             })
             .ToArray();
 
@@ -115,14 +114,6 @@ internal partial class RecordService(
         return organisationExists ? null : new GetRecordsError.OrganisationNotFound(organisationId);
     }
 
-    private IQueryable<RecordInformationTrackingProjection> GetProjectedRecordInformation()
-    {
-        var medicines = JoinMedicinesProductDetails(GetBaseRecordProjection());
-        var vaccines = JoinVaccinesProductDetails(GetBaseRecordProjection());
-
-        return medicines.Union(vaccines);
-    }
-
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(
         IQueryable<RecordInformationTrackingProjection> input,
         GetRecordsQueryDto getRecordsQuery
@@ -133,9 +124,9 @@ internal partial class RecordService(
             input = input.Where(m => getRecordsQuery.RecordType.Contains(m.RecordType));
         }
 
-        if (getRecordsQuery.RecordStatus.Count > 0)
+        if (getRecordsQuery.DisplayStatus.Count > 0)
         {
-            input = input.Where(m => getRecordsQuery.RecordStatus.Contains(m.RecordStatus));
+            input = input.Where(m => getRecordsQuery.DisplayStatus.Contains(m.DisplayStatus));
         }
 
         if (getRecordsQuery.UpdateStatus.HasValue)
@@ -162,10 +153,7 @@ internal partial class RecordService(
 
             input = input.Where(m =>
                 (m.Title != null && EF.Functions.ILike(m.Title, pattern, "\\"))
-                || (
-                    m.DevelopmentName != null
-                    && EF.Functions.ILike(m.DevelopmentName, pattern, "\\")
-                )
+                || EF.Functions.ILike(m.CompanyCode, pattern, "\\")
             );
         }
 
@@ -184,8 +172,8 @@ internal partial class RecordService(
                 GetRecordsQuerySortValue.NextUpdateDue => m =>
                     m.NextUpdateDue == null ? DateTime.MaxValue : m.NextUpdateDue.Value,
                 GetRecordsQuerySortValue.Id => m => m.Id,
-                GetRecordsQuerySortValue.DevelopmentName => m => m.DevelopmentName,
-                GetRecordsQuerySortValue.RecordStatus => m => m.RecordStatus,
+                GetRecordsQuerySortValue.CompanyCode => m => m.CompanyCode,
+                GetRecordsQuerySortValue.DisplayStatus => m => m.DisplayStatus,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(sortBy),
                     $"Unexpected value: {sortBy}"
@@ -209,12 +197,12 @@ internal partial class RecordService(
     {
         public int Id { get; init; }
         public int OrganisationId { get; init; }
-        public int RevisionId { get; init; }
         public RecordType RecordType { get; init; }
         public RecordStatus RecordStatus { get; init; }
+        public RecordDisplayStatus DisplayStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
         public string? Title { get; init; }
-        public string? DevelopmentName { get; init; }
+        public required string CompanyCode { get; init; }
         public DateTime? NextUpdateDue { get; init; }
     }
 
@@ -225,69 +213,48 @@ internal partial class RecordService(
         public RecordType RecordType { get; init; }
         public RecordStatus RecordStatus { get; init; }
         public DateTime? ReviewedAt { get; init; }
-        public int? CurrentDraftRevisionId { get; init; }
+        public int? LatestRevisionId { get; init; }
+        public RecordDisplayStatus DisplayStatus { get; init; }
         public DateTime? NextUpdateDue { get; init; }
     }
 
     private IQueryable<BaseRecordProjection> GetBaseRecordProjection() =>
-        dbContext.Records.Select(x => new BaseRecordProjection
-        {
-            Id = x.Id,
-            OrganisationId = x.OrganisationId,
-            RecordType = x.RecordType,
-            RecordStatus = x.RecordStatus,
-            ReviewedAt = x.ReviewedAt,
-            CurrentDraftRevisionId = x.Revisions.OrderBy(y => y.RevisionNo).Last().Id,
-            NextUpdateDue =
-                x.ReviewedAt == null
-                    ? null
-                    : x.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths), // TODO rules around this need to be reviewed, requires wider-team discussion
-        });
+        dbContext
+            .Records.SelectLatestRevision()
+            .Select(x => new BaseRecordProjection
+            {
+                Id = x.Record.Id,
+                OrganisationId = x.Record.OrganisationId,
+                RecordType = x.Record.RecordType,
+                RecordStatus = x.Record.RecordStatus,
+                ReviewedAt = x.Record.ReviewedAt,
+                LatestRevisionId = x.LatestRevisionId,
+                DisplayStatus = x.DisplayStatus,
+                NextUpdateDue =
+                    x.Record.ReviewedAt == null
+                        ? null
+                        : x.Record.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths), // TODO rules around this need to be reviewed, requires wider-team discussion
+            });
 
-    private IQueryable<RecordInformationTrackingProjection> JoinMedicinesProductDetails(
+    private IQueryable<RecordInformationTrackingProjection> JoinProductDetails(
         IQueryable<BaseRecordProjection> input
     ) =>
         input.Join(
-            dbContext.MedicinesProductDetails,
-            x => x.CurrentDraftRevisionId,
+            dbContext.RecordProductDetails,
+            x => x.LatestRevisionId,
             y => y.RevisionId,
             (a, b) =>
                 new RecordInformationTrackingProjection
                 {
                     Id = a.Id,
                     OrganisationId = a.OrganisationId,
-                    RevisionId = b.RevisionId,
                     RecordType = a.RecordType,
                     RecordStatus = a.RecordStatus,
+                    DisplayStatus = a.DisplayStatus,
                     ReviewedAt = a.ReviewedAt,
                     NextUpdateDue = a.NextUpdateDue,
                     Title = b.RecordTitle,
-                    DevelopmentName = b
-                        .ActiveSubstances.OrderBy(x => x.DisplayOrder)
-                        .First(x => x.NameType == SubstanceNameType.DevelopmentName)
-                        .Name,
-                }
-        );
-
-    private IQueryable<RecordInformationTrackingProjection> JoinVaccinesProductDetails(
-        IQueryable<BaseRecordProjection> input
-    ) =>
-        input.Join(
-            dbContext.VaccinesProductDetails,
-            x => x.CurrentDraftRevisionId,
-            y => y.RevisionId,
-            (x, details) =>
-                new RecordInformationTrackingProjection
-                {
-                    Id = x.Id,
-                    OrganisationId = x.OrganisationId,
-                    RevisionId = details.RevisionId,
-                    RecordType = x.RecordType,
-                    RecordStatus = x.RecordStatus,
-                    ReviewedAt = x.ReviewedAt,
-                    NextUpdateDue = x.NextUpdateDue,
-                    Title = details.RecordTitle,
-                    DevelopmentName = details.CompanyCode,
+                    CompanyCode = b.CompanyCode,
                 }
         );
 }

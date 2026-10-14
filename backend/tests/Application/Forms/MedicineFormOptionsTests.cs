@@ -58,7 +58,7 @@ public class MedicineFormOptionsTests(PostgresFixture fixture) : DatabaseTestBas
             Ct
         );
 
-        var options = await LoadAsync("medicines_product_detail.bnf_chapter_id");
+        var options = await LoadAsync("medicines_indication_detail.bnf_chapter_id");
 
         options.ShouldBe([
             new QuestionOption($"{chapterOne.Id}", "1: Gastro-intestinal system"),
@@ -79,8 +79,8 @@ public class MedicineFormOptionsTests(PostgresFixture fixture) : DatabaseTestBas
             Ct
         );
 
-        (await LoadAsync("medicines_product_detail.bnf_chapter_id")).ShouldBeEmpty();
-        (await LoadAsync("medicines_product_detail.bnf_chapter_id", $"{archived.Id}"))
+        (await LoadAsync("medicines_indication_detail.bnf_chapter_id")).ShouldBeEmpty();
+        (await LoadAsync("medicines_indication_detail.bnf_chapter_id", $"{archived.Id}"))
             .Select(option => option.Value)
             .ShouldBe([$"{archived.Id}"]);
     }
@@ -97,7 +97,7 @@ public class MedicineFormOptionsTests(PostgresFixture fixture) : DatabaseTestBas
             Ct
         );
 
-        var options = await LoadAsync("medicines_product_detail_therapeutic_area");
+        var options = await LoadAsync("medicines_indication_detail_therapeutic_area");
 
         options.ShouldBe([
             new QuestionOption($"{addiction.Id}", "1: Addiction"),
@@ -122,7 +122,7 @@ public class MedicineFormOptionsTests(PostgresFixture fixture) : DatabaseTestBas
             Ct
         );
 
-        var options = await LoadAsync("medicines_product_detail_therapeutic_area");
+        var options = await LoadAsync("medicines_indication_detail_therapeutic_area");
 
         options.ShouldBe([new QuestionOption($"{child.Id}", "Oncology › Lung")]);
     }
@@ -130,7 +130,7 @@ public class MedicineFormOptionsTests(PostgresFixture fixture) : DatabaseTestBas
     [Fact]
     public async Task Paediatric_OffersOptionsInScreenOrder()
     {
-        var options = await LoadAsync("medicines_product_detail.indication_is_paediatric");
+        var options = await LoadAsync("medicines_indication_detail.indication_is_paediatric");
 
         options
             .Select(option => option.Value)

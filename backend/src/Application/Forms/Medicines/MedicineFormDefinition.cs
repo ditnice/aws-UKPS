@@ -13,7 +13,7 @@ internal static class MedicineFormDefinition
     /// <summary>
     /// Bump whenever the definition changes; the fingerprint test enforces this.
     /// </summary>
-    public const string Version = "2026.10.1";
+    public const string Version = "2026.10.2";
 
     private const string UnknownAtThisStage = "Unknown at this stage";
 
@@ -33,9 +33,9 @@ internal static class MedicineFormDefinition
 
     private static void IndicationPage(PageBuilder p) =>
         p.Textarea(
-            "medicines_product_detail.indication",
+            "medicines_indication_detail.indication",
             "What is the indication this product is seeking a licence for?",
-            Bind.Column((MedicinesProductDetail x) => x.Indication),
+            Bind.Column((MedicinesIndicationDetail x) => x.Indication),
             q =>
                 q.Hint(
                         "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups.\n\nYou can edit these details at any time throughout product development."
@@ -46,9 +46,9 @@ internal static class MedicineFormDefinition
 
     private static void BnfChapterPage(PageBuilder p) =>
         p.Select(
-            "medicines_product_detail.bnf_chapter_id",
+            "medicines_indication_detail.bnf_chapter_id",
             "Select the BNF chapter for this product",
-            Bind.Column((MedicinesProductDetail x) => x.BnfChapterId),
+            Bind.Column((MedicinesIndicationDetail x) => x.BnfChapterId),
             // Top-level chapters only.
             Choices.Reference<BnfChapter>(
                 q =>
@@ -62,10 +62,10 @@ internal static class MedicineFormDefinition
 
     private static void TherapeuticAreaPage(PageBuilder p) =>
         p.Checkbox(
-            "medicines_product_detail_therapeutic_area",
+            "medicines_indication_detail_therapeutic_area",
             "Select the most appropriate therapeutic area for this product (optional)",
-            Bind.Junction<MedicinesProductDetail, MedicinesProductDetailTherapeuticArea>(
-                x => x.MedicinesProductDetailId,
+            Bind.Junction<MedicinesIndicationDetail, MedicinesIndicationDetailTherapeuticArea>(
+                x => x.MedicinesIndicationDetailId,
                 x => x.TherapeuticAreaId
             ),
             // Leaves only, labelled with their parent if they have one. The table is flat
@@ -92,9 +92,9 @@ internal static class MedicineFormDefinition
 
     private static void PaediatricPage(PageBuilder p) =>
         p.Radio(
-            "medicines_product_detail.indication_is_paediatric",
+            "medicines_indication_detail.indication_is_paediatric",
             "Is this product intended to treat children?",
-            Bind.Column((MedicinesProductDetail x) => x.IndicationIsPaediatric),
+            Bind.Column((MedicinesIndicationDetail x) => x.IndicationIsPaediatric),
             Choices.Enum(
                 (
                     IndicationPaediatricStatus.ExclusivelyChildren,
@@ -115,9 +115,9 @@ internal static class MedicineFormDefinition
 
     private static void CancerPage(PageBuilder p) =>
         p.Radio(
-            "medicines_product_detail.indication_is_cancer",
+            "medicines_indication_detail.indication_is_cancer",
             "Is this a product intended to treat cancer?",
-            Bind.Column((MedicinesProductDetail x) => x.IndicationIsCancer),
+            Bind.Column((MedicinesIndicationDetail x) => x.IndicationIsCancer),
             Choices.Enum(
                 (YesNoUnknown.Yes, "Yes"),
                 (YesNoUnknown.No, "No"),

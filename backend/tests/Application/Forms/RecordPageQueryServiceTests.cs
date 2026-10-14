@@ -33,7 +33,7 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
-        _record = await MedicineRecordTestData.CreateAsync(Context, Ct);
+        _record = await MedicineRecordTestData.CreateAsync(Context, Ct, withIndicationDetail: true);
         ActAs(UserRole.Standard, _record.Organisation.Id);
     }
 
@@ -50,11 +50,11 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
         string pageId
     ) => _harness.Service.GetPage(_record.Record.Id, _record.Revision.Id, pageId, Ct);
 
-    private async Task UpdateProductDetail(Action<MedicinesProductDetail> update)
+    private async Task UpdateIndicationDetail(Action<MedicinesIndicationDetail> update)
     {
         var context = _harness.GetClearedContext();
-        var detail = await context.MedicinesProductDetails.SingleAsync(
-            x => x.Id == _record.ProductDetail.Id,
+        var detail = await context.MedicinesIndicationDetails.SingleAsync(
+            x => x.Id == _record.IndicationDetail!.Id,
             Ct
         );
         update(detail);
@@ -66,7 +66,7 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
     {
         var page = (await GetPage("indication")).ShouldBeSuccess();
 
-        page.FormVersion.ShouldBe("2026.10.1");
+        page.FormVersion.ShouldBe("2026.10.2");
         page.Section.ShouldBe(
             new FormSectionDto { Id = "indication-details", Title = "Indication details" }
         );
@@ -76,7 +76,7 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
         page.Context.ShouldBeEmpty();
 
         var question = page.Questions.ShouldHaveSingleItem();
-        question.Id.ShouldBe("medicines_product_detail.indication");
+        question.Id.ShouldBe("medicines_indication_detail.indication");
         question.Type.ShouldBe(QuestionType.Textarea);
         question.Label.ShouldBe("What is the indication this product is seeking a licence for?");
         question.Hint.ShouldNotBeNull();
@@ -101,26 +101,60 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
     {
         (await GetPage("indication"))
             .ShouldBeSuccess()
-            .Answers["medicines_product_detail.indication"]
+            .Answers["medicines_indication_detail.indication"]
             .ShouldBeNull();
 
-        await UpdateProductDetail(x => x.Indication = "Chronic hepatitis C");
+        await UpdateIndicationDetail(x => x.Indication = "Chronic hepatitis C");
 
         var page = (await GetPage("indication")).ShouldBeSuccess();
-        page.Answers.Keys.ShouldBe(["medicines_product_detail.indication"]);
-        page.Answers["medicines_product_detail.indication"]!
+        page.Answers.Keys.ShouldBe(["medicines_indication_detail.indication"]);
+        page.Answers["medicines_indication_detail.indication"]!
             .GetValue<string>()
             .ShouldBe("Chronic hepatitis C");
     }
 
     [Fact]
+    public async Task GetPage_BeforeTheContentRowExists_AnswersAreEmpty()
+    {
+        var newRecord = await MedicineRecordTestData.CreateAsync(
+            Context,
+            Ct,
+            _record.Organisation,
+            _record.User
+        );
+
+        var indication = (
+            await _harness.Service.GetPage(
+                newRecord.Record.Id,
+                newRecord.Revision.Id,
+                "indication",
+                Ct
+            )
+        ).ShouldBeSuccess();
+        var areas = (
+            await _harness.Service.GetPage(
+                newRecord.Record.Id,
+                newRecord.Revision.Id,
+                "therapeutic-area",
+                Ct
+            )
+        ).ShouldBeSuccess();
+
+        indication.Answers["medicines_indication_detail.indication"].ShouldBeNull();
+        areas
+            .Answers["medicines_indication_detail_therapeutic_area"]
+            .ShouldBeOfType<JsonArray>()
+            .ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task GetPage_EnumAnswer_IsTheEnumName()
     {
-        await UpdateProductDetail(x => x.IndicationIsCancer = YesNoUnknown.Unknown);
+        await UpdateIndicationDetail(x => x.IndicationIsCancer = YesNoUnknown.Unknown);
 
         var page = (await GetPage("cancer")).ShouldBeSuccess();
 
-        page.Answers["medicines_product_detail.indication_is_cancer"]!
+        page.Answers["medicines_indication_detail.indication_is_cancer"]!
             .GetValue<string>()
             .ShouldBe("Unknown");
         page.PreviousPageId.ShouldBe("paediatric");
@@ -132,9 +166,9 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
     {
         var area = await AddEntity(new TherapeuticArea { Label = "1: Addiction" }, Ct);
         await AddEntity(
-            new MedicinesProductDetailTherapeuticArea
+            new MedicinesIndicationDetailTherapeuticArea
             {
-                MedicinesProductDetailId = _record.ProductDetail.Id,
+                MedicinesIndicationDetailId = _record.IndicationDetail!.Id,
                 TherapeuticAreaId = area.Id,
             },
             Ct
@@ -142,7 +176,7 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
 
         var page = (await GetPage("therapeutic-area")).ShouldBeSuccess();
 
-        var answer = page.Answers["medicines_product_detail_therapeutic_area"]
+        var answer = page.Answers["medicines_indication_detail_therapeutic_area"]
             .ShouldBeOfType<JsonArray>();
         answer.Select(x => x!.GetValue<string>()).ShouldBe([$"{area.Id}"]);
         page.Questions.Single().Display.ShouldBe("combobox");
@@ -166,7 +200,7 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
             .Questions.Single()
             .Options!.ShouldBeEmpty();
 
-        await UpdateProductDetail(x => x.BnfChapterId = archived.Id);
+        await UpdateIndicationDetail(x => x.BnfChapterId = archived.Id);
 
         (await GetPage("bnf-chapter"))
             .ShouldBeSuccess()
@@ -213,7 +247,7 @@ public class RecordPageQueryServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(WorkflowStatus.InReview)]
+    [InlineData(WorkflowStatus.QAReview)]
     [InlineData(WorkflowStatus.Published)]
     [InlineData(WorkflowStatus.Rejected)]
     public async Task GetPage_RevisionNotDraft_IsReadOnly(WorkflowStatus status)

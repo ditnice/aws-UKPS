@@ -21,7 +21,6 @@ internal sealed class UserRegistrationRequestConfiguration
         );
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.HasIndex(x => x.RequestGuid).IsUnique();
 
         builder.Property(x => x.RejectedAt).HasColumnType("timestamptz");
 
@@ -34,7 +33,7 @@ internal sealed class UserRegistrationRequestConfiguration
         builder
             .HasOne(x => x.RejectedByUser)
             .WithMany()
-            .HasForeignKey(x => x.RejectedBy)
+            .HasForeignKey(x => x.RejectedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
@@ -44,9 +43,9 @@ internal sealed class UserRegistrationRequestConfiguration
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
-            .HasOne(x => x.CreatedUser)
+            .HasOne(x => x.ResultingUser)
             .WithMany()
-            .HasForeignKey(x => x.CreatedUserId)
+            .HasForeignKey(x => x.ResultingUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(x => x.Version).IsRowVersion();

@@ -29,9 +29,9 @@ type or component.
 `^[a-z0-9]+(-[a-z0-9]+)*$` and be unique in the form.
 
 **Question ID**: snake_case `entity.field`, for example
-`medicines_product_detail.bnf_chapter_id`. Use the singular entity name, not the database
-table name (the table is `medicines_product_details`). For a junction or collection, use the
-entity name alone, for example `medicines_product_detail_therapeutic_area`. The ID must match
+`medicines_indication_detail.bnf_chapter_id`. Use the singular entity name, not the database
+table name (the table is `medicines_indication_details`). For a junction or collection, use the
+entity name alone, for example `medicines_indication_detail_therapeutic_area`. The ID must match
 `^[a-z0-9_]+(\.[a-z0-9_]+)?$` and be unique across the whole form.
 
 The question ID is the payload key, the validation error key, the frontend field name and the
@@ -81,25 +81,42 @@ silently breaking the form.
 converted.
 
 ```csharp
-Bind.Column((MedicinesProductDetail x) => x.Indication)          // string  -> "text"
-Bind.Column((MedicinesProductDetail x) => x.IndicationIsCancer)  // enum?   -> "Yes" / "No" / "Unknown"
-Bind.Column((MedicinesProductDetail x) => x.BnfChapterId)        // int?    -> "3"
+Bind.Column((MedicinesIndicationDetail x) => x.Indication)          // string  -> "text"
+Bind.Column((MedicinesIndicationDetail x) => x.IndicationIsCancer)  // enum?   -> "Yes" / "No" / "Unknown"
+Bind.Column((MedicinesIndicationDetail x) => x.BnfChapterId)        // int?    -> "3"
 ```
 
 **A junction table** (multi-select of reference data):
 
 ```csharp
-Bind.Junction<MedicinesProductDetail, MedicinesProductDetailTherapeuticArea>(
-    x => x.MedicinesProductDetailId,
+Bind.Junction<MedicinesIndicationDetail, MedicinesIndicationDetailTherapeuticArea>(
+    x => x.MedicinesIndicationDetailId,
     x => x.TherapeuticAreaId
 )
 ```
 
 The entity must be registered in `ContentRows` (`Bindings/ContentRows.cs`), which says how to
-find the revision's row. Only `MedicinesProductDetail` is registered today. Content rows are
-expected to exist already: `MedicinesProductDetail` is created by record creation, and the form
-never creates rows. Binding to a table whose row does not yet exist needs row creation to be
-added first (see the brief's notes on non-nullable columns).
+find the revision's row and, optionally, how to create it:
+
+```csharp
+public static ContentRow<MedicinesIndicationDetail> MedicinesIndicationDetail { get; } =
+    new(
+        x => x.RevisionId,
+        x => x.Id,
+        revisionId => new MedicinesIndicationDetail { RevisionId = revisionId }
+    );
+```
+
+With a factory (the third argument), a revision that has no row yet reads every question on it
+as unanswered, and the first save that writes to it creates the row. Record creation does not
+insert `MedicinesIndicationDetail`, so this is how its row comes to exist. The factory must set
+every required column: the compiler enforces this for `required` members, so a table with
+non-nullable columns that are not on the same page cannot be given a factory. Without a factory,
+the row must already exist (for example, because record creation inserts it), and a missing row
+is an error.
+
+Only `MedicinesIndicationDetail` is registered today. To bind to another table, add an entry
+here and to the `_rows` list below it.
 
 ## Step 5: Add options
 
@@ -204,7 +221,7 @@ Only needed if the existing rules cannot express what a page needs. Agree it wit
 Any change to a definition (pages, IDs, labels, hints, rules, options or bindings) must bump the
 version, so clients holding an old page are told to reload instead of saving against the new one.
 
-1. Change `MedicineFormDefinition.Version`, for example `2026.10.1` to `2026.10.2`.
+1. Change `MedicineFormDefinition.Version`, for example `2026.10.2` to `2026.10.3`.
 2. Run `MedicineFormDefinitionTests`. `Definition_ChangesRequireAVersionBump` fails and prints the
    new fingerprint.
 3. Update `ExpectedVersion` and `ExpectedFingerprint` in the test to match.
@@ -247,8 +264,8 @@ dotnet test                                   # everything
 You do not need to regenerate the OpenAPI spec or the frontend client for a new page: the page
 travels as data through the existing DTOs.
 
-Finally, try it locally: create a medicine record, or use **View or edit** in the organisation
-records table, and step through to your page.
+Finally, try it locally: create a medicine record, or open an existing one from the organisation
+records table and select **Update record**, then step through to your page.
 
 ## Adding a new question type
 
@@ -275,7 +292,7 @@ touches both backend and frontend.
 3. Register it in `components` in `questionRegistry.tsx`, and in `getQuestionTargetId` if the
    error summary should link somewhere other than an element with the question's ID.
 4. Describe its form value in `lib/dynamic-form/answers.ts` (`toFormValue`, `normaliseAnswer`).
-5. Add rendering, error and payload tests to `FormPage.spec.tsx`.
+5. Add rendering, error and payload tests to `FormPage.test.tsx`.
 
 ### Plugging in the combobox
 

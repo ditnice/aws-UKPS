@@ -13,10 +13,10 @@ public class MedicineFormDefinitionTests
     /// changed the definition: bump <see cref="MedicineFormDefinition.Version"/>, then update
     /// both constants here.
     /// </summary>
-    private const string ExpectedVersion = "2026.10.1";
+    private const string ExpectedVersion = "2026.10.2";
 
     private const string ExpectedFingerprint =
-        "d80c1cf2e18025bd04af4ad19c4c1f7c28fc754b4e15ebdaf2263f1c901be343";
+        "ce1df37cc8d7501e3a466fc031d6632002c8285f61a749308a819a0126ee98af";
 
     private readonly FormDefinition _form = MedicineFormDefinition.Create();
 

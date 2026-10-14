@@ -23,7 +23,7 @@ same IDs.
 |---|---|
 | The lists | `backend/src/Persistence/Data/ReferenceData/BnfChapterSeedData.cs`, `TherapeuticAreaSeedData.cs` |
 | `HasData(...)` calls | `backend/src/Persistence/Configurations/ReferenceData/BnfChapterConfiguration.cs`, `TherapeuticAreaConfiguration.cs` |
-| Migration | `backend/src/Persistence/Migrations/20261011202235_SeedBnfChaptersAndTherapeuticAreas.cs` |
+| Migration | `backend/src/Persistence/Migrations/20261014082448_AddRecordFormSupport.cs` |
 
 EF compares the `HasData` rows with the model snapshot and generates `InsertData`, `UpdateData` or
 `DeleteData` calls for the difference. The rows are recorded in
@@ -63,7 +63,7 @@ migrationBuilder.Sql(
 );
 ```
 
-`SeedBnfChaptersAndTherapeuticAreas` does this for both of its tables.
+`AddRecordFormSupport` does this for both of its tables.
 
 ### Removing rows: archive, don't delete
 

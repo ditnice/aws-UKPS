@@ -60,8 +60,9 @@ internal sealed class ColumnBinding<TEntity, TValue> : IQuestionBinding
         CancellationToken cancellationToken
     )
     {
-        var entity = await context.GetRowAsync(_row, cancellationToken);
-        return _toAnswer(_get(entity));
+        // A row that has not been created yet means every question on it is unanswered.
+        var entity = await context.FindRowAsync(_row, cancellationToken);
+        return entity is null ? null : _toAnswer(_get(entity));
     }
 
     public async Task WriteAsync(
@@ -70,7 +71,7 @@ internal sealed class ColumnBinding<TEntity, TValue> : IQuestionBinding
         CancellationToken cancellationToken
     )
     {
-        var entity = await context.GetRowAsync(_row, cancellationToken);
+        var entity = await context.GetOrCreateRowAsync(_row, cancellationToken);
         _set(entity, _fromAnswer(value));
     }
 

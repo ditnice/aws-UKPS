@@ -102,4 +102,21 @@ public interface IUserService
     Task<IReadOnlyCollection<OrganisationListDto>> GetCurrentUserOrganisations(
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Removes access and anonymises the user's profile and linked approved registration requests.
+    /// Personal details in user-change audit history are cleared. Records created by the user are
+    /// kept; other registration requests, communications, logs and backups are not deleted.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to remove.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a
+    /// <see cref="Result{TSuccess, TError}"/> with the name the user now appears under, or an
+    /// error of type <see cref="RemoveUserError"/>.
+    /// </returns>
+    Task<Result<RemovedUserDto, RemoveUserError>> RemoveUser(
+        int userId,
+        CancellationToken cancellationToken
+    );
 }

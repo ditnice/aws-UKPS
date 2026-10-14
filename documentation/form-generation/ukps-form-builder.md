@@ -6,15 +6,16 @@
 > - **Built:** the medicine "Indication details" section (5 pages); `textarea`, `radio`, `select`
 >   and `checkbox` questions; `required`, `maxLength` and `maxItems` rules with a shared
 >   client/server fixture; column and junction bindings; GET/PUT page endpoints with audit and
->   concurrency checks; redirect from record creation and a **View or edit** link in the records
->   table; seeded BNF chapters and therapeutic areas.
+>   concurrency checks; redirect from record creation and an **Update record** button on the record
+>   details page; seeded BNF chapters and therapeutic areas.
 > - **Not built yet:** conditions and stale-answer clearing, add-another groups, precision dates,
 >   cross-field and other rules, the remaining medicine pages, vaccine record creation and forms,
 >   the tasklist, and the searchable combobox.
 > - **Changed from this brief:** enum values are sent as declared (`"Textarea"`, `"Required"`);
 >   regulatory dates will be updated in place rather than deleted and re-inserted; trees are
->   offered as leaves (BNF is top-level only). See
->   [ADR-005](../ADR/ADR-005-dynamic-record-content-forms.md).
+>   offered as leaves (BNF is top-level only); the schema has since moved the indication questions
+>   to `MedicinesIndicationDetail`, whose row is created on the first save. See
+>   [ADR-006](../ADR/ADR-006-dynamic-record-content-forms.md).
 >
 > Current documentation: [high-level design](high-level-design.md),
 > [creating form pages](creating-form-pages.md),
