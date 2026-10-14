@@ -130,20 +130,21 @@ internal partial class RecordService(
             input = input.Where(m => getRecordsQuery.DisplayStatus.Contains(m.DisplayStatus));
         }
 
-        if (getRecordsQuery.UpdateStatus.HasValue)
+        if (getRecordsQuery.UpdateStatus.Count > 0)
         {
-            var now = _timeProvider.GetUtcNow();
+            bool includeOverdue = getRecordsQuery.UpdateStatus.Contains(UpdateStatus.Overdue);
+            bool includeNotOverdue = getRecordsQuery.UpdateStatus.Contains(UpdateStatus.NotOverdue);
 
-            input = getRecordsQuery.UpdateStatus.Value switch
+            if (includeOverdue && !includeNotOverdue)
             {
-                UpdateStatus.Overdue => input.Where(m =>
-                    m.NextUpdateDue != null && m.NextUpdateDue < now
-                ),
-                UpdateStatus.NotOverdue => input.Where(m =>
-                    m.NextUpdateDue == null || m.NextUpdateDue >= now
-                ),
-                _ => input,
-            };
+                var now = _timeProvider.GetUtcNow();
+                input = input.Where(m => m.NextUpdateDue != null && m.NextUpdateDue < now);
+            }
+            else if (includeNotOverdue && !includeOverdue)
+            {
+                var now = _timeProvider.GetUtcNow();
+                input = input.Where(m => m.NextUpdateDue == null || m.NextUpdateDue >= now);
+            }
         }
 
         string? search = getRecordsQuery.Search;

@@ -69,11 +69,13 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
         id="update-status-filter"
         options={Object.values(UpdateStatus)}
         labels={updateStatusLabels}
-        isSelected={(updateStatus: UpdateStatus) => query.updateStatus == updateStatus}
+        isSelected={(updateStatus: UpdateStatus) =>
+          query.updateStatus?.includes(updateStatus) ?? false
+        }
         onChanged={(updateStatus, isSelected) =>
           handleUpdatedQuery({
             ...query,
-            updateStatus: isSelected ? updateStatus : undefined,
+            updateStatus: addOrRemoveItem(query.updateStatus, updateStatus, isSelected),
           })
         }
       />

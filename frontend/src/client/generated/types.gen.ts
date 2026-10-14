@@ -1275,8 +1275,14 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
     userRole: UserRole;
 };
 
+/**
+ * Represents the update status filter for records.
+ */
 export const UpdateStatus = { OVERDUE: 'Overdue', NOT_OVERDUE: 'NotOverdue' } as const;
 
+/**
+ * Represents the update status filter for records.
+ */
 export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
 
 /**
@@ -2141,10 +2147,10 @@ export type GetOrganisationRecordsData = {
          */
         SortDirection?: SortDirection;
         /**
-         * Gets or initialises the update status filter. When set, only records that are
-         * overdue or not overdue for review will be returned.
+         * Gets or initialises the update status filters. When multiple values are set, records
+         * matching any selected status will be returned.
          */
-        UpdateStatus?: UpdateStatus;
+        UpdateStatus?: Array<UpdateStatus>;
     };
     url: '/records/organisations/{organisationId}';
 };

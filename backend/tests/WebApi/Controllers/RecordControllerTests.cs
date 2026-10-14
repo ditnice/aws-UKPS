@@ -514,10 +514,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         foreach (var type in query.RecordType)
             queryParams.Add($"recordType={Uri.EscapeDataString(type.ToString())}");
 
-        if (query.UpdateStatus.HasValue)
-            queryParams.Add(
-                $"updateStatus={Uri.EscapeDataString(query.UpdateStatus.Value.ToString())}"
-            );
+        foreach (var status in query.UpdateStatus)
+            queryParams.Add($"updateStatus={Uri.EscapeDataString(status.ToString())}");
 
         if (!string.IsNullOrWhiteSpace(query.Search))
             queryParams.Add($"search={Uri.EscapeDataString(query.Search)}");
@@ -597,7 +595,10 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             );
             RuleFor(
                 x => x.UpdateStatus,
-                f => f.Random.Bool(0.5f) ? f.PickRandom<UpdateStatus>() : null
+                f =>
+                    f.Random.Bool(0.5f)
+                        ? [f.PickRandom<UpdateStatus>()]
+                        : Array.Empty<UpdateStatus>()
             );
             RuleFor(x => x.Search, f => f.Random.Bool(0.5f) ? f.Lorem.Word() : null);
         }

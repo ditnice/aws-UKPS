@@ -1123,7 +1123,7 @@ export const fakeGetOrganisationRecordsRequest = (options?: Options): Omit<GetOr
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { PageSize: f.number.int({ min: 1, max: 100 }) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { SortBy: fakeGetRecordsQuerySortValue(options) },
             ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { SortDirection: fakeSortDirection(options) },
-            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { UpdateStatus: fakeUpdateStatus(options) }
+            ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { UpdateStatus: f.helpers.multiple(() => fakeUpdateStatus(options)) }
         }
     };
 };

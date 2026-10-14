@@ -1740,9 +1740,12 @@
           {
             "name": "UpdateStatus",
             "in": "query",
-            "description": "Gets or initialises the update status filter. When set, only records that are\noverdue or not overdue for review will be returned.",
+            "description": "Gets or initialises the update status filters. When multiple values are set, records\nmatching any selected status will be returned.",
             "schema": {
-              "$ref": "#/components/schemas/UpdateStatus"
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UpdateStatus"
+              }
             }
           }
         ],
@@ -5539,10 +5542,10 @@
       "UpdateStatus": {
         "enum": [
           "Overdue",
-          "NotOverdue",
-          null
+          "NotOverdue"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "Represents the update status filter for records."
       },
       "UpdateUserDetailsCommand": {
         "required": [
