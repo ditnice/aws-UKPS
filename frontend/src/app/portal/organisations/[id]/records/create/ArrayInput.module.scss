@@ -1,21 +1,44 @@
 @use '@/styles/spacing';
 @use '@/styles/utils';
 
-.multiValuesInput > input {
-  font-family: inherit;
-  margin-bottom: utils.rem(spacing.$xx-small);
+.root {
+  margin-bottom: utils.rem(spacing.$large);
 }
 
-.inputRowWithRemove {
+.heading {
+  margin: 0 0 utils.rem(spacing.$x-small);
+}
+
+.row {
   align-items: flex-end;
   display: flex;
-  gap: utils.rem(spacing.$large);
+  gap: utils.rem(spacing.$small);
+  margin-bottom: utils.rem(spacing.$small);
+}
 
-  > :first-child {
-    flex: 0 0 66.6667%;
+.input {
+  flex: 0 1 66.6667%;
+  min-width: 0;
+
+  // TODO: replace with a specific selector once global styling rules have been reviewed
+  :is(div, input, p) {
+    margin-bottom: 0;
   }
 }
 
 .removeButton {
-  transform: translateY(utils.rem(spacing.$small) * -1);
+  flex: none;
+  margin: 0;
+}
+
+@media (width <= 40rem) {
+  .row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .input {
+    flex: none;
+    width: 100%;
+  }
 }

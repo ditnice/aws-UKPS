@@ -1,10 +1,8 @@
 import { AnyFieldLikeMetaBase, Updater } from '@tanstack/react-form'
 import { ChangeEvent } from 'react'
 
-import { FormGroup } from '@nice-digital/nds-form-group'
-
 import { Button } from '@/components/Button/Button'
-import { Input, InputWidth } from '@/components/Input/Input'
+import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { clearFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -25,22 +23,21 @@ export type Field = {
   handleChange: (value: string) => void
 }
 
+export type GetSubfield<T extends string> = (
+  name: `${T}[${number}]`,
+  renderer: (subfield: Field) => React.ReactElement,
+) => React.ReactElement
+
 export type ArrayInputProps<T extends string> = {
   addItemLabel: string
   removeItemLabel: string
-  allowRemoveFirstItem?: boolean
+  heading?: string
+  firstItemClassName?: string
   labelPrefix: string
   hint: string
   field: ArrayField<T>
-  width?: InputWidth | undefined
-  getSubfield: (
-    value: `${T}[${number}]`,
-    renderer: (subfield: Field) => React.ReactElement,
-  ) => React.ReactElement
+  getSubfield: GetSubfield<T>
 }
-
-const OptionalErrorState = ({ children }: React.PropsWithChildren) =>
-  children ? <ErrorState>{children}</ErrorState> : null
 
 /**
  * Renders an array-backed form field as a list of editable input items.
@@ -55,9 +52,10 @@ const OptionalErrorState = ({ children }: React.PropsWithChildren) =>
  * @template T - The field name key used for the array entries.
  * @param props.addItemLabel - Label shown on the button used to append a new item.
  * @param props.removeItemLabel - Label shown on the button used to remove a list item.
+ * @param props.heading - Optional h2 shown once above the list.
+ * @param props.firstItemClassName - Optional class applied to the first item's row only.
  * @param props.labelPrefix - Prefix used for each item's visible label.
  * @param props.hint - Helper text shown beneath the first item.
- * @param props.width - Optional width for the rendered inputs.
  * @param props.field - Array field state and actions from the form library.
  * @param props.getSubfield - Callback used to render a specific field instance for one array index.
  * @returns The rendered array input component.
@@ -65,67 +63,69 @@ const OptionalErrorState = ({ children }: React.PropsWithChildren) =>
 const ArrayInput = <T extends string>({
   addItemLabel,
   removeItemLabel,
-  allowRemoveFirstItem = false,
+  heading,
+  firstItemClassName,
   labelPrefix,
   hint,
-  width,
   field,
   getSubfield,
 }: ArrayInputProps<T>) => {
   const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+  const canRemoveItem = field.state.value.length > 1
   return (
-    <FormGroup>
-      <OptionalErrorState>{errorMessage}</OptionalErrorState>
-      {field.state.value.map((_, i) => {
-        const subfieldName = `${field.name}[${i}]` as const
-        const canRemoveItem = i > 0 || (allowRemoveFirstItem && field.state.value.length > 1)
-        return (
-          <div className={styles.item} key={i}>
-            <div className={canRemoveItem ? styles.inputRowWithRemove : styles.inputRow}>
-              {getSubfield(subfieldName, (subfield) => {
-                const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
-                return (
-                  <Input
-                    error={Boolean(errorMessage)}
-                    errorMessage={errorMessage}
-                    label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
-                    className={styles.multiValuesInput}
-                    name={subfield.name}
-                    onBlur={subfield.handleBlur}
-                    value={subfield.state.value}
-                    hint={i === 0 ? hint : undefined}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      subfield.handleChange(event.target.value)
-                      field.setMeta(clearFormApiErrors())
-                    }}
-                    width={canRemoveItem ? undefined : width}
-                  />
-                )
-              })}
-              {canRemoveItem && (
-                <Button
-                  className={styles.removeButton}
-                  data-testid={`remove-button-${i}`}
-                  type="button"
-                  variant="secondary"
-                  onClick={() => field.removeValue(i)}
-                >
-                  {removeItemLabel} <span className="visually-hidden">{i + 1}</span>
-                </Button>
-              )}
-            </div>
+    <div className={styles.root}>
+      {heading && <h2 className={styles.heading}>{heading}</h2>}
+      {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
+      {field.state.value.map((_, i) => (
+        <div
+          className={
+            i === 0 && firstItemClassName ? `${styles.row} ${firstItemClassName}` : styles.row
+          }
+          key={i}
+        >
+          <div className={styles.input}>
+            {getSubfield(`${field.name}[${i}]`, (subfield) => {
+              const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
+              return (
+                <Input
+                  error={Boolean(errorMessage)}
+                  errorMessage={errorMessage}
+                  label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
+                  name={subfield.name}
+                  onBlur={subfield.handleBlur}
+                  value={subfield.state.value}
+                  hint={i === 0 ? hint : undefined}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    subfield.handleChange(event.target.value)
+                    field.setMeta(clearFormApiErrors())
+                  }}
+                  width="full"
+                />
+              )
+            })}
           </div>
-        )
-      })}
+          {canRemoveItem && (
+            <Button
+              className={styles.removeButton}
+              data-testid={`remove-button-${i}`}
+              type="button"
+              variant="secondary"
+              onClick={() => field.removeValue(i)}
+            >
+              {removeItemLabel} <span className="visually-hidden">{i + 1}</span>
+            </Button>
+          )}
+        </div>
+      ))}
       <Button
         data-testid="add-item-button"
         type="button"
-        variant="secondary"
+        variant="primary"
         onClick={() => field.pushValue('')}
       >
         {addItemLabel}
       </Button>
-    </FormGroup>
+    </div>
   )
 }
 

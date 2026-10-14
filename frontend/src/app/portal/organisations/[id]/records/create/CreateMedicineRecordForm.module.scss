@@ -1,0 +1,5 @@
+@use './HeadingLabel';
+
+.headingLabel {
+  @include HeadingLabel.heading-label;
+}
