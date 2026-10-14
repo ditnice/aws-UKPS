@@ -18,7 +18,6 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-// Isolate page wiring here; the components have their own rendering tests.
 vi.mock('./_components/UserAuthenticationDetails', () => ({
   UserAuthenticationDetails: ({ currentUser }: { currentUser: UserInformationDto }) => (
     <div data-testid="user-authentication-details">{currentUser.userId}</div>
@@ -53,8 +52,6 @@ const renderPage = async (searchParams: { updated?: string } = {}) => {
   render(await Me({ searchParams: Promise.resolve(searchParams) }))
 }
 
-// Direct invocation checks orchestration and the returned synchronous tree only.
-// It does not exercise Next.js rendering, routing or hydration.
 describe('Me (direct invocation)', () => {
   it('renders the page header', async () => {
     mockedGetUsersMe.mockResolvedValue({
