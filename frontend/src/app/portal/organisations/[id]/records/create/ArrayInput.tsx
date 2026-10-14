@@ -1,10 +1,10 @@
 import { AnyFieldLikeMetaBase, Updater } from '@tanstack/react-form'
-import { ChangeEvent, CSSProperties } from 'react'
+import { ChangeEvent } from 'react'
 
 import { FormGroup } from '@nice-digital/nds-form-group'
 
 import { Button } from '@/components/Button/Button'
-import { Input, inputWidthStyles, InputWidth } from '@/components/Input/Input'
+import { Input, InputWidth } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { clearFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -73,47 +73,35 @@ const ArrayInput = <T extends string>({
   getSubfield,
 }: ArrayInputProps<T>) => {
   const errorMessage = getFieldErrorMessage(field.state.meta.errors)
-  const fluidWidth = width && typeof width === 'string' ? inputWidthStyles[width].width : undefined
-
   return (
     <FormGroup>
       <OptionalErrorState>{errorMessage}</OptionalErrorState>
       {field.state.value.map((_, i) => {
         const subfieldName = `${field.name}[${i}]` as const
         const canRemoveItem = i > 0 || (allowRemoveFirstItem && field.state.value.length > 1)
-        const inputWithRemoveStyle =
-          canRemoveItem && fluidWidth
-            ? ({ '--input-width': fluidWidth } as CSSProperties)
-            : undefined
-
         return (
           <div className={styles.item} key={i}>
             <div className={canRemoveItem ? styles.inputRowWithRemove : styles.inputRow}>
-              <div
-                className={canRemoveItem ? styles.inputWithRemove : undefined}
-                style={inputWithRemoveStyle}
-              >
-                {getSubfield(subfieldName, (subfield) => {
-                  const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
-                  return (
-                    <Input
-                      error={Boolean(errorMessage)}
-                      errorMessage={errorMessage}
-                      label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
-                      className={styles.multiValuesInput}
-                      name={subfield.name}
-                      onBlur={subfield.handleBlur}
-                      value={subfield.state.value}
-                      hint={i === 0 ? hint : undefined}
-                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                        subfield.handleChange(event.target.value)
-                        field.setMeta(clearFormApiErrors())
-                      }}
-                      width={canRemoveItem && fluidWidth ? 'full' : width}
-                    />
-                  )
-                })}
-              </div>
+              {getSubfield(subfieldName, (subfield) => {
+                const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
+                return (
+                  <Input
+                    error={Boolean(errorMessage)}
+                    errorMessage={errorMessage}
+                    label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
+                    className={styles.multiValuesInput}
+                    name={subfield.name}
+                    onBlur={subfield.handleBlur}
+                    value={subfield.state.value}
+                    hint={i === 0 ? hint : undefined}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      subfield.handleChange(event.target.value)
+                      field.setMeta(clearFormApiErrors())
+                    }}
+                    width={canRemoveItem ? undefined : width}
+                  />
+                )
+              })}
               {canRemoveItem && (
                 <Button
                   className={styles.removeButton}
@@ -132,7 +120,7 @@ const ArrayInput = <T extends string>({
       <Button
         data-testid="add-item-button"
         type="button"
-        variant="primary"
+        variant="secondary"
         onClick={() => field.pushValue('')}
       >
         {addItemLabel}

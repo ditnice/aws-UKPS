@@ -11,29 +11,11 @@
   display: flex;
   gap: utils.rem(spacing.$large);
 
-  .inputWithRemove {
-    flex: 0 1 var(--input-width, auto);
-    min-width: 0;
+  > :first-child {
+    flex: 0 0 66.6667%;
   }
 }
 
 .removeButton {
   transform: translateY(utils.rem(spacing.$small) * -1);
-}
-
-@media (width <= 40rem) {
-  .inputRowWithRemove {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: utils.rem(spacing.$small);
-
-    .inputWithRemove {
-      flex: none;
-      width: 100%;
-    }
-  }
-
-  .removeButton {
-    transform: none;
-  }
 }
