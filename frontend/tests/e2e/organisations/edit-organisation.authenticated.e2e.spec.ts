@@ -7,6 +7,13 @@ const testOrganisation = {
   organisationEmail: 'test@example.com',
   phoneNumber: '07123456789',
 }
+test('edit organisation details', async ({ page }) => {
+  const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+  await page.goto(`/portal/organisations/${organisationId}/edit`)
+  await expect(page).toHaveScreenshot('edit-organisation.png', {
+    fullPage: true,
+  })
+})
 
 test('validates organisation details without changing authenticated-dev data', async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
