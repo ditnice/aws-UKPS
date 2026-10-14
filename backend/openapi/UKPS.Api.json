@@ -701,6 +701,86 @@
         }
       }
     },
+    "/users/me/current-organisation/champions": {
+      "get": {
+        "tags": [
+          "CurrentUserChampion"
+        ],
+        "summary": "Gets the champion contacts for the current organisation.",
+        "operationId": "GetCurrentOrganisationChampions",
+        "responses": {
+          "200": {
+            "description": "The champion contacts were returned.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The user is not authorised to view champion contacts.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The user is not authenticated.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me/organisations": {
       "get": {
         "tags": [
@@ -5850,6 +5930,9 @@
   "tags": [
     {
       "name": "Authentication"
+    },
+    {
+      "name": "CurrentUserChampion"
     },
     {
       "name": "CurrentUserOrganisation"

@@ -1769,6 +1769,35 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
+export type GetCurrentOrganisationChampionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/current-organisation/champions';
+};
+
+export type GetCurrentOrganisationChampionsErrors = {
+    /**
+     * The user is not authenticated.
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The user is not authorised to view champion contacts.
+     */
+    403: ProblemDetails;
+};
+
+export type GetCurrentOrganisationChampionsError = GetCurrentOrganisationChampionsErrors[keyof GetCurrentOrganisationChampionsErrors];
+
+export type GetCurrentOrganisationChampionsResponses = {
+    /**
+     * The champion contacts were returned.
+     */
+    200: Array<string>;
+};
+
+export type GetCurrentOrganisationChampionsResponse = GetCurrentOrganisationChampionsResponses[keyof GetCurrentOrganisationChampionsResponses];
+
 export type GetCurrentUserOrganisationsData = {
     body?: never;
     path?: never;

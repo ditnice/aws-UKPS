@@ -35,11 +35,19 @@ public class OrganisationSelectionAuthorisationTests : IClassFixture<WebApplicat
                 Arg.Any<CancellationToken>()
             )
             .Returns(Result<UpdateCurrentOrganisationError>.Ok());
+        _mockUserService
+            .GetCurrentOrganisationChampionEmails(Arg.Any<CancellationToken>())
+            .Returns(
+                Result<IReadOnlyCollection<string>, GetCurrentOrganisationChampionsError>.Ok([
+                    "champion@example.com",
+                ])
+            );
     }
 
     [Theory]
     [InlineData(AuthenticationFailCode.SelectedOrganisationRequired)]
     [InlineData(AuthenticationFailCode.SelectedOrganisationIsNotValid)]
+    [InlineData(AuthenticationFailCode.MembershipDeactivated)]
     public async Task DefaultPolicyEndpoint_WhenOrganisationNotSelected_ShouldReturnUnauthorisedWithFailCode(
         AuthenticationFailCode failCode
     )
@@ -88,6 +96,107 @@ public class OrganisationSelectionAuthorisationTests : IClassFixture<WebApplicat
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Theory]
+    [InlineData(AuthenticationFailCode.SelectedOrganisationRequired)]
+    [InlineData(AuthenticationFailCode.SelectedOrganisationIsNotValid)]
+    public async Task GetCurrentOrganisationChampions_WhenOrganisationNotSelected_ShouldReturnUnauthorisedWithFailCode(
+        AuthenticationFailCode failCode
+    )
+    {
+        HttpClient client = CreateClientRequiringOrganisationSelection(failCode);
+
+        var response = await client.GetAsync(
+            new Uri("/users/me/current-organisation/champions", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        using JsonDocument content = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
+        content.RootElement.GetProperty("code").GetString().ShouldBe(failCode.ToString());
+        await _mockUserService
+            .DidNotReceive()
+            .GetCurrentOrganisationChampionEmails(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetCurrentOrganisationChampions_WhenMembershipDeactivated_ShouldBeAccessible()
+    {
+        HttpClient client = CreateClientRequiringOrganisationSelection(
+            AuthenticationFailCode.MembershipDeactivated
+        );
+
+        var response = await client.GetAsync(
+            new Uri("/users/me/current-organisation/champions", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (
+            await response.Content.ReadFromJsonAsync<string[]>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldBe(["champion@example.com"]);
+        await _mockUserService
+            .Received(1)
+            .GetCurrentOrganisationChampionEmails(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetCurrentUserOrganisations_WhenMembershipDeactivated_ShouldReturnUnauthorisedWithFailCode()
+    {
+        HttpClient client = CreateClientRequiringOrganisationSelection(
+            AuthenticationFailCode.MembershipDeactivated
+        );
+
+        var response = await client.GetAsync(
+            new Uri("/users/me/organisations", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        using JsonDocument content = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
+        content
+            .RootElement.GetProperty("code")
+            .GetString()
+            .ShouldBe(AuthenticationFailCode.MembershipDeactivated.ToString());
+        await _mockUserService
+            .DidNotReceive()
+            .GetCurrentUserOrganisations(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateCurrentOrganisation_WhenMembershipDeactivated_ShouldReturnUnauthorisedWithFailCode()
+    {
+        HttpClient client = CreateClientRequiringOrganisationSelection(
+            AuthenticationFailCode.MembershipDeactivated
+        );
+
+        var response = await client.PatchAsJsonAsync(
+            new Uri("/users/me/current-organisation", UriKind.Relative),
+            new UpdateCurrentOrganisationCommand { OrganisationId = 1 },
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        using JsonDocument content = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
+        content
+            .RootElement.GetProperty("code")
+            .GetString()
+            .ShouldBe(AuthenticationFailCode.MembershipDeactivated.ToString());
+        await _mockUserService
+            .DidNotReceive()
+            .UpdateCurrentOrganisation(
+                Arg.Any<UpdateCurrentOrganisationCommand>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     private HttpClient CreateClientRequiringOrganisationSelection(AuthenticationFailCode failCode)

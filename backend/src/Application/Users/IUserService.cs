@@ -104,6 +104,17 @@ public interface IUserService
     );
 
     /// <summary>
+    /// Gets distinct active champion work email addresses for the current organisation.
+    /// The current user's membership may be deactivated; an error is returned when the
+    /// organisation context is unavailable or ineligible.
+    /// </summary>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>The champion work email addresses, or an error for unavailable or ineligible context.</returns>
+    Task<
+        Result<IReadOnlyCollection<string>, GetCurrentOrganisationChampionsError>
+    > GetCurrentOrganisationChampionEmails(CancellationToken cancellationToken);
+
+    /// <summary>
     /// Removes access and anonymises the user's profile and linked approved registration requests.
     /// Personal details in user-change audit history are cleared. Records created by the user are
     /// kept; other registration requests, communications, logs and backups are not deleted.
