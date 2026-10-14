@@ -11,6 +11,9 @@ import type { Client } from './generated/client'
 
 const fallbackReturnTo = '/portal'
 const selectOrganisationPath = '/portal/organisations/select'
+// The deactivated-membership error page requests this itself, so redirecting its
+// 401s back to the error page would loop.
+const championContactsPath = '/users/me/current-organisation/champions'
 
 export async function createServerApiClient(): Promise<Client> {
   const baseUrl = process.env.BACKEND_API_BASE_URL
@@ -41,7 +44,7 @@ function createServerFetch(returnTo: string): typeof fetch {
   return async (input, init) => {
     const response = await globalThis.fetch(input, init)
 
-    if (response.status === 401 && !isAuthRequest(input)) {
+    if (response.status === 401 && !isAuthRequest(input) && !isChampionContactsRequest(input)) {
       const content = await response
         .clone()
         .json()
@@ -83,6 +86,16 @@ function isAuthRequest(input: RequestInfo | URL): boolean {
     return new URL(requestUrl).pathname.startsWith('/auth/')
   } catch {
     return requestUrl === '/auth' || requestUrl.startsWith('/auth/')
+  }
+}
+
+function isChampionContactsRequest(input: RequestInfo | URL): boolean {
+  const requestUrl = input instanceof Request ? input.url : input.toString()
+
+  try {
+    return new URL(requestUrl).pathname === championContactsPath
+  } catch {
+    return requestUrl === championContactsPath
   }
 }
 

@@ -104,7 +104,7 @@ public interface IUserService
     );
 
     /// <summary>
-    /// Gets distinct active champion work email addresses for the current organisation.
+    /// Gets distinct champion work email addresses for Active or Inactive memberships in the current organisation.
     /// The current user's membership may be deactivated; an error is returned when the
     /// organisation context is unavailable or ineligible.
     /// </summary>

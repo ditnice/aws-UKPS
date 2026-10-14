@@ -1954,7 +1954,7 @@ export type DeactivateMembershipData = {
 
 export type DeactivateMembershipErrors = {
     /**
-     * Bad Request
+     * The membership is in an invalid state, or deactivation would leave no eligible champion.
      */
     400: ProblemDetails;
     /**
@@ -2049,7 +2049,7 @@ export type UpdateUserRoleData = {
 
 export type UpdateUserRoleErrors = {
     /**
-     * The supplied role is invalid.
+     * The supplied role is invalid, or the change would leave no eligible champion.
      */
     400: ProblemDetails;
     /**
@@ -2444,7 +2444,7 @@ export type RemoveUserData = {
 
 export type RemoveUserErrors = {
     /**
-     * One of the user's organisation memberships is not in a state that allows removal.
+     * One of the user's organisation memberships is not in a state that allows removal, or removal would leave no eligible champion.
      */
     400: ProblemDetails;
     /**

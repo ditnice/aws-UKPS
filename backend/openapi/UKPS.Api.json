@@ -1212,7 +1212,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "The membership is in an invalid state, or deactivation would leave no eligible champion.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1499,7 +1499,7 @@
             }
           },
           "400": {
-            "description": "The supplied role is invalid.",
+            "description": "The supplied role is invalid, or the change would leave no eligible champion.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2687,7 +2687,7 @@
             }
           },
           "400": {
-            "description": "One of the user's organisation memberships is not in a state that allows removal.",
+            "description": "One of the user's organisation memberships is not in a state that allows removal, or removal would leave no eligible champion.",
             "content": {
               "text/plain": {
                 "schema": {

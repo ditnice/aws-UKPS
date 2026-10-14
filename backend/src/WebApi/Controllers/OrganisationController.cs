@@ -149,6 +149,9 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// <response code="200">
     /// The membership was successfully deactivated.
     /// </response>
+    /// <response code="400">
+    /// The membership is in an invalid state, or deactivation would leave no eligible champion.
+    /// </response>
     /// <response code="403">
     /// The caller is not authorised to deactivate the membership, or the membership is their own.
     /// </response>
@@ -202,6 +205,12 @@ public class OrganisationController(IOrganisationService organisationService) : 
                             title: "Not authorised",
                             statusCode: StatusCodes.Status403Forbidden,
                             detail: "You cannot deactivate yourself."
+                        ),
+                    lastRemainingChampion: _ =>
+                        Problem(
+                            title: "Last remaining champion",
+                            statusCode: StatusCodes.Status400BadRequest,
+                            detail: "This action would leave an organisation without a champion user."
                         )
                 )
         );
@@ -299,7 +308,7 @@ public class OrganisationController(IOrganisationService organisationService) : 
     /// The membership role was successfully updated.
     /// </response>
     /// <response code="400">
-    /// The supplied role is invalid.
+    /// The supplied role is invalid, or the change would leave no eligible champion.
     /// </response>
     /// <response code="403">
     /// The caller is not authorised to update the membership, or the membership is their own.
@@ -351,6 +360,11 @@ public class OrganisationController(IOrganisationService organisationService) : 
                         title: "Not authorised",
                         statusCode: StatusCodes.Status403Forbidden,
                         detail: "The user is not authorised to perform this action."
+                    ),
+                    OrganisationMembershipUpdateUserRoleError.LastRemainingChampion => Problem(
+                        title: "Last remaining champion",
+                        statusCode: StatusCodes.Status400BadRequest,
+                        detail: "This action would leave an organisation without a champion user."
                     ),
                     _ => throw new UnreachableException(),
                 }

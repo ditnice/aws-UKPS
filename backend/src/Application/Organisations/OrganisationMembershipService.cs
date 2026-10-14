@@ -72,6 +72,16 @@ internal sealed class OrganisationMembershipService(
                 new OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole(membershipId)
             );
         }
+        if (
+            command.UserRole != UserRole.Champion
+            && await WouldRemoveLastChampion(membership, cancellationToken)
+        )
+        {
+            return UpdateUserRoleResult.Err(
+                new OrganisationMembershipUpdateUserRoleError.LastRemainingChampion(membershipId)
+            );
+        }
+
         membership.UserRole = command.UserRole;
         await dbContext.SaveChangesAsync(cancellationToken);
         return UpdateUserRoleResult.Ok(MapToDto(membership));
@@ -110,6 +120,13 @@ internal sealed class OrganisationMembershipService(
                 new OrganisationMembershipDeactivateUserError.CannotDeactivateSelf(membershipId)
             );
         }
+        if (await WouldRemoveLastChampion(membership, cancellationToken))
+        {
+            return DeactivateUserResult.Err(
+                new OrganisationMembershipDeactivateUserError.LastRemainingChampion(membershipId)
+            );
+        }
+
         var result = membership.TryDeactivate();
         if (!result.Success)
         {
@@ -123,18 +140,7 @@ internal sealed class OrganisationMembershipService(
 
         if (result.HasChanged)
         {
-            await emailService.SendEmail(
-                new SendEmailCommand()
-                {
-                    PersonIdentifier = membership.User!.CognitoUsername,
-                    RecipientAddress = membership.User.WorkEmail,
-                    Email = new DeactivatedUserNotificationEmail()
-                    {
-                        OrganisationName = membership.Organisation!.OrganisationName,
-                    },
-                },
-                cancellationToken
-            );
+            await SendDeactivationNotification(membership, cancellationToken);
         }
 
         return DeactivateUserResult.Ok(MapToDto(membership));
@@ -200,6 +206,35 @@ internal sealed class OrganisationMembershipService(
     // the permissions their role would otherwise grant them over the organisation.
     private bool IsCurrentUsersOwnMembership(UserOrgMembership membership) =>
         currentUserInfoService.IsCurrentUser(membership.User!.WorkEmail);
+
+    // Preserve an existing eligible champion; inactive champions are still contactable.
+    private async Task<bool> WouldRemoveLastChampion(
+        UserOrgMembership membership,
+        CancellationToken cancellationToken
+    ) =>
+        membership.IsEligibleChampion()
+        && !await dbContext.UserOrgMemberships.AnyOtherEligibleChampion(
+            membership.OrganisationId,
+            [membership.Id],
+            cancellationToken
+        );
+
+    private Task SendDeactivationNotification(
+        UserOrgMembership membership,
+        CancellationToken cancellationToken
+    ) =>
+        emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                PersonIdentifier = membership.User!.CognitoUsername,
+                RecipientAddress = membership.User.WorkEmail,
+                Email = new DeactivatedUserNotificationEmail()
+                {
+                    OrganisationName = membership.Organisation!.OrganisationName,
+                },
+            },
+            cancellationToken
+        );
 
     private bool NonSuperUserTryingToManageSuperUser(
         UserOrgMembership membership,
