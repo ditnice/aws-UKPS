@@ -52,11 +52,14 @@ export const getActiveFilters = (query: RecordsQuery): Filter[] => {
           label: recordStatusLabels[s],
         }) as const,
     ) ?? []),
-    ...(query.updateStatus?.map((status) => ({
-      key: 'update-status',
-      value: status,
-      label: updateStatusLabels[status],
-    })) ?? []),
+    ...(query.updateStatus?.map(
+      (status) =>
+        ({
+          key: 'update-status',
+          value: status,
+          label: updateStatusLabels[status],
+        }) as const,
+    ) ?? []),
   ]
 }
 
