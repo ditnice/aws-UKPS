@@ -59,6 +59,17 @@ describe('MembershipDeactivated (direct invocation)', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument()
   })
 
+  it('shows a retrieval error when no champion contacts are returned', async () => {
+    mockChampions({ data: [], error: undefined })
+
+    await renderPage()
+
+    expect(screen.getByTestId('champion-retrieval-error')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByTestId('multiple-champions')).not.toBeInTheDocument()
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+  })
+
   it('prioritises a retrieval error over an empty champion list', async () => {
     mockChampions({ data: [], error: { title: 'Forbidden' } })
 

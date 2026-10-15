@@ -18,7 +18,7 @@ const MembershipDeactivated = async ({
       client: await createServerApiClient(),
     })
 
-    if (!championEmails || error) {
+    if (!championEmails || error || championEmails.length === 0) {
       return (
         <>
           <PageHeader heading="Your account has been deactivated" />
