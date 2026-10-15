@@ -18,6 +18,7 @@ internal sealed record SyntheticReferenceData
         public required string Label { get; init; }
         public string? ParentCode { get; init; }
         public required int DisplayOrder { get; init; }
+        public bool IsArchived { get; init; }
     }
 
     internal sealed record SyntheticListEntry

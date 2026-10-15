@@ -205,6 +205,8 @@ def main():
         bnf = indication["bnfChapter"]
         if bnf is None or reference_codes["bnfChapters"].get(bnf["code"]) != bnf["label"]:
             error("BNF chapter matches reference data", record)
+        if bnf is not None and bnf["code"] in ref.ARCHIVED_BNF_CHAPTERS:
+            error("BNF chapter is not archived", record)
         for area in indication["therapeuticAreas"]:
             if reference_codes["therapeuticAreas"].get(area["code"]) != area["label"]:
                 error("therapeutic area matches reference data", record)
@@ -258,8 +260,9 @@ def main():
                 "irpReferenceRegulator", "irpRoute", "intlSubmissionDate", "intlLicenceDate",
                 "intlConditionalApprovalAnticipated")):
             error("no IRP fields outside the IRP", record)
-        if mhra["mhraProcedureType"].startswith("Unknown") and not mhra["procedureDetails"]:
-            error("unknown procedure needs details", record)
+        if mhra["mhraProcedureType"] in ("Other", "Not yet confirmed") \
+                and not mhra["procedureDetails"]:
+            error("other or unconfirmed procedure needs details", record)
         if mhra["globalSubmissionActualDate"] and (
                 mhra["globalSubmissionActualDate"]["datePrecision"] != "ActualDate"
                 or not mhra["globalFirstSubmissionRegion"]):
@@ -349,6 +352,9 @@ def main():
         if (lab["nonGenomicBiomarkerDescription"] is not None) != (
                 biomarker == "NonGenomicBiomarker"):
             error("non-genomic description only for non-genomic biomarkers", record)
+        if lab["genomicSampleType"] is not None \
+                and lab["genomicSampleType"] not in ref.GENOMIC_SAMPLE_TYPES:
+            error("genomic sample type is a listed value", record)
         if (lab["genomicTestPathwayPointOther"] is not None) != (
                 lab["patientPathwayPoint"] == "Other"):
             error("pathway point details only for Other", record)
