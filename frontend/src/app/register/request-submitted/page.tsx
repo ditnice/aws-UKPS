@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
 
 import { RegisterUserConfirmationDto } from '@/client/generated'
