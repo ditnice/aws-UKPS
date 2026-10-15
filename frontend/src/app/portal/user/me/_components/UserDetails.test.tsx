@@ -56,15 +56,4 @@ describe('UserDetails', () => {
     expect(link).toBeInTheDocument()
     expect(link!.getAttribute('href')).toBe('/portal/user/me/edit-details')
   })
-
-  it('renders the return to view and manage records link', () => {
-    const currentUser = { ...user }
-
-    const { container } = render(<UserDetails currentUser={currentUser} />)
-
-    const link = getLinkByContent(container, 'Return to view and manage records')
-
-    expect(link).toBeInTheDocument()
-    expect(link!.getAttribute('href')).toBe('/placeholder')
-  })
 })
