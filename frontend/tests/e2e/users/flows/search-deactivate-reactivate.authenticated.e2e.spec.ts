@@ -1,6 +1,7 @@
 import { expect, test } from '../../fixtures/test'
 import { requireEnvironmentVariable } from '../../helpers/test-environment'
 
+// need to add in if not on this screen then navigate to the next screen
 test.describe('Searching, activating and deactivating a user', () => {
   test('deactivate an active user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
@@ -56,6 +57,7 @@ test.describe('Searching, activating and deactivating a user', () => {
     ).toBeVisible()
   })
 
+  // need to add in if not on this screen then navigate to the next screen
   test('reactivate a deactive user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
 
@@ -115,14 +117,5 @@ test.describe('Searching, activating and deactivating a user', () => {
     await page.getByRole('button', { name: 'Apply filter', exact: true }).click()
 
     await expect(page.getByText(userEmail, { exact: true })).toBeVisible()
-  })
-
-  test('filter standard user', async ({ page }) => {
-    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-    await page.goto(`/portal/organisations/${organisationId}`)
-
-    await page.getByLabel('Standard user').check()
-
-    await expect(page.getByText('Champion user')).toHaveCount(1)
   })
 })

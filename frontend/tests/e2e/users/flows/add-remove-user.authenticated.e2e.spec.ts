@@ -6,13 +6,13 @@ const testUser = {
   workEmail: 'test@example.com',
   phoneNumber: '07123456789',
 }
-test.describe('Adding and approving a user', () => {
+test.describe('Adding and removing a user', () => {
   test('adding a new user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}`)
     await expect(page.getByText('Organisation details')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Add a new user' }).click()
+    await page.getByRole('link', { name: 'Add a new user' }).click()
     await expect(page.getByRole('heading', { name: 'Add a new user' })).toBeVisible()
     await page.getByLabel('Full name').fill(testUser.fullName)
     await page.getByLabel('Work email address').fill(testUser.workEmail)
@@ -21,6 +21,7 @@ test.describe('Adding and approving a user', () => {
     await page.getByRole('button', { name: 'Send invite' }).click()
 
     await expect(page.getByText('Organisation details')).toBeVisible()
+    await page.getByRole('textbox', { name: 'Filter users' }).fill(testUser.workEmail)
     await page
       .getByRole('button', {
         name: 'Apply filter',
