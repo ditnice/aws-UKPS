@@ -1,37 +1,82 @@
 # Record content forms: high-level design
 
-This document describes how record content pages (the questions a company answers about a
-medicine or vaccine) are defined, rendered, validated and saved. For a step-by-step guide to
-adding a page, see [Creating form pages](creating-form-pages.md). For reference data such as BNF
-chapters, see [Reference data](reference-data.md). The key decisions are recorded in
-[ADR-006](../ADR/ADR-006-dynamic-record-content-forms.md).
+> **Status: proposed design, not yet implemented.** This document describes the target design.
+> None of the code it names exists yet. The decision is recorded in
+> [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
-The original plan is the [form builder brief](ukps-form-builder.md). Where it and this
-document disagree, this document and the code are correct.
+This document describes how record content pages (the questions a company answers about a
+medicine or vaccine) are declared, rendered, validated and saved:
+
+- For a step-by-step guide to annotating an entity, see [Creating form pages](creating-form-pages.md).
+- For the lists that options come from, see [Reference data](reference-data.md).
+- For the database effects of each save, see the [walkthrough](record-creation-walkthrough.md).
+
+The earlier [form builder brief](ukps-form-builder.md) used a separate C# form definition.
+That idea is replaced here, and the brief is kept only as background.
 
 ## Overview
 
-Each page of a record's content is described by a **form definition written in C#**. The
-backend serves one page at a time as JSON: its questions, validation rules, options and the
-current answers. The frontend renders the page from that description, validates it with the same
-rules, and sends every answer on the page to one generic save endpoint. The backend validates
-again, writes each changed answer to its typed column or table, audits the change and returns
-the next page.
+The form is declared **on the EF content entities themselves**, using attributes. Each property that
+a user answers carries the question's ID, label, hint, page, rules and options. Every other
+property is explicitly ignored, with a reason.
 
-There is no generic answers table. Answers live in the existing typed content tables (for
-example `medicines_indication_details`), and **bindings** map each question onto its column or table.
+```csharp
+[FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
+internal sealed class MedicinesIndicationDetail
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
 
-### What is built today
+    [FormPage("indication", "Indication", Order = 10)]
+    [FormField(
+        "medicines_indication_detail.indication",
+        "What is the indication this product is seeking a licence for?",
+        Control = FormControl.Textarea)]
+    [FormRequired("Enter the indication this product is seeking a licence for")]
+    [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
+    public string? Indication { get; set; }
 
-| Area | Status |
+    // ...
+}
+```
+
+The backend works as follows:
+
+1. At startup, a **scanner** reads these attributes and the EF model and builds an in-memory
+   **form model**, one for each record type. A **validator** checks the model; if it finds a
+   problem, the API does not start.
+2. The backend serves one page at a time as JSON: its questions, rules, options and current
+   answers.
+3. The frontend renders the page from that JSON and validates it with the same rules. It then
+   sends every answer on the page to one generic save endpoint.
+4. The backend validates again and writes each changed answer to its typed column or table. It
+   audits the change and returns the next page.
+
+There is no generic answers table. Answers stay in the existing typed content tables, for example
+`medicines_indication_details`. The scanner derives a **binding** for each question from the EF
+model, telling it which column or junction table holds the answer.
+
+### Why attributes
+
+- **Locality.** A column and the question that fills it sit side by side. You can't add a column
+  to a content entity without deciding whether it is on a form, because the coverage check
+  rejects unannotated properties.
+- **Renames are safe.** Bindings come from the property itself, not from a string or a separate
+  expression. The question ID, which is the public contract, is written out explicitly, so
+  renaming a property in C# never changes it.
+- **One source of truth.** No separate definition file can drift from the entities.
+
+### Proposed first delivery
+
+| Area | Scope |
 |---|---|
-| Medicine form, section "Indication details" | 5 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer |
-| Question types | `Textarea`, `Radio`, `Select`, `Checkbox` (with an optional `combobox` display hint) |
+| Medicine form, section "Indication details" | 6 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer, treating a rare disease |
+| Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox` (`Checkbox` has an optional `combobox` display hint) |
 | Rules | `Required`, `MaxLength`, `MaxItems` |
-| Bindings | Column (string, enum, reference ID) and junction table |
+| Bindings | Column (string, enum, reference ID), flags enum, junction table |
 | Entry points | Record creation redirects to the first page; **Update record** on the record details page opens the first page |
 | Audit | One event per save, one row per changed answer |
-| Not built yet | Conditional pages and questions, add-another groups, precision dates, vaccine forms, tasklist |
+| Later | Conditional pages and questions, add-another groups, precision dates, vaccine forms, tasklist |
 
 ## Architecture
 
@@ -44,20 +89,21 @@ flowchart LR
     subgraph Frontend["Frontend (Next.js)"]
         R["Route<br/>portal/records/[recordId]/revisions/[revisionId]/[pageId]"]
         FP["FormPage<br/>(TanStack Form)"]
-        QR["questionRegistry<br/>Textarea / Select / Radio / Checkbox / ComboboxSlot"]
-        DF["lib/dynamic-form<br/>toFormValues, buildPayload,<br/>firstRuleError, buildZodSchema,<br/>applyServerErrors"]
+        QR["questionRegistry<br/>Input / Textarea / Select / Radio / Checkbox"]
+        DF["lib/dynamic-form<br/>answers, buildZodSchema,<br/>buildPayload, applyServerErrors"]
         RT["Record details page<br/>Update record button"]
     end
 
     subgraph Backend["Backend (.NET API)"]
         C["RecordFormController<br/>GET / PUT .../pages/{pageId}"]
-        Q[RecordPageQueryService]
-        S[RecordPageSaveService]
-        V[PageAnswerValidator]
-        REG["FormDefinitionRegistry<br/>(singleton, validated at startup)"]
-        MD[MedicineFormDefinition]
-        B["Bindings<br/>ColumnBinding, JunctionBinding"]
-        O["Options<br/>EnumOptions, ReferenceOptions"]
+        Q[RecordFormQueryService]
+        S[RecordFormSaveService]
+        RE[RuleEvaluator]
+        REG["FormModelRegistry<br/>(singleton, built and validated at startup)"]
+        SC["FormModelScanner<br/>+ FormModelValidator"]
+        ENT["Annotated entities<br/>[FormSection] [FormPage] [FormField] ..."]
+        B["Bindings<br/>Column, Flags, Junction"]
+        O["OptionProviderRegistry<br/>enum and reference providers"]
         A[OrganisationAuthoriser]
     end
 
@@ -79,10 +125,11 @@ flowchart LR
     C --> S
     Q --> REG
     S --> REG
-    S --> V
-    REG --> MD
-    MD --> B
-    MD --> O
+    S --> RE
+    SC -- "reads attributes + EF IModel" --> ENT
+    SC --> REG
+    REG --> B
+    REG --> O
     Q --> A
     S --> A
     B --> T
@@ -91,40 +138,115 @@ flowchart LR
     S --> RV
 ```
 
-### Where the code lives
+### Where the code will live
 
 | Concern | Location |
 |---|---|
-| Definition model and builder | `backend/src/Application/Forms/Definitions/` |
-| Bindings | `backend/src/Application/Forms/Bindings/` |
-| Rules | `backend/src/Application/Forms/Rules/` |
-| Options | `backend/src/Application/Forms/Options/` |
-| Medicine form | `backend/src/Application/Forms/Medicines/MedicineFormDefinition.cs` |
-| Services | `backend/src/Application/Forms/RecordPageQueryService.cs`, `RecordPageSaveService.cs`, `PageAnswerValidator.cs` |
+| Attributes (pure metadata, no Application dependency) | `backend/src/Persistence/FormAnnotations/` |
+| Annotated entities | `backend/src/Persistence/Entities/*RevisionContent/` |
+| Form model (`FormModel`, `FormSection`, `FormPage`, `FormQuestion`) | `backend/src/Application/RecordForms/Model/` |
+| Scanner, validator, fingerprint | `backend/src/Application/RecordForms/Scanning/` |
+| Form versions | `backend/src/Application/RecordForms/FormVersions.cs` |
+| Bindings | `backend/src/Application/RecordForms/Bindings/` |
+| Option providers | `backend/src/Application/RecordForms/Options/` |
+| Rules | `backend/src/Application/RecordForms/Rules/` |
+| Services | `backend/src/Application/RecordForms/RecordFormQueryService.cs`, `RecordFormSaveService.cs` |
 | Controller | `backend/src/WebApi/Controllers/RecordFormController.cs` |
-| Shared rule fixture | `backend/tests/Application/Forms/Fixtures/rule-cases.json` |
+| Shared rule fixture | `backend/tests/Application/RecordForms/Fixtures/rule-cases.json` |
 | Page route | `frontend/src/app/portal/records/[recordId]/revisions/[revisionId]/[pageId]/page.tsx` |
 | Renderer and question components | `frontend/src/components/DynamicForm/` |
 | Form logic | `frontend/src/lib/dynamic-form/` |
 
+The attributes live in Persistence, so entities stay free of Application types. Everything that
+interprets the attributes lives in Application.
+
 ## Key concepts
 
-### Definition hierarchy
+### From attributes to a form model
 
-`FormDefinition` (one per `RecordType`) contains ordered `SectionDefinition`s, each with ordered
-`PageDefinition`s, each with ordered `QuestionDefinition`s. A question has an ID, type, label,
-optional hint, optional display hint, rules, options (for choice questions) and a binding.
+```mermaid
+flowchart TD
+    A["Assembly types with [FormSection(recordType, ...)]"] --> B["Collect annotated properties<br/>(FormPage, FormField, rules, FormOptions)"]
+    M["EF IModel<br/>(columns, nullability, FKs, navigations)"] --> D
+    B --> C["Group by page ID across entities;<br/>pages into sections"]
+    C --> D["Infer control; build bindings<br/>from EF metadata"]
+    D --> E["Order: sections → pages → questions"]
+    E --> F["FormModelValidator<br/>(all errors reported together)"]
+    F -- valid --> G["FormModelRegistry<br/>one FormModel per RecordType"]
+    F -- invalid --> X["API fails to start"]
+```
 
-Definitions are built once at startup by `FormDefinitionRegistry.CreateDefault()` and checked by
-`FormDefinitionValidator`. An invalid definition stops the API from starting. The registry holds
-structure only: bindings receive the request's `AppDbContext`, and options are loaded per request.
+The form model is `FormModel → FormSection → FormPage → FormQuestion`. It is a plain immutable
+object graph, so the rest of the system never touches attributes or reflection:
 
-Page order is form order. Back goes to the previous page, Save and continue goes to the next, and
-saving the last page returns to the organisation's records list.
+- **`FormModel`**: one per `RecordType`. Holds the version, the ordered sections, a flat
+  ordered list of pages, and `FindPage`, `NextPage` and `PreviousPage`.
+- **`FormSection`**: ID, title and ordered pages.
+- **`FormPage`**: ID, title, section, and ordered questions.
+- **`FormQuestion`**: ID, control, label, hint, display hint, rules, option provider key and
+  binding.
+
+The registry is a singleton built once at startup from `AppDbContext.Model`. It holds structure
+only: bindings receive the request's `AppDbContext`, and options are loaded per request.
+
+### Sections, pages and ordering
+
+- **Sections.** `[FormSection(recordType, id, title, Order = n)]` on an entity puts the entity's
+  questions into that section of that record type's form. Several entities can declare the same
+  section ID, as long as they agree on its title and order. An entity can carry one
+  `[FormSection]` per record type. A shared entity such as `RecordProductDetail` can therefore
+  take part in both the Medicine and Vaccine forms.
+- **Pages.** `[FormPage(id, title, Order = n)]` on a property places its question on that page.
+  The page's `Order` places it within its section.
+- **Questions.** On a page with several questions, `FormField.Order` sets their order.
+- **Form order** is section order, then page order. Back goes to the previous page and Save and
+  continue goes to the next. Saving the last page returns to the organisation's records list.
+- **No ties.** Two sections or pages with the same `Order`, or two questions on the same page
+  with the same `Order`, fail startup. Attribute order in source is never relied on.
+
+### Pages that span entities
+
+A page ID is unique within a form, not within an entity. When properties on **different
+entities** declare the same `[FormPage]` ID, their questions are merged into one page:
+
+- every declaration of that page ID must agree on title and order;
+- the declaring entities must all be in the same section.
+
+The startup check enforces both.
+
+Saving a merged page writes to several tables in one `SaveChangesAsync` and one audit event.
+
+### Coverage: every column is accounted for
+
+In an entity with `[FormSection]`, every **mapped scalar property** (according to the EF model)
+must carry exactly one of the following, or the API does not start:
+
+- `[FormField]`: it is a question. It also needs `[FormPage]`.
+- `[FormIgnore("reason")]`: it is deliberately not a question, for example "Database
+  identity" or "Revision ownership is supplied by the server". The reason must not be blank.
+
+Navigation properties need no annotation, unless they back a junction question (see below).
+The coverage rule means a newly added column either becomes a question or is visibly marked as
+not one. It can never be silently left off the form.
+
+### Controls and inference
+
+`FormField.Control` is optional. When it is omitted, the scanner infers it from the property:
+
+| Property | Inferred control | Allowed controls |
+|---|---|---|
+| `string` | `Text` | `Text`, `Textarea` |
+| non-flags enum (nullable or not) | `Radio` | `Radio`, `Select` |
+| `int` / `int?` foreign key to reference data | none: must be set | `Radio`, `Select` |
+| `[Flags]` enum | `Checkbox` | `Checkbox` |
+| navigation collection to a junction entity | `Checkbox` | `Checkbox` |
+
+`Radio`, `Select` and `Checkbox` need `[FormOptions]`; `Text` and `Textarea` must not have it.
 
 ### Question IDs are a public contract
 
-A question ID such as `medicines_indication_detail.indication` is used, unchanged, as:
+The ID is written out in `[FormField]`, for example `medicines_indication_detail.indication`. It is
+used, unchanged, as:
 
 - the key in the page's `answers`,
 - the key in the save payload,
@@ -132,30 +254,60 @@ A question ID such as `medicines_indication_detail.indication` is used, unchange
 - the TanStack Form field name on the frontend,
 - the `field_path` of the audit row.
 
-Never change a released question ID: doing so breaks audit history and any saved client state.
+The convention is `snake_entity.snake_property`, using the singular entity name. Junction
+questions use the junction entity name alone, for example
+`medicines_indication_detail_therapeutic_area`.
+
+The ID is deliberately **not** derived from the property name. Renaming a C# property must not
+change it. **Never change a released question ID**: doing so breaks audit history and any saved
+client state.
 
 ### Bindings
 
-Bindings are the only form code that touches EF entities. Each one reads and writes one answer:
+Bindings are the only form code that touches EF entities. The scanner builds them from EF
+metadata, so attributes never contain expressions:
 
-- `ColumnBinding` reads or writes one property of the revision's content row. It converts
-  strings as-is, enums to and from their member names, and integer foreign keys to and from
-  strings.
-- `JunctionBinding` maps a multi-select to a junction table. Writing compares the submitted set
-  with the stored rows and inserts or deletes only the difference.
+- **`ColumnBinding`** reads or writes one property of the revision's content row. Strings are
+  passed as-is, enums convert to and from their member names, and integer foreign keys convert
+  to and from strings.
+- **`FlagsBinding`** maps a `[Flags]` enum property to a sorted `string[]` of member names, and
+  combines them with OR on write.
+- **`JunctionBinding`** is built from an annotated navigation collection such as
+  `MedicinesIndicationDetail.TherapeuticAreas`. It reads EF metadata to find the junction's
+  owner foreign key and its reference foreign key. On write, it compares the submitted set with
+  the stored rows and inserts or deletes only the difference.
 
-Content rows are found by `RevisionId` through `ContentRows`. Record creation does not insert a
-`MedicinesIndicationDetail` row, so until the first save its questions read as unanswered, and
-the first save that writes to it creates it. Rows can only be created this way if their
-`ContentRows` entry has a factory that sets every required column.
+#### Content rows
+
+The content row is found by the convention that every `[FormSection]` entity has an `int
+RevisionId` foreign key to `RecordRevision`. The validator checks this. `FormSection.RowSource`
+says how the row comes to exist:
+
+- **`FirstSave` (default).** Until the first save, the revision has no row, so its questions
+  read as unanswered. The first save that writes to the entity creates the row. This is only
+  allowed when the entity has no non-nullable columns other than the key and `RevisionId`
+  (unless they have a database default), because no page is guaranteed to be saved first.
+  `MedicinesIndicationDetail` qualifies.
+- **`RecordCreation`.** Record creation inserts the row, as it does for `RecordProductDetail`,
+  which has non-nullable `CompanyCode` and `RecordTitle`. A missing row is then a server error,
+  not something a save repairs.
 
 ### Options
 
-- `EnumOptions`: a fixed list for an enum column, displayed in the order declared.
-- `ReferenceOptions`: loaded from a reference data table on each request. Archived items are
-  hidden unless they are the value already saved, in which case they stay selectable.
+Attributes can't hold queries or tuples, so options come from **named providers** registered in
+C#. A property refers to its provider by key: `[FormOptions(OptionKeys.BnfTopLevel)]`, or a raw
+string such as `[FormOptions("bnf-top-level")]`.
 
-Option values are always strings on the wire (enum names, or reference IDs as strings).
+- **`EnumOptionProvider<TEnum>`** is a fixed list of enum members with labels, shown in the
+  order given. The startup check makes sure its enum matches the bound property's enum.
+- **`ReferenceOptionProvider<T>`** runs an EF query and projection against a reference data
+  table on each request. Archived items are hidden unless they are the value already saved, in
+  which case they stay selectable.
+
+Providers live in `Application/RecordForms/Options/` (for example `MedicineOptionProviders.cs`),
+and the keys are string constants in `Persistence/FormAnnotations/OptionKeys.cs`, so entities can
+use them without depending on Application. Option values are always strings on the wire: enum
+names, or reference IDs as strings.
 
 ### Validation
 
@@ -163,37 +315,70 @@ The server is authoritative; the client mirrors it so users see errors without a
 
 1. Text answers are trimmed, and whitespace-only becomes `null`. Multi-select answers are sorted
    so that the same selection in a different order is not a change.
-2. Each question's rules run in the order declared. The first failing rule's message is the one
-   error reported for that question.
-3. On the server only: every page question must be present with the right JSON shape, no other
-   keys are allowed, and every selected value must be an offered option.
+2. Each question's rules run in a **fixed order by kind** (`Required`, `MaxLength`, `MaxItems`).
+   .NET does not guarantee attribute order, so source order is never used. Only the first
+   failing rule's message is reported for that question.
+3. On the server only:
+   - every page question must be present with the right JSON shape;
+   - no other keys are allowed;
+   - every selected value must be an offered option.
 
-The message for each rule is written in the C# definition and shown verbatim on both sides. The
-shared fixture `rule-cases.json` is run by both `RuleFixtureTests` (xUnit) and
-`ruleFixture.test.ts` (Vitest), so the two implementations cannot drift apart.
+Rule messages are written in the attributes and shown verbatim on both sides. The shared
+fixture `rule-cases.json` is run by both xUnit and Vitest, so the two implementations cannot
+drift apart.
+
+### Startup checks
+
+`FormModelValidator` collects **every** problem and reports them together in one exception, so a
+broken build lists everything to fix at once. The full catalogue is in
+[Creating form pages](creating-form-pages.md#startup-checks).
 
 ### Versions and concurrency
 
-- **`formVersion`**: the definition's version string (for example `2026.10.2`). The client echoes
-  it on save; a mismatch returns 409 `form_version_changed`. `MedicineFormDefinitionTests` pins a
-  fingerprint of the definition, so changing the definition without bumping the version fails
-  the build.
-- **`revisionVersion`**: the revision's Postgres `xmin` (`RecordRevision.Version`). The client
-  echoes it on save; a stale value returns 409 `revision_changed`. Every save that changes
-  something updates the revision row, so the token moves on. A save racing another one is caught
-  by EF's concurrency check and also returns `revision_changed`.
+- **`formVersion`** is the form's version string, held in code as `FormVersions.Medicine` (for
+  example `2026.10.1`). The client echoes it on save, and a mismatch returns 409
+  `form_version_changed`.
+  - `FormModelFingerprint` hashes everything in the model that clients, saved data or audit
+    depend on: IDs, labels, hints, controls, rules, option keys, bindings and order.
+  - A unit test pins the fingerprint next to the version. Changing **any attribute** on a form
+    entity without bumping the version fails the build.
+- **`revisionVersion`** is the revision's Postgres `xmin` (`RecordRevision.Version`, a new `uint`
+  configured with `IsRowVersion()`). The client echoes it on save, and a stale value returns 409
+  `revision_changed`.
+  - Every save that changes something updates the revision row, so the token moves on.
+  - A save racing another one is caught by EF's concurrency check, which also returns
+    `revision_changed`.
 
 ### Authorisation and read-only pages
 
 - Reading a page needs `Operation.Read` on the record's organisation.
-- Saving needs `Operation.EditRecordContent` as well, which Standard, Champion and Super users
-  have.
-- Only draft revisions can be edited. A page is served with `readOnly: true` when the revision is
-  not a draft or the caller cannot edit; the frontend disables inputs and hides Save.
-- A missing record, revision or page and a record the caller cannot read all return the same
+- Saving also needs a new `Operation.EditRecordContent`, granted to Standard, Champion and Super
+  users. `Operation.Update` is unchanged.
+- Only draft revisions can be edited. A page is served with `readOnly: true` when the revision
+  is not a draft or the caller cannot edit. The frontend then disables inputs and hides Save.
+- A missing record, revision or page, and a record the caller cannot read, all return the same
   neutral 404 ([ADR-004](../ADR/ADR-004-authorisation-failures-and-resource-concealment.md)).
 
 ## Sequences
+
+### Starting the API
+
+```mermaid
+sequenceDiagram
+    participant H as Host startup
+    participant S as FormModelScanner
+    participant V as FormModelValidator
+    participant R as FormModelRegistry
+    H->>S: Scan assembly with AppDbContext.Model
+    S->>S: Read attributes, group pages, infer controls, build bindings
+    S->>V: Candidate models (one per RecordType)
+    alt Any problem
+        V-->>H: FormModelException listing every problem
+        H-->>H: Startup fails
+    else Valid
+        V->>R: Register models
+    end
+```
 
 ### Creating a record
 
@@ -212,8 +397,8 @@ sequenceDiagram
 ```
 
 The record details page (`/portal/organisations/{id}/records/{recordId}`) links its **Update
-record** button to the same URL, using the record's `revisionId` and `firstPageId` from
-`GET /records/{id}`, so users can return to a record and change their answers.
+record** button to the same URL, using `revisionId` and `firstPageId` from
+`GET /records/{id}`. This lets users return to a record and change their answers.
 
 ### Loading a page
 
@@ -269,7 +454,7 @@ sequenceDiagram
             else Nothing changed
                 B-->>F: 200 { nextPageId }
             else Changed
-                B->>P: Write changed answers through bindings
+                B->>P: Write changed answers through bindings (creating FirstSave rows)
                 B->>P: Update revision UpdatedAt/UpdatedBy
                 B->>P: INSERT record_events + record_event_field_changes
                 Note over B,P: One SaveChangesAsync, checked against xmin
@@ -292,8 +477,8 @@ sequenceDiagram
 | PUT | `/records/{recordId}/revisions/{revisionId}/pages/{pageId}` | Validate and save every answer on the page |
 
 JSON property names are camelCase, except answer and error keys, which are question IDs exactly
-as defined. Enum values are serialised as declared, for example `"Textarea"` and `"Required"`.
-The examples below use the therapeutic area page of record 5, revision 7.
+as declared. Enum values are serialised by name, for example `"Textarea"` and `"Required"`. The
+examples below use record 5, revision 7.
 
 ### GET response (`RecordPageDto`)
 
@@ -304,7 +489,7 @@ The examples below use the therapeutic area page of record 5, revision 7.
 | `organisationId` | Used for links back to the records list |
 | `section`, `page` | IDs and titles; the section title is the page caption |
 | `previousPageId` | Target of Back, or `null` on the first page |
-| `questions` | `id`, `type`, `label`, `hint`, `display`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`) |
+| `questions` | `id`, `type` (the `FormControl`), `label`, `hint`, `display`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`) |
 | `answers` | Every page question: a string or `null`, or an array for checkboxes |
 | `context` | Earlier answers this page depends on; empty until conditions are built |
 
@@ -312,7 +497,7 @@ The examples below use the therapeutic area page of record 5, revision 7.
 
 ```json
 {
-  "formVersion": "2026.10.2",
+  "formVersion": "2026.10.1",
   "revisionVersion": 4711,
   "readOnly": false,
   "organisationId": 3,
@@ -330,23 +515,21 @@ The examples below use the therapeutic area page of record 5, revision 7.
         { "kind": "MaxItems", "value": 3, "message": "Select up to 3 therapeutic areas" }
       ],
       "options": [
-        { "value": "1", "label": "1: Addiction" },
-        { "value": "2", "label": "2: Allergy" },
-        { "value": "3", "label": "3: Analgesia, Anesthesiology, or Anti-inflammatory" },
-        { "value": "14", "label": "14: Oncology" }
+        { "value": "2", "label": "Addiction › Opioid use disorder" },
+        { "value": "3", "label": "Addiction › Neonatal abstinence syndrome (NAS)" }
       ]
     }
   ],
   "answers": {
-    "medicines_indication_detail_therapeutic_area": ["14"]
+    "medicines_indication_detail_therapeutic_area": ["2"]
   },
   "context": {}
 }
 ```
 
-The options list is shortened here; the real response has all 20 areas. Other question types
-differ only in their answers and options. A single-value question has a string or `null` answer,
-and a `Textarea` has no options (`null`):
+The options list is shortened here; see [Reference data](reference-data.md) for what each
+provider offers. A single-value question has a string or `null` answer, and a `Textarea` has no
+options (`null`):
 
 ```json
 {
@@ -355,7 +538,7 @@ and a `Textarea` has no options (`null`):
       "id": "medicines_indication_detail.indication",
       "type": "Textarea",
       "label": "What is the indication this product is seeking a licence for?",
-      "hint": "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups.\n\nYou can edit these details at any time throughout product development.",
+      "hint": "Describe the indication you intend to license in the UK.",
       "display": null,
       "rules": [
         { "kind": "Required", "value": null, "message": "Enter the indication this product is seeking a licence for" },
@@ -370,12 +553,11 @@ and a `Textarea` has no options (`null`):
 }
 ```
 
-A page the caller cannot load returns `404 Not Found` (see the 404 example below).
-
 ### PUT
 
 Request: `{ formVersion, revisionVersion, answers }`, with every question on the page present.
-Send `null` for an unanswered single-value question and `[]` for an unanswered checkbox.
+Send `null` for an unanswered single-value question and `[]` for an unanswered checkbox. In C#,
+`answers` is `Dictionary<string, JsonElement>`: one generic OpenAPI type, not one per page.
 
 | Status | When | Body |
 |---|---|---|
@@ -391,10 +573,10 @@ Send `null` for an unanswered single-value question and `[]` for an unanswered c
 
 ```json
 {
-  "formVersion": "2026.10.2",
+  "formVersion": "2026.10.1",
   "revisionVersion": 4711,
   "answers": {
-    "medicines_indication_detail_therapeutic_area": ["14", "2"]
+    "medicines_indication_detail_therapeutic_area": ["3", "2"]
   }
 }
 ```
@@ -407,13 +589,13 @@ The order of checkbox values does not matter; the server sorts them before compa
 { "nextPageId": "paediatric" }
 ```
 
-Saving the last page (`cancer`) returns `{ "nextPageId": null }`, and the frontend goes to the
+Saving the last page returns `{ "nextPageId": null }`, and the frontend goes to the
 organisation's records list.
 
 #### 400 Bad Request
 
-One error per question, keyed by question ID. Keys that are not questions on the page are reported
-under their own key:
+One error per question, keyed by question ID. A key that is not a question on the page is
+reported under its own key:
 
 ```json
 {
@@ -428,7 +610,7 @@ under their own key:
 }
 ```
 
-The server's own messages, used for problems the definition does not describe:
+The server has its own messages for problems that the attributes do not describe:
 
 | Problem | Message |
 |---|---|
@@ -437,73 +619,72 @@ The server's own messages, used for problems the definition does not describe:
 | Wrong JSON shape (for example a number, or a string for a checkbox) | `The answer is not in the expected format.` |
 | A value that is not an offered option | `Select a valid option.` |
 
-#### 403 Forbidden
+#### 403, 404 and 409
 
-```json
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
-  "title": "Forbidden",
-  "status": 403,
-  "detail": "You are not authorised to edit this record.",
-  "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
-}
-```
+All three use `ProblemDetails`:
 
-#### 404 Not Found
-
-The same body for a missing record, revision or page and for a record in another organisation
-(GET and PUT):
-
-```json
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
-  "title": "Not Found",
-  "status": 404,
-  "detail": "The specified page could not be found.",
-  "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
-}
-```
-
-#### 409 Conflict
-
-```json
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "Conflict",
-  "status": 409,
-  "detail": "This record has changed since the page was loaded.",
-  "code": "revision_changed",
-  "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
-}
-```
-
-| `code` | `detail` |
-|---|---|
-| `revision_not_draft` | `This record can no longer be edited because it has been submitted.` |
-| `revision_changed` | `This record has changed since the page was loaded.` |
-| `form_version_changed` | `This form has changed since the page was loaded.` |
+| Status | `detail` | `code` |
+|---|---|---|
+| 403 | `You are not authorised to edit this record.` | n/a |
+| 404 | `The specified page could not be found.` (identical for every not-found or concealed case) | n/a |
+| 409 | `This record can no longer be edited because it has been submitted.` | `revision_not_draft` |
+| 409 | `This record has changed since the page was loaded.` | `revision_changed` |
+| 409 | `This form has changed since the page was loaded.` | `form_version_changed` |
 
 ## Audit
 
 Every save that changes something writes:
 
-- one `record_events` row with `event_type = 7` (`RecordContentUpdated`), the record and
-  revision IDs, the user and time, and `note` set to the page ID;
+- one `record_events` row with `event_type = 7` (`RecordContentUpdated`, a new enum value). It
+  holds the record and revision IDs, the user and time, and has `note` set to the page ID.
 - one `record_event_field_changes` row per changed question, with `field_path` set to the
   question ID.
 
-Values are stored as text. Single values are stored raw (`Unknown`, `12`, the indication text) so
-they can be queried directly, for example to report on fields moving away from `Unknown`.
-Multi-select values are stored as JSON (`["4","7"]`). No answer is stored as `null`.
+A merged page that spans several entities still writes **one** event.
 
-## Known limitations and next steps
+Values are stored as text:
+- Single values are stored raw (`Unknown`, `12`, the indication text), so they can be queried
+  directly, for example to report on fields moving away from `Unknown`.
+- Multi-select values (junction and flags) are stored as JSON (`["2","3"]`).
+- No answer is stored as `null`.
 
-- Conditional pages and questions (`ShowWhen`, `requiredWhen`) and clearing answers that no longer
-  apply are not built. `context` is always empty.
-- Add-another groups, precision dates and their bindings are not built.
-- Therapeutic area uses a checkbox list until the searchable combobox replaces `ComboboxSlot`.
-- The select placeholder is a generic "Choose an option"; definitions have no placeholder text.
-- There is no tasklist: "Return to tasklist" and the last page go to the records list.
-- Pages do not set a browser `<title>`.
-- Only top-level BNF chapters are seeded.
-- Vaccine records have no form yet, and record creation only creates medicine records.
+## Persistence changes
+
+One migration (`AddRecordContentForms`) adds:
+
+- `RecordEventType.RecordContentUpdated = 7`;
+- `RecordRevision.Version` (`uint`, `IsRowVersion()`, which Npgsql maps to `xmin`), following
+  `UserRegistrationRequestConfiguration.cs`.
+
+The migration does not add any reference data. BNF chapters and therapeutic areas are already
+loaded by the synthetic data seeder; see [Reference data](reference-data.md).
+
+## Open questions
+
+- **A section other than the entity's own.** Should a property be able to place its page in a
+  different section from its entity's, for example with `FormPage(..., Section = "technology")`?
+  `MedicinesIndicationDetail` also holds formulation, mode of action and technology status,
+  which the design may put in other sections. Without an override, those columns must move
+  entity or wait.
+- **BNF options vs saved data.** The design screen asks for a top-level BNF chapter, but all 500
+  synthetic records store a BNF *section*, such as `1.3`. With a top-level provider, those
+  records could not save the BNF page unchanged. See
+  [Reference data](reference-data.md#open-questions).
+- **Therapeutic area options.** The provider currently offers leaf areas labelled `Parent ›
+  Child`. If the design wants only the 20 top-level areas, that is a one-line change to the
+  provider.
+- **Reference data outside Development.** The synthetic seeder only runs when
+  `Seeding:ReseedOnStartup` is true. Other environments need a way to load reference data.
+- **Shared entities with different wording per record type.** Property attributes apply to every
+  form the entity is in. If Medicine and Vaccine need different labels for the same column, the
+  attributes will need a record-type qualifier.
+
+## Not in the first delivery
+
+- Conditional pages and questions (`ShowWhen`, `requiredWhen`) and clearing answers that no
+  longer apply. `context` is always empty.
+- Add-another groups, precision dates and their bindings.
+- The searchable combobox: therapeutic area uses a checkbox list behind `display: "combobox"`
+  until it exists.
+- The tasklist: "Return to tasklist" and the last page go to the records list.
+- Vaccine forms, and vaccine record creation.

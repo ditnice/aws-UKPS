@@ -1,109 +1,117 @@
 # Reference data
 
 Reference data is the fixed lists that form options come from, such as BNF chapters and
-therapeutic areas. This document explains how it is seeded, how to change it safely and how forms
-use it. For how options are declared on a question, see
-[Creating form pages](creating-form-pages.md#step-5-add-options).
+therapeutic areas. This document explains where that data comes from today, and how the
+proposed form [option providers](creating-form-pages.md#step-5-add-options) will use it.
 
-## What is seeded
+> The seeding described here **exists today**. The option providers are part of the
+> **proposed** attribute-driven form design; see the [high-level design](high-level-design.md).
 
-| Table | Entity | Rows | Notes |
-|---|---|---|---|
-| `bnf_chapters` | `BnfChapter` | 15 | Top-level BNF chapters 1 to 15, code = chapter number. Sections (1.1, 1.2, …) are not seeded yet |
-| `therapeutic_areas` | `TherapeuticArea` | 20 | Labels include their number, as shown to users: "1: Addiction" … "20: Urologic" |
+## Where the data comes from
 
-Other reference data (vaccine platforms, formulation types and so on) is not seeded yet.
-
-## How seeding works
-
-Reference data is seeded by **EF migrations**, so every environment gets the same rows with the
-same IDs.
+Reference data is **not** seeded by EF migrations. It is loaded by the **synthetic data seeder**,
+along with the development organisations, users and records.
 
 | Piece | Location |
 |---|---|
-| The lists | `backend/src/Persistence/Data/ReferenceData/BnfChapterSeedData.cs`, `TherapeuticAreaSeedData.cs` |
-| `HasData(...)` calls | `backend/src/Persistence/Configurations/ReferenceData/BnfChapterConfiguration.cs`, `TherapeuticAreaConfiguration.cs` |
-| Migration | `backend/src/Persistence/Migrations/20261014082448_AddRecordFormSupport.cs` |
+| Source data (reference lists plus 500 synthetic medicine records) | `backend/src/Persistence/Data/Seeding/SyntheticData/synthetic-medicine-records.json.gz` |
+| Shape of the reference lists | `SyntheticData/SyntheticReferenceData.cs` |
+| Builds the entities (hierarchies linked by `ParentCode`) | `SyntheticData/SeedReferenceData.cs` |
+| Writes everything | `Seeding/SeedDataWriter.cs` (deletes the database, runs migrations, inserts) |
+| Trigger | `Seeding/WebApplicationSeedingExtensions.cs`, when `Seeding:ReseedOnStartup` is `true` |
 
-EF compares the `HasData` rows with the model snapshot and generates `InsertData`, `UpdateData` or
-`DeleteData` calls for the difference. The rows are recorded in
-`AppDbContextModelSnapshot.cs`, so the seed lists and the configuration calls must stay in the
-code: removing them would make the next migration delete the data.
+`ReseedOnStartup` is `true` in `appsettings.Development.json` and `appsettings.Example.json`, and
+`false` in `appsettings.json`. Each local start therefore:
+- deletes the database;
+- re-runs every migration;
+- reloads the reference data and synthetic records.
 
-## Changing reference data
+Records and answers you created yourself do not survive a restart.
 
-### Adding rows or changing labels
+IDs come from identity columns, in the order the seeder inserts rows. They are stable between
+local runs of the same data file, but they are **not** a contract: never hard-code them.
 
-1. Edit the seed list. Give new rows the next unused ID; never re-use an ID.
-2. Generate a migration from `backend/`. The design-time host needs a connection string, but
-   nothing connects to a database:
+## What is loaded
 
-   ```sh
-   ConnectionStrings__DefaultConnection="Host=localhost;Database=ukps;Username=x;Password=x" \
-   AWS__LoadSecrets=false \
-   just generate-migration <Name>
-   ```
+| Table | Entity | Rows | Shape |
+|---|---|---|---|
+| `bnf_chapters` | `BnfChapter` | 92 | 15 top-level chapters (`Code` `"1"`…`"15"`), the rest are sections (`"1.3"`, `"2.5"`, …) with `ParentId` set |
+| `therapeutic_areas` | `TherapeuticArea` | 108 | 20 top-level areas (`"Addiction"`, …), the rest are child areas (`"Opioid use disorder"`, …) with `ParentId` set |
+| `formulation_type`, `mhra_procedure_type`, `irp_reference_regulator`, `irp_route`, `atmp_classification`, `patient_pathway_point`, `uk_patient_population_range` | | varies | Flat lists |
 
-3. If the migration inserts rows, add the identity sequence reset (below) to the end of `Up`.
-4. Review the generated migration: it should contain only the rows you meant to change.
+`BnfChapter` stores the code in `Code`, and the label is the name alone. `TherapeuticArea` has no
+code column: the code exists only in the source file, to link parents and children.
 
-Changing a label changes what users see on forms immediately. It does not need a form version
-bump, because options are loaded on each request and are not part of the definition fingerprint
-(only the option query is).
+### How the synthetic records use the trees
 
-### Resetting identity sequences
+This matters for which options a form offers, because a saved value must be offered or the page
+cannot be saved unchanged.
 
-Seed rows are inserted with explicit IDs, and Postgres does not advance an identity column's
-sequence when an ID is given. Without a reset, the next row created through the application would
-be given ID 1 and fail with a duplicate key. Any migration that inserts seed rows should end with:
+- **BNF:** all 500 synthetic records reference a **section** (for example `1.3`), never a
+  top-level chapter.
+- **Therapeutic areas:** every one of the 522 selections is a **child** (leaf) area, never a
+  top-level one.
 
-```csharp
-migrationBuilder.Sql(
-    "SELECT setval(pg_get_serial_sequence('ukps.<table>', 'id'), (SELECT MAX(id) FROM ukps.<table>));"
-);
-```
+## How the form uses it: option providers
 
-`AddRecordFormSupport` does this for both of its tables.
+Questions refer to a named option provider with `[FormOptions(key)]`. A reference data provider
+is an EF query and a projection to `ReferenceOptionRow(Id, Label, IsArchived)`, run on every
+request, so changes to rows show up without a restart. The proposed providers are:
 
-### Removing rows: archive, don't delete
+| Key | Query | Label | Notes |
+|---|---|---|---|
+| `bnf-top-level` | `ParentId == null`, ordered by `DisplayOrder` | `"{Code}: {Label}"`, e.g. `"1: Gastro-Intestinal System"` | Matches the BNF chapter screen design. **See the open question below** |
+| `therapeutic-areas` | leaves (`!Children.Any()`), ordered by parent then own `DisplayOrder` | `"Parent › Child"`, e.g. `"Addiction › Opioid use disorder"` | Matches how the synthetic records use the tree |
 
-Never delete a reference data row, or re-use its ID for something else. Saved answers and junction
-rows point at these IDs, foreign keys use `Restrict`, and audit history stores the IDs as text.
+Values on the wire are reference IDs as strings (`"12"`). Audit rows store the ID, not the
+label.
 
-To withdraw an option, set `IsArchived = true` in the seed list and generate a migration (an
-`UpdateData`). On forms:
+### Archived items
+
+`IsArchived` withdraws an option without deleting it:
 
 - an archived item is no longer offered to records that have not chosen it;
 - a record that already has it still sees it selected, can keep it, and can save the page;
 - once a record changes away from it, it cannot be chosen again.
 
-### Hierarchies
+Never delete a reference data row, or re-use its ID for something else. Saved answers and
+junction rows point at these IDs, foreign keys use `Restrict`, and audit history stores the IDs
+as text.
 
-`BnfChapter` and `TherapeuticArea` are trees: a child row has `ParentId` set to its parent's ID.
-To add BNF sections, add rows such as `(16, "1.1", "Dyspepsia and gastro-oesophageal reflux
-disease")` with `ParentId = 1`. Use an authoritative source for the codes and labels.
+### Hierarchies and changing the tree
 
-How the current form options react to children:
+- **BNF chapter**: offering only top-level chapters means that adding sections does not change
+  the question. Offering sections is a provider query change, which changes the form
+  fingerprint and needs a version bump.
+- **Therapeutic area**: offers leaves only. Adding a child under a leaf replaces that leaf with
+  its children in the list. Records that already chose the former leaf no longer see it offered,
+  so their page cannot be saved until the user picks a child. Before splitting an area, plan how
+  to move existing answers, or keep the parent selectable.
 
-- **BNF chapter** offers top-level chapters only (`ParentId == null`), so adding sections does not
-  change the question. Offering sections is a definition change and needs a version bump.
-- **Therapeutic area** offers leaf nodes only, labelled `Parent › Child`. Adding a child under an
-  area replaces that area with its children in the list. **Records that already chose the parent
-  are affected**: the parent is no longer offered, even as the saved value, so their page cannot
-  be saved until the user picks a child. Before splitting an area, plan how to move existing
-  answers (for example a data migration to a child), or keep the parent selectable.
+Changing a label changes what users see on forms immediately. It does not need a form version
+bump: rows are not part of the fingerprint, only the provider's query is.
 
-## Local development
+## Open questions
 
-`backend/src/appsettings.Development.json` sets `Seeding:ReseedOnStartup` to `true`. Each time the
-API starts it deletes the local database, re-runs every migration (including the reference data)
-and re-seeds the development users and organisations. Reference data therefore always comes back;
-records and answers you created do not.
+- **BNF top-level vs sections.** The design screen asks for a BNF *chapter*, but the synthetic
+  data stores sections. With a `bnf-top-level` provider, every seeded record's saved BNF value
+  would not be offered, and saving that page would fail with "Select a valid option" until the
+  user picks a chapter. The options are:
+  - offer sections, labelled `"1.3: Antisecretory drugs…"`, or grouped by chapter;
+  - always offer the saved value, even when the query filters it out (as archived items are
+    today);
+  - change the synthetic data to store chapters.
+- **Environments other than Development.** Nothing loads reference data where
+  `ReseedOnStartup` is `false`. Before forms are used outside local development, reference data
+  needs a production path. That could be migration `HasData` seeding with fixed IDs (plus an
+  identity sequence reset), or a separate load step.
 
 ## Tests
 
-- The shared test database is emptied by Respawn before each test, so ordinary database tests do
-  not see seeded rows; tests insert the reference data they need.
-- `backend/tests/Persistence/ReferenceDataSeedTests.cs` creates a separate database in the test
-  container, runs the migrations and checks the seeded rows and the sequence reset. Extend it when
-  you seed another table.
+- The shared test database is emptied by Respawn before each test, so database tests do not
+  see seeded rows. Tests insert the reference data they need.
+- Option provider tests should insert a small tree for each provider and check:
+  - the filter (top-level or leaves);
+  - the ordering;
+  - the labels;
+  - archived handling: hidden unless saved, shown when saved.

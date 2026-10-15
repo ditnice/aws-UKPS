@@ -1,261 +1,450 @@
 # Creating form pages
 
-This guide explains how to add a page to a record content form using the components and rules
-that exist today. It uses the five Indication details pages as the worked example; their designs
-are in [`screenshots/`](screenshots/) ([indication](screenshots/screen-one.png),
-[BNF chapter](screenshots/screen-two.png), [therapeutic area](screenshots/screen-three.png),
-[treating children](screenshots/screen-four.png), [treating cancer](screenshots/screen-five.png)).
+> **Status: proposed design, not yet implemented.** This guide describes how adding a page
+> will work once the attribute-driven form model is built. See
+> [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
+
+This guide explains how to put questions on a record content form by annotating EF entities. The
+worked example is the Indication details section of the Medicine form. The designs are in
+[`screenshots/`](screenshots/):
+- [indication](screenshots/screen-one.png);
+- [BNF chapter](screenshots/screen-two.png);
+- [therapeutic area](screenshots/screen-three.png);
+- [treating children](screenshots/screen-four.png);
+- [treating cancer](screenshots/screen-five.png).
+
 For how the pieces fit together, read the [high-level design](high-level-design.md) first.
 
-Adding a page that uses existing question types is a **backend-only change**: the frontend
-renders whatever the definition describes. You only touch the frontend to add a new question
-type or component.
+If a page only uses existing controls, rules and option providers, adding it is a **backend-only
+change** made entirely in the entity file. The frontend renders whatever the form model
+describes. You only touch the frontend to add a new control.
 
 ## Before you start
 
 | What | Where |
 |---|---|
-| Medicine form definition | `backend/src/Application/Forms/Medicines/MedicineFormDefinition.cs` |
-| Builder (`Form`, `SectionBuilder`, `PageBuilder`, `QuestionBuilder`) | `backend/src/Application/Forms/Definitions/` |
-| Bindings (`Bind`, `ContentRows`) | `backend/src/Application/Forms/Bindings/` |
-| Options (`Choices`) | `backend/src/Application/Forms/Options/` |
-| Rules | `backend/src/Application/Forms/Rules/` |
-| Definition tests | `backend/tests/Application/Forms/` |
+| Attributes | `backend/src/Persistence/FormAnnotations/` |
+| Content entities | `backend/src/Persistence/Entities/MedicinesRevisionContent/`, `VaccinesRevisionContent/`, `SharedRevisionContent/` |
+| Option keys (string constants the entities use) | `backend/src/Persistence/FormAnnotations/OptionKeys.cs` |
+| Option providers | `backend/src/Application/RecordForms/Options/` (`MedicineOptionProviders.cs`) |
+| Form versions | `backend/src/Application/RecordForms/FormVersions.cs` |
+| Tests | `backend/tests/Application/RecordForms/` |
 | Question components | `frontend/src/components/DynamicForm/questions/` |
 
-## Step 1: Choose the IDs
+## Attribute reference
 
-**Page ID**: a lowercase slug, used in the URL, for example `bnf-chapter`. It must match
-`^[a-z0-9]+(-[a-z0-9]+)*$` and be unique in the form.
+| Attribute | On | Arguments | Notes |
+|---|---|---|---|
+| `[FormSection(recordType, id, title)]` | class | `Order`, `RowSource` | One per record type. Every entity declaring the same section ID must agree on title and `Order` |
+| `[FormPage(id, title)]` | property | `Order` | Order within the section. Every declaration of the same page ID must agree |
+| `[FormField(id, label)]` | property | `Control`, `Hint`, `Display`, `Order` | `Order` only matters on pages with several questions |
+| `[FormRequired(message)]` | property | | |
+| `[FormMaxLength(max, message)]` | property | | `Text`, `Textarea` |
+| `[FormMaxItems(max, message)]` | property | | `Checkbox` |
+| `[FormOptions(key)]` | property | | Name of a registered option provider |
+| `[FormIgnore(reason)]` | property | | Not a question. The reason is required |
 
-**Question ID**: snake_case `entity.field`, for example
-`medicines_indication_detail.bnf_chapter_id`. Use the singular entity name, not the database
-table name (the table is `medicines_indication_details`). For a junction or collection, use the
-entity name alone, for example `medicines_indication_detail_therapeutic_area`. The ID must match
-`^[a-z0-9_]+(\.[a-z0-9_]+)?$` and be unique across the whole form.
+`FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`.
+`FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
-The question ID is the payload key, the validation error key, the frontend field name and the
-audit `field_path`. **Never change an ID once it has been released.**
+## Worked example: the Indication details section
 
-## Step 2: Add the page
-
-Pages are added to a section in `Create()`, in display order. Give each page its own private
-method so `Create()` stays readable (and under the analyser's method length limit):
+This is the whole of `MedicinesIndicationDetail` as it would be annotated for the first
+delivery. Every mapped scalar property has either `[FormField]` or `[FormIgnore]`; that is the
+[coverage rule](#step-1-account-for-every-property).
 
 ```csharp
-public static FormDefinition Create() =>
-    Form.For(RecordType.Medicine, Version)
-        .Section(
-            "indication-details",
-            "Indication details",
-            s =>
-                s.Page("indication", "Indication", IndicationPage)
-                    .Page("bnf-chapter", "BNF chapter", BnfChapterPage)
-                    // ...
-        )
-        .Build();
+using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
+
+namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
+
+[FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
+internal sealed class MedicinesIndicationDetail
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership is supplied by the server")]
+    public int RevisionId { get; set; }
+
+    [FormPage("indication", "Indication", Order = 10)]
+    [FormField(
+        "medicines_indication_detail.indication",
+        "What is the indication this product is seeking a licence for?",
+        Control = FormControl.Textarea,
+        Hint = "Describe the indication you intend to license in the UK.")]
+    [FormRequired("Enter the indication this product is seeking a licence for")]
+    [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
+    public string? Indication { get; set; }
+
+    [FormPage("bnf-chapter", "BNF chapter", Order = 20)]
+    [FormField(
+        "medicines_indication_detail.bnf_chapter_id",
+        "Select the BNF chapter for this product",
+        Control = FormControl.Select)]
+    [FormOptions(OptionKeys.BnfTopLevel)]
+    [FormRequired("Select a BNF chapter")]
+    public int? BnfChapterId { get; set; }
+
+    [FormPage("paediatric", "Treating children", Order = 40)]
+    [FormField(
+        "medicines_indication_detail.indication_is_paediatric",
+        "Is this product intended to treat children?")]
+    [FormOptions(OptionKeys.PaediatricStatus)]
+    [FormRequired("Select whether this product is intended to treat children")]
+    public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
+
+    [FormPage("cancer", "Treating cancer", Order = 50)]
+    [FormField(
+        "medicines_indication_detail.indication_is_cancer",
+        "Is this a product intended to treat cancer?")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
+    [FormRequired("Select whether this product is intended to treat cancer")]
+    public YesNoUnknown? IndicationIsCancer { get; set; }
+
+    [FormPage("rare-disease", "Treating a rare disease", Order = 60)]
+    [FormField(
+        "medicines_indication_detail.indication_is_rare_disease",
+        "Is this product intended to treat a rare disease?",
+        Hint = "A disease is rare if fewer than 5 in 10,000 people have it.")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
+    [FormRequired("Select whether this product treats a rare disease")]
+    public YesNoUnknown? IndicationIsRareDisease { get; set; }
+
+    [FormIgnore("No page designed yet")]
+    public int? FormulationTypeId { get; set; }
+
+    [FormIgnore("No page designed yet")]
+    public string? Presentation { get; set; }
+
+    [FormIgnore("No page designed yet")]
+    public string? ModeOfAction { get; set; }
+
+    [FormIgnore("No page designed yet")]
+    public string? ProposedDoseRegimen { get; set; }
+
+    [FormIgnore("No page designed yet")]
+    public YesNoUnknown? IsPersonalisedMedicine { get; set; }
+
+    [FormIgnore("No page designed yet")]
+    public MedicineTechnologyStatus? MedicineTechnologyStatus { get; set; }
+
+    // Navigation: no annotation needed unless it backs a question.
+    public RecordWorkflow.RecordRevision? Revision { get; set; }
+    public ReferenceData.BnfChapter? BnfChapter { get; set; }
+    public ReferenceData.FormulationType? FormulationType { get; set; }
+
+    // Junction navigation backing a multi-select question.
+    [FormPage("therapeutic-area", "Therapeutic area", Order = 30)]
+    [FormField(
+        "medicines_indication_detail_therapeutic_area",
+        "Select the most appropriate therapeutic area for this product (optional)",
+        Display = "combobox",
+        Hint = "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.")]
+    [FormOptions(OptionKeys.TherapeuticAreas)]
+    [FormMaxItems(3, "Select up to 3 therapeutic areas")]
+    public ICollection<MedicinesIndicationDetailTherapeuticArea> TherapeuticAreas { get; set; } = [];
+}
 ```
 
-The page title (second argument) is a short name for the page. On a page with one question, the
-question's label becomes the `<h1>` and the section title is shown as the caption above it. On a
-page with several questions, the page title is the `<h1>` and each question shows its own label.
+The scanner turns this into the following pages, in this order:
 
-## Step 3: Pick a question type
-
-| Builder method | `QuestionType` | Answer on the wire | Frontend component | Allowed bindings |
+| Order | Page ID | Question ID | Control | Binding |
 |---|---|---|---|---|
-| `Textarea` | `Textarea` | `string \| null` | `TextareaQuestion` (NDS textarea) | Column, string property |
-| `Select` | `Select` | `string \| null` | `SelectQuestion` | Column, enum or reference ID property |
-| `Radio` | `Radio` | `string \| null` | `RadioQuestion` (NDS radios) | Column, enum or reference ID property |
-| `Checkbox` | `Checkbox` | `string[]` (empty for none) | `CheckboxQuestion` (NDS checkboxes) | Junction |
-| `Checkbox` + `.Display("combobox")` | `Checkbox` | `string[]` | `ComboboxSlot` (checkbox list until the combobox is built) | Junction |
+| 10 | `indication` | `medicines_indication_detail.indication` | `Textarea` (explicit) | Column, string |
+| 20 | `bnf-chapter` | `medicines_indication_detail.bnf_chapter_id` | `Select` (explicit) | Column, reference ID |
+| 30 | `therapeutic-area` | `medicines_indication_detail_therapeutic_area` | `Checkbox` (inferred) | Junction |
+| 40 | `paediatric` | `medicines_indication_detail.indication_is_paediatric` | `Radio` (inferred) | Column, enum |
+| 50 | `cancer` | `medicines_indication_detail.indication_is_cancer` | `Radio` (inferred) | Column, enum |
+| 60 | `rare-disease` | `medicines_indication_detail.indication_is_rare_disease` | `Radio` (inferred) | Column, enum |
 
-`Radio`, `Select` and `Checkbox` need options. `Textarea` must not have any.
+Declaration order in the file does not matter; only `Order` does. For example, the therapeutic
+area page is declared last but sorts third.
 
-## Step 4: Bind the question
+## Step 1: Account for every property
 
-Bindings use typed expressions, so renaming an entity property breaks the build rather than
-silently breaking the form.
+In a `[FormSection]` entity, every mapped scalar property needs `[FormField]` or `[FormIgnore]`.
+If you add a column to a content entity, the API will not start until you have made that
+choice. Use `[FormIgnore]` with a reason that a reviewer can understand:
 
-**A column on the revision's content row**: the property type decides how the answer is
-converted.
+- `"Database identity"`, `"Revision ownership is supplied by the server"`: never on a form.
+- `"No page designed yet"`: intended for a form, but not designed. Search for this reason to
+  find work still to do.
+- `"Set by record creation"`: collected elsewhere, for example by the create record form.
 
-```csharp
-Bind.Column((MedicinesIndicationDetail x) => x.Indication)          // string  -> "text"
-Bind.Column((MedicinesIndicationDetail x) => x.IndicationIsCancer)  // enum?   -> "Yes" / "No" / "Unknown"
-Bind.Column((MedicinesIndicationDetail x) => x.BnfChapterId)        // int?    -> "3"
-```
+Navigation properties are exempt, unless they back a junction question.
 
-**A junction table** (multi-select of reference data):
+## Step 2: Choose the section and its row source
 
-```csharp
-Bind.Junction<MedicinesIndicationDetail, MedicinesIndicationDetailTherapeuticArea>(
-    x => x.MedicinesIndicationDetailId,
-    x => x.TherapeuticAreaId
-)
-```
-
-The entity must be registered in `ContentRows` (`Bindings/ContentRows.cs`), which says how to
-find the revision's row and, optionally, how to create it:
+Put `[FormSection]` on the entity if it isn't already there:
 
 ```csharp
-public static ContentRow<MedicinesIndicationDetail> MedicinesIndicationDetail { get; } =
-    new(
-        x => x.RevisionId,
-        x => x.Id,
-        revisionId => new MedicinesIndicationDetail { RevisionId = revisionId }
-    );
+[FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
 ```
 
-With a factory (the third argument), a revision that has no row yet reads every question on it
-as unanswered, and the first save that writes to it creates the row. Record creation does not
-insert `MedicinesIndicationDetail`, so this is how its row comes to exist. The factory must set
-every required column: the compiler enforces this for `required` members, so a table with
-non-nullable columns that are not on the same page cannot be given a factory. Without a factory,
-the row must already exist (for example, because record creation inserts it), and a missing row
-is an error.
+- **Section ID**: a lowercase slug. Sections are ordered by `Order` within the form.
+- **Shared entities**: add one `[FormSection]` per record type.
+- **`RowSource`** says how the revision's row for this entity comes to exist:
+  - **`FirstSave`** (the default): the first save that writes to the entity creates the row.
+    This is only allowed if the entity has no non-nullable columns besides `Id` and
+    `RevisionId`. `MedicinesIndicationDetail` qualifies.
+  - **`RecordCreation`**: record creation inserts the row, and the form only updates it. Use
+    this for entities with required columns, for example:
 
-Only `MedicinesIndicationDetail` is registered today. To bind to another table, add an entry
-here and to the `_rows` list below it.
+    ```csharp
+    [FormSection(RecordType.Medicine, "product-details", "Product details",
+        Order = 10, RowSource = FormRowSource.RecordCreation)]
+    internal sealed class RecordProductDetail { ... }
+    ```
+
+The entity must have an `int RevisionId` foreign key to `RecordRevision`. That is how the form
+finds the revision's row.
+
+## Step 3: Choose the IDs
+
+**Page ID**: a lowercase slug used in the URL, for example `bnf-chapter`. It must match
+`^[a-z0-9]+(-[a-z0-9]+)*$` and be unique in the form, across all entities. If you reuse an
+existing page ID, your question joins that page (see [Pages that span
+entities](#pages-that-span-entities)).
+
+**Question ID**: snake_case `entity.property`, for example
+`medicines_indication_detail.bnf_chapter_id`.
+- Use the singular entity name, not the database table name.
+- For a junction, use the junction entity name alone, for example
+  `medicines_indication_detail_therapeutic_area`.
+- The ID must match `^[a-z0-9_]+(\.[a-z0-9_]+)?$` and be unique across the whole form.
+
+The question ID is used as:
+- the payload key;
+- the validation error key;
+- the frontend field name;
+- the audit `field_path`.
+
+It is written out by hand, so renaming a C# property does not change it. **Never change an ID
+once it has been released.**
+
+## Step 4: Add the page and the field
+
+```csharp
+[FormPage("bnf-chapter", "BNF chapter", Order = 20)]
+[FormField(
+    "medicines_indication_detail.bnf_chapter_id",
+    "Select the BNF chapter for this product",
+    Control = FormControl.Select)]
+```
+
+- **Page title**: a short name for the page.
+- **Single-question page**: the question's label becomes the `<h1>`, and the section title is
+  shown as the caption above it.
+- **Page with several questions**: the page title is the `<h1>`, each question shows its own
+  label, and `FormField.Order` sets their order.
+- **Gaps in `Order`**: leave gaps (10, 20, 30) so that pages can be inserted later without
+  renumbering.
+
+### Choose a control
+
+Leave `Control` out when the inferred control is right:
+
+| Property type | Inferred | Allowed | Answer on the wire | Frontend component |
+|---|---|---|---|---|
+| `string` | `Text` | `Text`, `Textarea` | `string \| null` | `Input` / `Textarea` |
+| non-flags enum | `Radio` | `Radio`, `Select` | `string \| null` (member name) | NDS radios / `Select` |
+| `int?` reference FK | must be set | `Radio`, `Select` | `string \| null` (ID) | NDS radios / `Select` |
+| `[Flags]` enum | `Checkbox` | `Checkbox` | `string[]` (member names) | NDS checkboxes |
+| junction navigation | `Checkbox` | `Checkbox` | `string[]` (IDs) | NDS checkboxes |
+
+`Display = "combobox"` on a `Checkbox` asks the frontend for the searchable combobox. Until that
+is built, it renders as a checkbox list.
+
+### Hints
+
+- Pass hint text with `Hint = "..."`. A blank line (`\n\n`) starts a new paragraph.
+- Hints are shown above the input and linked to it with `aria-describedby`.
+- On a single-question page, the label is visually hidden on the field because it is already
+  the page heading. Screen readers still announce it.
 
 ## Step 5: Add options
 
-**Enum options**: list the values in the order they should be shown, with their labels. The
-enum type must match the bound property's enum, which the startup check enforces.
+Choice controls (`Radio`, `Select`, `Checkbox`) need `[FormOptions(key)]`. The key names a
+provider registered in C#. Attributes cannot hold queries, so the list itself lives in code.
+
+### Using an existing provider
+
+| Key (`OptionKeys`) | Kind | Offers |
+|---|---|---|
+| `yes-no-unknown` (`YesNoUnknown`) | Enum `YesNoUnknown` | Yes, No, Unknown at this stage |
+| `paediatric-status` (`PaediatricStatus`) | Enum `IndicationPaediatricStatus` | Exclusively for children, Both children and adults, Exclusively for adults, Unknown at this stage |
+| `bnf-top-level` (`BnfTopLevel`) | Reference `BnfChapter` | Top-level chapters, labelled `"1: Gastro-Intestinal System"` |
+| `therapeutic-areas` (`TherapeuticAreas`) | Reference `TherapeuticArea` | Leaf areas, labelled `"Addiction › Opioid use disorder"` |
+
+### Adding a provider
+
+Add its key to `OptionKeys` in `Persistence/FormAnnotations/` (it is only a string, so entities can
+use it without depending on Application). Then register the provider in
+`MedicineOptionProviders.cs`, or a vaccine equivalent:
 
 ```csharp
-Choices.Enum(
+// Enum: values in display order, with labels.
+registry.Enum(OptionKeys.YesNoUnknown,
     (YesNoUnknown.Yes, "Yes"),
     (YesNoUnknown.No, "No"),
-    (YesNoUnknown.Unknown, "Unknown at this stage")
-)
-```
+    (YesNoUnknown.Unknown, "Unknown at this stage"));
 
-**Reference data options**: give a query (filter and order) and a projection to
-`ReferenceOptionRow`. Both are expressions and must be translatable by EF Core.
+// Reference data: a query (filter and order) and a projection. Both must translate to SQL.
+registry.Reference<BnfChapter>(OptionKeys.BnfTopLevel,
+    q => q.Where(x => x.ParentId == null).OrderBy(x => x.DisplayOrder),
+    x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived));
 
-```csharp
-// Top-level BNF chapters, labelled "1: Gastro-intestinal system".
-Choices.Reference<BnfChapter>(
-    q => q.Where(x => x.ParentId == null).OrderBy(x => x.DisplayOrder).ThenBy(x => x.Code),
-    x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived)
-)
-
-// Leaf therapeutic areas, labelled "Parent › Child" if they have a parent.
-Choices.Reference<TherapeuticArea>(
+registry.Reference<TherapeuticArea>(OptionKeys.TherapeuticAreas,
     q => q.Where(x => !x.Children.Any())
-        .OrderBy(x => x.Parent!.DisplayOrder)
-        .ThenBy(x => x.DisplayOrder)
-        .ThenBy(x => x.Label),
+          .OrderBy(x => x.Parent!.DisplayOrder).ThenBy(x => x.DisplayOrder),
     x => new ReferenceOptionRow(
         x.Id,
         x.Parent == null ? x.Label : x.Parent.Label + " › " + x.Label,
-        x.IsArchived
-    )
-)
+        x.IsArchived));
 ```
 
-Archived reference data is not offered, unless it is the value already saved for this record, in
-which case it is still shown and accepted. See [Reference data](reference-data.md) for seeding
-and archiving.
+The startup check fails in these cases:
+- the key does not exist;
+- an enum provider's enum differs from the property's enum;
+- an enum provider is used on a reference ID or junction question, or a reference provider on
+  an enum question.
+
+An archived reference item is not offered, unless it is the value already saved for this record.
+In that case it is still shown and accepted. See [Reference data](reference-data.md).
 
 ## Step 6: Add validation
 
-Rules are added in the question's configure callback. Each rule carries the exact message shown
-to the user, on both the client and the server.
-
 ```csharp
-q => q.Hint("...")
-    .Required("Enter the indication this product is seeking a licence for")
-    .MaxLength(2000, "Indication must be 2000 characters or fewer")
+[FormRequired("Enter the indication this product is seeking a licence for")]
+[FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
 ```
 
-| Builder method | `RuleKind` | Applies to | Passes when |
+| Attribute | `RuleKind` | Applies to | Passes when |
 |---|---|---|---|
-| `Required(message)` | `Required` | All types | Text is not blank, an option is chosen, or at least one checkbox is ticked |
-| `MaxLength(max, message)` | `MaxLength` | `Textarea` | Text is at most `max` UTF-16 code units, after trimming |
-| `MaxItems(max, message)` | `MaxItems` | `Checkbox` | At most `max` options are ticked |
+| `FormRequired(message)` | `Required` | All controls | Text is not blank, an option is chosen, or at least one checkbox is ticked |
+| `FormMaxLength(max, message)` | `MaxLength` | `Text`, `Textarea` | Text is at most `max` UTF-16 code units, after trimming |
+| `FormMaxItems(max, message)` | `MaxItems` | `Checkbox` | At most `max` options are ticked |
 
 How rules are applied:
 
-- Text is trimmed first, and whitespace-only counts as unanswered. `"   abc   "` is checked as
-  `"abc"`.
-- Rules run in the order you declare them, and only the first failing rule is reported. Declare
-  `Required` before `MaxLength`.
-- A question without `Required` is optional. Write "(optional)" in the label if the design shows
-  it, as the therapeutic area page does.
-- Each rule kind may appear once per question. Attaching a rule to a type it does not apply to
-  fails the startup check.
+- **Trimming.** Text is trimmed first, and whitespace-only counts as unanswered. `"   abc   "` is
+  checked as `"abc"`.
+- **Fixed order.** Rules run in a fixed order by kind: `Required`, then `MaxLength`, then
+  `MaxItems`. Only the first failing rule is reported. The order of the attributes in the file
+  does not matter, because .NET does not guarantee attribute order.
+- **Optional questions.** A question without `[FormRequired]` is optional. Write "(optional)" in
+  the label if the design shows it, as the therapeutic area page does.
+- **One of each.** Each rule kind may appear once per question. A rule on a control it does not
+  apply to fails the startup check.
 
-The server also checks things the definition does not declare: every page question is present,
-no other keys are sent, each value has the right JSON shape, and every selected value is an
-offered option. You do not need to add rules for these.
+The server also checks things that the attributes don't declare. You do not need rules for
+these:
+- every page question is present;
+- no other keys are sent;
+- each value has the right JSON shape;
+- every selected value is an offered option.
 
 Write messages in the GOV.UK error message style used in the screenshots: say what to do, for
 example "Select a BNF chapter" or "Enter the indication…".
 
 ### Adding a new rule kind
 
-Only needed if the existing rules cannot express what a page needs. Agree it with the team first.
+Only needed if the existing rules can't express what a page needs. Agree it with the team first.
 
-1. Add the value to `RuleKind` (`backend/src/Application/Forms/Rules/RuleKind.cs`).
-2. Add a `QuestionRule` subclass with `Kind`, `Value`, `AppliesTo` and `IsSatisfiedBy`, and a
-   `QuestionBuilder` method.
+1. Add the value to `RuleKind`.
+2. Add a rule attribute in `Persistence/FormAnnotations/`, and its evaluation in `RuleEvaluator`.
+   Give it a place in the fixed evaluation order, and list the controls it applies to.
 3. Add the matching case to `isSatisfied` in `frontend/src/lib/dynamic-form/answers.ts`.
-4. Add passing and failing cases to `backend/tests/Application/Forms/Fixtures/rule-cases.json`,
-   and the new kind to `CreateRule` in `RuleFixtureTests`. `Fixture_CoversEveryRuleKind` fails
-   until you do.
+4. Add passing and failing cases to `rule-cases.json`. `Fixture_CoversEveryRuleKind` fails until
+   you do.
 5. Regenerate the OpenAPI spec (build the backend) and the client (`pnpm generate:api`), because
    `RuleKind` is part of the API.
 
-## Step 7: Hints and headings
+## Pages that span entities
 
-- Pass hint text with `.Hint("...")`. A blank line (`\n\n`) starts a new paragraph, as on the
-  indication page.
-- Hints are shown above the input and linked to it with `aria-describedby`.
-- On a single-question page, the label is visually hidden on the field because it is already the
-  page heading; screen readers still announce it.
+A page can hold questions from several entities. Declare the same `[FormPage]` ID, with the
+same title and `Order`, on each property. The entities must be in the same section. The example
+below is illustrative and is not a page in the current design:
 
-## Step 8: Bump the form version
+```csharp
+[FormSection(RecordType.Medicine, "product-details", "Product details",
+    Order = 10, RowSource = FormRowSource.RecordCreation)]
+internal sealed class RecordProductDetail
+{
+    [FormPage("names", "Product names", Order = 20)]
+    [FormField("record_product_detail.branded_name", "Branded name (optional)", Order = 10)]
+    [FormMaxLength(200, "Branded name must be 200 characters or fewer")]
+    public string? BrandedName { get; set; }
+    // ...
+}
 
-Any change to a definition (pages, IDs, labels, hints, rules, options or bindings) must bump the
-version, so clients holding an old page are told to reload instead of saving against the new one.
+[FormSection(RecordType.Medicine, "product-details", "Product details", Order = 10)]
+internal sealed class SomeOtherMedicineEntity
+{
+    [FormPage("names", "Product names", Order = 20)]
+    [FormField("some_other_medicine_entity.development_code", "Development code", Order = 20)]
+    public string? DevelopmentCode { get; set; }
+    // ...
+}
+```
 
-1. Change `MedicineFormDefinition.Version`, for example `2026.10.2` to `2026.10.3`.
-2. Run `MedicineFormDefinitionTests`. `Definition_ChangesRequireAVersionBump` fails and prints the
-   new fingerprint.
-3. Update `ExpectedVersion` and `ExpectedFingerprint` in the test to match.
+The `names` page shows both questions, ordered by `FormField.Order`. One save writes both
+tables, and the audit records them as one event.
 
-If you change the definition but forget the version, step 2 fails, which is the point of the
-test.
+Keep the page metadata in one place to avoid mismatches: declare the page ID, title and order as
+constants (for example in a `MedicinePages` static class) and use the constants in every
+`[FormPage]`.
 
-## Step 9: Test
+## Step 7: Bump the form version
 
-The startup check (`FormDefinitionValidator`) runs when the API starts and in
-`MedicineFormDefinitionTests.Definition_IsValid`. It catches:
+Any change to a form entity's attributes needs a version bump: pages, IDs, labels, hints,
+rules, option keys, order, or adding or ignoring a property. The bump tells clients holding an
+old page to reload instead of saving against the new one.
 
-- duplicate page or question IDs, and badly formed IDs;
-- sections with no pages, and pages with no questions;
-- a binding that does not suit the question type (for example a string column behind a
-  checkbox);
-- missing options on a choice question, or options on a textarea;
-- enum options for a different enum than the bound property, or enum options on a non-enum
-  binding;
-- a rule on a type it does not apply to, or the same rule declared twice.
+1. Change `FormVersions.Medicine`, for example `2026.10.1` to `2026.10.2`.
+2. Run the form model tests. `Model_ChangesRequireAVersionBump` fails and prints the new
+   fingerprint.
+3. Update `ExpectedVersion` and `ExpectedFingerprint` in the test.
 
-Also update:
+If you change an attribute but forget the version, step 2 fails, which is the point of the test.
 
-- `Definition_HasTheIndicationDetailsPagesInOrder` (or an equivalent test for your section) with
-  the new page order;
-- `MedicineFormOptionsTests` if you added reference data options;
-- `NextAndPreviousPage_FollowFormOrder` if you added a page at either end.
+Changing an option provider's **query** changes the fingerprint (its description is included).
+Changing reference data **rows** or labels does not.
 
-Run the tests:
+## Startup checks
+
+`FormModelValidator` runs when the API starts and in `MedicineFormModelTests.Model_IsValid`. It
+reports every problem in one exception.
+
+| Area | Fails when |
+|---|---|
+| Coverage | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation |
+| Pairing | `[FormField]` has no `[FormPage]`, or `[FormPage]` has no `[FormField]` |
+| IDs | A page or question ID is badly formed or duplicated within the form |
+| Agreement | Declarations of one section ID disagree on title or order, or declarations of one page ID disagree on title or order. A page spans entities in different sections |
+| Order | Two sections, two pages in a section, or two questions on a page have the same `Order` |
+| Structure | A section has no pages, or a page has no questions |
+| Controls | The control does not suit the property type (see the table in step 4). An `int?` FK has no explicit control |
+| Options | A choice control has no `[FormOptions]`, or a text control has one. The key is unknown. The enum provider's enum does not match the property, or the provider kind does not match the binding |
+| Rules | A rule is on a control it does not apply to, or a rule kind appears twice |
+| Rows | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns |
+
+## Step 8: Test
+
+- **`MedicineFormModelTests`**:
+  - `Model_IsValid`;
+  - the page order test (`Model_HasTheIndicationDetailsPagesInOrder`, or an equivalent for your
+    section);
+  - the fingerprint test.
+- **`MedicineOptionProviderTests`**: if you added a provider.
+- **`NextAndPreviousPage_FollowFormOrder`**: if you added a page at either end.
 
 ```sh
 cd backend
-dotnet test --filter-class "*MedicineForm*"   # definition and options tests
-dotnet test                                   # everything
+dotnet test --filter-class "*RecordForm*"   # form model, scanner and provider tests
+dotnet test                                 # everything
 ```
 
 (This repo uses xUnit v3 on Microsoft Testing Platform: `--filter` silently runs no tests; use
@@ -264,67 +453,43 @@ dotnet test                                   # everything
 You do not need to regenerate the OpenAPI spec or the frontend client for a new page: the page
 travels as data through the existing DTOs.
 
-Finally, try it locally: create a medicine record, or open an existing one from the organisation
-records table and select **Update record**, then step through to your page.
+Finally, try it locally. Create a medicine record, or open an existing one from the organisation
+records table and select **Update record**. Then step through to your page.
 
-## Adding a new question type
+## Adding a new control
 
-Needed when a page uses an input that none of the existing types cover, for example a date. This
+Needed when a page uses an input that no existing control covers, for example a date. This
 touches both backend and frontend.
 
 **Backend**
 
-1. Add the value to `QuestionType` (`Definitions/QuestionType.cs`).
-2. Add a builder method to `PageBuilder`.
-3. Describe its answer in `QuestionTypeExtensions`: `IsValidShape` (the JSON it accepts),
-   `Normalise` (trimming, sorting), and `HasOptions` / `IsMultiValue` if relevant.
-4. Add the binding kinds it accepts to `_allowedBindings` in `FormDefinitionValidator`, adding a
-   binding if no existing one fits.
-5. Add it to the `AppliesTo` set of each rule that should work with it.
-6. Build the backend to regenerate the OpenAPI spec, then add fixture cases for it.
+1. Add the value to `FormControl` (`Persistence/FormAnnotations/FormControl.cs`).
+2. Add it to the control/type table in the scanner (inference and allowed types) and, if needed,
+   add a binding.
+3. Describe its answer: the JSON shape it accepts, how it is normalised, and whether it has
+   options or multiple values.
+4. Add it to the controls that each relevant rule applies to.
+5. Build the backend to regenerate the OpenAPI spec, then add fixture cases.
 
 **Frontend**
 
 1. Run `pnpm generate:api`.
-2. Add a component in `components/DynamicForm/questions/` that takes `QuestionProps`: `question`,
-   `value`, `onChange`, `onBlur`, `error`, `disabled` and `labelAsHeading`. Follow
-   `RadioQuestion` or `TextareaQuestion`, including `QuestionHint` and the `labelAsHeading` class.
-3. Register it in `components` in `questionRegistry.tsx`, and in `getQuestionTargetId` if the
-   error summary should link somewhere other than an element with the question's ID.
-4. Describe its form value in `lib/dynamic-form/answers.ts` (`toFormValue`, `normaliseAnswer`).
-5. Add rendering, error and payload tests to `FormPage.test.tsx`.
-
-### Plugging in the combobox
-
-The therapeutic area question has `display: "combobox"`, so `questionRegistry` renders it with
-`ComboboxSlot`, which shows a checkbox list for now. The combobox should accept `ComboboxProps`
-(exported from `questions/ComboboxSlot.tsx`):
-
-```ts
-type ComboboxProps = {
-  id: string
-  label: string
-  hint?: string | null
-  options: FormOptionDto[]
-  value: string[]
-  onChange: (value: string[]) => void
-  onBlur: () => void
-  error?: string
-  disabled: boolean
-}
-```
-
-Replace the body of `ComboboxSlot` with the new component. Map `QuestionProps` to
-`ComboboxProps` (`id = question.id`, `options = question.options ?? []`, and so on). Nothing else
-needs to change: the answer is still a `string[]` and `MaxItems` still applies.
+2. Add a component in `components/DynamicForm/questions/` that takes `QuestionProps`:
+   - `question`, `value`, `onChange`, `onBlur`, `error`, `disabled`;
+   - `labelAsHeading`.
+3. Register it in `questionRegistry.tsx`.
+4. Describe its form value in `lib/dynamic-form/answers.ts`.
+5. Add rendering, error and payload tests.
 
 ## Checklist
 
-- [ ] Page ID is a unique slug; question IDs follow `entity.field` and are new
-- [ ] Page added in display order with its own private method
-- [ ] Question type, binding and options suit each other (startup check passes)
-- [ ] Rules added with user-facing messages, `Required` first
+- [ ] Every mapped scalar property has `[FormField]` or `[FormIgnore("reason")]`
+- [ ] `[FormSection]` present, with the right `RowSource`
+- [ ] Page ID is a unique slug; question IDs follow `entity.property` and are new
+- [ ] `Order` values leave gaps and don't clash
+- [ ] Control suits the property type; choice controls have `[FormOptions]` with a registered key
+- [ ] Rules added, with user-facing messages
 - [ ] Hint added if the design has one
-- [ ] `MedicineFormDefinition.Version` bumped; `ExpectedVersion` and `ExpectedFingerprint` updated
-- [ ] Definition and options tests updated; `dotnet test` passes
+- [ ] `FormVersions.Medicine` bumped; `ExpectedVersion` and `ExpectedFingerprint` updated
+- [ ] Form model and provider tests updated; `dotnet test` passes
 - [ ] Page checked locally against the design

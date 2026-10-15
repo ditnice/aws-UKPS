@@ -1,21 +1,19 @@
 # UKPS dynamic form builder: implementation brief
 
-> **Status (October 2026): partly built and partly superseded.** This brief was the plan before
-> implementation. Where it differs from the code or the documents below, they are correct.
+> **Status: historical, superseded.** This was the original brief for a form builder in which
+> each record type's form was a separate C# definition. That approach has been replaced by
+> **attributes on the EF content entities**
+> ([ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md)), and this brief is kept
+> only as background.
 >
-> - **Built:** the medicine "Indication details" section (5 pages); `textarea`, `radio`, `select`
->   and `checkbox` questions; `required`, `maxLength` and `maxItems` rules with a shared
->   client/server fixture; column and junction bindings; GET/PUT page endpoints with audit and
->   concurrency checks; redirect from record creation and an **Update record** button on the record
->   details page; seeded BNF chapters and therapeutic areas.
-> - **Not built yet:** conditions and stale-answer clearing, add-another groups, precision dates,
->   cross-field and other rules, the remaining medicine pages, vaccine record creation and forms,
->   the tasklist, and the searchable combobox.
-> - **Changed from this brief:** enum values are sent as declared (`"Textarea"`, `"Required"`);
->   regulatory dates will be updated in place rather than deleted and re-inserted; trees are
->   offered as leaves (BNF is top-level only); the schema has since moved the indication questions
->   to `MedicinesIndicationDetail`, whose row is created on the first save. See
->   [ADR-006](../ADR/ADR-006-dynamic-record-content-forms.md).
+> - **Still the basis of the design:** question IDs as a public contract, typed tables with
+>   bindings, the whole-page save, server-authoritative validation mirrored on the client, the
+>   shared rule fixture, `formVersion` and `revisionVersion` concurrency, field-level audit,
+>   draft-only edits and ADR-004 concealment.
+> - **Replaced:** the fluent `Form.For(...)` builder (§4 "Sketch") and per-form definition
+>   classes, by annotated entities, a startup scanner and named option providers.
+> - **Not yet designed for the attribute approach:** conditions and stale-answer clearing,
+>   add-another groups, precision dates and cross-field rules.
 >
 > Current documentation: [high-level design](high-level-design.md),
 > [creating form pages](creating-form-pages.md),
