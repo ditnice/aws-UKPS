@@ -37,5 +37,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\UKPS.Api.csproj" />
+    <None
+      Include="../src/appsettings.json"
+      Link="Configuration/appsettings.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Include="../src/appsettings.Example.json"
+      Link="Configuration/appsettings.Example.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
   </ItemGroup>
 </Project>

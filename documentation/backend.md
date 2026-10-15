@@ -67,11 +67,77 @@ The directory structure should match the following
 
 ## Configuration
 
+`backend/src/appsettings.json` and `backend/src/appsettings.Example.json` list
+every writable property of the backend's configuration options, plus the
+logging, connection-string and AWS settings used by this application. They are
+not an inventory of every setting supported by ASP.NET Core or the AWS SDK.
+Tests check the setting names in both files against the options types to prevent
+missing or ignored application settings. They do not validate that configuration
+values can be bound to those types.
+
+For local development, copy `appsettings.Example.json` to the ignored
+`appsettings.Development.json` alongside it, then replace placeholders as needed.
+The example is not loaded automatically. Environment variables use `__` between
+section and property names (for example, `Database__Username`) and override JSON
+settings. Never commit real credentials. The example enables super-user
+authentication bypass and database reseeding; use it only for local development
+against a disposable database.
+
+### Settings inventory
+
+| Section | Settings | Behaviour |
+| --- | --- | --- |
+| `Logging:LogLevel` | `Default`, `Microsoft.AspNetCore` | Default log levels are `Information` and `Warning`. Additional category overrides are supported by ASP.NET Core. |
+| `ConnectionStrings` | `DefaultConnection` | A non-empty value takes precedence over all structured database connection settings. The example uses local PostgreSQL. |
+| `AWS` | `LoadSecrets`, `Region` | `LoadSecrets` defaults to `false`; AWS clients use `Region`, set to `eu-west-2` in both files and overridden by the task environment. A valid region default is required for OpenAPI generation during builds. The example enables secret loading and requires AWS credentials and permission to read the development Cognito secret. |
+| `Cognito` | `ServiceUrlOverride`, `Region`, `UserPoolId`, `ClientId`, `ClientSecret` | The override is optional. The JWT authority is derived from the service URL and pool ID. Supply the client secret externally. |
+| `Database` | `MigrateOnStartup`, `Host`, `Name`, `Password`, `Port`, `RootCertificate`, `Username` | Startup migration defaults to `false`. Without a connection string, host, name, credentials and root certificate are required; port defaults to `5432`. Structured connections always use TLS `VerifyFull`. |
+| `DevAuthentication` | `IsEnabled`, `UserRole` | Disabled by default. When enabled, requests are authenticated using `UserRole`, which defaults to `Super`. |
+| `Email` | `MaxResendSignUpLinkAttempts`, `TestingEmailAddress`, `FromAddress`, `QueueUrl`, `QueueMaxNumberOfMessages`, `QueueWaitTimeInSeconds` | Resend limit defaults to `3` in the code and both appsettings files; dev/test ECS overrides it with `"3"`. `TestingEmailAddress` defaults to `null`; when set, it **adds** a recipient, rather than replacing the intended recipient. Sender and queue URL are required. Queue batch size defaults to `1` (range `1–10`); wait time defaults to `20` seconds (range `0–20`). |
+| `Seeding` | `ReseedOnStartup`, `SeedUsersJson` | Reseeding defaults to `false`; the configured user list defaults to `[]`. The example enables reseeding and includes a synthetic super user. |
+| `UserOnboarding` | `SetupLink`, `SetupTokenExpiryTimeSeconds` | Replace the link placeholder with the frontend base URL. Token expiry defaults to `900` seconds and must be at least `60`. |
+
+### Database connection modes and secrets
+
+- **Local PostgreSQL:** retain `ConnectionStrings:DefaultConnection` from the
+  example. Structured connection settings, including `RootCertificate`, are
+  ignored. `Database:MigrateOnStartup` still controls startup migration.
+- **Structured/Aurora connection:** unset the connection string and provide
+  `Database:Host`, `Name`, `Username`, `Password` and `RootCertificate`.
+  `RootCertificate` must point to an accessible CA bundle. The backend container
+  supplies `/app/certs/eu-west-2-bundle.pem` through `Database__RootCertificate`;
+  when running outside that container, supply your own accessible bundle path.
+
+`AWS:LoadSecrets` loads only the Cognito client secret from the development
+Secrets Manager reference configured in `AwsConfigurationExtensions`. It does
+not load database credentials. Deployed ECS tasks receive Cognito and database
+credentials through environment-variable secret injection. The database
+credential placeholders in the example are unused until the connection string
+is removed and must then be replaced through an external configuration source.
+
+AWS SQS and SES clients use the shared `AWS` configuration. `Email:Region`,
+`Email:BaseDomain`, `Email:ReplyToAddress` and `Email:ConfigurationSetName` are
+not consumed by the current backend and are omitted from its task definitions.
+Adding them to appsettings does not enable those behaviours.
+
+The dev and test backend task definitions explicitly set the resend limit to
+`3` and the development authentication role to `Super`; development authentication
+remains disabled by the base appsettings. `Email:TestingEmailAddress` stays unset
+rather than passing the string `"null"` as an environment variable. The root
+certificate path remains supplied by the backend Dockerfile rather than duplicated
+in the task definitions.
+
+`Email:MaxResendSignUpLinkAttempts` retains a numeric default of `3` so options
+can bind during local builds and OpenAPI generation without ECS environment
+variables. The task definition's `Email__MaxResendSignUpLinkAttempts` overrides
+this default when deployed. Do not replace numeric settings with string
+placeholders, as they cannot bind to integer options.
+
 ### DevAuthentication
 
 The `DevAuthentication` section controls the development authentication bypass.
 
-When `IsEnabled` is set to `true`, authentication challenges are bypassed and requests are automatically authenticated as a **super user**. This is intended for local development and testing only.
+When `IsEnabled` is set to `true`, authentication challenges are bypassed and requests are automatically authenticated using `DevAuthentication:UserRole`, which defaults to **Super**. This is intended for local development and testing only.
 
 ```json
   "DevAuthentication":{
