@@ -252,7 +252,7 @@ def main():
             error("suspended trial exists", record)
 
         # MHRA procedure and dates.
-        is_irp = mhra["mhraProcedureType"] == "International recognition procedure"
+        is_irp = mhra["mhraProcedureType"] == "International Recognition Procedure"
         irp_fields = ("irpReferenceRegulator", "irpRoute", "intlLicenceDate")
         if is_irp != all(mhra[field] is not None for field in irp_fields):
             error("IRP fields only and always for the IRP", record)

@@ -699,24 +699,24 @@ class RecordBuilder:
     # Regulatory timeline -----------------------------------------------------------------------
 
     PROCEDURE_DURATIONS = {
-        "MHRA national procedure": (150, 420),
-        "International recognition procedure": (60, 200),
+        "MHRA National Procedure": (150, 420),
+        "International Recognition Procedure": (60, 200),
         "Access Consortium": (240, 330),
-        "Orbis": (180, 270),
+        "Project Orbis": (180, 270),
         "Other": (60, 300),
         "Not yet confirmed": (240, 400),
     }
 
     def procedure(self, rng, category, row):
         weights = {
-            "International recognition procedure": 30,
-            "MHRA national procedure": 30,
+            "International Recognition Procedure": 30,
+            "MHRA National Procedure": 30,
             "Access Consortium": 8,
             "Other": 11,
             "Not yet confirmed": 11,
         }
         if category.is_cancer:
-            weights["Orbis"] = 12
+            weights["Project Orbis"] = 12
         return weighted(rng, weights)
 
     def timeline(self, rng, row, status, status_reason, status_note, procedure, record_dates):
@@ -754,7 +754,7 @@ class RecordBuilder:
 
     def mhra_procedure_and_dates(self, rng, procedure, timeline, as_of, designations):
         submission = timeline["ukSubmission"]
-        is_irp = procedure == "International recognition procedure"
+        is_irp = procedure == "International Recognition Procedure"
         result = {
             "mhraProcedureType": procedure,
             "procedureDetails": None,
@@ -792,7 +792,7 @@ class RecordBuilder:
                 "submission.",
             ])
 
-        expedited = procedure == "Orbis" or designations["pimDesignationStatus"] == "Granted"
+        expedited = procedure == "Project Orbis" or designations["pimDesignationStatus"] == "Granted"
         result["ukConditionalApprovalAnticipated"] = (
             yes_no_unknown(rng, 45, 30, 25) if expedited else yes_no_unknown(rng, 10, 65, 25)
         )

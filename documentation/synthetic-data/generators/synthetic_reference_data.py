@@ -378,10 +378,10 @@ FORMULATION_TYPES = [
 ]
 
 MHRA_PROCEDURE_TYPES = [
-    "MHRA national procedure",
-    "International recognition procedure",
+    "MHRA National Procedure",
+    "International Recognition Procedure",
     "Access Consortium",
-    "Orbis",
+    "Project Orbis",
     "Other",
     "Not yet confirmed",
 ]
