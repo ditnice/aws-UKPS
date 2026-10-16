@@ -1,5 +1,11 @@
 import { csrfCookieName, csrfHeaderName, getCookie } from '@/lib/auth/cookies'
-import { buildSignInHref, signInPath } from '@/lib/auth/routing'
+import {
+  buildSignInHref,
+  getOrganisationSelectionHref,
+  selectOrganisationPath,
+  signInPath,
+  switchOrganisationPath,
+} from '@/lib/auth/routing'
 
 import type { CreateClientConfig } from './generated/client.gen'
 
@@ -26,7 +32,16 @@ const browserFetch: typeof fetch = async (input, init) => {
   const refreshGeneration = browserRefreshGeneration
   const response = await globalThis.fetch(input, init)
 
-  if (response.status !== 401 || isAuthRequest(input) || retryInput === null) {
+  if (isAuthRequest(input)) {
+    return response
+  }
+
+  // The session is valid but needs an organisation selected, so refreshing would not help.
+  if (await redirectToOrganisationSelection(response)) {
+    return response
+  }
+
+  if (response.status !== 401 || retryInput === null) {
     return response
   }
 
@@ -95,6 +110,28 @@ function isAuthRequest(input: RequestInfo | URL): boolean {
   } catch {
     return false
   }
+}
+
+async function redirectToOrganisationSelection(response: Response): Promise<boolean> {
+  if (response.status !== 401 && response.status !== 409) {
+    return false
+  }
+
+  const content = await response
+    .clone()
+    .json()
+    .catch(() => null)
+  const { pathname, search } = globalThis.location
+  const href = getOrganisationSelectionHref(content, `${pathname}${search}`)
+
+  if (!href) {
+    return false
+  }
+
+  if (pathname !== selectOrganisationPath && pathname !== switchOrganisationPath) {
+    globalThis.location.replace(href)
+  }
+  return true
 }
 
 function redirectToSignIn(): void {

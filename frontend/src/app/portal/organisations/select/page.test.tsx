@@ -21,8 +21,16 @@ vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 // Isolate organisation-list prop wiring; selection behaviour uses the real table in its tests.
 vi.mock('./_components/SelectOrganisationTable', () => ({
-  SelectOrganisationTable: ({ organisations }: { organisations: { id: number }[] }) => (
-    <div data-testid="select-organisation-table">{organisations.length}</div>
+  SelectOrganisationTable: ({
+    organisations,
+    returnTo,
+  }: {
+    organisations: { id: number }[]
+    returnTo?: string
+  }) => (
+    <div data-testid="select-organisation-table" data-return-to={returnTo}>
+      {organisations.length}
+    </div>
   ),
 }))
 
@@ -32,6 +40,9 @@ const mockOrganisations = (result: Partial<GetCurrentUserOrganisationsResult>) =
   vi
     .mocked(getCurrentUserOrganisations)
     .mockResolvedValue(result as GetCurrentUserOrganisationsResult)
+
+const renderPage = (searchParams: { returnTo?: string } = {}) =>
+  SelectOrganisationPage({ searchParams: Promise.resolve(searchParams) })
 
 beforeEach(() => {
   vi.mocked(createServerApiClient).mockResolvedValue(
@@ -50,7 +61,7 @@ describe('SelectOrganisationPage (direct invocation)', () => {
       error: undefined,
     })
 
-    render(await SelectOrganisationPage())
+    render(await renderPage())
 
     expect(screen.getByTestId('select-organisation-table').textContent).toBe('2')
     expect(mocks.redirect).not.toHaveBeenCalled()
@@ -62,15 +73,59 @@ describe('SelectOrganisationPage (direct invocation)', () => {
       error: undefined,
     })
 
-    await expect(SelectOrganisationPage()).rejects.toThrow('NEXT_REDIRECT')
+    await expect(renderPage()).rejects.toThrow('NEXT_REDIRECT')
 
     expect(mocks.redirect).toHaveBeenCalledWith('/portal/organisations/7/records', 'replace')
+  })
+
+  it('passes a safe returnTo to the organisation table', async () => {
+    mockOrganisations({
+      data: [
+        { id: 1, organisationName: 'First organisation' },
+        { id: 2, organisationName: 'Second organisation' },
+      ],
+      error: undefined,
+    })
+
+    render(await renderPage({ returnTo: '/portal/organisations/2/records' }))
+
+    expect(screen.getByTestId('select-organisation-table')).toHaveAttribute(
+      'data-return-to',
+      '/portal/organisations/2/records',
+    )
+  })
+
+  it('ignores an unsafe returnTo', async () => {
+    mockOrganisations({
+      data: [
+        { id: 1, organisationName: 'First organisation' },
+        { id: 2, organisationName: 'Second organisation' },
+      ],
+      error: undefined,
+    })
+
+    render(await renderPage({ returnTo: 'https://example.com/portal' }))
+
+    expect(screen.getByTestId('select-organisation-table')).not.toHaveAttribute('data-return-to')
+  })
+
+  it('requests a replacement redirect to returnTo when the user has a single organisation', async () => {
+    mockOrganisations({
+      data: [{ id: 7, organisationName: 'Only organisation' }],
+      error: undefined,
+    })
+
+    await expect(renderPage({ returnTo: '/portal/organisations/7/records/3' })).rejects.toThrow(
+      'NEXT_REDIRECT',
+    )
+
+    expect(mocks.redirect).toHaveBeenCalledWith('/portal/organisations/7/records/3', 'replace')
   })
 
   it('shows a message when the user has no organisations', async () => {
     mockOrganisations({ data: [], error: undefined })
 
-    render(await SelectOrganisationPage())
+    render(await renderPage())
 
     expect(
       screen.getByText('You do not currently have access to manage any organisations.'),
@@ -81,7 +136,7 @@ describe('SelectOrganisationPage (direct invocation)', () => {
   it('shows an error when the organisations cannot be retrieved', async () => {
     mockOrganisations({ data: undefined, error: { title: 'error' } })
 
-    render(await SelectOrganisationPage())
+    render(await renderPage())
 
     expect(screen.getByRole('alert')).toHaveTextContent(
       'An error occurred when retrieving your organisations. Please try again later.',

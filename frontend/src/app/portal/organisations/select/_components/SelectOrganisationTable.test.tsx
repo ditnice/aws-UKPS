@@ -3,13 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { updateCurrentOrganisation } from '@/client/generated'
-import { router } from '@/test-utils/nextNavigation'
 
 import { SelectOrganisationTable } from './SelectOrganisationTable'
-
-const mocks = router
-
-vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   updateCurrentOrganisation: vi.fn(),
@@ -24,8 +19,11 @@ const getManageButton = (organisationName: string) =>
   screen.getByRole('button', { name: `Manage Organisation - ${organisationName}` })
 let user: ReturnType<typeof userEvent.setup>
 
+const assign = vi.fn()
+
 beforeEach(() => {
   user = userEvent.setup()
+  vi.stubGlobal('location', { ...globalThis.location, assign })
 })
 
 describe('SelectOrganisationTable', () => {
@@ -49,10 +47,31 @@ describe('SelectOrganisationTable', () => {
 
     expect(updateCurrentOrganisation).toHaveBeenCalledWith({ body: { organisationId: 456 } })
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/456/records')
+      expect(assign).toHaveBeenCalledWith('/portal/organisations/456/records')
     })
     expect(screen.queryByTestId('organisation-selection-error')).toBeNull()
   })
+
+  it.each([
+    ['/portal/organisations/456/records/9', '/portal/organisations/456/records/9'],
+    ['/portal/organisations/123/records', '/portal/organisations/456/records'],
+  ])(
+    'navigates to returnTo %s only when it is for the selected organisation',
+    async (returnTo, expected) => {
+      vi.mocked(updateCurrentOrganisation).mockResolvedValue({
+        data: undefined,
+        error: undefined,
+      } as Awaited<ReturnType<typeof updateCurrentOrganisation>>)
+
+      render(<SelectOrganisationTable organisations={organisations} returnTo={returnTo} />)
+
+      await user.click(getManageButton('Second organisation'))
+
+      await waitFor(() => {
+        expect(assign).toHaveBeenCalledWith(expected)
+      })
+    },
+  )
 
   it('shows an error and does not navigate when the backend returns an error', async () => {
     vi.mocked(updateCurrentOrganisation).mockResolvedValue({
@@ -65,7 +84,7 @@ describe('SelectOrganisationTable', () => {
     await user.click(getManageButton('First organisation'))
 
     expect(await screen.findByTestId('organisation-selection-error')).toBeTruthy()
-    expect(mocks.push).not.toHaveBeenCalled()
+    expect(assign).not.toHaveBeenCalled()
   })
 
   it('shows an error when the request fails', async () => {
@@ -76,7 +95,7 @@ describe('SelectOrganisationTable', () => {
     await user.click(getManageButton('First organisation'))
 
     expect(await screen.findByTestId('organisation-selection-error')).toBeTruthy()
-    expect(mocks.push).not.toHaveBeenCalled()
+    expect(assign).not.toHaveBeenCalled()
   })
 
   it('disables the manage buttons while a selection is in progress', async () => {

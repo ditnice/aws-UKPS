@@ -77,20 +77,82 @@ describe('createServerApiClient', () => {
     async (code) => {
       vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
       mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
-      mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal') })
+      mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal/organisations/2/records') })
       vi.stubGlobal(
         'fetch',
         vi.fn<typeof fetch>().mockResolvedValue(Response.json({ code }, { status: 401 })),
       )
 
       const client = await createTestClient()
-      await expect(client.fetch('https://api.example.test/users/me')).rejects.toThrow(
-        'NEXT_REDIRECT: /portal/organisations/select',
+      await expect(client.fetch('https://api.example.test/organisations/2')).rejects.toThrow(
+        'NEXT_REDIRECT: /portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F2%2Frecords',
       )
 
-      expect(redirect).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(redirect).toHaveBeenCalledWith(
+        '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F2%2Frecords',
+      )
     },
   )
+
+  it('redirects to the organisation selection page without a returnTo when no forwarded route header is available', async () => {
+    vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
+    mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
+    mocks.headers.mockResolvedValue({ get: vi.fn(() => null) })
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(
+          Response.json({ code: 'SelectedOrganisationRequired' }, { status: 401 }),
+        ),
+    )
+
+    const client = await createTestClient()
+    await expect(client.fetch('https://api.example.test/organisations/2')).rejects.toThrow(
+      'NEXT_REDIRECT: /portal/organisations/select',
+    )
+
+    expect(redirect).toHaveBeenCalledWith('/portal/organisations/select')
+  })
+
+  it('redirects a selected organisation mismatch to the switch page for the requested organisation', async () => {
+    vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
+    mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
+    mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal/organisations/2/records') })
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(
+          Response.json(
+            { code: 'SelectedOrganisationMismatch', organisationId: 2 },
+            { status: 409 },
+          ),
+        ),
+    )
+    const expectedHref =
+      '/portal/organisations/switch?organisationId=2&returnTo=%2Fportal%2Forganisations%2F2%2Frecords'
+
+    const client = await createTestClient()
+    await expect(client.fetch('https://api.example.test/organisations/2')).rejects.toThrow(
+      `NEXT_REDIRECT: ${expectedHref}`,
+    )
+
+    expect(redirect).toHaveBeenCalledWith(expectedHref)
+  })
+
+  it('passes through other conflict responses', async () => {
+    vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
+    mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
+    mocks.headers.mockResolvedValue({ get: vi.fn(() => '/portal') })
+    const response = Response.json({ title: 'Conflict' }, { status: 409 })
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(response))
+
+    const client = await createTestClient()
+
+    await expect(client.fetch('https://api.example.test/organisations')).resolves.toBe(response)
+    expect(redirect).not.toHaveBeenCalled()
+  })
 
   it('redirects to the authentication error page for other authentication fail codes', async () => {
     vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
