@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { navigationState } from '@/test-utils/nextNavigation'
+
 import { Header } from './Header'
 
 vi.mock('next/link', async () => ({
@@ -41,5 +43,44 @@ describe('Header', () => {
       'aria-expanded',
       'true',
     )
+  })
+
+  it('shows the organisation switcher when the user has multiple organisations', () => {
+    navigationState.pathname = '/portal'
+
+    render(
+      <Header
+        skipLinkId="content-start"
+        currentOrganisation={{ id: 12, name: 'Example Pharma', hasMultipleOrganisations: true }}
+      />,
+    )
+
+    const switcher = screen.getByRole('navigation', { name: 'Organisation switcher' })
+    expect(switcher).toHaveTextContent('Example Pharma')
+    expect(screen.getByRole('link', { name: 'Manage my organisation' })).toHaveAttribute(
+      'href',
+      '/portal/organisations/12',
+    )
+  })
+
+  it('hides the organisation switcher when the user has one organisation', () => {
+    render(
+      <Header
+        skipLinkId="content-start"
+        currentOrganisation={{ id: 12, name: 'Example Pharma', hasMultipleOrganisations: false }}
+      />,
+    )
+
+    expect(
+      screen.queryByRole('navigation', { name: 'Organisation switcher' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('hides the organisation switcher when no organisation is selected', () => {
+    render(<Header skipLinkId="content-start" />)
+
+    expect(
+      screen.queryByRole('navigation', { name: 'Organisation switcher' }),
+    ).not.toBeInTheDocument()
   })
 })
