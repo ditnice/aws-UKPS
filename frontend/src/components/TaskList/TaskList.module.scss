@@ -31,6 +31,10 @@
   border-bottom: 0;
 }
 
+.task-list__task-field-summary {
+  margin: spacing.$small * 1px 0;
+}
+
 .task-list__section-summary {
   display: flex;
   justify-content: space-between;

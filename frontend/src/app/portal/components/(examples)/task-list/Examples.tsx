@@ -14,6 +14,8 @@ export function Examples() {
               href="#product-record-details"
               description="Enter the company codes generic names, and branded names ..."
               status="in-progress"
+              completedFields={4}
+              totalFields={8}
             />
           </TaskListSection>
 
@@ -24,6 +26,8 @@ export function Examples() {
               href="#indication"
               description="Enter the condition this product treats and its disease area"
               status="completed"
+              completedFields={4}
+              totalFields={8}
             />
             <TaskListTask
               id="development"
@@ -31,6 +35,8 @@ export function Examples() {
               href="#development"
               description="Enter the development details for this product ..."
               status="not-started"
+              completedFields={4}
+              totalFields={8}
             />
           </TaskListSection>
 
@@ -46,6 +52,8 @@ export function Examples() {
               href="#lab-testing"
               description="Enter details of requireed laboratory tests ..."
               status="in-progress"
+              completedFields={4}
+              totalFields={8}
             />
             <TaskListTask
               id="patient-and-clinical-requirements"
@@ -53,6 +61,8 @@ export function Examples() {
               href="#patient-and-clinical-requirements"
               description="Describe how you identify patients and calculate ..."
               status="not-started"
+              completedFields={4}
+              totalFields={8}
             />
           </TaskListSection>
         </TaskList>

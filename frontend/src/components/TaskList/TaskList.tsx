@@ -31,11 +31,13 @@ export type TaskListSectionProps = {
 
 export type TaskListTaskProps = {
   className?: string
+  completedFields?: number
   description?: ReactNode
   href?: string
   id?: string
   title: ReactNode
   status: TaskStatus
+  totalFields?: number
 }
 
 export type TaskListSummaryProps = {
@@ -163,16 +165,24 @@ export function TaskListSection({
 
 export function TaskListTask({
   className,
+  completedFields,
   description,
   href,
   id,
   title,
   status,
+  totalFields,
 }: TaskListTaskProps) {
   return (
     <li id={id} className={clsx(styles['task-list__task'], className)}>
       <div className={styles['task-list__task-content']}>
         <div className={styles['task-list__task-title']}>
+          {completedFields !== undefined && totalFields !== undefined && (
+            <p className={styles['task-list__task-field-summary']}>
+              You have completed {completedFields} of {totalFields}{' '}
+              {totalFields === 1 ? 'field' : 'fields'}
+            </p>
+          )}
           {href ? (
             <a className={styles['task-list__task-link']} href={href}>
               {title}
