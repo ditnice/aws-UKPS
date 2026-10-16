@@ -92,46 +92,6 @@ test.describe('Searching and filtering users', () => {
     })
   }
 
-  // test('filter for active in last 6 months', async ({ page }) => {
-  //   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-
-  //   await page.goto(`/portal/organisations/${organisationId}`)
-  //   const filter = page.getByRole('checkbox', {
-  //     name: 'In the last 6 months',
-  //   })
-  //   await filter.check()
-  //   await expect(filter).toBeChecked()
-  //   const dates = page.locator('tbody tr td:nth-child(4)')
-  //   const noUsersMessage = page.getByRole('cell', {
-  //     name: 'No users found for this organisation.',
-  //   })
-  //   await expect
-  //     .poll(async () => {
-  //       if (await noUsersMessage.isVisible()) return 'empty'
-  //       if ((await dates.count()) > 0) return 'results'
-  //       return 'loading'
-  //     })
-  //     .not.toBe('loading')
-
-  //   if (await noUsersMessage.isVisible()) {
-  //     await expect(page.getByText('Showing results 0 to 0 of 0')).toBeVisible()
-  //     await expect(dates).toHaveCount(0)
-  //   } else {
-  //     await expect(page.getByText('Filters (1 Active)')).toBeVisible()
-  //     await expect(dates.first()).toBeVisible()
-  //     const sixMonthsAgo = new Date()
-  //     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-  //     sixMonthsAgo.setHours(0, 0, 0, 0)
-
-  //     for (const date of await dates.allTextContents()) {
-  //       const [day, month, year] = date.trim().split('/').map(Number)
-  //       const lastActive = new Date(year, month - 1, day)
-
-  //       expect(lastActive.getTime()).toBeGreaterThanOrEqual(sixMonthsAgo.getTime())
-  //     }
-  //   }
-  // })
-
   test('filter users by active and pending', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
 
