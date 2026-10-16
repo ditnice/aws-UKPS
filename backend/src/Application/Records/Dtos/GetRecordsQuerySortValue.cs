@@ -24,4 +24,9 @@ public enum GetRecordsQuerySortValue
     /// Sorts records by their display status.
     /// </summary>
     DisplayStatus = 3,
+
+    /// <summary>
+    /// Sorts records by their title.
+    /// </summary>
+    RecordTitle = 4,
 }

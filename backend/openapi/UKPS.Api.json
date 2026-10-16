@@ -1740,9 +1740,12 @@
           {
             "name": "UpdateStatus",
             "in": "query",
-            "description": "Gets or initialises the update status filter. When set, only records that are\noverdue or not overdue for review will be returned.",
+            "description": "Gets or initialises the update status filters. When multiple values are set, records\nmatching any selected status will be returned.",
             "schema": {
-              "$ref": "#/components/schemas/UpdateStatus"
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UpdateStatus"
+              }
             }
           }
         ],
@@ -3457,7 +3460,8 @@
           "NextUpdateDue",
           "Id",
           "CompanyCode",
-          "DisplayStatus"
+          "DisplayStatus",
+          "RecordTitle"
         ],
         "type": "string",
         "description": "Specifies the fields by which records can be sorted."
@@ -5105,6 +5109,14 @@
             ],
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date the record is next due for an update, when available.",
+            "format": "date-time"
           }
         },
         "description": "Represents the record summary returned by the record list endpoint."
@@ -5553,10 +5565,10 @@
       "UpdateStatus": {
         "enum": [
           "Overdue",
-          "NotOverdue",
-          null
+          "NotOverdue"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "Represents the update status filter for records."
       },
       "UpdateUserDetailsCommand": {
         "required": [

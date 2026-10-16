@@ -23,7 +23,7 @@ export type OrganisationRecordsSearchParams = {
   search?: string
   recordType?: string | string[]
   recordStatus?: string | string[]
-  updateStatus?: string
+  updateStatus?: string | string[]
   page?: string
   pageSize?: string
   sortBy?: string
@@ -34,7 +34,7 @@ export type RecordsQuery = {
   search?: string
   recordType?: Array<RecordType>
   recordStatus?: Array<RecordDisplayStatus>
-  updateStatus?: UpdateStatus
+  updateStatus?: Array<UpdateStatus>
   page?: number
   pageSize?: number
   sortBy?: GetRecordsQuerySortValue
@@ -52,15 +52,14 @@ export const getActiveFilters = (query: RecordsQuery): Filter[] => {
           label: recordStatusLabels[s],
         }) as const,
     ) ?? []),
-    ...(query.updateStatus
-      ? [
-          {
-            key: 'update-status',
-            value: query.updateStatus,
-            label: updateStatusLabels[query.updateStatus],
-          } as const,
-        ]
-      : []),
+    ...(query.updateStatus?.map(
+      (status) =>
+        ({
+          key: 'update-status',
+          value: status,
+          label: updateStatusLabels[status],
+        }) as const,
+    ) ?? []),
   ]
 }
 
@@ -71,7 +70,7 @@ export const buildQueryFromFilters = (
   ...initialQuery,
   search: filters.find((f) => f.key === 'search')?.value,
   recordStatus: filters.filter((f) => f.key === 'record-status').map((x) => x.value),
-  updateStatus: filters.find((f) => f.key === 'update-status')?.value,
+  updateStatus: filters.filter((f) => f.key === 'update-status').map((x) => x.value),
 })
 
 export const parseQueryFromSearchParams = (
@@ -80,9 +79,7 @@ export const parseQueryFromSearchParams = (
   return {
     search: searchParams.search,
     recordStatus: parseMulti(searchParams.recordStatus, Object.values(RecordDisplayStatus)),
-    updateStatus: Object.values(UpdateStatus).includes(searchParams.updateStatus as UpdateStatus)
-      ? (searchParams.updateStatus as UpdateStatus)
-      : undefined,
+    updateStatus: parseMulti(searchParams.updateStatus, Object.values(UpdateStatus)),
     recordType: parseMulti(searchParams.recordType, Object.values(RecordType)),
     page: parsePage(searchParams.page),
     pageSize: parsePageSize(searchParams.pageSize),
@@ -90,8 +87,8 @@ export const parseQueryFromSearchParams = (
       searchParams.sortBy as GetRecordsQuerySortValue,
     )
       ? (searchParams.sortBy as GetRecordsQuerySortValue)
-      : undefined,
-    sortDirection: parseSortDirection(searchParams.sortDirection),
+      : 'DisplayStatus',
+    sortDirection: parseSortDirection(searchParams.sortDirection) ?? 'Ascending',
   }
 }
 

@@ -165,7 +165,8 @@ export const GetRecordsQuerySortValue = {
     NEXT_UPDATE_DUE: 'NextUpdateDue',
     ID: 'Id',
     COMPANY_CODE: 'CompanyCode',
-    DISPLAY_STATUS: 'DisplayStatus'
+    DISPLAY_STATUS: 'DisplayStatus',
+    RECORD_TITLE: 'RecordTitle'
 } as const;
 
 /**
@@ -962,6 +963,10 @@ export type RecordListItemDto = {
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
+    /**
+     * Gets the date the record is next due for an update, when available.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1288,8 +1293,14 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
     userRole: UserRole;
 };
 
+/**
+ * Represents the update status filter for records.
+ */
 export const UpdateStatus = { OVERDUE: 'Overdue', NOT_OVERDUE: 'NotOverdue' } as const;
 
+/**
+ * Represents the update status filter for records.
+ */
 export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
 
 /**
@@ -2154,10 +2165,10 @@ export type GetOrganisationRecordsData = {
          */
         SortDirection?: SortDirection;
         /**
-         * Gets or initialises the update status filter. When set, only records that are
-         * overdue or not overdue for review will be returned.
+         * Gets or initialises the update status filters. When multiple values are set, records
+         * matching any selected status will be returned.
          */
-        UpdateStatus?: UpdateStatus;
+        UpdateStatus?: Array<UpdateStatus>;
     };
     url: '/records/organisations/{organisationId}';
 };
