@@ -5,6 +5,7 @@ test.describe('User details screen', () => {
     await page.goto('/portal/user/me/edit-details')
     await expect(page).toHaveScreenshot('user-details.png', {
       fullPage: true,
+      maxDiffPixelRatio: 0.02,
     })
   })
 

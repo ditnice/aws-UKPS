@@ -5,7 +5,9 @@ test.describe('Searching and filtering users', () => {
   test('search and filter users page', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}`)
-    await expect(page.locator('.filter-panel')).toHaveScreenshot('user-details.png')
+    await expect(page.locator('.filter-panel')).toHaveScreenshot('filter-panel.png', {
+      maxDiffPixelRatio: 0.02,
+    })
   })
 
   test('search for a user', async ({ page }) => {

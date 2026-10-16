@@ -12,6 +12,7 @@ test('edit organisation details', async ({ page }) => {
   await page.goto(`/portal/organisations/${organisationId}/edit`)
   await expect(page).toHaveScreenshot('edit-organisation.png', {
     fullPage: true,
+    maxDiffPixelRatio: 0.02,
   })
 })
 

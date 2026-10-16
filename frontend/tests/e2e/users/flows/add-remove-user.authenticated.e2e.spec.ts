@@ -1,3 +1,5 @@
+import { goToNextPage } from 'tests/e2e/helpers/pagination'
+
 import { expect, test } from '../../fixtures/test'
 import { requireEnvironmentVariable } from '../../helpers/test-environment'
 
@@ -44,66 +46,43 @@ test.describe('Adding and removing a user', () => {
     // cannot test the email sending functionality yet
   })
 
-  // need to click on a link in an email for approve to appear
-  // test('approve a user', async ({ page }) => {
-  //   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-
-  //   await page.goto(`/portal/organisations/${organisationId}`)
-  //   await expect(page.getByText('Organisation details')).toBeVisible()
-  //   await page.getByRole('textbox', { name: 'Filter users' }).fill(testUser.workEmail)
-  //   await page.getByRole('button', { name: 'Apply filter', exact: true }).click()
-  //   const approveUserRow = page.getByRole('row').filter({
-  //     has: page.getByText(testUser.workEmail, { exact: true }),
-  //   })
-
-  //   await expect(approveUserRow).toBeVisible()
-  //   await approveUserRow.getByRole('link', { name: 'Approve' }).click()
-  //   await expect(page.getByRole('heading', { name: 'Approve user' })).toBeVisible()
-  //   await page.getByText('Approve user', { exact: true }).click()
-  //   await page.getByRole('button', { name: 'Continue' }).click()
-
-  //   await expect(page.getByText('Organisation details')).toBeVisible()
-  //   await page.getByRole('textbox', { name: 'Filter users' }).fill(testUser.workEmail)
-
-  //   await page
-  //     .getByRole('button', {
-  //       name: 'Apply filter',
-  //       exact: true,
-  //     })
-  //     .click()
-  //   const userRow = page.getByRole('row').filter({
-  //     has: page.getByRole('cell', {
-  //       name: testUser.workEmail,
-  //       exact: true,
-  //     }),
-  //   })
-  //   await expect(userRow).toBeVisible()
-  //   await expect(
-  //     userRow.getByRole('cell', {
-  //       name: 'Pending',
-  //       exact: true,
-  //     }),
-  //   ).toBeVisible()
-  // })
-
-  // this will only pass once the remove user functionality has been added
   test('remove a user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
 
     await page.goto(`/portal/organisations/${organisationId}`)
     await expect(page.getByText('Organisation details')).toBeVisible()
-    const activeUserRow = page
-      .getByRole('row')
-      .filter({
-        has: page.getByRole('link', {
+    const activeUserRow = page.getByRole('row').filter({
+      has: page.getByRole('link', {
+        name: 'Edit',
+        exact: true,
+      }),
+    })
+
+    let userEmail: string | undefined
+    await expect(page.getByText('Loading users...')).toBeHidden()
+    while (!userEmail) {
+      const matchingRows = await activeUserRow.count()
+
+      for (let i = 0; i < matchingRows; i++) {
+        const row = activeUserRow.nth(i)
+        const editLink = row.getByRole('link', {
           name: 'Edit',
           exact: true,
-        }),
-      })
-      .first()
-    await expect(activeUserRow).toBeVisible()
-    const userEmail = (await activeUserRow.getByRole('cell').first().innerText()).trim()
-    await activeUserRow.getByRole('link', { name: 'Edit' }).click()
+        })
+
+        if (await editLink.isVisible()) {
+          userEmail = (await row.getByRole('cell').first().innerText()).trim()
+          await editLink.click()
+          break
+        }
+      }
+
+      if (userEmail) break
+
+      if (!(await goToNextPage(page))) {
+        throw new Error('No active user to be removed')
+      }
+    }
     await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
     await page.getByText('Remove user', { exact: true }).click()
     await page.getByRole('button', { name: 'Continue' }).click()
