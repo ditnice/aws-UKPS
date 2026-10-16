@@ -113,7 +113,7 @@ describe('NavLinks', () => {
     )
   })
 
-  it('omits organisation links when the user has no current organisation', () => {
+  it('omits links that need a selected organisation when the user has none', () => {
     navigationState.pathname = '/portal/organisations/select'
 
     render(<NavLinks />)
@@ -121,7 +121,6 @@ describe('NavLinks', () => {
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
       'Dashboard',
       'Components',
-      'Manage my details',
     ])
   })
 

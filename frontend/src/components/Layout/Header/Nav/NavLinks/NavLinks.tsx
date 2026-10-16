@@ -21,9 +21,9 @@ const defaultRootLinks: NavLinkItem[] = [
   { href: '/about-us', label: 'About' },
 ]
 
-// Organisation links are only shown once the user has a current organisation.
+// Links to pages that need a selected organisation are only shown once the user has one.
 function getDefaultPortalLinks(organisationId: number | undefined): NavLinkItem[] {
-  const organisationLinks: NavLinkItem[] =
+  const linksRequiringOrganisation: NavLinkItem[] =
     organisationId === undefined
       ? []
       : [
@@ -32,13 +32,13 @@ function getDefaultPortalLinks(organisationId: number | undefined): NavLinkItem[
             label: 'View and manage records',
           },
           { href: `/portal/organisations/${organisationId}`, label: 'Manage my organisation' },
+          { href: '/portal/user/me', label: 'Manage my details' },
         ]
 
   return [
     { href: '/portal', label: 'Dashboard' },
     { href: '/portal/components', label: 'Components' },
-    ...organisationLinks,
-    { href: '/portal/user/me', label: 'Manage my details' },
+    ...linksRequiringOrganisation,
   ]
 }
 
