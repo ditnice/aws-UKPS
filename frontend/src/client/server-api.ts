@@ -2,6 +2,7 @@ import { cookies, headers } from 'next/headers'
 import { redirect, unstable_rethrow } from 'next/navigation'
 import 'server-only'
 
+import { env } from '@/env'
 import { buildSignInHref } from '@/lib/auth/routing'
 
 import { AuthenticationFailCode } from './generated'
@@ -13,11 +14,7 @@ const fallbackReturnTo = '/portal'
 const selectOrganisationPath = '/portal/organisations/select'
 
 export async function createServerApiClient(): Promise<Client> {
-  const baseUrl = process.env.BACKEND_API_BASE_URL
-
-  if (!baseUrl) {
-    throw new Error('BACKEND_API_BASE_URL is required to create the server API client.')
-  }
+  const baseUrl = env.BACKEND_API_BASE_URL
 
   const accessToken = (await cookies()).get('access_token')?.value
   const returnTo = (await headers()).get('x-ukps-return-to') ?? fallbackReturnTo

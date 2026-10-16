@@ -1,5 +1,7 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 
+import './src/env'
+
 import type { NextConfig } from 'next'
 
 const niceDesignSystemPackages = [
@@ -57,7 +59,7 @@ const nextConfig: NextConfig = {
 
     return webpackConfig
   },
-  transpilePackages: niceDesignSystemPackages,
+  transpilePackages: [...niceDesignSystemPackages, '@t3-oss/env-nextjs', '@t3-oss/env-core'],
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })

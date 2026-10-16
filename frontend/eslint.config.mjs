@@ -114,8 +114,27 @@ const eslintConfig = [
   },
   ...ndsWrapperRestrictions,
   {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/env.ts',
+      'src/**/*.test.{ts,tsx}',
+      'src/client/generated/**',
+      'src/payload-types.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'Import validated configuration from @/env instead of reading process.env.',
+        },
+      ],
+    },
+  },
+  {
     ignores: [
       '.next/',
+      'build/',
       'next-env.d.ts',
       'src/payload-types.ts',
       'src/payload-generated-schema.ts',

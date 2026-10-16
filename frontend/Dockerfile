@@ -30,7 +30,15 @@ COPY --from=deps /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml 
 COPY . .
 RUN mkdir -p public
 RUN mkdir -p media
-RUN pnpm build
+ARG NEXT_PUBLIC_QA_SUPPORT_EMAIL
+ENV NEXT_PUBLIC_QA_SUPPORT_EMAIL=${NEXT_PUBLIC_QA_SUPPORT_EMAIL}
+# Nonsecret build-only configuration. No runtime secrets or database/network access needed.
+# No validation bypass exists: public configuration is still required and validated.
+RUN AUTHENTICATION_MODE=DEV \
+    BACKEND_API_BASE_URL=http://127.0.0.1:7180 \
+    DATABASE_URL=postgres://build:build@127.0.0.1:5432/build \
+    PAYLOAD_SECRET=nonsecret-build-only-placeholder \
+    pnpm build
 
 # checkov:skip=CKV_DOCKER_2: Distroless base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP.
 FROM gcr.io/distroless/nodejs24-debian13:nonroot AS runtime
@@ -48,9 +56,10 @@ COPY --from=build --chown=nonroot:nonroot /app/.next/standalone ./
 COPY --from=build --chown=nonroot:nonroot /app/.next/static ./.next/static
 COPY --from=build --chown=nonroot:nonroot /app/public ./public
 COPY --from=build --chown=nonroot:nonroot /app/media ./media
+COPY --from=build --chown=nonroot:nonroot /app/build/start.mjs ./start.mjs
 
 USER nonroot
 
 EXPOSE 3000
 
-CMD ["server.js"]
+CMD ["start.mjs"]

@@ -1,11 +1,12 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 
+import { env } from '@/env'
 import { signInPath } from '@/lib/auth/routing'
 
-const cognitoIssuer = process.env.COGNITO_ISSUER
-const cognitoClientId = process.env.COGNITO_CLIENT_ID
-const authenticationMode = process.env.AUTHENTICATION_MODE
+const cognitoIssuer = env.COGNITO_ISSUER
+const cognitoClientId = env.COGNITO_CLIENT_ID
+const authenticationMode = env.AUTHENTICATION_MODE
 const cognitoJwks = cognitoIssuer
   ? createRemoteJWKSet(new URL(`${cognitoIssuer}/.well-known/jwks.json`))
   : undefined
@@ -23,18 +24,7 @@ export async function proxy(req: NextRequest) {
 
   if (accessToken) {
     try {
-      if (!cognitoIssuer) {
-        throw Error('Cognito issuer is not configured')
-      }
-
-      if (!cognitoClientId) {
-        throw Error('Cognito client ID is not configured')
-      }
-
-      if (!cognitoJwks) {
-        throw Error('Cognito JWKS is not configured')
-      }
-      const { payload } = await jwtVerify(accessToken, cognitoJwks, {
+      const { payload } = await jwtVerify(accessToken, cognitoJwks!, {
         issuer: cognitoIssuer,
       })
 

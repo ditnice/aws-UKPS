@@ -1,9 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DELETE, dynamic, GET, POST, runtime } from './route'
 
-const originalBaseUrl = process.env.BACKEND_API_BASE_URL
-const originalFrontendPublicOrigin = process.env.FRONTEND_PUBLIC_ORIGIN
+const env = vi.hoisted(() => ({
+  BACKEND_API_BASE_URL: 'https://api.example/v1',
+  BACKEND_API_TIMEOUT_MS: 15_000,
+  FRONTEND_PUBLIC_ORIGIN: undefined as string | undefined,
+}))
+vi.mock('@/env', () => ({ env }))
 
 function request(method = 'GET', headers: HeadersInit = {}, body?: string) {
   return new Request('https://frontend.example/backend-api/users?active=true', {
@@ -29,19 +33,13 @@ function responseWithCookies(cookies: string[], headers: HeadersInit = {}) {
 }
 
 beforeEach(() => {
-  process.env.BACKEND_API_BASE_URL = 'https://api.example/v1'
+  env.BACKEND_API_BASE_URL = 'https://api.example/v1'
+  env.BACKEND_API_TIMEOUT_MS = 15_000
+  env.FRONTEND_PUBLIC_ORIGIN = undefined
   vi.stubGlobal(
     'fetch',
     vi.fn(async () => new Response('ok')),
   )
-})
-
-afterEach(() => {
-  vi.restoreAllMocks()
-  if (originalBaseUrl === undefined) delete process.env.BACKEND_API_BASE_URL
-  else process.env.BACKEND_API_BASE_URL = originalBaseUrl
-  if (originalFrontendPublicOrigin === undefined) delete process.env.FRONTEND_PUBLIC_ORIGIN
-  else process.env.FRONTEND_PUBLIC_ORIGIN = originalFrontendPublicOrigin
 })
 
 describe('backend API route', () => {
@@ -51,25 +49,13 @@ describe('backend API route', () => {
   })
 
   it('constructs a URL below the configured base path and preserves only the request query', async () => {
-    process.env.BACKEND_API_BASE_URL = 'https://api.example/root/api?configured=ignored#fragment'
+    env.BACKEND_API_BASE_URL = 'https://api.example/root/api?configured=ignored#fragment'
 
     await GET(request() as never, context('people', 'a/b'))
 
     const [url, init] = vi.mocked(fetch).mock.calls[0]
     expect(String(url)).toBe('https://api.example/root/api/people/a%2Fb?active=true')
     expect(init).toMatchObject({ cache: 'no-store', method: 'GET', redirect: 'manual' })
-  })
-
-  it('returns a private error for missing or invalid configuration', async () => {
-    delete process.env.BACKEND_API_BASE_URL
-    const missing = await GET(request() as never, context('users'))
-    process.env.BACKEND_API_BASE_URL = 'file:///etc/passwd'
-    const invalid = await GET(request() as never, context('users'))
-
-    expect(missing.status).toBe(500)
-    expect(invalid.status).toBe(500)
-    expect(missing.headers.get('cache-control')).toBe('private, no-store')
-    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('allows safe methods without Origin and requires same-origin Origin for unsafe methods', async () => {
@@ -105,7 +91,7 @@ describe('backend API route', () => {
   })
 
   it('uses the configured public frontend origin for unsafe method validation', async () => {
-    process.env.FRONTEND_PUBLIC_ORIGIN = 'https://dev.ukps.nice.org.uk'
+    env.FRONTEND_PUBLIC_ORIGIN = 'https://dev.ukps.nice.org.uk'
 
     const allowed = await POST(
       request(
@@ -277,21 +263,12 @@ describe('backend API route', () => {
   })
 
   it('uses a configured positive upstream timeout', async () => {
-    vi.stubEnv('BACKEND_API_TIMEOUT_MS', '2500')
+    env.BACKEND_API_TIMEOUT_MS = 2500
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout')
 
     await GET(request() as never, context('users'))
 
     expect(timeoutSpy).toHaveBeenCalledWith(2500)
-  })
-
-  it.each(['abc', '0', '-1'])('uses the default upstream timeout for %s', async (timeout) => {
-    vi.stubEnv('BACKEND_API_TIMEOUT_MS', timeout)
-    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout')
-
-    await GET(request() as never, context('users'))
-
-    expect(timeoutSpy).toHaveBeenCalledWith(15_000)
   })
 
   it('passes client cancellation to fetch and does not buffer the upstream response', async () => {

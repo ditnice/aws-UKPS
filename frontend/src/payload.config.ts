@@ -9,30 +9,12 @@ import sharp from 'sharp'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Users } from './collections/Users'
+import { env, getDatabaseConnectionString } from './env'
 import { Header } from './globals/Header'
 import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-
-function getDatabaseConnectionString(): string {
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL
-  }
-
-  const { DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_PORT, DATABASE_USERNAME } =
-    process.env
-
-  if (DATABASE_HOST && DATABASE_NAME && DATABASE_PASSWORD && DATABASE_PORT && DATABASE_USERNAME) {
-    const username = encodeURIComponent(DATABASE_USERNAME)
-    const password = encodeURIComponent(DATABASE_PASSWORD)
-    const databaseName = encodeURIComponent(DATABASE_NAME)
-
-    return `postgres://${username}:${password}@${DATABASE_HOST}:${DATABASE_PORT}/${databaseName}?sslmode=verify-full`
-  }
-
-  return ''
-}
 
 export default buildConfig({
   admin: {
@@ -44,7 +26,7 @@ export default buildConfig({
   collections: [Users, Media, Pages],
   editor: lexicalEditor(),
   globals: [Header],
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: env.PAYLOAD_SECRET,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

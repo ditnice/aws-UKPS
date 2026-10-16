@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { postAuthResendSetupToken } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
+import { env } from '@/env'
 
 import styles from '../page.module.scss'
 
@@ -12,7 +13,7 @@ import { SignUpInitiateError } from './SignUpInitiateError'
 import type { ReactNode } from 'react'
 
 const resendCooldownSeconds = 60
-const supportEmail = process.env.NEXT_PUBLIC_QA_SUPPORT_EMAIL
+const supportEmail = env.NEXT_PUBLIC_QA_SUPPORT_EMAIL
 
 type RequestNewLinkProps = {
   setupToken: string

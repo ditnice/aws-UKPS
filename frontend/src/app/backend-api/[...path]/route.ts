@@ -1,3 +1,5 @@
+import { env } from '@/env'
+
 import type { NextRequest } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -46,15 +48,10 @@ const responseHeaderAllowlist = [
 
 const allowedCookies = new Set(['access_token', 'refresh_token', 'csrf_token'])
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
-const defaultUpstreamTimeoutMs = 15_000
 const privateNoStore = 'private, no-store'
 
 async function proxyRequest(request: NextRequest, context: RouteContext): Promise<Response> {
-  const backendApiBaseUrl = process.env.BACKEND_API_BASE_URL
-
-  if (!backendApiBaseUrl) {
-    return errorResponse(500, 'BACKEND_API_BASE_URL is not configured.')
-  }
+  const backendApiBaseUrl = env.BACKEND_API_BASE_URL
 
   if (unsafeMethods.has(request.method) && !hasSameOrigin(request)) {
     logOriginRejection(request)
@@ -66,13 +63,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
     return errorResponse(400, 'The requested backend path is invalid.')
   }
 
-  let targetUrl: URL
-
-  try {
-    targetUrl = buildTargetUrl(backendApiBaseUrl, path, new URL(request.url).search)
-  } catch {
-    return errorResponse(500, 'BACKEND_API_BASE_URL is invalid.')
-  }
+  const targetUrl = buildTargetUrl(backendApiBaseUrl, path, new URL(request.url).search)
 
   const requestHeaders = new Headers()
   for (const name of requestHeaderAllowlist) {
@@ -83,7 +74,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
   const cookie = filterRequestCookies(request.headers.get('cookie'))
   if (cookie) requestHeaders.set('cookie', cookie)
 
-  const timeoutSignal = AbortSignal.timeout(getUpstreamTimeoutMs())
+  const timeoutSignal = AbortSignal.timeout(env.BACKEND_API_TIMEOUT_MS)
   const init: RequestInit = {
     cache: 'no-store',
     headers: requestHeaders,
@@ -133,13 +124,6 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
 
 function buildTargetUrl(baseUrl: string, path: string[], search: string): URL {
   const targetUrl = new URL(baseUrl)
-  if (
-    !['http:', 'https:'].includes(targetUrl.protocol) ||
-    targetUrl.username ||
-    targetUrl.password
-  ) {
-    throw new TypeError('Invalid backend URL')
-  }
   const basePath = targetUrl.pathname.endsWith('/') ? targetUrl.pathname : `${targetUrl.pathname}/`
   targetUrl.pathname = `${basePath}${path.map(encodeURIComponent).join('/')}`
   targetUrl.search = search
@@ -152,7 +136,7 @@ function hasSameOrigin(request: NextRequest): boolean {
   if (!origin) return false
 
   try {
-    const expectedOrigin = process.env.FRONTEND_PUBLIC_ORIGIN ?? new URL(request.url).origin
+    const expectedOrigin = env.FRONTEND_PUBLIC_ORIGIN ?? new URL(request.url).origin
     return new URL(origin).origin === expectedOrigin
   } catch {
     return false
@@ -177,13 +161,6 @@ function logOriginRejection(request: NextRequest): void {
     requestOrigin,
     requestUrl: request.url,
   })
-}
-
-function getUpstreamTimeoutMs(): number {
-  const configuredTimeout = Number(process.env.BACKEND_API_TIMEOUT_MS)
-  return Number.isInteger(configuredTimeout) && configuredTimeout > 0
-    ? configuredTimeout
-    : defaultUpstreamTimeoutMs
 }
 
 function filterRequestCookies(cookieHeader: string | null): string {

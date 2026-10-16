@@ -1,4 +1,5 @@
 .next/
+build/
 coverage/
 node_modules/
 playwright-report/

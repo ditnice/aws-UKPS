@@ -30,7 +30,7 @@ export default defineConfig({
           name: 'integration',
           environment: 'node',
           include: ['tests/int/**/*.int.test.ts'],
-          setupFiles: ['./vitest.setup.ts'],
+          setupFiles: ['./vitest.setup.integration.ts'],
         },
       },
     ],

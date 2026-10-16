@@ -24,27 +24,61 @@ After you click the `Deploy` button above, you'll want to have standalone copy o
 
 ### Configuration
 
-The following environment variables can be set:
+Configuration is validated centrally in `src/env.ts` using T3 Env and Zod 4. Invalid or
+missing values fail at config import and standalone startup, with variable names only
+in errors (never values). Validation parses configuration only: it makes no database
+or network connections. Application code must import `env`, not read `process.env`.
 
-| Variable                 | Required | Example                                                           | Description                                                                                                                                                                                                                                                             |
-| ------------------------ | -------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BACKEND_API_BASE_URL`   | Yes      | `https://localhost:7180`                                          | Base URL of the backend API. All API requests are sent to this endpoint.                                                                                                                                                                                                |
-| `BACKEND_API_TIMEOUT_MS` | No       | `60000`                                                           | Maximum time, in milliseconds, to wait for a backend API response before timing out.                                                                                                                                                                                    |
-| `COGNITO_ISSUER`         | Yes*     | `https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h` | AWS Cognito User Pool issuer URL used to validate authentication tokens.                                                                                                                                                                                                |
-| `COGNITO_CLIENT_ID`      | Yes*     | `ioihsfd49fj09wj3f`                                               | AWS Cognito App Client ID used during authentication and authorization flows.                                                                                                                                                                                           |
-| `AUTHENTICATION_MODE`    | No       | `DEV`                                                             | Controls how authentication is handled by the application. `DEV` means that you will be allowed to access all routes without authentication and is intended for local development and testing only. If this is enabled you will not be able to use the login processes. |
+| Variable                                                                                    | Required                       | Rules                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BACKEND_API_BASE_URL`                                                                      | Yes                            | HTTP(S) URL without credentials. Base paths are preserved.                                                                                                                                                  |
+| `BACKEND_API_TIMEOUT_MS`                                                                    | No                             | Integer milliseconds `1..2147483647` (Node's timer limit without overflow warnings or clamping); defaults to `15000` when absent.                                                                           |
+| `FRONTEND_PUBLIC_ORIGIN`                                                                    | No                             | HTTP(S) origin only, without credentials, path, query or fragment. A trailing `/` is normalized. When absent, unsafe-method checks use the request origin.                                                  |
+| `PAYLOAD_SECRET`                                                                            | Yes                            | Nonblank secret; bytes, including surrounding spaces, are preserved.                                                                                                                                        |
+| `DATABASE_URL`                                                                              | Either URL or all fields below | PostgreSQL `postgres://` or `postgresql://` URL with host and database. Takes precedence over separate fields, which are ignored when the URL is supplied. An invalid URL never falls back.                 |
+| `DATABASE_HOST`, `DATABASE_NAME`, `DATABASE_PASSWORD`, `DATABASE_PORT`, `DATABASE_USERNAME` | All required without URL       | Nonblank values; host must be a hostname or bracketed IPv6, port an integer `1..65535`. Credentials and database name are encoded without trimming. Generated connection strings use `sslmode=verify-full`. |
+| `AUTHENTICATION_MODE`                                                                       | No                             | Only `DEV` is accepted. Omit for authenticated mode. `DEV` bypasses portal authentication: local development/testing only.                                                                                  |
+| `COGNITO_ISSUER`                                                                            | Unless DEV                     | HTTP(S) issuer URL without credentials.                                                                                                                                                                     |
+| `COGNITO_CLIENT_ID`                                                                         | Unless DEV                     | Nonblank Cognito app client ID. Supplied Cognito values are validated even in DEV.                                                                                                                          |
+| `NEXT_PUBLIC_QA_SUPPORT_EMAIL`                                                              | Yes, at build time             | Valid support email, embedded in browser assets. Not a secret.                                                                                                                                              |
 
-> \* Unless AUTHENTICATION_MODE=DEV
+Copy `.env.example` to `.env` for local development and replace placeholders. Optional
+values should be omitted, not set to empty strings. Unit/component tests use explicit
+nonsecret configuration in `vitest.setup.ts`, never a developer's `.env`.
 
-#### Example Configuration
+#### Builds and ECS startup
 
-```env
-BACKEND_API_BASE_URL=https://localhost:7180
-BACKEND_API_TIMEOUT_MS=60000
-COGNITO_ISSUER=https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h
-COGNITO_CLIENT_ID=ioihsfd49fj09wj3f
-AUTHENTICATION_MODE=DEV
+Use Node 24 and pnpm 12. `pnpm dev`, `pnpm devsafe`, `pnpm build` and `pnpm start`
+validate configuration before launching Next, using Node 24's native TypeScript support
+and Next's mode-specific `.env` loading. `next.config.ts` also validates direct Next CLI
+invocations, but use the pnpm commands to check before Next announces readiness.
+`pnpm build` bundles `build/start.mjs` with its validator dependencies. No TypeScript loader or
+development dependencies are needed at runtime. The Docker image runs `start.mjs`,
+which validates ECS-injected server configuration **before** importing `server.js`.
+Do not override the container command to `server.js`; standalone Next does not load
+`next.config.ts`. `node start.mjs --check-env` validates without starting the server.
+There is no runtime validation bypass.
+
+The Docker build supplies nonsecret, build-only server placeholders and DEV mode in
+one `RUN` instruction; these are not runtime defaults. Real server secrets must only
+be injected at startup, not passed as Docker build arguments. The build needs no live
+backend or PostgreSQL database. The runtime preflight validates the real values again.
+The existing static homepage prerender may attempt its fixture database connection and
+log a Payload fallback warning; this does not fail the build. That page uses its default
+content when CMS content is unavailable at build time.
+
+Pass the public support email explicitly:
+
+```sh
+docker build --build-arg NEXT_PUBLIC_QA_SUPPORT_EMAIL=support@example.com -t ukps-frontend .
 ```
+
+The existing ECS runtime-only `NEXT_PUBLIC_QA_SUPPORT_EMAIL` setting cannot populate
+browser assets. Deployment pipelines must pass the target environment's `qa_support_email`
+as this build argument. Rebuild per environment when support emails differ; do not promote
+an image built with another environment's email. Changing an ECS variable alone cannot
+change the embedded email. The preflight uses the same build-time email as Next. Server
+variables remain runtime-configurable, so environments sharing an email may share an image.
 
 ### Public content access integration tests
 

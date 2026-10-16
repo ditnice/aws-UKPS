@@ -1,11 +1,15 @@
 import { getPayload, Payload } from 'payload'
-import { describe, it, beforeAll, expect } from 'vitest'
+import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 
 import config from '@/payload.config'
 
 let payload: Payload
 
 describe('API', () => {
+  afterAll(async () => {
+    if (payload) await payload.destroy()
+  })
+
   beforeAll(async () => {
     const payloadConfig = await config
     payload = await getPayload({ config: payloadConfig })

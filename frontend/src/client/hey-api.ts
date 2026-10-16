@@ -1,3 +1,4 @@
+import { env } from '@/env'
 import { csrfCookieName, csrfHeaderName, getCookie } from '@/lib/auth/cookies'
 import { buildSignInHref, signInPath } from '@/lib/auth/routing'
 
@@ -14,7 +15,7 @@ export const createClientConfig: CreateClientConfig = (config) => {
 
   return {
     ...config,
-    baseUrl: isBrowser ? browserBaseUrl : process.env.BACKEND_API_BASE_URL,
+    baseUrl: isBrowser ? browserBaseUrl : env.BACKEND_API_BASE_URL,
     // TODO: Server Components cannot persist refreshed cookies. Until a renewal layer exists,
     // server-side 401 responses should redirect to authentication.
     fetch: isBrowser ? browserFetch : globalThis.fetch,
