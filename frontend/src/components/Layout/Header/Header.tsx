@@ -7,13 +7,21 @@ import { useState } from 'react'
 import { Account } from './Account/Account'
 import styles from './Header.module.scss'
 import { Nav } from './Nav/Nav'
+import { OrganisationSwitcher } from './OrganisationSwitcher/OrganisationSwitcher'
 import { SkipLink } from './SkipLink/SkipLink'
+
+export type CurrentOrganisation = {
+  id: number
+  name: string
+  hasMultipleOrganisations: boolean
+}
 
 export type HeaderProps = {
   skipLinkId: string
+  currentOrganisation?: CurrentOrganisation
 }
 
-export function Header({ skipLinkId }: HeaderProps) {
+export function Header({ skipLinkId, currentOrganisation }: HeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const handleMobileMenuBtnClick = () => {
@@ -65,9 +73,12 @@ export function Header({ skipLinkId }: HeaderProps) {
               </div>
             </div>
           </div>
-          <Nav isExpanded={isExpanded} />
+          <Nav isExpanded={isExpanded} organisationId={currentOrganisation?.id} />
         </header>
       </div>
+      {currentOrganisation?.hasMultipleOrganisations && (
+        <OrganisationSwitcher organisationName={currentOrganisation.name} />
+      )}
     </>
   )
 }

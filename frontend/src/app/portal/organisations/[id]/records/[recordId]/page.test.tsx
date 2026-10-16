@@ -81,10 +81,10 @@ const renderPage = async (recordId = '42', recordType: string | undefined = 'Med
     params: Promise.resolve({ id: '7', recordId }),
     searchParams: Promise.resolve({ recordType }),
   })
-  // The organisation wrapper mock renders the async record view directly, so resolve it here.
+  // The organisation wrapper mock returns the record view element, so render it here.
   const view = page.props.children({ id: 7 }) as ReactElement<unknown>
-  const viewComponent = view.type as (props: unknown) => Promise<ReactElement>
-  render(await viewComponent(view.props))
+  const viewComponent = view.type as (props: unknown) => ReactElement
+  render(viewComponent(view.props))
 }
 
 beforeEach(() => {
@@ -103,7 +103,10 @@ describe('RecordPage', () => {
     await renderPage()
 
     expect(getRecord).toHaveBeenCalledWith(
-      expect.objectContaining({ path: { id: 42 }, query: { recordType: 'Medicine' } }),
+      expect.objectContaining({
+        path: { id: 42 },
+        query: { recordType: 'Medicine', organisationId: 7 },
+      }),
     )
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Record 42: GC22')
     expect(screen.getByTestId('lead').textContent).toBe(
@@ -116,30 +119,22 @@ describe('RecordPage', () => {
   })
 
   it.each([
-    ['an invalid record ID', 'abc', 'Medicine'],
-    ['a missing record type', '42', undefined],
-    ['an invalid record type', '42', 'Device'],
-  ])('returns not found for %s', async (_, recordId, recordType) => {
+    ['an invalid organisation ID', 'abc', '42', 'Medicine'],
+    ['an invalid record ID', '7', 'abc', 'Medicine'],
+    ['a missing record type', '7', '42', undefined],
+    ['an invalid record type', '7', '42', 'Device'],
+  ])('returns not found for %s', async (_, id, recordId, recordType) => {
     await expect(
       RecordPage({
-        params: Promise.resolve({ id: '7', recordId }),
+        params: Promise.resolve({ id, recordId }),
         searchParams: Promise.resolve({ recordType }),
       }),
     ).rejects.toThrow('NEXT_NOT_FOUND')
+    expect(getRecord).not.toHaveBeenCalled()
   })
 
   it('returns not found when the API cannot find the record', async () => {
     mockRecord({ data: undefined, error: {}, response: new Response(null, { status: 404 }) })
-
-    await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND')
-  })
-
-  it('returns not found when the record belongs to a different organisation', async () => {
-    mockRecord({
-      data: { ...medicineRecord, organisationId: 8 },
-      error: undefined,
-      response: new Response(),
-    })
 
     await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND')
   })

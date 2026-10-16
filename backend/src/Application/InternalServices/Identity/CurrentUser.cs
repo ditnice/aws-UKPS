@@ -27,4 +27,9 @@ public sealed record CurrentUser
     /// The email address of the current user.
     /// </summary>
     public required string Email { get; init; }
+
+    /// <summary>
+    /// Gets the organisations the current user can select, with their role in each.
+    /// </summary>
+    public IReadOnlyCollection<SelectableMembership> SelectableMemberships { get; init; } = [];
 }

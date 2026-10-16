@@ -28,6 +28,7 @@ const user: UserInformationDto = {
   organisationName: 'Example Pharma',
   userRole: userRole,
   status: 'Active',
+  hasMultipleOrganisations: false,
 }
 const currentUserRole = 'Super' as UserRole
 const currentUser = {
@@ -52,6 +53,7 @@ function mockCurrentUserResponse(overrides = {}) {
       workTelephone: '',
       organisationMembershipId: 1,
       status: 'Active',
+      hasMultipleOrganisations: false,
       organisationId: 1,
       organisationName: '',
     },

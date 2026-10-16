@@ -1,5 +1,6 @@
 using Bogus;
 using Shouldly;
+using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
@@ -72,6 +73,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -102,6 +104,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -143,6 +146,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -160,6 +164,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -172,6 +177,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(
             999_999,
             RecordType.Medicine,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -190,10 +196,101 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await service.GetRecord(
             record.Id,
             RecordType.Medicine,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
         result.ShouldBeError().ShouldBeOfType<GetRecordError.NotAllowed>();
+    }
+
+    [Fact]
+    public async Task GetRecord_RecordInAnotherOrganisation_ReturnsNotFound()
+    {
+        Record record = await AddRecord(RecordStatus.Published);
+        await AddRevision(record, 1, WorkflowStatus.Published);
+        Organisation otherOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var service = _harness
+            .UpdateCurrentUser(x => x with { OrganisationId = otherOrganisation.Id })
+            .Service;
+
+        GetRecordResult result = await service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            otherOrganisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<GetRecordError.NotFound>();
+    }
+
+    [Fact]
+    public async Task GetRecord_RecordInAnotherSelectableOrganisation_ReturnsNotFoundRatherThanOfferingToSwitch()
+    {
+        Record record = await AddRecord(RecordStatus.Published);
+        await AddRevision(record, 1, WorkflowStatus.Published);
+        Organisation otherOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var service = _harness
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    SelectableMemberships =
+                    [
+                        new(_organisation.Id, UserRole.Standard),
+                        new(otherOrganisation.Id, UserRole.Standard),
+                    ],
+                }
+            )
+            .Service;
+
+        GetRecordResult result = await service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            otherOrganisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<GetRecordError.NotFound>();
+    }
+
+    [Fact]
+    public async Task GetRecord_RecordInSelectableOrganisationThatIsNotSelected_ThrowsMismatch()
+    {
+        Record record = await AddRecord(RecordStatus.Published);
+        await AddRevision(record, 1, WorkflowStatus.Published);
+        Organisation selectedOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var service = _harness
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    OrganisationId = selectedOrganisation.Id,
+                    SelectableMemberships =
+                    [
+                        new(selectedOrganisation.Id, UserRole.Standard),
+                        new(_organisation.Id, UserRole.Standard),
+                    ],
+                }
+            )
+            .Service;
+
+        SelectedOrganisationMismatchException exception =
+            await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+                service.GetRecord(
+                    record.Id,
+                    RecordType.Medicine,
+                    _organisation.Id,
+                    TestContext.Current.CancellationToken
+                )
+            );
+        exception.OrganisationId.ShouldBe(_organisation.Id);
     }
 
     [Fact]
@@ -205,6 +302,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Vaccine,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -227,6 +325,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(
             record.Id,
             requestedRecordType,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -244,6 +343,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         GetRecordResult result = await Service.GetRecord(
             record.Id,
             RecordType.Medicine,
+            _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
@@ -299,7 +399,12 @@ public class RecordViewServiceTests : DatabaseTestBase
             ct
         );
 
-        GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            ct
+        );
 
         var dto = result
             .ShouldBeSuccess()
@@ -363,7 +468,12 @@ public class RecordViewServiceTests : DatabaseTestBase
             ct
         );
 
-        GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            ct
+        );
 
         var dto = result
             .ShouldBeSuccess()
@@ -525,7 +635,12 @@ public class RecordViewServiceTests : DatabaseTestBase
         );
         await Context.SaveChangesAsync(ct);
 
-        GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            ct
+        );
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.MedicinesDevelopmentBackground.ShouldBe(
@@ -726,7 +841,12 @@ public class RecordViewServiceTests : DatabaseTestBase
         );
         await Context.SaveChangesAsync(ct);
 
-        GetRecordResult result = await Service.GetRecord(record.Id, RecordType.Medicine, ct);
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            ct
+        );
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.RecordClinicalTrialInformation.ShouldNotBeNull()

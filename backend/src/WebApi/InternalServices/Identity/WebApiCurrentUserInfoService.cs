@@ -55,6 +55,28 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             );
     }
 
+    private static SelectableMembership[] FindSelectableMemberships(ClaimsPrincipal claimsPrincipal)
+    {
+        return claimsPrincipal
+            .FindAll(UkpsClaimTypes.SelectableMembership)
+            .Select(claim => ParseSelectableMembership(claim.Value))
+            .ToArray();
+    }
+
+    private static SelectableMembership ParseSelectableMembership(string value)
+    {
+        string[] parts = value.Split(':');
+        return
+            parts.Length == 2
+            && int.TryParse(parts[0], CultureInfo.InvariantCulture, out var organisationId)
+            && Enum.TryParse<UserRole>(parts[1], out var role)
+            && Enum.IsDefined(role)
+            ? new SelectableMembership(organisationId, role)
+            : throw new InvalidOperationException(
+                $"Invalid {UkpsClaimTypes.SelectableMembership} claim value."
+            );
+    }
+
     private static CognitoUsername FindCognitoUsername(ClaimsPrincipal claimsPrincipal)
     {
         string usernameValue =
@@ -73,6 +95,7 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             UserRole = FindUserRole(claimsPrincipal),
             Email = FindUserEmail(claimsPrincipal),
             CognitoUsername = FindCognitoUsername(claimsPrincipal),
+            SelectableMemberships = FindSelectableMemberships(claimsPrincipal),
         };
     }
 }
