@@ -2939,17 +2939,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               }
             }
@@ -5296,8 +5296,35 @@
       },
       "RegisterUserConfirmationDto": {
         "required": [
-          "id",
           "organisationName",
+          "fullName",
+          "workEmail",
+          "phoneNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the user's organisation."
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Gets the user's full name."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's work email address."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the user phone number."
+          }
+        },
+        "description": "Represents the details of a user who has been registered."
+      },
+      "RegisterUserDetailsDto": {
+        "required": [
+          "id",
           "fullName",
           "workEmail",
           "phoneNumber"
@@ -5306,12 +5333,8 @@
         "properties": {
           "id": {
             "type": "integer",
-            "description": "ID for the user.",
+            "description": "The Id to identify the registration details.",
             "format": "int32"
-          },
-          "organisationName": {
-            "type": "string",
-            "description": "Gets the name of the user's organisation."
           },
           "fullName": {
             "type": "string",

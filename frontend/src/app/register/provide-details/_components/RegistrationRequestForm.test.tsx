@@ -30,7 +30,6 @@ afterEach(() => {
 })
 
 const confirmation: RegisterUserConfirmationDto = {
-  id: 7,
   organisationName: 'Test Organisation',
   fullName: 'Jane Smith',
   workEmail: 'jane.smith@example.com',
@@ -112,12 +111,8 @@ describe('RegistrationRequestForm', () => {
     await user.click(screen.getByRole('button', { name: 'Submit request' }))
 
     await waitFor(() => {
-      expect(sessionStorage.getItem(`request_${confirmation.id}`)).toBe(
-        JSON.stringify(confirmation),
-      )
-      expect(mockPush).toHaveBeenCalledWith(
-        `/register/request-submitted/request_${confirmation.id}`,
-      )
+      expect(sessionStorage.getItem(`registrationRequest`)).toBe(JSON.stringify(confirmation))
+      expect(mockPush).toHaveBeenCalledWith(`/register/request-submitted`)
     })
   })
 
