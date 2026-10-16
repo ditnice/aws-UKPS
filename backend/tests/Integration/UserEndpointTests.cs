@@ -278,7 +278,7 @@ public class UserEndpointTests : DatabaseTestBase
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+        var dto = await response.Content.ReadFromJsonAsync<RegisterUserDetailsDto>(
             TestContext.Current.CancellationToken
         );
         dto.ShouldNotBeNull().Id.ShouldBe(request.Id);

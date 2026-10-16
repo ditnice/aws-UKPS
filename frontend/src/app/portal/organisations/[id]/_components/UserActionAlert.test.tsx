@@ -6,7 +6,7 @@ import {
   getUserDetailsWithinOrganisation,
   getUserRegistrationById,
 } from '@/client/generated/sdk.gen'
-import type { RegisterUserConfirmationDto, UserInformationDto } from '@/client/generated/types.gen'
+import type { RegisterUserDetailsDto, UserInformationDto } from '@/client/generated/types.gen'
 import { createServerApiClient } from '@/client/server-api'
 
 import { UserActionAlert } from './UserActionAlert'
@@ -36,11 +36,10 @@ const user: UserInformationDto = {
 
 const registration = {
   id: 4,
-  organisationName: 'Example Pharma',
   fullName: 'Jane Smith',
   workEmail: 'jane.smith@example.com',
   phoneNumber: '01234 567890',
-} satisfies RegisterUserConfirmationDto
+} satisfies RegisterUserDetailsDto
 
 const apiClient = {} as Client
 

@@ -72,7 +72,7 @@ internal class UserRegistrationService : IUserRegistrationService
                 .Include(x => x.Organisation)
                 .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
 
-            var dto = MapToDto(request);
+            var dto = MapToConfirmationDto(request);
             await _emailService.SendEmail(
                 new SendEmailCommand()
                 {
@@ -122,7 +122,7 @@ internal class UserRegistrationService : IUserRegistrationService
 
         // Only offer to switch organisation once the request is known to be in it.
         access.ThrowIfNotSelected(organisationId);
-        var dto = MapToDto(request);
+        var dto = MapToDetailsDto(request);
         return GetUserRegistrationByIdResult.Ok(dto);
     }
 
@@ -306,14 +306,26 @@ internal class UserRegistrationService : IUserRegistrationService
         );
     }
 
-    private static RegisterUserConfirmationDto MapToDto(
+    private static RegisterUserConfirmationDto MapToConfirmationDto(
+        UserRegistrationRequest userRegistrationRequest
+    )
+    {
+        return new()
+        {
+            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
+            FullName = userRegistrationRequest.FullName,
+            WorkEmail = userRegistrationRequest.WorkEmail,
+            PhoneNumber = userRegistrationRequest.PhoneNumber,
+        };
+    }
+
+    private static RegisterUserDetailsDto MapToDetailsDto(
         UserRegistrationRequest userRegistrationRequest
     )
     {
         return new()
         {
             Id = userRegistrationRequest.Id,
-            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
             FullName = userRegistrationRequest.FullName,
             WorkEmail = userRegistrationRequest.WorkEmail,
             PhoneNumber = userRegistrationRequest.PhoneNumber,

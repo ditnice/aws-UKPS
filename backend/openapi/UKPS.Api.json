@@ -1840,9 +1840,12 @@
           {
             "name": "UpdateStatus",
             "in": "query",
-            "description": "Gets or initialises the update status filter. When set, only records that are\noverdue or not overdue for review will be returned.",
+            "description": "Gets or initialises the update status filters. When multiple values are set, records\nmatching any selected status will be returned.",
             "schema": {
-              "$ref": "#/components/schemas/UpdateStatus"
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UpdateStatus"
+              }
             }
           }
         ],
@@ -3189,17 +3192,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               }
             }
@@ -3776,7 +3779,8 @@
           "NextUpdateDue",
           "Id",
           "CompanyCode",
-          "DisplayStatus"
+          "DisplayStatus",
+          "RecordTitle"
         ],
         "type": "string",
         "description": "Specifies the fields by which records can be sorted."
@@ -5424,6 +5428,14 @@
             ],
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date the record is next due for an update, when available.",
+            "format": "date-time"
           }
         },
         "description": "Represents the record summary returned by the record list endpoint."
@@ -5615,8 +5627,35 @@
       },
       "RegisterUserConfirmationDto": {
         "required": [
-          "id",
           "organisationName",
+          "fullName",
+          "workEmail",
+          "phoneNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the user's organisation."
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Gets the user's full name."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's work email address."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the user phone number."
+          }
+        },
+        "description": "Represents the details of a user who has been registered."
+      },
+      "RegisterUserDetailsDto": {
+        "required": [
+          "id",
           "fullName",
           "workEmail",
           "phoneNumber"
@@ -5625,12 +5664,8 @@
         "properties": {
           "id": {
             "type": "integer",
-            "description": "ID for the user.",
+            "description": "The Id to identify the registration details.",
             "format": "int32"
-          },
-          "organisationName": {
-            "type": "string",
-            "description": "Gets the name of the user's organisation."
           },
           "fullName": {
             "type": "string",
@@ -5849,10 +5884,10 @@
       "UpdateStatus": {
         "enum": [
           "Overdue",
-          "NotOverdue",
-          null
+          "NotOverdue"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "Represents the update status filter for records."
       },
       "UpdateUserDetailsCommand": {
         "required": [

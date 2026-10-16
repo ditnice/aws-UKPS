@@ -310,7 +310,7 @@ public class RecordServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecords_WhenSortParametersNotSet_ShouldSortByNextUpdateDueAscending()
+    public async Task GetRecords_WhenSortParametersNotSet_ShouldSortByDisplayStatusAscending()
     {
         GetRecordsResult result = await Service.GetOrganisationRecords(
             _organisationId,
@@ -321,12 +321,7 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldNotBeEmpty();
-        dto.Items.Select(x =>
-                x.ReviewedAt.HasValue ? x.ReviewedAt.Value.AddMonths(3) : (DateTime?)null
-            )
-            .Where(x => x.HasValue)
-            .Select(x => x!.Value)
-            .ShouldBeInOrder(SortDirection.Ascending);
+        dto.Items.Select(x => x.DisplayStatus).ShouldBeInOrder(SortDirection.Ascending);
     }
 
     [Fact]

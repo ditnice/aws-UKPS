@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
 
 import { RegisterUserConfirmationDto } from '@/client/generated'
@@ -11,13 +10,12 @@ import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryLis
 const subscribe = () => () => undefined
 
 export default function RequestSubmitted() {
-  const { id } = useParams<{ id: string }>()
   const isClient = useSyncExternalStore(
     subscribe,
     () => true,
     () => false,
   )
-  const userJson = isClient ? sessionStorage.getItem(id) : null
+  const userJson = isClient ? sessionStorage.getItem('registrationRequest') : null
   const user = userJson ? (JSON.parse(userJson) as RegisterUserConfirmationDto) : null
 
   return (
