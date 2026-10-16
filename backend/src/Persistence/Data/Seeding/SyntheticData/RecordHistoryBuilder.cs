@@ -13,15 +13,7 @@ internal sealed class RecordHistoryBuilder
     private const double UpdateRejectionChance = 0.08;
     private const double PendingDraftChance = 0.12;
     private const double InitiallyUnknownChance = 0.4;
-
-    private static readonly string[] _rejectionNotes =
-    [
-        "Please confirm the UK submission date and whether it is an estimate.",
-        "The indication wording does not match the clinical trial population. Please review.",
-        "Please add the reference regulator for the International Recognition Procedure.",
-        "Proposed place in therapy needs likely comparators.",
-        "Please check the BNF chapter against the mode of action.",
-    ];
+    private const double ProvisionalValueChance = 0.5;
 
     private readonly SyntheticRecord _source;
     private readonly IReadOnlyList<User> _authors;
@@ -30,6 +22,10 @@ internal sealed class RecordHistoryBuilder
     private readonly DateOnly _today;
     private readonly Randomizer _random;
     private readonly List<object> _content = [];
+    private readonly List<RecordFieldAudit> _audits = [];
+
+    /// <summary>Each audited field's value as of the latest save, to any revision.</summary>
+    private readonly Dictionary<string, string?> _saved = new(StringComparer.Ordinal);
     private readonly Record _record;
     private User _author;
 
@@ -82,7 +78,7 @@ internal sealed class RecordHistoryBuilder
             BuildPublishedHistory(first);
         }
 
-        return new SeededRecord(_record, _content);
+        return new SeededRecord(_record, _content, _audits);
     }
 
     private void BuildDraftHistory(RecordRevision first)
@@ -91,27 +87,25 @@ internal sealed class RecordHistoryBuilder
         double outcome = _random.Double();
         bool canBeRejected = lastUpdated.DayNumber - _source.CreatedAt.DayNumber >= 2;
 
-        if (outcome < 0.2 && canBeRejected)
+        if (outcome < 0.2 && canBeRejected && Flaw(_source) is { } flaw)
         {
             // Submitted once, sent back by QA, and now being reworked.
             DateOnly submitted = _source.CreatedAt.AddDays(1);
+            Draft(first, At(submitted, 9, 10), flaw.Submitted);
             Submit(first, At(submitted, 10, 12));
             DateOnly rejected = submitted.AddDays(1);
-            Reject(first, At(rejected, 9, 11));
-            AddContent(first, _source);
+            Reject(first, At(rejected, 9, 11), flaw.Note);
 
             RecordRevision rework = CreateRevision(At(rejected, 11, 13), basedOn: first);
-            Edit(rework, At(lastUpdated, 14, 17));
-            AddContent(rework, _source);
+            Draft(rework, At(lastUpdated, 14, 17), _source);
             return;
         }
 
-        Edit(first, At(lastUpdated, 12, 15));
+        Draft(first, At(lastUpdated, 12, 15), _source);
         if (outcome < 0.45)
         {
             Submit(first, At(lastUpdated, 15, 17));
         }
-        AddContent(first, _source);
     }
 
     private void BuildPublishedHistory(RecordRevision first)
@@ -135,13 +129,7 @@ internal sealed class RecordHistoryBuilder
             );
             if (published is null || publishedRevision is null)
             {
-                publishedRevision = Publish(
-                    first,
-                    _source.CreatedAt,
-                    publishDays[index],
-                    version,
-                    []
-                );
+                publishedRevision = Publish(first, _source.CreatedAt, publishDays[index], version);
                 QaReview approval = publishedRevision.QaReviews.Last();
                 _record.ChangeStatus(
                     RecordStatus.Published,
@@ -152,10 +140,10 @@ internal sealed class RecordHistoryBuilder
                 continue;
             }
 
-            var changes = RecordContentHistory.Changes(published, version);
-            if (changes.Count == 0)
+            if (!RecordContentHistory.HasChanges(published, version))
             {
-                ConfirmAsCurrent(At(publishDays[index], 10, 16), publishedRevision);
+                // Before any status change made later the same day.
+                ConfirmAsCurrent(At(publishDays[index], 10, 15), publishedRevision);
                 continue;
             }
 
@@ -165,7 +153,7 @@ internal sealed class RecordHistoryBuilder
             }
             DateOnly draftDay = DayBetween(publishDays[index - 1].AddDays(1), publishDays[index]);
             RecordRevision draft = CreateRevision(At(draftDay, 9, 11), basedOn: publishedRevision);
-            publishedRevision = Publish(draft, draftDay, publishDays[index], version, changes);
+            publishedRevision = Publish(draft, draftDay, publishDays[index], version);
             published = version;
         }
 
@@ -194,12 +182,13 @@ internal sealed class RecordHistoryBuilder
             // A further update is being prepared but has not been published yet.
             DateOnly draftDay = DayBetween(lastActivity.AddDays(1), _today.AddDays(-1));
             RecordRevision draft = CreateRevision(At(draftDay, 9, 11), basedOn: publishedRevision);
-            Edit(draft, At(draftDay, 11, 14));
-            if (_random.Double() < 0.3)
+            // Records without estimated dates to push back have a draft opened but not yet changed.
+            SyntheticRecord? update = RecordContentHistory.Slipped(_source);
+            Draft(draft, At(draftDay, 11, 14), update ?? _source);
+            if (update is not null && _random.Double() < 0.3)
             {
                 Submit(draft, At(draftDay, 14, 17));
             }
-            AddContent(draft, _source);
         }
     }
 
@@ -234,7 +223,7 @@ internal sealed class RecordHistoryBuilder
             return disclosedAt;
         }
 
-        IReadOnlyDictionary<string, string?> fields = RecordContentHistory.TrackedFields(_source);
+        IReadOnlyDictionary<string, string?> fields = RecordContentHistory.AuditedFields(_source);
         foreach (string field in RecordContentHistory.DisclosableFields)
         {
             bool known = fields[field] is nameof(YesNoUnknown.Yes) or nameof(YesNoUnknown.No);
@@ -270,29 +259,45 @@ internal sealed class RecordHistoryBuilder
         RecordRevision draft,
         DateOnly draftDay,
         DateOnly publishDay,
-        SyntheticRecord version,
-        IReadOnlyList<(string FieldPath, string? OldValue, string? NewValue)> changes
+        SyntheticRecord version
     )
     {
         double rejectionChance = draft.BasedOnRevision is null
             ? FirstSubmissionRejectionChance
             : UpdateRejectionChance;
         RecordRevision revision = draft;
-        if (publishDay.DayNumber - draftDay.DayNumber >= 3 && _random.Double() < rejectionChance)
+        if (
+            publishDay.DayNumber - draftDay.DayNumber >= 3
+            && _random.Double() < rejectionChance
+            && Flaw(version) is { } flaw
+        )
         {
             DateOnly submitted = draftDay.AddDays(1);
+            Draft(revision, At(submitted, 9, 10), flaw.Submitted);
             Submit(revision, At(submitted, 10, 12));
             DateOnly rejected = submitted.AddDays(1);
-            Reject(revision, At(rejected, 9, 11));
-            AddContent(revision, version);
+            Reject(revision, At(rejected, 9, 11), flaw.Note);
             revision = CreateRevision(At(rejected, 11, 13), basedOn: revision);
         }
 
-        Edit(revision, At(publishDay, 11, 12));
-        Submit(revision, At(publishDay, 12, 13));
-        Approve(revision, At(publishDay, 13, 15), changes);
-        AddContent(revision, version);
+        Draft(revision, At(publishDay, 11, 12), version);
+        DateTime resubmitted = At(publishDay, 12, 13);
+        Submit(revision, resubmitted);
+        Approve(revision, At(publishDay, 13, 15), resubmitted);
         return revision;
+    }
+
+    /// <summary>Picks a mistake QA could send back for <paramref name="version"/>, if any apply.</summary>
+    private (string Note, SyntheticRecord Submitted)? Flaw(SyntheticRecord version)
+    {
+        (string Note, SyntheticRecord Submitted)[] applicable =
+        [
+            .. RecordContentHistory
+                .SubmissionFlaws.Select(flaw => (flaw.Note, Submitted: flaw.Introduce(version)))
+                .Where(flaw => flaw.Submitted is not null)
+                .Select(flaw => (flaw.Note, flaw.Submitted!)),
+        ];
+        return applicable.Length == 0 ? null : Pick(applicable);
     }
 
     private RecordRevision CreateRevision(DateTime at, RecordRevision? basedOn)
@@ -315,23 +320,121 @@ internal sealed class RecordHistoryBuilder
         return revision;
     }
 
-    private void Edit(RecordRevision revision, DateTime at)
+    /// <summary>
+    /// Saves a revision one or more times between its creation and <paramref name="lastSave"/>,
+    /// leaving it with the content of <paramref name="version"/>. New records are filled in a
+    /// section at a time, and some fields are saved with a provisional value first.
+    /// </summary>
+    private void Draft(RecordRevision revision, DateTime lastSave, SyntheticRecord version)
     {
-        revision.UpdatedAt = at;
-        revision.UpdatedByUser = _author;
+        AddContent(revision, version);
+        IReadOnlyDictionary<string, string?> target = RecordContentHistory.AuditedFields(version);
+        string[] changed = [.. target.Keys.Where(field => !IsSaved(field, target[field]))];
+        if (changed.Length == 0)
+        {
+            return;
+        }
+
+        int plannedSaves = _saved.Count == 0 ? _random.Number(2, 4) : _random.Number(1, 3);
+        DateTime[] times = SaveTimes(revision.CreatedAt, lastSave, plannedSaves);
+        int saves = Math.Min(times.Length, changed.Length);
+        times = times[^saves..];
+
+        HashSet<string> provisionallyUnknown =
+        [
+            .. RecordContentHistory.DisclosableFields.Where(_ => _random.Bool()),
+        ];
+        IReadOnlyDictionary<string, string?> provisional = RecordContentHistory.AuditedFields(
+            RecordContentHistory.AsKnownAt(
+                version,
+                DateOnly.FromDateTime(revision.CreatedAt),
+                _random.Number(1, 3),
+                provisionallyUnknown
+            )
+        );
+
+        for (int save = 0; save < saves - 1; save++)
+        {
+            IEnumerable<string> section = changed
+                .Skip(save * changed.Length / saves)
+                .Take(((save + 1) * changed.Length / saves) - (save * changed.Length / saves));
+            Save(
+                revision,
+                times[save],
+                section.Select(field =>
+                {
+                    string? value = target[field];
+                    bool usesProvisional =
+                        provisional[field] is { } guess
+                        && !string.Equals(guess, value, StringComparison.Ordinal)
+                        && _random.Double() < ProvisionalValueChance;
+                    return (field, usesProvisional ? provisional[field] : value);
+                })
+            );
+        }
+        Save(revision, times[^1], changed.Select(field => (field, target[field])));
     }
+
+    /// <summary>
+    /// Up to <paramref name="count"/> distinct save times during working hours after
+    /// <paramref name="start"/>, ending with <paramref name="end"/>.
+    /// </summary>
+    private DateTime[] SaveTimes(DateTime start, DateTime end, int count)
+    {
+        SortedSet<DateTime> times = [end];
+        DateOnly firstDay = DateOnly.FromDateTime(start);
+        DateOnly lastDay = DateOnly.FromDateTime(end);
+        for (int attempt = 1; attempt < count; attempt++)
+        {
+            DateTime time = At(DayBetween(firstDay, lastDay), 9, 18);
+            if (time > start && time < end)
+            {
+                times.Add(time);
+            }
+        }
+        return [.. times];
+    }
+
+    private void Save(
+        RecordRevision revision,
+        DateTime at,
+        IEnumerable<(string Field, string? Value)> values
+    )
+    {
+        foreach ((string field, string? value) in values)
+        {
+            if (IsSaved(field, value))
+            {
+                continue;
+            }
+
+            _audits.Add(
+                new RecordFieldAudit
+                {
+                    Record = _record,
+                    Revision = revision,
+                    FieldPath = field,
+                    OldValue = _saved.GetValueOrDefault(field),
+                    NewValue = value,
+                    ChangedByUser = _author,
+                    ChangedAt = at,
+                }
+            );
+            _saved[field] = value;
+        }
+    }
+
+    private bool IsSaved(string field, string? value) =>
+        string.Equals(_saved.GetValueOrDefault(field), value, StringComparison.Ordinal);
 
     private void Submit(RecordRevision revision, DateTime at)
     {
-        revision.SubmittedAt = at;
-        revision.SubmittedByUser = _author;
         revision.WorkflowStatus = WorkflowStatus.QAReview;
         AddEvent(RecordEventType.SubmittedToQa, at, _author, revision);
     }
 
-    private void Reject(RecordRevision revision, DateTime at)
+    private void Reject(RecordRevision revision, DateTime at, string note)
     {
-        string note = Pick(_rejectionNotes);
         QaReview review = Review(revision, at, QaOutcome.Rejected, note);
         revision.WorkflowStatus = WorkflowStatus.Rejected;
         AddEvent(
@@ -344,34 +447,13 @@ internal sealed class RecordHistoryBuilder
         );
     }
 
-    private void Approve(
-        RecordRevision revision,
-        DateTime at,
-        IReadOnlyList<(string FieldPath, string? OldValue, string? NewValue)> changes
-    )
+    private void Approve(RecordRevision revision, DateTime at, DateTime submittedAt)
     {
         QaReview review = Review(revision, at, QaOutcome.Approved, note: null);
         revision.WorkflowStatus = WorkflowStatus.Published;
-        RecordEvent published = AddEvent(
-            RecordEventType.RecordPublished,
-            at,
-            review.ReviewedByUser,
-            revision,
-            review
-        );
-        foreach ((string fieldPath, string? oldValue, string? newValue) in changes)
-        {
-            published.FieldChanges.Add(
-                new RecordEventFieldChange
-                {
-                    FieldPath = fieldPath,
-                    OldValue = oldValue,
-                    NewValue = newValue,
-                }
-            );
-        }
+        AddEvent(RecordEventType.RecordPublished, at, review.ReviewedByUser, revision, review);
         // The organisation confirmed the record was current when they submitted it.
-        _record.ReviewedAt = revision.SubmittedAt;
+        _record.ReviewedAt = submittedAt;
     }
 
     private QaReview Review(RecordRevision revision, DateTime at, QaOutcome outcome, string? note)
@@ -413,7 +495,7 @@ internal sealed class RecordHistoryBuilder
         }
     }
 
-    private RecordEvent AddEvent(
+    private void AddEvent(
         RecordEventType eventType,
         DateTime at,
         User? performedBy,
@@ -433,7 +515,6 @@ internal sealed class RecordHistoryBuilder
             Note = note,
         };
         _record.Events.Add(recordEvent);
-        return recordEvent;
     }
 
     private void AddContent(RecordRevision revision, SyntheticRecord version) =>
