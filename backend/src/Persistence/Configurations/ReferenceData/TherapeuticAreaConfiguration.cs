@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using UKPS.Api.Persistence.Data.ReferenceData;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 
 namespace UKPS.Api.Persistence.Configurations.ReferenceData;
@@ -17,5 +18,14 @@ internal sealed class TherapeuticAreaConfiguration : IEntityTypeConfiguration<Th
             .WithMany(x => x.Children)
             .HasForeignKey(x => x.ParentId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasData(
+            TherapeuticAreaSeedData.Areas.Select(area => new TherapeuticArea
+            {
+                Id = area.Id,
+                Label = area.Label,
+                DisplayOrder = area.Id,
+            })
+        );
     }
 }

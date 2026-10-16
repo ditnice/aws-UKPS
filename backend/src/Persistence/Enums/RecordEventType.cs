@@ -41,4 +41,10 @@ public enum RecordEventType
     /// Indicates that the status of a record has changed.
     /// </summary>
     RecordStatusChanged = 6,
+
+    /// <summary>
+    /// Indicates that a page of a draft revision's content was saved. The event's field changes
+    /// record each changed answer; its note is the page ID.
+    /// </summary>
+    RecordContentUpdated = 7,
 }

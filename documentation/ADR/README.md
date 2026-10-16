@@ -12,3 +12,4 @@ section for ideas that were discussed but not adopted.
 | [ADR-003](ADR-003-handling-global-authrorisation-scenarios.md) | Handling organisation context authentication failures | Accepted |
 | [ADR-004](ADR-004-authorisation-failures-and-resource-concealment.md) | Authorisation failures and resource concealment | Accepted |
 | [ADR-005](ADR-005-frontend-testing-strategy.md) | Frontend testing strategy | Proposed |
+| [ADR-006](ADR-006-dynamic-record-content-forms.md) | Dynamic record content forms | Accepted |

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.Forms;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
@@ -17,7 +18,8 @@ using GetRecordResult = Result<RecordDto, GetRecordError>;
 
 internal sealed class RecordViewService(
     AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    FormDefinitionRegistry formDefinitions
 ) : IRecordViewService
 {
     public async Task<GetRecordResult> GetRecord(
@@ -106,6 +108,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
+            FirstPageId = formDefinitions.Get(RecordType.Medicine)?.FirstPage.Id,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,

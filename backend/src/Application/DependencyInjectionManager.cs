@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using UKPS.Api.Application.Authentication;
+using UKPS.Api.Application.Forms;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
@@ -37,6 +38,9 @@ internal static class DependencyInjectionManager
         services.TryAddScoped<IUserService, UserService>();
         services.TryAddScoped<IRecordViewService, RecordViewService>();
         services.TryAddScoped<IRecordCreationService, RecordCreationService>();
+        services.TryAddSingleton(FormDefinitionRegistry.CreateDefault());
+        services.TryAddScoped<IRecordPageQueryService, RecordPageQueryService>();
+        services.TryAddScoped<IRecordPageSaveService, RecordPageSaveService>();
         services.AddAuthenticationServices();
         services.AddEmailServices();
         services.TryAddScoped<IUserAdministrationService, UserAdministrationService>();

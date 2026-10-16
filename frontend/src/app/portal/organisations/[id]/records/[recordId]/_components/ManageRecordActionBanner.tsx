@@ -1,7 +1,17 @@
+import Link from 'next/link'
+
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
-export const ManageRecordActionBanner = () => {
+type ManageRecordActionBannerProps = {
+  /**
+   * Where "Update record" goes: the first page of the record's content form. Omitted for
+   * record types that have no form yet.
+   */
+  updateHref?: string
+}
+
+export const ManageRecordActionBanner = ({ updateHref }: ManageRecordActionBannerProps) => {
   return (
     <ActionBanner
       variant="subtle"
@@ -9,9 +19,15 @@ export const ManageRecordActionBanner = () => {
       headingLevel={2}
       cta={
         <ButtonGroup>
-          <Button variant="cta" buttonType="button">
-            Update record
-          </Button>
+          {updateHref ? (
+            <Button elementType={Link} href={updateHref} variant="cta">
+              Update record
+            </Button>
+          ) : (
+            <Button variant="cta" buttonType="button">
+              Update record
+            </Button>
+          )}
           <Button>Change record status</Button>
           <Button>Confirm information as current</Button>
           <Button variant="secondary">View record timeline</Button>

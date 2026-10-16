@@ -41,4 +41,10 @@ public abstract record RecordDto
     /// Gets the identifier of the latest revision.
     /// </summary>
     public required int RevisionId { get; init; }
+
+    /// <summary>
+    /// Gets the identifier of the first page of the record's content form, where updating the
+    /// latest revision starts, or <c>null</c> if the record type has no form yet.
+    /// </summary>
+    public string? FirstPageId { get; init; }
 }

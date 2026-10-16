@@ -1,0 +1,29 @@
+@use '@/styles/colours';
+@use '@/styles/focus';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.summary {
+  border: utils.rem(spacing.$x-small) solid colours.$error;
+  margin-bottom: utils.rem(spacing.$large);
+  padding: utils.rem(spacing.$medium);
+
+  &:focus {
+    @include focus.default-focus-style;
+  }
+}
+
+.title {
+  @include typography.font-size(h3);
+  margin-top: 0;
+}
+
+.list {
+  margin-bottom: 0;
+
+  a {
+    color: colours.$error;
+    font-weight: bold;
+  }
+}

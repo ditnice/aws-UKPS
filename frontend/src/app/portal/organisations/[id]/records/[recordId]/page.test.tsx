@@ -49,7 +49,9 @@ vi.mock('@nice-digital/nds-page-header', () => ({
 }))
 
 vi.mock('./_components/ManageRecordActionBanner', () => ({
-  ManageRecordActionBanner: () => <div data-testid="manage-record-banner" />,
+  ManageRecordActionBanner: ({ updateHref }: { updateHref?: string }) => (
+    <div data-testid="manage-record-banner" data-update-href={updateHref} />
+  ),
 }))
 
 vi.mock('./_components/MedicineRecordDetails', () => ({
@@ -113,6 +115,28 @@ describe('RecordPage', () => {
     expect(screen.getByText('QA review')).toBeDefined()
     expect(screen.getByTestId('manage-record-banner')).toBeDefined()
     expect(screen.getByTestId('medicine-record-details')).toBeDefined()
+  })
+
+  it("points Update record at the first page of the latest revision's form", async () => {
+    mockRecord({
+      data: { ...medicineRecord, firstPageId: 'indication' },
+      error: undefined,
+      response: new Response(),
+    })
+
+    await renderPage()
+
+    expect(screen.getByTestId('manage-record-banner').dataset.updateHref).toBe(
+      '/portal/records/42/revisions/3/indication',
+    )
+  })
+
+  it('leaves Update record without a link when the record type has no form', async () => {
+    mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
+
+    await renderPage()
+
+    expect(screen.getByTestId('manage-record-banner').dataset.updateHref).toBeUndefined()
   })
 
   it.each([

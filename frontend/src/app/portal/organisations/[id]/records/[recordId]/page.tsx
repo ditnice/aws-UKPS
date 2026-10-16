@@ -7,6 +7,7 @@ import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Tag } from '@/components/Tag/Tag'
+import { recordPageHref } from '@/lib/dynamic-form/links'
 
 import OrganisationPageWrapper from '../../_components/OrganisationPageWrapper'
 import { recordStatusLabels, recordStatusTagColours } from '../labels'
@@ -97,7 +98,13 @@ const RecordView = async ({ organisationId, recordId, recordType }: RecordViewPr
         ]}
       />
 
-      <ManageRecordActionBanner />
+      <ManageRecordActionBanner
+        updateHref={
+          record.firstPageId
+            ? recordPageHref(record.recordId, record.revisionId, record.firstPageId)
+            : undefined
+        }
+      />
 
       <h2>View record details</h2>
       <Button variant="secondary">Export record to PDF</Button>

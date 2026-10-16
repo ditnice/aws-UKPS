@@ -63,6 +63,10 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public void CreateRecord_OnValidCommand_ShouldReturnTheFirstFormPage() =>
+        _validResponse.FirstPageId.ShouldBe("indication");
+
+    [Fact]
     public async Task CreateRecord_OnValidCommand_ShouldCreateANewRecord()
     {
         var context = _harness.GetClearedContext();
