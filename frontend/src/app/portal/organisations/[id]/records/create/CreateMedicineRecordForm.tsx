@@ -16,6 +16,7 @@ import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
 import ArrayInput from './ArrayInput'
+import styles from './CreateMedicineRecordForm.module.scss'
 
 const inputWidth = 'two-thirds'
 
@@ -100,34 +101,39 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       }}
     >
       {error && <ErrorState>{errorMessages.creatingNewRecordError}</ErrorState>}
-      <form.Field name="companyCode">
+      <form.Field
+        name="companyCode"
+        validators={{ onDynamic: createRecordCommandSchema.shape.companyCode }}
+      >
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
-            <Input
-              error={Boolean(errorMessage)}
-              errorMessage={errorMessage}
-              label="Company code"
-              hint="Enter the primary internal code or working name your company uses for this product seeking market access."
-              name={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                field.handleChange(event.target.value)
-              }
-              value={field.state.value}
-              width={inputWidth}
-            />
+            <div className={styles.headingLabel}>
+              <Input
+                error={Boolean(errorMessage)}
+                errorMessage={errorMessage}
+                label="Company code"
+                hint="Enter the primary internal code or working name your company uses for this product seeking market access."
+                name={field.name}
+                onBlur={field.handleBlur}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  field.handleChange(event.target.value)
+                }
+                value={field.state.value}
+                width={inputWidth}
+              />
+            </div>
           )
         }}
       </form.Field>
       <form.Field name="otherIdentifiers" mode="array">
         {(field) => (
           <ArrayInput
+            firstItemClassName={styles.headingLabel}
             labelPrefix="Other names and identifiers (optional)"
             hint="Enter any other development names, synonyms, or identifiers that you want to associate with this product."
             addItemLabel="Add another identifier"
-            removeItemLabel="Remove identifier"
-            width={inputWidth}
+            removeItemLabel="Remove additional identifier"
             field={field}
             getSubfield={(name, renderInputs) => (
               <form.Field name={name}>{renderInputs}</form.Field>
@@ -158,14 +164,19 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       <form.Field name="genericNames" mode="array">
         {(field) => (
           <ArrayInput
+            heading="Active substance"
             labelPrefix="Generic name"
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
             addItemLabel="Add another active substance"
-            removeItemLabel="Remove active substance"
-            width={inputWidth}
+            removeItemLabel="Remove additional active substance"
             field={field}
             getSubfield={(name, renderInputs) => (
-              <form.Field name={name}>{renderInputs}</form.Field>
+              <form.Field
+                name={name}
+                validators={{ onDynamic: createRecordCommandSchema.shape.genericNames.element }}
+              >
+                {renderInputs}
+              </form.Field>
             )}
           />
         )}
@@ -174,19 +185,21 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
-            <Textarea
-              error={Boolean(errorMessage)}
-              errorMessage={errorMessage}
-              label="Record title"
-              name={field.name}
-              hint="Enter a title to help you to identify this record. You can enter up to 100 characters."
-              onBlur={field.handleBlur}
-              onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
-                field.handleChange(event.target.value)
-              }
-              value={field.state.value}
-              width={inputWidth}
-            />
+            <div className={styles.headingLabel}>
+              <Textarea
+                error={Boolean(errorMessage)}
+                errorMessage={errorMessage}
+                label="Record title"
+                name={field.name}
+                hint="Enter a title to help you to identify this record. You can enter up to 100 characters."
+                onBlur={field.handleBlur}
+                onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+                  field.handleChange(event.target.value)
+                }
+                value={field.state.value}
+                width={inputWidth}
+              />
+            </div>
           )
         }}
       </form.Field>
