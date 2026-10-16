@@ -50,11 +50,22 @@ const taskStatusLabels: Record<TaskStatus, string> = {
   completed: 'Completed',
 }
 
-const taskStatusColours = {
-  'not-started': 'red',
+const taskStatusColours: Record<Exclude<TaskStatus, 'completed'>, 'blue' | 'yellow'> = {
+  'not-started': 'blue',
   'in-progress': 'yellow',
-  completed: 'green',
-} as const
+}
+
+function TaskStatusLabel({ className, status }: { className: string; status: TaskStatus }) {
+  if (status === 'completed') {
+    return <span className={className}>{taskStatusLabels[status]}</span>
+  }
+
+  return (
+    <Tag className={className} colour={taskStatusColours[status]}>
+      {taskStatusLabels[status]}
+    </Tag>
+  )
+}
 
 export function TaskList({ children, className }: TaskListProps) {
   const tasks = collectTasks(children)
@@ -118,11 +129,7 @@ export function TaskListSection({
       {(description || status) && (
         <div className={styles['task-list__section-summary']}>
           <div className={styles['task-list__section-description']}>{description}</div>
-          {status && (
-            <Tag className={styles['task-list__status']} colour={taskStatusColours[status]}>
-              {taskStatusLabels[status]}
-            </Tag>
-          )}
+          {status && <TaskStatusLabel className={styles['task-list__status']} status={status} />}
         </div>
       )}
 
@@ -176,9 +183,7 @@ export function TaskListTask({
         </div>
         {description && <div className={styles['task-list__task-description']}>{description}</div>}
       </div>
-      <Tag className={styles['task-list__status']} colour={taskStatusColours[status]}>
-        {taskStatusLabels[status]}
-      </Tag>
+      <TaskStatusLabel className={styles['task-list__status']} status={status} />
     </li>
   )
 }
