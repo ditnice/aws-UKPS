@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UKPS database ERD</title>
+<!--
+  AUTO-GENERATED FILE. Do not edit directly.
+  Source: EF Core model (AppDbContext) + documentation/database/erd-groups.yml
+  Regenerate with: ./scripts/generate-erd.sh
+  Rendering uses Mermaid and styling uses Pico CSS (classless), both from a CDN, so an internet
+  connection is required to view it.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+<style>
+  /* Layout only; element styling comes from Pico (classless). Dark mode follows the system preference via Pico. */
+  html { font-size: 87.5%; }
+  :root { --pico-spacing: 0.6rem; --pico-form-element-spacing-vertical: 0.35rem; --pico-form-element-spacing-horizontal: 0.6rem; }
+  html, body { height: 100%; margin: 0; }
+  body { display: grid; grid-template-columns: 19rem 1fr; grid-template-rows: 100vh; }
+  body.collapsed { grid-template-columns: 1fr; }
+  body.collapsed aside { display: none; }
+  aside { overflow-y: auto; padding: 0 1rem 1rem; border-right: 1px solid var(--pico-muted-border-color); }
+  main { position: relative; overflow: hidden; max-width: none; padding: 0; margin: 0; }
+  h1 { font-size: 1.25rem; margin: 1rem 0 0; }
+  fieldset { margin: 1rem 0 0; padding: 0.5rem 0.75rem; border: 1px solid var(--pico-muted-border-color); border-radius: var(--pico-border-radius); }
+  legend { padding: 0 0.3rem; font-weight: 600; }
+  fieldset label { margin-bottom: 0.2rem; }
+  fieldset p { margin-bottom: 0.5rem; }
+  .swatch { display: inline-block; width: 0.8em; height: 0.8em; border: 1px solid #666; vertical-align: middle; margin-right: 0.25em; }
+  .count, .note { color: var(--pico-muted-color); }
+  .note { font-size: 0.85em; margin: 0.25rem 0 0; }
+  #sidebar-toggle { position: absolute; z-index: 1; top: 0.5rem; left: 0.5rem; width: auto; padding: 0.25rem 0.7rem; margin: 0; }
+  #status { position: absolute; z-index: 1; top: 0.5rem; left: 6.5rem; background: var(--pico-background-color); border: 1px solid var(--pico-muted-border-color); border-radius: var(--pico-border-radius); padding: 0.2rem 0.6rem; font-size: 0.85em; }
+  #status.error { color: var(--pico-del-color); white-space: pre-wrap; max-width: 60%; }
+  #zoom { position: absolute; z-index: 1; top: 0.5rem; right: 0.5rem; }
+  #zoom button, fieldset button { width: auto; padding: 0.25rem 0.7rem; margin: 0; }
+  #status { line-height: 1.6; }
+  #canvas { position: absolute; inset: 0; cursor: grab; }
+  #canvas:active { cursor: grabbing; }
+  #canvas svg { width: 100%; height: 100%; max-width: none !important; user-select: none; touch-action: none; }
+  textarea { height: 10em; font-family: monospace; font-size: 0.8em; }
+  @media (max-width: 760px) {
+    body:not(.collapsed) { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    aside { border-right: 0; border-bottom: 1px solid var(--pico-muted-border-color); max-height: 45vh; }
+  }
+</style>
+</head>
+<body>
+<aside>
+  <h1>UKPS database ERD</h1>
+  <p class="note" id="summary"></p>
+
+  <fieldset>
+    <legend>Groups</legend>
+    <div id="groups"></div>
+    <p><button type="button" id="groups-all">All</button> <button type="button" id="groups-none">None</button></p>
+    <label><input type="checkbox" id="stubs" checked> Show referenced tables from other groups as stubs</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Focus on a table</legend>
+    <select id="focus"><option value="">(none)</option></select>
+    <label><input type="radio" name="depth" value="1" checked> Direct relations</label>
+    <label><input type="radio" name="depth" value="2"> Two hops</label>
+    <p class="note">Focus ignores the group filter.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Column detail</legend>
+    <label><input type="radio" name="detail" value="all" checked> All columns</label>
+    <label><input type="radio" name="detail" value="keys"> Keys only</label>
+    <label><input type="radio" name="detail" value="none"> Table names only</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Hide relationships into</legend>
+    <div id="hubs"></div>
+    <p class="note">The most referenced tables. Hiding their incoming lines removes most of the clutter; FK markers on columns remain.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Layout</legend>
+    <label><input type="radio" name="direction" value="LR" checked> Left to right</label>
+    <label><input type="radio" name="direction" value="TB"> Top to bottom</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Export</legend>
+    <p><button type="button" id="download-svg">Download SVG</button> <button type="button" id="copy-mmd">Copy Mermaid</button> <button type="button" id="reset">Reset</button></p>
+    <details><summary>Mermaid source for the current view</summary><textarea id="source" readonly></textarea></details>
+  </fieldset>
+</aside>
+
+<main>
+  <div id="canvas"></div>
+  <button type="button" id="sidebar-toggle" title="Show or hide the controls">Controls</button>
+  <div id="status">Loading…</div>
+  <div id="zoom"><button type="button" id="zoom-in" title="Zoom in">+</button> <button type="button" id="zoom-out" title="Zoom out">−</button> <button type="button" id="zoom-fit" title="Fit to window">Fit</button></div>
+</main>
+
+<script id="erd-data" type="application/json">/*__ERD_DATA__*/</script>
+<script type="module">
+  const data = JSON.parse(document.getElementById('erd-data').textContent);
+  const tablesByName = new Map(data.tables.map(t => [t.name, t]));
+  const groupOfTable = new Map();
+  for (const g of data.groups) for (const t of g.tables) groupOfTable.set(t, g.key);
+
+  const incoming = new Map();
+  for (const r of data.relationships) incoming.set(r.principalTable, (incoming.get(r.principalTable) || 0) + 1);
+  const hubCandidates = [...incoming.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8);
+
+  const defaults = () => ({
+    groups: new Set(data.groups.map(g => g.key)), stubs: true, focus: '', depth: 1, detail: 'all',
+    hiddenHubs: new Set(), direction: data.direction || 'LR',
+  });
+  let state = defaults();
+
+  // ---- sidebar -------------------------------------------------------------
+  const $ = id => document.getElementById(id);
+  const groupsEl = $('groups');
+  for (const g of data.groups) {
+    const label = document.createElement('label');
+    label.innerHTML = `<input type="checkbox" data-group="${g.key}"> <span class="swatch" data-colour="${g.colour}"></span>${g.title} <span class="count">(${g.tables.length})</span>`;
+    label.querySelector('input').addEventListener('change', e => { e.target.checked ? state.groups.add(g.key) : state.groups.delete(g.key); render(); });
+    groupsEl.appendChild(label);
+  }
+  $('groups-all').onclick = () => { state.groups = new Set(data.groups.map(g => g.key)); render(); };
+  $('groups-none').onclick = () => { state.groups = new Set(); render(); };
+  $('stubs').onchange = e => { state.stubs = e.target.checked; render(); };
+
+  const focusEl = $('focus');
+  for (const t of data.tables) { const o = document.createElement('option'); o.value = t.name; o.textContent = t.name; focusEl.appendChild(o); }
+  focusEl.onchange = e => { state.focus = e.target.value; render(); };
+
+  const hubsEl = $('hubs');
+  for (const [name, n] of hubCandidates) {
+    const label = document.createElement('label');
+    label.innerHTML = `<input type="checkbox" data-hub="${name}"> ${name} <span class="count">(${n} FKs)</span>`;
+    label.querySelector('input').addEventListener('change', e => { e.target.checked ? state.hiddenHubs.add(name) : state.hiddenHubs.delete(name); render(); });
+    hubsEl.appendChild(label);
+  }
+
+  const radios = (name, apply) => document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.addEventListener('change', () => { apply(r.value); render(); }));
+  radios('depth', v => state.depth = Number(v));
+  radios('detail', v => state.detail = v);
+  radios('direction', v => state.direction = v);
+
+  function syncSidebar() {
+    groupsEl.querySelectorAll('input').forEach(i => i.checked = state.groups.has(i.dataset.group));
+    groupsEl.querySelectorAll('.swatch').forEach(el => el.style.background = groupFill(el.dataset.colour));
+    $('stubs').checked = state.stubs;
+    focusEl.value = state.focus;
+    hubsEl.querySelectorAll('input').forEach(i => i.checked = state.hiddenHubs.has(i.dataset.hub));
+    const check = (name, value) => document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.checked = r.value === String(value));
+    check('depth', state.depth); check('detail', state.detail); check('direction', state.direction);
+  }
+
+  // ---- model -> mermaid ----------------------------------------------------
+  function visibleTables() {
+    if (state.focus && tablesByName.has(state.focus)) {
+      const seen = new Set([state.focus]); let frontier = [state.focus];
+      for (let d = 0; d < state.depth; d++) {
+        const next = [];
+        for (const r of data.relationships) {
+          for (const [a, b] of [[r.principalTable, r.dependentTable], [r.dependentTable, r.principalTable]]) {
+            if (frontier.includes(a) && !seen.has(b)) { seen.add(b); next.push(b); }
+          }
+        }
+        frontier = next;
+      }
+      return { full: seen, stubs: new Set() };
+    }
+    const full = new Set(data.tables.filter(t => state.groups.has(groupOfTable.get(t.name))).map(t => t.name));
+    const stubs = new Set();
+    if (state.stubs) {
+      for (const r of data.relationships) {
+        if (state.hiddenHubs.has(r.principalTable)) continue;
+        if (full.has(r.dependentTable) && !full.has(r.principalTable)) stubs.add(r.principalTable);
+        if (full.has(r.principalTable) && !full.has(r.dependentTable)) stubs.add(r.dependentTable);
+      }
+    }
+    return { full, stubs };
+  }
+
+  function entityBlock(t, indent) {
+    const cls = groupOfTable.get(t.name);
+    if (state.detail === 'none') return `${indent}${t.name}:::${cls}\n`;
+    const cols = t.columns.filter(c => state.detail === 'all' || c.pk || c.fk || c.uk);
+    if (cols.length === 0) return `${indent}${t.name}:::${cls}\n`;
+    let s = `${indent}${t.name}:::${cls} {\n`;
+    for (const c of cols) {
+      const keys = [c.pk && 'PK', c.fk && 'FK', c.uk && 'UK'].filter(Boolean).join(', ');
+      s += `${indent}    ${c.type} ${c.name}${keys ? ' ' + keys : ''}${c.nullable ? ' "nullable"' : ''}\n`;
+    }
+    return s + `${indent}}\n`;
+  }
+
+  // ---- colour scheme -------------------------------------------------------
+  const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => darkScheme.matches;
+  // Group colours in the config are pastels for a light background; in dark mode keep the
+  // hue but drop the lightness so light text stays readable.
+  function groupFill(hex) {
+    if (!isDark()) return hex;
+    const n = parseInt(hex.slice(1), 16);
+    const r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+    let h = 0, sat = 0;
+    if (max !== min) {
+      const d = max - min;
+      sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h *= 60;
+    }
+    return hslToHex(h, Math.min(sat, 0.6), 0.28);
+  }
+  function hslToHex(h, s, l) {
+    const f = n => {
+      const k = (n + h / 30) % 12;
+      const c = l - s * Math.min(l, 1 - l) * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+      return Math.round(c * 255).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+  }
+  const entityStyle = () => isDark() ? 'stroke:#9ca3af,stroke-width:1px,color:#f3f4f6' : 'stroke:#374151,stroke-width:1px,color:#111827';
+  const stubStyle = () => isDark() ? 'fill:#1f2937,stroke:#6b7280,stroke-dasharray:4 2,color:#e5e7eb' : 'fill:#ffffff,stroke:#9ca3af,stroke-dasharray:4 2,color:#111827';
+
+  function buildMermaid() {
+    const { full, stubs } = visibleTables();
+    let s = `erDiagram\n    direction ${state.direction}\n`;
+    for (const g of data.groups) s += `    classDef ${g.key} fill:${groupFill(g.colour)},${entityStyle()}\n`;
+    s += `    classDef stub ${stubStyle()}\n`;
+    const useSubgraphs = !state.focus;
+    for (const g of data.groups) {
+      const tables = g.tables.filter(n => full.has(n));
+      if (tables.length === 0) continue;
+      if (useSubgraphs) s += `    subgraph ${g.key}["${g.title}"]\n`;
+      for (const n of tables) s += entityBlock(tablesByName.get(n), useSubgraphs ? '        ' : '    ');
+      if (useSubgraphs) s += '    end\n';
+    }
+    for (const n of [...stubs].sort()) s += `    ${n}:::stub\n`;
+    const shown = new Set([...full, ...stubs]);
+    let edges = 0;
+    for (const r of data.relationships) {
+      if (!shown.has(r.principalTable) || !shown.has(r.dependentTable)) continue;
+      if (state.hiddenHubs.has(r.principalTable)) continue;
+      if (stubs.has(r.principalTable) && stubs.has(r.dependentTable)) continue;
+      const p = r.isRequired ? '||' : '|o', d = r.isOneToOne ? 'o|' : 'o{', line = r.isIdentifying ? '--' : '..';
+      s += `    ${r.principalTable} ${p}${line}${d} ${r.dependentTable} : "${r.dependentColumns.join(', ')}"\n`;
+      edges++;
+    }
+    return { text: s, tables: full.size, stubs: stubs.size, edges };
+  }
+
+  // ---- pan / zoom (viewBox based, no external dependency) ------------------
+  const status = $('status'), canvas = $('canvas');
+  const camera = { svg: null, base: null, x: 0, y: 0, w: 0, h: 0 };
+  const applyCamera = () => camera.svg?.setAttribute('viewBox', `${camera.x} ${camera.y} ${camera.w} ${camera.h}`);
+  const unitsPerPixel = () => {
+    const r = canvas.getBoundingClientRect();
+    return Math.max(camera.w / r.width, camera.h / r.height);
+  };
+  function attachCamera(svgEl) {
+    const [x, y, w, h] = (svgEl.getAttribute('viewBox') || '0 0 1000 1000').split(/[\s,]+/).map(Number);
+    svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    Object.assign(camera, { svg: svgEl, base: { x, y, w, h }, x, y, w, h });
+    applyCamera();
+  }
+  function zoomAt(factor, clientX, clientY) {
+    if (!camera.svg) return;
+    const r = canvas.getBoundingClientRect();
+    const upp = unitsPerPixel();
+    // The visible area is centred within the canvas when aspect ratios differ.
+    const visW = r.width * upp, visH = r.height * upp;
+    const originX = camera.x + camera.w / 2 - visW / 2, originY = camera.y + camera.h / 2 - visH / 2;
+    const px = originX + (clientX - r.left) * upp, py = originY + (clientY - r.top) * upp;
+    const newW = camera.w / factor, newH = camera.h / factor;
+    if (newW < camera.base.w / 40 || newW > camera.base.w * 10) return;
+    camera.x = px - (px - camera.x) / factor;
+    camera.y = py - (py - camera.y) / factor;
+    camera.w = newW; camera.h = newH;
+    applyCamera();
+  }
+  function zoomCentre(factor) {
+    const r = canvas.getBoundingClientRect();
+    zoomAt(factor, r.left + r.width / 2, r.top + r.height / 2);
+  }
+  function fitCamera() {
+    if (!camera.base) return;
+    Object.assign(camera, camera.base);
+    applyCamera();
+  }
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY);
+  }, { passive: false });
+  let drag = null;
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || !camera.svg) return;
+    drag = { x: e.clientX, y: e.clientY };
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const upp = unitsPerPixel();
+    camera.x -= (e.clientX - drag.x) * upp;
+    camera.y -= (e.clientY - drag.y) * upp;
+    drag = { x: e.clientX, y: e.clientY };
+    applyCamera();
+  });
+  const endDrag = () => { drag = null; };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  // ---- rendering -----------------------------------------------------------
+  let mermaid, renderSeq = 0;
+  $('summary').textContent = `${data.tables.length} tables, ${data.relationships.length} relationships, ${data.groups.length} groups`;
+
+  let mermaidTheme = null;
+  async function ensureMermaid() {
+    if (!mermaid) mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.esm.min.mjs')).default;
+    const theme = isDark() ? 'dark' : 'default';
+    if (theme !== mermaidTheme) {
+      // Group subgraphs use a neutral grey so the group colours on the entities stand out.
+      const themeVariables = isDark()
+        ? { clusterBkg: '#1f2937', clusterBorder: '#4b5563' }
+        : { clusterBkg: '#f3f4f6', clusterBorder: '#9ca3af' };
+      mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme, themeVariables, maxTextSize: 2000000, maxEdges: 5000, er: { useMaxWidth: false } });
+      mermaidTheme = theme;
+    }
+  }
+  darkScheme.addEventListener('change', render);
+
+  async function render() {
+    syncSidebar();
+    const seq = ++renderSeq;
+    const built = buildMermaid();
+    $('source').value = built.text;
+    status.className = ''; status.textContent = 'Rendering…';
+    try {
+      await ensureMermaid();
+      const { svg } = await mermaid.render('erd-svg-' + seq, built.text);
+      if (seq !== renderSeq) return;
+      canvas.innerHTML = svg;
+      const svgEl = canvas.querySelector('svg');
+      svgEl.removeAttribute('style'); svgEl.removeAttribute('width'); svgEl.removeAttribute('height');
+      attachCamera(svgEl);
+      status.textContent = `${built.tables} tables${built.stubs ? ` + ${built.stubs} stubs` : ''}, ${built.edges} relationships shown`;
+    } catch (err) {
+      status.className = 'error';
+      status.textContent = 'Could not render diagram: ' + (err?.message || err);
+      console.error(err);
+    }
+  }
+
+  $('sidebar-toggle').onclick = () => document.body.classList.toggle('collapsed');
+  $('zoom-in').onclick = () => zoomCentre(1.5);
+  $('zoom-out').onclick = () => zoomCentre(1 / 1.5);
+  $('zoom-fit').onclick = fitCamera;
+  $('reset').onclick = () => { state = defaults(); render(); };
+  $('copy-mmd').onclick = async () => { await navigator.clipboard.writeText($('source').value); status.textContent = 'Mermaid source copied'; };
+  $('download-svg').onclick = () => {
+    const svgEl = canvas.querySelector('svg'); if (!svgEl) return;
+    const blob = new Blob([new XMLSerializer().serializeToString(svgEl)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ukps-erd.svg'; a.click(); URL.revokeObjectURL(a.href);
+  };
+
+  render();
+</script>
+</body>
+</html>

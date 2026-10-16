@@ -22,3 +22,6 @@ test:
 coverage:
     dotnet test /p:CollectCoverage=true
     dotnet tool run reportgenerator
+
+erd:
+    dotnet run --project tools/UKPS.ErdGenerator -- --groups ../documentation/database/erd-groups.yml --output ../documentation/database/ukps-erd.mmd --html ../documentation/database/ukps-erd.html
