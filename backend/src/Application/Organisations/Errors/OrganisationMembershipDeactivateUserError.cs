@@ -43,11 +43,19 @@ public abstract record OrganisationMembershipDeactivateUserError
     public sealed record CannotDeactivateSelf(int MembershipId)
         : OrganisationMembershipDeactivateUserError;
 
+    /// <summary>
+    /// Represents an error indicating that deactivation would leave an organisation without a champion.
+    /// </summary>
+    /// <param name="MembershipId">The identifier of the champion membership.</param>
+    public sealed record LastRemainingChampion(int MembershipId)
+        : OrganisationMembershipDeactivateUserError;
+
     internal TResult Match<TResult>(
         Func<NotAllowed, TResult> notAllowed,
         Func<TResult> notFound,
         Func<NotAllowedInCurrentState, TResult> notAllowedInCurrentState,
-        Func<CannotDeactivateSelf, TResult> cannotDeactivateSelf
+        Func<CannotDeactivateSelf, TResult> cannotDeactivateSelf,
+        Func<LastRemainingChampion, TResult> lastRemainingChampion
     ) =>
         this switch
         {
@@ -55,6 +63,7 @@ public abstract record OrganisationMembershipDeactivateUserError
             NotFound => notFound(),
             NotAllowedInCurrentState error => notAllowedInCurrentState(error),
             CannotDeactivateSelf error => cannotDeactivateSelf(error),
+            LastRemainingChampion error => lastRemainingChampion(error),
             _ => throw new InvalidOperationException($"Unknown error type: {GetType().Name}"),
         };
 }

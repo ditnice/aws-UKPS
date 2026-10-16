@@ -116,17 +116,16 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldFail_WhenUserDoesNotHaveAuthorisedMembership()
+    public async Task Handle_ShouldRequireRecoveryOrFail_WhenUserDoesNotHaveAuthorisedMembership()
     {
         var invalidStatuses = Enum.GetValues<UserOrgMembershipStatus>()
             .Except([UserOrgMembershipStatus.Active, UserOrgMembershipStatus.Inactive]);
-        Faker<UserOrgMembership> invalidMembershipFaker = _membershipFaker.RuleFor(
-            x => x.Status,
-            f => f.PickRandom(invalidStatuses)
-        );
-
-        foreach (var _ in Enumerable.Range(0, 10))
+        foreach (UserOrgMembershipStatus status in invalidStatuses)
         {
+            Faker<UserOrgMembership> invalidMembershipFaker = _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => status
+            );
             User testUser = _userFaker
                 .RuleFor(x => x.UserOrgMemberships, _ => invalidMembershipFaker.Generate(1))
                 .Generate();
@@ -142,21 +141,72 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
             await _handler.Handle(context, CancellationToken.None);
 
             // Assert
-            context.Result.ShouldNotBeNull();
-            context.Result.Failure.ShouldNotBeNull();
             if (testUser.UserOrgMemberships!.Single().Status == UserOrgMembershipStatus.Deactivated)
             {
-                context.Result.Failure.Message.ShouldBe(
-                    AuthenticationFailCode.MembershipDeactivated.ToString()
+                AssertOrganisationSelectionRequired(
+                    context,
+                    AuthenticationFailCode.MembershipDeactivated
                 );
+                context
+                    .Principal!.FindFirst(UkpsClaimTypes.Email)!
+                    .Value.ShouldBe(testUser.WorkEmail);
             }
             else
             {
+                context.Result.ShouldNotBeNull();
+                context.Result.Failure.ShouldNotBeNull();
                 context.Result.Failure.Message.ShouldBe(
                     AuthenticationFailCode.MembershipNotInValidState.ToString()
                 );
             }
         }
+    }
+
+    [Fact]
+    public async Task Handle_ShouldPreserveIdentityWithoutOrganisationClaims_WhenSoleMembershipIsDeactivated()
+    {
+        UserMembership.Deactivate();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _user.CognitoUsername
+        );
+
+        await _handler.Handle(context, TestContext.Current.CancellationToken);
+
+        AssertOrganisationSelectionRequired(context, AuthenticationFailCode.MembershipDeactivated);
+        context.Principal!.FindFirst(UkpsClaimTypes.Email)!.Value.ShouldBe(_user.WorkEmail);
+        context
+            .Principal.FindFirst(UkpsClaimTypes.Username)!
+            .Value.ShouldBe(_user.CognitoUsername.Value);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldPreserveIdentityWithoutOrganisationClaims_WhenSelectedMembershipIsDeactivatedAndNoneAreSelectable()
+    {
+        UserOrgMembership[] memberships =
+            _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
+        _userWithMultipleMemberships
+            .TryUpdateCurrentOrganisation(memberships[1].OrganisationId)
+            .ShouldBeTrue();
+        foreach (UserOrgMembership membership in memberships)
+        {
+            membership.Deactivate();
+        }
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        await _handler.Handle(context, TestContext.Current.CancellationToken);
+
+        AssertOrganisationSelectionRequired(context, AuthenticationFailCode.MembershipDeactivated);
+        context
+            .Principal!.FindFirst(UkpsClaimTypes.Email)!
+            .Value.ShouldBe(_userWithMultipleMemberships.WorkEmail);
     }
 
     [Fact]

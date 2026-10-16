@@ -36,11 +36,18 @@ public abstract record RemoveUserError
         StateMachineTransitionResult<UserOrgStatus> TransitionResult
     ) : RemoveUserError;
 
+    /// <summary>
+    /// Indicates that removal would leave an organisation without a champion.
+    /// </summary>
+    /// <param name="UserId">The identifier of the user who is the last remaining champion.</param>
+    public sealed record LastRemainingChampion(int UserId) : RemoveUserError;
+
     internal TResult Match<TResult>(
         Func<TResult> notAllowed,
         Func<TResult> userNotFound,
         Func<TResult> cannotRemoveSelf,
-        Func<NotAllowedInCurrentState, TResult> notAllowedInCurrentState
+        Func<NotAllowedInCurrentState, TResult> notAllowedInCurrentState,
+        Func<LastRemainingChampion, TResult> lastRemainingChampion
     )
     {
         return this switch
@@ -49,6 +56,7 @@ public abstract record RemoveUserError
             UserNotFound => userNotFound(),
             CannotRemoveSelf => cannotRemoveSelf(),
             NotAllowedInCurrentState error => notAllowedInCurrentState(error),
+            LastRemainingChampion error => lastRemainingChampion(error),
             _ => throw new UnreachableException($"Unrecognised {nameof(RemoveUserError)}"),
         };
     }
