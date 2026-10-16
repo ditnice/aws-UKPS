@@ -18,8 +18,8 @@ internal sealed class Record
 
     /// <summary>
     /// Last time the submitting organisation confirmed the record is current. Set on:
-    ///   RecordPublished        -> the published revision's SubmittedAt (the pharma
-    ///                             submission timestamp, not the QA decision timestamp)
+    ///   RecordPublished        -> the published revision's SubmittedToQa event time (the
+    ///                             pharma submission timestamp, not the QA decision timestamp)
     ///   RecordReviewedNoChange -> the current time
     ///   RecordStatusChanged    -> the current time, when a user changes the status
     ///                             (not when the record is archived automatically)
