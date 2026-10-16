@@ -7,46 +7,51 @@ export function Examples() {
     <>
       <Example title="Product record (full design)">
         <TaskList>
-          <TaskListSection title="Example Title">
+          <TaskListSection title="Provide product record details">
             <TaskListTask
-              title="Example Title"
-              href="#href"
-              description="Example description"
+              id="product-record-details"
+              title="Name and identifiers"
+              href="#product-record-details"
+              description="Enter the company codes generic names, and branded names ..."
               status="in-progress"
             />
           </TaskListSection>
 
-          <TaskListSection title="Example Title">
+          <TaskListSection title="Provide indication and development information">
             <TaskListTask
-              title="Example Title"
-              href="#href"
-              description="Example description"
-              status="in-progress"
+              id="indication"
+              title="Indication details"
+              href="#indication"
+              description="Enter the condition this product treats and its disease area"
+              status="completed"
             />
             <TaskListTask
-              title="Example Title"
-              href="#href"
-              description="Example description"
-              status="in-progress"
+              id="development"
+              title="Development background"
+              href="#development"
+              description="Enter the development details for this product ..."
+              status="not-started"
             />
           </TaskListSection>
 
           <TaskListSection
-            title="Example Title"
-            description="Example description"
+            title="Provide service readiness information (optional)"
+            description="This section is optional ..."
             status="in-progress"
             collapsible
           >
             <TaskListTask
-              title="Example Title"
-              href="#href"
-              description="Example description"
+              id="lab-testing"
+              title="Laboratory testing"
+              href="#lab-testing"
+              description="Enter details of requireed laboratory tests ..."
               status="in-progress"
             />
             <TaskListTask
-              title="Example Title"
-              href="#href"
-              description="Example description"
+              id="patient-and-clinical-requirements"
+              title="Patient and clinical requirements"
+              href="#patient-and-clinical-requirements"
+              description="Describe how you identify patients and calculate ..."
               status="not-started"
             />
           </TaskListSection>

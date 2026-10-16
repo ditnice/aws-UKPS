@@ -60,3 +60,11 @@
 .task-list__toggle-icon--expanded {
   transform: rotate(-180deg);
 }
+
+.task-list__summary {
+  margin-bottom: spacing.$large * 1px;
+}
+
+.task-list__summary-text {
+  margin-bottom: spacing.$large * 1px;
+}

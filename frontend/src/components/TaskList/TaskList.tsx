@@ -1,7 +1,7 @@
 'use client'
 
 import clsx from 'clsx'
-import { useState } from 'react'
+import { useState, Children, isValidElement, ReactElement } from 'react'
 
 import ChevronDownIcon from '@nice-digital/icons/lib/ChevronDown'
 
@@ -11,7 +11,7 @@ import styles from './TaskList.module.scss'
 
 import type { ReactNode } from 'react'
 
-export type TaskStatus = 'not-started' | 'in-progress'
+export type TaskStatus = 'not-started' | 'in-progress' | 'completed'
 
 export type TaskListProps = {
   children: ReactNode
@@ -33,24 +33,60 @@ export type TaskListTaskProps = {
   className?: string
   description?: ReactNode
   href?: string
+  id?: string
   title: ReactNode
   status: TaskStatus
+}
+
+export type TaskListSummaryProps = {
+  completed: number
+  total: number
+  firstIncompleteId?: string
 }
 
 const taskStatusLabels: Record<TaskStatus, string> = {
   'not-started': 'Not started',
   'in-progress': 'In progress',
+  completed: 'Completed',
 }
 
 const taskStatusColours = {
   'not-started': 'red',
   'in-progress': 'yellow',
+  completed: 'green',
 } as const
 
 export function TaskList({ children, className }: TaskListProps) {
+  const tasks = collectTasks(children)
+  const completed = tasks.filter((task) => task.props.status === 'completed').length
+  const firstIncomplete = tasks.find((task) => task.props.status !== 'completed')
+
   return (
-    <div className={clsx(styles['task-list'], className)} data-component="task-list">
-      {children}
+    <>
+      <TaskListSummary
+        completed={completed}
+        total={tasks.length}
+        firstIncompleteId={firstIncomplete?.props.id}
+      />
+
+      <div className={clsx(styles['task-list'], className)} data-component="task-list">
+        {children}
+      </div>
+    </>
+  )
+}
+
+export function TaskListSummary({ completed, total, firstIncompleteId }: TaskListSummaryProps) {
+  return (
+    <div className={styles['task-list__summary']}>
+      <p className={styles['task-list__summary-text']}>
+        You have completed {completed} of {total} {total === 1 ? 'section' : 'sections'}
+      </p>
+      {firstIncompleteId && (
+        <a className={styles['task-list__summary-link']} href={`#${firstIncompleteId}`}>
+          Skip to first incomplete section
+        </a>
+      )}
     </div>
   )
 }
@@ -118,9 +154,16 @@ export function TaskListSection({
   )
 }
 
-export function TaskListTask({ className, description, href, title, status }: TaskListTaskProps) {
+export function TaskListTask({
+  className,
+  description,
+  href,
+  id,
+  title,
+  status,
+}: TaskListTaskProps) {
   return (
-    <li className={clsx(styles['task-list__task'], className)}>
+    <li id={id} className={clsx(styles['task-list__task'], className)}>
       <div className={styles['task-list__task-content']}>
         <div className={styles['task-list__task-title']}>
           {href ? (
@@ -138,4 +181,18 @@ export function TaskListTask({ className, description, href, title, status }: Ta
       </Tag>
     </li>
   )
+}
+
+type AnyProps = { children?: ReactNode; status?: TaskStatus; id?: string }
+
+function collectTasks(children: ReactNode): ReactElement<AnyProps>[] {
+  return Children.toArray(children).flatMap((child) => {
+    if (!isValidElement<AnyProps>(child)) return []
+
+    if (child.props.status && child.props.children === undefined) {
+      return [child]
+    }
+
+    return collectTasks(child.props.children)
+  })
 }
