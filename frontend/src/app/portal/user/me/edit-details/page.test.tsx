@@ -44,6 +44,7 @@ const exampleUser: UserInformationDto = {
   organisationName: 'Example Organisation',
   userRole: 'Standard',
   status: 'Active',
+  hasMultipleOrganisations: false,
 }
 // Direct invocation checks orchestration and the returned synchronous tree only.
 // It does not exercise Next.js rendering, routing or hydration.

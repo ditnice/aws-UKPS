@@ -89,6 +89,7 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
             Result<RecordDto, GetRecordError> result = await service.GetRecord(
                 record.Id,
                 RecordType.Medicine,
+                record.OrganisationId,
                 ct
             );
 

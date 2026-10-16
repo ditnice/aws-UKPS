@@ -1,12 +1,13 @@
 import { notFound } from 'next/navigation'
 
-import { getRecord, RecordType } from '@/client/generated'
+import { getRecord, RecordDto, RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Tag } from '@/components/Tag/Tag'
+import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../_components/OrganisationPageWrapper'
 import { recordStatusLabels, recordStatusTagColours } from '../labels'
@@ -26,49 +27,47 @@ type RecordPageProps = {
 }
 
 const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
-  const { id: organisationId, recordId: recordIdParam } = await params
+  const { id, recordId: recordIdParam } = await params
+  const organisationId = parsePositiveInteger(id)
   const recordId = parseRecordId(recordIdParam)
   const recordType = parseRecordType((await searchParams).recordType)
 
-  if (!recordId || !recordType) {
+  if (!organisationId || !recordId || !recordType) {
+    notFound()
+  }
+
+  // Fetch the record before the organisation, so the record endpoint can check whether the record
+  // exists in this organisation, whether the user may see it, and whether this is their selected
+  // organisation. Otherwise the organisation wrapper below would offer to switch organisation
+  // first, even for a record that doesn't exist.
+  const { data: record, response } = await getRecord({
+    client: await createServerApiClient(),
+    path: { id: recordId },
+    query: { recordType, organisationId },
+  })
+
+  if (response?.status === 404) {
     notFound()
   }
 
   return (
-    <OrganisationPageWrapper organisationId={organisationId}>
-      {(organisation) => (
-        <RecordView organisationId={organisation.id} recordId={recordId} recordType={recordType} />
-      )}
+    <OrganisationPageWrapper organisationId={id}>
+      {(organisation) => <RecordView organisationId={organisation.id} record={record} />}
     </OrganisationPageWrapper>
   )
 }
 
 type RecordViewProps = {
   organisationId: number
-  recordId: number
-  recordType: RecordType
+  record: RecordDto | undefined
 }
 
-const RecordView = async ({ organisationId, recordId, recordType }: RecordViewProps) => {
-  const {
-    data: record,
-    error,
-    response,
-  } = await getRecord({
-    client: await createServerApiClient(),
-    path: { id: recordId },
-    query: { recordType },
-  })
-
-  if (response?.status === 404 || (record && record.organisationId !== organisationId)) {
-    notFound()
-  }
-
+const RecordView = ({ organisationId, record }: RecordViewProps) => {
   const backLink = (
     <BackLink href={`/portal/organisations/${organisationId}/records`}>Back</BackLink>
   )
 
-  if (error || !record) {
+  if (!record) {
     return (
       <section>
         <PageHeader heading="Unable to load record" backLink={backLink} />

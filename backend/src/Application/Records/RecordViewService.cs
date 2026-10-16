@@ -23,24 +23,26 @@ internal sealed class RecordViewService(
     public async Task<GetRecordResult> GetRecord(
         int recordId,
         RecordType recordType,
+        int organisationId,
         CancellationToken cancellationToken
     )
     {
-        RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
-
-        if (record is null)
-        {
-            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
-        }
-
-        if (
-            !organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.Read,
-                record.OrganisationId
-            )
-        )
+        // Authorise against the requested organisation before looking the record up, so an
+        // unauthorised caller gets the same response whether or not the record exists.
+        OrganisationAccess access = organisationAuthoriser.GetOrganisationAccess(
+            Operation.Read,
+            organisationId
+        );
+        if (access == OrganisationAccess.NotAllowed)
         {
             return GetRecordResult.Err(new GetRecordError.NotAllowed(recordId));
+        }
+
+        RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
+
+        if (record is null || record.OrganisationId != organisationId)
+        {
+            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }
 
         // Every record is created with a revision, so this only guards against bad data.
@@ -55,6 +57,9 @@ internal sealed class RecordViewService(
                 new GetRecordError.RecordTypeMismatch(recordId, recordType, record.RecordType)
             );
         }
+
+        // Only offer to switch organisation once the record is known to be in it.
+        access.ThrowIfNotSelected(organisationId);
 
         int revisionId = record.LatestRevisionId.Value;
 

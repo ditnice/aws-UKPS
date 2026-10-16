@@ -70,6 +70,7 @@ internal partial class UserService(
             OrganisationName = membership.Organisation.OrganisationName,
             UserRole = currentUser.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
+            HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
         };
     }
 
@@ -200,9 +201,13 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        GetUsersError? organisationError = await ValidateOrganisationAsync(
-            organisationId,
+        OrganisationAccess access = organisationAuthoriser.GetOrganisationAccess(
             Operation.ElevatedRead,
+            organisationId
+        );
+        GetUsersError? organisationError = await ValidateOrganisationAccessAsync(
+            organisationId,
+            access,
             cancellationToken
         );
         if (organisationError is not null)
@@ -227,9 +232,16 @@ internal partial class UserService(
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        return user is null
-            ? GetUserInformationResult.Err(new GetUsersError.UserNotFound(userId, organisationId))
-            : GetUserInformationResult.Ok(user);
+        if (user is null)
+        {
+            return GetUserInformationResult.Err(
+                new GetUsersError.UserNotFound(userId, organisationId)
+            );
+        }
+
+        // Only offer to switch organisation once the user is known to be in it.
+        access.ThrowIfNotSelected(organisationId);
+        return GetUserInformationResult.Ok(user);
     }
 
     private IQueryable<UserInformationTrackingProjection> GetProjectedUserInformation()
@@ -389,23 +401,36 @@ internal partial class UserService(
                 : null;
         }
 
-        bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
+        OrganisationAccess access = organisationAuthoriser.GetOrganisationAccess(
             operation,
             organisationId.Value
         );
-        if (!actionPermitted)
+        access.ThrowIfNotSelected(organisationId.Value);
+
+        return await ValidateOrganisationAccessAsync(
+            organisationId.Value,
+            access,
+            cancellationToken
+        );
+    }
+
+    private async Task<GetUsersError?> ValidateOrganisationAccessAsync(
+        int organisationId,
+        OrganisationAccess access,
+        CancellationToken cancellationToken
+    )
+    {
+        if (access == OrganisationAccess.NotAllowed)
         {
-            return new GetUsersError.NotAllowed(organisationId.Value);
+            return new GetUsersError.NotAllowed(organisationId);
         }
 
         bool organisationExists = await dbContext.Organisations.AnyAsync(
-            o => o.Id == organisationId.Value,
+            o => o.Id == organisationId,
             cancellationToken
         );
 
-        return organisationExists
-            ? null
-            : new GetUsersError.OrganisationNotFound(organisationId.Value);
+        return organisationExists ? null : new GetUsersError.OrganisationNotFound(organisationId);
     }
 
     private static IQueryable<UserInformationTrackingProjection> ApplyFilters(

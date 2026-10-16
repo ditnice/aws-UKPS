@@ -73,6 +73,18 @@ internal class TokenValidationHandler : ITokenValidationHandler
             new Claim(UkpsClaimTypes.OrganisationId, $"{membership.OrganisationId}")
         );
         identity?.AddClaim(new Claim(UkpsClaimTypes.UserRole, $"{membership.UserRole}"));
+
+        foreach (
+            UserOrgMembership selectable in user.UserOrgMemberships!.Where(x => x.IsSelectable())
+        )
+        {
+            identity?.AddClaim(
+                new Claim(
+                    UkpsClaimTypes.SelectableMembership,
+                    $"{selectable.OrganisationId}:{selectable.UserRole}"
+                )
+            );
+        }
     }
 
     private static MembershipSelection GetSelectedMembership(

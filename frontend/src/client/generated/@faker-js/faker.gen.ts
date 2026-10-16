@@ -32,7 +32,8 @@ export const fakeAuthenticationFailCode = (options?: Options): AuthenticationFai
         'SelectedOrganisationIsNotValid',
         'MembershipDeactivated',
         'MembershipNotInValidState',
-        'OrganisationNotActive'
+        'OrganisationNotActive',
+        'SelectedOrganisationMismatch'
     ]);
 };
 
@@ -515,6 +516,7 @@ export const fakeAuthenticationProblemDetails = (options?: Options): Authenticat
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { code: f.datatype.boolean() ? fakeAuthenticationFailCode(options) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { organisationId: f.datatype.boolean() ? f.number.int() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { challengeType: f.datatype.boolean() ? fakeUkpsChallengeType(options) : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { authenticationSession: f.datatype.boolean() ? f.string.sample() : null }
     };
@@ -630,7 +632,8 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         organisationId: f.number.int(),
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options),
-        status: fakeUserOrgStatus(options)
+        status: fakeUserOrgStatus(options),
+        hasMultipleOrganisations: f.datatype.boolean()
     };
 };
 
@@ -1009,6 +1012,8 @@ export const fakeGetOrganisationByIdResponse403 = (options?: Options): GetOrgani
 
 export const fakeGetOrganisationByIdResponse404 = (options?: Options): GetOrganisationByIdErrors[404] => fakeProblemDetails(options);
 
+export const fakeGetOrganisationByIdResponse409 = (options?: Options): GetOrganisationByIdErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakeUpdateOrganisationDetailsRequest = (options?: Options): Omit<UpdateOrganisationDetailsData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
@@ -1028,6 +1033,8 @@ export const fakeUpdateOrganisationDetailsResponse401 = (options?: Options): Upd
 export const fakeUpdateOrganisationDetailsResponse403 = (options?: Options): UpdateOrganisationDetailsErrors[403] => fakeProblemDetails(options);
 
 export const fakeUpdateOrganisationDetailsResponse404 = (options?: Options): UpdateOrganisationDetailsErrors[404] => fakeProblemDetails(options);
+
+export const fakeUpdateOrganisationDetailsResponse409 = (options?: Options): UpdateOrganisationDetailsErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeDeactivateMembershipRequest = (options?: Options): Omit<DeactivateMembershipData, 'url'> => {
     const f = options?.faker ?? faker;
@@ -1049,6 +1056,8 @@ export const fakeDeactivateMembershipResponse403 = (options?: Options): Deactiva
 
 export const fakeDeactivateMembershipResponse404 = (options?: Options): DeactivateMembershipErrors[404] => fakeProblemDetails(options);
 
+export const fakeDeactivateMembershipResponse409 = (options?: Options): DeactivateMembershipErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakeReactivateMembershipRequest = (options?: Options): Omit<ReactivateMembershipData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
@@ -1068,6 +1077,8 @@ export const fakeReactivateMembershipResponse401 = (options?: Options): Reactiva
 export const fakeReactivateMembershipResponse403 = (options?: Options): ReactivateMembershipErrors[403] => fakeProblemDetails(options);
 
 export const fakeReactivateMembershipResponse404 = (options?: Options): ReactivateMembershipErrors[404] => fakeProblemDetails(options);
+
+export const fakeReactivateMembershipResponse409 = (options?: Options): ReactivateMembershipErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeUpdateUserRoleRequest = (options?: Options): Omit<UpdateUserRoleData, 'url'> => {
     const f = options?.faker ?? faker;
@@ -1090,6 +1101,8 @@ export const fakeUpdateUserRoleResponse403 = (options?: Options): UpdateUserRole
 
 export const fakeUpdateUserRoleResponse404 = (options?: Options): UpdateUserRoleErrors[404] => fakeProblemDetails(options);
 
+export const fakeUpdateUserRoleResponse409 = (options?: Options): UpdateUserRoleErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakePostOrganisationsRequest = (options?: Options): Omit<PostOrganisationsData, 'url'> => ({
     body: fakeCreateOrganisationDto(options)
 });
@@ -1100,7 +1113,7 @@ export const fakePostOrganisationsResponse400 = (options?: Options): PostOrganis
 
 export const fakePostOrganisationsResponse401 = (options?: Options): PostOrganisationsErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakePostOrganisationsResponse409 = (options?: Options): PostOrganisationsErrors[409] => fakeProblemDetails(options);
+export const fakePostOrganisationsResponse409 = (options?: Options): PostOrganisationsErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeGetOrganisationsPublicOptionsResponse = (options?: Options): GetOrganisationsPublicOptionsResponse => {
     const f = options?.faker ?? faker;
@@ -1136,6 +1149,8 @@ export const fakeGetOrganisationRecordsResponse403 = (options?: Options): GetOrg
 
 export const fakeGetOrganisationRecordsResponse404 = (options?: Options): GetOrganisationRecordsErrors[404] => fakeProblemDetails(options);
 
+export const fakeGetOrganisationRecordsResponse409 = (options?: Options): GetOrganisationRecordsErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakeGetRecordRequest = (options?: Options): Omit<GetRecordData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
@@ -1143,7 +1158,8 @@ export const fakeGetRecordRequest = (options?: Options): Omit<GetRecordData, 'ur
             id: f.number.int()
         },
         query: {
-            recordType: fakeRecordType(options)
+            recordType: fakeRecordType(options),
+            organisationId: f.number.int()
         }
     };
 };
@@ -1155,6 +1171,8 @@ export const fakeGetRecordResponse400 = (options?: Options): GetRecordErrors[400
 export const fakeGetRecordResponse401 = (options?: Options): GetRecordErrors[401] => fakeAuthenticationProblemDetails(options);
 
 export const fakeGetRecordResponse404 = (options?: Options): GetRecordErrors[404] => fakeProblemDetails(options);
+
+export const fakeGetRecordResponse409 = (options?: Options): GetRecordErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeCreateRecordRequest = (options?: Options): Omit<CreateRecordData, 'url'> => ({
     body: fakeCreateRecordCommand(options)
@@ -1168,9 +1186,13 @@ export const fakeCreateRecordResponse401 = (options?: Options): CreateRecordErro
 
 export const fakeCreateRecordResponse403 = (options?: Options): CreateRecordErrors[403] => fakeProblemDetails(options);
 
+export const fakeCreateRecordResponse409 = (options?: Options): CreateRecordErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakeGetUsersMeResponse200 = (options?: Options): GetUsersMeResponses[200] => fakeUserInformationDto(options);
 
 export const fakeGetUsersMeResponse401 = (options?: Options): GetUsersMeErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeGetUsersMeResponse409 = (options?: Options): GetUsersMeErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeGetUsersRequest = (options?: Options): Omit<GetUsersData, 'url'> => {
     const f = options?.faker ?? faker;
@@ -1198,6 +1220,8 @@ export const fakeGetUsersResponse401 = (options?: Options): GetUsersErrors[401] 
 
 export const fakeGetUsersResponse403 = (options?: Options): GetUsersErrors[403] => fakeProblemDetails(options);
 
+export const fakeGetUsersResponse409 = (options?: Options): GetUsersErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakeGetUserDetailsWithinOrganisationRequest = (options?: Options): Omit<GetUserDetailsWithinOrganisationData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
@@ -1215,6 +1239,8 @@ export const fakeGetUserDetailsWithinOrganisationResponse401 = (options?: Option
 export const fakeGetUserDetailsWithinOrganisationResponse403 = (options?: Options): GetUserDetailsWithinOrganisationErrors[403] => fakeProblemDetails(options);
 
 export const fakeGetUserDetailsWithinOrganisationResponse404 = (options?: Options): GetUserDetailsWithinOrganisationErrors[404] => fakeProblemDetails(options);
+
+export const fakeGetUserDetailsWithinOrganisationResponse409 = (options?: Options): GetUserDetailsWithinOrganisationErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeRemoveUserRequest = (options?: Options): Omit<RemoveUserData, 'url'> => {
     const f = options?.faker ?? faker;
@@ -1235,6 +1261,8 @@ export const fakeRemoveUserResponse403 = (options?: Options): RemoveUserErrors[4
 
 export const fakeRemoveUserResponse404 = (options?: Options): RemoveUserErrors[404] => fakeProblemDetails(options);
 
+export const fakeRemoveUserResponse409 = (options?: Options): RemoveUserErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakePatchUsersByUserIdRequest = (options?: Options): Omit<PatchUsersByUserIdData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
@@ -1253,7 +1281,7 @@ export const fakePatchUsersByUserIdResponse401 = (options?: Options): PatchUsers
 
 export const fakePatchUsersByUserIdResponse404 = (options?: Options): PatchUsersByUserIdErrors[404] => fakeProblemDetails(options);
 
-export const fakePatchUsersByUserIdResponse409 = (options?: Options): PatchUsersByUserIdErrors[409] => fakeProblemDetails(options);
+export const fakePatchUsersByUserIdResponse409 = (options?: Options): PatchUsersByUserIdErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakePostUsersOnboardRequest = (options?: Options): Omit<PostUsersOnboardData, 'url'> => ({
     body: fakeOnboardUserCommandDto(options)
@@ -1267,7 +1295,7 @@ export const fakePostUsersOnboardResponse401 = (options?: Options): PostUsersOnb
 
 export const fakePostUsersOnboardResponse403 = (options?: Options): PostUsersOnboardErrors[403] => fakeProblemDetails(options);
 
-export const fakePostUsersOnboardResponse409 = (options?: Options): PostUsersOnboardErrors[409] => fakeProblemDetails(options);
+export const fakePostUsersOnboardResponse409 = (options?: Options): PostUsersOnboardErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeRegisterUserRequest = (options?: Options): Omit<RegisterUserData, 'url'> => {
     const f = options?.faker ?? faker;
@@ -1301,6 +1329,8 @@ export const fakeGetUserRegistrationByIdResponse403 = (options?: Options): GetUs
 
 export const fakeGetUserRegistrationByIdResponse404 = (options?: Options): GetUserRegistrationByIdErrors[404] => fakeProblemDetails(options);
 
+export const fakeGetUserRegistrationByIdResponse409 = (options?: Options): GetUserRegistrationByIdErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakeApproveRequest = (options?: Options): Omit<ApproveData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
@@ -1319,6 +1349,8 @@ export const fakeApproveResponse403 = (options?: Options): ApproveErrors[403] =>
 
 export const fakeApproveResponse404 = (options?: Options): ApproveErrors[404] => fakeProblemDetails(options);
 
+export const fakeApproveResponse409 = (options?: Options): ApproveErrors[409] => fakeAuthenticationProblemDetails(options);
+
 export const fakeRejectRequest = (options?: Options): Omit<RejectData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
@@ -1336,3 +1368,5 @@ export const fakeRejectResponse401 = (options?: Options): RejectErrors[401] => f
 export const fakeRejectResponse403 = (options?: Options): RejectErrors[403] => fakeProblemDetails(options);
 
 export const fakeRejectResponse404 = (options?: Options): RejectErrors[404] => fakeProblemDetails(options);
+
+export const fakeRejectResponse409 = (options?: Options): RejectErrors[409] => fakeAuthenticationProblemDetails(options);

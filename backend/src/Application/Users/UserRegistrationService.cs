@@ -101,11 +101,11 @@ internal class UserRegistrationService : IUserRegistrationService
     {
         // Authorise against the requested organisation before looking the request up, so an
         // unauthorised caller gets the same response whether or not the request exists.
-        var authorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
+        OrganisationAccess access = _organisationAuthoriser.GetOrganisationAccess(
             Operation.SignUpUser,
             organisationId
         );
-        if (!authorised)
+        if (access == OrganisationAccess.NotAllowed)
         {
             return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.UserNotAuthorised());
         }
@@ -119,6 +119,9 @@ internal class UserRegistrationService : IUserRegistrationService
         {
             return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.IdNotFound(id));
         }
+
+        // Only offer to switch organisation once the request is known to be in it.
+        access.ThrowIfNotSelected(organisationId);
         var dto = MapToDto(request);
         return GetUserRegistrationByIdResult.Ok(dto);
     }
