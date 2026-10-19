@@ -5,7 +5,9 @@ using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
+using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using GetRecordsResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Records.Dtos.RecordListItemDto>,
@@ -17,13 +19,15 @@ namespace UKPS.Api.Application.Records;
 internal partial class RecordService(
     AppDbContext dbContext,
     IDateTimeProvider timeProvider,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    IUserService userService
 ) : IRecordService
 {
     private readonly IDateTimeProvider _timeProvider = timeProvider;
 
     private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
 
+    private readonly IUserService _userService = userService;
     private const int PublishedRecordUpdateDueMonths = 3;
 
     public async Task<GetRecordsResult> GetOrganisationRecords(
@@ -113,6 +117,53 @@ internal partial class RecordService(
         );
 
         return organisationExists ? null : new GetRecordsError.OrganisationNotFound(organisationId);
+    }
+
+    public async Task<DiscardRecordError?> DiscardDraftRecord(
+        int recordId,
+        CancellationToken cancellationToken
+    )
+    {
+        var record = await dbContext.Records.FirstOrDefaultAsync(
+            r => r.Id == recordId,
+            cancellationToken
+        );
+        if (record is null)
+        {
+            return new DiscardRecordError.RecordNotFound();
+        }
+        if (!await CanDiscardDraftRecord(recordId, cancellationToken))
+        {
+            return new DiscardRecordError.InvalidDiscard();
+        }
+
+        var currentUser = await _userService.GetCurrentUser(cancellationToken);
+        var user = await dbContext.Users.FirstOrDefaultAsync(
+            u => u.Id == currentUser.UserId,
+            cancellationToken
+        );
+        if (user is null)
+        {
+            return new DiscardRecordError.UserNotFound();
+        }
+        var performedAt = _timeProvider.GetUtcNow();
+
+        record.ChangeStatus(
+            RecordStatus.Discarded,
+            performedAt,
+            user,
+            RecordStatusChangeReason.ManuallyDiscarded
+        );
+        var recordEvent = new RecordEvent
+        {
+            Record = record,
+            EventType = RecordEventType.RecordDiscarded,
+            PerformedBy = user.Id,
+            PerformedAt = performedAt,
+        };
+        dbContext.RecordEvents.Add(recordEvent);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return null;
     }
 
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(
@@ -260,4 +311,34 @@ internal partial class RecordService(
                     CompanyCode = b.CompanyCode,
                 }
         );
+
+    private async Task<bool> CanDiscardDraftRecord(
+        int recordId,
+        CancellationToken cancellationToken
+    )
+    {
+        bool validDiscard = await dbContext.Records.AnyAsync(
+            r => r.Id == recordId && r.RecordStatus == RecordStatus.Unpublished,
+            cancellationToken
+        );
+        validDiscard =
+            validDiscard
+            && await dbContext.RecordRevisions.CountAsync(
+                r => r.RecordId == recordId,
+                cancellationToken
+            ) == 1
+            && await dbContext.RecordRevisions.AnyAsync(
+                r => r.RecordId == recordId && r.WorkflowStatus == WorkflowStatus.Draft,
+                cancellationToken
+            );
+        var userOrgs = await _userService.GetCurrentUserOrganisations(cancellationToken);
+
+        var recordOrganisationId = await dbContext
+            .Records.Where(r => r.Id == recordId)
+            .Select(r => r.OrganisationId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        bool userBelongsToOrganisation = userOrgs.Any(o => o.Id == recordOrganisationId);
+        return validDiscard && userBelongsToOrganisation;
+    }
 }

@@ -162,4 +162,33 @@ public class RecordController(
                 )
         );
     }
+
+    /// <summary>
+    /// Discards a draft record by updating its status to discarded.
+    /// </summary>
+    /// <param name="recordId">The unique identifier of the record to discard.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// An HTTP 200 response if the record is successfully discarded.
+    /// An HTTP 404 response if the record cannot be found.
+    /// An HTTP 400 response if the record is not eligible to be discarded.
+    /// An HTTP 500 response if the current user cannot be found or an unexpected error occurs.
+    /// </returns>
+    [HttpPost("{recordId}/discard")]
+    public async Task<IActionResult> DiscardDraftRecord(
+        int recordId,
+        CancellationToken cancellationToken
+    )
+    {
+        var error = await recordService.DiscardDraftRecord(recordId, cancellationToken);
+
+        return error switch
+        {
+            null => Ok(),
+            DiscardRecordError.RecordNotFound => NotFound(),
+            DiscardRecordError.UserNotFound => StatusCode(StatusCodes.Status500InternalServerError),
+            DiscardRecordError.InvalidDiscard => BadRequest(),
+            _ => StatusCode(StatusCodes.Status500InternalServerError),
+        };
+    }
 }

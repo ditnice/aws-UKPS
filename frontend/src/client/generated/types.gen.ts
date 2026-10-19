@@ -1033,7 +1033,8 @@ export const RecordStatus = {
     UNPUBLISHED: 'Unpublished',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived'
+    ARCHIVED: 'Archived',
+    DISCARDED: 'Discarded'
 } as const;
 
 /**
@@ -2281,6 +2282,30 @@ export type CreateRecordResponses = {
 };
 
 export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
+
+export type PostRecordsByRecordIdDiscardData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the record to discard.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/discard';
+};
+
+export type PostRecordsByRecordIdDiscardErrors = {
+    /**
+     * An HTTP 200 response if the record is successfully discarded.
+     * An HTTP 404 response if the record cannot be found.
+     * An HTTP 400 response if the record is not eligible to be discarded.
+     * An HTTP 500 response if the current user cannot be found or an unexpected error occurs.
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type PostRecordsByRecordIdDiscardError = PostRecordsByRecordIdDiscardErrors[keyof PostRecordsByRecordIdDiscardErrors];
 
 export type GetUsersMeData = {
     body?: never;
