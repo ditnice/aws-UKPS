@@ -16,8 +16,6 @@ import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
-import styles from './CreateMedicineRecordForm.module.scss'
-
 const inputWidth = 'two-thirds'
 
 const isDistinctIgnoringCase = (values: string[]) =>
@@ -108,28 +106,27 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
-            <div className={styles.headingLabel}>
-              <Input
-                error={Boolean(errorMessage)}
-                errorMessage={errorMessage}
-                label="Company code"
-                hint="Enter the primary internal code or working name your company uses for this product seeking market access."
-                name={field.name}
-                onBlur={field.handleBlur}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  field.handleChange(event.target.value)
-                }
-                value={field.state.value}
-                width={inputWidth}
-              />
-            </div>
+            <Input
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              title="Company code"
+              label="Company code"
+              hint="Enter the primary internal code or working name your company uses for this product seeking market access."
+              name={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              value={field.state.value}
+              width={inputWidth}
+            />
           )
         }}
       </form.Field>
       <form.Field name="otherIdentifiers" mode="array">
         {(field) => (
           <AddAnother
-            firstItemClassName={styles.headingLabel}
+            title="Other names and identifiers (optional)"
             labelPrefix="Other names and identifiers (optional)"
             hint="Enter any other development names, synonyms, or identifiers that you want to associate with this product."
             addItemLabel="Add another identifier"
@@ -148,6 +145,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
             <Input
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
+              title="Branded name"
               label="Branded name (optional)"
               hint="Enter the name this medicine is sold under. For example, Humira, Lipitor."
               name={field.name}
@@ -164,7 +162,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       <form.Field name="genericNames" mode="array">
         {(field) => (
           <AddAnother
-            heading="Active substance"
+            title="Active substance"
             labelPrefix="Generic name"
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
             addItemLabel="Add another active substance"
@@ -185,21 +183,20 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
-            <div className={styles.headingLabel}>
-              <Textarea
-                error={Boolean(errorMessage)}
-                errorMessage={errorMessage}
-                label="Record title"
-                name={field.name}
-                hint="Enter a title to help you to identify this record. You can enter up to 100 characters."
-                onBlur={field.handleBlur}
-                onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
-                  field.handleChange(event.target.value)
-                }
-                value={field.state.value}
-                width={inputWidth}
-              />
-            </div>
+            <Textarea
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              title="Record title"
+              label="Record title"
+              name={field.name}
+              hint="Enter a title to help you to identify this record. You can enter up to 100 characters."
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+                field.handleChange(event.target.value)
+              }
+              value={field.state.value}
+              width={inputWidth}
+            />
           )
         }}
       </form.Field>

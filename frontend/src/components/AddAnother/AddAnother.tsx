@@ -31,7 +31,7 @@ export type GetSubfield<T extends string> = (
 export type AddAnotherProps<T extends string> = {
   addItemLabel: string
   removeItemLabel: string
-  heading?: string
+  title?: string
   firstItemClassName?: string
   labelPrefix: string
   hint: string
@@ -52,7 +52,7 @@ export type AddAnotherProps<T extends string> = {
  * @template T - The field name key used for the array entries.
  * @param props.addItemLabel - Label shown on the button used to append a new item.
  * @param props.removeItemLabel - Label shown on the button used to remove a list item.
- * @param props.heading - Optional h2 shown once above the list.
+ * @param props.title - Optional h2 shown once above the list.
  * @param props.firstItemClassName - Optional class applied to the first item's row only.
  * @param props.labelPrefix - Prefix used for each item's visible label.
  * @param props.hint - Helper text shown beneath the first item.
@@ -63,7 +63,7 @@ export type AddAnotherProps<T extends string> = {
 export const AddAnother = <T extends string>({
   addItemLabel,
   removeItemLabel,
-  heading,
+  title,
   firstItemClassName,
   labelPrefix,
   hint,
@@ -74,7 +74,7 @@ export const AddAnother = <T extends string>({
   const canRemoveItem = field.state.value.length > 1
   return (
     <div className={styles.root}>
-      {heading && <h2 className={styles.heading}>{heading}</h2>}
+      {title && <h2>{title}</h2>}
       {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
       {field.state.value.map((_, i) => (
         <div

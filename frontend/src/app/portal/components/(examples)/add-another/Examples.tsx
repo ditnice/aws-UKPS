@@ -18,7 +18,7 @@ export function Examples() {
       <form.Field name="names" mode="array">
         {(field) => (
           <AddAnother
-            heading="Other names"
+            title="Other names"
             labelPrefix="Name"
             hint="Enter another name or identifier associated with this item."
             addItemLabel="Add another name"
