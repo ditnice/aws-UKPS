@@ -146,7 +146,8 @@ export const EamsOpinionDecision = { NEGATIVE: 'Negative', POSITIVE: 'Positive' 
 export type EamsOpinionDecision = typeof EamsOpinionDecision[keyof typeof EamsOpinionDecision];
 
 /**
- * The input a record content question is rendered with. Part of the HTTP API contract.
+ * The input a record content question is rendered with. Part of the HTTP API contract: the
+ * numeric values are sent to the frontend, so never renumber or reuse one.
  */
 export const FormControl = {
     TEXT: 'Text',
@@ -158,7 +159,8 @@ export const FormControl = {
 } as const;
 
 /**
- * The input a record content question is rendered with. Part of the HTTP API contract.
+ * The input a record content question is rendered with. Part of the HTTP API contract: the
+ * numeric values are sent to the frontend, so never renumber or reuse one.
  */
 export type FormControl = typeof FormControl[keyof typeof FormControl];
 

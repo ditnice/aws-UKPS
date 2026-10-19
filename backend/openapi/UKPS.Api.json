@@ -3733,7 +3733,7 @@
           "HierarchicalSelect"
         ],
         "type": "string",
-        "description": "The input a record content question is rendered with. Part of the HTTP API contract."
+        "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nnumeric values are sent to the frontend, so never renumber or reuse one."
       },
       "GenomicTestMandatoryStatus": {
         "enum": [
