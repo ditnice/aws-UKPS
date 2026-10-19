@@ -171,6 +171,7 @@ internal partial class RecordService(
         GetRecordsQueryDto getRecordsQuery
     )
     {
+        input = input.Where(m => m.RecordStatus != RecordStatus.Discarded);
         if (getRecordsQuery.RecordType.Count > 0)
         {
             input = input.Where(m => getRecordsQuery.RecordType.Contains(m.RecordType));
