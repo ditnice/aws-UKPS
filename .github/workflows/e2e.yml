@@ -1,0 +1,94 @@
+name: E2E tests
+
+# Runs the full Playwright suite against the Docker Compose stack (docker-compose.yml).
+# The stack uses the dev-auth bypass and a throwaway Postgres, so no secrets are needed.
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Tags match the image names Compose uses for project "ukps", so `up --no-build` uses them.
+      - name: Build images
+        uses: docker/bake-action@v6
+        with:
+          source: .
+          files: docker-compose.yml
+          targets: backend,frontend,playwright
+          load: true
+          set: |
+            backend.tags=ukps-backend
+            frontend.tags=ukps-frontend
+            playwright.tags=ukps-playwright
+            backend.cache-from=type=gha,scope=e2e-backend
+            backend.cache-to=type=gha,mode=max,scope=e2e-backend
+            frontend.cache-from=type=gha,scope=e2e-frontend
+            frontend.cache-to=type=gha,mode=max,scope=e2e-frontend
+            playwright.cache-from=type=gha,scope=e2e-playwright
+            playwright.cache-to=type=gha,mode=max,scope=e2e-playwright
+
+      - name: Prepare report directories
+        run: |
+          mkdir -p frontend/playwright-report frontend/test-results
+          echo "E2E_UID=$(id -u)" >> "$GITHUB_ENV"
+          echo "E2E_GID=$(id -g)" >> "$GITHUB_ENV"
+
+      - name: Run Playwright
+        run: docker compose --profile e2e up --no-build --exit-code-from playwright
+
+      - name: Collect container logs
+        if: failure()
+        run: docker compose --profile e2e logs --no-color > compose-logs.txt
+
+      - name: Summarise results
+        if: always()
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import os
+          import xml.etree.ElementTree as ET
+
+          path = "frontend/test-results/junit.xml"
+          if not os.path.exists(path):
+              print("### E2E tests\n\nNo JUnit report was produced; see the container logs artifact.")
+          else:
+              root = ET.parse(path).getroot()
+              total = int(root.get("tests", 0))
+              failed = int(root.get("failures", 0)) + int(root.get("errors", 0))
+              skipped = int(root.get("skipped", 0))
+              print("### E2E tests\n")
+              print("| Passed | Failed | Skipped |\n|---|---|---|")
+              print(f"| {total - failed - skipped} | {failed} | {skipped} |")
+          EOF
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report-${{ github.run_id }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            compose-logs.txt
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Stop stack
+        if: always()
+        run: docker compose --profile e2e down --volumes --remove-orphans

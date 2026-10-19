@@ -1,11 +1,18 @@
 import { defineConfig, devices } from '@playwright/test'
 import 'dotenv/config'
 
-import { isAuthenticatedTargetAllowed, isLocalBaseURL } from './tests/e2e/helpers/test-environment'
+import {
+  isAuthenticatedTargetAllowed,
+  isDevAuthMode,
+  isLocalBaseURL,
+} from './tests/e2e/helpers/test-environment'
 
 const localBaseURL = 'https://localhost:3000'
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? localBaseURL
 const isLocal = isLocalBaseURL(baseURL)
+/* The Docker Compose stack runs with frontend AUTHENTICATION_MODE=DEV and backend
+ * DevAuthentication, so authenticated specs run without signing in. */
+const isDevAuth = isDevAuthMode()
 const localWebServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? 'pnpm dev'
 const localChromiumOptions = isLocal
   ? { launchOptions: { args: ['--ignore-certificate-errors'] } }
@@ -22,7 +29,39 @@ const hasAuthenticatedCredentials = [
   'E2E_ORGANISATION_ID',
 ].every((name) => Boolean(process.env[name]?.trim()))
 const canRunAuthenticatedTests =
-  hasAuthenticatedCredentials && isAuthenticatedTargetAllowed(baseURL)
+  isDevAuth || (hasAuthenticatedCredentials && isAuthenticatedTargetAllowed(baseURL))
+const authenticatedProjects = isDevAuth
+  ? [
+      {
+        name: 'authenticated-chromium',
+        testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
+        use: {
+          ...devices['Desktop Chrome'],
+          ...localChromiumOptions,
+        },
+      },
+    ]
+  : [
+      {
+        name: 'auth-setup',
+        testMatch: /auth\.setup\.ts/,
+        use: {
+          ...devices['Desktop Chrome'],
+          ...localChromiumOptions,
+        },
+      },
+      {
+        name: 'authenticated-chromium',
+        dependencies: ['auth-setup'],
+        testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
+        use: {
+          ...devices['Desktop Chrome'],
+          ...localChromiumOptions,
+          storageState: 'tests/e2e/.auth/authenticated-dev.json',
+        },
+      },
+    ]
+const skipWebServer = Boolean(process.env.PLAYWRIGHT_SKIP_WEB_SERVER)
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -37,7 +76,11 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ...(process.env.CI ? [['junit', { outputFile: 'test-results/junit.xml' }] as const] : []),
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -79,35 +122,15 @@ export default defineConfig({
         ...localChromiumOptions,
       },
     },
-    ...(canRunAuthenticatedTests
-      ? [
-          {
-            name: 'auth-setup',
-            testMatch: /auth\.setup\.ts/,
-            use: {
-              ...devices['Desktop Chrome'],
-              ...localChromiumOptions,
-            },
-          },
-          {
-            name: 'authenticated-chromium',
-            dependencies: ['auth-setup'],
-            testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
-            use: {
-              ...devices['Desktop Chrome'],
-              ...localChromiumOptions,
-              storageState: 'tests/e2e/.auth/authenticated-dev.json',
-            },
-          },
-        ]
-      : []),
+    ...(canRunAuthenticatedTests ? authenticatedProjects : []),
   ],
-  webServer: isLocal
-    ? {
-        command: localWebServerCommand,
-        reuseExistingServer: true,
-        url: baseURL,
-        ignoreHTTPSErrors: true,
-      }
-    : undefined,
+  webServer:
+    isLocal && !skipWebServer
+      ? {
+          command: localWebServerCommand,
+          reuseExistingServer: true,
+          url: baseURL,
+          ignoreHTTPSErrors: true,
+        }
+      : undefined,
 })

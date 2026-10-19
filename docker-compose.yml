@@ -1,0 +1,105 @@
+# Full UKPS stack (Postgres, backend, frontend) built from the production Dockerfiles, plus a
+# Playwright runner under the `e2e` profile. See documentation/frontend.md#running-e2e-tests-with-docker-compose.
+#
+#   just e2e          # build, run the whole Playwright suite, tear down
+#   just stack-up     # run the stack only, on http://localhost:3000
+#
+# Authentication uses the dev bypass (frontend AUTHENTICATION_MODE=DEV and backend
+# DevAuthentication): every request acts as the seeded Super user in organisation 1.
+# No AWS access is needed and none of this configuration is secret.
+
+name: ukps
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ukps_payload
+    # Fresh, throwaway database on every run.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # No appsettings.E2E.json exists, so only appsettings.json and these variables apply.
+      ASPNETCORE_ENVIRONMENT: E2E
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=ukps_backend;Username=postgres;Password=postgres
+      Database__MigrateOnStartup: "true"
+      # Drops, migrates and deterministically reseeds the database on every start.
+      Seeding__ReseedOnStartup: "true"
+      DevAuthentication__IsEnabled: "true"
+      DevAuthentication__UserRole: Super
+      AWS__LoadSecrets: "false"
+      Cognito__Region: eu-west-2
+      Cognito__UserPoolId: eu-west-2_e2e
+      Cognito__ClientId: e2e
+      Cognito__ClientSecret: e2e
+      Email__FromAddress: no-reply@ukps.invalid
+      Email__QueueUrl: http://localhost/e2e-disabled
+      Email__ListenerEnabled: "false"
+      # Dummy credentials stop the AWS SDK probing for real ones.
+      AWS_ACCESS_KEY_ID: e2e
+      AWS_SECRET_ACCESS_KEY: e2e
+      AWS_REGION: eu-west-2
+      AWS_EC2_METADATA_DISABLED: "true"
+    ports:
+      - "${UKPS_BACKEND_PORT:-8080}:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/ukps_payload
+      PAYLOAD_SECRET: e2e-not-a-secret
+      BACKEND_API_BASE_URL: http://backend:8080
+      FRONTEND_PUBLIC_ORIGIN: http://localhost:3000
+      AUTHENTICATION_MODE: DEV
+      COGNITO_ISSUER: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_e2e
+      COGNITO_CLIENT_ID: e2e
+    ports:
+      - "${UKPS_FRONTEND_PORT:-3000}:3000"
+
+  playwright:
+    profiles: [e2e]
+    build:
+      context: ./frontend
+      dockerfile: e2e.Dockerfile
+    # Shares the frontend's network namespace so the browser reaches the app on
+    # http://localhost:3000, which browsers treat as a secure context for Secure cookies.
+    network_mode: service:frontend
+    depends_on:
+      - frontend
+      - backend
+    user: "${E2E_UID:-1000}:${E2E_GID:-1000}"
+    environment:
+      HOME: /tmp
+      CI: ${CI:-}
+      PLAYWRIGHT_ARGS: ${PLAYWRIGHT_ARGS:-}
+      PLAYWRIGHT_BASE_URL: http://localhost:3000
+      PLAYWRIGHT_SKIP_WEB_SERVER: "1"
+      E2E_AUTH_MODE: dev
+      E2E_ORGANISATION_ID: "1"
+    volumes:
+      - ./frontend/playwright-report:/app/playwright-report
+      - ./frontend/test-results:/app/test-results
