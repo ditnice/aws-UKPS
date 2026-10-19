@@ -26,7 +26,7 @@ COPY tests/e2e ./tests/e2e
 # invite-user.authenticated.e2e.spec.ts imports this helper from the app source.
 COPY src/app/portal/organisations/[[]id]/_lib/userActionAlert.ts ./src/app/portal/organisations/[id]/_lib/userActionAlert.ts
 
-RUN mkdir -p playwright-report test-results && chmod a+rwx playwright-report test-results
+RUN mkdir -p e2e-results && chmod a+rwx e2e-results
 
 # Matches the test:e2e package scripts; set only after tsx has been installed.
 ENV NODE_OPTIONS="--no-deprecation --import=tsx/esm"

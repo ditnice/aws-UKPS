@@ -75,10 +75,12 @@ just e2e --project=chromium       # extra arguments are passed to `playwright te
 CI=true just e2e                  # CI behaviour: 1 worker, 2 retries, JUnit output
 ```
 
-Results are written to the repo (both paths are git-ignored):
+Results are written to `frontend/e2e-results/` (git-ignored):
 
-- `frontend/playwright-report/` – HTML report (`pnpm exec playwright show-report` from `frontend/`)
-- `frontend/test-results/` – traces, screenshots and, when `CI` is set, `junit.xml`
+- `playwright-report/` – HTML report (`pnpm exec playwright show-report e2e-results/playwright-report`
+  from `frontend/`)
+- `test-results/` – traces and screenshots
+- `junit.xml` – when `CI` is set
 
 How the stack is set up:
 
@@ -116,15 +118,16 @@ just stack-down
 `pnpm install`, browser install) are reused, then runs `docker compose --profile e2e up`.
 
 Each run uploads an `e2e-report-<run id>` artifact (kept 14 days) containing the HTML report,
-`test-results/` (traces, screenshots, `junit.xml`) and, on failure, `compose-logs.txt`. Pass/fail
+`frontend/e2e-results/` (HTML report, traces, screenshots, `junit.xml`) and, on failure,
+`compose-logs.txt`. Pass/fail
 counts appear on the run's summary page.
 
 #### Running in a CI pipeline (e.g. TeamCity)
 
 - Build step: `CI=true COMPOSE_PROJECT_NAME=ukps-e2e-<build number> UKPS_FRONTEND_PORT=0
   UKPS_BACKEND_PORT=0 just e2e`. The project name and ephemeral ports let builds share an agent.
-- XML report processing: `frontend/test-results/junit.xml`.
-- Artifacts: `frontend/playwright-report/**` and `frontend/test-results/**`.
+- XML report processing: `frontend/e2e-results/junit.xml`.
+- Artifacts: `frontend/e2e-results/**`.
 - The agent needs Docker with Compose v2 and BuildKit, on x86_64 (`backend/Dockerfile` copies
   x86_64-specific libraries).
 

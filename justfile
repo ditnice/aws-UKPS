@@ -6,7 +6,7 @@ regenerate:
 e2e *args:
     #!/usr/bin/env bash
     set -uo pipefail
-    mkdir -p frontend/playwright-report frontend/test-results
+    mkdir -p frontend/e2e-results
     export E2E_UID="$(id -u)" E2E_GID="$(id -g)" PLAYWRIGHT_ARGS="{{args}}"
     docker compose --profile e2e up --build --exit-code-from playwright
     status=$?

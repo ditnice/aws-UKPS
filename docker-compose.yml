@@ -100,6 +100,10 @@ services:
       PLAYWRIGHT_SKIP_WEB_SERVER: "1"
       E2E_AUTH_MODE: dev
       E2E_ORGANISATION_ID: "1"
+      # Playwright deletes and recreates its output folders, so they must sit inside the
+      # mount rather than be mount points themselves.
+      PLAYWRIGHT_OUTPUT_DIR: e2e-results/test-results
+      PLAYWRIGHT_HTML_OUTPUT_DIR: e2e-results/playwright-report
+      PLAYWRIGHT_JUNIT_OUTPUT_FILE: e2e-results/junit.xml
     volumes:
-      - ./frontend/playwright-report:/app/playwright-report
-      - ./frontend/test-results:/app/test-results
+      - ./frontend/e2e-results:/app/e2e-results

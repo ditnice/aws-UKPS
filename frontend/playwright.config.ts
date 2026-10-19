@@ -76,10 +76,20 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  /* PLAYWRIGHT_OUTPUT_DIR and PLAYWRIGHT_HTML_OUTPUT_DIR let the Docker Compose runner keep all
+   * output inside one mounted folder; Playwright deletes and recreates these folders on each run. */
+  outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR ?? 'test-results',
   reporter: [
     ['list'],
     ['html', { open: 'never' }],
-    ...(process.env.CI ? [['junit', { outputFile: 'test-results/junit.xml' }] as const] : []),
+    ...(process.env.CI
+      ? [
+          [
+            'junit',
+            { outputFile: process.env.PLAYWRIGHT_JUNIT_OUTPUT_FILE ?? 'test-results/junit.xml' },
+          ] as const,
+        ]
+      : []),
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
