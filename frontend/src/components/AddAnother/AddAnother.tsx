@@ -7,7 +7,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { clearFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import styles from './ArrayInput.module.scss'
+import styles from './AddAnother.module.scss'
 
 export type ArrayField<T extends string> = {
   name: T
@@ -28,7 +28,7 @@ export type GetSubfield<T extends string> = (
   renderer: (subfield: Field) => React.ReactElement,
 ) => React.ReactElement
 
-export type ArrayInputProps<T extends string> = {
+export type AddAnotherProps<T extends string> = {
   addItemLabel: string
   removeItemLabel: string
   heading?: string
@@ -60,7 +60,7 @@ export type ArrayInputProps<T extends string> = {
  * @param props.getSubfield - Callback used to render a specific field instance for one array index.
  * @returns The rendered array input component.
  */
-export const ArrayInput = <T extends string>({
+export const AddAnother = <T extends string>({
   addItemLabel,
   removeItemLabel,
   heading,
@@ -69,7 +69,7 @@ export const ArrayInput = <T extends string>({
   hint,
   field,
   getSubfield,
-}: ArrayInputProps<T>) => {
+}: AddAnotherProps<T>) => {
   const errorMessage = getFieldErrorMessage(field.state.meta.errors)
   const canRemoveItem = field.state.value.length > 1
   return (

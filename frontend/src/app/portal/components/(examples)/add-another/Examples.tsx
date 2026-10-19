@@ -2,7 +2,7 @@
 
 import { useForm } from '@tanstack/react-form'
 
-import { ArrayInput } from '@/components/ArrayInput/ArrayInput'
+import { AddAnother } from '@/components/AddAnother/AddAnother'
 
 import { Example } from '../../_components/Example'
 
@@ -17,7 +17,7 @@ export function Examples() {
     <Example title="Repeatable text inputs">
       <form.Field name="names" mode="array">
         {(field) => (
-          <ArrayInput
+          <AddAnother
             heading="Other names"
             labelPrefix="Name"
             hint="Enter another name or identifier associated with this item."

@@ -6,7 +6,7 @@ import { ChangeEvent, useState } from 'react'
 import z from 'zod'
 
 import { createRecord, CreateRecordCommand } from '@/client/generated'
-import { ArrayInput } from '@/components/ArrayInput/ArrayInput'
+import { AddAnother } from '@/components/AddAnother/AddAnother'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -128,7 +128,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       </form.Field>
       <form.Field name="otherIdentifiers" mode="array">
         {(field) => (
-          <ArrayInput
+          <AddAnother
             firstItemClassName={styles.headingLabel}
             labelPrefix="Other names and identifiers (optional)"
             hint="Enter any other development names, synonyms, or identifiers that you want to associate with this product."
@@ -163,7 +163,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       </form.Field>
       <form.Field name="genericNames" mode="array">
         {(field) => (
-          <ArrayInput
+          <AddAnother
             heading="Active substance"
             labelPrefix="Generic name"
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
