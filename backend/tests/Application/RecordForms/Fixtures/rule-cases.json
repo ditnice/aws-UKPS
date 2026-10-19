@@ -1,0 +1,23 @@
+{
+  "description": "Shared rule cases run by both the backend (RuleCasesTests) and the frontend (lib/dynamic-form). Each answer is the wire answer before normalisation; error is the first failing rule's message, or null.",
+  "cases": [
+    { "name": "required text answered", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }], "answer": "abc", "error": null },
+    { "name": "required text null", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }], "answer": null, "error": "Enter a value" },
+    { "name": "required text blank", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }], "answer": "", "error": "Enter a value" },
+    { "name": "required text whitespace only", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }], "answer": "   ", "error": "Enter a value" },
+    { "name": "optional text null", "multiple": false, "rules": [], "answer": null, "error": null },
+    { "name": "max length at limit", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "answer": "abcde", "error": null },
+    { "name": "max length over limit", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "answer": "abcdef", "error": "Too long" },
+    { "name": "max length checked after trimming", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "answer": "  abcde  ", "error": null },
+    { "name": "max length counts UTF-16 code units", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 2, "message": "Too long" }], "answer": "😀", "error": null },
+    { "name": "max length passes when unanswered", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "answer": null, "error": null },
+    { "name": "required reported before max length", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }, { "kind": "Required", "value": null, "message": "Enter a value" }], "answer": "   ", "error": "Enter a value" },
+    { "name": "only the first failing rule is reported", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }, { "kind": "MaxLength", "value": 2, "message": "Too long" }], "answer": "abc", "error": "Too long" },
+    { "name": "required choice answered", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Select an option" }], "answer": "Yes", "error": null },
+    { "name": "required multi none ticked", "multiple": true, "rules": [{ "kind": "Required", "value": null, "message": "Select at least one" }], "answer": [], "error": "Select at least one" },
+    { "name": "required multi one ticked", "multiple": true, "rules": [{ "kind": "Required", "value": null, "message": "Select at least one" }], "answer": ["2"], "error": null },
+    { "name": "max items at limit", "multiple": true, "rules": [{ "kind": "MaxItems", "value": 3, "message": "Select up to 3" }], "answer": ["1", "2", "3"], "error": null },
+    { "name": "max items over limit", "multiple": true, "rules": [{ "kind": "MaxItems", "value": 3, "message": "Select up to 3" }], "answer": ["1", "2", "3", "4"], "error": "Select up to 3" },
+    { "name": "optional multi none ticked", "multiple": true, "rules": [{ "kind": "MaxItems", "value": 3, "message": "Select up to 3" }], "answer": [], "error": null }
+  ]
+}

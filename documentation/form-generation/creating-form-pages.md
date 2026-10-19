@@ -1,15 +1,19 @@
 # Creating form pages
 
-> **Status: proposed design, not yet implemented.** This guide describes how adding a page
-> will work once the attribute-driven form model is built. See
+> **Status: implemented** for the first delivery (Medicine form, Indication details). See
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
 This guide explains how to put questions on a record content form by annotating EF entities. The
 worked example is the Indication details section of the Medicine form. The designs are in
 [`screenshots/`](screenshots/):
 - [indication](screenshots/screen-one.png);
-- [BNF chapter](screenshots/screen-two.png);
-- [therapeutic area](screenshots/screen-three.png);
+- BNF chapter: [chapter](screenshots/screen-two-part-1.png),
+  [chapter list](screenshots/screen-two-part-2.png),
+  [subchapter](screenshots/screen-two-part-3.png),
+  [subchapter list](screenshots/screen-two-part-4.png);
+- therapeutic area: [area list](screenshots/screen-three-part-1.png),
+  [disease or condition](screenshots/screen-three-part-2.png),
+  [chosen pair](screenshots/screen-three-part-3.png);
 - [treating children](screenshots/screen-four.png);
 - [treating cancer](screenshots/screen-five.png).
 
@@ -37,14 +41,14 @@ describes. You only touch the frontend to add a new control.
 |---|---|---|---|
 | `[FormSection(recordType, id, title)]` | class | `Order`, `RowSource` | One per record type. Every entity declaring the same section ID must agree on title and `Order` |
 | `[FormPage(id, title)]` | property | `Order` | Order within the section. Every declaration of the same page ID must agree |
-| `[FormField(id, label)]` | property | `Control`, `Hint`, `Display`, `Order` | `Order` only matters on pages with several questions |
+| `[FormField(id, label)]` | property | `Control`, `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` |
 | `[FormRequired(message)]` | property | | |
 | `[FormMaxLength(max, message)]` | property | | `Text`, `Textarea` |
 | `[FormMaxItems(max, message)]` | property | | `Checkbox` |
 | `[FormOptions(key)]` | property | | Name of a registered option provider |
 | `[FormIgnore(reason)]` | property | | Not a question. The reason is required |
 
-`FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`.
+`FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
 ## Worked example: the Indication details section
@@ -73,17 +77,21 @@ internal sealed class MedicinesIndicationDetail
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
         Control = FormControl.Textarea,
-        Hint = "Describe the indication you intend to license in the UK.")]
+        Hint = "Describe the indication as you intend to apply for licensing in the UK. ...\n\nYou can edit these details at any time throughout product development.")]
     [FormRequired("Enter the indication this product is seeking a licence for")]
     [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
     public string? Indication { get; set; }
 
+    // The most specific BNF entry chosen: a subchapter, or the chapter if none is picked.
     [FormPage("bnf-chapter", "BNF chapter", Order = 20)]
     [FormField(
         "medicines_indication_detail.bnf_chapter_id",
         "Select the BNF chapter for this product",
-        Control = FormControl.Select)]
-    [FormOptions(OptionKeys.BnfTopLevel)]
+        Control = FormControl.HierarchicalSelect,
+        Placeholder = "Choose BNF chapter",
+        ChildLabel = "Select the BNF subchapter (optional)",
+        ChildPlaceholder = "Choose BNF subchapter")]
+    [FormOptions(OptionKeys.BnfChapters)]
     [FormRequired("Select a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
@@ -140,8 +148,13 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail_therapeutic_area",
         "Select the most appropriate therapeutic area for this product (optional)",
+        Control = FormControl.HierarchicalSelect,
         Display = "combobox",
-        Hint = "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.")]
+        Hint = "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.",
+        Placeholder = "Choose a therapeutic area",
+        ChildLabel = "Select the disease or condition (optional)",
+        ChildPlaceholder = "Choose a disease or condition",
+        AddAnotherLabel = "Add another therapy area")]
     [FormOptions(OptionKeys.TherapeuticAreas)]
     [FormMaxItems(3, "Select up to 3 therapeutic areas")]
     public ICollection<MedicinesIndicationDetailTherapeuticArea> TherapeuticAreas { get; set; } = [];
@@ -153,8 +166,8 @@ The scanner turns this into the following pages, in this order:
 | Order | Page ID | Question ID | Control | Binding |
 |---|---|---|---|---|
 | 10 | `indication` | `medicines_indication_detail.indication` | `Textarea` (explicit) | Column, string |
-| 20 | `bnf-chapter` | `medicines_indication_detail.bnf_chapter_id` | `Select` (explicit) | Column, reference ID |
-| 30 | `therapeutic-area` | `medicines_indication_detail_therapeutic_area` | `Checkbox` (inferred) | Junction |
+| 20 | `bnf-chapter` | `medicines_indication_detail.bnf_chapter_id` | `HierarchicalSelect` (explicit) | Column, reference ID |
+| 30 | `therapeutic-area` | `medicines_indication_detail_therapeutic_area` | `HierarchicalSelect` (explicit) | Junction |
 | 40 | `paediatric` | `medicines_indication_detail.indication_is_paediatric` | `Radio` (inferred) | Column, enum |
 | 50 | `cancer` | `medicines_indication_detail.indication_is_cancer` | `Radio` (inferred) | Column, enum |
 | 60 | `rare-disease` | `medicines_indication_detail.indication_is_rare_disease` | `Radio` (inferred) | Column, enum |
@@ -250,12 +263,17 @@ Leave `Control` out when the inferred control is right:
 |---|---|---|---|---|
 | `string` | `Text` | `Text`, `Textarea` | `string \| null` | `Input` / `Textarea` |
 | non-flags enum | `Radio` | `Radio`, `Select` | `string \| null` (member name) | NDS radios / `Select` |
-| `int?` reference FK | must be set | `Radio`, `Select` | `string \| null` (ID) | NDS radios / `Select` |
+| `int?` reference FK | must be set | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID) | NDS radios / `Select` / parent and child `Select`s |
 | `[Flags]` enum | `Checkbox` | `Checkbox` | `string[]` (member names) | NDS checkboxes |
-| junction navigation | `Checkbox` | `Checkbox` | `string[]` (IDs) | NDS checkboxes |
+| junction navigation | `Checkbox` | `Checkbox`, `HierarchicalSelect` | `string[]` (IDs) | NDS checkboxes / repeated parent and child `Select`s |
 
-`Display = "combobox"` on a `Checkbox` asks the frontend for the searchable combobox. Until that
-is built, it renders as a checkbox list.
+`HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
+optionally a child, and the answer is the most specific choice. It needs a tree provider (see
+step 5). On a junction it repeats, with an **Add another** button up to the `MaxItems` rule. See
+[Hierarchical selects](high-level-design.md#hierarchical-selects).
+
+`Display = "combobox"` asks the frontend for a searchable combobox. Until that is built, it is
+ignored and the control renders as plain dropdowns or checkboxes.
 
 ### Hints
 
@@ -275,8 +293,8 @@ provider registered in C#. Attributes cannot hold queries, so the list itself li
 |---|---|---|
 | `yes-no-unknown` (`YesNoUnknown`) | Enum `YesNoUnknown` | Yes, No, Unknown at this stage |
 | `paediatric-status` (`PaediatricStatus`) | Enum `IndicationPaediatricStatus` | Exclusively for children, Both children and adults, Exclusively for adults, Unknown at this stage |
-| `bnf-top-level` (`BnfTopLevel`) | Reference `BnfChapter` | Top-level chapters, labelled `"1: Gastro-Intestinal System"` |
-| `therapeutic-areas` (`TherapeuticAreas`) | Reference `TherapeuticArea` | Leaf areas, labelled `"Addiction › Opioid use disorder"` |
+| `bnf-chapters` (`BnfChapters`) | Reference tree `BnfChapter` | Chapters with their sections, labelled `"1: Gastro-Intestinal System"` and `"1.3: Antisecretory drugs…"` |
+| `therapeutic-areas` (`TherapeuticAreas`) | Reference tree `TherapeuticArea` | Areas with their diseases or conditions, labelled `"1: Addiction"` and `"1.3: Smoking cessation"` |
 
 ### Adding a provider
 
@@ -286,30 +304,32 @@ use it without depending on Application). Then register the provider in
 
 ```csharp
 // Enum: values in display order, with labels.
-registry.Enum(OptionKeys.YesNoUnknown,
+registry.AddEnum(OptionKeys.YesNoUnknown,
     (YesNoUnknown.Yes, "Yes"),
     (YesNoUnknown.No, "No"),
     (YesNoUnknown.Unknown, "Unknown at this stage"));
 
-// Reference data: a query (filter and order) and a projection. Both must translate to SQL.
-registry.Reference<BnfChapter>(OptionKeys.BnfTopLevel,
-    q => q.Where(x => x.ParentId == null).OrderBy(x => x.DisplayOrder),
-    x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived));
+// Flat reference data (for Radio, Select, Checkbox): a query (filter and order) and a
+// projection. Both must translate to SQL. The last argument is the parent ID, null here.
+registry.AddReference<FormulationType>(OptionKeys.FormulationTypes,
+    q => q.OrderBy(x => x.Label),
+    x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null));
 
-registry.Reference<TherapeuticArea>(OptionKeys.TherapeuticAreas,
-    q => q.Where(x => !x.Children.Any())
-          .OrderBy(x => x.Parent!.DisplayOrder).ThenBy(x => x.DisplayOrder),
-    x => new ReferenceOptionRow(
-        x.Id,
-        x.Parent == null ? x.Label : x.Parent.Label + " › " + x.Label,
-        x.IsArchived));
+// Two-level reference data (for HierarchicalSelect). ParentId links children to parents; the
+// query's order is kept within each level. More than two levels throws.
+registry.AddReferenceTree<BnfChapter>(OptionKeys.BnfChapters,
+    q => q.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id),
+    x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived, x.ParentId));
 ```
+
+(`FormulationTypes` is illustrative; it is not registered yet.)
 
 The startup check fails in these cases:
 - the key does not exist;
 - an enum provider's enum differs from the property's enum;
 - an enum provider is used on a reference ID or junction question, or a reference provider on
-  an enum question.
+  an enum question;
+- a `HierarchicalSelect` uses a flat provider, or another choice control uses a tree provider.
 
 An archived reference item is not offered, unless it is the value already saved for this record.
 In that case it is still shown and accepted. See [Reference data](reference-data.md).
@@ -426,8 +446,9 @@ reports every problem in one exception.
 | Agreement | Declarations of one section ID disagree on title or order, or declarations of one page ID disagree on title or order. A page spans entities in different sections |
 | Order | Two sections, two pages in a section, or two questions on a page have the same `Order` |
 | Structure | A section has no pages, or a page has no questions |
-| Controls | The control does not suit the property type (see the table in step 4). An `int?` FK has no explicit control |
-| Options | A choice control has no `[FormOptions]`, or a text control has one. The key is unknown. The enum provider's enum does not match the property, or the provider kind does not match the binding |
+| Controls | The control does not suit the property type (see the table in step 4). An `int?` FK has no explicit control. A non-nullable column has no `[FormRequired]` |
+| Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel` |
+| Options | A choice control has no `[FormOptions]`, or a text control has one. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId` |
 | Rules | A rule is on a control it does not apply to, or a rule kind appears twice |
 | Rows | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns |
 
@@ -437,13 +458,18 @@ reports every problem in one exception.
   - `Model_IsValid`;
   - the page order test (`Model_HasTheIndicationDetailsPagesInOrder`, or an equivalent for your
     section);
-  - the fingerprint test.
+  - the fingerprint test (`Model_ChangesRequireAVersionBump`), which prints the whole scanned
+    model when it fails.
+- **`FormModelValidatorTests`**: if you add a startup check. It scans small test-only entities
+  (`Scanning/ScanningTestEntities.cs`) against a test EF model.
+- **`RecordFormServiceTests`**: database tests of the page query and save services, following
+  the [walkthrough](record-creation-walkthrough.md).
 - **`MedicineOptionProviderTests`**: if you added a provider.
 - **`NextAndPreviousPage_FollowFormOrder`**: if you added a page at either end.
 
 ```sh
 cd backend
-dotnet test --filter-class "*RecordForm*"   # form model, scanner and provider tests
+dotnet test --filter-class "*RecordForms*"  # form model, scanner, rules and service tests
 dotnet test                                 # everything
 ```
 
@@ -478,7 +504,7 @@ touches both backend and frontend.
    - `question`, `value`, `onChange`, `onBlur`, `error`, `disabled`;
    - `labelAsHeading`.
 3. Register it in `questionRegistry.tsx`.
-4. Describe its form value in `lib/dynamic-form/answers.ts`.
+4. Describe its form value in `lib/dynamic-form/answers.ts` (`toFormValue` and `toAnswer`).
 5. Add rendering, error and payload tests.
 
 ## Checklist

@@ -29,7 +29,12 @@ internal sealed class SeedReferenceData
         );
         TherapeuticAreas = CreateHierarchy(
             data.TherapeuticAreas,
-            entry => new TherapeuticArea { Label = entry.Label, DisplayOrder = entry.DisplayOrder },
+            entry => new TherapeuticArea
+            {
+                Code = entry.Code,
+                Label = entry.Label,
+                DisplayOrder = entry.DisplayOrder,
+            },
             (child, parent) => child.Parent = parent
         );
         FormulationTypes = CreateList(

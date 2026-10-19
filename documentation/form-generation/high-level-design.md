@@ -1,7 +1,7 @@
 # Record content forms: high-level design
 
-> **Status: proposed design, not yet implemented.** This document describes the target design.
-> None of the code it names exists yet. The decision is recorded in
+> **Status: first delivery implemented** (Medicine form, Indication details section). The
+> decision is recorded in
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
 This document describes how record content pages (the questions a company answers about a
@@ -71,12 +71,12 @@ model, telling it which column or junction table holds the answer.
 | Area | Scope |
 |---|---|
 | Medicine form, section "Indication details" | 6 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer, treating a rare disease |
-| Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox` (`Checkbox` has an optional `combobox` display hint) |
+| Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another") |
 | Rules | `Required`, `MaxLength`, `MaxItems` |
 | Bindings | Column (string, enum, reference ID), flags enum, junction table |
-| Entry points | Record creation redirects to the first page; **Update record** on the record details page opens the first page |
+| Entry points | Record creation redirects to the first page; **Update record** on the record details page opens the first page. Both use `firstPageId`, returned by `POST /records` and `GET /records/{id}` |
 | Audit | One event per save, one row per changed answer |
-| Later | Conditional pages and questions, add-another groups, precision dates, vaccine forms, tasklist |
+| Later | Conditional pages and questions, add-another groups, precision dates, vaccine forms, tasklist, searchable combobox |
 
 ## Architecture
 
@@ -89,7 +89,7 @@ flowchart LR
     subgraph Frontend["Frontend (Next.js)"]
         R["Route<br/>portal/records/[recordId]/revisions/[revisionId]/[pageId]"]
         FP["FormPage<br/>(TanStack Form)"]
-        QR["questionRegistry<br/>Input / Textarea / Select / Radio / Checkbox"]
+        QR["questionRegistry<br/>Input / Textarea / Select / Radio / Checkbox / HierarchicalSelect"]
         DF["lib/dynamic-form<br/>answers, buildZodSchema,<br/>buildPayload, applyServerErrors"]
         RT["Record details page<br/>Update record button"]
     end
@@ -145,16 +145,17 @@ flowchart LR
 | Attributes (pure metadata, no Application dependency) | `backend/src/Persistence/FormAnnotations/` |
 | Annotated entities | `backend/src/Persistence/Entities/*RevisionContent/` |
 | Form model (`FormModel`, `FormSection`, `FormPage`, `FormQuestion`) | `backend/src/Application/RecordForms/Model/` |
-| Scanner, validator, fingerprint | `backend/src/Application/RecordForms/Scanning/` |
+| Scanner, validator, builder, fingerprint | `backend/src/Application/RecordForms/Scanning/` |
 | Form versions | `backend/src/Application/RecordForms/FormVersions.cs` |
 | Bindings | `backend/src/Application/RecordForms/Bindings/` |
 | Option providers | `backend/src/Application/RecordForms/Options/` |
 | Rules | `backend/src/Application/RecordForms/Rules/` |
-| Services | `backend/src/Application/RecordForms/RecordFormQueryService.cs`, `RecordFormSaveService.cs` |
+| Services | `backend/src/Application/RecordForms/RecordFormQueryService.cs`, `RecordFormSaveService.cs`, sharing `RecordFormPageLoader.cs` |
+| Server-side page validation | `backend/src/Application/RecordForms/Rules/PageAnswerValidator.cs`, `AnswerParser.cs`, `RuleEvaluator.cs` |
 | Controller | `backend/src/WebApi/Controllers/RecordFormController.cs` |
-| Shared rule fixture | `backend/tests/Application/RecordForms/Fixtures/rule-cases.json` |
+| Shared rule fixture | `backend/tests/Application/RecordForms/Fixtures/rule-cases.json` (run by `RuleCasesTests` and `frontend/src/lib/dynamic-form/ruleCases.test.ts`) |
 | Page route | `frontend/src/app/portal/records/[recordId]/revisions/[revisionId]/[pageId]/page.tsx` |
-| Renderer and question components | `frontend/src/components/DynamicForm/` |
+| Renderer and question components | `frontend/src/components/DynamicForm/` (`FormPage.tsx`, `questionRegistry.tsx`, `questions/`) |
 | Form logic | `frontend/src/lib/dynamic-form/` |
 
 The attributes live in Persistence, so entities stay free of Application types. Everything that
@@ -186,8 +187,11 @@ object graph, so the rest of the system never touches attributes or reflection:
 - **`FormQuestion`**: ID, control, label, hint, display hint, rules, option provider key and
   binding.
 
-The registry is a singleton built once at startup from `AppDbContext.Model`. It holds structure
-only: bindings receive the request's `AppDbContext`, and options are loaded per request.
+The registry is a singleton built from the EF design-time model of an `AppDbContext` created
+without a connection string (`FormModelFactory.LoadModel`), so it never depends on database
+settings. `FormModelStartupCheck`, a hosted service, resolves it when the API starts, so an
+invalid model stops the API starting. It holds structure only: bindings receive the request's
+`AppDbContext`, and options are loaded per request.
 
 ### Sections, pages and ordering
 
@@ -237,11 +241,34 @@ not one. It can never be silently left off the form.
 |---|---|---|
 | `string` | `Text` | `Text`, `Textarea` |
 | non-flags enum (nullable or not) | `Radio` | `Radio`, `Select` |
-| `int` / `int?` foreign key to reference data | none: must be set | `Radio`, `Select` |
+| `int` / `int?` foreign key to reference data | none: must be set | `Radio`, `Select`, `HierarchicalSelect` |
 | `[Flags]` enum | `Checkbox` | `Checkbox` |
-| navigation collection to a junction entity | `Checkbox` | `Checkbox` |
+| navigation collection to a junction entity | `Checkbox` | `Checkbox`, `HierarchicalSelect` |
 
-`Radio`, `Select` and `Checkbox` need `[FormOptions]`; `Text` and `Textarea` must not have it.
+Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need `[FormOptions]`;
+`Text` and `Textarea` must not have it.
+
+### Hierarchical selects
+
+BNF chapter and therapeutic area are two-level choices: a parent dropdown, then, once a parent
+with children is chosen, an optional child dropdown (the BNF subchapter, or the disease or
+condition). `HierarchicalSelect` covers both:
+
+- **Storage is unchanged.** The answer is the **most specific option chosen**: the child if one
+  is picked, otherwise the parent. It is stored in the existing column (`bnf_chapter_id`) or
+  junction rows, so the wire format stays a single ID string or an ID array.
+- **The frontend works out the parent** from the options tree when it loads a saved child, so a
+  seeded record that stores a BNF section or a child therapeutic area loads straight into the
+  pair.
+- **Options are a tree.** A `HierarchicalSelect` needs a tree provider (`AddReferenceTree`); each
+  option has `children`. Any node in the offered tree is a valid answer.
+- **On a junction it repeats.** Each entry is a parent and child pair; **Add another** (the
+  `AddAnotherLabel`) adds entries up to the `MaxItems` rule, and later entries can be removed.
+  Choosing the same option twice is rejected.
+- **Wording comes from `FormField`:** `Placeholder` (the parent's empty option), `ChildLabel`
+  (required; the child dropdown's heading), `ChildPlaceholder` and `AddAnotherLabel`.
+- Both dropdowns are plain `Select`s for now; `Display = "combobox"` is kept so a searchable
+  combobox can replace the child list later.
 
 ### Question IDs are a public contract
 
@@ -251,8 +278,11 @@ used, unchanged, as:
 - the key in the page's `answers`,
 - the key in the save payload,
 - the key in validation errors (`ValidationProblemDetails.errors`),
-- the TanStack Form field name on the frontend,
 - the `field_path` of the audit row.
+
+TanStack Form reads dots in a field name as a nested path, so the frontend names each field by
+its position on the page (`q0`, `q1`, …) and maps to and from question IDs when it loads answers,
+builds the payload and applies server errors (`lib/dynamic-form/answers.ts`).
 
 The convention is `snake_entity.snake_property`, using the singular entity name. Junction
 questions use the junction entity name alone, for example
@@ -295,14 +325,17 @@ says how the row comes to exist:
 ### Options
 
 Attributes can't hold queries or tuples, so options come from **named providers** registered in
-C#. A property refers to its provider by key: `[FormOptions(OptionKeys.BnfTopLevel)]`, or a raw
-string such as `[FormOptions("bnf-top-level")]`.
+C#. A property refers to its provider by key: `[FormOptions(OptionKeys.BnfChapters)]`, or a raw
+string such as `[FormOptions("bnf-chapters")]`.
 
 - **`EnumOptionProvider<TEnum>`** is a fixed list of enum members with labels, shown in the
   order given. The startup check makes sure its enum matches the bound property's enum.
 - **`ReferenceOptionProvider<T>`** runs an EF query and projection against a reference data
   table on each request. Archived items are hidden unless they are the value already saved, in
-  which case they stay selectable.
+  which case they stay selectable. Registered with `AddReference` it offers a flat list; with
+  `AddReferenceTree` it offers two levels, parents with children, linked by the projection's
+  `ParentId`. If a saved child's parent is archived, the parent stays visible so the child can
+  be shown.
 
 Providers live in `Application/RecordForms/Options/` (for example `MedicineOptionProviders.cs`),
 and the keys are string constants in `Persistence/FormAnnotations/OptionKeys.cs`, so entities can
@@ -321,7 +354,8 @@ The server is authoritative; the client mirrors it so users see errors without a
 3. On the server only:
    - every page question must be present with the right JSON shape;
    - no other keys are allowed;
-   - every selected value must be an offered option.
+   - every selected value must be an offered option;
+   - a multi-value answer must not repeat a value.
 
 Rule messages are written in the attributes and shown verbatim on both sides. The shared
 fixture `rule-cases.json` is run by both xUnit and Vitest, so the two implementations cannot
@@ -434,7 +468,7 @@ sequenceDiagram
     U->>F: Save and continue
     F->>F: Validate with Zod (same rules and messages)
     alt Client validation fails
-        F-->>U: Error summary and field errors
+        F-->>U: Errors shown against fields
     else Valid
         F->>B: PUT /records/5/revisions/7/pages/bnf-chapter { formVersion, revisionVersion, answers }
         B->>P: Load revision
@@ -487,10 +521,11 @@ examples below use record 5, revision 7.
 | `formVersion`, `revisionVersion` | Echo both back on save |
 | `readOnly` | Show the page without Save |
 | `organisationId` | Used for links back to the records list |
+| `recordId`, `revisionId` | Used to build page URLs |
 | `section`, `page` | IDs and titles; the section title is the page caption |
 | `previousPageId` | Target of Back, or `null` on the first page |
-| `questions` | `id`, `type` (the `FormControl`), `label`, `hint`, `display`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`) |
-| `answers` | Every page question: a string or `null`, or an array for checkboxes |
+| `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
+| `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 | `context` | Earlier answers this page depends on; empty until conditions are built |
 
 `GET /records/5/revisions/7/pages/therapeutic-area` returns `200 OK`:
@@ -507,16 +542,27 @@ examples below use record 5, revision 7.
   "questions": [
     {
       "id": "medicines_indication_detail_therapeutic_area",
-      "type": "Checkbox",
+      "type": "HierarchicalSelect",
+      "multiple": true,
       "label": "Select the most appropriate therapeutic area for this product (optional)",
       "hint": "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.",
       "display": "combobox",
+      "placeholder": "Choose a therapeutic area",
+      "childLabel": "Select the disease or condition (optional)",
+      "childPlaceholder": "Choose a disease or condition",
+      "addAnotherLabel": "Add another therapy area",
       "rules": [
         { "kind": "MaxItems", "value": 3, "message": "Select up to 3 therapeutic areas" }
       ],
       "options": [
-        { "value": "2", "label": "Addiction › Opioid use disorder" },
-        { "value": "3", "label": "Addiction › Neonatal abstinence syndrome (NAS)" }
+        {
+          "value": "1",
+          "label": "1: Addiction",
+          "children": [
+            { "value": "2", "label": "1.1: Opioid use disorder", "children": null },
+            { "value": "3", "label": "1.2: Neonatal abstinence syndrome (NAS)", "children": null }
+          ]
+        }
       ]
     }
   ],
@@ -618,6 +664,7 @@ The server has its own messages for problems that the attributes do not describe
 | A key is not a question on this page | `This is not a question on this page.` |
 | Wrong JSON shape (for example a number, or a string for a checkbox) | `The answer is not in the expected format.` |
 | A value that is not an offered option | `Select a valid option.` |
+| A multi-value answer repeats a value | `You have selected the same option more than once.` |
 
 #### 403, 404 and 409
 
@@ -652,9 +699,15 @@ Values are stored as text:
 
 One migration (`AddRecordContentForms`) adds:
 
-- `RecordEventType.RecordContentUpdated = 7`;
+- `RecordEventType.RecordContentUpdated = 7` (an enum value; no schema change);
 - `RecordRevision.Version` (`uint`, `IsRowVersion()`, which Npgsql maps to `xmin`), following
-  `UserRegistrationRequestConfiguration.cs`.
+  `UserRegistrationRequestConfiguration.cs`. `xmin` is a system column, so this is a model change
+  only;
+- `therapeutic_areas.code`, so therapeutic areas are labelled with their code (`1: Addiction`,
+  `1.3: Smoking cessation`) like BNF chapters. The seeder fills it from the source file.
+
+`Operation.EditRecordContent` is granted to Standard users in `OrganisationAuthoriser`; Champion
+and Super users already have every operation.
 
 The migration does not add any reference data. BNF chapters and therapeutic areas are already
 loaded by the synthetic data seeder; see [Reference data](reference-data.md).
@@ -666,13 +719,6 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
   `MedicinesIndicationDetail` also holds formulation, mode of action and technology status,
   which the design may put in other sections. Without an override, those columns must move
   entity or wait.
-- **BNF options vs saved data.** The design screen asks for a top-level BNF chapter, but all 500
-  synthetic records store a BNF *section*, such as `1.3`. With a top-level provider, those
-  records could not save the BNF page unchanged. See
-  [Reference data](reference-data.md#open-questions).
-- **Therapeutic area options.** The provider currently offers leaf areas labelled `Parent ›
-  Child`. If the design wants only the 20 top-level areas, that is a one-line change to the
-  provider.
 - **Reference data outside Development.** The synthetic seeder only runs when
   `Seeding:ReseedOnStartup` is true. Other environments need a way to load reference data.
 - **Shared entities with different wording per record type.** Property attributes apply to every
@@ -684,7 +730,8 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
 - Conditional pages and questions (`ShowWhen`, `requiredWhen`) and clearing answers that no
   longer apply. `context` is always empty.
 - Add-another groups, precision dates and their bindings.
-- The searchable combobox: therapeutic area uses a checkbox list behind `display: "combobox"`
-  until it exists.
-- The tasklist: "Return to tasklist" and the last page go to the records list.
+- The searchable combobox: the hierarchical selects use plain dropdowns behind
+  `display: "combobox"` until it exists.
+- The tasklist: "Return to tasklist" is a placeholder link that goes nowhere, and saving the last
+  page goes to the records list.
 - Vaccine forms, and vaccine record creation.

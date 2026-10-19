@@ -1,8 +1,8 @@
 # Record creation walkthrough: database changes per save
 
-> **Status: proposed design, not yet implemented.** This shows what the attribute-driven form
-> ([high-level design](high-level-design.md)) is expected to write. Use it as the acceptance
-> check once the form is built.
+> **Status: implemented.** This shows what the attribute-driven form
+> ([high-level design](high-level-design.md)) writes. `RecordFormServiceTests` checks the same
+> steps against a real database.
 
 This walks through the happy path of creating a medicine record and answering the six
 Indication details pages. For each save it lists the tables written and the values to expect,
@@ -26,7 +26,7 @@ For the design behind it, see the [high-level design](high-level-design.md).
   | `YesNoUnknown` | `0` Unknown, `1` No, `2` Yes |
 
 - IDs in this document are examples: organisation `3`, user `12`, record `5`, revision `7`,
-  record product detail `8`, medicines indication detail `9`, BNF chapter `40`, therapeutic area
+  record product detail `8`, medicines indication detail `9`, BNF section `40`, therapeutic area
   `51`. Reference data IDs depend on the order the seeder inserts rows (see
   [Reference data](reference-data.md)), so look yours up. Substitute your own; the queries
   below use `:record_id` and `:revision_id`.
@@ -42,8 +42,8 @@ For the design behind it, see the [high-level design](high-level-design.md).
 |---|---|---|
 | 0 | Create record | Company code `GS-7977`, branded name `Sovaldi`, generic name `sofosbuvir`, other identifier `PSI-7977`, record title `Chronic hepatitis C in adults` |
 | 1 | Indication | `Chronic hepatitis C infection in adults with genotype 1` |
-| 2 | BNF chapter | `5: Infections` (ID `40`) |
-| 3 | Therapeutic area | `Infectious Disease (viral) › Hepatitis C virus (HCV)` (ID `51`) |
+| 2 | BNF chapter | Chapter `5: Infections`, subchapter `5.3: Antiviral drugs` (ID `40`) |
+| 3 | Therapeutic area | Area `10: Viral infectious disease`, condition `10.x: Hepatitis C virus (HCV)` (ID `51`) |
 | 4 | Treating children | This product is exclusively for adults |
 | 5 | Treating cancer | No |
 | 6 | Treating a rare disease | No |
@@ -53,7 +53,8 @@ For the design behind it, see the [high-level design](high-level-design.md).
 **Request:** `POST /records` from `/portal/organisations/3/records/create`.
 
 **Response:** `200 { "recordId": 5, "revisionId": 7, "firstPageId": "indication" }`, then the
-browser goes to `/portal/records/5/revisions/7/indication`.
+browser goes to `/portal/records/5/revisions/7/indication`. (`firstPageId` is `null` for a record
+type with no form, and the browser then goes to the records list.)
 
 All of the following are written in one transaction at `T0`.
 
@@ -209,12 +210,14 @@ up the latest value in the same way.
 | `record_events` | Insert, `event_type = 7`, `note = bnf-chapter` |
 | `record_event_field_changes` | `field_path = medicines_indication_detail.bnf_chapter_id`, `old_value = null`, `new_value = 40` |
 
-The audit stores the chapter ID, not its label.
+The answer is the most specific choice: the subchapter's ID here. Choosing only the chapter
+would store the chapter's ID. The audit stores the ID, not its label.
 
 ## Step 3: Therapeutic area
 
 **Request:** `PUT /records/5/revisions/7/pages/therapeutic-area`, with answers
-`{ "medicines_indication_detail_therapeutic_area": ["51"] }`.
+`{ "medicines_indication_detail_therapeutic_area": ["51"] }`. Each entry is the most specific
+choice: the condition if one is picked, otherwise the area.
 
 **Response:** `{ "nextPageId": "paediatric" }`
 
@@ -227,7 +230,8 @@ The audit stores the chapter ID, not its label.
 | `record_event_field_changes` | `field_path = medicines_indication_detail_therapeutic_area`, `old_value = null`, `new_value = ["51"]` |
 
 Selections are sorted as text before they are compared and audited, so choosing `["7","10"]`
-would be stored in the audit as `["10","7"]`. If nothing is ticked (the question is optional), no
+would be stored in the audit as `["10","7"]`. Choosing the same option twice is rejected with
+"You have selected the same option more than once.". If nothing is ticked (the question is optional), no
 junction rows are written; a first save with nothing ticked is not a change, so it writes no
 audit rows and does not touch the revision.
 

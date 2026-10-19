@@ -1,0 +1,48 @@
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+@use '@/styles/visibility';
+
+// Hints may hold several paragraphs separated by a blank line.
+.question {
+  :global(.input__hint),
+  :global(.textarea__hint),
+  :global(.form-group__hint),
+  [id$='-hint'] {
+    white-space: pre-line;
+  }
+}
+
+// On a single-question page the label is the page heading, so the field's own label and
+// legend are hidden visually but still announced.
+.labelAsHeading {
+  :global(.textarea__label),
+  :global(.form-group__legend) {
+    @include visibility.invisible;
+  }
+}
+
+.childLabel {
+  @include typography.font-size(h3);
+  display: block;
+  font-family: inherit;
+  font-weight: bold;
+  margin-bottom: utils.rem(spacing.$small);
+  margin-top: utils.rem(spacing.$large);
+}
+
+.entry {
+  margin-bottom: utils.rem(spacing.$medium);
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$medium);
+  margin-top: utils.rem(spacing.$large);
+}
+
+.error {
+  font-weight: bold;
+}

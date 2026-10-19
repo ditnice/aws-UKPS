@@ -36,16 +36,18 @@ local runs of the same data file, but they are **not** a contract: never hard-co
 | Table | Entity | Rows | Shape |
 |---|---|---|---|
 | `bnf_chapters` | `BnfChapter` | 92 | 15 top-level chapters (`Code` `"1"`…`"15"`), the rest are sections (`"1.3"`, `"2.5"`, …) with `ParentId` set |
-| `therapeutic_areas` | `TherapeuticArea` | 108 | 20 top-level areas (`"Addiction"`, …), the rest are child areas (`"Opioid use disorder"`, …) with `ParentId` set |
+| `therapeutic_areas` | `TherapeuticArea` | 108 | 20 top-level areas (`Code` `"1"`…`"20"`, `"Addiction"`, …), the rest are child areas (`"1.1"`, `"Opioid use disorder"`, …) with `ParentId` set |
 | `formulation_type`, `mhra_procedure_type`, `irp_reference_regulator`, `irp_route`, `atmp_classification`, `patient_pathway_point`, `uk_patient_population_range` | | varies | Flat lists |
 
-`BnfChapter` stores the code in `Code`, and the label is the name alone. `TherapeuticArea` has no
-code column: the code exists only in the source file, to link parents and children.
+`BnfChapter` and `TherapeuticArea` both store the code in `Code`, and the label is the name
+alone. (`TherapeuticArea.Code` was added by the `AddRecordContentForms` migration; the seeder
+fills it from the source file, where it also links parents and children.)
 
 ### How the synthetic records use the trees
 
 This matters for which options a form offers, because a saved value must be offered or the page
-cannot be saved unchanged.
+cannot be saved unchanged. Both questions use a two-level `HierarchicalSelect` whose options
+include children, so these saved values are offered and load into their parent and child pair.
 
 - **BNF:** all 500 synthetic records reference a **section** (for example `1.3`), never a
   top-level chapter.
@@ -56,14 +58,16 @@ cannot be saved unchanged.
 
 Questions refer to a named option provider with `[FormOptions(key)]`. A reference data provider
 is an EF query and a projection to `ReferenceOptionRow(Id, Label, IsArchived)`, run on every
-request, so changes to rows show up without a restart. The proposed providers are:
+request, so changes to rows show up without a restart. The providers are:
 
-| Key | Query | Label | Notes |
+| Key | Kind | Query | Label |
 |---|---|---|---|
-| `bnf-top-level` | `ParentId == null`, ordered by `DisplayOrder` | `"{Code}: {Label}"`, e.g. `"1: Gastro-Intestinal System"` | Matches the BNF chapter screen design. **See the open question below** |
-| `therapeutic-areas` | leaves (`!Children.Any()`), ordered by parent then own `DisplayOrder` | `"Parent › Child"`, e.g. `"Addiction › Opioid use disorder"` | Matches how the synthetic records use the tree |
+| `bnf-chapters` | Tree | every row, ordered by `DisplayOrder` | `"{Code}: {Label}"`, e.g. `"1: Gastro-Intestinal System"` and `"1.3: Antisecretory drugs and mucosal protectants"` |
+| `therapeutic-areas` | Tree | every row, ordered by `DisplayOrder` | `"{Code}: {Label}"`, e.g. `"1: Addiction"` and `"1.1: Opioid use disorder"` |
 
-Values on the wire are reference IDs as strings (`"12"`). Audit rows store the ID, not the
+A tree provider groups rows by `ParentId` into parents with children; rows more than two levels
+deep are an error. The answer is the most specific choice, so a value can be a parent or a child
+ID. Values on the wire are reference IDs as strings (`"12"`). Audit rows store the ID, not the
 label.
 
 ### Archived items
@@ -80,27 +84,18 @@ as text.
 
 ### Hierarchies and changing the tree
 
-- **BNF chapter**: offering only top-level chapters means that adding sections does not change
-  the question. Offering sections is a provider query change, which changes the form
-  fingerprint and needs a version bump.
-- **Therapeutic area**: offers leaves only. Adding a child under a leaf replaces that leaf with
-  its children in the list. Records that already chose the former leaf no longer see it offered,
-  so their page cannot be saved until the user picks a child. Before splitting an area, plan how
-  to move existing answers, or keep the parent selectable.
+- Both trees offer parents and children, and either can be the answer, so adding children
+  under an existing item does not invalidate saved answers.
+- Only two levels are supported. Adding a third level makes the provider throw when the page is
+  loaded; that would need a provider and control change.
+- If an archived parent has a saved child, the parent is still shown (with only its saved
+  children) so the saved answer can be displayed.
 
 Changing a label changes what users see on forms immediately. It does not need a form version
 bump: rows are not part of the fingerprint, only the provider's query is.
 
 ## Open questions
 
-- **BNF top-level vs sections.** The design screen asks for a BNF *chapter*, but the synthetic
-  data stores sections. With a `bnf-top-level` provider, every seeded record's saved BNF value
-  would not be offered, and saving that page would fail with "Select a valid option" until the
-  user picks a chapter. The options are:
-  - offer sections, labelled `"1.3: Antisecretory drugs…"`, or grouped by chapter;
-  - always offer the saved value, even when the query filters it out (as archived items are
-    today);
-  - change the synthetic data to store chapters.
 - **Environments other than Development.** Nothing loads reference data where
   `ReseedOnStartup` is `false`. Before forms are used outside local development, reference data
   needs a production path. That could be migration `HasData` seeding with fixed IDs (plus an
@@ -110,8 +105,5 @@ bump: rows are not part of the fingerprint, only the provider's query is.
 
 - The shared test database is emptied by Respawn before each test, so database tests do not
   see seeded rows. Tests insert the reference data they need.
-- Option provider tests should insert a small tree for each provider and check:
-  - the filter (top-level or leaves);
-  - the ordering;
-  - the labels;
-  - archived handling: hidden unless saved, shown when saved.
+- `RecordFormServiceTests` inserts a small BNF and therapeutic area tree and checks the tree
+  shape, the labels, and archived handling (hidden unless saved, shown when saved).
