@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import ArrayInput, { ArrayInputProps } from './ArrayInput'
+import { ArrayInput, ArrayInputProps } from './ArrayInput'
 
 const defaultProps: ArrayInputProps<string> = {
   addItemLabel: 'add-item-label',

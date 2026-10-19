@@ -60,7 +60,7 @@ export type ArrayInputProps<T extends string> = {
  * @param props.getSubfield - Callback used to render a specific field instance for one array index.
  * @returns The rendered array input component.
  */
-const ArrayInput = <T extends string>({
+export const ArrayInput = <T extends string>({
   addItemLabel,
   removeItemLabel,
   heading,
@@ -128,5 +128,3 @@ const ArrayInput = <T extends string>({
     </div>
   )
 }
-
-export default ArrayInput

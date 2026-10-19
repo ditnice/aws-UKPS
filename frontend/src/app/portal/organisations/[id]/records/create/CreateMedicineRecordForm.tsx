@@ -6,6 +6,7 @@ import { ChangeEvent, useState } from 'react'
 import z from 'zod'
 
 import { createRecord, CreateRecordCommand } from '@/client/generated'
+import { ArrayInput } from '@/components/ArrayInput/ArrayInput'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -15,7 +16,6 @@ import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
-import ArrayInput from './ArrayInput'
 import styles from './CreateMedicineRecordForm.module.scss'
 
 const inputWidth = 'two-thirds'
