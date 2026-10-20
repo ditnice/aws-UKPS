@@ -480,6 +480,71 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         JsonNode.DeepEquals(inaccessibleBody, missingBody).ShouldBeTrue();
     }
 
+    [Fact]
+    public async Task DiscardDraftRecord_WhenSuccessful_ShouldReturnOk()
+    {
+        var recordId = 1;
+
+        _mockRecordService
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
+            .Returns((DiscardRecordError?)null);
+
+        var response = await _client.PostAsync(
+            new Uri($"records/{recordId}/discard", UriKind.Relative),
+            null,
+            TestContext.Current.CancellationToken
+        );
+
+        await _mockRecordService
+            .Received(1)
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenRecordNotFound_ShouldReturnNotFound()
+    {
+        var recordId = 1;
+
+        _mockRecordService
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
+            .Returns(new DiscardRecordError.RecordNotFound());
+
+        var response = await _client.PostAsync(
+            new Uri($"records/{recordId}/discard", UriKind.Relative),
+            null,
+            TestContext.Current.CancellationToken
+        );
+
+        await _mockRecordService
+            .Received(1)
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenInvalidDiscard_ShouldReturnBadRequest()
+    {
+        var recordId = 1;
+
+        _mockRecordService
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
+            .Returns(new DiscardRecordError.InvalidDiscard());
+
+        var response = await _client.PostAsync(
+            new Uri($"records/{recordId}/discard", UriKind.Relative),
+            null,
+            TestContext.Current.CancellationToken
+        );
+
+        await _mockRecordService
+            .Received(1)
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("?recordType=")]
