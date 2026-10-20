@@ -24,10 +24,12 @@ WORKDIR /app
 ENV COREPACK_HOME=/usr/local/share/corepack \
     NEXT_TELEMETRY_DISABLED=1
 
-# pnpm 12.13.0, pinned with its sha512 in package.json "packageManager"; corepack verifies the
-# hash on install. 12.14.0 skipped as under 7 days old. Pinned 2026-10-20.
-COPY package.json ./
-RUN corepack enable && corepack install && chmod -R a+rX /usr/local/share/corepack
+# pnpm 12.13.0, pinned with its sha512 (from the npm registry's dist.integrity); corepack
+# verifies the hash on download. 12.14.0 skipped as under 7 days old. Keep this in step with
+# the other frontend Dockerfile. Pinned 2026-10-20.
+RUN corepack enable \
+    && corepack prepare pnpm@12.13.0+sha512.1e55719bf26e809dce5c5084fdebaa64efb3da9038ae5d68a9f8a68311f1a45841c8c3b76a37298c3b66f6bcc80409a9b7f33c78a7168a3e90fb65a5d8235ae4 --activate \
+    && chmod -R a+rX /usr/local/share/corepack
 
 FROM base AS deps
 
