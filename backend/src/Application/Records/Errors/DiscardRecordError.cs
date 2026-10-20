@@ -11,11 +11,6 @@ public abstract record DiscardRecordError
     internal sealed record RecordNotFound() : DiscardRecordError;
 
     /// <summary>
-    /// Represents an error indicating that the current user cannot be found in the current database.
-    /// </summary>
-    internal sealed record UserNotFound() : DiscardRecordError;
-
-    /// <summary>
     /// Represents an error indicating that the record is not suitable to be discarded.
     /// </summary>
     internal sealed record InvalidDiscard() : DiscardRecordError;

@@ -2300,7 +2300,6 @@ export type PostRecordsByRecordIdDiscardErrors = {
      * An HTTP 200 response if the record is successfully discarded.
      * An HTTP 404 response if the record cannot be found.
      * An HTTP 400 response if the record is not eligible to be discarded.
-     * An HTTP 500 response if the current user cannot be found or an unexpected error occurs.
      */
     401: AuthenticationProblemDetails;
 };

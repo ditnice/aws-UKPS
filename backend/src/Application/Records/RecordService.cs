@@ -138,14 +138,10 @@ internal partial class RecordService(
         }
 
         var currentUser = await _userService.GetCurrentUser(cancellationToken);
-        var user = await dbContext.Users.FirstOrDefaultAsync(
+        var user = await dbContext.Users.SingleAsync(
             u => u.Id == currentUser.UserId,
             cancellationToken
         );
-        if (user is null)
-        {
-            return new DiscardRecordError.UserNotFound();
-        }
         var performedAt = _timeProvider.GetUtcNow();
 
         record.ChangeStatus(

@@ -172,7 +172,6 @@ public class RecordController(
     /// An HTTP 200 response if the record is successfully discarded.
     /// An HTTP 404 response if the record cannot be found.
     /// An HTTP 400 response if the record is not eligible to be discarded.
-    /// An HTTP 500 response if the current user cannot be found or an unexpected error occurs.
     /// </returns>
     [HttpPost("{recordId}/discard")]
     public async Task<IActionResult> DiscardDraftRecord(
@@ -186,7 +185,6 @@ public class RecordController(
         {
             null => Ok(),
             DiscardRecordError.RecordNotFound => NotFound(),
-            DiscardRecordError.UserNotFound => StatusCode(StatusCodes.Status500InternalServerError),
             DiscardRecordError.InvalidDiscard => BadRequest(),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };

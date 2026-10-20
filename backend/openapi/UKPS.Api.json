@@ -2097,7 +2097,7 @@
         ],
         "responses": {
           "401": {
-            "description": "An HTTP 200 response if the record is successfully discarded.\nAn HTTP 404 response if the record cannot be found.\nAn HTTP 400 response if the record is not eligible to be discarded.\nAn HTTP 500 response if the current user cannot be found or an unexpected error occurs.",
+            "description": "An HTTP 200 response if the record is successfully discarded.\nAn HTTP 404 response if the record cannot be found.\nAn HTTP 400 response if the record is not eligible to be discarded.",
             "content": {
               "text/plain": {
                 "schema": {
