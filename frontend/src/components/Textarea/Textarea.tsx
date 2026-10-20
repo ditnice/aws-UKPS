@@ -10,7 +10,7 @@ export type TextareaFixedWidth = InputFixedWidth
 export type TextareaFluidWidth = InputFluidWidth
 export type TextareaWidth = InputWidth
 
-export type TextareaProps = Omit<NdsTextareaProps, 'title'> & {
+export type TextareaProps = NdsTextareaProps & {
   style?: CSSProperties
   title?: string
   /**
@@ -27,7 +27,7 @@ export function Textarea({ style, title, width, ...rest }: TextareaProps) {
   return (
     <>
       {title && <h2>{title}</h2>}
-      <NdsTextarea style={textareaStyle} {...rest} />
+      <NdsTextarea {...rest} style={textareaStyle} />
     </>
   )
 }
