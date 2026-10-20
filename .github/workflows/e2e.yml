@@ -21,13 +21,22 @@ jobs:
     env:
       CI: "true"
     steps:
-      - uses: actions/checkout@v5
+      # actions/checkout v7.0.1 (Node 24).
+      # Pinned to a commit SHA so a moved tag can't change what runs; newest release at
+      # least 7 days old. Pinned 2026-10-20.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: docker/setup-buildx-action@v3
+      # docker/setup-buildx-action v4.4.1 (Node 24).
+      # Pinned to a commit SHA so a moved tag can't change what runs; newest release at
+      # least 7 days old. Pinned 2026-10-20.
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       # Tags match the image names Compose uses for project "ukps", so `up --no-build` uses them.
+      # docker/bake-action v7.4.0 (Node 24); v7.5.0 skipped as under 7 days old.
+      # Pinned to a commit SHA so a moved tag can't change what runs; newest release at
+      # least 7 days old. Pinned 2026-10-20.
       - name: Build images
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@018cb6412ab401ebaa809aa5f85966b74628600f # v7.4.0
         with:
           source: .
           files: docker-compose.yml
@@ -77,9 +86,12 @@ jobs:
               print(f"| {total - failed - skipped} | {failed} | {skipped} |")
           EOF
 
+      # actions/upload-artifact v7.0.2 (Node 24).
+      # Pinned to a commit SHA so a moved tag can't change what runs; newest release at
+      # least 7 days old. Pinned 2026-10-20.
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: e2e-report-${{ github.run_id }}
           path: |

@@ -61,7 +61,8 @@ repos:
     hooks:
       - id: checkov
         name: Checkov (Dockerfile)
-        files: ^(backend|frontend)(/.*)?/Dockerfile$
+        files: (^|/)((Dockerfile|Containerfile)(\.[^/]*)?|[^/]+\.(Dockerfile|dockerfile|Containerfile))$
+        exclude: \.dockerignore$
         args:
           - --framework
           - dockerfile
