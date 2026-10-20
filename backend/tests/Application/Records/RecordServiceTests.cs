@@ -1,7 +1,9 @@
 using Bogus;
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
@@ -412,5 +414,118 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
         dto.Items.Select(x => x.Id).ShouldContainSet(OrganisationRecords.Select(x => x.Id));
         dto.Items.Count.ShouldBe(OrganisationRecords.Count);
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenSuccessful_UpdatesRecordStatus()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var user = new UserFaker().Generate();
+        await AddEntities(new[] { user }, cancellationToken);
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = user.CognitoUsername,
+                OrganisationId = _organisationId,
+                UserRole = UserRole.Champion,
+            }
+        );
+        var membership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.UserId, user.Id)
+            .RuleFor(x => x.OrganisationId, _organisationId)
+            .RuleFor(x => x.UserRole, UserRole.Champion)
+            .RuleFor(x => x.Status, UserOrgMembershipStatus.Active)
+            .Generate();
+
+        await AddEntities(new[] { membership }, cancellationToken);
+
+        var record = new RecordFaker()
+            .RuleFor(x => x.RecordStatus, RecordStatus.Unpublished)
+            .RuleFor(x => x.OrganisationId, _organisationId)
+            .RuleFor(x => x.CreatedByUser, user)
+            .Generate();
+
+        var revision = new RecordRevisionFaker()
+            .RuleFor(x => x.Record, record)
+            .RuleFor(x => x.WorkflowStatus, WorkflowStatus.Draft)
+            .RuleFor(x => x.CreatedByUser, user)
+            .Generate();
+
+        await AddEntities(new[] { revision }, cancellationToken);
+
+        DiscardRecordError? result = await Service.DiscardDraftRecord(record.Id, cancellationToken);
+        result.ShouldBeNull();
+        Context.ChangeTracker.Clear();
+
+        var updatedRecord = await Context
+            .Records.AsNoTracking()
+            .SingleAsync(r => r.Id == record.Id, cancellationToken);
+        updatedRecord.RecordStatus.ShouldBe(RecordStatus.Discarded);
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenRecordNotFound_ReturnsRecordNotFoundError()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        DiscardRecordError? result = await Service.DiscardDraftRecord(
+            int.MaxValue,
+            cancellationToken
+        );
+
+        result.ShouldBeOfType<DiscardRecordError.RecordNotFound>();
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenRecordIsPublished_ReturnsInvalidDiscardError()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        var user = new UserFaker().Generate();
+        await AddEntities(new[] { user }, cancellationToken);
+
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = user.CognitoUsername,
+                OrganisationId = _organisationId,
+                UserRole = UserRole.Champion,
+            }
+        );
+
+        var membership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.UserId, user.Id)
+            .RuleFor(x => x.OrganisationId, _organisationId)
+            .RuleFor(x => x.UserRole, UserRole.Champion)
+            .RuleFor(x => x.Status, UserOrgMembershipStatus.Active)
+            .Generate();
+
+        await AddEntities(new[] { membership }, cancellationToken);
+
+        var record = new RecordFaker()
+            .RuleFor(x => x.RecordStatus, RecordStatus.Published)
+            .RuleFor(x => x.OrganisationId, _organisationId)
+            .RuleFor(x => x.CreatedByUser, user)
+            .Generate();
+
+        var revision = new RecordRevisionFaker()
+            .RuleFor(x => x.Record, record)
+            .RuleFor(x => x.WorkflowStatus, WorkflowStatus.Draft)
+            .RuleFor(x => x.CreatedByUser, user)
+            .Generate();
+
+        await AddEntities(new[] { revision }, cancellationToken);
+
+        DiscardRecordError? result = await Service.DiscardDraftRecord(record.Id, cancellationToken);
+
+        result.ShouldBeOfType<DiscardRecordError.InvalidDiscard>();
+
+        Context.ChangeTracker.Clear();
+
+        var unchangedRecord = await Context
+            .Records.AsNoTracking()
+            .SingleAsync(r => r.Id == record.Id, cancellationToken);
+
+        unchangedRecord.RecordStatus.ShouldBe(RecordStatus.Published);
     }
 }
