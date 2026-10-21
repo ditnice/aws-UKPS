@@ -62,3 +62,13 @@ docker buildx build --platform linux/amd64 --provenance=false --file backend/mig
 ```
 
 Terraform passes `image_tag` directly to Lambda as part of the ECR image URI. Use a new, immutable tag for each deployment because replacing an existing tag does not change the Terraform configuration and will not trigger a Lambda update. The tagged image must exist before Terraform applies the change.
+
+## Database Migrations on Deploy
+
+The migrator Lambda owns all database migration and seeding; the backend ECS service does not migrate or seed on startup. On each `terraform apply` with a new `image_tag`, Terraform:
+
+1. Updates the migrator Lambda image and publishes a new version.
+2. Invokes that version synchronously (`aws_lambda_invocation`) and waits for it to finish.
+3. Registers the new backend task definition and rolls the backend ECS service.
+
+If the migrator throws, the apply fails at `module.db_migrator_lambda.aws_lambda_invocation.db_migrator` and the backend service is left on its current task definition. Check the logs in the `/lambda/<project>/<environment>/db-migrator` CloudWatch log group, fix the cause, and re-run the apply; the invocation is retried because it was never recorded in state. Re-applying with an unchanged `image_tag` does not re-run the migrator.
