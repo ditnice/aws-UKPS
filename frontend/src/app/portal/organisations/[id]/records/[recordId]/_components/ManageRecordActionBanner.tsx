@@ -36,6 +36,7 @@ export const ManageRecordActionBanner = ({ record }: ManageRecordActionBannerPro
               Discard record
             </Button>
           )}
+          {actions.includes('confirmOnHold') && <Button>Confirm status as current</Button>}
           {actions.includes('viewTimeline') && (
             <Button variant="secondary">View record timeline</Button>
           )}

@@ -1,6 +1,7 @@
 import type { RecordDisplayStatus, RecordStatus } from '@/client/generated'
 
-export type RecordAction = 'update' | 'changeStatus' | 'confirmCurrent' | 'discard' | 'viewTimeline'
+export type RecordAction =
+  'update' | 'changeStatus' | 'confirmCurrent' | 'confirmOnHold' | 'discard' | 'viewTimeline'
 
 type RecordStatuses = {
   displayStatus: RecordDisplayStatus
@@ -22,9 +23,9 @@ export const getRecordActions = ({
     case 'Draft':
       return recordStatus === 'Unpublished'
         ? ['update', 'discard', 'viewTimeline']
-        : ['update', 'changeStatus', 'viewTimeline']
+        : ['update', 'changeStatus', 'confirmCurrent', 'viewTimeline']
     case 'OnHold':
-      return ['changeStatus', 'viewTimeline']
+      return ['changeStatus', 'confirmOnHold', 'viewTimeline']
     case 'QAReview':
     case 'Archived':
     default:
