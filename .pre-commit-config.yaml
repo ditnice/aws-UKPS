@@ -125,6 +125,13 @@ repos:
         files: ^backend/.*\.(cs|csproj|props|targets)$
         pass_filenames: false
 
+      - id: backend-erd
+        name: Generate database ERD from EF Core model
+        language: system
+        entry: ./scripts/generate-erd.sh
+        files: ^(backend/src/Persistence/.*|documentation/database/erd-groups\.yml|backend/tools/UKPS\.ErdGenerator/.*)$
+        pass_filenames: false
+
       - id: frontend-generate-api
         name: Generate frontend API client when OpenAPI spec changes
         language: system

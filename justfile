@@ -19,3 +19,9 @@ stack-up:
 
 stack-down:
     docker compose --profile e2e down --volumes --remove-orphans
+
+erd:
+    ./scripts/generate-erd.sh
+
+erd-check:
+    ./scripts/generate-erd.sh --check

@@ -7,12 +7,14 @@
 ├── backend/                - .NET API Layer
 │   ├── src/                - API application source code
 │   ├── tests/              - Backend test project and test assets
+│   ├── tools/              - Build-time tooling (ERD generator)
 │   ├── .editorconfig       - Backend editor and formatting rules
 │   ├── Dockerfile          - Backend container build definition
 │   ├── README.md           - Backend-specific documentation
 │   └── ...                 - Supporting backend files
 ├── documentation/          - Project documentation assets
 │   ├── assets/             - Documentation images and media assets
+│   ├── database/           - Generated database ERD and its grouping config
 │   └── ...                 - Additional documentation files
 ├── frontend/               - Next.js frontend application
 │   ├── src/                - Next.js application source code
@@ -27,6 +29,7 @@
 │   ├── .editorconfig       - Infrastructure editor and formatting rules
 │   ├── README.md           - Infrastructure-specific documentation
 │   └── ...                 - Supporting Terraform files
+├── scripts/                - Developer scripts (e.g. generate-erd.sh)
 ├── docker-compose.yml      - Local multi-container orchestration file
 ├── README.md               - Repository overview and structure
 └── ...                     - Repository metadata and supporting files
@@ -36,7 +39,8 @@
 
 The backend is an ASP.NET Core Web API built on .NET 10, contained in the `UKPS.Api` project. It includes OpenAPI support via `Microsoft.AspNetCore.OpenApi`, with automatic API schema generation and documentation. Tests are written using xUnit and live in the `UKPS.Api.Tests` project under `tests/`.
 
-For more information, see the [backend README](backend/README.md).
+For more information, see the [backend README](backend/README.md). The database schema is
+documented by a generated ERD, see [documentation/database](documentation/database/README.md).
 
 ## Frontend
 
