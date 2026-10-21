@@ -13,7 +13,7 @@ name: ukps
 services:
   postgres:
     # PostgreSQL 17.9 to match Aurora (infrastructure: aurora_engine_version = "17.9"), rather
-    # than the newer upstream 17.11. Pinned by digest. Pinned 2026-10-20.
+    # than the newer upstream 17.11. Pinned by digest.
     image: postgres:17.9-alpine3.23@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
     environment:
       POSTGRES_USER: postgres

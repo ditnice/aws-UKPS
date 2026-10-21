@@ -1,7 +1,4 @@
 # syntax=docker/dockerfile:1.28.0@sha256:bb22d9815c728170f72750f4e5b0d672e06176142e1d602c7e66c050100b7e5b
-# BuildKit Dockerfile syntax 1.28.0 (line above), pinned by digest. Parser directives must be
-# the first line, so this comment sits below it. Newest release at least 7 days old (repo
-# policy, see pnpm-workspace.yaml minimumReleaseAge). Pinned 2026-10-20.
 
 # ECS Fargate runs this image on linux/amd64 (infrastructure/modules/ecs sets no
 # runtime_platform). Building for the same platform keeps native modules (sharp, esbuild)
@@ -16,7 +13,7 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
     /eu-west-2-bundle.pem
 
 # Node 24.21.0 on Debian 13 "trixie": the same Node and Debian release (glibc) as the
-# distroless runtime below. 24.22.0 skipped as under 7 days old. Pinned 2026-10-20.
+# distroless runtime below.
 FROM --platform=${ECS_PLATFORM} node:24.21.0-trixie@sha256:1278a37eb510ec1606fba0e80f554bcc941ae0b44f35ae373c4822ae7717c64d AS base
 
 WORKDIR /app
@@ -25,8 +22,7 @@ ENV COREPACK_HOME=/usr/local/share/corepack \
     NEXT_TELEMETRY_DISABLED=1
 
 # pnpm 12.13.0, pinned with its sha512 (from the npm registry's dist.integrity); corepack
-# verifies the hash on download. 12.14.0 skipped as under 7 days old. Keep this in step with
-# the other frontend Dockerfile. Pinned 2026-10-20.
+# verifies the hash on download. Keep this in step with the other frontend Dockerfile.
 RUN corepack enable \
     && corepack prepare pnpm@12.13.0+sha512.1e55719bf26e809dce5c5084fdebaa64efb3da9038ae5d68a9f8a68311f1a45841c8c3b76a37298c3b66f6bcc80409a9b7f33c78a7168a3e90fb65a5d8235ae4 --activate \
     && chmod -R a+rX /usr/local/share/corepack
@@ -53,8 +49,7 @@ ARG NEXT_PUBLIC_QA_SUPPORT_EMAIL
 RUN pnpm build
 
 # Distroless Node.js 24 on Debian 13, uploaded 2026-10-01; runs Node 24.21.0 (checked with
-# `--version`, as distroless publishes no version tags). Pinned by digest to match the build
-# stage above; newest upload at least 7 days old. Pinned 2026-10-20.
+# `--version`, as distroless publishes no version tags).
 # checkov:skip=CKV_DOCKER_2: Distroless base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP.
 FROM --platform=${ECS_PLATFORM} gcr.io/distroless/nodejs24-debian13:nonroot@sha256:9eeb7f5887d0e239e78264b06f7f11d2e14be534050481803a9e4728fcdd278e AS runtime
 

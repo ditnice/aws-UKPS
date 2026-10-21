@@ -110,18 +110,6 @@ just stack-down
 
 `UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports (`0` picks a free one).
 
-#### GitHub Actions
-
-`.github/workflows/e2e.yml` runs the same stack on every push (and manually via
-"Run workflow"). A newer push to the same branch cancels the older run. It builds the images with
-`docker buildx bake` using the GitHub Actions cache, so unchanged layers (NuGet restore,
-`pnpm install`, browser install) are reused, then runs `docker compose --profile e2e up`.
-
-Each run uploads an `e2e-report-<run id>` artifact (kept 14 days) containing the HTML report,
-`e2e-results/` (HTML report, traces, screenshots, `junit.xml`) and, on failure,
-`compose-logs.txt`. Pass/fail
-counts appear on the run's summary page.
-
 #### Running in a CI pipeline (e.g. TeamCity)
 
 - Build step: `CI=true COMPOSE_PROJECT_NAME=ukps-e2e-<build number> UKPS_FRONTEND_PORT=0
