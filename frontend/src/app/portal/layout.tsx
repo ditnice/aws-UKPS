@@ -1,6 +1,5 @@
 import { ApplicationLayout } from '@/components/Layout/ApplicationLayout'
 import { inter, lora } from '@/styles/fonts'
-import '@/styles/global.scss'
 
 import type { ReactNode } from 'react'
 
