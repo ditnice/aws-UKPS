@@ -108,4 +108,4 @@ services:
       PLAYWRIGHT_HTML_OUTPUT_DIR: e2e-results/playwright-report
       PLAYWRIGHT_JUNIT_OUTPUT_FILE: e2e-results/junit.xml
     volumes:
-      - ./frontend/e2e-results:/app/e2e-results
+      - ./e2e-results:/app/e2e-results
