@@ -809,7 +809,8 @@ export const RecordDisplayStatus = {
     QA_REVIEW: 'QAReview',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived'
+    ARCHIVED: 'Archived',
+    DISCARDED: 'Discarded'
 } as const;
 
 /**

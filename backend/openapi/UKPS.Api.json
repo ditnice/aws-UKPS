@@ -4736,7 +4736,8 @@
           "QAReview",
           "Published",
           "OnHold",
-          "Archived"
+          "Archived",
+          "Discarded"
         ],
         "type": "string",
         "description": "Represents the status shown to users for a record. On hold and archived records show their\nrecord status; otherwise the workflow status of the latest revision is shown."

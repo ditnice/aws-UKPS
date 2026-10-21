@@ -30,4 +30,9 @@ public enum RecordDisplayStatus
     /// The record is archived.
     /// </summary>
     Archived = 4,
+
+    /// <summary>
+    /// The record is discarded.
+    /// </summary>
+    Discarded = 5,
 }
