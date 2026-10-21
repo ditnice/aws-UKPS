@@ -23,7 +23,9 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      # Check over TCP: during first-start setup Postgres runs a socket-only temporary server, which
+      # a socket check would report as ready.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d ukps_payload"]
       interval: 2s
       timeout: 5s
       retries: 30
@@ -76,7 +78,9 @@ services:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/ukps_payload
       PAYLOAD_SECRET: e2e-not-a-secret
       BACKEND_API_BASE_URL: http://backend:8080
-      FRONTEND_PUBLIC_ORIGIN: http://localhost:3000
+      # The proxy only accepts unsafe requests from this origin. The Playwright runner always uses
+      # http://localhost:3000; `just stack-up` sets UKPS_FRONTEND_ORIGIN to match UKPS_FRONTEND_PORT.
+      FRONTEND_PUBLIC_ORIGIN: ${UKPS_FRONTEND_ORIGIN:-http://localhost:3000}
       AUTHENTICATION_MODE: DEV
       COGNITO_ISSUER: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_e2e
       COGNITO_CLIENT_ID: e2e
@@ -99,7 +103,6 @@ services:
     environment:
       HOME: /tmp
       CI: ${CI:-}
-      PLAYWRIGHT_ARGS: ${PLAYWRIGHT_ARGS:-}
       PLAYWRIGHT_BASE_URL: http://localhost:3000
       PLAYWRIGHT_SKIP_WEB_SERVER: "1"
       E2E_AUTH_MODE: dev

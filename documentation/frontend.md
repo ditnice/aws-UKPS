@@ -81,6 +81,9 @@ Results are written to `e2e-results/` (git-ignored):
   ../e2e-results/playwright-report` from the repository root)
 - `test-results/` – traces and screenshots
 - `junit.xml` – when `CI` is set
+- `stack.log` – Postgres, backend and frontend logs, when the run fails
+
+The folder is emptied at the start of each run.
 
 How the stack is set up:
 
@@ -108,8 +111,10 @@ PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=1 E2E_AUTH_
 just stack-down
 ```
 
-`UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports (`0` picks a free one). Both bind to
-`127.0.0.1` only, as dev authentication makes every request the Super user.
+`UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports. Both bind to `127.0.0.1` only, as
+dev authentication makes every request the Super user. `just e2e` accepts `0` to pick a free port;
+`just stack-up` needs a fixed frontend port, because the frontend only accepts form submissions and
+API calls from the origin your browser uses (`http://localhost:<port>`).
 
 #### Running in a CI pipeline (e.g. TeamCity)
 

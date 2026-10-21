@@ -3,7 +3,14 @@
 // Backend /health only answers once the database has been reseeded and migrated; the first
 // frontend /health call initialises Payload and applies its migrations.
 
-const timeoutMs = Number(process.env.E2E_STACK_TIMEOUT_MS ?? 180_000)
+const rawTimeout = process.env.E2E_STACK_TIMEOUT_MS ?? '180000'
+const timeoutMs = Number(rawTimeout)
+if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
+  console.error(
+    `E2E_STACK_TIMEOUT_MS must be a positive whole number of milliseconds, got "${rawTimeout}".`,
+  )
+  process.exit(1)
+}
 const targets = [
   process.env.E2E_BACKEND_HEALTH_URL ?? 'http://backend:8080/health',
   new URL('/health', process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').href,

@@ -11,8 +11,14 @@ const localBaseURL = 'https://localhost:3000'
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? localBaseURL
 const isLocal = isLocalBaseURL(baseURL)
 /* The Docker Compose stack runs with frontend AUTHENTICATION_MODE=DEV and backend
- * DevAuthentication, so authenticated specs run without signing in. */
+ * DevAuthentication, so authenticated specs run without signing in. That bypasses the
+ * credential and target checks below, so it's only allowed against a local target. */
 const isDevAuth = isDevAuthMode()
+if (isDevAuth && !isLocal) {
+  throw new Error(
+    `E2E_AUTH_MODE=dev only works against a local target, but PLAYWRIGHT_BASE_URL is ${baseURL}.`,
+  )
+}
 const localWebServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? 'pnpm dev'
 const localChromiumOptions = isLocal
   ? { launchOptions: { args: ['--ignore-certificate-errors'] } }
