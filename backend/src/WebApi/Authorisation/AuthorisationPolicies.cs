@@ -61,7 +61,6 @@ internal static class AuthorisationPolicies
                         )
             );
 
-            //add new policy so deactivated users can access the champion contacts endpoint
             options.AddPolicy(
                 CurrentOrganisationChampionContacts,
                 policy =>
@@ -69,13 +68,7 @@ internal static class AuthorisationPolicies
                         .RequireAuthenticatedUser()
                         .RequireClaim(UkpsClaimTypes.Username)
                         .RequireAssertion(context =>
-                            context.User.HasClaim(c =>
-                                string.Equals(
-                                    c.Type,
-                                    UkpsClaimTypes.OrganisationId,
-                                    StringComparison.Ordinal
-                                )
-                            )
+                            context.User.FindFirst(UkpsClaimTypes.OrganisationId) is not null
                             || context.User.HasClaim(
                                 UkpsClaimTypes.OrganisationSelectionFailure,
                                 AuthenticationFailCode.MembershipDeactivated.ToString()

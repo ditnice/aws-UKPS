@@ -8,5 +8,18 @@ public abstract record GetCurrentOrganisationChampionsError
     /// <summary>
     /// The current user is not allowed to retrieve the champion contacts.
     /// </summary>
-    internal sealed record NotAllowed : GetCurrentOrganisationChampionsError;
+    public sealed record NotAllowed : GetCurrentOrganisationChampionsError;
+
+    internal TResult Match<TResult>(Func<NotAllowed, TResult> notAllowed)
+    {
+        ArgumentNullException.ThrowIfNull(notAllowed);
+
+        return this switch
+        {
+            NotAllowed e => notAllowed(e),
+            _ => throw new NotSupportedException(
+                $"Unsupported {nameof(GetCurrentOrganisationChampionsError)} subtype: {GetType().Name}."
+            ),
+        };
+    }
 }

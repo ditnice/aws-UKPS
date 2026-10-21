@@ -704,7 +704,7 @@
     "/users/me/current-organisation/champions": {
       "get": {
         "tags": [
-          "CurrentUserChampion"
+          "CurrentUserOrganisationChampion"
         ],
         "summary": "Gets the champion contacts for the current organisation.",
         "operationId": "GetCurrentOrganisationChampions",
@@ -5932,7 +5932,7 @@
       "name": "Authentication"
     },
     {
-      "name": "CurrentUserChampion"
+      "name": "CurrentUserOrganisationChampion"
     },
     {
       "name": "CurrentUserOrganisation"

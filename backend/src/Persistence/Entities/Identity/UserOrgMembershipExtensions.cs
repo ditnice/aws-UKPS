@@ -32,18 +32,23 @@ internal static class UserOrgMembershipExtensions
         membership.UserRole == UserRole.Champion
         && _eligibleChampionStatuses.Contains(membership.Status);
 
+    public static IQueryable<UserOrgMembership> EligibleChampions(
+        this IQueryable<UserOrgMembership> query,
+        int organisationId
+    ) =>
+        query.Where(x =>
+            x.OrganisationId == organisationId
+            && x.UserRole == UserRole.Champion
+            && _eligibleChampionStatuses.Contains(x.Status)
+        );
+
     public static Task<bool> AnyOtherEligibleChampion(
         this DbSet<UserOrgMembership> dbSet,
         int organisationId,
         IReadOnlyCollection<int> excludedMembershipIds,
         CancellationToken cancellationToken
     ) =>
-        dbSet.AnyAsync(
-            x =>
-                x.OrganisationId == organisationId
-                && !excludedMembershipIds.Contains(x.Id)
-                && x.UserRole == UserRole.Champion
-                && _eligibleChampionStatuses.Contains(x.Status),
-            cancellationToken
-        );
+        dbSet
+            .EligibleChampions(organisationId)
+            .AnyAsync(x => !excludedMembershipIds.Contains(x.Id), cancellationToken);
 }

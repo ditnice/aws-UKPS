@@ -20,14 +20,15 @@ using UKPS.Api.WebApi.InternalServices.Identity;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
-public class CurrentUserChampionControllerTests : IClassFixture<WebApplicationFactory<Program>>
+public class CurrentUserOrganisationChampionControllerTests
+    : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string ChampionContactsUrl = "/users/me/current-organisation/champions";
     private readonly IUserService _mockUserService = Substitute.For<IUserService>();
     private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
 
-    public CurrentUserChampionControllerTests(WebApplicationFactory<Program> factory)
+    public CurrentUserOrganisationChampionControllerTests(WebApplicationFactory<Program> factory)
     {
         ArgumentNullException.ThrowIfNull(factory);
         var claims = new DevAuthenticationClaims().UpdateClaim(

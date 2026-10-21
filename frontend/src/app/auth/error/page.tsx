@@ -5,6 +5,42 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 export const dynamic = 'force-dynamic'
 
+const ChampionContacts = ({ championEmails }: { championEmails: string[] | undefined }) => {
+  if (!championEmails || championEmails.length === 0) {
+    return (
+      <ErrorState data-testid="champion-retrieval-error">
+        An error occurred when retrieving your organisation&apos;s champion users. Please try again
+        later.
+      </ErrorState>
+    )
+  }
+
+  if (championEmails.length === 1) {
+    return (
+      <p data-testid="single-champion">
+        Contact your organisation&apos;s champion user to reactivate your account:{' '}
+        <a href={`mailto:${championEmails[0]}`}>{championEmails[0]}</a>
+      </p>
+    )
+  }
+
+  return (
+    <div data-testid="multiple-champions">
+      <p>
+        Contact one of your organisation&apos;s champion users to reactivate your account. Their
+        email addresses are:
+      </p>
+      <ul>
+        {championEmails.map((email) => (
+          <li key={email}>
+            <a href={`mailto:${email}`}>{email}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 const MembershipDeactivated = async ({
   searchParams,
 }: {
@@ -18,46 +54,10 @@ const MembershipDeactivated = async ({
       client: await createServerApiClient(),
     })
 
-    if (!championEmails || error || championEmails.length === 0) {
-      return (
-        <>
-          <PageHeader heading="Your account has been deactivated" />
-          <ErrorState data-testid="champion-retrieval-error">
-            An error occurred when retrieving your organisation&apos;s champion users. Please try
-            again later.
-          </ErrorState>
-        </>
-      )
-    }
-
-    if (championEmails.length === 1) {
-      return (
-        <>
-          <PageHeader heading="Your account has been deactivated" />
-          <p data-testid="single-champion">
-            Contact your organisation&apos;s champion user to reactivate your account:{' '}
-            <a href={`mailto:${championEmails[0]}`}>{championEmails[0]}</a>
-          </p>
-        </>
-      )
-    }
-
     return (
       <>
         <PageHeader heading="Your account has been deactivated" />
-        <div data-testid="multiple-champions">
-          <p>
-            Contact one of your organisation&apos;s champion users to reactivate your account. Their
-            email addresses are:
-          </p>
-          <ul>
-            {championEmails.map((email) => (
-              <li key={email}>
-                <a href={`mailto:${email}`}>{email}</a>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ChampionContacts championEmails={error ? undefined : championEmails} />
       </>
     )
   }

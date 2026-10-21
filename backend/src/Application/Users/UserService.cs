@@ -172,14 +172,7 @@ internal partial class UserService(
         }
 
         List<string> championEmails = await dbContext
-            .UserOrgMemberships.Where(x =>
-                x.OrganisationId == organisationId
-                && x.UserRole == UserRole.Champion
-                && (
-                    x.Status == UserOrgMembershipStatus.Active
-                    || x.Status == UserOrgMembershipStatus.Inactive
-                )
-            )
+            .UserOrgMemberships.EligibleChampions(organisationId.Value)
             .Select(x => x.User!.WorkEmail)
             .Distinct()
             .OrderBy(email => email)
@@ -647,7 +640,7 @@ internal partial class UserService(
             .UserOrgMemberships.Where(m => m.UserId == userId)
             .ToListAsync(cancellationToken);
 
-        if (await WouldRemoveLastChampion(memberships, userId, cancellationToken))
+        if (await WouldRemoveLastChampion(memberships, cancellationToken))
         {
             return new RemoveUserError.LastRemainingChampion(userId);
         }
@@ -668,11 +661,11 @@ internal partial class UserService(
 
     private async Task<bool> WouldRemoveLastChampion(
         IReadOnlyCollection<UserOrgMembership> memberships,
-        int userId,
         CancellationToken cancellationToken
     )
     {
         // Check every affected organisation before changing any memberships or user data.
+        int[] removedMembershipIds = memberships.Select(m => m.Id).ToArray();
         var championOrganisationIds = memberships
             .Where(m => m.IsEligibleChampion())
             .Select(m => m.OrganisationId)
@@ -680,15 +673,9 @@ internal partial class UserService(
 
         foreach (int organisationId in championOrganisationIds)
         {
-            bool hasAnotherChampion = await dbContext.UserOrgMemberships.AnyAsync(
-                m =>
-                    m.OrganisationId == organisationId
-                    && m.UserId != userId
-                    && m.UserRole == UserRole.Champion
-                    && (
-                        m.Status == UserOrgMembershipStatus.Active
-                        || m.Status == UserOrgMembershipStatus.Inactive
-                    ),
+            bool hasAnotherChampion = await dbContext.UserOrgMemberships.AnyOtherEligibleChampion(
+                organisationId,
+                removedMembershipIds,
                 cancellationToken
             );
 
