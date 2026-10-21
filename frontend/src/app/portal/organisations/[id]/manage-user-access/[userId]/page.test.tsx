@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserInformationDto, UserRole } from '@/client/generated/types.gen'
+import type { UserInformationDto } from '@/client/generated/types.gen'
 import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import ManageUserAccess from './page'
@@ -17,23 +18,14 @@ vi.mock('@/client/server-api', () => ({
 }))
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
-const userRole = 'Standard' as UserRole
 const user: UserInformationDto = {
-  userId: 4,
-  fullName: 'Julie Brooks',
-  workTelephone: '01234 567890',
+  ...fakeUserInformationDto(),
   workEmail: 'julie.brooks@example.com',
-  organisationMembershipId: 9,
-  organisationId: 2,
-  organisationName: 'Example Pharma',
-  userRole: userRole,
+  userRole: 'Standard',
 }
-const currentUserRole = 'Super' as UserRole
-const currentUser = {
-  userId: 10,
-  fullName: 'Current User',
-  workEmail: 'current.user@example.com',
-  userRole: currentUserRole,
+const currentUser: UserInformationDto = {
+  ...fakeUserInformationDto(),
+  userRole: 'Super',
 }
 
 function mockUserResponse(overrides: Partial<UserInformationDto> = {}) {
@@ -43,16 +35,9 @@ function mockUserResponse(overrides: Partial<UserInformationDto> = {}) {
   })
 }
 
-function mockCurrentUserResponse(overrides = {}) {
+function mockCurrentUserResponse(overrides: Partial<UserInformationDto> = {}) {
   vi.mocked(getUsersMe).mockResolvedValue({
-    data: {
-      ...currentUser,
-      ...overrides,
-      workTelephone: '',
-      organisationMembershipId: 1,
-      organisationId: 1,
-      organisationName: '',
-    },
+    data: { ...currentUser, ...overrides },
     error: undefined,
   })
 }

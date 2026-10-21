@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { UserInformationDto, getUsersMe } from '@/client/generated'
+import { getUsersMe } from '@/client/generated'
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 
@@ -34,16 +35,7 @@ beforeEach(() => {
   vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
 })
 
-const exampleUser: UserInformationDto = {
-  userId: 1,
-  fullName: 'John Smith',
-  workTelephone: '020 7123 4567',
-  workEmail: 'john.smith@example.com',
-  organisationMembershipId: 10,
-  organisationId: 100,
-  organisationName: 'Example Organisation',
-  userRole: 'Standard',
-}
+const exampleUser = fakeUserInformationDto()
 // Direct invocation checks orchestration and the returned synchronous tree only.
 // It does not exercise Next.js rendering, routing or hydration.
 describe('EditDetails (direct invocation)', () => {

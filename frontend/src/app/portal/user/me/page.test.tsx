@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { UserInformationDto } from '@/client/generated'
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
@@ -37,16 +38,7 @@ beforeEach(() => {
   vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
 })
 
-const exampleUser: UserInformationDto = {
-  userId: 1,
-  fullName: 'John Smith',
-  workTelephone: '020 7123 4567',
-  workEmail: 'john.smith@example.com',
-  organisationMembershipId: 10,
-  organisationId: 100,
-  organisationName: 'Example Organisation',
-  userRole: 'Standard',
-}
+const exampleUser = fakeUserInformationDto()
 
 const renderPage = async (searchParams: { updated?: string } = {}) => {
   render(await Me({ searchParams: Promise.resolve(searchParams) }))

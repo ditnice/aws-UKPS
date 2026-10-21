@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import type { Client } from '@/client/generated/client'
 import {
   getUserDetailsWithinOrganisation,
@@ -22,14 +23,8 @@ vi.mock('@/client/server-api', () => ({
 }))
 
 const user: UserInformationDto = {
-  userId: 4,
-  fullName: 'Julie Brooks',
-  workTelephone: '01234 567890',
+  ...fakeUserInformationDto(),
   workEmail: 'julie.brooks@example.com',
-  organisationMembershipId: 9,
-  organisationId: 2,
-  organisationName: 'Example Pharma',
-  userRole: 'Standard',
 }
 
 const registration = {

@@ -1,20 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import type { UserInformationDto } from '@/client/generated'
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 
 import { UserAuthenticationDetails } from './UserAuthenticationDetails'
 
-const user = {
-  userId: 4,
-  fullName: 'Julie Brooks',
-  workTelephone: '01234 567890',
-  workEmail: 'julie.brooks@example.com',
-  organisationMembershipId: 9,
-  organisationId: 2,
-  organisationName: 'Example Pharma',
-  userRole: 'Standard',
-} satisfies UserInformationDto
+const user = fakeUserInformationDto()
 
 describe('UserAuthenticationDetails', () => {
   it('renders an error when the current user cannot be retrieved', () => {
