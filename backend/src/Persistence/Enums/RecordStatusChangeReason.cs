@@ -41,4 +41,11 @@ public enum RecordStatusChangeReason
     /// Indicates that the reason for the status change is other than the predefined reasons.
     /// </summary>
     Other = 6,
+
+    /// <summary>
+    /// Indicates that the system archived the record, for example because the product has been
+    /// available in the UK for more than 6 months, or the record has not been updated within the
+    /// required period.
+    /// </summary>
+    ArchivedAutomatically = 7,
 }

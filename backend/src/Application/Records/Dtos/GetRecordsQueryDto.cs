@@ -20,9 +20,9 @@ public sealed record GetRecordsQueryDto
     public ICollection<RecordType> RecordType { get; init; } = [];
 
     /// <summary>
-    /// Gets or initialises the record statuses to include.
+    /// Gets or initialises the display statuses to include.
     /// </summary>
-    public ICollection<RecordStatus> RecordStatus { get; init; } = [];
+    public ICollection<RecordDisplayStatus> DisplayStatus { get; init; } = [];
 
     /// <summary>
     /// Gets or initialises the 1-based page number.
@@ -39,7 +39,7 @@ public sealed record GetRecordsQueryDto
     /// <summary>
     /// Gets or initialises the field by which records are sorted.
     /// </summary>
-    public GetRecordsQuerySortValue SortBy { get; init; } = GetRecordsQuerySortValue.NextUpdateDue;
+    public GetRecordsQuerySortValue SortBy { get; init; } = GetRecordsQuerySortValue.DisplayStatus;
 
     /// <summary>
     /// Gets or initialises the sort direction.
@@ -47,8 +47,8 @@ public sealed record GetRecordsQueryDto
     public SortDirection SortDirection { get; init; } = SortDirection.Ascending;
 
     /// <summary>
-    /// Gets or initialises the update status filter. When set, only records that are
-    /// overdue or not overdue for review will be returned.
+    /// Gets or initialises the update status filters. When multiple values are set, records
+    /// matching any selected status will be returned.
     /// </summary>
-    public UpdateStatus? UpdateStatus { get; init; }
+    public ICollection<UpdateStatus> UpdateStatus { get; init; } = [];
 }

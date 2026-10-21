@@ -14,3 +14,13 @@ export const updateFormApiErrors = (
     },
   })
 }
+
+export const clearFormApiErrors = (): Updater<AnyFieldLikeMetaBase> => {
+  return (meta) => ({
+    ...meta,
+    errorMap: {
+      ...meta.errorMap,
+      onSubmit: undefined,
+    },
+  })
+}

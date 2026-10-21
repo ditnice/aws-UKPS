@@ -1,6 +1,7 @@
-import { ActionBanner } from '@nice-digital/nds-action-banner'
+import Link from 'next/link'
 
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
+import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
@@ -25,7 +26,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
       {(organisation) => (
         <>
           <PageHeader heading={`${organisation.organisationName}`} />
-          <CreateMedicineRecordActionBanner />
+          <CreateMedicineRecordActionBanner organisationId={organisationId} />
           <TableAndFiltersGrid
             title="Search and filter records"
             filters={<RecordsTablesFilters query={query} />}
@@ -34,7 +35,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
                 {(data) => (
                   <>
                     <RecordsQueryResultsSummary query={query} data={data} />
-                    <RecordsTable data={data} query={query} />
+                    <RecordsTable organisationId={organisation.id} data={data} query={query} />
                   </>
                 )}
               </RecordsFetch>
@@ -46,18 +47,25 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
   )
 }
 
-const CreateMedicineRecordActionBanner = () => {
+const CreateMedicineRecordActionBanner = ({ organisationId }: { organisationId: string }) => {
   return (
     <ActionBanner
       variant="subtle"
       title="Create Record"
       cta={
         <>
-          <Button>Create medicine record (TODO)</Button>
+          <Button
+            elementType={Link}
+            href={`/portal/organisations/${organisationId}/records/create`}
+          >
+            Create medicine record
+          </Button>
         </>
       }
     >
-      To create a new record select the record type you want to create.
+      To create a new record select the record type you want to create.{' '}
+      <a>View a record template (opens in new tab)</a> to check what information you will need to
+      provide.
     </ActionBanner>
   )
 }

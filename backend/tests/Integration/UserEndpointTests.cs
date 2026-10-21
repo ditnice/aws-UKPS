@@ -204,28 +204,121 @@ public class UserEndpointTests : DatabaseTestBase
         otherUserProblem.Detail.ShouldBe(missingUserProblem.Detail);
     }
 
+    [Theory]
+    [InlineData(UserRole.Standard)]
+    [InlineData(UserRole.Champion)]
+    public async Task RemoveUser_NotAuthorised_ReturnsIndistinguishableNotFoundForExistingAndGuessedIds(
+        UserRole role
+    )
+    {
+        User target = _seededUsers.First();
+        AuthenticateAs(role, target.UserOrgMemberships!.First().OrganisationId);
+
+        using HttpResponseMessage existingResponse = await _httpClient.DeleteAsync(
+            new Uri($"/users/{target.Id}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+        using HttpResponseMessage guessedResponse = await _httpClient.DeleteAsync(
+            new Uri("/users/999999", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        existingResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        guessedResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        ProblemDetails? existingProblem =
+            await existingResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+                TestContext.Current.CancellationToken
+            );
+        ProblemDetails? guessedProblem =
+            await guessedResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+                TestContext.Current.CancellationToken
+            );
+        existingProblem.ShouldNotBeNull();
+        guessedProblem.ShouldNotBeNull();
+        existingProblem.Status.ShouldBe(guessedProblem.Status);
+        existingProblem.Type.ShouldBe(guessedProblem.Type);
+        existingProblem.Title.ShouldBe(guessedProblem.Title);
+        existingProblem.Detail.ShouldBe(guessedProblem.Detail);
+    }
+
     [Fact]
     public async Task GetUserRegistrationById_NotAuthorisedForOrganisation_ReturnsForbiddenWhetherOrNotRequestExists()
     {
         UserRegistrationRequest request = _userRegistrationRequests[0];
         AuthenticateAs(UserRole.Champion, request.OrganisationId + 1000);
 
-        HttpResponseMessage existingResponse = await _httpClient.GetAsync(
-            new Uri(
-                $"/organisations/{request.OrganisationId}/membership-requests/{request.Id}",
-                UriKind.Relative
-            ),
-            TestContext.Current.CancellationToken
+        using HttpResponseMessage existingResponse = await SendMembershipRequest(
+            "GET",
+            "",
+            request.OrganisationId,
+            request.Id
         );
-        HttpResponseMessage guessedResponse = await _httpClient.GetAsync(
-            new Uri(
-                $"/organisations/{request.OrganisationId}/membership-requests/999999",
-                UriKind.Relative
-            ),
-            TestContext.Current.CancellationToken
+        using HttpResponseMessage guessedResponse = await SendMembershipRequest(
+            "GET",
+            "",
+            request.OrganisationId,
+            request.Id + 1000
         );
 
         existingResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         guessedResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_Authorised_ReturnsRequestId()
+    {
+        UserRegistrationRequest request = _userRegistrationRequests[0];
+        AuthenticateAs(UserRole.Champion, request.OrganisationId);
+
+        using HttpResponseMessage response = await SendMembershipRequest(
+            "GET",
+            "",
+            request.OrganisationId,
+            request.Id
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var dto = await response.Content.ReadFromJsonAsync<RegisterUserDetailsDto>(
+            TestContext.Current.CancellationToken
+        );
+        dto.ShouldNotBeNull().Id.ShouldBe(request.Id);
+    }
+
+    [Theory]
+    [InlineData("GET", "")]
+    [InlineData("PATCH", "/approve")]
+    [InlineData("PATCH", "/reject")]
+    public async Task MembershipRequest_IdFromAnotherOrganisation_ReturnsNotFound(
+        string method,
+        string action
+    )
+    {
+        UserRegistrationRequest request = _userRegistrationRequests[0];
+        int otherOrganisationId = _userRegistrationRequests
+            .First(x => x.OrganisationId != request.OrganisationId)
+            .OrganisationId;
+        AuthenticateAs(UserRole.Champion, otherOrganisationId);
+
+        using HttpResponseMessage response = await SendMembershipRequest(
+            method,
+            action,
+            otherOrganisationId,
+            request.Id
+        );
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    private async Task<HttpResponseMessage> SendMembershipRequest(
+        string method,
+        string action,
+        int organisationId,
+        int id
+    )
+    {
+        using var message = new HttpRequestMessage(
+            new HttpMethod(method),
+            $"/organisations/{organisationId}/membership-requests/{id}{action}"
+        );
+        return await _httpClient.SendAsync(message, TestContext.Current.CancellationToken);
     }
 }

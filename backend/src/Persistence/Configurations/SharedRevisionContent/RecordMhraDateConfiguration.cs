@@ -10,6 +10,7 @@ internal sealed class RecordMhraDateConfiguration : IEntityTypeConfiguration<Rec
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
+        builder.Property(x => x.UkConditionalApprovalAnticipated);
 
         builder
             .HasIndex(x => x.RevisionId)
@@ -32,12 +33,6 @@ internal sealed class RecordMhraDateConfiguration : IEntityTypeConfiguration<Rec
             .HasOne(x => x.UkLicenceDate)
             .WithMany()
             .HasForeignKey(x => x.UkLicenceDateId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.UkLaunchDate)
-            .WithMany()
-            .HasForeignKey(x => x.UkLaunchDateId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -15,21 +15,21 @@ internal sealed partial class UserOnboardingService
 {
     private readonly AppDbContext _dbContext;
     private readonly IIdentityService _administerIdentityService;
-    private readonly ICurrentUserInfoService _currentUserInfoService;
+    private readonly CurrentDbUserEntityService _currentDbUserEntityService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly ILogger<UserOnboardingService> _logger;
 
     public UserOnboardingService(
         AppDbContext dbContext,
         IIdentityService administerIdentityService,
-        ICurrentUserInfoService currentUserInfoService,
+        CurrentDbUserEntityService currentDbUserEntityService,
         IDateTimeProvider dateTimeProvider,
         ILogger<UserOnboardingService> logger
     )
     {
         _dbContext = dbContext;
         _administerIdentityService = administerIdentityService;
-        _currentUserInfoService = currentUserInfoService;
+        _currentDbUserEntityService = currentDbUserEntityService;
         _dateTimeProvider = dateTimeProvider;
         _logger = logger;
     }
@@ -85,6 +85,7 @@ internal sealed partial class UserOnboardingService
         CancellationToken cancellationToken
     )
     {
+        User currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
         var user = User.CreateInitialisedUser(
             new()
             {
@@ -93,7 +94,7 @@ internal sealed partial class UserOnboardingService
                 WorkEmail = command.NewUserEmail,
                 WorkTelephone = command.ContactNumber,
                 OrganisationId = command.OrganisationId,
-                CurrentUserEmail = _currentUserInfoService.GetCurrentUserInfo().Email,
+                CurrentUserId = currentUser.Id,
                 Now = _dateTimeProvider.GetUtcNow(),
             }
         );

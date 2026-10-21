@@ -15,15 +15,10 @@ public record CreateRecordCommand
     public required int OrganisationId { get; init; }
 
     /// <summary>
-    /// Gets the development names associated with the record.
+    /// Gets the company's internal code or working name for the product, e.g. ABC-123.
     /// </summary>
-    /// <remarks>
-    /// At least one development name must be provided, and names cannot be empty or whitespace.
-    /// </remarks>
     [Required]
-    [MinLength(1)]
-    [NoEmptyOrWhitespaceItems]
-    public required IReadOnlyCollection<string> DevelopmentNames { get; init; }
+    public required string CompanyCode { get; init; }
 
     /// <summary>
     /// Gets the optional branded name associated with the record.
@@ -39,15 +34,24 @@ public record CreateRecordCommand
     /// </summary>
     /// <remarks>
     /// At least one generic name must be provided, and names cannot be empty or whitespace.
+    /// Names must be distinct, ignoring case and leading or trailing whitespace.
     /// </remarks>
     [Required]
     [MinLength(1)]
+    [DistinctStrings(StringComparison.OrdinalIgnoreCase)]
     [NoEmptyOrWhitespaceItems]
     public required IReadOnlyCollection<string> GenericNames { get; init; }
 
     /// <summary>
+    /// Gets the other names, codes, or synonyms associated with the record.
+    /// </summary>
+    [NoEmptyOrWhitespaceItems]
+    public IReadOnlyCollection<string> OtherIdentifiers { get; init; } = [];
+
+    /// <summary>
     /// Gets the title of the record.
     /// </summary>
-    [Required]
+    [Required(AllowEmptyStrings = false)]
+    [MaxLength(100)]
     public required string RecordTitle { get; init; }
 }

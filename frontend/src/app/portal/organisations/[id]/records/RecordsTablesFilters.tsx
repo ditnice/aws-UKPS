@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 
 import { FilterByInput, FilterPanel } from '@nice-digital/nds-filters'
 
-import { RecordStatus, UpdateStatus } from '@/client/generated'
+import { RecordDisplayStatus, UpdateStatus } from '@/client/generated'
 
 import { FilterOptionsGroup } from '../_components/OrganisationFilters'
 
@@ -45,16 +45,16 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
         name="search"
         buttonLabel="Apply filter"
         inputProps={{
-          placeholder: 'Enter an email address',
+          placeholder: 'Enter record identifier',
           defaultValue: query.search ?? '',
         }}
       ></FilterByInput>
       <FilterOptionsGroup
         heading="Record status"
         id="record-status-filter"
-        options={Object.values(RecordStatus)}
+        options={Object.values(RecordDisplayStatus)}
         labels={recordStatusLabels}
-        isSelected={(recordStatus: RecordStatus) =>
+        isSelected={(recordStatus: RecordDisplayStatus) =>
           query.recordStatus?.includes(recordStatus) ?? false
         }
         onChanged={(recordStatus, isSelected) =>
@@ -69,11 +69,13 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
         id="update-status-filter"
         options={Object.values(UpdateStatus)}
         labels={updateStatusLabels}
-        isSelected={(updateStatus: UpdateStatus) => query.updateStatus == updateStatus}
+        isSelected={(updateStatus: UpdateStatus) =>
+          query.updateStatus?.includes(updateStatus) ?? false
+        }
         onChanged={(updateStatus, isSelected) =>
           handleUpdatedQuery({
             ...query,
-            updateStatus: isSelected ? updateStatus : undefined,
+            updateStatus: addOrRemoveItem(query.updateStatus, updateStatus, isSelected),
           })
         }
       />

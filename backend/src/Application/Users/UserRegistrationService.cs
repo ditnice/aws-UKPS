@@ -7,6 +7,7 @@ using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.InternalServices.UserOnboarding;
+using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
@@ -71,7 +72,19 @@ internal class UserRegistrationService : IUserRegistrationService
                 .Include(x => x.Organisation)
                 .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
 
-            var dto = MapToDto(request);
+            var dto = MapToConfirmationDto(request);
+            await _emailService.SendEmail(
+                new SendEmailCommand()
+                {
+                    PersonIdentifier = PersonIdentifier.FromRegistrationId(userRegister.Id),
+                    RecipientAddress = userRegister.WorkEmail,
+                    Email = new UserRegisterEmail()
+                    {
+                        OrganisationName = request.Organisation!.OrganisationName,
+                    },
+                },
+                cancellationToken
+            );
 
             return Result<RegisterUserConfirmationDto, RegisterUserError>.Ok(dto);
         }
@@ -106,7 +119,7 @@ internal class UserRegistrationService : IUserRegistrationService
         {
             return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.IdNotFound(id));
         }
-        var dto = MapToDto(request);
+        var dto = MapToDetailsDto(request);
         return GetUserRegistrationByIdResult.Ok(dto);
     }
 
@@ -159,17 +172,17 @@ internal class UserRegistrationService : IUserRegistrationService
         }
 
         var result = await _userOnboardingService.InitialiseNewUserSetup(
-            new OnboardUserCommandDto()
-            {
-                FullName = registrationRequest.FullName,
-                NewUserEmail = registrationRequest.WorkEmail,
-                OrganisationId = registrationRequest.OrganisationId,
-                ContactNumber = registrationRequest.PhoneNumber,
-            },
+            MapToOnboardUserCommandDto(registrationRequest),
             cancellationToken
         );
         return await result.Match(
-            targetUser => HandleOnboardingSuccess(transaction, targetUser, cancellationToken),
+            targetUser =>
+                HandleOnboardingSuccess(
+                    transaction,
+                    registrationRequest,
+                    targetUser,
+                    cancellationToken
+                ),
             err => HandleUserOnBoardingError(transaction, err, cancellationToken)
         );
     }
@@ -249,10 +262,14 @@ internal class UserRegistrationService : IUserRegistrationService
 
     private async Task<Result<ApproveRequestError>> HandleOnboardingSuccess(
         IDbContextTransaction transaction,
+        UserRegistrationRequest registrationRequest,
         User targetUser,
         CancellationToken cancellationToken
     )
     {
+        registrationRequest.ResultingUser = targetUser;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
         // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
         Uri link = _setupLinkCreator.GetSetupLink(targetUser.OnboardingRecord!.SetupToken);
         await _emailService.SendEmail(
@@ -286,17 +303,42 @@ internal class UserRegistrationService : IUserRegistrationService
         );
     }
 
-    private static RegisterUserConfirmationDto MapToDto(
+    private static RegisterUserConfirmationDto MapToConfirmationDto(
+        UserRegistrationRequest userRegistrationRequest
+    )
+    {
+        return new()
+        {
+            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
+            FullName = userRegistrationRequest.FullName,
+            WorkEmail = userRegistrationRequest.WorkEmail,
+            PhoneNumber = userRegistrationRequest.PhoneNumber,
+        };
+    }
+
+    private static RegisterUserDetailsDto MapToDetailsDto(
         UserRegistrationRequest userRegistrationRequest
     )
     {
         return new()
         {
             Id = userRegistrationRequest.Id,
-            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
             FullName = userRegistrationRequest.FullName,
             WorkEmail = userRegistrationRequest.WorkEmail,
             PhoneNumber = userRegistrationRequest.PhoneNumber,
+        };
+    }
+
+    private static OnboardUserCommandDto MapToOnboardUserCommandDto(
+        UserRegistrationRequest registrationRequest
+    )
+    {
+        return new()
+        {
+            FullName = registrationRequest.FullName,
+            NewUserEmail = registrationRequest.WorkEmail,
+            OrganisationId = registrationRequest.OrganisationId,
+            ContactNumber = registrationRequest.PhoneNumber,
         };
     }
 }

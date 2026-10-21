@@ -6,8 +6,8 @@ using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
-using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Records;
@@ -62,43 +62,44 @@ internal class RecordCreationService : IRecordCreationService
             time,
             currentUser
         );
-        MedicinesProductDetail medicinesProductDetail = new MedicinesProductDetail()
+        RecordProductDetail recordProductDetail = new RecordProductDetail()
         {
+            CompanyCode = command.CompanyCode,
             RecordTitle = command.RecordTitle,
             BrandedName = command.BrandedName,
-            ActiveSubstances = CreateActiveSubstancesArray(command),
+            NamesAndIdentifiers = CreateNamesAndIdentifiersArray(command),
             Revision = revision,
         };
 
-        await _dbContext.AddAsync(medicinesProductDetail, cancellationToken);
+        await _dbContext.AddAsync(recordProductDetail, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return CreateRecordResult.Ok(
             new CreateRecordDto() { RecordId = record.Id, RevisionId = revision.Id }
         );
     }
 
-    private static MedicinesActiveSubstance[] CreateActiveSubstancesArray(
+    private static RecordNameAndIdentifier[] CreateNamesAndIdentifiersArray(
         CreateRecordCommand command
     )
     {
-        var developmentNames = command.DevelopmentNames.Select(
-            static (x, index) =>
-                new MedicinesActiveSubstance
-                {
-                    Name = x,
-                    NameType = SubstanceNameType.DevelopmentName,
-                    DisplayOrder = index,
-                }
-        );
         var genericNames = command.GenericNames.Select(
             static (x, index) =>
-                new MedicinesActiveSubstance
+                new RecordNameAndIdentifier
                 {
                     Name = x,
-                    NameType = SubstanceNameType.GenericName,
-                    DisplayOrder = index,
+                    NameType = NameAndIdentifierType.GenericName,
+                    DisplayOrder = index + 1,
                 }
         );
-        return developmentNames.Concat(genericNames).ToArray();
+        var otherIdentifiers = command.OtherIdentifiers.Select(
+            static (x, index) =>
+                new RecordNameAndIdentifier
+                {
+                    Name = x,
+                    NameType = NameAndIdentifierType.OtherIdentifier,
+                    DisplayOrder = index + 1,
+                }
+        );
+        return genericNames.Concat(otherIdentifiers).ToArray();
     }
 }

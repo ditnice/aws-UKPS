@@ -132,17 +132,17 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     {
         var orgId = 1;
         var registrationId = 2;
-        RegisterUserConfirmationDto expected = RegisterUserConfirmationDto();
+        RegisterUserDetailsDto expected = RegisterUserDetailsDto();
         _mock
             .GetUserRegistrationById(orgId, registrationId, Arg.Any<CancellationToken>())
-            .Returns(Result<RegisterUserConfirmationDto, GetUserDetailsError>.Ok(expected));
+            .Returns(Result<RegisterUserDetailsDto, GetUserDetailsError>.Ok(expected));
 
         HttpResponseMessage response = await SendGetUserMembershipRequestById(
             orgId,
             registrationId
         );
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var content = await response.Content.ReadFromJsonAsync<RegisterUserConfirmationDto>(
+        var content = await response.Content.ReadFromJsonAsync<RegisterUserDetailsDto>(
             TestJsonOptions.Default,
             TestContext.Current.CancellationToken
         );
@@ -155,7 +155,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
         _mock
             .GetUserRegistrationById(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(
-                Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                Result<RegisterUserDetailsDto, GetUserDetailsError>.Err(
                     new GetUserDetailsError.IdNotFound(1)
                 )
             );
@@ -169,7 +169,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
         _mock
             .GetUserRegistrationById(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(
-                Result<RegisterUserConfirmationDto, GetUserDetailsError>.Err(
+                Result<RegisterUserDetailsDto, GetUserDetailsError>.Err(
                     new GetUserDetailsError.UserNotAuthorised()
                 )
             );
@@ -329,10 +329,18 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
             WorkEmail = "user@example.com",
         };
 
-    private static RegisterUserConfirmationDto RegisterUserConfirmationDto() =>
+    private static RegisterUserDetailsDto RegisterUserDetailsDto() =>
         new()
         {
             Id = 1,
+            FullName = "Test1",
+            PhoneNumber = "07845796823",
+            WorkEmail = "user@example.com",
+        };
+
+    private static RegisterUserConfirmationDto RegisterUserConfirmationDto() =>
+        new()
+        {
             OrganisationName = "Test",
             FullName = "Test2",
             PhoneNumber = "07845796823",
@@ -345,14 +353,12 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     )
     {
         using StringContent stringContent = new StringContent(string.Empty);
-        return await _client.PatchAsync(
-            new Uri(
-                $"{CreateBasedUrl(organisationId, registrationRequestId)}/approve",
-                UriKind.Relative
-            ),
-            stringContent,
-            TestContext.Current.CancellationToken
+        var uri = new Uri(
+            $"{CreateBasedUrl(organisationId, registrationRequestId)}/approve",
+            UriKind.Relative
         );
+
+        return await _client.PatchAsync(uri, stringContent, TestContext.Current.CancellationToken);
     }
 
     private async Task<HttpResponseMessage> SendRejectRequest(
