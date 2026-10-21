@@ -41,5 +41,6 @@ USER node
 
 # Run the Playwright binary directly: `pnpm exec` re-verifies node_modules against the
 # build-time store (a cache mount that no longer exists) and tries to reinstall as a
-# user that can't write to /app/node_modules.
-CMD ["sh", "-c", "node tests/e2e/scripts/wait-for-stack.mjs && ./node_modules/.bin/playwright test $PLAYWRIGHT_ARGS"]
+# user that can't write to /app/node_modules. `exec` replaces the shell so Playwright
+# receives stop signals and can write its reports before exiting.
+CMD ["sh", "-c", "node tests/e2e/scripts/wait-for-stack.mjs && exec ./node_modules/.bin/playwright test $PLAYWRIGHT_ARGS"]

@@ -41,11 +41,6 @@ COPY --from=deps /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml 
 COPY . .
 RUN mkdir -p public
 RUN mkdir -p media
-
-# `next build` inlines NEXT_PUBLIC_* values into the client bundle, so they must be passed at
-# build time (--build-arg). Setting them on the ECS task at runtime, as
-# infrastructure/environments/*/main.tf does for this one, has no effect.
-ARG NEXT_PUBLIC_QA_SUPPORT_EMAIL
 RUN pnpm build
 
 # Distroless Node.js 24 on Debian 13. Distroless publishes no version tags, so it's pinned by

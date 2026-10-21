@@ -30,17 +30,16 @@ const hasAuthenticatedCredentials = [
 ].every((name) => Boolean(process.env[name]?.trim()))
 const canRunAuthenticatedTests =
   isDevAuth || (hasAuthenticatedCredentials && isAuthenticatedTargetAllowed(baseURL))
+const authenticatedChromiumProject = {
+  name: 'authenticated-chromium',
+  testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
+  use: {
+    ...devices['Desktop Chrome'],
+    ...localChromiumOptions,
+  },
+}
 const authenticatedProjects = isDevAuth
-  ? [
-      {
-        name: 'authenticated-chromium',
-        testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
-        use: {
-          ...devices['Desktop Chrome'],
-          ...localChromiumOptions,
-        },
-      },
-    ]
+  ? [authenticatedChromiumProject]
   : [
       {
         name: 'auth-setup',
@@ -51,17 +50,15 @@ const authenticatedProjects = isDevAuth
         },
       },
       {
-        name: 'authenticated-chromium',
+        ...authenticatedChromiumProject,
         dependencies: ['auth-setup'],
-        testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
         use: {
-          ...devices['Desktop Chrome'],
-          ...localChromiumOptions,
+          ...authenticatedChromiumProject.use,
           storageState: 'tests/e2e/.auth/authenticated-dev.json',
         },
       },
     ]
-const skipWebServer = Boolean(process.env.PLAYWRIGHT_SKIP_WEB_SERVER)
+const skipWebServer = ['1', 'true'].includes(process.env.PLAYWRIGHT_SKIP_WEB_SERVER ?? '')
 
 /**
  * See https://playwright.dev/docs/test-configuration.
