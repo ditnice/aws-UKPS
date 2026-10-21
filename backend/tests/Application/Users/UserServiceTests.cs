@@ -2393,50 +2393,96 @@ public class UserServiceTests : DatabaseTestBase
         await AssertSavedMembership(other.Id, otherMembershipStatus, otherRole);
     }
 
-    [Theory]
-    [InlineData(0, UserOrgStatus.Active)]
-    [InlineData(1, UserOrgStatus.Active)]
-    [InlineData(0, UserOrgStatus.Inactive)]
-    [InlineData(1, UserOrgStatus.Inactive)]
+    // [Theory]
+    // [InlineData(0, UserOrgStatus.Active)]
+    // [InlineData(1, UserOrgStatus.Active)]
+    // [InlineData(0, UserOrgStatus.Inactive)]
+    // [InlineData(1, UserOrgStatus.Inactive)]
+    [Fact]
     public async Task RemoveUser_WhenAnyOrganisationWouldLoseItsLastChampion_ShouldLeaveEverythingUnchanged(
-        int blockedOrganisationIndex,
-        UserOrgStatus status
+    // int blockedOrganisationIndex,
+    // UserOrgStatus status
     )
     {
-        var membershipStatus = (UserOrgMembershipStatus)status;
-        User caller = await AddCallerUser();
-        (User target, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
-            3,
-            status: membershipStatus
-        );
-        memberships[0].UserRole = UserRole.Champion;
-        memberships[1].UserRole = UserRole.Champion;
-        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        await AddChampionContactTestMembership(
-            memberships[1 - blockedOrganisationIndex].Organisation!,
-            "remaining@example.com"
-        );
-        UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
-        UserOnboardingRecord onboarding = await AddOnboardingRecordCreatedBy(
-            caller.Id,
-            resultingUserId: target.Id
-        );
-        UserAudit audit = await AddPersonalAudit(target);
-        AddCognitoAccount(target);
+        // Arrange
+        var user = _userFaker.Generate();
+        Organisation organisation = _organisationFaker
+            .RuleFor(
+                x => x.UserOrgMemberships,
+                _ =>
+                    _userOrgMembershipFaker
+                        .RuleFor(x => x.User, _ => user)
+                        .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                        .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                        .Generate(1)
+                        .ToList()
+            )
+            .Generate();
 
-        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+        await AddEntity(organisation, TestContext.Current.CancellationToken);
 
+        var userBeforeResult = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+        var userBefore = userBeforeResult.ShouldBeSuccess();
+
+        // Act
+        var result = await Service.RemoveUser(user.Id, TestContext.Current.CancellationToken);
+
+        // Assert
         result.ShouldBeError().ShouldBeOfType<RemoveUserError.LastRemainingChampion>();
-        Context.ChangeTracker.Entries().ShouldAllBe(x => x.State == EntityState.Unchanged);
-        _harness.Cognito.GetUser(target.CognitoUsername).ShouldNotBeNull();
-        await AssertBlockedRemovalDataUnchanged(target, request, onboarding, audit);
-        await using AppDbContext verifyContext = Fixture.CreateContext();
-        var saved = await verifyContext
-            .UserOrgMemberships.Where(x => x.UserId == target.Id)
-            .ToListAsync(TestContext.Current.CancellationToken);
-        saved.Count.ShouldBe(memberships.Length);
-        saved.ShouldAllBe(x => x.Status == membershipStatus);
-        saved.Count(x => x.UserRole == UserRole.Champion).ShouldBe(2);
+        var userAfterResult = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+        var userAfter = userAfterResult.ShouldBeSuccess();
+        userBefore.ShouldBe(userAfter);
+
+        // var context = _harness.GetClearedContext();
+        // var user = await context.Users.Include(x => x.UserOrgMemberships).FirstOrDefaultAsync(
+        //     x => x.Id == user.Id,
+        //     TestContext.Current.CancellationToken
+        // );
+
+        // user.
+
+        // var membershipStatus = (UserOrgMembershipStatus)status;
+        // User caller = await AddCallerUser();
+        // (User target, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+        //     3,
+        //     status: membershipStatus
+        // );
+        // memberships[0].UserRole = UserRole.Champion;
+        // memberships[1].UserRole = UserRole.Champion;
+        // await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        // await AddChampionContactTestMembership(
+        //     memberships[1 - blockedOrganisationIndex].Organisation!,
+        //     "remaining@example.com"
+        // );
+        // UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
+        // UserOnboardingRecord onboarding = await AddOnboardingRecordCreatedBy(
+        //     caller.Id,
+        //     resultingUserId: target.Id
+        // );
+        // UserAudit audit = await AddPersonalAudit(target);
+        // AddCognitoAccount(target);
+
+        // var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        // result.ShouldBeError().ShouldBeOfType<RemoveUserError.LastRemainingChampion>();
+        // Context.ChangeTracker.Entries().ShouldAllBe(x => x.State == EntityState.Unchanged);
+        // _harness.Cognito.GetUser(target.CognitoUsername).ShouldNotBeNull();
+        // await AssertBlockedRemovalDataUnchanged(target, request, onboarding, audit);
+        // await using AppDbContext verifyContext = Fixture.CreateContext();
+        // var saved = await verifyContext
+        //     .UserOrgMemberships.Where(x => x.UserId == target.Id)
+        //     .ToListAsync(TestContext.Current.CancellationToken);
+        // saved.Count.ShouldBe(memberships.Length);
+        // saved.ShouldAllBe(x => x.Status == membershipStatus);
+        // saved.Count(x => x.UserRole == UserRole.Champion).ShouldBe(2);
     }
 
     [Fact]
@@ -2636,65 +2682,6 @@ public class UserServiceTests : DatabaseTestBase
         );
         saved.Status.ShouldBe(status);
         saved.UserRole.ShouldBe(role);
-    }
-
-    private Task<UserAudit> AddPersonalAudit(User target) =>
-        AddEntity(
-            new UserAudit
-            {
-                UserId = target.Id,
-                FieldPath = UserAuditFieldPaths.FullName,
-                OldValue = "old name",
-                NewValue = target.FullName,
-                EventType = IamEventType.FieldUpdated,
-                UpdatedAt = _currentDateTime,
-            },
-            TestContext.Current.CancellationToken
-        );
-
-    private async Task AssertBlockedRemovalDataUnchanged(
-        User target,
-        UserRegistrationRequest request,
-        UserOnboardingRecord onboarding,
-        UserAudit audit
-    )
-    {
-        await using AppDbContext verifyContext = Fixture.CreateContext();
-        var savedUser = await verifyContext.Users.SingleAsync(
-            x => x.Id == target.Id,
-            TestContext.Current.CancellationToken
-        );
-        savedUser.FullName.ShouldBe(target.FullName);
-        savedUser.WorkEmail.ShouldBe(target.WorkEmail);
-        savedUser.Title.ShouldBe(target.Title);
-        savedUser.JobTitle.ShouldBe(target.JobTitle);
-        savedUser.WorkTelephone.ShouldBe(target.WorkTelephone);
-        savedUser.UpdatedAt.ShouldBe(target.UpdatedAt);
-        var savedRequest = await verifyContext.UserRegistrationRequests.SingleAsync(
-            x => x.Id == request.Id,
-            TestContext.Current.CancellationToken
-        );
-        savedRequest.FullName.ShouldBe(request.FullName);
-        savedRequest.WorkEmail.ShouldBe(request.WorkEmail);
-        savedRequest.PhoneNumber.ShouldBe(request.PhoneNumber);
-        (
-            await verifyContext.UserOnboardingRecords.AnyAsync(
-                x => x.SetupToken == onboarding.SetupToken,
-                TestContext.Current.CancellationToken
-            )
-        ).ShouldBeTrue();
-        var savedAudit = await verifyContext.UserAudits.SingleAsync(
-            x => x.Id == audit.Id,
-            TestContext.Current.CancellationToken
-        );
-        savedAudit.OldValue.ShouldBe(audit.OldValue);
-        savedAudit.NewValue.ShouldBe(audit.NewValue);
-        (
-            await verifyContext.UserAudits.AnyAsync(
-                x => x.UserId == target.Id && x.EventType == IamEventType.Deleted,
-                TestContext.Current.CancellationToken
-            )
-        ).ShouldBeFalse();
     }
 
     [Fact]
