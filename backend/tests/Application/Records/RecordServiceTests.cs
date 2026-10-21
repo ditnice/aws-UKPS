@@ -129,7 +129,9 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldNotBeEmpty();
-        dto.TotalCount.ShouldBe(OrganisationRecords.Count);
+        dto.TotalCount.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
     }
 
     [Fact]
@@ -172,7 +174,9 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        dto.TotalCount.ShouldBe(OrganisationRecords.Count);
+        dto.TotalCount.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
         dto.Page.ShouldBe(2);
         dto.PageSize.ShouldBe(1);
         dto.Items.Count.ShouldBe(1);
@@ -193,7 +197,9 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldBeEmpty();
-        dto.TotalCount.ShouldBe(OrganisationRecords.Count);
+        dto.TotalCount.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
         dto.Page.ShouldBe(pageBeyondLast);
     }
 
@@ -230,6 +236,7 @@ public class RecordServiceTests : DatabaseTestBase
         dto.Items.Select(x => x.Id)
             .ShouldBe(
                 OrganisationRecords
+                    .Where(r => r.RecordStatus != RecordStatus.Discarded)
                     .Where(r => statuses.Contains(GetExpectedDisplayStatus(r)))
                     .Select(r => r.Id),
                 ignoreOrder: true
@@ -265,7 +272,9 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        dto.Items.Count.ShouldBe(OrganisationRecords.Count);
+        dto.Items.Count.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
     }
 
     [Fact]
@@ -337,7 +346,11 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        foreach (Record record in OrganisationRecords)
+        foreach (
+            Record record in OrganisationRecords.Where(r =>
+                r.RecordStatus != RecordStatus.Discarded
+            )
+        )
         {
             RecordListItemDto item = dto.Items.Single(x => x.Id == record.Id);
             string companyCode = GetExpectedCompanyCode(record);
@@ -398,8 +411,15 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        dto.TotalCount.ShouldBe(OrganisationRecords.Count);
-        dto.Items.Select(x => x.Id).ShouldContainSet(OrganisationRecords.Select(x => x.Id));
+        dto.TotalCount.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
+        dto.Items.Select(x => x.Id)
+            .ShouldContainSet(
+                OrganisationRecords
+                    .Where(r => r.RecordStatus != RecordStatus.Discarded)
+                    .Select(x => x.Id)
+            );
     }
 
     [Fact]
@@ -412,8 +432,13 @@ public class RecordServiceTests : DatabaseTestBase
         );
 
         var dto = result.ShouldBeSuccess();
-        dto.Items.Select(x => x.Id).ShouldContainSet(OrganisationRecords.Select(x => x.Id));
-        dto.Items.Count.ShouldBe(OrganisationRecords.Count);
+        var expectedRecords = OrganisationRecords
+            .Where(r => r.RecordStatus != RecordStatus.Discarded)
+            .ToList();
+        dto.Items.Select(x => x.Id).ShouldContainSet(expectedRecords.Select(x => x.Id));
+        dto.Items.Count.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
     }
 
     [Fact]
