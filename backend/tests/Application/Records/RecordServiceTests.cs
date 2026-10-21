@@ -5,6 +5,7 @@ using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
@@ -445,44 +446,13 @@ public class RecordServiceTests : DatabaseTestBase
     public async Task DiscardDraftRecord_WhenSuccessful_UpdatesRecordStatus()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        var user = new UserFaker().Generate();
-        await AddEntities(new[] { user }, cancellationToken);
-        _harness.UpdateCurrentUser(x =>
-            x with
-            {
-                CognitoUsername = user.CognitoUsername,
-                OrganisationId = _organisationId,
-                UserRole = UserRole.Champion,
-            }
-        );
-        var membership = new UserOrgMembershipFaker()
-            .RuleFor(x => x.UserId, user.Id)
-            .RuleFor(x => x.OrganisationId, _organisationId)
-            .RuleFor(x => x.UserRole, UserRole.Champion)
-            .RuleFor(x => x.Status, UserOrgMembershipStatus.Active)
-            .Generate();
-
-        await AddEntities(new[] { membership }, cancellationToken);
-
-        var record = new RecordFaker()
-            .RuleFor(x => x.RecordStatus, RecordStatus.Unpublished)
-            .RuleFor(x => x.OrganisationId, _organisationId)
-            .RuleFor(x => x.CreatedByUser, user)
-            .Generate();
-
-        var revision = new RecordRevisionFaker()
-            .RuleFor(x => x.Record, record)
-            .RuleFor(x => x.WorkflowStatus, WorkflowStatus.Draft)
-            .RuleFor(x => x.CreatedByUser, user)
-            .Generate();
-
-        await AddEntities(new[] { revision }, cancellationToken);
+        Record record = await CreateDraftRecord();
 
         DiscardRecordError? result = await Service.DiscardDraftRecord(record.Id, cancellationToken);
         result.ShouldBeNull();
         Context.ChangeTracker.Clear();
 
-        var updatedRecord = await Context
+        Record updatedRecord = await Context
             .Records.AsNoTracking()
             .SingleAsync(r => r.Id == record.Id, cancellationToken);
         updatedRecord.RecordStatus.ShouldBe(RecordStatus.Discarded);
@@ -505,8 +475,28 @@ public class RecordServiceTests : DatabaseTestBase
     public async Task DiscardDraftRecord_WhenRecordIsPublished_ReturnsInvalidDiscardError()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        Record record = await CreateDraftRecord(RecordStatus.Published);
 
-        var user = new UserFaker().Generate();
+        DiscardRecordError? result = await Service.DiscardDraftRecord(record.Id, cancellationToken);
+
+        result.ShouldBeOfType<DiscardRecordError.InvalidDiscard>();
+
+        Context.ChangeTracker.Clear();
+
+        Record unchangedRecord = await Context
+            .Records.AsNoTracking()
+            .SingleAsync(r => r.Id == record.Id, cancellationToken);
+
+        unchangedRecord.RecordStatus.ShouldBe(RecordStatus.Published);
+    }
+
+    private async Task<Record> CreateDraftRecord(
+        RecordStatus recordStatus = RecordStatus.Unpublished
+    )
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        User user = new UserFaker().Generate();
         await AddEntities(new[] { user }, cancellationToken);
 
         _harness.UpdateCurrentUser(x =>
@@ -527,13 +517,13 @@ public class RecordServiceTests : DatabaseTestBase
 
         await AddEntities(new[] { membership }, cancellationToken);
 
-        var record = new RecordFaker()
-            .RuleFor(x => x.RecordStatus, RecordStatus.Published)
+        Record record = new RecordFaker()
+            .RuleFor(x => x.RecordStatus, recordStatus)
             .RuleFor(x => x.OrganisationId, _organisationId)
             .RuleFor(x => x.CreatedByUser, user)
             .Generate();
 
-        var revision = new RecordRevisionFaker()
+        RecordRevision revision = new RecordRevisionFaker()
             .RuleFor(x => x.Record, record)
             .RuleFor(x => x.WorkflowStatus, WorkflowStatus.Draft)
             .RuleFor(x => x.CreatedByUser, user)
@@ -541,16 +531,6 @@ public class RecordServiceTests : DatabaseTestBase
 
         await AddEntities(new[] { revision }, cancellationToken);
 
-        DiscardRecordError? result = await Service.DiscardDraftRecord(record.Id, cancellationToken);
-
-        result.ShouldBeOfType<DiscardRecordError.InvalidDiscard>();
-
-        Context.ChangeTracker.Clear();
-
-        var unchangedRecord = await Context
-            .Records.AsNoTracking()
-            .SingleAsync(r => r.Id == record.Id, cancellationToken);
-
-        unchangedRecord.RecordStatus.ShouldBe(RecordStatus.Published);
+        return record;
     }
 }
