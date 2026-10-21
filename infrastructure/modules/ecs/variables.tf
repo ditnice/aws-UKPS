@@ -286,3 +286,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "deployment_dependency" {
+  description = "Opaque value that must be resolved before the task definition is registered. Used to gate rollouts on pre-deployment jobs such as DB migrations."
+  type        = string
+  default     = null
+}
