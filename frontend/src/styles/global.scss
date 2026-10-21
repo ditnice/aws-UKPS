@@ -22,3 +22,8 @@ ol,
 .list {
   max-width: none;
 }
+
+// The Accordion package applies its own 66ch constraint in a separate stylesheet.
+body .accordion {
+  max-width: none;
+}
