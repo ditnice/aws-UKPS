@@ -150,6 +150,14 @@ internal partial class RecordService(
             user,
             RecordStatusChangeReason.ManuallyDiscarded
         );
+        RecordRevision revision = new RecordRevision()
+        {
+            CreatedAt = performedAt,
+            CreatedByUser = user,
+            WorkflowStatus = WorkflowStatus.Discarded,
+            Record = record,
+        };
+        dbContext.RecordRevisions.Add(revision);
         var recordEvent = new RecordEvent
         {
             Record = record,
