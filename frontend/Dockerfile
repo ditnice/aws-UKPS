@@ -12,8 +12,8 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
     https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
     /eu-west-2-bundle.pem
 
-# Node 24.21.0 on Debian 13 "trixie": the same Node and Debian release (glibc) as the
-# distroless runtime below.
+# Node 24 on Debian 13 "trixie": keep the Node version and Debian release (glibc) in step
+# with the distroless runtime below.
 FROM --platform=${ECS_PLATFORM} node:24.21.0-trixie@sha256:1278a37eb510ec1606fba0e80f554bcc941ae0b44f35ae373c4822ae7717c64d AS base
 
 WORKDIR /app
@@ -48,8 +48,8 @@ RUN mkdir -p media
 ARG NEXT_PUBLIC_QA_SUPPORT_EMAIL
 RUN pnpm build
 
-# Distroless Node.js 24 on Debian 13, uploaded 2026-10-01; runs Node 24.21.0 (checked with
-# `--version`, as distroless publishes no version tags).
+# Distroless Node.js 24 on Debian 13. Distroless publishes no version tags, so it's pinned by
+# digest; keep its Node version in step with the base stage above.
 # checkov:skip=CKV_DOCKER_2: Distroless base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP.
 FROM --platform=${ECS_PLATFORM} gcr.io/distroless/nodejs24-debian13:nonroot@sha256:9eeb7f5887d0e239e78264b06f7f11d2e14be534050481803a9e4728fcdd278e AS runtime
 

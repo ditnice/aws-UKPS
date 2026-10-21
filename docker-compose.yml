@@ -13,7 +13,7 @@ name: ukps
 services:
   postgres:
     # PostgreSQL 17.9 to match Aurora (infrastructure: aurora_engine_version = "17.9"), rather
-    # than the newer upstream 17.11. Pinned by digest.
+    # than the latest upstream 17.x. Pinned by digest.
     image: postgres:17.9-alpine3.23@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
     environment:
       POSTGRES_USER: postgres
@@ -59,7 +59,8 @@ services:
       AWS_REGION: eu-west-2
       AWS_EC2_METADATA_DISABLED: "true"
     ports:
-      - "${UKPS_BACKEND_PORT:-8080}:8080"
+      # Loopback only: dev authentication makes every request the Super user.
+      - "127.0.0.1:${UKPS_BACKEND_PORT:-8080}:8080"
 
   frontend:
     build:
@@ -80,7 +81,8 @@ services:
       COGNITO_ISSUER: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_e2e
       COGNITO_CLIENT_ID: e2e
     ports:
-      - "${UKPS_FRONTEND_PORT:-3000}:3000"
+      # Loopback only: dev authentication makes every request the Super user.
+      - "127.0.0.1:${UKPS_FRONTEND_PORT:-3000}:3000"
 
   playwright:
     profiles: [e2e]

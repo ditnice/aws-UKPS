@@ -12,8 +12,8 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
     https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
     /eu-west-2-bundle.pem
 
-# .NET SDK 10.0.402 (.NET 10.0.13) on Ubuntu 24.04 "noble", the same OS and .NET patch as the
-# chiseled runtime below.
+# .NET 10 SDK on Ubuntu 24.04 "noble". Keep its .NET patch version in step with the chiseled
+# runtime below.
 FROM --platform=${ECS_PLATFORM} mcr.microsoft.com/dotnet/sdk:10.0.402-noble@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa AS restore
 
 WORKDIR /src
@@ -27,15 +27,15 @@ COPY . .
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish src/UKPS.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
 
 # TODO: Remove this temporary GSSAPI dependency when database authentication migrates to IAM auth with GSS encryption disabled.
-# Ubuntu 24.04 "noble" snapshot 20260917, the same release the chiseled runtime is built from,
-# so the copied libraries match its glibc.
+# Ubuntu 24.04 "noble", the same release the chiseled runtime is built from, so the copied
+# libraries match its glibc.
 FROM --platform=${ECS_PLATFORM} ubuntu:noble-20260917@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55 AS native-deps
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 
-# ASP.NET Core 10.0.13 runtime on Ubuntu 24.04 "noble" chiseled (extra: includes ICU and tzdata).
+# ASP.NET Core 10 runtime on Ubuntu 24.04 "noble" chiseled (extra: includes ICU and tzdata).
 # checkov:skip=CKV_DOCKER_2: Distroless/chiseled base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP (see infrastructure/modules/alb/main.tf).
 FROM --platform=${ECS_PLATFORM} mcr.microsoft.com/dotnet/aspnet:10.0.13-noble-chiseled-extra@sha256:3ed6558056b54d5c9dfefb7ff473728e022ff2bf1d976cbf8ee07b05ec594374 AS runtime
 

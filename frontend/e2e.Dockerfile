@@ -3,8 +3,8 @@
 # Playwright runner for the Docker Compose E2E stack (see docker-compose.yml).
 # Browsers are installed from the lockfile's @playwright/test version, so they can't drift.
 
-# Node 24.21.0 on Debian 13 "trixie", the same base as the frontend build stage (see
-# Dockerfile). Playwright 1.64 supports Debian 13 for `install --with-deps`.
+# Node 24 on Debian 13 "trixie", the same base as the frontend build stage (see
+# Dockerfile). Playwright supports Debian 13 for `install --with-deps`.
 # checkov:skip=CKV_DOCKER_2: Short-lived test runner; readiness is handled by tests/e2e/scripts/wait-for-stack.mjs.
 FROM node:24.21.0-trixie@sha256:1278a37eb510ec1606fba0e80f554bcc941ae0b44f35ae373c4822ae7717c64d
 

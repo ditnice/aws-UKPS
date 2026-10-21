@@ -108,7 +108,8 @@ PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=1 E2E_AUTH_
 just stack-down
 ```
 
-`UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports (`0` picks a free one).
+`UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports (`0` picks a free one). Both bind to
+`127.0.0.1` only, as dev authentication makes every request the Super user.
 
 #### Running in a CI pipeline (e.g. TeamCity)
 
