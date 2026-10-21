@@ -4,13 +4,13 @@ internal sealed class UserRegistrationRequest
 {
     public int Id { get; init; }
     public required int OrganisationId { get; init; }
-    public required string FullName { get; init; }
-    public required string WorkEmail { get; init; }
-    public required string PhoneNumber { get; init; }
+    public required string FullName { get; set; }
+    public required string WorkEmail { get; set; }
+    public required string PhoneNumber { get; set; }
     public required DateTime CreatedAt { get; init; }
-    public int? RejectedBy { get; init; }
+    public int? RejectedByUserId { get; init; }
     public int? ApprovedByUserId { get; init; }
-    public int? CreatedUserId { get; init; }
+    public int? ResultingUserId { get; init; }
     public DateTime? RejectedAt { get; private set; }
     public DateTime? ApprovedAt { get; private set; }
 
@@ -18,9 +18,16 @@ internal sealed class UserRegistrationRequest
     public Organisation? Organisation { get; init; }
     public User? RejectedByUser { get; private set; }
     public User? ApprovedByUser { get; private set; }
-    public User? CreatedUser { get; set; }
+    public User? ResultingUser { get; set; }
 
     public uint Version { get; set; }
+
+    internal void Anonymise(int userId)
+    {
+        FullName = $"User-{userId}";
+        WorkEmail = $"removed-user-{userId}@removed.invalid";
+        PhoneNumber = "REMOVED";
+    }
 
     internal void Approve(User currentUser, DateTime dateTime)
     {

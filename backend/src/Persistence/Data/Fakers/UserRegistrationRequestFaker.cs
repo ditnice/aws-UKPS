@@ -18,7 +18,7 @@ internal sealed class UserRegistrationRequestFaker : Faker<UserRegistrationReque
         RuleFor(x => x.WorkEmail, (f, u) => f.Internet.Email(u.FullName));
         RuleFor(x => x.PhoneNumber, _ => new TelephoneNumberFaker().Generate());
 
-        RuleFor(x => x.RejectedBy, f => null);
+        RuleFor(x => x.RejectedByUserId, f => null);
         RuleFor(x => x.RejectedAt, f => null);
         RuleFor(x => x.RejectedByUser, f => null);
         RuleFor(x => x.CreatedAt, f => DateTime.SpecifyKind(f.Date.Past(), DateTimeKind.Utc));

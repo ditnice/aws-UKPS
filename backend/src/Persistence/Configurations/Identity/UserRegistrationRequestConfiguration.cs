@@ -33,13 +33,19 @@ internal sealed class UserRegistrationRequestConfiguration
         builder
             .HasOne(x => x.RejectedByUser)
             .WithMany()
-            .HasForeignKey(x => x.RejectedBy)
+            .HasForeignKey(x => x.RejectedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
             .HasOne(x => x.ApprovedByUser)
             .WithMany()
             .HasForeignKey(x => x.ApprovedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne(x => x.ResultingUser)
+            .WithMany()
+            .HasForeignKey(x => x.ResultingUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(x => x.Version).IsRowVersion();

@@ -165,7 +165,8 @@ export const GetRecordsQuerySortValue = {
     NEXT_UPDATE_DUE: 'NextUpdateDue',
     ID: 'Id',
     COMPANY_CODE: 'CompanyCode',
-    DISPLAY_STATUS: 'DisplayStatus'
+    DISPLAY_STATUS: 'DisplayStatus',
+    RECORD_TITLE: 'RecordTitle'
 } as const;
 
 /**
@@ -962,6 +963,10 @@ export type RecordListItemDto = {
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
+    /**
+     * Gets the date the record is next due for an update, when available.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1083,13 +1088,31 @@ export type RegisterUserCommandDto = {
  */
 export type RegisterUserConfirmationDto = {
     /**
-     * ID for the user.
-     */
-    id: number;
-    /**
      * Gets the name of the user's organisation.
      */
     organisationName: string;
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
+};
+
+/**
+ * Represents the details of a user who has been registered.
+ */
+export type RegisterUserDetailsDto = {
+    /**
+     * The Id to identify the registration details.
+     */
+    id: number;
     /**
      * Gets the user's full name.
      */
@@ -1120,6 +1143,16 @@ export type RegulatoryDateDto = {
      * Gets a value indicating whether the date is confidential.
      */
     isConfidential: boolean;
+};
+
+/**
+ * The result of removing a user.
+ */
+export type RemovedUserDto = {
+    /**
+     * The name the removed user now appears under, for example in a record's timeline.
+     */
+    displayName: string;
 };
 
 /**
@@ -1260,8 +1293,14 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
     userRole: UserRole;
 };
 
+/**
+ * Represents the update status filter for records.
+ */
 export const UpdateStatus = { OVERDUE: 'Overdue', NOT_OVERDUE: 'NotOverdue' } as const;
 
+/**
+ * Represents the update status filter for records.
+ */
 export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
 
 /**
@@ -1348,6 +1387,10 @@ export type UserInformationDto = {
      * Gets the role assigned to the user within the organisation.
      */
     userRole: UserRole;
+    /**
+     * Gets the user's membership status within the organisation.
+     */
+    status: UserOrgStatus;
 };
 
 /**
@@ -1385,18 +1428,19 @@ export type UserListItemDto = {
 };
 
 /**
- * Defines the actions that can be performed on a user's membership.
+ * Defines the actions that can be performed on a user or their membership.
  */
 export const UserMembershipAction = {
     APPROVE_MEMBERSHIP: 'ApproveMembership',
     REJECT_MEMBERSHIP: 'RejectMembership',
     DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
     REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
-    EDIT_USER_ROLE: 'EditUserRole'
+    EDIT_USER_ROLE: 'EditUserRole',
+    REMOVE_USER: 'RemoveUser'
 } as const;
 
 /**
- * Defines the actions that can be performed on a user's membership.
+ * Defines the actions that can be performed on a user or their membership.
  */
 export type UserMembershipAction = typeof UserMembershipAction[keyof typeof UserMembershipAction];
 
@@ -1409,7 +1453,8 @@ export const UserOrgStatus = {
     ACTIVE: 'Active',
     REJECTED: 'Rejected',
     INACTIVE: 'Inactive',
-    DEACTIVATED: 'Deactivated'
+    DEACTIVATED: 'Deactivated',
+    REMOVED: 'Removed'
 } as const;
 
 /**
@@ -1738,6 +1783,10 @@ export type PostAuthVerifyMfaErrors = {
      * verification could not be completed.
      */
     400: ProblemDetails;
+    /**
+     * The multi-factor authentication onboarding record was not found.
+     */
+    404: ProblemDetails;
 };
 
 export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerifyMfaErrors];
@@ -2116,10 +2165,10 @@ export type GetOrganisationRecordsData = {
          */
         SortDirection?: SortDirection;
         /**
-         * Gets or initialises the update status filter. When set, only records that are
-         * overdue or not overdue for review will be returned.
+         * Gets or initialises the update status filters. When multiple values are set, records
+         * matching any selected status will be returned.
          */
-        UpdateStatus?: UpdateStatus;
+        UpdateStatus?: Array<UpdateStatus>;
     };
     url: '/records/organisations/{organisationId}';
 };
@@ -2181,11 +2230,7 @@ export type GetRecordErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The caller is not authorised to view the record.
-     */
-    403: ProblemDetails;
-    /**
-     * No record of the requested type exists with the specified identifier.
+     * The requested record was not found or is not accessible to the caller.
      */
     404: ProblemDetails;
 };
@@ -2385,6 +2430,48 @@ export type GetUserDetailsWithinOrganisationResponses = {
 
 export type GetUserDetailsWithinOrganisationResponse = GetUserDetailsWithinOrganisationResponses[keyof GetUserDetailsWithinOrganisationResponses];
 
+export type RemoveUserData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to remove.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}';
+};
+
+export type RemoveUserErrors = {
+    /**
+     * One of the user's organisation memberships is not in a state that allows removal.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller attempted to remove themselves.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified user does not exist or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+};
+
+export type RemoveUserError = RemoveUserErrors[keyof RemoveUserErrors];
+
+export type RemoveUserResponses = {
+    /**
+     * The user was removed. Returns the name they now appear under.
+     */
+    200: RemovedUserDto;
+};
+
+export type RemoveUserResponse = RemoveUserResponses[keyof RemoveUserResponses];
+
 export type PatchUsersByUserIdData = {
     /**
      * A token to monitor for cancellation requests.
@@ -2541,7 +2628,7 @@ export type GetUserRegistrationByIdResponses = {
     /**
      * The membership request's details were successfully retrieved.
      */
-    200: RegisterUserConfirmationDto;
+    200: RegisterUserDetailsDto;
 };
 
 export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];

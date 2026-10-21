@@ -4,7 +4,7 @@
 @use '@/styles/utils';
 
 .buttonGroup {
-  margin-top: utils.rem(spacing.$large);
+  margin-top: utils.rem(spacing.$x_large);
 
   > * + * {
     margin-left: utils.rem(spacing.$medium);

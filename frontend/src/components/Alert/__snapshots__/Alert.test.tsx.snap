@@ -82,3 +82,27 @@ exports[`Alert > renders an info alert by default 1`] = `
   </div>
 </DocumentFragment>
 `;
+
+exports[`Alert dismiss button > renders a dismiss link pointing at the given href 1`] = `
+<DocumentFragment>
+  <div
+    class="_wrapper_7b834f"
+  >
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      class="alert alert--success"
+      data-component="alert--success"
+    >
+      User removed from organisation
+      <a
+        class="btn btn--secondary"
+        data-component="button--secondary--button"
+        href="/portal/organisations/2"
+      >
+        Dismiss
+      </a>
+    </div>
+  </div>
+</DocumentFragment>
+`;

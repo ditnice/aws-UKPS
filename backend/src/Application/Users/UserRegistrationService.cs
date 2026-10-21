@@ -72,7 +72,7 @@ internal class UserRegistrationService : IUserRegistrationService
                 .Include(x => x.Organisation)
                 .SingleAsync(x => x.Id == userRegister.Id, cancellationToken);
 
-            var dto = MapToDto(request);
+            var dto = MapToConfirmationDto(request);
             await _emailService.SendEmail(
                 new SendEmailCommand()
                 {
@@ -119,7 +119,7 @@ internal class UserRegistrationService : IUserRegistrationService
         {
             return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.IdNotFound(id));
         }
-        var dto = MapToDto(request);
+        var dto = MapToDetailsDto(request);
         return GetUserRegistrationByIdResult.Ok(dto);
     }
 
@@ -267,7 +267,7 @@ internal class UserRegistrationService : IUserRegistrationService
         CancellationToken cancellationToken
     )
     {
-        registrationRequest.CreatedUser = targetUser;
+        registrationRequest.ResultingUser = targetUser;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
@@ -303,14 +303,26 @@ internal class UserRegistrationService : IUserRegistrationService
         );
     }
 
-    private static RegisterUserConfirmationDto MapToDto(
+    private static RegisterUserConfirmationDto MapToConfirmationDto(
+        UserRegistrationRequest userRegistrationRequest
+    )
+    {
+        return new()
+        {
+            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
+            FullName = userRegistrationRequest.FullName,
+            WorkEmail = userRegistrationRequest.WorkEmail,
+            PhoneNumber = userRegistrationRequest.PhoneNumber,
+        };
+    }
+
+    private static RegisterUserDetailsDto MapToDetailsDto(
         UserRegistrationRequest userRegistrationRequest
     )
     {
         return new()
         {
             Id = userRegistrationRequest.Id,
-            OrganisationName = userRegistrationRequest.Organisation!.OrganisationName,
             FullName = userRegistrationRequest.FullName,
             WorkEmail = userRegistrationRequest.WorkEmail,
             PhoneNumber = userRegistrationRequest.PhoneNumber,

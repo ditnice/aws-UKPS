@@ -22,6 +22,7 @@ const user: UserInformationDto = {
   ...fakeUserInformationDto(),
   workEmail: 'julie.brooks@example.com',
   userRole: 'Standard',
+  status: 'Active',
 }
 const currentUser: UserInformationDto = {
   ...fakeUserInformationDto(),
@@ -85,7 +86,7 @@ describe('ManageUserAccess (direct invocation)', () => {
 
     expect(
       screen.getByRole('radio', {
-        name: 'Remove user - not implemented yet',
+        name: 'Remove user',
       }),
     ).toBeInTheDocument()
   })
@@ -98,7 +99,7 @@ describe('ManageUserAccess (direct invocation)', () => {
 
     expect(
       screen.queryByRole('radio', {
-        name: 'Remove user - not implemented yet',
+        name: 'Remove user',
       }),
     ).toBeNull()
   })
@@ -109,6 +110,32 @@ describe('ManageUserAccess (direct invocation)', () => {
     await expect(ManageUserAccess({ params })).rejects.toBe(notFoundError)
 
     expect(notFound).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    ['Active', 3],
+    ['Inactive', 3],
+    ['AwaitingSetup', 1],
+    ['Deactivated', 2],
+  ] as const)('offers state-appropriate options for a %s user', async (status, actionCount) => {
+    mockUserResponse({ status })
+    render(await ManageUserAccess({ params }))
+    expect(screen.getAllByRole('radio')).toHaveLength(actionCount)
+    expect(screen.getByRole('radio', { name: 'Remove user' })).toBeInTheDocument()
+  })
+
+  it('rejects direct navigation to a removed user', async () => {
+    mockUserResponse({ status: 'Removed' })
+    await expect(ManageUserAccess({ params })).rejects.toBe(notFoundError)
+  })
+
+  it('does not offer self-management', async () => {
+    mockCurrentUserResponse({ userId: user.userId })
+    render(await ManageUserAccess({ params }))
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+    expect(
+      screen.getByText('You cannot manage your own access from this page.'),
+    ).toBeInTheDocument()
   })
 
   it.each([

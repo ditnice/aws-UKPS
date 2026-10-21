@@ -111,6 +111,11 @@ export const componentDefinitions = [
     label: 'Summary List',
     slug: 'summary-list',
   },
+  {
+    description: 'Show the tasks users need to complete and the status.',
+    label: 'Task list',
+    slug: 'task-list',
+  },
   { description: 'Present data for comparison and scanning.', label: 'Table', slug: 'table' },
   { description: 'Switch between related panes of content.', label: 'Tabs', slug: 'tabs' },
   { description: 'Label, categorise or highlight an item.', label: 'Tag', slug: 'tag' },

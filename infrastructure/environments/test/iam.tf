@@ -33,6 +33,7 @@ data "aws_iam_policy_document" "backend_cognito" {
     effect = "Allow"
     actions = [
       "cognito-idp:AdminCreateUser",
+      "cognito-idp:AdminDeleteUser",
       "cognito-idp:AdminInitiateAuth",
       "cognito-idp:AdminRespondToAuthChallenge",
       "cognito-idp:AdminSetUserPassword",
@@ -63,6 +64,8 @@ data "aws_iam_policy_document" "backend_cognito" {
     actions = [
       "sqs:SendMessage",
       "sqs:GetQueueAttributes",
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
     ]
     resources = [module.sqs_email_backend.queue_arn]
   }

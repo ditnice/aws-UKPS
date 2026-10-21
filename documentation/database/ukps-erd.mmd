@@ -1,0 +1,639 @@
+%% AUTO-GENERATED FILE. Do not edit directly.
+%% Source: EF Core model (AppDbContext) + documentation/database/erd-groups.yml
+%% Regenerate with: ./scripts/generate-erd.sh
+erDiagram
+    direction LR
+
+    classDef identity fill:#dbeafe,stroke:#374151,stroke-width:1px
+    classDef record_workflow fill:#dcfce7,stroke:#374151,stroke-width:1px
+    classDef shared_revision_content fill:#fef3c7,stroke:#374151,stroke-width:1px
+    classDef medicines_revision_content fill:#fee2e2,stroke:#374151,stroke-width:1px
+    classDef vaccines_revision_content fill:#e0f2fe,stroke:#374151,stroke-width:1px
+    classDef reference_data fill:#f3f4f6,stroke:#374151,stroke-width:1px
+    classDef reporting fill:#f3e8ff,stroke:#374151,stroke-width:1px
+    classDef email fill:#ffedd5,stroke:#374151,stroke-width:1px
+    classDef user_features fill:#ccfbf1,stroke:#374151,stroke-width:1px
+
+    subgraph identity["Identity and Access"]
+        app_user:::identity {
+            integer id PK
+            varchar(39) cognito_username
+            timestamptz created_at
+            text full_name
+            text job_title "nullable"
+            timestamptz last_active "nullable"
+            text title "nullable"
+            timestamptz updated_at "nullable"
+            integer user_type
+            text work_email UK
+            text work_telephone "nullable"
+        }
+        organisation_audits:::identity {
+            integer id PK
+            integer event_type
+            text field_path "nullable"
+            text new_value "nullable"
+            text notes "nullable"
+            text old_value "nullable"
+            integer organisation_id FK
+            text reason "nullable"
+            timestamptz updated_at
+            integer updated_by FK "nullable"
+        }
+        organisations:::identity {
+            integer id PK
+            integer allowed_pharmaceutical_entity
+            text country_or_region "nullable"
+            timestamptz created_at
+            text head_office_address
+            text head_office_email
+            text head_office_telephone
+            timestamptz last_active "nullable"
+            text organisation_name
+            integer organisation_type
+            integer status
+        }
+        terms_acceptances:::identity {
+            integer id PK
+            timestamptz created_at
+            text ip_address "nullable"
+            timestamptz link_expires_at
+            integer organisation_id FK
+            integer relevant_pharmaceutical_entity
+            text signatory_email
+            text signatory_job_title "nullable"
+            text signatory_name
+            timestamptz signed_at "nullable"
+            integer status
+        }
+        user_audits:::identity {
+            integer id PK
+            integer event_type
+            text field_path "nullable"
+            text new_value "nullable"
+            text notes "nullable"
+            text old_value "nullable"
+            text reason "nullable"
+            timestamptz updated_at
+            integer updated_by FK "nullable"
+            integer user_id FK
+        }
+        user_onboarding_records:::identity {
+            uuid setup_token PK
+            timestamptz consumed_at "nullable"
+            uuid correlation_id UK "nullable"
+            timestamptz created_at
+            integer created_by_user_id FK
+            integer resend_count
+            integer resulting_user_id FK, UK
+        }
+        user_org_memberships:::identity {
+            integer id PK
+            integer allowed_pharmaceutical_entity
+            timestamptz created_at
+            boolean is_selected_as_current_organisation
+            integer organisation_id FK
+            integer status
+            integer user_id FK
+            integer user_role
+        }
+        user_registration_requests:::identity {
+            integer id PK
+            timestamptz approved_at "nullable"
+            integer approved_by_user_id FK "nullable"
+            timestamptz created_at
+            text full_name
+            integer organisation_id FK
+            text phone_number
+            timestamptz rejected_at "nullable"
+            integer rejected_by_user_id FK "nullable"
+            integer resulting_user_id FK "nullable"
+            text work_email
+            xid xmin
+        }
+    end
+
+    subgraph record_workflow["Record Workflow"]
+        qa_reviews:::record_workflow {
+            integer id PK
+            text note "nullable"
+            integer outcome "nullable"
+            timestamptz reviewed_at "nullable"
+            integer reviewed_by FK "nullable"
+            integer revision_id FK
+        }
+        record_event_field_changes:::record_workflow {
+            integer id PK
+            text field_path
+            text new_value "nullable"
+            text old_value "nullable"
+            integer record_event_id FK
+        }
+        record_events:::record_workflow {
+            integer id PK
+            integer event_type
+            text note "nullable"
+            jsonb payload "nullable"
+            timestamptz performed_at
+            integer performed_by FK "nullable"
+            integer qa_review_id FK "nullable"
+            integer record_id FK
+            integer revision_id FK "nullable"
+        }
+        record_revisions:::record_workflow {
+            integer id PK
+            integer based_on_revision_id FK "nullable"
+            timestamptz created_at
+            integer created_by FK
+            integer record_id FK
+            timestamptz submitted_at "nullable"
+            integer submitted_by FK "nullable"
+            timestamptz updated_at "nullable"
+            integer updated_by FK "nullable"
+            integer workflow_status
+        }
+        record_status_histories:::record_workflow {
+            integer id PK
+            integer from_status "nullable"
+            text note "nullable"
+            integer reason "nullable"
+            integer record_id FK
+            integer to_status
+            timestamptz updated_at
+            integer updated_by FK "nullable"
+        }
+        records:::record_workflow {
+            integer id PK
+            timestamptz created_at
+            integer created_by FK "nullable"
+            integer organisation_id FK
+            integer record_status
+            integer record_type
+            timestamptz reviewed_at "nullable"
+        }
+    end
+
+    subgraph shared_revision_content["Shared Revision Content"]
+        other_clinical_trial_numbers:::shared_revision_content {
+            integer id PK
+            integer clinical_trial_id FK
+            integer display_order "nullable"
+            text other_registry_number
+        }
+        record_clinical_trial_information:::shared_revision_content {
+            integer id PK
+            integer recruiting_in_uk "nullable"
+            integer revision_id FK, UK
+        }
+        record_clinical_trials:::shared_revision_content {
+            integer id PK
+            text brief_description "nullable"
+            text clinical_trials_gov_number
+            integer revision_id FK
+            text study_name
+            integer trial_phase "nullable"
+        }
+        record_htas:::shared_revision_content {
+            integer id PK
+            text hta_additional_details "nullable"
+            integer hta_nice_aligned_pathway "nullable"
+            integer medicine_hta_bodies "nullable"
+            integer medicine_hta_submission_intended "nullable"
+            text nice_ta_development_id "nullable"
+            integer revision_id FK, UK
+            integer uk_launch_date_id FK "nullable"
+            integer vaccine_hta_assessor "nullable"
+        }
+        record_mhra_dates:::shared_revision_content {
+            integer id PK
+            integer revision_id FK, UK
+            integer uk_conditional_approval_anticipated "nullable"
+            integer uk_licence_date_id FK "nullable"
+            integer uk_submission_date_id FK "nullable"
+        }
+        record_mhra_procedures:::shared_revision_content {
+            integer id PK
+            integer irp_reference_regulator_id FK "nullable"
+            integer mhra_procedure_type_id FK "nullable"
+            text procedure_details "nullable"
+            integer revision_id FK, UK
+        }
+        record_names_and_identifiers:::shared_revision_content {
+            integer id PK
+            integer display_order "nullable"
+            text name
+            integer name_type
+            integer record_product_detail_id FK
+        }
+        record_product_details:::shared_revision_content {
+            integer id PK
+            text branded_name "nullable"
+            text company_code
+            text record_title
+            integer revision_id FK, UK
+        }
+        regulatory_dates:::shared_revision_content {
+            integer id PK
+            integer date_event
+            integer date_precision
+            date date_value
+            boolean is_confidential
+            integer revision_id FK
+        }
+    end
+
+    subgraph medicines_revision_content["Medicines Revision Content"]
+        medicines_budget_impacts:::medicines_revision_content {
+            integer id PK
+            integer compassionate_access_available "nullable"
+            text compassionate_access_details "nullable"
+            text estimated_uptake "nullable"
+            text indication_specific_pricing_details "nullable"
+            integer indication_specific_pricing_planned "nullable"
+            integer net_uk_budget_impact_band "nullable"
+            integer patient_access_scheme_planned "nullable"
+            integer patient_access_scheme_regions "nullable"
+            integer revision_id FK, UK
+        }
+        medicines_development_backgrounds:::medicines_revision_content {
+            integer id PK
+            text co_marketing_company_name "nullable"
+            integer is_co_marketed "nullable"
+            integer is_originator_company "nullable"
+            integer is_repurposed_medicine "nullable"
+            text originator_company_name "nullable"
+            text repurposed_medicine_details "nullable"
+            integer revision_id FK, UK
+        }
+        medicines_eams_pims:::medicines_revision_content {
+            integer id PK
+            integer eams_opinion_date_id FK "nullable"
+            integer eams_opinion_decision "nullable"
+            integer eams_submission_date_id FK "nullable"
+            integer pim_designation_status "nullable"
+            integer revision_id FK, UK
+            integer will_submit_to_eams "nullable"
+        }
+        medicines_eu_statuses:::medicines_revision_content {
+            integer id PK
+            integer atmp_classification_id FK "nullable"
+            integer atmp_recommendation_date_id FK "nullable"
+            integer eu_atmp_classification_status "nullable"
+            integer eu_orphan_granted_date_id FK "nullable"
+            integer eu_orphan_status "nullable"
+            text eu_orphan_status_number "nullable"
+            integer revision_id FK, UK
+        }
+        medicines_global_submissions:::medicines_revision_content {
+            integer id PK
+            text global_first_submission_region "nullable"
+            integer global_submission_actual_date_id FK "nullable"
+            integer revision_id FK, UK
+        }
+        medicines_indication_detail_therapeutic_areas:::medicines_revision_content {
+            integer medicines_indication_detail_id PK, FK
+            integer therapeutic_area_id PK, FK
+        }
+        medicines_indication_details:::medicines_revision_content {
+            integer id PK
+            integer bnf_chapter_id FK "nullable"
+            integer formulation_type_id FK "nullable"
+            text indication "nullable"
+            integer indication_is_cancer "nullable"
+            integer indication_is_paediatric "nullable"
+            integer indication_is_rare_disease "nullable"
+            integer is_personalised_medicine "nullable"
+            integer medicine_technology_status "nullable"
+            text mode_of_action "nullable"
+            text presentation "nullable"
+            text proposed_dose_regimen "nullable"
+            integer revision_id FK, UK
+        }
+        medicines_intl_recognitions:::medicines_revision_content {
+            integer id PK
+            integer intl_conditional_approval_anticipated "nullable"
+            integer intl_licence_date_id FK "nullable"
+            integer intl_submission_date_id FK "nullable"
+            integer irp_route_id FK "nullable"
+            integer revision_id FK, UK
+        }
+        medicines_laboratory_testings:::medicines_revision_content {
+            integer id PK
+            text additional_genomic_factors "nullable"
+            integer biomarker_type "nullable"
+            integer diagnostic_test_required "nullable"
+            text genomic_alterations "nullable"
+            text genomic_sample_type "nullable"
+            text genomic_target "nullable"
+            integer genomic_test_mandatory_status "nullable"
+            integer genomic_test_ngtd_relationship "nullable"
+            text genomic_test_notes "nullable"
+            text genomic_test_pathway_point_other "nullable"
+            text genomic_test_specificity_sensitivity "nullable"
+            text genomic_test_used_in_trials "nullable"
+            text genomic_turnaround_time_details "nullable"
+            text monitoring_tests_details "nullable"
+            text non_genomic_biomarker_description "nullable"
+            integer patient_pathway_point_id FK "nullable"
+            integer revision_id FK, UK
+            text safety_tests_details "nullable"
+        }
+        medicines_patient_identifications:::medicines_revision_content {
+            integer id PK
+            integer revision_id FK, UK
+            text screening_details "nullable"
+            integer screening_required "nullable"
+            text urgent_identification_details "nullable"
+            integer urgent_identification_required "nullable"
+        }
+        medicines_service_impacts:::medicines_revision_content {
+            integer id PK
+            text estimated_eligible_patient_population "nullable"
+            text handling_storage_details "nullable"
+            integer handling_storage_requirements "nullable"
+            text nhs_service_changes_details "nullable"
+            integer nhs_service_changes_required "nullable"
+            integer revision_id FK, UK
+            text uk_patient_population_notes "nullable"
+            integer uk_patient_population_range_id FK "nullable"
+        }
+        medicines_treatment_details:::medicines_revision_content {
+            integer id PK
+            text estimated_duration_of_treatment "nullable"
+            text proposed_place_in_therapy
+            integer revision_id FK, UK
+        }
+    end
+
+    subgraph vaccines_revision_content["Vaccines Revision Content"]
+        vaccines_adjuvants:::vaccines_revision_content {
+            integer id PK
+            text adjuvant_name
+            integer display_order "nullable"
+            integer vaccines_technology_id FK
+        }
+        vaccines_administration_routes:::vaccines_revision_content {
+            integer vaccines_technology_id PK, FK
+            integer administration_route_id PK, FK
+        }
+        vaccines_antigens:::vaccines_revision_content {
+            integer id PK
+            text antigen_name
+            integer display_order "nullable"
+            integer vaccines_technology_id FK
+        }
+        vaccines_company_infos:::vaccines_revision_content {
+            integer id PK
+            text grant_funding_identifier "nullable"
+            integer has_grant_funding "nullable"
+            integer is_originator_company "nullable"
+            text originator_details "nullable"
+            integer revision_id FK, UK
+        }
+        vaccines_disease_details:::vaccines_revision_content {
+            integer id PK
+            text age_group
+            text disease_target
+            integer revision_id FK, UK
+            text risk_group "nullable"
+        }
+        vaccines_intl_submissions:::vaccines_revision_content {
+            integer id PK
+            integer has_intl_submission "nullable"
+            text intl_submission_details "nullable"
+            integer revision_id FK, UK
+        }
+        vaccines_pathogens:::vaccines_revision_content {
+            integer id PK
+            integer display_order "nullable"
+            text pathogen_name
+            integer vaccines_disease_detail_id FK
+        }
+        vaccines_service_readinesses:::vaccines_revision_content {
+            integer id PK
+            text additional_service_notes "nullable"
+            text dosing_schedule
+            integer revision_id FK, UK
+            integer storage_requirement_id FK
+            text storage_requirement_other "nullable"
+        }
+        vaccines_technologies:::vaccines_revision_content {
+            integer id PK
+            text administration_route_other "nullable"
+            integer has_adjuvant
+            integer revision_id FK, UK
+            integer vaccine_platform_id FK
+            text vaccine_platform_other "nullable"
+        }
+    end
+
+    subgraph reference_data["Reference Data"]
+        atmp_classification:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+        }
+        bnf_chapters:::reference_data {
+            integer id PK
+            text code
+            integer display_order "nullable"
+            boolean is_archived
+            text label
+            integer parent_id FK "nullable"
+        }
+        formulation_type:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+        }
+        irp_reference_regulator:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+        }
+        irp_route:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+        }
+        mhra_procedure_type:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+            integer relevant_to "nullable"
+        }
+        patient_pathway_point:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+        }
+        therapeutic_areas:::reference_data {
+            integer id PK
+            integer display_order "nullable"
+            boolean is_archived
+            text label
+            integer parent_id FK "nullable"
+        }
+        uk_patient_population_range:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+            integer sort_order
+        }
+        vaccine_administration_route:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+        }
+        vaccine_platform:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+        }
+        vaccine_storage_requirement:::reference_data {
+            integer id PK
+            boolean is_archived
+            text label
+        }
+    end
+
+    subgraph reporting["Reporting"]
+        report_audits:::reporting {
+            integer id PK
+            jsonb configuration
+            boolean exported "nullable"
+            jsonb field_usage
+            timestamptz ran_at
+            integer report_preset_id FK "nullable"
+            integer result_count "nullable"
+            integer user_id FK
+        }
+        report_presets:::reporting {
+            integer id PK
+            integer applicable_pharmaceutical_entity
+            integer applicable_user_type
+            jsonb configuration
+            integer created_by FK
+            boolean is_shared
+            text title
+            timestamptz updated_at "nullable"
+        }
+    end
+
+    subgraph email["Email"]
+        email_audits:::email {
+            integer id PK
+            text recipients
+            integer related_entity_id "nullable"
+            text related_entity_type "nullable"
+            timestamptz sent_at
+            integer template_id FK
+        }
+        email_templates:::email {
+            integer id PK
+            text body "nullable"
+            text description "nullable"
+            text govnotify_template_id "nullable"
+            boolean is_active
+            text subject "nullable"
+            text title
+        }
+    end
+
+    subgraph user_features["User Features"]
+        record_watchlists:::user_features {
+            integer user_id PK, FK
+            integer record_id PK, FK
+        }
+    end
+
+    %% Relationships: principal ||--o{ dependent : "fk column(s)"
+    app_user |o..o{ organisation_audits : "updated_by"
+    app_user |o..o{ qa_reviews : "reviewed_by"
+    app_user |o..o{ record_events : "performed_by"
+    app_user ||..o{ record_revisions : "created_by"
+    app_user |o..o{ record_revisions : "submitted_by"
+    app_user |o..o{ record_revisions : "updated_by"
+    app_user |o..o{ record_status_histories : "updated_by"
+    app_user ||--o{ record_watchlists : "user_id"
+    app_user |o..o{ records : "created_by"
+    app_user ||..o{ report_audits : "user_id"
+    app_user ||..o{ report_presets : "created_by"
+    app_user |o..o{ user_audits : "updated_by"
+    app_user ||..o{ user_audits : "user_id"
+    app_user ||..o{ user_onboarding_records : "created_by_user_id"
+    app_user ||..o| user_onboarding_records : "resulting_user_id"
+    app_user ||..o{ user_org_memberships : "user_id"
+    app_user |o..o{ user_registration_requests : "approved_by_user_id"
+    app_user |o..o{ user_registration_requests : "rejected_by_user_id"
+    app_user |o..o{ user_registration_requests : "resulting_user_id"
+    atmp_classification |o..o{ medicines_eu_statuses : "atmp_classification_id"
+    bnf_chapters |o..o{ bnf_chapters : "parent_id"
+    bnf_chapters |o..o{ medicines_indication_details : "bnf_chapter_id"
+    email_templates ||..o{ email_audits : "template_id"
+    formulation_type |o..o{ medicines_indication_details : "formulation_type_id"
+    irp_reference_regulator |o..o{ record_mhra_procedures : "irp_reference_regulator_id"
+    irp_route |o..o{ medicines_intl_recognitions : "irp_route_id"
+    medicines_indication_details ||--o{ medicines_indication_detail_therapeutic_areas : "medicines_indication_detail_id"
+    mhra_procedure_type |o..o{ record_mhra_procedures : "mhra_procedure_type_id"
+    organisations ||..o{ organisation_audits : "organisation_id"
+    organisations ||..o{ records : "organisation_id"
+    organisations ||..o{ terms_acceptances : "organisation_id"
+    organisations ||..o{ user_org_memberships : "organisation_id"
+    organisations ||..o{ user_registration_requests : "organisation_id"
+    patient_pathway_point |o..o{ medicines_laboratory_testings : "patient_pathway_point_id"
+    qa_reviews |o..o{ record_events : "qa_review_id"
+    record_clinical_trials ||..o{ other_clinical_trial_numbers : "clinical_trial_id"
+    record_events ||..o{ record_event_field_changes : "record_event_id"
+    record_product_details ||..o{ record_names_and_identifiers : "record_product_detail_id"
+    record_revisions ||..o| medicines_budget_impacts : "revision_id"
+    record_revisions ||..o| medicines_development_backgrounds : "revision_id"
+    record_revisions ||..o| medicines_eams_pims : "revision_id"
+    record_revisions ||..o| medicines_eu_statuses : "revision_id"
+    record_revisions ||..o| medicines_global_submissions : "revision_id"
+    record_revisions ||..o| medicines_indication_details : "revision_id"
+    record_revisions ||..o| medicines_intl_recognitions : "revision_id"
+    record_revisions ||..o| medicines_laboratory_testings : "revision_id"
+    record_revisions ||..o| medicines_patient_identifications : "revision_id"
+    record_revisions ||..o| medicines_service_impacts : "revision_id"
+    record_revisions ||..o| medicines_treatment_details : "revision_id"
+    record_revisions ||..o{ qa_reviews : "revision_id"
+    record_revisions ||..o| record_clinical_trial_information : "revision_id"
+    record_revisions ||..o{ record_clinical_trials : "revision_id"
+    record_revisions |o..o{ record_events : "revision_id"
+    record_revisions ||..o| record_htas : "revision_id"
+    record_revisions ||..o| record_mhra_dates : "revision_id"
+    record_revisions ||..o| record_mhra_procedures : "revision_id"
+    record_revisions ||..o| record_product_details : "revision_id"
+    record_revisions |o..o{ record_revisions : "based_on_revision_id"
+    record_revisions ||..o{ regulatory_dates : "revision_id"
+    record_revisions ||..o| vaccines_company_infos : "revision_id"
+    record_revisions ||..o| vaccines_disease_details : "revision_id"
+    record_revisions ||..o| vaccines_intl_submissions : "revision_id"
+    record_revisions ||..o| vaccines_service_readinesses : "revision_id"
+    record_revisions ||..o| vaccines_technologies : "revision_id"
+    records ||..o{ record_events : "record_id"
+    records ||..o{ record_revisions : "record_id"
+    records ||..o{ record_status_histories : "record_id"
+    records ||--o{ record_watchlists : "record_id"
+    regulatory_dates |o..o{ medicines_eams_pims : "eams_opinion_date_id"
+    regulatory_dates |o..o{ medicines_eams_pims : "eams_submission_date_id"
+    regulatory_dates |o..o{ medicines_eu_statuses : "atmp_recommendation_date_id"
+    regulatory_dates |o..o{ medicines_eu_statuses : "eu_orphan_granted_date_id"
+    regulatory_dates |o..o{ medicines_global_submissions : "global_submission_actual_date_id"
+    regulatory_dates |o..o{ medicines_intl_recognitions : "intl_licence_date_id"
+    regulatory_dates |o..o{ medicines_intl_recognitions : "intl_submission_date_id"
+    regulatory_dates |o..o{ record_htas : "uk_launch_date_id"
+    regulatory_dates |o..o{ record_mhra_dates : "uk_licence_date_id"
+    regulatory_dates |o..o{ record_mhra_dates : "uk_submission_date_id"
+    report_presets |o..o{ report_audits : "report_preset_id"
+    therapeutic_areas ||--o{ medicines_indication_detail_therapeutic_areas : "therapeutic_area_id"
+    therapeutic_areas |o..o{ therapeutic_areas : "parent_id"
+    uk_patient_population_range |o..o{ medicines_service_impacts : "uk_patient_population_range_id"
+    vaccine_administration_route ||--o{ vaccines_administration_routes : "administration_route_id"
+    vaccine_platform ||..o{ vaccines_technologies : "vaccine_platform_id"
+    vaccine_storage_requirement ||..o{ vaccines_service_readinesses : "storage_requirement_id"
+    vaccines_disease_details ||..o{ vaccines_pathogens : "vaccines_disease_detail_id"
+    vaccines_technologies ||..o{ vaccines_adjuvants : "vaccines_technology_id"
+    vaccines_technologies ||--o{ vaccines_administration_routes : "vaccines_technology_id"
+    vaccines_technologies ||..o{ vaccines_antigens : "vaccines_technology_id"

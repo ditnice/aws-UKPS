@@ -1,14 +1,14 @@
 namespace UKPS.Api.Persistence.Entities.ReferenceData;
 
 /// <summary>
-/// Therapeutic area hierarchy — medicines only. Currently flat; supports future sub-levels.
-/// 20 values.
+/// Therapeutic area hierarchy — medicines only.
+/// 20 top-level areas, 172 total nodes including sub-areas.
 /// </summary>
 internal sealed class TherapeuticArea
 {
     public int Id { get; set; }
 
-    /// <summary>Null for top-level areas. Currently flat; structure supports future sub-levels.</summary>
+    /// <summary>Null for top-level areas.</summary>
     public int? ParentId { get; set; }
 
     public required string Label { get; set; }

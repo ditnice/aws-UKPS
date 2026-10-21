@@ -207,13 +207,22 @@ def modality(generic, is_atmp):
     return "sm"
 
 
+SOURCE_ATMP_CLASSIFICATIONS = {
+    "Gene therapy medicinal product": ["In-vivo gene therapy medicine",
+                                       "Ex-vivo gene therapy medicine"],
+    "Somatic cell therapy medicinal product": ["Somatic-cell therapy medicine"],
+    "Tissue engineered product": ["Tissue-engineered medicine"],
+    "Combined ATMP": ["Combined ATMP"],
+}
+
 ATMP_MODES = {
-    "Gene therapy medicinal product": ["AAV-based gene therapy", "Lentiviral ex vivo gene therapy"],
-    "Somatic cell therapy medicinal product": [
+    "In-vivo gene therapy medicine": ["AAV-based gene therapy"],
+    "Ex-vivo gene therapy medicine": [
+        "Lentiviral ex vivo gene therapy",
         "Autologous CAR-T cell therapy",
-        "Allogeneic mesenchymal stromal cell therapy",
     ],
-    "Tissue engineered product": [
+    "Somatic-cell therapy medicine": ["Allogeneic mesenchymal stromal cell therapy"],
+    "Tissue-engineered medicine": [
         "Tissue-engineered autologous chondrocyte implant",
         "Bioengineered skin substitute",
     ],
@@ -238,18 +247,17 @@ def formulation(rng, category, kind, paediatric, atmp_classification, early_stag
     if rng.random() < 0.02:
         return "Other"
     if kind == "atmp":
-        if atmp_classification in ("Tissue engineered product", "Combined ATMP"):
+        if atmp_classification in ("Tissue-engineered medicine", "Combined ATMP"):
             return "Implant"
-        return "Subretinal injection" if category.key == "ophthalmology" else "Intravenous infusion"
+        return "Intra-ocular injection" if category.key == "ophthalmology" else "Intravenous infusion"
     if category.key == "ophthalmology":
         return "Intravitreal injection" if kind in ("ab", "bio") else weighted(
-            rng, {"Eye drops": 6, "Tablet": 4})
+            rng, {"Eye drops": 5, "Ocular implant": 1, "Tablet": 4})
     if kind == "bio" and category.key == "neurology":
         return weighted(rng, {"Intrathecal injection": 60, "Subcutaneous injection": 40})
     if kind == "ab":
         return weighted(rng, {
-            "Intravenous infusion": 35,
-            "Solution for infusion": 10,
+            "Intravenous infusion": 45,
             "Powder for solution for infusion": 15,
             "Subcutaneous injection": 35,
             "Intravenous injection": 5,
@@ -259,7 +267,8 @@ def formulation(rng, category, kind, paediatric, atmp_classification, early_stag
             "Subcutaneous injection": 50,
             "Intravenous infusion": 25,
             "Powder for solution for injection": 15,
-            "Intramuscular injection": 10,
+            "Intramuscular injection": 5,
+            "Long-acting release (LAR) depot injection": 5,
         })
     if paediatric == "ExclusivelyChildren":
         return weighted(rng, {
@@ -271,25 +280,26 @@ def formulation(rng, category, kind, paediatric, atmp_classification, early_stag
             "Tablet": 10,
         })
     if category.key == "dermatology":
-        return weighted(rng, {"Cream": 30, "Gel": 15, "Cutaneous solution": 5, "Tablet": 35,
-                              "Capsule": 15})
+        return weighted(rng, {"Cream": 25, "Ointment": 10, "Gel": 10, "Cutaneous solution": 5,
+                              "Tablet": 35, "Capsule": 15})
     if category.key in ("respiratory", "allergy"):
         return weighted(rng, {"Dry powder inhaler": 35, "Metered dose inhaler": 20,
                               "Solution for nebuliser": 10, "Nasal spray": 5, "Tablet": 30})
     if category.key == "infection":
         return weighted(rng, {"Intravenous infusion": 30, "Powder for solution for infusion": 15,
                               "Tablet": 35, "Capsule": 20})
-    return weighted(rng, {"Tablet": 50, "Capsule": 25, "Enteric coated tablet": 8,
-                          "Oral solution": 7, "Subcutaneous infusion": 3, "Intrathecal injection": 2,
-                          "Implant": 1})
+    return weighted(rng, {"Tablet": 45, "Capsule": 22, "Modified release tablet": 8,
+                          "Enteric coated tablet": 6, "Oral solution": 7, "Transdermal patch": 3,
+                          "Subcutaneous infusion": 3, "Intrathecal injection": 2, "Implant": 1})
 
 
 def presentation_and_dose(rng, form):
     strength = rng.choice([5, 10, 20, 25, 40, 50, 75, 100, 150, 200, 250, 300, 400])
     concentration = rng.choice([10, 20, 25, 50, 100])
-    if form in ("Tablet", "Enteric coated tablet", "Dispersible tablet"):
+    if form in ("Tablet", "Enteric coated tablet", "Dispersible tablet", "Modified release tablet"):
         kind = {"Tablet": "Film-coated tablets", "Enteric coated tablet": "Gastro-resistant tablets",
-                "Dispersible tablet": "Dispersible tablets"}[form]
+                "Dispersible tablet": "Dispersible tablets",
+                "Modified release tablet": "Prolonged-release tablets"}[form]
         return (f"{kind}, {strength} mg, blister packs of {rng.choice([28, 30, 56, 84])}",
                 f"{strength} mg orally {rng.choice(['once', 'twice'])} daily")
     if form == "Capsule":
@@ -298,7 +308,7 @@ def presentation_and_dose(rng, form):
     if form in ("Oral solution", "Oral suspension", "Powder for oral solution", "Granules"):
         return (f"{form}, {concentration} mg/mL when prepared, supplied with an oral dosing syringe",
                 f"{rng.choice([2, 3, 5, 10])} mg/kg orally twice daily (maximum {strength} mg per dose)")
-    if form in ("Intravenous infusion", "Solution for infusion"):
+    if form == "Intravenous infusion":
         return (f"Concentrate for solution for infusion, {concentration} mg/mL, single-use "
                 f"{rng.choice([4, 10, 20])} mL vial",
                 f"{rng.choice([3, 5, 10, 15])} mg/kg by intravenous infusion every "
@@ -306,7 +316,8 @@ def presentation_and_dose(rng, form):
     if form in ("Powder for solution for infusion", "Powder for solution for injection"):
         return (f"Lyophilised powder, {strength} mg single-dose vial for reconstitution",
                 f"{strength} mg every {rng.choice([2, 3, 4, 6])} weeks")
-    if form in ("Subcutaneous injection", "Subcutaneous infusion", "Intramuscular injection"):
+    if form in ("Subcutaneous injection", "Subcutaneous infusion", "Intramuscular injection",
+                "Long-acting release (LAR) depot injection"):
         return (f"Solution for injection in pre-filled pen, {strength} mg/{rng.choice([1, 2])} mL",
                 f"{strength * 2} mg loading dose, then {strength} mg every "
                 f"{rng.choice([1, 2, 4, 8])} weeks")
@@ -314,14 +325,14 @@ def presentation_and_dose(rng, form):
         return (f"Solution for injection, {concentration} mg/mL, {rng.choice([2, 5])} mL ampoule",
                 f"{strength} mg by slow intravenous injection once daily for "
                 f"{rng.choice([5, 7, 14])} days")
-    if form in ("Intravitreal injection", "Subretinal injection"):
+    if form in ("Intravitreal injection", "Intra-ocular injection"):
         return (f"Solution for injection, {concentration} mg/mL, single-dose vial with filter needle",
                 "Monthly injections for 3 doses, then every 8 to 16 weeks"
                 if form == "Intravitreal injection" else "Single subretinal administration per eye")
     if form == "Eye drops":
         return (f"Eye drops, solution, {concentration / 10:g} mg/mL, 5 mL multi-dose bottle",
                 "One drop in the affected eye(s) twice daily")
-    if form in ("Cream", "Gel", "Cutaneous solution"):
+    if form in ("Cream", "Ointment", "Gel", "Cutaneous solution"):
         return (f"{form}, {rng.choice([0.05, 0.1, 1, 2])}% w/w, 30 g and 60 g tubes",
                 "Apply a thin layer to affected skin twice daily")
     if form in ("Dry powder inhaler", "Metered dose inhaler", "Solution for nebuliser", "Nasal spray"):
@@ -330,9 +341,12 @@ def presentation_and_dose(rng, form):
     if form == "Intrathecal injection":
         return (f"Solution for intrathecal injection, {concentration} mg/5 mL vial",
                 "Four loading doses over 2 months, then every 4 months")
-    if form == "Implant":
+    if form in ("Implant", "Ocular implant"):
         return ("Single-use implant supplied in a pre-loaded applicator",
                 "Single surgical implantation")
+    if form == "Transdermal patch":
+        return (f"Transdermal patch, {strength / 100:g} mg/24 hours, cartons of 30 patches",
+                "Apply one patch daily, rotating the application site")
     return (None, None)
 
 
@@ -525,7 +539,10 @@ class RecordBuilder:
         indication = parse_indication(row["indication"])
         category, recognised = classify(indication["disease"], rng)
         generic = row["generic_name"]
-        atmp_classification = row["atmp_classification"]
+        atmp_classification = (
+            rng.choice(SOURCE_ATMP_CLASSIFICATIONS[row["atmp_classification"]])
+            if row["atmp_classification"] else None
+        )
         product_modality = modality(generic, atmp_classification is not None)
 
         status, status_reason, status_note = status
@@ -682,27 +699,21 @@ class RecordBuilder:
     # Regulatory timeline -----------------------------------------------------------------------
 
     PROCEDURE_DURATIONS = {
-        "MHRA national assessment procedure - standard": (330, 420),
-        "MHRA national assessment procedure - accelerated": (150, 240),
+        "MHRA National Procedure": (150, 420),
         "International Recognition Procedure": (60, 200),
-        "EC decision reliance procedure": (60, 90),
-        "EU mutual recognition reliance procedure": (90, 150),
-        "Access consortium": (240, 330),
+        "Access Consortium": (240, 330),
         "Project Orbis": (180, 270),
-        "Rolling review procedure": (200, 300),
-        "Unknown / Other – please provide details": (240, 400),
+        "Other": (60, 300),
+        "Not yet confirmed": (240, 400),
     }
 
     def procedure(self, rng, category, row):
         weights = {
             "International Recognition Procedure": 30,
-            "MHRA national assessment procedure - standard": 20,
-            "MHRA national assessment procedure - accelerated": 10,
-            "Access consortium": 8,
-            "Rolling review procedure": 5,
-            "EC decision reliance procedure": 4,
-            "EU mutual recognition reliance procedure": 2,
-            "Unknown / Other – please provide details": 11,
+            "MHRA National Procedure": 30,
+            "Access Consortium": 8,
+            "Other": 11,
+            "Not yet confirmed": 11,
         }
         if category.is_cancer:
             weights["Project Orbis"] = 12
@@ -759,7 +770,13 @@ class RecordBuilder:
             "intlConditionalApprovalAnticipated": None,
         }
 
-        if procedure.startswith("Unknown"):
+        if procedure == "Other":
+            result["procedureDetails"] = rng.choice([
+                "Rolling review procedure.",
+                "EC Decision Reliance Procedure following the European Commission decision.",
+                "Mutual recognition reliance procedure using the EU decision.",
+            ])
+        elif procedure == "Not yet confirmed":
             result["procedureDetails"] = rng.choice([
                 "Route to be confirmed following a scientific advice meeting with the MHRA.",
                 "Considering the Innovative Licensing and Access Pathway (ILAP); route not yet "
@@ -775,10 +792,7 @@ class RecordBuilder:
                 "submission.",
             ])
 
-        expedited = procedure in (
-            "MHRA national assessment procedure - accelerated",
-            "Project Orbis",
-        ) or designations["pimDesignationStatus"] == "Granted"
+        expedited = procedure == "Project Orbis" or designations["pimDesignationStatus"] == "Granted"
         result["ukConditionalApprovalAnticipated"] = (
             yes_no_unknown(rng, 45, 30, 25) if expedited else yes_no_unknown(rng, 10, 65, 25)
         )
@@ -787,8 +801,8 @@ class RecordBuilder:
             regulator = weighted(rng, {"European Union": 55, "United States": 30, "Canada": 5,
                                        "Japan": 3, "Switzerland": 3, "Australia": 2,
                                        "Singapore": 2})
-            route = weighted(rng, {"Recognition A": 60, "Recognition B": 40})
-            gap = (20, 300) if route == "Recognition A" else (300, 1500)
+            route = weighted(rng, {"Route A": 55, "Route B": 35, "Not yet confirmed": 10})
+            gap = (300, 1500) if route == "Route B" else (20, 300)
             intl_licence = submission - days(rng, *gap)
             intl_submission = intl_licence - days(rng, 300, 420)
             result.update({
@@ -935,8 +949,10 @@ class RecordBuilder:
         area = therapeutic_area(category, indication["disease"])
         areas = [area]
         if rng.random() < 0.15:
-            secondary = {"oncology": "3.4", "immunology": "9.1", "neurology": "3.5",
+            secondary = {"oncology": "3.4", "immunology": "9.1", "neurology": "3.4",
                          "rheumatology": "3.4", "dermatology": "9.1"}.get(category.key)
+            if category.is_cancer and indication["setting"] in ("later-line", "relapsed"):
+                secondary = "14.13"
             if secondary:
                 areas.append(secondary)
 
@@ -948,7 +964,9 @@ class RecordBuilder:
             {"New chemical / biological entity": "NewChemicalOrBiologicalEntity",
              "New indication": "NewIndication", "New formulation": "NewFormulation",
              "New dosing regimen": "NewDosingRegimen", "New presentation": "NewPresentation",
-             "Biosimilar": "Biosimilar"}.get(value, value)
+             "Biosimilar": "Biosimilar",
+             "SPC amendment without indication change": "SpcAmendmentWithoutIndicationChange"}
+            .get(value, value)
             for value in technology
         ]
 
@@ -1106,10 +1124,9 @@ class RecordBuilder:
             elif genomic:
                 later_line = indication["setting"] in ("later-line", "relapsed")
                 pathway = weighted(rng, {
-                    "At diagnosis": 10 if later_line else 40,
-                    "Before first-line treatment": 0 if later_line else 30,
-                    "At disease progression or relapse": 40 if later_line else 10,
-                    "Before second or subsequent line of treatment": 40 if later_line else 0,
+                    "Initial presentation": 10 if later_line else 70,
+                    "Progression": 70 if later_line else 10,
+                    "Longitudinal testing": 12,
                     "Other": 8,
                 })
                 result.update({
@@ -1118,10 +1135,11 @@ class RecordBuilder:
                     "genomicTestNgtdRelationship": weighted(rng, {
                         "NewTest": 35, "ExistingTestNewIndication": 30,
                         "ExistingTestSameIndication": 25, "Unknown": 10}),
-                    "genomicSampleType": rng.choice(
-                        ["Tumour tissue (FFPE block)", "Plasma (circulating tumour DNA)"]
+                    "genomicSampleType": weighted(
+                        rng,
+                        {"Tissue": 55, "Liquid": 25, "Any sample": 15, "Other": 5}
                         if category.is_cancer
-                        else ["Peripheral blood (EDTA)", "Saliva", "Dried blood spot"]),
+                        else {"Liquid": 70, "Any sample": 20, "Other": 10}),
                     "genomicTurnaroundTimeDetails": (
                         f"Results needed within {rng.choice([7, 10, 14])} working days so that "
                         f"the start of treatment is not delayed." if rng.random() < 0.6 else None),
@@ -1161,9 +1179,9 @@ class RecordBuilder:
                 result.update({
                     "biomarkerType": "NonGenomicBiomarker",
                     "nonGenomicBiomarkerDescription": rng.choice(markers),
-                    "patientPathwayPoint": weighted(rng, {"At diagnosis": 50,
-                                                          "Before first-line treatment": 30,
-                                                          "During treatment (response monitoring)": 20}),
+                    "patientPathwayPoint": weighted(rng, {"Initial presentation": 65,
+                                                          "Progression": 10,
+                                                          "Longitudinal testing": 25}),
                 })
 
         if rng.random() < 0.35:
@@ -1228,15 +1246,15 @@ class RecordBuilder:
             "ukPatientPopulationNotes": (
                 f"Based on published {rng.choice(['UK', 'European', 'England'])} prevalence "
                 f"estimates ({rng.randint(2018, 2025)}), adjusted for the licensed population."
-                if population_range != "Unknown" and rng.random() < 0.6 else None),
+                if population_range != "Not known" and rng.random() < 0.6 else None),
             "estimatedEligiblePatientPopulation": (
                 f"Approximately {round(rng.randint(*eligible), -1):,} patients in England each year"
-                if population_range != "Unknown" and rng.random() < 0.7 else None),
+                if population_range != "Not known" and rng.random() < 0.7 else None),
         }
 
     def population_range(self, rng, size):
         if rng.random() < 0.08:
-            return "Unknown"
+            return "Not known"
         ranges = ref.UK_PATIENT_POPULATION_RANGES
         indexes = {"rare": range(0, 3), "medium": range(2, 7), "common": range(6, 12)}[size]
         return ranges[rng.choice(list(indexes))]
