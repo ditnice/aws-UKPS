@@ -105,24 +105,25 @@ module "cognito" {
 module "ecs_frontend" {
   source = "../../modules/ecs"
 
-  project                      = local.project
-  environment                  = local.environment
-  service_name                 = "${local.service_name}-frontend"
-  ecs_capacity_providers       = var.ecs_capacity_providers
-  ecs_capacity_provider        = var.ecs_capacity_provider
-  ecs_cpu_allocation           = var.ecs_frontend_cpu_allocation
-  ecs_memory_allocation        = var.ecs_frontend_memory_allocation
-  cloudwatch_kms_arn           = module.kms_frontend.app_key_arn
-  cloudwatch_log_retention     = var.ecs_log_retention
-  vpc_id                       = module.networking.vpc_id
-  private_subnet_ids           = module.networking.app_subnet_ids
-  container_port               = var.frontend_container_port
-  ecr_repository_url           = var.frontend_image_repository_url
-  image_tag                    = var.image_tag
-  target_group_arn             = module.alb.frontend_target_group_arn
-  alb_security_group_id        = one(module.alb.alb_security_group_ids)
-  ecs_egress_cidr_blocks       = [module.networking.vpc_cidr]
-  ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
+  project                           = local.project
+  environment                       = local.environment
+  service_name                      = "${local.service_name}-frontend"
+  ecs_capacity_providers            = var.ecs_capacity_providers
+  ecs_capacity_provider             = var.ecs_capacity_provider
+  ecs_cpu_allocation                = var.ecs_frontend_cpu_allocation
+  ecs_memory_allocation             = var.ecs_frontend_memory_allocation
+  cloudwatch_kms_arn                = module.kms_frontend.app_key_arn
+  cloudwatch_log_retention          = var.ecs_log_retention
+  vpc_id                            = module.networking.vpc_id
+  private_subnet_ids                = module.networking.app_subnet_ids
+  container_port                    = var.frontend_container_port
+  health_check_grace_period_seconds = 300
+  ecr_repository_url                = var.frontend_image_repository_url
+  image_tag                         = var.image_tag
+  target_group_arn                  = module.alb.frontend_target_group_arn
+  alb_security_group_id             = one(module.alb.alb_security_group_ids)
+  ecs_egress_cidr_blocks            = [module.networking.vpc_cidr]
+  ecs_https_egress_cidr_blocks      = ["0.0.0.0/0"]
   container_environment = {
     BACKEND_API_BASE_URL         = "https://${module.alb.backend_host_name}"
     COGNITO_CLIENT_ID            = module.cognito.app_client_id
@@ -213,24 +214,25 @@ module "sqs_email_backend_alerts" {
 module "ecs_backend" {
   source = "../../modules/ecs"
 
-  project                  = local.project
-  environment              = local.environment
-  service_name             = "${local.service_name}-backend"
-  ecs_capacity_providers   = var.ecs_capacity_providers
-  ecs_capacity_provider    = var.ecs_capacity_provider
-  ecs_cpu_allocation       = var.ecs_backend_cpu_allocation
-  ecs_memory_allocation    = var.ecs_backend_memory_allocation
-  cloudwatch_kms_arn       = module.kms_backend.app_key_arn
-  cloudwatch_log_retention = var.ecs_log_retention
-  vpc_id                   = module.networking.vpc_id
-  private_subnet_ids       = module.networking.app_subnet_ids
-  container_port           = var.backend_container_port
-  ecr_repository_url       = var.backend_image_repository_url
-  image_tag                = var.image_tag
-  deployment_dependency    = module.db_migrator_lambda.invocation_id
-  target_group_arn         = module.alb.backend_target_group_arn
-  alb_security_group_id    = one(module.alb.alb_security_group_ids)
-  ecs_egress_cidr_blocks   = [module.networking.vpc_cidr]
+  project                           = local.project
+  environment                       = local.environment
+  service_name                      = "${local.service_name}-backend"
+  ecs_capacity_providers            = var.ecs_capacity_providers
+  ecs_capacity_provider             = var.ecs_capacity_provider
+  ecs_cpu_allocation                = var.ecs_backend_cpu_allocation
+  ecs_memory_allocation             = var.ecs_backend_memory_allocation
+  cloudwatch_kms_arn                = module.kms_backend.app_key_arn
+  cloudwatch_log_retention          = var.ecs_log_retention
+  vpc_id                            = module.networking.vpc_id
+  private_subnet_ids                = module.networking.app_subnet_ids
+  container_port                    = var.backend_container_port
+  health_check_grace_period_seconds = 300
+  ecr_repository_url                = var.backend_image_repository_url
+  image_tag                         = var.image_tag
+  deployment_dependency             = module.db_migrator_lambda.invocation_id
+  target_group_arn                  = module.alb.backend_target_group_arn
+  alb_security_group_id             = one(module.alb.alb_security_group_ids)
+  ecs_egress_cidr_blocks            = [module.networking.vpc_cidr]
   # Cognito has no PrivateLink endpoint. Confirm that app subnet routes provide
   # NAT or controlled egress before deploying this service.
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
