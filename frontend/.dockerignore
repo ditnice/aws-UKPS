@@ -6,6 +6,7 @@ coverage/
 tests/
 test-results/
 playwright-report/
+e2e-results/
 blob-report/
 media/
 .env

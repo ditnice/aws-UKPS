@@ -6,6 +6,7 @@ import { ChangeEvent, useState } from 'react'
 import z from 'zod'
 
 import { createRecord, CreateRecordCommand } from '@/client/generated'
+import { AddAnother } from '@/components/AddAnother/AddAnother'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -14,8 +15,6 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
-
-import ArrayInput from './ArrayInput'
 
 const inputWidth = 'two-thirds'
 
@@ -105,13 +104,17 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       }}
     >
       {error && <ErrorState>{errorMessages.creatingNewRecordError}</ErrorState>}
-      <form.Field name="companyCode">
+      <form.Field
+        name="companyCode"
+        validators={{ onDynamic: createRecordCommandSchema.shape.companyCode }}
+      >
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
             <Input
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
+              title="Company code"
               label="Company code"
               hint="Enter the primary internal code or working name your company uses for this product seeking market access."
               name={field.name}
@@ -127,12 +130,12 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       </form.Field>
       <form.Field name="otherIdentifiers" mode="array">
         {(field) => (
-          <ArrayInput
+          <AddAnother
+            title="Other names and identifiers (optional)"
             labelPrefix="Other names and identifiers (optional)"
             hint="Enter any other development names, synonyms, or identifiers that you want to associate with this product."
             addItemLabel="Add another identifier"
-            removeItemLabel="Remove identifier"
-            width={inputWidth}
+            removeItemLabel="Remove additional identifier"
             field={field}
             getSubfield={(name, renderInputs) => (
               <form.Field name={name}>{renderInputs}</form.Field>
@@ -147,6 +150,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
             <Input
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
+              title="Branded name"
               label="Branded name (optional)"
               hint="Enter the name this medicine is sold under. For example, Humira, Lipitor."
               name={field.name}
@@ -162,15 +166,20 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       </form.Field>
       <form.Field name="genericNames" mode="array">
         {(field) => (
-          <ArrayInput
+          <AddAnother
+            title="Active substance"
             labelPrefix="Generic name"
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
             addItemLabel="Add another active substance"
-            removeItemLabel="Remove active substance"
-            width={inputWidth}
+            removeItemLabel="Remove additional active substance"
             field={field}
             getSubfield={(name, renderInputs) => (
-              <form.Field name={name}>{renderInputs}</form.Field>
+              <form.Field
+                name={name}
+                validators={{ onDynamic: createRecordCommandSchema.shape.genericNames.element }}
+              >
+                {renderInputs}
+              </form.Field>
             )}
           />
         )}
@@ -182,6 +191,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
             <Textarea
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
+              title="Record title"
               label="Record title"
               name={field.name}
               hint="Enter a title to help you to identify this record. You can enter up to 100 characters."

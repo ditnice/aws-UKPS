@@ -23,11 +23,17 @@ test.describe('sign-up', () => {
     await page.goto('/auth/sign-up/set-password?setupToken=test-token')
 
     const password = page.getByLabel('Password', { exact: true })
-    await password.fill('short')
-    await page.getByRole('button', { name: 'Continue' }).click()
+    const tooShort = page.getByText('Password must be at least 8 characters long')
+
+    // Hydration can reset a value filled against the server-rendered markup, so retry
+    // the whole interaction until the client-side validation responds.
+    await expect(async () => {
+      await password.fill('short')
+      await page.getByRole('button', { name: 'Continue' }).click()
+      await expect(tooShort).toBeVisible({ timeout: 1_000 })
+    }).toPass()
 
     await expect(password).toHaveAttribute('aria-invalid', 'true')
-    await expect(page.getByText('Password must be at least 8 characters long')).toBeVisible()
   })
 
   test('loads MFA setup from same-tab session storage', async ({ page }) => {
