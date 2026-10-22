@@ -404,6 +404,7 @@ module "db_migrator_lambda" {
   region             = var.region
 
   seeded_users_json = jsonencode(var.seeded_users)
+  reseed_on_startup = true
 
   log_retention_days = var.ecs_log_retention
 

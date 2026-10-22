@@ -40,7 +40,7 @@ resource "aws_lambda_function" "db_migrator" {
       Database__Port             = tostring(var.db_port)
       Database__Name             = var.db_name
       Database__MigrateOnStartup = "true"
-      Seeding__ReseedOnStartup   = "true"
+      Seeding__ReseedOnStartup   = tostring(var.reseed_on_startup)
       Seeding__SeedUsersJson     = var.seeded_users_json
       DB_SECRET_ARN              = var.db_secret_arn
     }

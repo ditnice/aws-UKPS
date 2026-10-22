@@ -53,6 +53,7 @@ No modules.
 | <a name="input_memory_size"></a> [memory\_size](#input\_memory\_size) | Lambda memory in MB. | `number` | `512` | no |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region, used to scope the KMS ViaService condition. | `string` | n/a | yes |
+| <a name="input_reseed_on_startup"></a> [reseed\_on\_startup](#input\_reseed\_on\_startup) | Whether the migration Lambda reseeds the database. | `bool` | `true` | no |
 | <a name="input_reserved_concurrent_executions"></a> [reserved\_concurrent\_executions](#input\_reserved\_concurrent\_executions) | Reserved concurrent executions for the Lambda. | `number` | `1` | no |
 | <a name="input_seeded_users_json"></a> [seeded\_users\_json](#input\_seeded\_users\_json) | JSON-encoded list of users (with roles) to seed. Matches Seeding\_\_SeedUsersJson on the backend ECS service. | `string` | `"[]"` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Logical service name used in resource names | `string` | n/a | yes |
