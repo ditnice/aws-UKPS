@@ -124,7 +124,7 @@ internal partial class RecordService(
         CancellationToken cancellationToken
     )
     {
-        var record = await dbContext.Records.FirstOrDefaultAsync(
+        Record? record = await dbContext.Records.FirstOrDefaultAsync(
             r => r.Id == recordId,
             cancellationToken
         );
@@ -132,7 +132,7 @@ internal partial class RecordService(
         {
             return new DiscardRecordError.RecordNotFound();
         }
-        if (!await CanDiscardDraftRecord(recordId, cancellationToken))
+        if (!await CanDiscardDraftRecord(record, cancellationToken))
         {
             return new DiscardRecordError.InvalidDiscard();
         }
@@ -318,32 +318,37 @@ internal partial class RecordService(
         );
 
     private async Task<bool> CanDiscardDraftRecord(
-        int recordId,
+        Record record,
         CancellationToken cancellationToken
     )
     {
-        bool validDiscard = await dbContext.Records.AnyAsync(
-            r => r.Id == recordId && r.RecordStatus == RecordStatus.Unpublished,
-            cancellationToken
-        );
-        validDiscard =
-            validDiscard
-            && await dbContext.RecordRevisions.CountAsync(
-                r => r.RecordId == recordId,
+        bool recordExistsAndIsUnpublished = record.RecordStatus == RecordStatus.Unpublished;
+
+        if (!recordExistsAndIsUnpublished)
+        {
+            return false;
+        }
+
+        bool onlyHasOneRecordRevisionAndItIsDraftStatus =
+            await dbContext.RecordRevisions.CountAsync(
+                r => r.RecordId == record.Id,
                 cancellationToken
             ) == 1
             && await dbContext.RecordRevisions.AnyAsync(
-                r => r.RecordId == recordId && r.WorkflowStatus == WorkflowStatus.Draft,
+                r => r.RecordId == record.Id && r.WorkflowStatus == WorkflowStatus.Draft,
                 cancellationToken
             );
-        var userOrgs = await _userService.GetCurrentUserOrganisations(cancellationToken);
 
-        var recordOrganisationId = await dbContext
-            .Records.Where(r => r.Id == recordId)
-            .Select(r => r.OrganisationId)
-            .FirstOrDefaultAsync(cancellationToken);
+        if (!onlyHasOneRecordRevisionAndItIsDraftStatus)
+        {
+            return false;
+        }
 
-        bool userBelongsToOrganisation = userOrgs.Any(o => o.Id == recordOrganisationId);
-        return validDiscard && userBelongsToOrganisation;
+        bool authorisedToPerformOperation =
+            _organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.DiscardRecord,
+                record.OrganisationId
+            );
+        return authorisedToPerformOperation;
     }
 }

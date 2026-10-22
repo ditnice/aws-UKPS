@@ -13,4 +13,5 @@ internal enum Operation
     /// another users' details.
     /// </summary>
     ElevatedRead = 5,
+    DiscardRecord = 6,
 }
