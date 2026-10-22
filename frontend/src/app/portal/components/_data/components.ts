@@ -1,4 +1,9 @@
 export const componentDefinitions = [
+  {
+    description: 'Let users add, edit and remove items in a repeatable form field.',
+    label: 'Add Another',
+    slug: 'add-another',
+  },
   { description: 'Present pages in an alphabetical list.', label: 'A-Z List', slug: 'a-z-list' },
   {
     description: 'Show and hide related sections of content.',
