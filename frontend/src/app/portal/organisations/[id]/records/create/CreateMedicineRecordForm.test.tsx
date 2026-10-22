@@ -167,7 +167,7 @@ describe('CreateMedicineRecordForm', () => {
 
       expect(screen.getByLabelText('Generic name 2')).toBeDefined()
 
-      fireEvent.click(screen.getByText('Remove active substance'))
+      fireEvent.click(screen.getByRole('button', { name: 'Remove additional active substance 2' }))
 
       expect(screen.queryByLabelText('Generic name 2')).toBeNull()
     })
@@ -187,6 +187,7 @@ describe('CreateMedicineRecordForm', () => {
     it('rejects duplicate generic names that differ only by case', async () => {
       renderComponent()
 
+      setFieldValue('Company code', validFormValues.companyCode)
       fillArrayField('Add another active substance', 'Generic name', ['duplicate', 'DUPLICATE'])
 
       clickSubmitButton()
@@ -201,6 +202,7 @@ describe('CreateMedicineRecordForm', () => {
     it('rejects duplicate generic names', async () => {
       renderComponent()
 
+      setFieldValue('Company code', validFormValues.companyCode)
       fillArrayField('Add another active substance', 'Generic name', ['duplicate', 'duplicate'])
 
       clickSubmitButton()
@@ -227,7 +229,7 @@ describe('CreateMedicineRecordForm', () => {
 
       expect(screen.getByLabelText(`${otherIdentifiersLabel} 2`)).toBeDefined()
 
-      fireEvent.click(screen.getByText('Remove identifier'))
+      fireEvent.click(screen.getByRole('button', { name: 'Remove additional identifier 2' }))
 
       expect(screen.queryByLabelText(`${otherIdentifiersLabel} 2`)).toBeNull()
     })

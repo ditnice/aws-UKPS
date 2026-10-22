@@ -12,6 +12,7 @@ export type TextareaWidth = InputWidth
 
 export type TextareaProps = NdsTextareaProps & {
   style?: CSSProperties
+  title?: string
   /**
    * Fixed widths (2, 3, 4, 5, 10, 20, 30) constrain the text area to a character-based
    * max-width. Fluid widths resize the text area as a percentage of its container.
@@ -20,8 +21,13 @@ export type TextareaProps = NdsTextareaProps & {
   width?: TextareaWidth
 }
 
-export function Textarea({ style, width, ...rest }: TextareaProps) {
+export function Textarea({ style, title, width, ...rest }: TextareaProps) {
   const textareaStyle = width ? { ...style, ...inputWidthStyles[width] } : style
 
-  return <NdsTextarea style={textareaStyle} {...rest} />
+  return (
+    <>
+      {title && <h2>{title}</h2>}
+      <NdsTextarea {...rest} style={textareaStyle} />
+    </>
+  )
 }

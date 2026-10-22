@@ -1,21 +1,32 @@
+using Microsoft.Extensions.Options;
+
 namespace UKPS.Api.Application.InternalServices.Communication;
 
 internal sealed partial class EmailQueueListener : BackgroundService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IOptions<EmailOptions> _options;
     private readonly ILogger<EmailQueueListener> _logger;
 
     public EmailQueueListener(
         IServiceScopeFactory serviceScopeFactory,
+        IOptions<EmailOptions> options,
         ILogger<EmailQueueListener> logger
     )
     {
         _serviceScopeFactory = serviceScopeFactory;
+        _options = options;
         _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (!_options.Value.ListenerEnabled)
+        {
+            LogEmailListenerDisabled();
+            return;
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
 #pragma warning disable CA1031 // Do not catch general exception types
@@ -44,4 +55,10 @@ internal sealed partial class EmailQueueListener : BackgroundService
         Message = "An error occurred whilst listening for email messages."
     )]
     private partial void LogEmailListeningFailure(Exception ex);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Email queue listener is disabled by configuration."
+    )]
+    private partial void LogEmailListenerDisabled();
 }

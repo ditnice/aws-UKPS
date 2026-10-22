@@ -9,3 +9,4 @@ coverage/
 *.suo
 *.binlog
 .DS_Store
+src/appsettings.Development.json

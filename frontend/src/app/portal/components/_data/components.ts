@@ -1,4 +1,9 @@
 export const componentDefinitions = [
+  {
+    description: 'Let users add, edit and remove items in a repeatable form field.',
+    label: 'Add Another',
+    slug: 'add-another',
+  },
   { description: 'Present pages in an alphabetical list.', label: 'A-Z List', slug: 'a-z-list' },
   {
     description: 'Show and hide related sections of content.',
@@ -110,6 +115,11 @@ export const componentDefinitions = [
     description: 'Summarise key-value information with optional actions.',
     label: 'Summary List',
     slug: 'summary-list',
+  },
+  {
+    description: 'Show the tasks users need to complete and the status.',
+    label: 'Task list',
+    slug: 'task-list',
   },
   { description: 'Present data for comparison and scanning.', label: 'Table', slug: 'table' },
   { description: 'Switch between related panes of content.', label: 'Tabs', slug: 'tabs' },
