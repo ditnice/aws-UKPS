@@ -45,7 +45,9 @@ export function Select({
 }: SelectProps) {
   const selectId = id ?? name
   const hintId = hint ? `${selectId}-hint` : undefined
-  const errorId = error ? `${selectId}-error` : undefined
+  // `error` alone styles the field; the message is shown only when one is given, so grouped
+  // selects can share a single message.
+  const errorId = error && errorMessage ? `${selectId}-error` : undefined
   const ariaDescribedBy = [describedBy, hintId, errorId].filter(Boolean).join(' ') || undefined
   const selectStyle = width ? { ...style, ...inputWidthStyles[width] } : style
 
@@ -61,7 +63,7 @@ export function Select({
           {hint}
         </div>
       )}
-      {error && (
+      {errorId && (
         <p className={styles.error} id={errorId}>
           <span className="visually-hidden">Error:</span> {errorMessage}
         </p>
@@ -69,6 +71,7 @@ export function Select({
       <select
         {...rest}
         aria-describedby={ariaDescribedBy}
+        aria-invalid={error || undefined}
         className={clsx(styles.field, error && styles.fieldError)}
         id={selectId}
         name={name}

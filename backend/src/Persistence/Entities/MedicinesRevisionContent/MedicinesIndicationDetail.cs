@@ -37,7 +37,7 @@ internal sealed class MedicinesIndicationDetail
         ChildPlaceholder = "Choose BNF subchapter"
     )]
     [FormOptions(OptionKeys.BnfChapters)]
-    [FormRequired("Select a BNF chapter")]
+    [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
     [FormPage("paediatric", "Treating children", Order = 40)]

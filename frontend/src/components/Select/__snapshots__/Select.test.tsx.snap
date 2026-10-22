@@ -31,6 +31,7 @@ exports[`Select > merges existing describedby with hint and error ids 1`] = `
     </p>
     <select
       aria-describedby="existing-description location-hint location-error"
+      aria-invalid="true"
       class="_field_09c1ee _fieldError_09c1ee"
       id="location"
       name="location"
@@ -142,6 +143,7 @@ exports[`Select > renders an error and describes the select with it 1`] = `
     </p>
     <select
       aria-describedby="location-error"
+      aria-invalid="true"
       class="_field_09c1ee _fieldError_09c1ee"
       id="location"
       name="location"

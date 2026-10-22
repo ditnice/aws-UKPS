@@ -16,7 +16,7 @@ type EntryProps = {
   entry: HierarchicalEntry
   onChange: (entry: HierarchicalEntry) => void
   onBlur: () => void
-  hasError: boolean
+  error?: string
   disabled: boolean
   labelAsHeading: boolean
 }
@@ -29,7 +29,7 @@ function HierarchicalEntrySelects({
   entry,
   onChange,
   onBlur,
-  hasError,
+  error,
   disabled,
   labelAsHeading,
 }: EntryProps) {
@@ -39,6 +39,10 @@ function HierarchicalEntrySelects({
   // Repeated entries need distinct accessible names.
   const entrySuffix = question.multiple && index > 0 ? ` (${index + 1})` : ''
   const showParentLabel = !labelAsHeading || entrySuffix !== ''
+  // The question's error is shown once, above the first parent select; every select is styled
+  // as invalid and described by that one message.
+  const ownsError = Boolean(error) && index === 0
+  const errorId = error ? `${name}-0-parent-error` : undefined
 
   return (
     <div className={styles.entry}>
@@ -47,13 +51,20 @@ function HierarchicalEntrySelects({
         {entrySuffix}
       </label>
       <Select
+        aria-describedby={ownsError ? undefined : errorId}
         disabled={disabled}
+        error={Boolean(error)}
+        errorMessage={ownsError ? error : undefined}
         id={parentId}
         label={null}
         name={`${name}[${index}].parent`}
         onBlur={onBlur}
-        onChange={(event) => onChange({ parent: event.target.value, child: '' })}
-        aria-invalid={hasError || undefined}
+        onChange={(event) => {
+          onChange({ parent: event.target.value, child: '' })
+          // Revalidate straight away, so an error the new parent fixes clears before the child
+          // select appears, rather than the child showing as invalid until the next blur.
+          onBlur()
+        }}
         value={entry.parent}
         width="one-third"
       >
@@ -72,7 +83,9 @@ function HierarchicalEntrySelects({
             {entrySuffix && <span className="visually-hidden">{entrySuffix}</span>}
           </label>
           <Select
+            aria-describedby={errorId}
             disabled={disabled}
+            error={Boolean(error)}
             id={childId}
             label={null}
             name={`${name}[${index}].child`}
@@ -123,11 +136,6 @@ export function HierarchicalSelectQuestion({
           {question.hint}
         </p>
       )}
-      {error && (
-        <p className={styles.error} id={`${name}-error`} role="alert">
-          <span className="visually-hidden">Error:</span> {error}
-        </p>
-      )}
       {entries.map((entry, index) => (
         // Entries have no stable identity of their own; position is what the user edits.
 
@@ -135,7 +143,7 @@ export function HierarchicalSelectQuestion({
           <HierarchicalEntrySelects
             disabled={disabled}
             entry={entry}
-            hasError={Boolean(error)}
+            error={error}
             index={index}
             labelAsHeading={labelAsHeading}
             name={name}

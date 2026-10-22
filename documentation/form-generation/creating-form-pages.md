@@ -92,7 +92,7 @@ internal sealed class MedicinesIndicationDetail
         ChildLabel = "Select the BNF subchapter (optional)",
         ChildPlaceholder = "Choose BNF subchapter")]
     [FormOptions(OptionKeys.BnfChapters)]
-    [FormRequired("Select a BNF chapter")]
+    [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
     [FormPage("paediatric", "Treating children", Order = 40)]
@@ -367,7 +367,7 @@ these:
 - every selected value is an offered option.
 
 Write messages in the GOV.UK error message style used in the screenshots: say what to do, for
-example "Select a BNF chapter" or "Enter the indication…".
+example "Choose a BNF chapter" or "Enter the indication…".
 
 ### Adding a new rule kind
 

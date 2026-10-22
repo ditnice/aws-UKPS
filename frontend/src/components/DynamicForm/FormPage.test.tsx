@@ -344,7 +344,7 @@ describe('FormPage', () => {
                 placeholder: 'Choose BNF chapter',
                 childLabel: 'Select the BNF subchapter (optional)',
                 childPlaceholder: 'Choose BNF subchapter',
-                rules: [{ kind: 'Required', value: null, message: 'Select a BNF chapter' }],
+                rules: [{ kind: 'Required', value: null, message: 'Choose a BNF chapter' }],
                 options: tree,
               }),
             ],
@@ -364,6 +364,40 @@ describe('FormPage', () => {
 
       await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalled())
       expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ bnf: '13' })
+    })
+
+    it('clears a parent error before showing the child select', async () => {
+      render(
+        <FormPage
+          page={page({
+            page: { id: 'bnf-chapter', title: 'BNF chapter' },
+            questions: [
+              question({
+                id: 'bnf',
+                type: 'HierarchicalSelect',
+                label: 'Select the BNF chapter for this product',
+                hint: null,
+                childLabel: 'Select the BNF subchapter (optional)',
+                rules: [{ kind: 'Required', value: null, message: 'Choose a BNF chapter' }],
+                options: tree,
+              }),
+            ],
+            answers: { bnf: null },
+          })}
+        />,
+      )
+
+      save()
+      expect(await screen.findByText('Choose a BNF chapter')).toBeInTheDocument()
+
+      fireEvent.change(screen.getByLabelText('Select the BNF chapter for this product'), {
+        target: { value: '1' },
+      })
+
+      await waitFor(() => expect(screen.queryByText('Choose a BNF chapter')).toBeNull())
+      const child = screen.getByLabelText('Select the BNF subchapter (optional)')
+      expect(child.getAttribute('aria-invalid')).toBeNull()
+      expect(child.className).not.toMatch(/fieldError/)
     })
 
     it('loads a saved child into its parent and child selects', () => {
