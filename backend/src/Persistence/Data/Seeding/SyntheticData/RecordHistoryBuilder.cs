@@ -87,21 +87,21 @@ internal sealed class RecordHistoryBuilder
         double outcome = _random.Double();
         bool canBeRejected = lastUpdated.DayNumber - _source.CreatedAt.DayNumber >= 2;
 
-        if (outcome < 0.2 && canBeRejected && Flaw(_source) is { } flaw)
+        if (outcome < 0.2 && canBeRejected && PickSubmissionFlaw(_source) is { } flaw)
         {
             // Submitted once, sent back by QA, and now being reworked.
             DateOnly submitted = _source.CreatedAt.AddDays(1);
-            Draft(first, At(submitted, 9, 10), flaw.Submitted);
+            SaveDraftEdits(first, At(submitted, 9, 10), flaw.Submitted);
             Submit(first, At(submitted, 10, 12));
             DateOnly rejected = submitted.AddDays(1);
             Reject(first, At(rejected, 9, 11), flaw.Note);
 
             RecordRevision rework = CreateRevision(At(rejected, 11, 13), basedOn: first);
-            Draft(rework, At(lastUpdated, 14, 17), _source);
+            SaveDraftEdits(rework, At(lastUpdated, 14, 17), _source);
             return;
         }
 
-        Draft(first, At(lastUpdated, 12, 15), _source);
+        SaveDraftEdits(first, At(lastUpdated, 12, 15), _source);
         if (outcome < 0.45)
         {
             Submit(first, At(lastUpdated, 15, 17));
@@ -183,8 +183,8 @@ internal sealed class RecordHistoryBuilder
             DateOnly draftDay = DayBetween(lastActivity.AddDays(1), _today.AddDays(-1));
             RecordRevision draft = CreateRevision(At(draftDay, 9, 11), basedOn: publishedRevision);
             // Records without estimated dates to push back have a draft opened but not yet changed.
-            SyntheticRecord? update = RecordContentHistory.Slipped(_source);
-            Draft(draft, At(draftDay, 11, 14), update ?? _source);
+            SyntheticRecord? update = RecordContentHistory.WithEstimatedUkDatesPushedBack(_source);
+            SaveDraftEdits(draft, At(draftDay, 11, 14), update ?? _source);
             if (update is not null && _random.Double() < 0.3)
             {
                 Submit(draft, At(draftDay, 14, 17));
@@ -269,18 +269,18 @@ internal sealed class RecordHistoryBuilder
         if (
             publishDay.DayNumber - draftDay.DayNumber >= 3
             && _random.Double() < rejectionChance
-            && Flaw(version) is { } flaw
+            && PickSubmissionFlaw(version) is { } flaw
         )
         {
             DateOnly submitted = draftDay.AddDays(1);
-            Draft(revision, At(submitted, 9, 10), flaw.Submitted);
+            SaveDraftEdits(revision, At(submitted, 9, 10), flaw.Submitted);
             Submit(revision, At(submitted, 10, 12));
             DateOnly rejected = submitted.AddDays(1);
             Reject(revision, At(rejected, 9, 11), flaw.Note);
             revision = CreateRevision(At(rejected, 11, 13), basedOn: revision);
         }
 
-        Draft(revision, At(publishDay, 11, 12), version);
+        SaveDraftEdits(revision, At(publishDay, 11, 12), version);
         DateTime resubmitted = At(publishDay, 12, 13);
         Submit(revision, resubmitted);
         Approve(revision, At(publishDay, 13, 15), resubmitted);
@@ -288,7 +288,7 @@ internal sealed class RecordHistoryBuilder
     }
 
     /// <summary>Picks a mistake QA could send back for <paramref name="version"/>, if any apply.</summary>
-    private (string Note, SyntheticRecord Submitted)? Flaw(SyntheticRecord version)
+    private (string Note, SyntheticRecord Submitted)? PickSubmissionFlaw(SyntheticRecord version)
     {
         (string Note, SyntheticRecord Submitted)[] applicable =
         [
@@ -321,11 +321,11 @@ internal sealed class RecordHistoryBuilder
     }
 
     /// <summary>
-    /// Saves a revision one or more times between its creation and <paramref name="lastSave"/>,
-    /// leaving it with the content of <paramref name="version"/>. New records are filled in a
-    /// section at a time, and some fields are saved with a provisional value first.
+    /// Saves edits to a revision one or more times between its creation and
+    /// <paramref name="lastSave"/>, leaving it with the content of <paramref name="version"/>.
+    /// Some fields are saved with a provisional value first.
     /// </summary>
-    private void Draft(RecordRevision revision, DateTime lastSave, SyntheticRecord version)
+    private void SaveDraftEdits(RecordRevision revision, DateTime lastSave, SyntheticRecord version)
     {
         AddContent(revision, version);
         IReadOnlyDictionary<string, string?> target = RecordContentHistory.AuditedFields(version);
@@ -335,7 +335,10 @@ internal sealed class RecordHistoryBuilder
             return;
         }
 
-        int plannedSaves = _saved.Count == 0 ? _random.Number(2, 4) : _random.Number(1, 3);
+        // A new record is filled in from scratch a section at a time, so it takes more saves
+        // than a later revision that only changes a few fields.
+        bool isNewRecord = _saved.Count == 0;
+        int plannedSaves = isNewRecord ? _random.Number(2, 4) : _random.Number(1, 3);
         DateTime[] times = SaveTimes(revision.CreatedAt, lastSave, plannedSaves);
         int saves = Math.Min(times.Length, changed.Length);
         times = times[^saves..];

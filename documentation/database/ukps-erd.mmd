@@ -122,13 +122,6 @@ erDiagram
             integer reviewed_by FK "nullable"
             integer revision_id FK
         }
-        record_event_field_changes:::record_workflow {
-            integer id PK
-            text field_path
-            text new_value "nullable"
-            text old_value "nullable"
-            integer record_event_id FK
-        }
         record_events:::record_workflow {
             integer id PK
             integer event_type
@@ -140,16 +133,22 @@ erDiagram
             integer record_id FK
             integer revision_id FK "nullable"
         }
+        record_field_audit:::record_workflow {
+            integer id PK
+            timestamptz changed_at
+            integer changed_by FK
+            text field_path
+            text new_value "nullable"
+            text old_value "nullable"
+            integer record_id FK
+            integer revision_id FK
+        }
         record_revisions:::record_workflow {
             integer id PK
             integer based_on_revision_id FK "nullable"
             timestamptz created_at
             integer created_by FK
             integer record_id FK
-            timestamptz submitted_at "nullable"
-            integer submitted_by FK "nullable"
-            timestamptz updated_at "nullable"
-            integer updated_by FK "nullable"
             integer workflow_status
         }
         record_status_histories:::record_workflow {
@@ -551,9 +550,8 @@ erDiagram
     app_user |o..o{ organisation_audits : "updated_by"
     app_user |o..o{ qa_reviews : "reviewed_by"
     app_user |o..o{ record_events : "performed_by"
+    app_user ||..o{ record_field_audit : "changed_by"
     app_user ||..o{ record_revisions : "created_by"
-    app_user |o..o{ record_revisions : "submitted_by"
-    app_user |o..o{ record_revisions : "updated_by"
     app_user |o..o{ record_status_histories : "updated_by"
     app_user ||--o{ record_watchlists : "user_id"
     app_user |o..o{ records : "created_by"
@@ -584,7 +582,6 @@ erDiagram
     patient_pathway_point |o..o{ medicines_laboratory_testings : "patient_pathway_point_id"
     qa_reviews |o..o{ record_events : "qa_review_id"
     record_clinical_trials ||..o{ other_clinical_trial_numbers : "clinical_trial_id"
-    record_events ||..o{ record_event_field_changes : "record_event_id"
     record_product_details ||..o{ record_names_and_identifiers : "record_product_detail_id"
     record_revisions ||..o| medicines_budget_impacts : "revision_id"
     record_revisions ||..o| medicines_development_backgrounds : "revision_id"
@@ -601,6 +598,7 @@ erDiagram
     record_revisions ||..o| record_clinical_trial_information : "revision_id"
     record_revisions ||..o{ record_clinical_trials : "revision_id"
     record_revisions |o..o{ record_events : "revision_id"
+    record_revisions ||..o{ record_field_audit : "revision_id"
     record_revisions ||..o| record_htas : "revision_id"
     record_revisions ||..o| record_mhra_dates : "revision_id"
     record_revisions ||..o| record_mhra_procedures : "revision_id"
@@ -613,6 +611,7 @@ erDiagram
     record_revisions ||..o| vaccines_service_readinesses : "revision_id"
     record_revisions ||..o| vaccines_technologies : "revision_id"
     records ||..o{ record_events : "record_id"
+    records ||..o{ record_field_audit : "record_id"
     records ||..o{ record_revisions : "record_id"
     records ||..o{ record_status_histories : "record_id"
     records ||--o{ record_watchlists : "record_id"

@@ -276,32 +276,32 @@ internal static class RecordContentHistory
     }
 
     /// <summary>
-    /// Returns the record with its estimated UK dates a quarter later, as timelines tend to slip,
-    /// or null if it has no estimated UK dates.
+    /// Returns the record with its estimated UK dates three months later, or null if it has no
+    /// estimated UK dates.
     /// </summary>
-    public static SyntheticRecord? Slipped(SyntheticRecord record)
+    public static SyntheticRecord? WithEstimatedUkDatesPushedBack(SyntheticRecord record)
     {
         SyntheticRegulatoryAccessAndLaunch regulatory = record.RegulatoryAccessAndLaunchInformation;
         SyntheticMhraProcedureAndDates mhra = regulatory.MhraProcedureAndDates;
         SyntheticHtaAndLaunch hta = regulatory.HealthTechnologyAssessmentAndLaunch;
-        SyntheticRecord slipped = record with
+        SyntheticRecord pushedBack = record with
         {
             RegulatoryAccessAndLaunchInformation = regulatory with
             {
                 MhraProcedureAndDates = mhra with
                 {
-                    UkSubmissionDate = Slip(mhra.UkSubmissionDate),
-                    UkLicenceDate = Slip(mhra.UkLicenceDate),
+                    UkSubmissionDate = PushBackIfEstimated(mhra.UkSubmissionDate),
+                    UkLicenceDate = PushBackIfEstimated(mhra.UkLicenceDate),
                 },
                 HealthTechnologyAssessmentAndLaunch = hta with
                 {
-                    UkLaunchDate = Slip(hta.UkLaunchDate),
+                    UkLaunchDate = PushBackIfEstimated(hta.UkLaunchDate),
                 },
             },
         };
-        return HasChanges(record, slipped) ? slipped : null;
+        return HasChanges(record, pushedBack) ? pushedBack : null;
 
-        static SyntheticRegulatoryDate? Slip(SyntheticRegulatoryDate? date) =>
+        static SyntheticRegulatoryDate? PushBackIfEstimated(SyntheticRegulatoryDate? date) =>
             date is null || date.DatePrecision == DatePrecision.ActualDate
                 ? date
                 : date with

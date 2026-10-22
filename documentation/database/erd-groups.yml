@@ -27,7 +27,7 @@ groups:
     colour: "#dcfce7"
     tables:
       - qa_reviews
-      - record_event_field_changes
+      - record_field_audit
       - record_events
       - record_revisions
       - record_status_histories
