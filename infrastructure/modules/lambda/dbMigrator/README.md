@@ -29,6 +29,7 @@ No modules.
 | [aws_iam_role_policy_attachment.vpc_execution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.xray](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_lambda_function.db_migrator](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
+| [aws_lambda_invocation.db_migrator](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_invocation) | resource |
 | [aws_security_group.lambda_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_sqs_queue.db_migrator_dlq](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
 | [aws_vpc_security_group_egress_rule.aurora](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
@@ -64,5 +65,8 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_function_name"></a> [function\_name](#output\_function\_name) | Name of the migration Lambda function |
+| <a name="output_function_version"></a> [function\_version](#output\_function\_version) | Published version of the migration Lambda function |
+| <a name="output_invocation_id"></a> [invocation\_id](#output\_invocation\_id) | ID of the deployment-time migration invocation. Depend on this to run after migrations complete. |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | ID of the Lambda security group |
 <!-- END_TF_DOCS -->
