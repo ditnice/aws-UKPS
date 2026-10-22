@@ -127,7 +127,7 @@ describe('createServerApiClient', () => {
 
       const client = await createTestClient()
       const response = await client.fetch(
-        'https://api.example.test/users/me/current-organisation/champions',
+        'https://api.example.test/users/me/organisations/current/champions',
       )
 
       expect(response).toBe(unauthorisedResponse)
@@ -140,10 +140,10 @@ describe('createServerApiClient', () => {
   )
 
   it.each([
-    '/users/me/current-organisation/champions',
-    new URL('https://api.example.test/users/me/current-organisation/champions'),
-    new Request('https://api.example.test/users/me/current-organisation/champions'),
-    'https://api.example.test/users/me/current-organisation/champions?recovery=true',
+    '/users/me/organisations/current/champions',
+    new URL('https://api.example.test/users/me/organisations/current/champions'),
+    new Request('https://api.example.test/users/me/organisations/current/champions'),
+    'https://api.example.test/users/me/organisations/current/champions?recovery=true',
   ])('recognises champion-contact requests supplied as %s', async (input) => {
     vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
     mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })
@@ -170,7 +170,7 @@ describe('createServerApiClient', () => {
 
     const client = await createTestClient()
     await expect(
-      client.fetch('https://api.example.test/users/me/current-organisation/champions/1'),
+      client.fetch('https://api.example.test/users/me/organisations/current/champions/1'),
     ).rejects.toThrow('NEXT_REDIRECT: /auth/error?code=MembershipDeactivated')
 
     expect(redirect).toHaveBeenCalledWith('/auth/error?code=MembershipDeactivated')

@@ -2393,16 +2393,8 @@ public class UserServiceTests : DatabaseTestBase
         await AssertSavedMembership(other.Id, otherMembershipStatus, otherRole);
     }
 
-    // [Theory]
-    // [InlineData(0, UserOrgStatus.Active)]
-    // [InlineData(1, UserOrgStatus.Active)]
-    // [InlineData(0, UserOrgStatus.Inactive)]
-    // [InlineData(1, UserOrgStatus.Inactive)]
     [Fact]
-    public async Task RemoveUser_WhenAnyOrganisationWouldLoseItsLastChampion_ShouldLeaveEverythingUnchanged(
-    // int blockedOrganisationIndex,
-    // UserOrgStatus status
-    )
+    public async Task RemoveUser_WhenAnyOrganisationWouldLoseItsLastChampion_ShouldLeaveEverythingUnchanged()
     {
         // Arrange
         var user = _userFaker.Generate();
@@ -2440,49 +2432,6 @@ public class UserServiceTests : DatabaseTestBase
         );
         var userAfter = userAfterResult.ShouldBeSuccess();
         userBefore.ShouldBe(userAfter);
-
-        // var context = _harness.GetClearedContext();
-        // var user = await context.Users.Include(x => x.UserOrgMemberships).FirstOrDefaultAsync(
-        //     x => x.Id == user.Id,
-        //     TestContext.Current.CancellationToken
-        // );
-
-        // user.
-
-        // var membershipStatus = (UserOrgMembershipStatus)status;
-        // User caller = await AddCallerUser();
-        // (User target, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
-        //     3,
-        //     status: membershipStatus
-        // );
-        // memberships[0].UserRole = UserRole.Champion;
-        // memberships[1].UserRole = UserRole.Champion;
-        // await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        // await AddChampionContactTestMembership(
-        //     memberships[1 - blockedOrganisationIndex].Organisation!,
-        //     "remaining@example.com"
-        // );
-        // UserRegistrationRequest request = await AddApprovedRegistrationRequest(target, caller);
-        // UserOnboardingRecord onboarding = await AddOnboardingRecordCreatedBy(
-        //     caller.Id,
-        //     resultingUserId: target.Id
-        // );
-        // UserAudit audit = await AddPersonalAudit(target);
-        // AddCognitoAccount(target);
-
-        // var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
-
-        // result.ShouldBeError().ShouldBeOfType<RemoveUserError.LastRemainingChampion>();
-        // Context.ChangeTracker.Entries().ShouldAllBe(x => x.State == EntityState.Unchanged);
-        // _harness.Cognito.GetUser(target.CognitoUsername).ShouldNotBeNull();
-        // await AssertBlockedRemovalDataUnchanged(target, request, onboarding, audit);
-        // await using AppDbContext verifyContext = Fixture.CreateContext();
-        // var saved = await verifyContext
-        //     .UserOrgMemberships.Where(x => x.UserId == target.Id)
-        //     .ToListAsync(TestContext.Current.CancellationToken);
-        // saved.Count.ShouldBe(memberships.Length);
-        // saved.ShouldAllBe(x => x.Status == membershipStatus);
-        // saved.Count(x => x.UserRole == UserRole.Champion).ShouldBe(2);
     }
 
     [Fact]

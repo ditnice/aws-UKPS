@@ -696,76 +696,286 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(false, UserOrgStatus.Active)]
-    [InlineData(false, UserOrgStatus.Inactive)]
-    [InlineData(true, UserOrgStatus.Active)]
-    [InlineData(true, UserOrgStatus.Inactive)]
-    public async Task ChampionLoss_WhenLastEligibleChampion_ShouldRejectWithoutChanges(
-        bool deactivate,
+    [InlineData(UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Inactive)]
+    public async Task UpdateUserRole_WhenLastEligibleChampion_ShouldRejectWithoutChanges(
         UserOrgStatus status
     )
     {
+        // Arrange
         var membershipStatus = (UserOrgMembershipStatus)status;
+
         var membership = await SetupUserOrgMembership(
             modifier: x => x.UserRole = UserRole.Champion,
             overrideMembershipFaker: _membershipFaker.RuleFor(x => x.Status, _ => membershipStatus)
         );
 
-        await AssertChampionLossBlocked(membership, deactivate);
+        // Act
+        var result = await _service.UpdateUserRole(
+            membership.OrganisationId,
+            membership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
 
-        membership.UserRole.ShouldBe(UserRole.Champion);
-        membership.Status.ShouldBe(membershipStatus);
+        // Assert
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.LastRemainingChampion>()
+            .MembershipId.ShouldBe(membership.Id);
+
         await using AppDbContext verifyContext = Fixture.CreateContext();
-        var saved = await verifyContext.UserOrgMemberships.SingleAsync(
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
             x => x.Id == membership.Id,
             TestContext.Current.CancellationToken
         );
-        saved.UserRole.ShouldBe(UserRole.Champion);
-        saved.Status.ShouldBe(membershipStatus);
-        _harness.Emails.Sent.ShouldBeEmpty();
+
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedMembership.Status.ShouldBe(membershipStatus);
     }
 
     [Theory]
-    [InlineData(false, UserOrgStatus.Active, UserRole.Champion, true)]
-    [InlineData(false, UserOrgStatus.Inactive, UserRole.Champion, true)]
-    [InlineData(false, UserOrgStatus.Deactivated, UserRole.Champion, false)]
-    [InlineData(false, UserOrgStatus.Removed, UserRole.Champion, false)]
-    [InlineData(false, UserOrgStatus.AwaitingSetup, UserRole.Champion, false)]
-    [InlineData(false, UserOrgStatus.Active, UserRole.Standard, false)]
-    [InlineData(false, UserOrgStatus.Active, UserRole.Super, false)]
-    [InlineData(true, UserOrgStatus.Active, UserRole.Champion, true)]
-    [InlineData(true, UserOrgStatus.Inactive, UserRole.Champion, true)]
-    [InlineData(true, UserOrgStatus.Deactivated, UserRole.Champion, false)]
-    [InlineData(true, UserOrgStatus.Removed, UserRole.Champion, false)]
-    [InlineData(true, UserOrgStatus.AwaitingSetup, UserRole.Champion, false)]
-    [InlineData(true, UserOrgStatus.Active, UserRole.Standard, false)]
-    [InlineData(true, UserOrgStatus.Active, UserRole.Super, false)]
-    public async Task ChampionLoss_ShouldRequireAnotherEligibleChampion(
-        bool deactivate,
-        UserOrgStatus otherStatus,
-        UserRole otherRole,
-        bool allowed
+    [InlineData(UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Inactive)]
+    public async Task DeactivateMembership_WhenLastEligibleChampion_ShouldRejectWithoutChanges(
+        UserOrgStatus status
     )
     {
+        // Arrange
+        var membershipStatus = (UserOrgMembershipStatus)status;
+
+        var membership = await SetupUserOrgMembership(
+            modifier: x => x.UserRole = UserRole.Champion,
+            overrideMembershipFaker: _membershipFaker.RuleFor(x => x.Status, _ => membershipStatus)
+        );
+
+        // Act
+        var result = await _service.DeactivateMembership(
+            membership.OrganisationId,
+            membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipDeactivateUserError.LastRemainingChampion>()
+            .MembershipId.ShouldBe(membership.Id);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedMembership.Status.ShouldBe(membershipStatus);
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Inactive)]
+    public async Task UpdateUserRole_WhenAnotherChampionExists_ShouldSucceed(
+        UserOrgStatus otherStatus
+    )
+    {
+        // Arrange
         var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
+
         var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
-        var other = await AddOtherMembership(
+
+        var otherMembership = await AddOtherMembership(
+            membership.OrganisationId,
+            otherMembershipStatus
+        );
+
+        // Act
+        var result = await _service.UpdateUserRole(
+            membership.OrganisationId,
+            membership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Standard);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.UserRole.ShouldBe(UserRole.Standard);
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+
+        // Verify that the other champion membership remains unchanged
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedOtherMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedOtherMembership.Status.ShouldBe(otherMembershipStatus);
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Inactive)]
+    public async Task DeactivateMembership_WhenAnotherEligibleChampionExists_ShouldSucceed(
+        UserOrgStatus otherStatus
+    )
+    {
+        // Arrange
+        var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
+
+        var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
+
+        var otherMembership = await AddOtherMembership(
+            membership.OrganisationId,
+            otherMembershipStatus
+        );
+
+        // Act
+        var result = await _service.DeactivateMembership(
+            membership.OrganisationId,
+            membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result.ShouldBeSuccess().Status.ShouldBe(UserOrgStatus.Deactivated);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Deactivated);
+
+        // Verify that the other champion membership remains unchanged
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedOtherMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedOtherMembership.Status.ShouldBe(otherMembershipStatus);
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Deactivated, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Removed, UserRole.Champion)]
+    [InlineData(UserOrgStatus.AwaitingSetup, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Active, UserRole.Standard)]
+    [InlineData(UserOrgStatus.Active, UserRole.Super)]
+    public async Task UpdateUserRole_WhenOtherMembershipIsNotEligibleChampion_ShouldRejectWithoutChanges(
+        UserOrgStatus otherStatus,
+        UserRole otherRole
+    )
+    {
+        // Arrange
+        var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
+
+        var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
+
+        var otherMembership = await AddOtherMembership(
             membership.OrganisationId,
             otherMembershipStatus,
             otherRole
         );
 
-        if (allowed)
-        {
-            await AssertChampionLossAllowed(membership, deactivate);
-        }
-        else
-        {
-            await AssertChampionLossBlocked(membership, deactivate);
-        }
+        // Act
+        var result = await _service.UpdateUserRole(
+            membership.OrganisationId,
+            membership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
 
-        other.Status.ShouldBe(otherMembershipStatus);
-        other.UserRole.ShouldBe(otherRole);
+        // Assert
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.LastRemainingChampion>()
+            .MembershipId.ShouldBe(membership.Id);
+
+        _harness.Emails.Sent.ShouldBeEmpty();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+
+        // Verify that the other membership remains unchanged
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedOtherMembership.UserRole.ShouldBe(otherRole);
+        savedOtherMembership.Status.ShouldBe(otherMembershipStatus);
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Deactivated, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Removed, UserRole.Champion)]
+    [InlineData(UserOrgStatus.AwaitingSetup, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Active, UserRole.Standard)]
+    [InlineData(UserOrgStatus.Active, UserRole.Super)]
+    public async Task DeactivateMembership_WhenOtherMembershipIsNotEligibleChampion_ShouldRejectWithoutChanges(
+        UserOrgStatus otherStatus,
+        UserRole otherRole
+    )
+    {
+        // Arrange
+        var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
+
+        var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
+
+        var otherMembership = await AddOtherMembership(
+            membership.OrganisationId,
+            otherMembershipStatus,
+            otherRole
+        );
+
+        // Act
+        var result = await _service.DeactivateMembership(
+            membership.OrganisationId,
+            membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipDeactivateUserError.LastRemainingChampion>()
+            .MembershipId.ShouldBe(membership.Id);
+
+        _harness.Emails.Sent.ShouldBeEmpty();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+
+        // Verify that the other membership remains unchanged
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedOtherMembership.UserRole.ShouldBe(otherRole);
+        savedOtherMembership.Status.ShouldBe(otherMembershipStatus);
     }
 
     [Theory]
@@ -773,12 +983,14 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [InlineData(UserOrgStatus.Inactive)]
     public async Task UpdateUserRole_WhenChampionRoleIsUnchanged_ShouldSucceed(UserOrgStatus status)
     {
+        // Arrange
         var membershipStatus = (UserOrgMembershipStatus)status;
         var membership = await SetupUserOrgMembership(
             modifier: x => x.UserRole = UserRole.Champion,
             overrideMembershipFaker: _membershipFaker.RuleFor(x => x.Status, _ => membershipStatus)
         );
 
+        // Act
         var result = await _service.UpdateUserRole(
             membership.OrganisationId,
             membership.Id,
@@ -786,21 +998,19 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
+        // Assert
         result.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Champion);
         membership.Status.ShouldBe(membershipStatus);
     }
 
     [Theory]
-    [InlineData(false, UserOrgStatus.Active)]
-    [InlineData(false, UserOrgStatus.Inactive)]
-    [InlineData(true, UserOrgStatus.Active)]
-    [InlineData(true, UserOrgStatus.Inactive)]
-    public async Task ChampionLoss_WhenTargetIsInactiveAndAnotherChampionExists_ShouldSucceed(
-        bool deactivate,
+    [InlineData(UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Inactive)]
+    public async Task UpdateUserRole_WhenTargetIsInactiveAndAnotherChampionExists_ShouldSucceed(
         UserOrgStatus otherStatus
     )
     {
-        var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
+        // Arrange
         var membership = await SetupUserOrgMembership(
             modifier: x => x.UserRole = UserRole.Champion,
             overrideMembershipFaker: _membershipFaker.RuleFor(
@@ -808,9 +1018,90 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
                 _ => UserOrgMembershipStatus.Inactive
             )
         );
-        await AddOtherMembership(membership.OrganisationId, otherMembershipStatus);
 
-        await AssertChampionLossAllowed(membership, deactivate);
+        var otherMembership = await AddOtherMembership(
+            membership.OrganisationId,
+            (UserOrgMembershipStatus)otherStatus
+        );
+
+        // Act
+        var result = await _service.UpdateUserRole(
+            membership.OrganisationId,
+            membership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Standard);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.UserRole.ShouldBe(UserRole.Standard);
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Inactive);
+
+        // Verify that the other champion membership remains unchanged
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedOtherMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedOtherMembership.Status.ShouldBe((UserOrgMembershipStatus)otherStatus);
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Inactive)]
+    public async Task DeactivateMembership_WhenTargetIsInactiveAndAnotherChampionExists_ShouldSucceed(
+        UserOrgStatus otherStatus
+    )
+    {
+        // Arrange
+        var membership = await SetupUserOrgMembership(
+            modifier: x => x.UserRole = UserRole.Champion,
+            overrideMembershipFaker: _membershipFaker.RuleFor(
+                x => x.Status,
+                _ => UserOrgMembershipStatus.Inactive
+            )
+        );
+
+        var otherMembership = await AddOtherMembership(
+            membership.OrganisationId,
+            (UserOrgMembershipStatus)otherStatus
+        );
+
+        // Act
+        var result = await _service.DeactivateMembership(
+            membership.OrganisationId,
+            membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result.ShouldBeSuccess().Status.ShouldBe(UserOrgStatus.Deactivated);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Deactivated);
+
+        // Verify that the other champion membership remains unchanged
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedOtherMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedOtherMembership.Status.ShouldBe((UserOrgMembershipStatus)otherStatus);
     }
 
     [Theory]
@@ -821,76 +1112,38 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         UserOrgStatus status
     )
     {
+        // Arrange
         var membershipStatus = (UserOrgMembershipStatus)status;
         var membership = await SetupUserOrgMembership(
             modifier: x => x.UserRole = UserRole.Champion,
             overrideMembershipFaker: _membershipFaker.RuleFor(x => x.Status, _ => membershipStatus)
         );
 
-        await AssertChampionLossAllowed(membership, deactivate: false);
-
-        membership.Status.ShouldBe(membershipStatus);
-    }
-
-    [Theory]
-    [InlineData(UserOrgStatus.Deactivated, true)]
-    [InlineData(UserOrgStatus.Removed, false)]
-    [InlineData(UserOrgStatus.AwaitingSetup, false)]
-    public async Task DeactivateMembership_WhenChampionIsNotEligible_ShouldPreserveStateHandling(
-        UserOrgStatus status,
-        bool allowed
-    )
-    {
-        var membershipStatus = (UserOrgMembershipStatus)status;
-        var membership = await SetupUserOrgMembership(
-            modifier: x => x.UserRole = UserRole.Champion,
-            overrideMembershipFaker: _membershipFaker.RuleFor(x => x.Status, _ => membershipStatus)
-        );
-
-        var result = await _service.DeactivateMembership(
+        // Act
+        var result = await _service.UpdateUserRole(
             membership.OrganisationId,
             membership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
             TestContext.Current.CancellationToken
         );
 
-        if (allowed)
-        {
-            result.ShouldBeSuccess();
-        }
-        else
-        {
-            result
-                .ShouldBeError()
-                .ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotAllowedInCurrentState>();
-        }
-        membership.Status.ShouldBe(membershipStatus);
-        _harness.Emails.Sent.ShouldBeEmpty();
+        // Assert
+        result.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Standard);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.UserRole.ShouldBe(UserRole.Standard);
+        savedMembership.Status.ShouldBe(membershipStatus);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ChampionLoss_WhenActionsAreSequential_ShouldBlockTheSecondAction(
-        bool deactivate
-    )
+    [Fact]
+    public async Task UpdateUserRole_WhenOnlyOtherChampionIsInAnotherOrganisation_ShouldReject()
     {
-        var first = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
-        var last = await AddOtherMembership(first.OrganisationId, UserOrgMembershipStatus.Inactive);
-
-        await AssertChampionLossAllowed(first, deactivate);
-        await AssertChampionLossBlocked(last, deactivate);
-
-        last.UserRole.ShouldBe(UserRole.Champion);
-        last.Status.ShouldBe(UserOrgMembershipStatus.Inactive);
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ChampionLoss_WhenChampionBelongsToAnotherOrganisation_ShouldStillReject(
-        bool deactivate
-    )
-    {
+        // Arrange
         var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
         var otherOrganisation = await AddEntity(
             _organisationFaker.Generate(),
@@ -898,162 +1151,44 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         );
         await AddOtherMembership(otherOrganisation.Id, UserOrgMembershipStatus.Active);
 
-        await AssertChampionLossBlocked(membership, deactivate);
+        // Act
+        var result = await _service.UpdateUserRole(
+            membership.OrganisationId,
+            membership.Id,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.LastRemainingChampion>()
+            .MembershipId.ShouldBe(membership.Id);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ChampionLoss_WhenMembershipIsOutsideRequestedOrganisation_ShouldReturnNotFound(
-        bool deactivate
-    )
+    [Fact]
+    public async Task DeactivateMembership_WhenOnlyOtherChampionIsInAnotherOrganisation_ShouldReject()
     {
+        // Arrange
         var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
         var otherOrganisation = await AddEntity(
             _organisationFaker.Generate(),
             TestContext.Current.CancellationToken
         );
+        await AddOtherMembership(otherOrganisation.Id, UserOrgMembershipStatus.Active);
 
-        if (deactivate)
-        {
-            var result = await _service.DeactivateMembership(
-                otherOrganisation.Id,
-                membership.Id,
-                TestContext.Current.CancellationToken
-            );
-            result
-                .ShouldBeError()
-                .ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotFound>();
-        }
-        else
-        {
-            var result = await _service.UpdateUserRole(
-                otherOrganisation.Id,
-                membership.Id,
-                new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
-                TestContext.Current.CancellationToken
-            );
-            result
-                .ShouldBeError()
-                .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotFound>();
-        }
-        membership.UserRole.ShouldBe(UserRole.Champion);
-        membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ChampionLoss_WhenCallerIsNotAuthorised_ShouldPreservePermissionPrecedence(
-        bool deactivate
-    )
-    {
-        var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
-        var service = new ServiceTestHarness<IOrganisationMembershipService>(Context)
-            .UpdateCurrentUser(x => x with { UserRole = UserRole.Standard })
-            .Service;
-
-        if (deactivate)
-        {
-            var result = await service.DeactivateMembership(
-                membership.OrganisationId,
-                membership.Id,
-                TestContext.Current.CancellationToken
-            );
-            result
-                .ShouldBeError()
-                .ShouldBeOfType<OrganisationMembershipDeactivateUserError.NotAllowed>();
-        }
-        else
-        {
-            var result = await service.UpdateUserRole(
-                membership.OrganisationId,
-                membership.Id,
-                new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
-                TestContext.Current.CancellationToken
-            );
-            result
-                .ShouldBeError()
-                .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.NotAllowed>();
-        }
-    }
-
-    [Fact]
-    public async Task UpdateUserRole_WhenLastChampionIsPromotedByNonSuper_ShouldPreserveSuperRoleRestriction()
-    {
-        var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
-        var service = new ServiceTestHarness<IOrganisationMembershipService>(Context)
-            .UpdateCurrentUser(x =>
-                x with
-                {
-                    OrganisationId = membership.OrganisationId,
-                    UserRole = UserRole.Champion,
-                }
-            )
-            .Service;
-
-        var result = await service.UpdateUserRole(
+        // Act
+        var result = await _service.DeactivateMembership(
             membership.OrganisationId,
             membership.Id,
-            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Super },
             TestContext.Current.CancellationToken
         );
 
+        // Assert
         result
             .ShouldBeError()
-            .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.CannotManageSuperRole>();
-    }
-
-    private async Task AssertChampionLossBlocked(UserOrgMembership membership, bool deactivate)
-    {
-        if (deactivate)
-        {
-            var result = await _service.DeactivateMembership(
-                membership.OrganisationId,
-                membership.Id,
-                TestContext.Current.CancellationToken
-            );
-            result
-                .ShouldBeError()
-                .ShouldBeOfType<OrganisationMembershipDeactivateUserError.LastRemainingChampion>()
-                .MembershipId.ShouldBe(membership.Id);
-        }
-        else
-        {
-            var result = await _service.UpdateUserRole(
-                membership.OrganisationId,
-                membership.Id,
-                new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
-                TestContext.Current.CancellationToken
-            );
-            result
-                .ShouldBeError()
-                .ShouldBeOfType<OrganisationMembershipUpdateUserRoleError.LastRemainingChampion>()
-                .MembershipId.ShouldBe(membership.Id);
-        }
-    }
-
-    private async Task AssertChampionLossAllowed(UserOrgMembership membership, bool deactivate)
-    {
-        if (deactivate)
-        {
-            var result = await _service.DeactivateMembership(
-                membership.OrganisationId,
-                membership.Id,
-                TestContext.Current.CancellationToken
-            );
-            result.ShouldBeSuccess().Status.ShouldBe(UserOrgStatus.Deactivated);
-        }
-        else
-        {
-            var result = await _service.UpdateUserRole(
-                membership.OrganisationId,
-                membership.Id,
-                new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
-                TestContext.Current.CancellationToken
-            );
-            result.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Standard);
-        }
+            .ShouldBeOfType<OrganisationMembershipDeactivateUserError.LastRemainingChampion>()
+            .MembershipId.ShouldBe(membership.Id);
     }
 
     private async Task<UserOrgMembership> AddOtherMembership(
@@ -1062,16 +1197,12 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         UserRole role = UserRole.Champion
     )
     {
-        var user = await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken);
         var membership = new UserOrgMembershipFaker()
             .RuleFor(x => x.Status, _ => status)
             .RuleFor(x => x.UserRole, _ => role)
-            .Generate()
-            .Update(x =>
-            {
-                x.UserId = user.Id;
-                x.OrganisationId = organisationId;
-            });
+            .RuleFor(x => x.User, _ => _userFaker.Generate())
+            .RuleFor(x => x.OrganisationId, _ => organisationId)
+            .Generate();
         return await AddEntity(membership, TestContext.Current.CancellationToken);
     }
 

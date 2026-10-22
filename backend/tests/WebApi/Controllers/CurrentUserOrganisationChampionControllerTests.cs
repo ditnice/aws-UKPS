@@ -23,7 +23,7 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 public class CurrentUserOrganisationChampionControllerTests
     : IClassFixture<WebApplicationFactory<Program>>
 {
-    private const string ChampionContactsUrl = "/users/me/current-organisation/champions";
+    private const string ChampionContactsUrl = "/users/me/organisations/current/champions";
     private readonly IUserService _mockUserService = Substitute.For<IUserService>();
     private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;

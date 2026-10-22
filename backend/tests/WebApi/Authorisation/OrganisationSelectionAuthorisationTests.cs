@@ -108,7 +108,7 @@ public class OrganisationSelectionAuthorisationTests : IClassFixture<WebApplicat
         HttpClient client = CreateClientRequiringOrganisationSelection(failCode);
 
         var response = await client.GetAsync(
-            new Uri("/users/me/current-organisation/champions", UriKind.Relative),
+            new Uri("/users/me/organisations/current/champions", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -130,7 +130,7 @@ public class OrganisationSelectionAuthorisationTests : IClassFixture<WebApplicat
         );
 
         var response = await client.GetAsync(
-            new Uri("/users/me/current-organisation/champions", UriKind.Relative),
+            new Uri("/users/me/organisations/current/champions", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 

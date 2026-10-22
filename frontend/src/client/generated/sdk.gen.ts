@@ -102,7 +102,7 @@ export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options:
 /**
  * Gets the champion contacts for the current organisation.
  */
-export const getCurrentOrganisationChampions = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentOrganisationChampionsData, ThrowOnError>): RequestResult<GetCurrentOrganisationChampionsResponses, GetCurrentOrganisationChampionsErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentOrganisationChampionsResponses, GetCurrentOrganisationChampionsErrors, ThrowOnError>({ url: '/users/me/current-organisation/champions', ...options });
+export const getCurrentOrganisationChampions = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentOrganisationChampionsData, ThrowOnError>): RequestResult<GetCurrentOrganisationChampionsResponses, GetCurrentOrganisationChampionsErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentOrganisationChampionsResponses, GetCurrentOrganisationChampionsErrors, ThrowOnError>({ url: '/users/me/organisations/current/champions', ...options });
 
 /**
  * Retrieves the organisations the current user is permitted to manage.

@@ -701,7 +701,7 @@
         }
       }
     },
-    "/users/me/current-organisation/champions": {
+    "/users/me/organisations/current/champions": {
       "get": {
         "tags": [
           "CurrentUserOrganisationChampion"

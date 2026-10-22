@@ -1773,7 +1773,7 @@ export type GetCurrentOrganisationChampionsData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/users/me/current-organisation/champions';
+    url: '/users/me/organisations/current/champions';
 };
 
 export type GetCurrentOrganisationChampionsErrors = {
