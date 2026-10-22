@@ -1,5 +1,6 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.28.0@sha256:bb22d9815c728170f72750f4e5b0d672e06176142e1d602c7e66c050100b7e5b
 
+# Matches the Lambda's architectures = ["x86_64"] (infrastructure/modules/lambda/dbMigrator).
 ARG LAMBDA_PLATFORM=linux/amd64
 
 FROM scratch AS rds-ca
@@ -10,7 +11,9 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
     /eu-west-2-bundle.pem
 
 
-FROM --platform=${LAMBDA_PLATFORM} mcr.microsoft.com/dotnet/sdk:10.0 AS restore
+# .NET 10 SDK on Ubuntu 24.04 "noble", the same SDK image as backend/Dockerfile. The
+# self-contained publish below bundles the .NET runtime from this SDK.
+FROM --platform=${LAMBDA_PLATFORM} mcr.microsoft.com/dotnet/sdk:10.0.402-noble@sha256:747cbade5bfd918a175ac32f8f1d931edec2c7d0d5397a3de72eaef1ac1f66d2 AS restore
 
 WORKDIR /src
 
@@ -29,9 +32,10 @@ FROM restore AS build
 COPY . .
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish migration/MigratorLambda.csproj --configuration Release --runtime linux-x64 --self-contained true --no-restore --output /app/publish -p:PublishReadyToRun=true
 
+# AWS Lambda .NET 10 base image for x86_64 (Amazon Linux 2023).
 # checkov:skip=CKV_DOCKER_2: Lambda provided runtime has no shell; health checks are handled at the Lambda service level.
 # checkov:skip=CKV_DOCKER_3: Lambda supplies a least-privileged runtime user; setting USER can prevent the managed runtime from starting.
-FROM --platform=${LAMBDA_PLATFORM} public.ecr.aws/lambda/dotnet:10 AS runtime
+FROM --platform=${LAMBDA_PLATFORM} public.ecr.aws/lambda/dotnet:10.2026.10.13.19-x86_64@sha256:0f3d4a098bf356d6bffa2dc6228e88336f5e15c39b2f2304940beb06a231d6e6 AS runtime
 
 RUN dnf install -y krb5-libs \
     && dnf clean all

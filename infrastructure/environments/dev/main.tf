@@ -229,6 +229,7 @@ module "ecs_backend" {
   health_check_grace_period_seconds = 300
   ecr_repository_url                = var.backend_image_repository_url
   image_tag                         = var.image_tag
+  deployment_dependency             = module.db_migrator_lambda.invocation_id
   target_group_arn                  = module.alb.backend_target_group_arn
   alb_security_group_id             = one(module.alb.alb_security_group_ids)
   ecs_egress_cidr_blocks            = [module.networking.vpc_cidr]
@@ -236,24 +237,20 @@ module "ecs_backend" {
   # NAT or controlled egress before deploying this service.
   ecs_https_egress_cidr_blocks = ["0.0.0.0/0"]
   container_environment = {
-    AWS__Region                 = var.region
-    Cognito__Region             = var.region
-    Cognito__UserPoolId         = module.cognito.user_pool_id
-    Cognito__ClientId           = module.cognito.app_client_id
-    Cognito__Authority          = module.cognito.user_pool_issuer
-    Database__Host              = module.aurora_backend.cluster_endpoint
-    Database__MigrateOnStartup  = "false"
-    Database__Name              = module.aurora_backend.database_name
-    Database__Port              = tostring(module.aurora_backend.port)
-    Email__Region               = var.region
-    Email__BaseDomain           = module.alb.frontend_host_name
-    Email__FromAddress          = module.ses.from_email_address
-    Email__ReplyToAddress       = module.ses.from_email_address
-    Email__ConfigurationSetName = module.ses.configuration_set_name
-    Email__QueueUrl             = module.sqs_email_backend.queue_url
-    Seeding__ReseedOnStartup    = "true"
-    Seeding__SeedUsersJson      = jsonencode(var.seeded_users)
-    UserOnboarding__SetupLink   = "https://${module.alb.frontend_host_name}"
+    AWS__Region                        = var.region
+    Cognito__Region                    = var.region
+    Cognito__UserPoolId                = module.cognito.user_pool_id
+    Cognito__ClientId                  = module.cognito.app_client_id
+    Database__Host                     = module.aurora_backend.cluster_endpoint
+    Database__MigrateOnStartup         = "false"
+    Database__Name                     = module.aurora_backend.database_name
+    Database__Port                     = tostring(module.aurora_backend.port)
+    DevAuthentication__UserRole        = "Super"
+    Email__FromAddress                 = module.ses.from_email_address
+    Email__MaxResendSignUpLinkAttempts = "3"
+    Email__QueueUrl                    = module.sqs_email_backend.queue_url
+    Seeding__ReseedOnStartup           = "false"
+    UserOnboarding__SetupLink          = "https://${module.alb.frontend_host_name}"
   }
   container_secrets = {
     Cognito__ClientSecret = "${module.cognito.client_secret_arn}:ClientSecret::"
@@ -407,6 +404,7 @@ module "db_migrator_lambda" {
   region             = var.region
 
   seeded_users_json = jsonencode(var.seeded_users)
+  reseed_on_startup = true
 
   log_retention_days = var.ecs_log_retention
 

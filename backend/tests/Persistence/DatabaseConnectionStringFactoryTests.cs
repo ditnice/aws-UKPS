@@ -65,6 +65,28 @@ public sealed class DatabaseConnectionStringFactoryTests
         );
     }
 
+    [Fact]
+    public void GetConnectionString_ShouldThrow_WhenRootCertificateIsMissing()
+    {
+        IConfiguration configuration = CreateConfiguration(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [$"{DatabaseOptions.SectionName}:Host"] = "aurora.example.com",
+                [$"{DatabaseOptions.SectionName}:Name"] = "ukps_backend",
+                [$"{DatabaseOptions.SectionName}:Username"] = "ukpsadmin",
+                [$"{DatabaseOptions.SectionName}:Password"] = "test-password",
+            }
+        );
+
+        var exception = Should.Throw<InvalidOperationException>(() =>
+            DatabaseConnectionStringFactory.GetConnectionString(configuration)
+        );
+
+        exception.Message.ShouldBe(
+            "Database connection string is not configured. Set ConnectionStrings:DefaultConnection or Database:RootCertificate."
+        );
+    }
+
     private static IConfiguration CreateConfiguration(Dictionary<string, string?> values) =>
         new ConfigurationBuilder().AddInMemoryCollection(values).Build();
 }

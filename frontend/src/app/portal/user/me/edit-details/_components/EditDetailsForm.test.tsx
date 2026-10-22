@@ -101,7 +101,9 @@ describe('EditDetailsForm', () => {
     expect(contactNumber.getAttribute('type')).toBe('tel')
     expect(contactNumber.getAttribute('autocomplete')).toBe('tel')
     expect(
-      screen.getByText('For international numbers include the country code.'),
+      screen.getByText(
+        'This number will be visible to horizon scanning organisations. For international numbers include the country code.',
+      ),
     ).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: 'Save' }).getAttribute('type')).toBe('submit')

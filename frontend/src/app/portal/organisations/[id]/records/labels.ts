@@ -39,7 +39,7 @@ export type RecordsTableHeader = {
 export const organisationRecordsTableHeaders: RecordsTableHeader[] = [
   { key: 'id', label: 'ID', sortColumn: 'Id' },
   { key: 'company-code', label: 'Company code', sortColumn: 'CompanyCode' },
-  { key: 'records-title', label: 'Records title', sortColumn: null },
+  { key: 'records-title', label: 'Record title', sortColumn: 'RecordTitle' },
   { key: 'record-status', label: 'Record status', sortColumn: 'DisplayStatus' },
   { key: 'next-update', label: 'Next update', sortColumn: 'NextUpdateDue' },
   { key: 'actions', label: 'Action', sortColumn: null },

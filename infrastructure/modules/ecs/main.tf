@@ -21,6 +21,12 @@ resource "aws_ecs_cluster_capacity_providers" "this" {
   capacity_providers = var.ecs_capacity_providers
 }
 
+# Gates the task definition (and therefore the service rollout) on
+# var.deployment_dependency being resolved during apply.
+resource "terraform_data" "deployment_gate" {
+  input = var.deployment_dependency
+}
+
 resource "aws_ecs_task_definition" "ecs_task_def" {
   family = "${var.project}-${var.environment}-${var.service_name}-task"
 
@@ -62,6 +68,8 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
     Project     = var.project
     Service     = var.service_name
   })
+
+  depends_on = [terraform_data.deployment_gate]
 }
 
 resource "aws_ecs_service" "ecs_service" {

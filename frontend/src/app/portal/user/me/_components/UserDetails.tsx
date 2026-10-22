@@ -15,6 +15,7 @@ export const UserDetails = ({ currentUser }: { currentUser: UserInformationDto |
     )
   return (
     <div>
+      <h2>Personal details</h2>
       <SummaryList>
         <SummaryListRow label="Organisation" value={currentUser.organisationName} />
         <SummaryListRow label="Full name" value={currentUser.fullName} />
@@ -24,9 +25,6 @@ export const UserDetails = ({ currentUser }: { currentUser: UserInformationDto |
       <ButtonGroup>
         <Button elementType={Link} href={`/portal/user/me/edit-details`} variant="cta">
           Edit Details
-        </Button>
-        <Button elementType={Link} href={'/placeholder'}>
-          Return to view and manage records
         </Button>
       </ButtonGroup>
     </div>
