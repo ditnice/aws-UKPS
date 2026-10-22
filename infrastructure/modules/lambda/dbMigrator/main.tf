@@ -9,6 +9,7 @@ resource "aws_lambda_function" "db_migrator" {
   package_type  = "Image"
   image_uri     = "${var.image_repository_url}:${var.image_tag}"
   architectures = ["x86_64"]
+  publish       = true
 
   memory_size                    = var.memory_size
   timeout                        = var.timeout
@@ -60,4 +61,16 @@ resource "aws_lambda_function" "db_migrator" {
   }
 
   tags = var.tags
+}
+
+# Runs the newly published version synchronously on every deployment. A function
+# error fails the apply, so dependants (e.g. the backend ECS service) do not roll.
+resource "aws_lambda_invocation" "db_migrator" {
+  function_name = aws_lambda_function.db_migrator.function_name
+  qualifier     = aws_lambda_function.db_migrator.version
+  input         = jsonencode({})
+
+  triggers = {
+    version = aws_lambda_function.db_migrator.version
+  }
 }

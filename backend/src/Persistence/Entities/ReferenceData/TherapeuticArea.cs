@@ -3,6 +3,7 @@ namespace UKPS.Api.Persistence.Entities.ReferenceData;
 /// <summary>
 /// Therapeutic area hierarchy — medicines only. Top-level areas (for example "Addiction") with
 /// child diseases or conditions (for example "Opioid use disorder").
+/// 20 top-level areas, 172 total nodes including sub-areas.
 /// </summary>
 internal sealed class TherapeuticArea
 {

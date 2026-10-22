@@ -1,0 +1,116 @@
+# Logical grouping of database tables for the generated ERD.
+#
+# The table list itself comes from the EF Core model (AppDbContext); this file only
+# adds the architectural categorisation. Every table in the model must appear in
+# exactly one group, otherwise ./scripts/generate-erd.sh fails. When you add a table,
+# add it here and regenerate documentation/database/ukps-erd.mmd.
+#
+# direction: LR (left-to-right, reads best for this schema) or TB (top-to-bottom).
+direction: LR
+
+groups:
+  identity:
+    title: Identity and Access
+    colour: "#dbeafe"
+    tables:
+      - app_user
+      - organisation_audits
+      - organisations
+      - terms_acceptances
+      - user_audits
+      - user_onboarding_records
+      - user_org_memberships
+      - user_registration_requests
+
+  record_workflow:
+    title: Record Workflow
+    colour: "#dcfce7"
+    tables:
+      - qa_reviews
+      - record_event_field_changes
+      - record_events
+      - record_revisions
+      - record_status_histories
+      - records
+
+  shared_revision_content:
+    title: Shared Revision Content
+    colour: "#fef3c7"
+    tables:
+      - other_clinical_trial_numbers
+      - record_clinical_trial_information
+      - record_clinical_trials
+      - record_htas
+      - record_mhra_dates
+      - record_mhra_procedures
+      - record_names_and_identifiers
+      - record_product_details
+      - regulatory_dates
+
+  medicines_revision_content:
+    title: Medicines Revision Content
+    colour: "#fee2e2"
+    tables:
+      - medicines_budget_impacts
+      - medicines_development_backgrounds
+      - medicines_eams_pims
+      - medicines_eu_statuses
+      - medicines_global_submissions
+      - medicines_indication_detail_therapeutic_areas
+      - medicines_indication_details
+      - medicines_intl_recognitions
+      - medicines_laboratory_testings
+      - medicines_patient_identifications
+      - medicines_service_impacts
+      - medicines_treatment_details
+
+  vaccines_revision_content:
+    title: Vaccines Revision Content
+    colour: "#e0f2fe"
+    tables:
+      - vaccines_adjuvants
+      - vaccines_administration_routes
+      - vaccines_antigens
+      - vaccines_company_infos
+      - vaccines_disease_details
+      - vaccines_intl_submissions
+      - vaccines_pathogens
+      - vaccines_service_readinesses
+      - vaccines_technologies
+
+  reference_data:
+    title: Reference Data
+    colour: "#f3f4f6"
+    tables:
+      - atmp_classification
+      - bnf_chapters
+      - formulation_type
+      - irp_reference_regulator
+      - irp_route
+      - mhra_procedure_type
+      - patient_pathway_point
+      - therapeutic_areas
+      - uk_patient_population_range
+      - vaccine_administration_route
+      - vaccine_platform
+      - vaccine_storage_requirement
+
+  reporting:
+    title: Reporting
+    colour: "#f3e8ff"
+    tables:
+      - report_audits
+      - report_presets
+
+  email:
+    title: Email
+    colour: "#ffedd5"
+    tables:
+      - email_audits
+      - email_templates
+
+  user_features:
+    title: User Features
+    colour: "#ccfbf1"
+    tables:
+      - record_watchlists

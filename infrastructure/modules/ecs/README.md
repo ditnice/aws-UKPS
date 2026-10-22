@@ -14,6 +14,7 @@ ECS Module
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
 
@@ -37,6 +38,7 @@ No modules.
 | [aws_vpc_security_group_egress_rule.ecs_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.ecs_https_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.alb_to_ecs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [terraform_data.deployment_gate](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
@@ -51,6 +53,7 @@ No modules.
 | <a name="input_container_environment"></a> [container\_environment](#input\_container\_environment) | Plaintext environment variables supplied to the application container | `map(string)` | `{}` | no |
 | <a name="input_container_port"></a> [container\_port](#input\_container\_port) | The port on which the container listens | `number` | `3000` | no |
 | <a name="input_container_secrets"></a> [container\_secrets](#input\_container\_secrets) | Map of container environment variable names to Secrets Manager or SSM valueFrom references | `map(string)` | `{}` | no |
+| <a name="input_deployment_dependency"></a> [deployment\_dependency](#input\_deployment\_dependency) | Opaque value that must be resolved before the task definition is registered. Used to gate rollouts on pre-deployment jobs such as DB migrations. | `string` | `null` | no |
 | <a name="input_ecr_repository_url"></a> [ecr\_repository\_url](#input\_ecr\_repository\_url) | ECR repository URL | `string` | n/a | yes |
 | <a name="input_ecs_capacity_provider"></a> [ecs\_capacity\_provider](#input\_ecs\_capacity\_provider) | The capacity provider to use for the ECS cluster | `string` | `"FARGATE"` | no |
 | <a name="input_ecs_capacity_providers"></a> [ecs\_capacity\_providers](#input\_ecs\_capacity\_providers) | A list of capacity providers to use for the ECS cluster | `list(string)` | <pre>[<br/>  "FARGATE"<br/>]</pre> | no |
