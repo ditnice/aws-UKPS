@@ -1,4 +1,9 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.28.0@sha256:bb22d9815c728170f72750f4e5b0d672e06176142e1d602c7e66c050100b7e5b
+
+# ECS Fargate runs this image on linux/amd64 (infrastructure/modules/ecs sets no
+# runtime_platform), and the native-deps copies below use x86_64 library paths. Building for
+# that platform explicitly means arm64 machines emulate the build instead of failing.
+ARG ECS_PLATFORM=linux/amd64
 
 FROM scratch AS rds-ca
 
@@ -7,7 +12,9 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
     https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
     /eu-west-2-bundle.pem
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS restore
+# .NET 10 SDK on Ubuntu 24.04 "noble". Keep its .NET patch version in step with the chiseled
+# runtime below.
+FROM --platform=${ECS_PLATFORM} mcr.microsoft.com/dotnet/sdk:10.0.402-noble@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa AS restore
 
 WORKDIR /src
 
@@ -20,14 +27,17 @@ COPY . .
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish src/UKPS.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
 
 # TODO: Remove this temporary GSSAPI dependency when database authentication migrates to IAM auth with GSS encryption disabled.
-FROM ubuntu:noble AS native-deps
+# Ubuntu 24.04 "noble", the same release the chiseled runtime is built from, so the copied
+# libraries match its glibc.
+FROM --platform=${ECS_PLATFORM} ubuntu:noble-20260917@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55 AS native-deps
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 
+# ASP.NET Core 10 runtime on Ubuntu 24.04 "noble" chiseled (extra: includes ICU and tzdata).
 # checkov:skip=CKV_DOCKER_2: Distroless/chiseled base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP (see infrastructure/modules/alb/main.tf).
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra AS runtime
+FROM --platform=${ECS_PLATFORM} mcr.microsoft.com/dotnet/aspnet:10.0.13-noble-chiseled-extra@sha256:3ed6558056b54d5c9dfefb7ff473728e022ff2bf1d976cbf8ee07b05ec594374 AS runtime
 
 WORKDIR /app
 

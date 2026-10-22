@@ -9,7 +9,7 @@
 │   ├── tests/              - Backend test project and test assets
 │   ├── tools/              - Build-time tooling (ERD generator)
 │   ├── .editorconfig       - Backend editor and formatting rules
-│   ├── Containerfile       - Backend container build definition
+│   ├── Dockerfile          - Backend container build definition
 │   ├── README.md           - Backend-specific documentation
 │   └── ...                 - Supporting backend files
 ├── documentation/          - Project documentation assets
@@ -20,7 +20,7 @@
 │   ├── src/                - Next.js application source code
 │   ├── tests/              - Unit tests and test fixtures/mocks
 │   ├── .editorconfig       - Frontend editor and formatting rules
-│   ├── Containerfile       - Frontend container build definition
+│   ├── Dockerfile          - Frontend container build definition
 │   ├── README.md           - Frontend-specific documentation
 │   └── ...                 - Supporting frontend files
 ├── infrastructure/         - Terraform infrastructure as code
@@ -44,7 +44,7 @@ documented by a generated ERD, see [documentation/database](documentation/databa
 
 ## Frontend
 
-The frontend is a Next.js 16 application with Payload CMS 3 embedded directly via the `/app` directory integration, backed by PostgreSQL. The app is divided into three route groups: `(payload)` for the Payload admin interface, `(public)` for the public-facing site with slug-based routing, and `portal` for the authenticated user portal. Tests use Vitest for integration tests and Playwright for end-to-end tests.
+The frontend is a Next.js 16 application with Payload CMS 3 embedded directly via the `/app` directory integration, backed by PostgreSQL. The app is divided into three route groups: `(payload)` for the Payload admin interface, `(public)` for the public-facing site with slug-based routing, and `portal` for the authenticated user portal. Tests use Vitest for integration tests and Playwright for end-to-end tests. Run the whole Playwright suite against a Docker Compose stack with `just e2e` (see [Running E2E tests with Docker Compose](documentation/frontend.md#running-e2e-tests-with-docker-compose)).
 
 For more information, see the [frontend README](frontend/README.md).
 

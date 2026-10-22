@@ -1,4 +1,9 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.28.0@sha256:bb22d9815c728170f72750f4e5b0d672e06176142e1d602c7e66c050100b7e5b
+
+# ECS Fargate runs this image on linux/amd64 (infrastructure/modules/ecs sets no
+# runtime_platform). Building for the same platform keeps native modules (sharp, esbuild)
+# matching production, including on arm64 machines.
+ARG ECS_PLATFORM=linux/amd64
 
 FROM scratch AS rds-ca
 
@@ -7,14 +12,20 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
     https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
     /eu-west-2-bundle.pem
 
-FROM node:24-bookworm AS base
+# Node 24 on Debian 13 "trixie": keep the Node version and Debian release (glibc) in step
+# with the distroless runtime below.
+FROM --platform=${ECS_PLATFORM} node:24.21.0-trixie@sha256:1278a37eb510ec1606fba0e80f554bcc941ae0b44f35ae373c4822ae7717c64d AS base
 
 WORKDIR /app
 
 ENV COREPACK_HOME=/usr/local/share/corepack \
     NEXT_TELEMETRY_DISABLED=1
 
-RUN corepack enable && corepack prepare pnpm@12.8.1 --activate && chmod -R a+rX /usr/local/share/corepack
+# pnpm 12.13.0, pinned with its sha512 (from the npm registry's dist.integrity); corepack
+# verifies the hash on download. Keep this in step with the other frontend Dockerfile.
+RUN corepack enable \
+    && corepack prepare pnpm@12.13.0+sha512.1e55719bf26e809dce5c5084fdebaa64efb3da9038ae5d68a9f8a68311f1a45841c8c3b76a37298c3b66f6bcc80409a9b7f33c78a7168a3e90fb65a5d8235ae4 --activate \
+    && chmod -R a+rX /usr/local/share/corepack
 
 FROM base AS deps
 
@@ -32,8 +43,10 @@ RUN mkdir -p public
 RUN mkdir -p media
 RUN pnpm build
 
+# Distroless Node.js 24 on Debian 13. Distroless publishes no version tags, so it's pinned by
+# digest; keep its Node version in step with the base stage above.
 # checkov:skip=CKV_DOCKER_2: Distroless base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP.
-FROM gcr.io/distroless/nodejs24-debian13:nonroot AS runtime
+FROM --platform=${ECS_PLATFORM} gcr.io/distroless/nodejs24-debian13:nonroot@sha256:9eeb7f5887d0e239e78264b06f7f11d2e14be534050481803a9e4728fcdd278e AS runtime
 
 WORKDIR /app
 
