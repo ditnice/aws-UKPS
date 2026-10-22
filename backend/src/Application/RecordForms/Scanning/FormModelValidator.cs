@@ -1,0 +1,435 @@
+using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using UKPS.Api.Application.RecordForms.Model;
+using UKPS.Api.Application.RecordForms.Options;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
+using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
+
+namespace UKPS.Api.Application.RecordForms.Scanning;
+
+/// <summary>
+/// Checks scanned declarations against every startup rule and returns all the problems at once,
+/// so a broken build lists everything to fix. The rules are catalogued in
+/// <c>documentation/form-generation/creating-form-pages.md</c>.
+/// </summary>
+internal static partial class FormModelValidator
+{
+    private const string RevisionIdProperty = "RevisionId";
+
+    public static IReadOnlyList<string> Validate(
+        IReadOnlyList<EntityDeclaration> entities,
+        OptionProviderRegistry options
+    )
+    {
+        List<string> problems = [];
+
+        foreach (EntityDeclaration entity in entities)
+        {
+            ValidateEntity(entity, problems);
+            foreach (QuestionDeclaration question in entity.Questions)
+            {
+                ValidateQuestion(question, options, problems);
+            }
+        }
+
+        IEnumerable<RecordType> recordTypes = entities
+            .SelectMany(static e => e.Sections)
+            .Select(static s => s.RecordType)
+            .Distinct();
+        foreach (RecordType recordType in recordTypes)
+        {
+            ValidateForm(recordType, entities, problems);
+        }
+
+        return problems;
+    }
+
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.ExplicitCapture, 1000)]
+    private static partial Regex SlugPattern();
+
+    [GeneratedRegex(@"^[a-z0-9_]+(\.[a-z0-9_]+)?$", RegexOptions.ExplicitCapture, 1000)]
+    private static partial Regex QuestionIdPattern();
+
+    private static void ValidateEntity(EntityDeclaration entity, List<string> problems)
+    {
+        string name = entity.ClrType.Name;
+
+        IProperty? revisionId = entity.EntityType.FindProperty(RevisionIdProperty);
+        bool hasRevisionKey =
+            revisionId is not null
+            && revisionId.ClrType == typeof(int)
+            && revisionId
+                .GetContainingForeignKeys()
+                .Any(static fk => fk.PrincipalEntityType.ClrType == typeof(RecordRevision));
+        if (!hasRevisionKey)
+        {
+            problems.Add($"{name} has no int RevisionId foreign key to RecordRevision.");
+        }
+
+        if (entity.Sections.Any(static s => s.RowSource == FormRowSource.FirstSave))
+        {
+            string[] required = entity
+                .EntityType.GetProperties()
+                .Where(static p =>
+                    !p.IsNullable
+                    && !p.IsPrimaryKey()
+                    && !string.Equals(p.Name, RevisionIdProperty, StringComparison.Ordinal)
+                    && p.GetDefaultValueSql() is null
+                    && p.GetDefaultValue() is null
+                )
+                .Select(static p => p.Name)
+                .ToArray();
+            if (required.Length > 0)
+            {
+                problems.Add(
+                    $"{name} uses RowSource FirstSave but has non-nullable columns ({string.Join(", ", required)}); use RowSource RecordCreation."
+                );
+            }
+        }
+
+        foreach (
+            IGrouping<RecordType, FormSectionAttribute> duplicate in entity
+                .Sections.GroupBy(static s => s.RecordType)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add($"{name} declares more than one [FormSection] for {duplicate.Key}.");
+        }
+
+        foreach (FormSectionAttribute section in entity.Sections)
+        {
+            if (!SlugPattern().IsMatch(section.Id) || string.IsNullOrWhiteSpace(section.Title))
+            {
+                problems.Add(
+                    $"{name} declares section '{section.Id}' with a badly formed ID or a blank title."
+                );
+            }
+        }
+
+        if (entity.Questions.Count == 0)
+        {
+            problems.Add($"{name} declares [FormSection] but has no questions.");
+        }
+    }
+
+    private static void ValidateQuestion(
+        QuestionDeclaration question,
+        OptionProviderRegistry options,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        FormFieldAttribute field = question.Field;
+
+        if (!QuestionIdPattern().IsMatch(field.Id))
+        {
+            problems.Add($"{where} has a badly formed question ID '{field.Id}'.");
+        }
+
+        if (
+            !SlugPattern().IsMatch(question.Page.Id)
+            || string.IsNullOrWhiteSpace(question.Page.Title)
+        )
+        {
+            problems.Add(
+                $"{where} declares page '{question.Page.Id}' with a badly formed ID or a blank title."
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(field.Label))
+        {
+            problems.Add($"{where} has a blank label.");
+        }
+
+        FormControl? control = question.Control;
+        if (control is null)
+        {
+            problems.Add($"{where} is a reference ID, so its Control must be set explicitly.");
+            return;
+        }
+
+        if (!ControlRules.Allowed(question.Binding.Kind).Contains(control.Value))
+        {
+            problems.Add(
+                $"{where} uses control {control} which does not suit a {question.Binding.Kind} binding."
+            );
+            return;
+        }
+
+        if (!question.Binding.IsNullable && question.Required is null)
+        {
+            problems.Add($"{where} is bound to a non-nullable column, so it needs [FormRequired].");
+        }
+
+        ValidateOptions(question, control.Value, options, problems);
+        ValidateRules(question, control.Value, problems);
+        ValidatePresentation(question, control.Value, problems);
+    }
+
+    private static void ValidateOptions(
+        QuestionDeclaration question,
+        FormControl control,
+        OptionProviderRegistry options,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        bool isChoice = ControlRules.IsChoice(control);
+        if (question.Options is null)
+        {
+            if (isChoice)
+            {
+                problems.Add($"{where} uses choice control {control} but has no [FormOptions].");
+            }
+
+            return;
+        }
+
+        if (!isChoice)
+        {
+            problems.Add($"{where} uses text control {control} but has [FormOptions].");
+            return;
+        }
+
+        IOptionProvider? provider = options.Find(question.Options.Key);
+        if (provider is null)
+        {
+            problems.Add($"{where} uses unknown option provider '{question.Options.Key}'.");
+            return;
+        }
+
+        (OptionProviderKind expectedKind, Type? expectedSource) = ExpectedProvider(
+            question,
+            control
+        );
+
+        if (provider.Kind != expectedKind || provider.SourceType != expectedSource)
+        {
+            problems.Add(
+                $"{where} needs a {expectedKind} provider of {expectedSource?.Name}, but '{provider.Key}' is a {provider.Kind} provider of {provider.SourceType.Name}."
+            );
+        }
+
+        if (
+            control == FormControl.HierarchicalSelect
+            && expectedSource?.GetProperty("ParentId")?.PropertyType != typeof(int?)
+        )
+        {
+            problems.Add(
+                $"{where} uses HierarchicalSelect but {expectedSource?.Name} has no int? ParentId."
+            );
+        }
+    }
+
+    private static (OptionProviderKind Kind, Type? Source) ExpectedProvider(
+        QuestionDeclaration question,
+        FormControl control
+    )
+    {
+        if (question.Binding.Kind is BindingKind.Enum or BindingKind.Flags)
+        {
+            return (OptionProviderKind.Enum, question.Binding.EnumType);
+        }
+
+        OptionProviderKind kind =
+            control == FormControl.HierarchicalSelect
+                ? OptionProviderKind.ReferenceTree
+                : OptionProviderKind.Reference;
+        return (kind, question.Binding.ReferenceType);
+    }
+
+    private static void ValidateRules(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        if (
+            question.MaxLength is { } maxLength
+            && (control is not (FormControl.Text or FormControl.Textarea) || maxLength.Max <= 0)
+        )
+        {
+            problems.Add(
+                $"{where} has [FormMaxLength], which needs a Text or Textarea control and a positive maximum."
+            );
+        }
+
+        if (
+            question.MaxItems is { } maxItems
+            && (question.Shape != AnswerShape.Multi || maxItems.Max <= 0)
+        )
+        {
+            problems.Add(
+                $"{where} has [FormMaxItems], which needs a multi-value question and a positive maximum."
+            );
+        }
+    }
+
+    private static void ValidatePresentation(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        FormFieldAttribute field = question.Field;
+        bool isHierarchical = control == FormControl.HierarchicalSelect;
+
+        if (
+            field.Placeholder is not null
+            && control is not (FormControl.Select or FormControl.HierarchicalSelect)
+        )
+        {
+            problems.Add(
+                $"{where} sets Placeholder, which only a Select or HierarchicalSelect uses."
+            );
+        }
+
+        if ((field.ChildLabel is not null || field.ChildPlaceholder is not null) && !isHierarchical)
+        {
+            problems.Add(
+                $"{where} sets ChildLabel or ChildPlaceholder, which only a HierarchicalSelect uses."
+            );
+        }
+
+        if (
+            field.AddAnotherLabel is not null
+            && !(isHierarchical && question.Shape == AnswerShape.Multi)
+        )
+        {
+            problems.Add(
+                $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect uses."
+            );
+        }
+
+        if (isHierarchical && field.ChildLabel is null)
+        {
+            problems.Add($"{where} uses HierarchicalSelect, which needs a ChildLabel.");
+        }
+    }
+
+    private static void ValidateForm(
+        RecordType recordType,
+        IReadOnlyList<EntityDeclaration> entities,
+        List<string> problems
+    )
+    {
+        string form = $"The {recordType} form";
+        if (FormVersions.For(recordType) is null)
+        {
+            problems.Add($"{form} has no entry in FormVersions.");
+        }
+
+        var sections = entities
+            .SelectMany(e =>
+                e.Sections.Where(s => s.RecordType == recordType)
+                    .Select(s => (Entity: e, Section: s))
+            )
+            .ToArray();
+
+        foreach (var group in sections.GroupBy(static x => x.Section.Id, StringComparer.Ordinal))
+        {
+            if (group.Select(static x => (x.Section.Title, x.Section.Order)).Distinct().Count() > 1)
+            {
+                problems.Add(
+                    $"{form} declares section '{group.Key}' with different titles or orders."
+                );
+            }
+        }
+
+        ReportTies(
+            sections.DistinctBy(static x => x.Section.Id, StringComparer.Ordinal),
+            static x => x.Section.Order,
+            static x => $"section '{x.Section.Id}'",
+            form,
+            problems
+        );
+
+        var questions = sections
+            .SelectMany(static x =>
+                x.Entity.Questions.Select(q => (Question: q, SectionId: x.Section.Id))
+            )
+            .ToArray();
+        ValidatePages(form, questions, problems);
+
+        foreach (
+            var duplicate in questions
+                .GroupBy(static x => x.Question.Field.Id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add($"{form} uses question ID '{duplicate.Key}' more than once.");
+        }
+    }
+
+    private static void ValidatePages(
+        string form,
+        (QuestionDeclaration Question, string SectionId)[] questions,
+        List<string> problems
+    )
+    {
+        var pages = questions
+            .GroupBy(static x => x.Question.Page.Id, StringComparer.Ordinal)
+            .ToArray();
+        foreach (var page in pages)
+        {
+            if (
+                page.Select(static x => (x.Question.Page.Title, x.Question.Page.Order))
+                    .Distinct()
+                    .Count() > 1
+            )
+            {
+                problems.Add($"{form} declares page '{page.Key}' with different titles or orders.");
+            }
+
+            if (page.Select(static x => x.SectionId).Distinct(StringComparer.Ordinal).Count() > 1)
+            {
+                problems.Add(
+                    $"{form} has page '{page.Key}' spanning entities in different sections."
+                );
+            }
+
+            ReportTies(
+                page,
+                static x => x.Question.Field.Order,
+                static x => $"question '{x.Question.Field.Id}'",
+                $"{form}, page '{page.Key}',",
+                problems
+            );
+        }
+
+        foreach (
+            var section in pages
+                .Select(static p => p.First())
+                .GroupBy(static x => x.SectionId, StringComparer.Ordinal)
+        )
+        {
+            ReportTies(
+                section,
+                static x => x.Question.Page.Order,
+                static x => $"page '{x.Question.Page.Id}'",
+                $"{form}, section '{section.Key}',",
+                problems
+            );
+        }
+    }
+
+    private static void ReportTies<T>(
+        IEnumerable<T> items,
+        Func<T, int> order,
+        Func<T, string> describe,
+        string where,
+        List<string> problems
+    )
+    {
+        foreach (IGrouping<int, T> tie in items.GroupBy(order).Where(static g => g.Count() > 1))
+        {
+            problems.Add(
+                $"{where} has {string.Join(" and ", tie.Select(describe))} with the same Order {tie.Key}."
+            );
+        }
+    }
+}

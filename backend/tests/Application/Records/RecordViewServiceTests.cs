@@ -331,11 +331,21 @@ public class RecordViewServiceTests : DatabaseTestBase
         var bnfChapter = await AddEntity(new BnfChapter { Code = "1.1", Label = "Dyspepsia" }, ct);
         var formulationType = await AddEntity(new FormulationType { Label = "Tablet" }, ct);
         var areaB = await AddEntity(
-            new TherapeuticArea { Label = "Oncology", DisplayOrder = 2 },
+            new TherapeuticArea
+            {
+                Code = "14",
+                Label = "Oncology",
+                DisplayOrder = 2,
+            },
             ct
         );
         var areaA = await AddEntity(
-            new TherapeuticArea { Label = "Cardiology", DisplayOrder = 1 },
+            new TherapeuticArea
+            {
+                Code = "4",
+                Label = "Cardiology",
+                DisplayOrder = 1,
+            },
             ct
         );
         await AddEntity(

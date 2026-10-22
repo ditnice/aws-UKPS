@@ -13,4 +13,10 @@ internal enum Operation
     /// another users' details.
     /// </summary>
     ElevatedRead = 5,
+
+    /// <summary>
+    /// Answering record content form pages on a draft revision. Granted to standard users, unlike
+    /// <see cref="Update"/>.
+    /// </summary>
+    EditRecordContent = 6,
 }

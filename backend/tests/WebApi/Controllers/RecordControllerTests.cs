@@ -77,6 +77,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     {
         RecordId = 1,
         RevisionId = 2,
+        FirstPageId = "indication",
     };
 
     public RecordControllerTests(WebApplicationFactory<Program> factory)

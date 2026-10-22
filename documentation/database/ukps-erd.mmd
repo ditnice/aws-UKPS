@@ -151,6 +151,7 @@ erDiagram
             timestamptz updated_at "nullable"
             integer updated_by FK "nullable"
             integer workflow_status
+            xid xmin
         }
         record_status_histories:::record_workflow {
             integer id PK
@@ -469,6 +470,7 @@ erDiagram
         }
         therapeutic_areas:::reference_data {
             integer id PK
+            text code
             integer display_order "nullable"
             boolean is_archived
             text label

@@ -97,7 +97,13 @@ const RecordView = async ({ organisationId, recordId, recordType }: RecordViewPr
         ]}
       />
 
-      <ManageRecordActionBanner />
+      <ManageRecordActionBanner
+        updateRecordHref={
+          record.firstPageId
+            ? `/portal/records/${record.recordId}/revisions/${record.revisionId}/${record.firstPageId}`
+            : undefined
+        }
+      />
 
       <h2>View record details</h2>
       <Button variant="secondary">Export record to PDF</Button>

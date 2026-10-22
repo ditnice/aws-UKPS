@@ -16,10 +16,10 @@ export default function PortalDashboard() {
           <Link href="/portal/components">Components</Link>
         </li>
         <li>
-          <Link href="/portal/organisations/1">Organisation 1 manage org</Link>
+          <Link href="/portal/organisations/2">Organisation 2 manage org</Link>
         </li>
         <li>
-          <Link href="/portal/organisations/1/records">Organisation 1 records dashboard</Link>
+          <Link href="/portal/organisations/2/records">Organisation 2 records dashboard</Link>
         </li>
       </ul>
     </>
