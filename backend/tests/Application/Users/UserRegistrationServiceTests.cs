@@ -323,12 +323,14 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         var user = await _harness
             .GetClearedContext()
             .Users.Include(x => x.UserOrgMemberships)
+            .Include(x => x.OnboardingRecord)
             .FirstOrDefaultAsync(
                 x => x.WorkEmail == request.Command.WorkEmail,
                 TestContext.Current.CancellationToken
             );
 
         user.ShouldNotBeNull();
+        user.OnboardingRecord?.OnboardingFlow.ShouldBe(OnboardingFlow.SelfSignUp);
         var membership = user.UserOrgMemberships.ShouldHaveSingleItem();
 
         membership.Status.ShouldBe(UserOrgMembershipStatus.AwaitingSetup);

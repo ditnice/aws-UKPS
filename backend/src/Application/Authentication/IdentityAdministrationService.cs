@@ -12,6 +12,7 @@ using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.InternalServices.Identity.InitiateAuthenticationError
@@ -312,6 +313,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     {
         var newRecord = new UserOnboardingRecord()
         {
+            OnboardingFlow = existingRecord.OnboardingFlow,
             SetupToken = Guid.CreateVersion7(),
             CorrelationId = Guid.CreateVersion7(),
             CreatedByUserId = existingRecord.CreatedByUserId,
@@ -333,13 +335,29 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
+        OnboardingFlow onboardingFlow =
+            user.OnboardingRecord?.OnboardingFlow
+            ?? throw new InvalidOperationException(
+                "User's onboarding record was not set as expected."
+            );
         Uri link = _setupLinkCreator.GetSetupLink(setupToken);
+        IEmail email = onboardingFlow switch
+        {
+            OnboardingFlow.Invite => new UserSignUpRequestEmail() { Link = link },
+            OnboardingFlow.SelfSignUp => new UserMembershipRequestApprovedNotificationEmail()
+            {
+                Link = link,
+            },
+            _ => throw new UnreachableException(
+                $"Unexpected onboarding flow [{user.OnboardingRecord.OnboardingFlow}] encountered when sending setup link email."
+            ),
+        };
         await _emailService.SendEmail(
             new SendEmailCommand()
             {
                 PersonIdentifier = user.CognitoUsername,
                 RecipientAddress = user.WorkEmail,
-                Email = new UserSignUpRequestEmail() { Link = link },
+                Email = email,
             },
             cancellationToken
         );
