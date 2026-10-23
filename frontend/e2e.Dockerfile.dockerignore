@@ -1,0 +1,13 @@
+# Build context for e2e.Dockerfile. Never include .env files: frontend/.env holds real
+# dev-environment E2E credentials.
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!patches/**
+!playwright.config.ts
+!tsconfig.json
+!tests/e2e/**
+!src/app/portal/organisations/*/_lib/userActionAlert.ts
+tests/e2e/.auth/
+**/.env*

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { getUserDetailsWithinOrganisation } from '@/client/generated/sdk.gen'
 import type { UserInformationDto } from '@/client/generated/types.gen'
 import { notFound, notFoundError } from '@/test-utils/nextNavigation'
@@ -37,18 +38,7 @@ vi.mock('./_components/ChangePermissionsForm', () => ({
   ),
 }))
 
-const user: UserInformationDto = {
-  userId: 4,
-  fullName: 'Julie Brooks',
-  workTelephone: '01234 567890',
-  workEmail: 'julie.brooks@example.com',
-  organisationMembershipId: 9,
-  organisationId: 2,
-  organisationName: 'Example Pharma',
-  userRole: 'Standard',
-  status: 'Active',
-  hasMultipleOrganisations: false,
-}
+const user = fakeUserInformationDto()
 
 function mockResponse(overrides: Partial<UserInformationDto> = {}) {
   vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({

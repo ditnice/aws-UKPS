@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import type { Client } from '@/client/generated/client'
 import {
   getUserDetailsWithinOrganisation,
@@ -22,13 +23,8 @@ vi.mock('@/client/server-api', () => ({
 }))
 
 const user: UserInformationDto = {
-  userId: 4,
-  fullName: 'Julie Brooks',
-  workTelephone: '01234 567890',
+  ...fakeUserInformationDto(),
   workEmail: 'julie.brooks@example.com',
-  organisationMembershipId: 9,
-  organisationId: 2,
-  organisationName: 'Example Pharma',
   userRole: 'Standard',
   status: 'Active',
   hasMultipleOrganisations: false,
@@ -266,7 +262,7 @@ describe('UserActionAlert (direct invocation)', () => {
         expect(
           screen.queryByRole('heading', { name: 'User removed from UK PharmaScan' }),
         ).not.toBeInTheDocument()
-        expect(screen.queryByText(/Julie Brooks/)).not.toBeInTheDocument()
+        expect(screen.queryByText(user.fullName, { exact: false })).not.toBeInTheDocument()
         expect(screen.queryByRole('link', { name: 'Dismiss' })).not.toBeInTheDocument()
       },
     )

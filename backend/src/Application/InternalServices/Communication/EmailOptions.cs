@@ -8,6 +8,8 @@ internal record EmailOptions
 
     public int MaxResendSignUpLinkAttempts { get; set; } = 3;
 
+    public bool ListenerEnabled { get; init; } = true;
+
     [EmailAddress]
     public string? TestingEmailAddress { get; init; }
 

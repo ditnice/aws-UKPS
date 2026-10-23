@@ -64,6 +64,71 @@ cd frontend && pnpm dev    # https://localhost:3000
 Open `https://localhost:3000`, log in, and confirm in DevTools → Application → Cookies that
 `access_token`, `refresh_token`, and `csrf_token` are present with `Secure` checked.
 
+### Running E2E tests with Docker Compose
+
+The root `docker-compose.yml` runs Postgres, the backend and the frontend from their production
+Dockerfiles, plus a Playwright runner container. No certificates, AWS access or secrets are needed.
+
+```
+just e2e                          # build, run the whole Playwright suite, tear down
+just e2e --project=chromium       # extra arguments are passed to `playwright test`
+CI=true just e2e                  # CI behaviour: 1 worker, 2 retries, JUnit output
+```
+
+Results are written to `e2e-results/` (git-ignored):
+
+- `playwright-report/` – HTML report (`pnpm --dir frontend exec playwright show-report
+  ../e2e-results/playwright-report` from the repository root)
+- `test-results/` – traces and screenshots
+- `junit.xml` – when `CI` is set
+- `stack.log` – Postgres, backend and frontend logs, when the run fails
+
+The folder is emptied at the start of each run.
+
+How the stack is set up:
+
+- **Database:** Postgres 17 on a `tmpfs`, so every run starts empty. The backend drops, migrates and
+  deterministically reseeds `ukps_backend` on start; Payload creates and migrates `ukps_payload` on
+  its first request. Public pages use the defaults in `src/payload/DefaultPages.ts`.
+- **Auth:** the dev bypass. The frontend runs with `AUTHENTICATION_MODE=DEV` and the backend with
+  `DevAuthentication`, so every request is the seeded Super user (`example.user@email.com`) in
+  organisation 1. Playwright runs with `E2E_AUTH_MODE=dev`, which runs the
+  `*.authenticated.e2e.spec.ts` specs without the Cognito `auth-setup` project.
+- **Not covered:** real Cognito sign-in, MFA and sign-up, and emails (the SQS listener is off via
+  `Email__ListenerEnabled=false`). `auth/redirects.e2e.spec.ts` skips because the dev bypass never
+  redirects to sign-in. Run `pnpm test:e2e:authenticated-dev` against the dev environment for
+  real-auth coverage.
+- **Readiness:** the runtime images are distroless, so instead of Compose healthchecks the
+  Playwright container runs `tests/e2e/scripts/wait-for-stack.mjs` first.
+
+To explore the app or use Playwright UI mode from your machine:
+
+```
+just stack-up                     # http://localhost:3000, backend on http://localhost:8080/scalar
+cd frontend
+PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=1 E2E_AUTH_MODE=dev \
+  E2E_ORGANISATION_ID=1 pnpm test:e2e:ui
+just stack-down
+```
+
+`UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports. Both bind to `127.0.0.1` only, as
+dev authentication makes every request the Super user. `just stack-up` needs a fixed frontend port,
+because the frontend only accepts form submissions and API calls from the origin your browser uses
+(`http://localhost:<port>`).
+
+`just e2e` runs as its own Compose project (`ukps-e2e`) with free ports picked at random (`0`), so it
+doesn't clash with `just stack-up` or with `pnpm dev`/`just run`, and its teardown leaves those
+running. Set `COMPOSE_PROJECT_NAME`, `UKPS_FRONTEND_PORT` or `UKPS_BACKEND_PORT` to override this.
+
+#### Running in a CI pipeline (e.g. TeamCity)
+
+- Build step: `CI=true COMPOSE_PROJECT_NAME=ukps-e2e-<build number> just e2e`. A project name for
+  each build lets builds share an agent.
+- XML report processing: `e2e-results/junit.xml`.
+- Artifacts: `e2e-results/**`.
+- The agent needs Docker with Compose v2 and BuildKit, on x86_64 (`backend/Dockerfile` copies
+  x86_64-specific libraries).
+
 ### Coding Standards
 
 The following is a collection of agreed coding standards.
