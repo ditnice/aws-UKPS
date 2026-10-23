@@ -36,9 +36,9 @@ export default function RequestSubmitted() {
           </SummaryList>
         </>
       )}
-      <Link href="/portal">
-        <Button>Return to UK PharmaScan home</Button>
-      </Link>
+      <Button elementType={Link} href={'/portal'}>
+        Return to UK PharmaScan home
+      </Button>
     </>
   )
 }
