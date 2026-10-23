@@ -2,10 +2,10 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
-using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
@@ -20,14 +20,15 @@ internal partial class RecordService(
     AppDbContext dbContext,
     IDateTimeProvider timeProvider,
     IOrganisationAuthoriser organisationAuthoriser,
-    IUserService userService
+    CurrentDbUserEntityService currentDbUserEntityService
 ) : IRecordService
 {
     private readonly IDateTimeProvider _timeProvider = timeProvider;
 
-    private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
+    private readonly CurrentDbUserEntityService _currentDbUserEntityService =
+        currentDbUserEntityService;
 
-    private readonly IUserService _userService = userService;
+    private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
     private const int PublishedRecordUpdateDueMonths = 3;
 
     public async Task<GetRecordsResult> GetOrganisationRecords(
@@ -119,7 +120,7 @@ internal partial class RecordService(
         return organisationExists ? null : new GetRecordsError.OrganisationNotFound(organisationId);
     }
 
-    public async Task<DiscardRecordError?> DiscardDraftRecord(
+    public async Task<Result<DiscardRecordError>> DiscardDraftRecord(
         int recordId,
         CancellationToken cancellationToken
     )
@@ -130,30 +131,27 @@ internal partial class RecordService(
         );
         if (record is null)
         {
-            return new DiscardRecordError.RecordNotFound();
+            return Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound());
         }
         if (!await CanDiscardDraftRecord(record, cancellationToken))
         {
-            return new DiscardRecordError.InvalidDiscard();
+            return Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard());
         }
 
-        var currentUser = await _userService.GetCurrentUser(cancellationToken);
-        var user = await dbContext.Users.SingleAsync(
-            u => u.Id == currentUser.UserId,
-            cancellationToken
-        );
+        var currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
+
         var performedAt = _timeProvider.GetUtcNow();
 
         record.ChangeStatus(
             RecordStatus.Discarded,
             performedAt,
-            user,
+            currentUser,
             RecordStatusChangeReason.ManuallyDiscarded
         );
         RecordRevision revision = new RecordRevision()
         {
             CreatedAt = performedAt,
-            CreatedByUser = user,
+            CreatedByUser = currentUser,
             WorkflowStatus = WorkflowStatus.Discarded,
             Record = record,
         };
@@ -162,12 +160,12 @@ internal partial class RecordService(
         {
             Record = record,
             EventType = RecordEventType.RecordDiscarded,
-            PerformedBy = user.Id,
+            PerformedBy = currentUser.Id,
             PerformedAt = performedAt,
         };
         dbContext.RecordEvents.Add(recordEvent);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return null;
+        return Result<DiscardRecordError>.Ok();
     }
 
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(

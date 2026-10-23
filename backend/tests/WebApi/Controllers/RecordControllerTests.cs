@@ -487,7 +487,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
 
         _mockRecordService
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
-            .Returns((DiscardRecordError?)null);
+            .Returns(Result<DiscardRecordError>.Ok());
 
         var response = await _client.PostAsync(
             new Uri($"records/{recordId}/discard", UriKind.Relative),
@@ -508,7 +508,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
 
         _mockRecordService
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
-            .Returns(new DiscardRecordError.RecordNotFound());
+            .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound()));
 
         var response = await _client.PostAsync(
             new Uri($"records/{recordId}/discard", UriKind.Relative),
@@ -530,7 +530,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
 
         _mockRecordService
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
-            .Returns(new DiscardRecordError.InvalidDiscard());
+            .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard()));
 
         var response = await _client.PostAsync(
             new Uri($"records/{recordId}/discard", UriKind.Relative),

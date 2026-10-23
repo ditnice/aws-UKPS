@@ -38,5 +38,8 @@ public interface IRecordService
     /// <returns>
     /// An <see cref="DiscardRecordError"/> indicating the outcome of the operation.
     /// </returns>
-    Task<DiscardRecordError?> DiscardDraftRecord(int recordId, CancellationToken cancellationToken);
+    Task<Result<DiscardRecordError>> DiscardDraftRecord(
+        int recordId,
+        CancellationToken cancellationToken
+    );
 }

@@ -179,14 +179,22 @@ public class RecordController(
         CancellationToken cancellationToken
     )
     {
-        var error = await recordService.DiscardDraftRecord(recordId, cancellationToken);
+        Result<DiscardRecordError> result = await recordService.DiscardDraftRecord(
+            recordId,
+            cancellationToken
+        );
 
-        return error switch
+        if (result.IsOk)
         {
-            null => Ok(),
+            return Ok();
+        }
+        return result.Error switch
+        {
             DiscardRecordError.RecordNotFound => NotFound(),
             DiscardRecordError.InvalidDiscard => BadRequest(),
-            _ => StatusCode(StatusCodes.Status500InternalServerError),
+            _ => throw new InvalidOperationException(
+                $"Unexpected error when discarding draft record {recordId}."
+            ),
         };
     }
 }

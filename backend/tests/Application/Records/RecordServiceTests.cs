@@ -1,6 +1,7 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
@@ -18,6 +19,7 @@ using GetRecordsResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Records.Errors.GetRecordsError
 >;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
+using SortDirection = UKPS.Api.Application.Common.SortDirection;
 
 namespace UKPS.Api.Tests.Application.Records;
 
@@ -318,7 +320,8 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldNotBeEmpty();
-        dto.Items.Select(x => x.DisplayStatus).ShouldBeInOrder(sortDirection);
+        dto.Items.Select(x => x.DisplayStatus)
+            .ShouldBeInOrder((Shouldly.SortDirection)sortDirection);
     }
 
     [Fact]
@@ -333,7 +336,8 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldNotBeEmpty();
-        dto.Items.Select(x => x.DisplayStatus).ShouldBeInOrder(SortDirection.Ascending);
+        dto.Items.Select(x => x.DisplayStatus)
+            .ShouldBeInOrder((Shouldly.SortDirection)SortDirection.Ascending);
     }
 
     [Fact]
@@ -448,8 +452,11 @@ public class RecordServiceTests : DatabaseTestBase
         var cancellationToken = TestContext.Current.CancellationToken;
         Record record = await CreateDraftRecord();
 
-        DiscardRecordError? result = await Service.DiscardDraftRecord(record.Id, cancellationToken);
-        result.ShouldBeNull();
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
+            record.Id,
+            cancellationToken
+        );
+        result.IsOk.ShouldBeTrue();
         Context.ChangeTracker.Clear();
 
         Record updatedRecord = await Context
@@ -463,12 +470,12 @@ public class RecordServiceTests : DatabaseTestBase
     {
         var cancellationToken = TestContext.Current.CancellationToken;
 
-        DiscardRecordError? result = await Service.DiscardDraftRecord(
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
             int.MaxValue,
             cancellationToken
         );
-
-        result.ShouldBeOfType<DiscardRecordError.RecordNotFound>();
+        result.ShouldBeError();
+        result.Error.ShouldBeOfType<DiscardRecordError.RecordNotFound>();
     }
 
     [Fact]
@@ -477,9 +484,12 @@ public class RecordServiceTests : DatabaseTestBase
         var cancellationToken = TestContext.Current.CancellationToken;
         Record record = await CreateDraftRecord(RecordStatus.Published);
 
-        DiscardRecordError? result = await Service.DiscardDraftRecord(record.Id, cancellationToken);
-
-        result.ShouldBeOfType<DiscardRecordError.InvalidDiscard>();
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
+            record.Id,
+            cancellationToken
+        );
+        result.ShouldBeError();
+        result.Error.ShouldBeOfType<DiscardRecordError.InvalidDiscard>();
 
         Context.ChangeTracker.Clear();
 
