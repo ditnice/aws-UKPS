@@ -103,6 +103,11 @@ How the stack is set up:
   but the SQS listener that sends them is off via `Email__ListenerEnabled=false`). `auth/redirects.e2e.spec.ts` skips because the dev bypass never
   redirects to sign-in. Run `pnpm test:e2e:authenticated-dev` against the dev environment for
   real-auth coverage.
+- **Test tags:** tests tagged `@mutates-data` (they create, change or delete data) or `@visual`
+  (screenshot comparisons against Linux Chromium baselines) only run when `E2E_EPHEMERAL_STACK=true`,
+  which only the Compose playwright service sets. Every Playwright project skips them otherwise, so
+  deployed runs (`test:e2e:dev`, `test:e2e:authenticated-dev`) never change the environment's data.
+  Tag new tests with `mutatesDataTag` or `visualTag` from `tests/e2e/helpers/test-environment.ts`.
 - **Readiness:** the backend waits for Postgres and Floci healthchecks. The backend and frontend
   runtime images are distroless, so instead of Compose healthchecks for them the Playwright container
   runs `tests/e2e/scripts/wait-for-stack.mjs` first.
@@ -113,9 +118,12 @@ To explore the app or use Playwright UI mode from your machine:
 just stack-up                     # http://localhost:3000, backend on http://localhost:8080/scalar
 cd frontend
 PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=1 E2E_AUTH_MODE=dev \
-  E2E_ORGANISATION_ID=1 pnpm test:e2e:ui
+  E2E_EPHEMERAL_STACK=true E2E_ORGANISATION_ID=1 pnpm test:e2e:ui
 just stack-down
 ```
+
+Changes made by `@mutates-data` tests last until `just stack-down`; the backend reseeds when it
+restarts.
 
 `UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports. Both bind to `127.0.0.1` only, as
 dev authentication makes every request the Super user. `just stack-up` needs a fixed frontend port,

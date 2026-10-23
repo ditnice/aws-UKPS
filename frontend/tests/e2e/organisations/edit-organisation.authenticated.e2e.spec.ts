@@ -1,5 +1,5 @@
 import { expect, test } from '../fixtures/test'
-import { requireEnvironmentVariable } from '../helpers/test-environment'
+import { mutatesDataTag, requireEnvironmentVariable, visualTag } from '../helpers/test-environment'
 
 const testOrganisation = {
   organisationName: 'Test organisation',
@@ -7,7 +7,7 @@ const testOrganisation = {
   organisationEmail: 'test@example.com',
   phoneNumber: '07123456789',
 }
-test('edit organisation details', async ({ page }) => {
+test('edit organisation details', { tag: visualTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}/edit`)
   await expect(
@@ -46,7 +46,7 @@ test('cancels an organisation edit without saving', async ({ page }) => {
   await expect(page).toHaveURL(`/portal/organisations/${organisationId}`)
 })
 
-test('successfully edits the oganisation name', async ({ page }) => {
+test('successfully edits the oganisation name', { tag: mutatesDataTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}/edit`)
 
@@ -60,7 +60,7 @@ test('successfully edits the oganisation name', async ({ page }) => {
   await expect(page.getByText('Organisation Details Updated')).toBeVisible()
 })
 
-test('successfully edits the oganisation address', async ({ page }) => {
+test('successfully edits the oganisation address', { tag: mutatesDataTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}/edit`)
 
@@ -74,7 +74,7 @@ test('successfully edits the oganisation address', async ({ page }) => {
   await expect(page.getByText('Organisation Details Updated')).toBeVisible()
 })
 
-test('successfully edits the email', async ({ page }) => {
+test('successfully edits the email', { tag: mutatesDataTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}/edit`)
 
@@ -88,7 +88,7 @@ test('successfully edits the email', async ({ page }) => {
   await expect(page.getByText('Organisation Details Updated')).toBeVisible()
 })
 
-test('successfully edits the phone number', async ({ page }) => {
+test('successfully edits the phone number', { tag: mutatesDataTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}/edit`)
 

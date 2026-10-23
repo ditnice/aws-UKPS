@@ -1,5 +1,5 @@
 import { expect, test } from '../../fixtures/test'
-import { requireEnvironmentVariable } from '../../helpers/test-environment'
+import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-environment'
 
 // A unique email, so a retry or an earlier run against a shared environment can't collide.
 const testUser = {
@@ -7,7 +7,7 @@ const testUser = {
   workEmail: `playwright-${Date.now()}@example.com`,
   phoneNumber: '07123456789',
 }
-test.describe('Adding and removing a user', () => {
+test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
   // 'remove a user' removes the user that 'adding a new user' invites.
   test.describe.configure({ mode: 'serial' })
 

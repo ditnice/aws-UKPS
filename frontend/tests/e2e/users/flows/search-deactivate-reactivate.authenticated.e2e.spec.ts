@@ -1,8 +1,8 @@
 import { expect, test } from '../../fixtures/test'
 import { goToNextPage } from '../../helpers/pagination'
-import { requireEnvironmentVariable } from '../../helpers/test-environment'
+import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-environment'
 
-test.describe('Searching, activating and deactivating a user', () => {
+test.describe('Searching, activating and deactivating a user', { tag: mutatesDataTag }, () => {
   // 'reactivate a deactive user' reactivates the user that 'deactivate an active user' deactivates.
   test.describe.configure({ mode: 'serial' })
   let deactivatedUserEmail: string | undefined

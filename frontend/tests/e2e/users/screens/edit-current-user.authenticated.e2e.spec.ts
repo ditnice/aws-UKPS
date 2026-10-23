@@ -1,7 +1,8 @@
 import { expect, test } from '../../fixtures/test'
+import { mutatesDataTag, visualTag } from '../../helpers/test-environment'
 
 test.describe('User details screen', () => {
-  test('user details page', async ({ page }) => {
+  test('user details page', { tag: visualTag }, async ({ page }) => {
     await page.goto('/portal/user/me/edit-details')
     await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()
     // The field values come from whichever user is signed in, so they're masked.
@@ -23,7 +24,7 @@ test.describe('User details screen', () => {
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible()
   })
 
-  test('saves current-user details', async () => {
+  test('saves current-user details', { tag: mutatesDataTag }, async () => {
     test.fixme(true, 'The form does not call the user API or show a success state.')
   })
 

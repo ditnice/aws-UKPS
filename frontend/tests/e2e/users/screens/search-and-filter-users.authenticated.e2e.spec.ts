@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test'
 
 import { expect, test } from '../../fixtures/test'
-import { requireEnvironmentVariable } from '../../helpers/test-environment'
+import { requireEnvironmentVariable, visualTag } from '../../helpers/test-environment'
 
 function activeFilter(page: Page, label: string) {
   return page.getByRole('list', { name: 'Active filters' }).getByRole('listitem').filter({
@@ -10,7 +10,7 @@ function activeFilter(page: Page, label: string) {
 }
 
 test.describe('Searching and filtering users', () => {
-  test('search and filter users page', async ({ page }) => {
+  test('search and filter users page', { tag: visualTag }, async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}`)
     await expect(page.locator('.filter-panel')).toHaveScreenshot('filter-panel.png', {

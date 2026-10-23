@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test'
 
 import { expect, test } from '../fixtures/test'
-import { requireEnvironmentVariable } from '../helpers/test-environment'
+import { mutatesDataTag, requireEnvironmentVariable } from '../helpers/test-environment'
 
 // Nothing seeds registration requests, so each test submits its own through the public form.
 async function requestAccess(page: Page, organisationId: string): Promise<string> {
@@ -34,7 +34,7 @@ async function filterByEmail(page: Page, workEmail: string) {
   await page.getByRole('button', { name: 'Apply filter', exact: true }).click()
 }
 
-test('approves a registration request', async ({ page }) => {
+test('approves a registration request', { tag: mutatesDataTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   const workEmail = await requestAccess(page, organisationId)
   const row = await openRequest(page, organisationId, workEmail)
@@ -54,7 +54,7 @@ test('approves a registration request', async ({ page }) => {
   await expect(userRow.getByRole('cell', { name: 'Pending', exact: true })).toBeVisible()
 })
 
-test('rejects a registration request', async ({ page }) => {
+test('rejects a registration request', { tag: mutatesDataTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   const workEmail = await requestAccess(page, organisationId)
   const row = await openRequest(page, organisationId, workEmail)

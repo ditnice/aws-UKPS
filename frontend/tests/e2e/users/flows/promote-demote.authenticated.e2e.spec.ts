@@ -1,8 +1,8 @@
 import { expect, test } from '../../fixtures/test'
 import { goToNextPage } from '../../helpers/pagination'
-import { requireEnvironmentVariable } from '../../helpers/test-environment'
+import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-environment'
 
-test.describe('Promoting and demoting a user', () => {
+test.describe('Promoting and demoting a user', { tag: mutatesDataTag }, () => {
   // Both tests change user roles, so running them in parallel lets one pick the other's user.
   test.describe.configure({ mode: 'serial' })
 
