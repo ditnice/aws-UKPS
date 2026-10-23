@@ -489,12 +489,12 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
             .Returns(Result<DiscardRecordError>.Ok());
 
-        var response = await _client.PostAsync(
-            new Uri($"records/{recordId}/discard", UriKind.Relative),
-            null,
-            TestContext.Current.CancellationToken
+        using var request = new HttpRequestMessage(
+            HttpMethod.Patch,
+            new Uri($"records/{recordId}/discard", UriKind.Relative)
         );
 
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         await _mockRecordService
             .Received(1)
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
@@ -510,11 +510,12 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
             .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound()));
 
-        var response = await _client.PostAsync(
-            new Uri($"records/{recordId}/discard", UriKind.Relative),
-            null,
-            TestContext.Current.CancellationToken
+        using var request = new HttpRequestMessage(
+            HttpMethod.Patch,
+            new Uri($"records/{recordId}/discard", UriKind.Relative)
         );
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         await _mockRecordService
             .Received(1)
@@ -532,11 +533,12 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
             .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard()));
 
-        var response = await _client.PostAsync(
-            new Uri($"records/{recordId}/discard", UriKind.Relative),
-            null,
-            TestContext.Current.CancellationToken
+        using var request = new HttpRequestMessage(
+            HttpMethod.Patch,
+            new Uri($"records/{recordId}/discard", UriKind.Relative)
         );
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         await _mockRecordService
             .Received(1)
