@@ -83,6 +83,10 @@ public class SelectedOrganisationMismatchTests : IClassFixture<WebApplicationFac
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureNoDatabase();
+                builder.UseSetting(
+                    "ConnectionStrings:DefaultConnection",
+                    "Host=localhost;Database=unused"
+                );
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
                 builder.UseSetting(
                     $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
