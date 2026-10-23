@@ -590,7 +590,9 @@ The QA user approves revision 2, and the record is published for the first time.
 | 6 | 1 | 2 | 2 | `record_published` | 15 | 2026-01-19T15:00:00Z | NULL | NULL |
 
 > [!NOTE]
-> Only one event is written, `record_published`. There is no extra `record_status_changed`, even though a status history row is written.
+> Only one event is written, `record_published`. There is no extra `record_status_changed`, even though a status history row is written. This follows a general rule:
+> - Every `record_status_histories` row has exactly one event. It is `record_status_changed`, unless the status change is a side effect of a more specific event (`record_created` in [stage 1](#stage-1-first-save-and-continue-on-a-brand-new-record), `record_published` here).
+> - Every `record_status_changed` event has exactly one `record_status_histories` row.
 
 <br>
 
@@ -727,7 +729,7 @@ User 7 archives the record because development has been discontinued.
 
 ## Stage 13: Discard a draft record
 
-A record can be discarded only while it has a single revision that is still in `draft`, which means it has never been submitted or published. Discarding sets both the revision and the record to `discarded`. Nothing is deleted.
+A record can be discarded only while it has a single revision that is still in `draft`, which means it has never been submitted or published. Any user in the organisation can discard it. Discarding sets both the revision and the record to `discarded`. Nothing is deleted.
 
 This stage follows a second record (2). User 7 created it on 2026-03-02 with revision 4, as in [stage 1](#stage-1-first-save-and-continue-on-a-brand-new-record) (`record_events` 13, `record_status_histories` 5), and never submitted it. They now discard it.
 
@@ -747,13 +749,16 @@ This stage follows a second record (2). User 7 created it on 2026-03-02 with rev
 
 | id | record_id | from_status | to_status | reason | note | updated_by | updated_at |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 6 | 2 | `unpublished` | `discarded` | NULL | NULL | 7 | 2026-03-20T15:00:00Z |
+| 6 | 2 | `unpublished` | `discarded` | `manually_discarded` | NULL | 7 | 2026-03-20T15:00:00Z |
 
 **`record_events`** is inserted:
 
 | id | record_id | revision_id | qa_review_id | event_type | performed_by | performed_at | note | payload |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 14 | 2 | 4 | NULL | `manually_discarded` | 7 | 2026-03-20T15:00:00Z | NULL | NULL |
+| 14 | 2 | 4 | NULL | `record_status_changed` | 7 | 2026-03-20T15:00:00Z | NULL | NULL |
+
+> [!NOTE]
+> As in [stage 11](#stage-11-put-on-hold), the history row holds the from, to and reason, and the event is the timeline entry. Unlike on hold and archive, the event sets `revision_id`, because the revision changes status too.
 
 <br>
 
@@ -761,7 +766,7 @@ This stage follows a second record (2). User 7 created it on 2026-03-02 with rev
 
 When a draft first revision has been untouched for a year, the system discards it and writes the same rows, with these differences:
 
-- `record_events.event_type` is `automatically_discarded`.
+- `record_status_histories.reason` is `automatically_discarded`.
 - `record_events.performed_by` and `record_status_histories.updated_by` are NULL.
 
 > [!WARNING]
@@ -795,7 +800,7 @@ When a draft first revision has been untouched for a year, the system discards i
 | Rejected revisions frozen. `reviewed_at` untouched on rejection | [5](#stage-5-qa-rejects) |
 | Copy-forward must remap date FKs and cover every revision-owned table | [6](#stage-6-pharma-user-edits-after-rejection) |
 | `reviewed_at` = submission time, not approval time | [8](#stage-8-qa-approves) |
-| Status history row but only a `record_published` event | [8](#stage-8-qa-approves) |
+| One event per status history row: `record_status_changed`, unless a side effect of `record_created` or `record_published` | [8](#stage-8-qa-approves) |
 | Date precision change: in place vs new row (orphans) | [10](#stage-10-update-a-published-record) |
 | No status history row when already published | [10](#stage-10-update-a-published-record) |
 | Superseded revisions stay published. Current = latest published | [10](#stage-10-update-a-published-record) |
@@ -805,4 +810,3 @@ When a draft first revision has been untouched for a year, the system discards i
 | Discard eligibility: exactly one revision, still `draft` (not just `unpublished`) | [13](#stage-13-discard-a-draft-record) |
 | "Untouched for a year" measured from the audit | [13](#stage-13-discard-a-draft-record) |
 | Revision and record status change in one transaction. `discarded` is terminal | [13](#stage-13-discard-a-draft-record) |
-| New enum members appended, not inserted | [13](#stage-13-discard-a-draft-record) |
