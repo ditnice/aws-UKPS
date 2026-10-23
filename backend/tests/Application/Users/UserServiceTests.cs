@@ -2337,31 +2337,23 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(UserOrgStatus.Active, UserOrgStatus.Active, UserRole.Champion, true)]
-    [InlineData(UserOrgStatus.Active, UserOrgStatus.Inactive, UserRole.Champion, true)]
-    [InlineData(UserOrgStatus.Inactive, UserOrgStatus.Active, UserRole.Champion, true)]
-    [InlineData(UserOrgStatus.Inactive, UserOrgStatus.Inactive, UserRole.Champion, true)]
-    [InlineData(UserOrgStatus.Active, UserOrgStatus.Deactivated, UserRole.Champion, false)]
-    [InlineData(UserOrgStatus.Active, UserOrgStatus.Removed, UserRole.Champion, false)]
-    [InlineData(UserOrgStatus.Active, UserOrgStatus.AwaitingSetup, UserRole.Champion, false)]
-    [InlineData(UserOrgStatus.Active, UserOrgStatus.Active, UserRole.Standard, false)]
-    [InlineData(UserOrgStatus.Active, UserOrgStatus.Active, UserRole.Super, false)]
-    public async Task RemoveUser_WhenTargetIsEligibleChampion_ShouldRequireAnotherEligibleChampion(
-        UserOrgStatus targetStatus,
+    [InlineData(UserOrgStatus.Deactivated, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Removed, UserRole.Champion)]
+    [InlineData(UserOrgStatus.AwaitingSetup, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Active, UserRole.Standard)]
+    [InlineData(UserOrgStatus.Active, UserRole.Super)]
+    public async Task RemoveUser_WhenOtherMembershipIsNotEligibleChampion_ShouldRejectWithoutChanges(
         UserOrgStatus otherStatus,
-        UserRole otherRole,
-        bool allowed
+        UserRole otherRole
     )
     {
-        var targetMembershipStatus = (UserOrgMembershipStatus)targetStatus;
+        // Arrange
         var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
         await AddCallerUser();
-        (User target, UserOrgMembership membership) = await AddUserWithMembership(
-            status: targetMembershipStatus
-        );
+        (User target, UserOrgMembership membership) = await AddUserWithMembership();
         membership.UserRole = UserRole.Champion;
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var other = await AddChampionContactTestMembership(
+        var otherMembership = await AddChampionContactTestMembership(
             membership.Organisation!,
             "other@example.com",
             otherMembershipStatus,
@@ -2369,28 +2361,78 @@ public class UserServiceTests : DatabaseTestBase
         );
         AddCognitoAccount(target);
 
+        // Act
         var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
 
-        if (allowed)
-        {
-            result.ShouldBeSuccess();
-            _harness.Cognito.GetUser(target.CognitoUsername).ShouldBeNull();
-        }
-        else
-        {
-            result
-                .ShouldBeError()
-                .ShouldBeOfType<RemoveUserError.LastRemainingChampion>()
-                .UserId.ShouldBe(target.Id);
-            _harness.Cognito.GetUser(target.CognitoUsername).ShouldNotBeNull();
-            Context.ChangeTracker.Entries().ShouldAllBe(x => x.State == EntityState.Unchanged);
-        }
-        await AssertSavedMembership(
-            membership.Id,
-            allowed ? UserOrgMembershipStatus.Removed : targetMembershipStatus,
-            UserRole.Champion
+        // Assert
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<RemoveUserError.LastRemainingChampion>()
+            .UserId.ShouldBe(target.Id);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
         );
-        await AssertSavedMembership(other.Id, otherMembershipStatus, otherRole);
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedOtherMembership.Status.ShouldBe(otherMembershipStatus);
+        savedOtherMembership.UserRole.ShouldBe(otherRole);
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldNotBeNull();
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Active, UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Active, UserOrgStatus.Inactive)]
+    [InlineData(UserOrgStatus.Inactive, UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Inactive, UserOrgStatus.Inactive)]
+    public async Task RemoveUser_WhenAnotherEligibleChampionExists_ShouldSucceed(
+        UserOrgStatus targetStatus,
+        UserOrgStatus otherStatus
+    )
+    {
+        // Arrange
+        var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
+        await AddCallerUser();
+        (User target, UserOrgMembership membership) = await AddUserWithMembership(
+            status: (UserOrgMembershipStatus)targetStatus
+        );
+        membership.UserRole = UserRole.Champion;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var otherMembership = await AddChampionContactTestMembership(
+            membership.Organisation!,
+            "other@example.com",
+            otherMembershipStatus
+        );
+        AddCognitoAccount(target);
+
+        // Act
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.ShouldBeSuccess();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Removed);
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedOtherMembership.Status.ShouldBe(otherMembershipStatus);
+        savedOtherMembership.UserRole.ShouldBe(UserRole.Champion);
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldBeNull();
     }
 
     [Fact]
@@ -2398,7 +2440,7 @@ public class UserServiceTests : DatabaseTestBase
     {
         // Arrange
         var user = _userFaker.Generate();
-        Organisation organisation = _organisationFaker
+        Organisation blockedOrganisation = _organisationFaker
             .RuleFor(
                 x => x.UserOrgMemberships,
                 _ =>
@@ -2411,11 +2453,33 @@ public class UserServiceTests : DatabaseTestBase
             )
             .Generate();
 
-        await AddEntity(organisation, TestContext.Current.CancellationToken);
+        await AddEntity(blockedOrganisation, TestContext.Current.CancellationToken);
+
+        var safeOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        // Same user, different organisation, eligible champion membership
+        await AddEntity(
+            new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                .Generate()
+                .Update(x =>
+                {
+                    x.User = user;
+                    x.Organisation = safeOrganisation;
+                }),
+            TestContext.Current.CancellationToken
+        );
+
+        // A second eligible champion
+        await AddChampionContactTestMembership(safeOrganisation, "safe.other@example.com");
 
         var userBeforeResult = await Service.GetUserDetailsWithinOrganisation(
             user.Id,
-            organisation.Id,
+            blockedOrganisation.Id,
             TestContext.Current.CancellationToken
         );
         var userBefore = userBeforeResult.ShouldBeSuccess();
@@ -2427,7 +2491,7 @@ public class UserServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<RemoveUserError.LastRemainingChampion>();
         var userAfterResult = await Service.GetUserDetailsWithinOrganisation(
             user.Id,
-            organisation.Id,
+            blockedOrganisation.Id,
             TestContext.Current.CancellationToken
         );
         var userAfter = userAfterResult.ShouldBeSuccess();
