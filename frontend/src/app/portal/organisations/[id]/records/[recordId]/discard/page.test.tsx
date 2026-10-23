@@ -118,7 +118,10 @@ describe('DiscardRecordPage', () => {
     expect(getRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { id: medicineRecord.recordId },
-        query: { recordType: medicineRecord.recordType },
+        query: {
+          recordType: medicineRecord.recordType,
+          organisationId: medicineRecord.organisationId,
+        },
       }),
     )
     expect(

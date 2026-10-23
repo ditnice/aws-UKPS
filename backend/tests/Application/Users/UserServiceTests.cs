@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
@@ -135,9 +137,67 @@ public class UserServiceTests : DatabaseTestBase
                     OrganisationName = currentUserMembership.Organisation!.OrganisationName,
                     UserRole = currentUserMembership.UserRole,
                     Status = currentUserMembership.Status.ConvertToUserOrgStatus(),
+                    HasMultipleOrganisations = currentUser.HasMultipleSelectableOrganisations(),
                 }
             );
         }
+    }
+
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(2, true)]
+    public async Task GetCurrentUser_ShouldReturnWhetherTheUserHasMultipleOrganisations(
+        int numberOfMemberships,
+        bool expected
+    )
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            numberOfMemberships,
+            organisationStatus: UserOrgStatus.Active
+        );
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = memberships[0].OrganisationId,
+                Email = user.WorkEmail,
+                CognitoUsername = user.CognitoUsername,
+            }
+        );
+
+        UserInformationDto result = await Service.GetCurrentUser(
+            TestContext.Current.CancellationToken
+        );
+
+        result.HasMultipleOrganisations.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task GetCurrentUser_ShouldNotCountOrganisationsThatCannotBeSelected()
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            2,
+            organisationStatus: UserOrgStatus.Active
+        );
+        await Context
+            .Organisations.Where(x => x.Id == memberships[1].OrganisationId)
+            .ExecuteUpdateAsync(
+                x => x.SetProperty(o => o.Status, UserOrgStatus.Inactive),
+                TestContext.Current.CancellationToken
+            );
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = memberships[0].OrganisationId,
+                Email = user.WorkEmail,
+                CognitoUsername = user.CognitoUsername,
+            }
+        );
+
+        UserInformationDto result = await Service.GetCurrentUser(
+            TestContext.Current.CancellationToken
+        );
+
+        result.HasMultipleOrganisations.ShouldBeFalse();
     }
 
     [Fact]
@@ -1298,6 +1358,44 @@ public class UserServiceTests : DatabaseTestBase
         notFound.OrganisationId.ShouldBe(otherOrganisation.Id);
     }
 
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_WhenOrganisationIsNotSelected_ThrowsMismatch()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        IUserService service = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentUser(x => ChampionWithAnotherOrganisationSelected(x, membership))
+            .Service;
+
+        SelectedOrganisationMismatchException exception =
+            await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+                service.GetUserDetailsWithinOrganisation(
+                    user.Id,
+                    membership.OrganisationId,
+                    TestContext.Current.CancellationToken
+                )
+            );
+
+        exception.OrganisationId.ShouldBe(membership.OrganisationId);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisation_WhenOrganisationIsNotSelectedAndUserIsNotInIt_ThrowsMismatch()
+    {
+        (_, UserOrgMembership membership) = await AddUserWithMembership();
+        (User otherUser, _) = await AddUserWithMembership();
+        IUserService service = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentUser(x => ChampionWithAnotherOrganisationSelected(x, membership))
+            .Service;
+
+        await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+            service.GetUserDetailsWithinOrganisation(
+                otherUser.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            )
+        );
+    }
+
     [Theory]
     [InlineData(UserRole.Super, true)]
     [InlineData(UserRole.Champion, false)]
@@ -1649,6 +1747,21 @@ public class UserServiceTests : DatabaseTestBase
 
         result.Select(x => x.Id).ShouldBe([validMemberships.Single().OrganisationId]);
     }
+
+    private static CurrentUser ChampionWithAnotherOrganisationSelected(
+        CurrentUser user,
+        UserOrgMembership membership
+    ) =>
+        user with
+        {
+            UserRole = UserRole.Champion,
+            OrganisationId = membership.OrganisationId + 1000,
+            SelectableOrganisationIds =
+            [
+                membership.OrganisationId + 1000,
+                membership.OrganisationId,
+            ],
+        };
 
     private async Task<(User User, UserOrgMembership Membership)> AddUserWithMembership(
         Action<User>? configureUser = null,

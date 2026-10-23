@@ -84,12 +84,13 @@ public class RecordController(
     /// </summary>
     /// <param name="id">The identifier of the record to retrieve.</param>
     /// <param name="recordType">The expected type of the record.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The record data.</returns>
     /// <response code="200">Returns the record data.</response>
-    /// <response code="400">The record type is missing or invalid.</response>
+    /// <response code="400">The record type or organisation is missing or invalid.</response>
     /// <response code="404">
-    /// The requested record was not found or is not accessible to the caller.
+    /// The requested record was not found in the organisation or is not accessible to the caller.
     /// </response>
     [HttpGet("{id:int}", Name = nameof(GetRecord))]
     [ProducesResponseType<RecordDto>(StatusCodes.Status200OK)]
@@ -98,10 +99,16 @@ public class RecordController(
     public async Task<ActionResult<RecordDto>> GetRecord(
         int id,
         [FromQuery, Required] RecordType? recordType,
+        [FromQuery, Required] int? organisationId,
         CancellationToken cancellationToken
     )
     {
-        var result = await recordViewService.GetRecord(id, recordType!.Value, cancellationToken);
+        var result = await recordViewService.GetRecord(
+            id,
+            recordType!.Value,
+            organisationId!.Value,
+            cancellationToken
+        );
 
         // Returned directly rather than via Ok() so it serialises with its recordType.
         return result.Match<ActionResult<RecordDto>>(

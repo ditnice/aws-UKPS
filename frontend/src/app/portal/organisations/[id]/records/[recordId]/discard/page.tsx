@@ -55,7 +55,7 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
   } = await getRecord({
     client: await createServerApiClient(),
     path: { id: recordId },
-    query: { recordType },
+    query: { recordType, organisationId },
   })
 
   if (

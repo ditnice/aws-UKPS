@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
@@ -17,7 +18,8 @@ namespace UKPS.Api.Application.Records;
 internal partial class RecordService(
     AppDbContext dbContext,
     IDateTimeProvider timeProvider,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    ICurrentUserInfoService currentUserInfoService
 ) : IRecordService
 {
     private readonly IDateTimeProvider _timeProvider = timeProvider;
@@ -97,6 +99,8 @@ internal partial class RecordService(
         CancellationToken cancellationToken
     )
     {
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         bool actionPermitted = _organisationAuthoriser.CanPerformOperationOnOrganisation(
             operation,
             organisationId

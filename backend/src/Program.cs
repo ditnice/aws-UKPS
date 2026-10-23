@@ -67,7 +67,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder
     .Services.AddControllers(options =>
     {
-        options.Conventions.Add(new ProducesUnauthorizedResponseConvention());
+        options.Conventions.Add(new ProducesAuthorisationResponsesConvention());
+        options.Filters.Add<SelectedOrganisationMismatchExceptionFilter>();
     })
     .AddJsonOptions(options =>
     {

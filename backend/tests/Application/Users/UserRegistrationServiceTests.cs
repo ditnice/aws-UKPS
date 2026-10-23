@@ -1,6 +1,8 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
+using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
@@ -191,6 +193,60 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         );
 
         result.ShouldBeError().ShouldBeOfType<GetUserDetailsError.IdNotFound>();
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_WhenOrganisationIsNotSelected_ThrowsMismatch()
+    {
+        var request = await CreateRegistrationRequest();
+
+        SelectedOrganisationMismatchException exception =
+            await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+                _harness
+                    .UpdateCurrentUser(ChampionWithAnotherOrganisationSelected)
+                    .Service.GetUserRegistrationById(
+                        _organisation.Id,
+                        request.Id,
+                        TestContext.Current.CancellationToken
+                    )
+            );
+
+        exception.OrganisationId.ShouldBe(_organisation.Id);
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_WhenOrganisationIsNotSelectedAndRequestIsNotInIt_ThrowsMismatch()
+    {
+        await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+            _harness
+                .UpdateCurrentUser(ChampionWithAnotherOrganisationSelected)
+                .Service.GetUserRegistrationById(
+                    _organisation.Id,
+                    999,
+                    TestContext.Current.CancellationToken
+                )
+        );
+    }
+
+    [Fact]
+    public async Task GetUserRegistrationById_WhenOrganisationIsNotSelectedAndRoleDoesNotPermit_ThrowsMismatch()
+    {
+        var request = await CreateRegistrationRequest();
+
+        await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+            _harness
+                .UpdateCurrentUser(user =>
+                    ChampionWithAnotherOrganisationSelected(user) with
+                    {
+                        UserRole = UserRole.Standard,
+                    }
+                )
+                .Service.GetUserRegistrationById(
+                    _organisation.Id,
+                    request.Id,
+                    TestContext.Current.CancellationToken
+                )
+        );
     }
 
     [Fact]
@@ -577,4 +633,12 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     }
 
     private sealed record RegistrationContext(int Id, RegisterUserCommandDto Command);
+
+    private CurrentUser ChampionWithAnotherOrganisationSelected(CurrentUser user) =>
+        user with
+        {
+            UserRole = UserRole.Champion,
+            OrganisationId = _organisation.Id + 1000,
+            SelectableOrganisationIds = [_organisation.Id + 1000, _organisation.Id],
+        };
 }

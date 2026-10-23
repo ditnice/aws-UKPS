@@ -1,19 +1,22 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { OrganisationListDto, updateCurrentOrganisation } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Table } from '@/components/Table/Table'
+import { getOrganisationLandingHref } from '@/lib/auth/routing'
 
 export type SelectOrganisationTableProps = {
   organisations: OrganisationListDto[]
+  returnTo?: string
 }
 
-export const SelectOrganisationTable = ({ organisations }: SelectOrganisationTableProps) => {
-  const router = useRouter()
+export const SelectOrganisationTable = ({
+  organisations,
+  returnTo,
+}: SelectOrganisationTableProps) => {
   const [hasError, setHasError] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -27,7 +30,8 @@ export const SelectOrganisationTable = ({ organisations }: SelectOrganisationTab
         setHasError(true)
         return
       }
-      router.push(`/portal/organisations/${organisationId}/records`)
+      // A full page load so nothing from the previous organisation is kept, such as the header.
+      globalThis.location.assign(getOrganisationLandingHref(organisationId, returnTo))
     } catch {
       setHasError(true)
     } finally {

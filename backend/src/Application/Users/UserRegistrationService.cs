@@ -19,6 +19,7 @@ namespace UKPS.Api.Application.Users;
 internal class UserRegistrationService : IUserRegistrationService
 {
     private readonly IOrganisationAuthoriser _organisationAuthoriser;
+    private readonly ICurrentUserInfoService _currentUserInfoService;
     private readonly UserOnboardingService _userOnboardingService;
     private readonly CurrentDbUserEntityService _currentDbUserEntityService;
     private readonly IEmailService _emailService;
@@ -30,6 +31,7 @@ internal class UserRegistrationService : IUserRegistrationService
         AppDbContext dbContext,
         IDateTimeProvider dateTimeProvider,
         IOrganisationAuthoriser organisationAuthoriser,
+        ICurrentUserInfoService currentUserInfoService,
         UserOnboardingService userOnboardingService,
         CurrentDbUserEntityService currentDbUserEntityService,
         IEmailService emailService,
@@ -39,6 +41,7 @@ internal class UserRegistrationService : IUserRegistrationService
         _dbContext = dbContext;
         _dateTimeProvider = dateTimeProvider;
         _organisationAuthoriser = organisationAuthoriser;
+        _currentUserInfoService = currentUserInfoService;
         _userOnboardingService = userOnboardingService;
         _currentDbUserEntityService = currentDbUserEntityService;
         _emailService = emailService;
@@ -99,13 +102,15 @@ internal class UserRegistrationService : IUserRegistrationService
         CancellationToken cancellationToken
     )
     {
+        _currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         // Authorise against the requested organisation before looking the request up, so an
         // unauthorised caller gets the same response whether or not the request exists.
-        var authorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
+        bool isAuthorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
             Operation.SignUpUser,
             organisationId
         );
-        if (!authorised)
+        if (!isAuthorised)
         {
             return GetUserRegistrationByIdResult.Err(new GetUserDetailsError.UserNotAuthorised());
         }
@@ -129,6 +134,8 @@ internal class UserRegistrationService : IUserRegistrationService
         CancellationToken cancellationToken
     )
     {
+        _currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         bool isAuthorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
             Operation.Update,
             organisationId
@@ -193,6 +200,8 @@ internal class UserRegistrationService : IUserRegistrationService
         CancellationToken cancellationToken
     )
     {
+        _currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         bool isAuthorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
             Operation.Update,
             organisationId

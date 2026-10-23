@@ -36,6 +36,8 @@ internal sealed class OrganisationMembershipService(
         CancellationToken cancellationToken
     )
     {
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         if (
             !organisationAuthoriser.CanPerformOperationOnOrganisation(
                 Operation.Update,
@@ -83,6 +85,8 @@ internal sealed class OrganisationMembershipService(
         CancellationToken cancellationToken
     )
     {
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         if (
             !organisationAuthoriser.CanPerformOperationOnOrganisation(
                 Operation.Update,
@@ -146,6 +150,8 @@ internal sealed class OrganisationMembershipService(
         CancellationToken cancellationToken
     )
     {
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         if (
             !organisationAuthoriser.CanPerformOperationOnOrganisation(
                 Operation.Update,

@@ -70,6 +70,7 @@ internal partial class UserService(
             OrganisationName = membership.Organisation.OrganisationName,
             UserRole = currentUser.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
+            HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
         };
     }
 
@@ -388,6 +389,8 @@ internal partial class UserService(
                 ? new GetUsersError.NotAllowed(null)
                 : null;
         }
+
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId.Value);
 
         bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
             operation,
