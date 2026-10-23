@@ -23,6 +23,7 @@ const defaultRootLinks: NavLinkItem[] = [
 const defaultPortalLinks: NavLinkItem[] = [
   { href: '/portal', label: 'Dashboard' },
   { href: '/portal/components', label: 'Components' },
+  { href: '/portal/user/me', label: 'Manage my details' },
 ]
 
 function isPortalPath(pathname: string) {

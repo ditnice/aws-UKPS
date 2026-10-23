@@ -141,6 +141,12 @@ variable "seeded_users_json" {
   }
 }
 
+variable "reseed_on_startup" {
+  description = "Whether the migration Lambda reseeds the database."
+  type        = bool
+  default     = true
+}
+
 variable "memory_size" {
   description = "Lambda memory in MB."
   type        = number

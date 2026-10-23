@@ -29,6 +29,7 @@ No modules.
 | [aws_iam_role_policy_attachment.vpc_execution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.xray](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_lambda_function.db_migrator](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
+| [aws_lambda_invocation.db_migrator](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_invocation) | resource |
 | [aws_security_group.lambda_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_sqs_queue.db_migrator_dlq](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
 | [aws_vpc_security_group_egress_rule.aurora](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
@@ -52,6 +53,7 @@ No modules.
 | <a name="input_memory_size"></a> [memory\_size](#input\_memory\_size) | Lambda memory in MB. | `number` | `512` | no |
 | <a name="input_project"></a> [project](#input\_project) | Name of the project | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region, used to scope the KMS ViaService condition. | `string` | n/a | yes |
+| <a name="input_reseed_on_startup"></a> [reseed\_on\_startup](#input\_reseed\_on\_startup) | Whether the migration Lambda reseeds the database. | `bool` | `true` | no |
 | <a name="input_reserved_concurrent_executions"></a> [reserved\_concurrent\_executions](#input\_reserved\_concurrent\_executions) | Reserved concurrent executions for the Lambda. | `number` | `1` | no |
 | <a name="input_seeded_users_json"></a> [seeded\_users\_json](#input\_seeded\_users\_json) | JSON-encoded list of users (with roles) to seed. Matches Seeding\_\_SeedUsersJson on the backend ECS service. | `string` | `"[]"` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Logical service name used in resource names | `string` | n/a | yes |
@@ -64,5 +66,8 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_function_name"></a> [function\_name](#output\_function\_name) | Name of the migration Lambda function |
+| <a name="output_function_version"></a> [function\_version](#output\_function\_version) | Published version of the migration Lambda function |
+| <a name="output_invocation_id"></a> [invocation\_id](#output\_invocation\_id) | ID of the deployment-time migration invocation. Depend on this to run after migrations complete. |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | ID of the Lambda security group |
 <!-- END_TF_DOCS -->

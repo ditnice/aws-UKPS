@@ -11,7 +11,7 @@ export type InputFluidWidth =
 
 export type InputWidth = InputFixedWidth | InputFluidWidth
 
-export type InputProps = Omit<ComponentPropsWithoutRef<'input'>, 'className'> & {
+export type InputProps = Omit<ComponentPropsWithoutRef<'input'>, 'className' | 'title'> & {
   className?: string
   error?: boolean
   errorMessage?: string
@@ -19,6 +19,7 @@ export type InputProps = Omit<ComponentPropsWithoutRef<'input'>, 'className'> & 
   inputRef?: Ref<HTMLInputElement>
   label: string | null
   name: string
+  title?: string
   /**
    * Fixed widths (2, 3, 4, 5, 10, 20, 30) constrain the input to a character-based
    * max-width. Fluid widths resize the input as a percentage of its container.
@@ -55,6 +56,7 @@ export function Input({
   label,
   name,
   style,
+  title,
   type = 'text',
   width,
   ...rest
@@ -67,6 +69,7 @@ export function Input({
 
   return (
     <div className={clsx('input', error && 'input--error', className)} data-component="input">
+      {title && <h2>{title}</h2>}
       {label && (
         <label className="input__label" htmlFor={inputId}>
           {label}
