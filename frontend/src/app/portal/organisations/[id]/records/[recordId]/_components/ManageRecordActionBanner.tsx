@@ -1,7 +1,22 @@
+import Link from 'next/link'
+
+import type { RecordDto } from '@/client/generated'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
-export const ManageRecordActionBanner = () => {
+import { getRecordActions } from '../_lib/recordActions'
+
+type ManageRecordActionBannerProps = {
+  record: Pick<
+    RecordDto,
+    'organisationId' | 'recordId' | 'recordType' | 'displayStatus' | 'recordStatus'
+  >
+}
+
+export const ManageRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
+  const actions = getRecordActions(record)
+  const discardHref = `/portal/organisations/${record.organisationId}/records/${record.recordId}/discard?recordType=${record.recordType}`
+
   return (
     <ActionBanner
       variant="subtle"
@@ -9,12 +24,22 @@ export const ManageRecordActionBanner = () => {
       headingLevel={2}
       cta={
         <ButtonGroup>
-          <Button variant="cta" buttonType="button">
-            Update record
-          </Button>
-          <Button>Change record status</Button>
-          <Button>Confirm information as current</Button>
-          <Button variant="secondary">View record timeline</Button>
+          {actions.includes('update') && (
+            <Button variant="cta" buttonType="button">
+              Update record
+            </Button>
+          )}
+          {actions.includes('changeStatus') && <Button>Change record status</Button>}
+          {actions.includes('confirmCurrent') && <Button>Confirm information as current</Button>}
+          {actions.includes('discard') && (
+            <Button elementType={Link} href={discardHref}>
+              Discard record
+            </Button>
+          )}
+          {actions.includes('confirmOnHold') && <Button>Confirm status as current</Button>}
+          {actions.includes('viewTimeline') && (
+            <Button variant="secondary">View record timeline</Button>
+          )}
         </ButtonGroup>
       }
     >

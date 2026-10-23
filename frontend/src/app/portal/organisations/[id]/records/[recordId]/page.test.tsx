@@ -14,8 +14,13 @@ const mocks = vi.hoisted(() => ({
   }),
 }))
 
-vi.mock('@/client/generated', () => ({
+vi.mock('@/client/generated', async () => ({
   getRecord: vi.fn(),
+  RecordType: (
+    await vi.importActual<typeof import('@/client/generated/types.gen')>(
+      '@/client/generated/types.gen',
+    )
+  ).RecordType,
 }))
 
 vi.mock('@/client/server-api', () => ({
@@ -81,10 +86,10 @@ const renderPage = async (recordId = '42', recordType: string | undefined = 'Med
     params: Promise.resolve({ id: '7', recordId }),
     searchParams: Promise.resolve({ recordType }),
   })
-  // The organisation wrapper mock returns the record view element, so render it here.
+  // The organisation wrapper mock renders the async record view directly, so resolve it here.
   const view = page.props.children({ id: 7 }) as ReactElement<unknown>
-  const viewComponent = view.type as (props: unknown) => ReactElement
-  render(viewComponent(view.props))
+  const viewComponent = view.type as (props: unknown) => Promise<ReactElement>
+  render(await viewComponent(view.props))
 }
 
 beforeEach(() => {

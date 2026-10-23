@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getRecord, RecordDto, RecordType } from '@/client/generated'
+import { getRecord, RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
@@ -15,12 +15,6 @@ import { recordStatusLabels, recordStatusTagColours } from '../labels'
 import { ManageRecordActionBanner } from './_components/ManageRecordActionBanner'
 import { MedicineRecordDetails } from './_components/MedicineRecordDetails'
 
-const parseRecordId = (value: string): number | null =>
-  /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null
-
-const parseRecordType = (value: string | string[] | undefined): RecordType | null =>
-  value === 'Medicine' || value === 'Vaccine' ? value : null
-
 type RecordPageProps = {
   params: Promise<{ id: string; recordId: string }>
   searchParams: Promise<{ recordType?: string | string[] }>
@@ -28,19 +22,36 @@ type RecordPageProps = {
 
 const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
   const { id, recordId: recordIdParam } = await params
+  const { recordType: recordTypeParam } = await searchParams
   const organisationId = parsePositiveInteger(id)
-  const recordId = parseRecordId(recordIdParam)
-  const recordType = parseRecordType((await searchParams).recordType)
+  const recordId = parsePositiveInteger(recordIdParam)
+  const recordType = Object.values(RecordType).find((type) => type === recordTypeParam)
 
   if (!organisationId || !recordId || !recordType) {
     notFound()
   }
 
-  // Fetch the record before the organisation, so the record endpoint can check whether the record
-  // exists in this organisation, whether the user may see it, and whether this is their selected
-  // organisation. Otherwise the organisation wrapper below would offer to switch organisation
-  // first, even for a record that doesn't exist.
-  const { data: record, response } = await getRecord({
+  return (
+    <OrganisationPageWrapper organisationId={id}>
+      {(organisation) => (
+        <RecordView organisationId={organisation.id} recordId={recordId} recordType={recordType} />
+      )}
+    </OrganisationPageWrapper>
+  )
+}
+
+type RecordViewProps = {
+  organisationId: number
+  recordId: number
+  recordType: RecordType
+}
+
+const RecordView = async ({ organisationId, recordId, recordType }: RecordViewProps) => {
+  const {
+    data: record,
+    error,
+    response,
+  } = await getRecord({
     client: await createServerApiClient(),
     path: { id: recordId },
     query: { recordType, organisationId },
@@ -50,24 +61,11 @@ const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
     notFound()
   }
 
-  return (
-    <OrganisationPageWrapper organisationId={id}>
-      {(organisation) => <RecordView organisationId={organisation.id} record={record} />}
-    </OrganisationPageWrapper>
-  )
-}
-
-type RecordViewProps = {
-  organisationId: number
-  record: RecordDto | undefined
-}
-
-const RecordView = ({ organisationId, record }: RecordViewProps) => {
   const backLink = (
     <BackLink href={`/portal/organisations/${organisationId}/records`}>Back</BackLink>
   )
 
-  if (!record) {
+  if (error || !record) {
     return (
       <section>
         <PageHeader heading="Unable to load record" backLink={backLink} />
@@ -96,7 +94,7 @@ const RecordView = ({ organisationId, record }: RecordViewProps) => {
         ]}
       />
 
-      <ManageRecordActionBanner />
+      <ManageRecordActionBanner record={record} />
 
       <h2>View record details</h2>
       <Button variant="secondary">Export record to PDF</Button>

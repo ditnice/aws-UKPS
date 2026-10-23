@@ -5,7 +5,7 @@ export const recordStatusLabels: Record<RecordDisplayStatus, string> = {
   Draft: 'Draft',
   QAReview: 'QA review',
   Published: 'Published',
-  OnHold: 'On Hold',
+  OnHold: 'On hold',
   Archived: 'Archived',
 }
 
