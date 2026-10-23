@@ -2,9 +2,10 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 
-import { FilterByInput, FilterPanel } from '@nice-digital/nds-filters'
+import { FilterPanel } from '@nice-digital/nds-filters'
 
 import { RecordDisplayStatus, UpdateStatus } from '@/client/generated'
+import { FilterByInput } from '@/components/FilterByInput/FilterByInput'
 
 import { FilterOptionsGroup } from '../_components/OrganisationFilters'
 
@@ -44,6 +45,7 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
         label="Search Records"
         name="search"
         buttonLabel="Apply filter"
+        hint="Search by record title, company code or record ID."
         inputProps={{
           placeholder: 'Enter record identifier',
           defaultValue: query.search ?? '',
