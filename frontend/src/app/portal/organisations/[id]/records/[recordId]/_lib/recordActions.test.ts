@@ -17,10 +17,10 @@ describe('getRecordActions', () => {
       'a draft of a published record',
       'Draft',
       'Published',
-      ['update', 'changeStatus', 'viewTimeline'],
+      ['update', 'changeStatus', 'confirmCurrent', 'viewTimeline'],
     ],
     ['in QA review', 'QAReview', 'Unpublished', ['viewTimeline']],
-    ['on hold', 'OnHold', 'OnHold', ['changeStatus', 'viewTimeline']],
+    ['on hold', 'OnHold', 'OnHold', ['changeStatus', 'confirmOnHold', 'viewTimeline']],
     ['archived', 'Archived', 'Archived', ['viewTimeline']],
   ])('returns the actions for a record that is %s', (_, displayStatus, recordStatus, expected) => {
     expect(getRecordActions({ displayStatus, recordStatus })).toEqual(expected)

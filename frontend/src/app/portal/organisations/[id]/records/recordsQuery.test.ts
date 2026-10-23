@@ -107,7 +107,7 @@ describe('active records filters', () => {
     expect(getActiveFilters(query)).toEqual([
       { key: 'search', value: 'medicine & vaccine', label: 'medicine & vaccine' },
       { key: 'record-status', value: 'Published', label: 'Published' },
-      { key: 'record-status', value: 'OnHold', label: 'On Hold' },
+      { key: 'record-status', value: 'OnHold', label: 'On hold' },
       { key: 'update-status', value: 'Overdue', label: 'Overdue' },
       { key: 'update-status', value: 'NotOverdue', label: 'Not overdue' },
     ])

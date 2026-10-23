@@ -48,10 +48,20 @@ describe('ManageRecordActionBanner', () => {
       'a draft of a published record',
       'Draft',
       'Published',
-      ['Update record', 'Change record status', 'View record timeline'],
+      [
+        'Update record',
+        'Change record status',
+        'Confirm information as current',
+        'View record timeline',
+      ],
     ],
     ['in QA review', 'QAReview', 'Unpublished', ['View record timeline']],
-    ['on hold', 'OnHold', 'OnHold', ['Change record status', 'View record timeline']],
+    [
+      'on hold',
+      'OnHold',
+      'OnHold',
+      ['Change record status', 'Confirm status as current', 'View record timeline'],
+    ],
     ['archived', 'Archived', 'Archived', ['View record timeline']],
   ])(
     'shows the permitted actions for a record that is %s',
