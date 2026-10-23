@@ -156,6 +156,9 @@ internal partial class RecordService(
             input = input.Where(m =>
                 (m.Title != null && EF.Functions.ILike(m.Title, pattern, "\\"))
                 || EF.Functions.ILike(m.CompanyCode, pattern, "\\")
+#pragma warning disable CA1305, MA0011 // Translated to SQL, so locale does not apply
+                || EF.Functions.ILike(m.Id.ToString(), pattern, "\\")
+#pragma warning restore CA1305, MA0011
             );
         }
 
