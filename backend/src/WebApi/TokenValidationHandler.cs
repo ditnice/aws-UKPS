@@ -79,10 +79,7 @@ internal class TokenValidationHandler : ITokenValidationHandler
         )
         {
             identity?.AddClaim(
-                new Claim(
-                    UkpsClaimTypes.SelectableMembership,
-                    $"{selectable.OrganisationId}:{selectable.UserRole}"
-                )
+                new Claim(UkpsClaimTypes.SelectableOrganisationId, $"{selectable.OrganisationId}")
             );
         }
     }

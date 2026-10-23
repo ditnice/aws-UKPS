@@ -1379,7 +1379,7 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUserDetailsWithinOrganisation_WhenOrganisationIsNotSelectedAndUserIsNotInIt_ReturnsUserNotFound()
+    public async Task GetUserDetailsWithinOrganisation_WhenOrganisationIsNotSelectedAndUserIsNotInIt_ThrowsMismatch()
     {
         (_, UserOrgMembership membership) = await AddUserWithMembership();
         (User otherUser, _) = await AddUserWithMembership();
@@ -1387,13 +1387,13 @@ public class UserServiceTests : DatabaseTestBase
             .UpdateCurrentUser(x => ChampionWithAnotherOrganisationSelected(x, membership))
             .Service;
 
-        GetUserInformationResult result = await service.GetUserDetailsWithinOrganisation(
-            otherUser.Id,
-            membership.OrganisationId,
-            TestContext.Current.CancellationToken
+        await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+            service.GetUserDetailsWithinOrganisation(
+                otherUser.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            )
         );
-
-        result.ShouldBeError().ShouldBeOfType<GetUsersError.UserNotFound>();
     }
 
     [Theory]
@@ -1756,10 +1756,10 @@ public class UserServiceTests : DatabaseTestBase
         {
             UserRole = UserRole.Champion,
             OrganisationId = membership.OrganisationId + 1000,
-            SelectableMemberships =
+            SelectableOrganisationIds =
             [
-                new(membership.OrganisationId + 1000, UserRole.Champion),
-                new(membership.OrganisationId, UserRole.Champion),
+                membership.OrganisationId + 1000,
+                membership.OrganisationId,
             ],
         };
 

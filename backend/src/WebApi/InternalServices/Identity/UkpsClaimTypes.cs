@@ -33,8 +33,7 @@ internal static class UkpsClaimTypes
 
     /// <summary>
     /// The claim type representing an organisation the user can select, with one claim per
-    /// organisation. The value is the organisation identifier and the user's role in it, in the
-    /// format <c>{organisationId}:{userRole}</c>.
+    /// organisation. The value is the organisation identifier.
     /// </summary>
-    public const string SelectableMembership = "selectable_membership";
+    public const string SelectableOrganisationId = "selectable_organisation_id";
 }

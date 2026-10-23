@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
@@ -17,7 +18,8 @@ using GetRecordResult = Result<RecordDto, GetRecordError>;
 
 internal sealed class RecordViewService(
     AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    ICurrentUserInfoService currentUserInfoService
 ) : IRecordViewService
 {
     public async Task<GetRecordResult> GetRecord(
@@ -27,13 +29,16 @@ internal sealed class RecordViewService(
         CancellationToken cancellationToken
     )
     {
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         // Authorise against the requested organisation before looking the record up, so an
         // unauthorised caller gets the same response whether or not the record exists.
-        OrganisationAccess access = organisationAuthoriser.GetOrganisationAccess(
-            Operation.Read,
-            organisationId
-        );
-        if (access == OrganisationAccess.NotAllowed)
+        if (
+            !organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Read,
+                organisationId
+            )
+        )
         {
             return GetRecordResult.Err(new GetRecordError.NotAllowed(recordId));
         }
@@ -57,9 +62,6 @@ internal sealed class RecordViewService(
                 new GetRecordError.RecordTypeMismatch(recordId, recordType, record.RecordType)
             );
         }
-
-        // Only offer to switch organisation once the record is known to be in it.
-        access.ThrowIfNotSelected(organisationId);
 
         int revisionId = record.LatestRevisionId.Value;
 

@@ -201,13 +201,9 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        OrganisationAccess access = organisationAuthoriser.GetOrganisationAccess(
-            Operation.ElevatedRead,
-            organisationId
-        );
-        GetUsersError? organisationError = await ValidateOrganisationAccessAsync(
+        GetUsersError? organisationError = await ValidateOrganisationAsync(
             organisationId,
-            access,
+            Operation.ElevatedRead,
             cancellationToken
         );
         if (organisationError is not null)
@@ -232,16 +228,9 @@ internal partial class UserService(
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (user is null)
-        {
-            return GetUserInformationResult.Err(
-                new GetUsersError.UserNotFound(userId, organisationId)
-            );
-        }
-
-        // Only offer to switch organisation once the user is known to be in it.
-        access.ThrowIfNotSelected(organisationId);
-        return GetUserInformationResult.Ok(user);
+        return user is null
+            ? GetUserInformationResult.Err(new GetUsersError.UserNotFound(userId, organisationId))
+            : GetUserInformationResult.Ok(user);
     }
 
     private IQueryable<UserInformationTrackingProjection> GetProjectedUserInformation()
@@ -401,36 +390,25 @@ internal partial class UserService(
                 : null;
         }
 
-        OrganisationAccess access = organisationAuthoriser.GetOrganisationAccess(
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId.Value);
+
+        bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
             operation,
             organisationId.Value
         );
-        access.ThrowIfNotSelected(organisationId.Value);
-
-        return await ValidateOrganisationAccessAsync(
-            organisationId.Value,
-            access,
-            cancellationToken
-        );
-    }
-
-    private async Task<GetUsersError?> ValidateOrganisationAccessAsync(
-        int organisationId,
-        OrganisationAccess access,
-        CancellationToken cancellationToken
-    )
-    {
-        if (access == OrganisationAccess.NotAllowed)
+        if (!actionPermitted)
         {
-            return new GetUsersError.NotAllowed(organisationId);
+            return new GetUsersError.NotAllowed(organisationId.Value);
         }
 
         bool organisationExists = await dbContext.Organisations.AnyAsync(
-            o => o.Id == organisationId,
+            o => o.Id == organisationId.Value,
             cancellationToken
         );
 
-        return organisationExists ? null : new GetUsersError.OrganisationNotFound(organisationId);
+        return organisationExists
+            ? null
+            : new GetUsersError.OrganisationNotFound(organisationId.Value);
     }
 
     private static IQueryable<UserInformationTrackingProjection> ApplyFilters(

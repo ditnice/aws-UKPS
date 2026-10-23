@@ -215,17 +215,38 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetUserRegistrationById_WhenOrganisationIsNotSelectedAndRequestIsNotInIt_ReturnsIdNotFound()
+    public async Task GetUserRegistrationById_WhenOrganisationIsNotSelectedAndRequestIsNotInIt_ThrowsMismatch()
     {
-        GetUserDetails result = await _harness
-            .UpdateCurrentUser(ChampionWithAnotherOrganisationSelected)
-            .Service.GetUserRegistrationById(
-                _organisation.Id,
-                999,
-                TestContext.Current.CancellationToken
-            );
+        await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+            _harness
+                .UpdateCurrentUser(ChampionWithAnotherOrganisationSelected)
+                .Service.GetUserRegistrationById(
+                    _organisation.Id,
+                    999,
+                    TestContext.Current.CancellationToken
+                )
+        );
+    }
 
-        result.ShouldBeError().ShouldBeOfType<GetUserDetailsError.IdNotFound>();
+    [Fact]
+    public async Task GetUserRegistrationById_WhenOrganisationIsNotSelectedAndRoleDoesNotPermit_ThrowsMismatch()
+    {
+        var request = await CreateRegistrationRequest();
+
+        await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+            _harness
+                .UpdateCurrentUser(user =>
+                    ChampionWithAnotherOrganisationSelected(user) with
+                    {
+                        UserRole = UserRole.Standard,
+                    }
+                )
+                .Service.GetUserRegistrationById(
+                    _organisation.Id,
+                    request.Id,
+                    TestContext.Current.CancellationToken
+                )
+        );
     }
 
     [Fact]
@@ -618,10 +639,6 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         {
             UserRole = UserRole.Champion,
             OrganisationId = _organisation.Id + 1000,
-            SelectableMemberships =
-            [
-                new(_organisation.Id + 1000, UserRole.Champion),
-                new(_organisation.Id, UserRole.Champion),
-            ],
+            SelectableOrganisationIds = [_organisation.Id + 1000, _organisation.Id],
         };
 }

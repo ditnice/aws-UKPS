@@ -227,7 +227,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_RecordInAnotherSelectableOrganisation_ReturnsNotFoundRatherThanOfferingToSwitch()
+    public async Task GetRecord_RecordNotInSelectableOrganisationThatIsNotSelected_ThrowsMismatch()
     {
         Record record = await AddRecord(RecordStatus.Published);
         await AddRevision(record, 1, WorkflowStatus.Published);
@@ -239,23 +239,21 @@ public class RecordViewServiceTests : DatabaseTestBase
             .UpdateCurrentUser(x =>
                 x with
                 {
-                    SelectableMemberships =
-                    [
-                        new(_organisation.Id, UserRole.Standard),
-                        new(otherOrganisation.Id, UserRole.Standard),
-                    ],
+                    SelectableOrganisationIds = [_organisation.Id, otherOrganisation.Id],
                 }
             )
             .Service;
 
-        GetRecordResult result = await service.GetRecord(
-            record.Id,
-            RecordType.Medicine,
-            otherOrganisation.Id,
-            TestContext.Current.CancellationToken
-        );
-
-        result.ShouldBeError().ShouldBeOfType<GetRecordError.NotFound>();
+        SelectedOrganisationMismatchException exception =
+            await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
+                service.GetRecord(
+                    record.Id,
+                    RecordType.Medicine,
+                    otherOrganisation.Id,
+                    TestContext.Current.CancellationToken
+                )
+            );
+        exception.OrganisationId.ShouldBe(otherOrganisation.Id);
     }
 
     [Fact]
@@ -272,11 +270,7 @@ public class RecordViewServiceTests : DatabaseTestBase
                 x with
                 {
                     OrganisationId = selectedOrganisation.Id,
-                    SelectableMemberships =
-                    [
-                        new(selectedOrganisation.Id, UserRole.Standard),
-                        new(_organisation.Id, UserRole.Standard),
-                    ],
+                    SelectableOrganisationIds = [selectedOrganisation.Id, _organisation.Id],
                 }
             )
             .Service;

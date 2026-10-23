@@ -29,7 +29,7 @@ public sealed record CurrentUser
     public required string Email { get; init; }
 
     /// <summary>
-    /// Gets the organisations the current user can select, with their role in each.
+    /// Gets the identifiers of the organisations the current user can select.
     /// </summary>
-    public IReadOnlyCollection<SelectableMembership> SelectableMemberships { get; init; } = [];
+    public IReadOnlyCollection<int> SelectableOrganisationIds { get; init; } = [];
 }

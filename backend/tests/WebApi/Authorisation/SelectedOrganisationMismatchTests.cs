@@ -71,16 +71,10 @@ public class SelectedOrganisationMismatchTests : IClassFixture<WebApplicationFac
             .UpdateClaim(new Claim(UkpsClaimTypes.UserRole, $"{UserRole.Standard}"))
             .UpdateClaim(new Claim(UkpsClaimTypes.OrganisationId, $"{SelectedOrganisationId}"));
         claims.Claims.Add(
-            new Claim(
-                UkpsClaimTypes.SelectableMembership,
-                $"{SelectedOrganisationId}:{UserRole.Standard}"
-            )
+            new Claim(UkpsClaimTypes.SelectableOrganisationId, $"{SelectedOrganisationId}")
         );
         claims.Claims.Add(
-            new Claim(
-                UkpsClaimTypes.SelectableMembership,
-                $"{OtherMemberOrganisationId}:{UserRole.Standard}"
-            )
+            new Claim(UkpsClaimTypes.SelectableOrganisationId, $"{OtherMemberOrganisationId}")
         );
 
         return _factory

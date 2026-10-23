@@ -1,8 +1,8 @@
 namespace UKPS.Api.Application.InternalServices.Authorisation;
 
 /// <summary>
-/// Thrown when the current user requests an operation on an organisation they could perform it
-/// on, but that organisation is not their selected organisation.
+/// Thrown when the current user requests an operation on an organisation they are a member of,
+/// but that organisation is not their selected organisation.
 /// </summary>
 public class SelectedOrganisationMismatchException : Exception
 {

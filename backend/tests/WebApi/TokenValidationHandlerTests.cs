@@ -116,7 +116,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldAppendSelectableMembershipClaims_WhenUserHasMultipleMemberships()
+    public async Task Handle_ShouldAppendSelectableOrganisationIdClaims_WhenUserHasMultipleMemberships()
     {
         UserOrgMembership[] memberships =
             _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
@@ -147,12 +147,9 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
         context.Result.ShouldBeNull();
         var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
         identity
-            .FindAll(UkpsClaimTypes.SelectableMembership)
+            .FindAll(UkpsClaimTypes.SelectableOrganisationId)
             .Select(x => x.Value)
-            .ShouldBe(
-                memberships[..2].Select(x => $"{x.OrganisationId}:{x.UserRole}"),
-                ignoreOrder: true
-            );
+            .ShouldBe(memberships[..2].Select(x => $"{x.OrganisationId}"), ignoreOrder: true);
     }
 
     [Fact]
