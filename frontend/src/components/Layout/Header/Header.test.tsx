@@ -51,7 +51,11 @@ describe('Header', () => {
     render(
       <Header
         skipLinkId="content-start"
-        currentOrganisation={{ id: 12, name: 'Example Pharma', hasMultipleOrganisations: true }}
+        organisationContext={{
+          organisationId: 12,
+          organisationName: 'Example Pharma',
+          hasMultipleOrganisations: true,
+        }}
       />,
     )
 
@@ -67,7 +71,11 @@ describe('Header', () => {
     render(
       <Header
         skipLinkId="content-start"
-        currentOrganisation={{ id: 12, name: 'Example Pharma', hasMultipleOrganisations: false }}
+        organisationContext={{
+          organisationId: 12,
+          organisationName: 'Example Pharma',
+          hasMultipleOrganisations: false,
+        }}
       />,
     )
 

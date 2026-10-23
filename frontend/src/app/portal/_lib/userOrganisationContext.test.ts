@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { unstable_rethrow } from '@/test-utils/nextNavigation'
 
-import { getCurrentOrganisation } from './currentOrganisation'
+import { getUserOrganisationContext } from './userOrganisationContext'
 
 const mocks = vi.hoisted(() => ({
   createServerApiClient: vi.fn(),
@@ -20,8 +20,8 @@ beforeEach(() => {
   mocks.createServerApiClient.mockResolvedValue(client)
 })
 
-describe('getCurrentOrganisation', () => {
-  it("returns the current user's organisation", async () => {
+describe('getUserOrganisationContext', () => {
+  it("returns the user's selected organisation context", async () => {
     mocks.getUsersMe.mockResolvedValue({
       data: {
         organisationId: 12,
@@ -30,9 +30,9 @@ describe('getCurrentOrganisation', () => {
       },
     })
 
-    await expect(getCurrentOrganisation()).resolves.toEqual({
-      id: 12,
-      name: 'Example Pharma',
+    await expect(getUserOrganisationContext()).resolves.toEqual({
+      organisationId: 12,
+      organisationName: 'Example Pharma',
       hasMultipleOrganisations: true,
     })
   })
@@ -40,7 +40,7 @@ describe('getCurrentOrganisation', () => {
   it("requests the current user without the server client's redirecting fetch", async () => {
     mocks.getUsersMe.mockResolvedValue({ data: { organisationId: 12 } })
 
-    await getCurrentOrganisation()
+    await getUserOrganisationContext()
 
     expect(mocks.getUsersMe).toHaveBeenCalledWith({ client, fetch: globalThis.fetch })
   })
@@ -48,14 +48,14 @@ describe('getCurrentOrganisation', () => {
   it('returns undefined when the current user cannot be retrieved', async () => {
     mocks.getUsersMe.mockResolvedValue({ data: undefined, error: { status: 401 } })
 
-    await expect(getCurrentOrganisation()).resolves.toBeUndefined()
+    await expect(getUserOrganisationContext()).resolves.toBeUndefined()
   })
 
   it('returns undefined when the request fails', async () => {
     const error = new Error('Network error')
     mocks.getUsersMe.mockRejectedValue(error)
 
-    await expect(getCurrentOrganisation()).resolves.toBeUndefined()
+    await expect(getUserOrganisationContext()).resolves.toBeUndefined()
     expect(unstable_rethrow).toHaveBeenCalledWith(error)
   })
 })

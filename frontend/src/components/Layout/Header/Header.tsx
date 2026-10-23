@@ -10,18 +10,18 @@ import { Nav } from './Nav/Nav'
 import { OrganisationSwitcher } from './OrganisationSwitcher/OrganisationSwitcher'
 import { SkipLink } from './SkipLink/SkipLink'
 
-export type CurrentOrganisation = {
-  id: number
-  name: string
+export type UserOrganisationContext = {
+  organisationId: number
+  organisationName: string
   hasMultipleOrganisations: boolean
 }
 
 export type HeaderProps = {
   skipLinkId: string
-  currentOrganisation?: CurrentOrganisation
+  organisationContext?: UserOrganisationContext
 }
 
-export function Header({ skipLinkId, currentOrganisation }: HeaderProps) {
+export function Header({ skipLinkId, organisationContext }: HeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const handleMobileMenuBtnClick = () => {
@@ -73,11 +73,11 @@ export function Header({ skipLinkId, currentOrganisation }: HeaderProps) {
               </div>
             </div>
           </div>
-          <Nav isExpanded={isExpanded} organisationId={currentOrganisation?.id} />
+          <Nav isExpanded={isExpanded} organisationId={organisationContext?.organisationId} />
         </header>
       </div>
-      {currentOrganisation?.hasMultipleOrganisations && (
-        <OrganisationSwitcher organisationName={currentOrganisation.name} />
+      {organisationContext?.hasMultipleOrganisations && (
+        <OrganisationSwitcher organisationName={organisationContext.organisationName} />
       )}
     </>
   )

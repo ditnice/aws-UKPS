@@ -2,7 +2,7 @@ import { ApplicationLayout } from '@/components/Layout/ApplicationLayout'
 import { inter, lora } from '@/styles/fonts'
 import '@/styles/global.scss'
 
-import { getCurrentOrganisation } from './_lib/currentOrganisation'
+import { getUserOrganisationContext } from './_lib/userOrganisationContext'
 
 import type { ReactNode } from 'react'
 
@@ -12,12 +12,12 @@ export const metadata = {
 }
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
-  const currentOrganisation = await getCurrentOrganisation()
+  const organisationContext = await getUserOrganisationContext()
 
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
       <body>
-        <ApplicationLayout currentOrganisation={currentOrganisation}>{children}</ApplicationLayout>
+        <ApplicationLayout organisationContext={organisationContext}>{children}</ApplicationLayout>
       </body>
     </html>
   )

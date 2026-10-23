@@ -7,19 +7,19 @@ import { Footer } from './Footer/Footer'
 import { Header } from './Header/Header'
 import { Main } from './Main/Main'
 
-import type { CurrentOrganisation } from './Header/Header'
+import type { UserOrganisationContext } from './Header/Header'
 import type { ReactNode } from 'react'
 
 export type ApplicationLayoutProps = {
   children: ReactNode
-  currentOrganisation?: CurrentOrganisation
+  organisationContext?: UserOrganisationContext
 }
 
-export function ApplicationLayout({ children, currentOrganisation }: ApplicationLayoutProps) {
+export function ApplicationLayout({ children, organisationContext }: ApplicationLayoutProps) {
   return (
     <>
       <div className={styles.contentWrapper}>
-        <Header skipLinkId="content-start" currentOrganisation={currentOrganisation} />
+        <Header skipLinkId="content-start" organisationContext={organisationContext} />
         <Main className={styles.mainContent} id="content-start">
           <Container>{children}</Container>
         </Main>
