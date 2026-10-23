@@ -14,8 +14,13 @@ const mocks = vi.hoisted(() => ({
   }),
 }))
 
-vi.mock('@/client/generated', () => ({
+vi.mock('@/client/generated', async () => ({
   getRecord: vi.fn(),
+  RecordType: (
+    await vi.importActual<typeof import('@/client/generated/types.gen')>(
+      '@/client/generated/types.gen',
+    )
+  ).RecordType,
 }))
 
 vi.mock('@/client/server-api', () => ({
