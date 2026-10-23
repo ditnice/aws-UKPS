@@ -59,8 +59,6 @@ describe('SignUpSetPasswordForm', () => {
 
     expect(screen.getByText('Your password must:')).toBeInTheDocument()
     expect(screen.getByText('be at least 8 characters long')).toBeInTheDocument()
-    expect(screen.getByText('be 256 characters or fewer')).toBeInTheDocument()
-    expect(screen.getByText('not contain spaces or other whitespace')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })

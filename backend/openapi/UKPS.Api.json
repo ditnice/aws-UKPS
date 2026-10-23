@@ -2077,6 +2077,48 @@
         }
       }
     },
+    "/records/{recordId}/discard": {
+      "patch": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Discards a draft record by updating its status to discarded and a new record event is made.",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The unique identifier of the record to discard.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "An HTTP 200 response if the record is successfully discarded.\nAn HTTP 404 response if the record cannot be found.\nAn HTTP 400 response if the record is not eligible to be discarded.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -4694,7 +4736,8 @@
           "QAReview",
           "Published",
           "OnHold",
-          "Archived"
+          "Archived",
+          "Discarded"
         ],
         "type": "string",
         "description": "Represents the status shown to users for a record. On hold and archived records show their\nrecord status; otherwise the workflow status of the latest revision is shown."
@@ -5251,7 +5294,8 @@
           "Unpublished",
           "Published",
           "OnHold",
-          "Archived"
+          "Archived",
+          "Discarded"
         ],
         "type": "string",
         "description": "Represents the status of a record in the system."

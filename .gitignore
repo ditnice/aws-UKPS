@@ -103,6 +103,7 @@ next-env.d.ts
 # Playwright
 test-results/
 playwright-report/
+/e2e-results/
 blob-report/
 /playwright/.cache/
 /frontend/tests/e2e/.auth/

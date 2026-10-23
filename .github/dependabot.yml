@@ -48,6 +48,11 @@ updates:
       interval: daily
       time: "07:00"
       timezone: Europe/London
+    # One PR per Dockerfile set, so build and runtime images (e.g. Node, .NET) are bumped together.
+    groups:
+      frontend-docker:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -58,7 +63,48 @@ updates:
       - frontend
 
   - package-ecosystem: docker
-    directory: /backend
+    directories:
+      - /backend
+      - /backend/migration
+    schedule:
+      interval: daily
+      time: "07:00"
+      timezone: Europe/London
+    # One PR per Dockerfile set, so build and runtime images (e.g. Node, .NET) are bumped together.
+    groups:
+      backend-docker:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    labels:
+      - dependencies
+      - docker
+      - backend
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: daily
+      time: "07:00"
+      timezone: Europe/London
+    ignore:
+      # Keep Postgres on the same minor version as Aurora (aurora_engine_version); digest updates still apply.
+      - dependency-name: postgres
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-patch
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
       interval: daily
       time: "07:00"
@@ -69,8 +115,6 @@ updates:
           - version-update:semver-major
     labels:
       - dependencies
-      - docker
-      - backend
 
   - package-ecosystem: terraform
     directories:

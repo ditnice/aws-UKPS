@@ -1,12 +1,8 @@
 'use client'
 
-import {
-  FilterByInput,
-  FilterGroup,
-  FilterOption,
-  FilterPanel,
-  FilterSummary,
-} from '@nice-digital/nds-filters'
+import { FilterGroup, FilterOption, FilterPanel, FilterSummary } from '@nice-digital/nds-filters'
+
+import { FilterByInput } from '@/components/FilterByInput/FilterByInput'
 
 import { Example } from '../../_components/Example'
 

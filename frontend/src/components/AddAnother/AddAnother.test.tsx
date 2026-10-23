@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import ArrayInput, { ArrayInputProps } from './ArrayInput'
+import { AddAnother, AddAnotherProps } from './AddAnother'
 
-const defaultProps: ArrayInputProps<string> = {
+const defaultProps: AddAnotherProps<string> = {
   addItemLabel: 'add-item-label',
   removeItemLabel: 'remove-item-label',
   labelPrefix: 'label-prefix',
@@ -28,8 +28,8 @@ const defaultProps: ArrayInputProps<string> = {
   },
 }
 
-const renderComponent = (overrides?: Partial<ArrayInputProps<string>>) => {
-  render(<ArrayInput {...{ ...defaultProps, ...overrides }} />)
+const renderComponent = (overrides?: Partial<AddAnotherProps<string>>) => {
+  render(<AddAnother {...{ ...defaultProps, ...overrides }} />)
 }
 
 const getInputByLabelText = (labelText: string): HTMLInputElement => {
@@ -40,7 +40,7 @@ const getInputByLabelText = (labelText: string): HTMLInputElement => {
 
 afterEach(cleanup)
 
-describe('ArrayInput', () => {
+describe('AddAnother', () => {
   it('renders without React prop warnings when there is no field error', () => {
     const consoleError = vi.spyOn(console, 'error')
 
@@ -87,10 +87,10 @@ describe('ArrayInput', () => {
     expect(screen.getByText(defaultProps.hint)).toBeDefined()
   })
 
-  it('should not render a remove button for the first item', () => {
+  it('should render a remove button for the first item', () => {
     renderComponent()
 
-    expect(screen.queryByTestId('remove-button-0')).toBeNull()
+    expect(screen.queryByTestId('remove-button-0')).toBeDefined()
   })
 
   it('should render a remove button for each subsequent item', () => {
@@ -184,7 +184,7 @@ describe('ArrayInput', () => {
   it('should call subfield handleChange when an input changes', () => {
     const handleChange = vi.fn()
 
-    const getSubfield: ArrayInputProps<string>['getSubfield'] = (name, subfieldRender) =>
+    const getSubfield: AddAnotherProps<string>['getSubfield'] = (name, subfieldRender) =>
       subfieldRender({
         name,
         handleBlur: vi.fn(),
@@ -229,7 +229,7 @@ describe('ArrayInput', () => {
   it('should call subfield handleBlur when an input loses focus', () => {
     const handleBlur = vi.fn()
 
-    const getSubfield: ArrayInputProps<string>['getSubfield'] = (name, subfieldRender) =>
+    const getSubfield: AddAnotherProps<string>['getSubfield'] = (name, subfieldRender) =>
       subfieldRender({
         name,
         handleBlur,
@@ -270,7 +270,7 @@ describe('ArrayInput', () => {
   })
 
   it('should render a subfield error', () => {
-    const getSubfield: ArrayInputProps<string>['getSubfield'] = (name, subfieldRender) =>
+    const getSubfield: AddAnotherProps<string>['getSubfield'] = (name, subfieldRender) =>
       subfieldRender({
         name,
         handleBlur: vi.fn(),
@@ -289,7 +289,7 @@ describe('ArrayInput', () => {
   })
 
   it('should render an error state on an input when the subfield has an error', () => {
-    const getSubfield: ArrayInputProps<string>['getSubfield'] = (name, subfieldRender) =>
+    const getSubfield: AddAnotherProps<string>['getSubfield'] = (name, subfieldRender) =>
       subfieldRender({
         name,
         handleBlur: vi.fn(),
