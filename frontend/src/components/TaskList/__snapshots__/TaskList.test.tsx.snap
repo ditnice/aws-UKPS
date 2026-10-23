@@ -8,7 +8,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
     <p
       class="_task-list__summary-text_b29161"
     >
-      You have completed 1 of 3 sections
+      You have completed 1 of 3 mandatory sections
     </p>
     <a
       class="_task-list__summary-link_b29161"
@@ -73,7 +73,13 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           <span
             class="_task-list__status_b29161"
           >
-            Completed
+            <span
+              class="tag"
+              data-component="tag"
+              style="background-color: rgb(207, 228, 220); color: rgb(8, 61, 41);"
+            >
+              Completed
+            </span>
           </span>
         </li>
         <li
@@ -135,7 +141,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
               data-component="tag"
               style="background-color: rgb(210, 226, 241); color: rgb(15, 56, 92);"
             >
-              Not started
+              Not yet started
             </span>
           </span>
         </li>
@@ -145,7 +151,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
 </DocumentFragment>
 `;
 
-exports[`TaskListTask > renders a task link, status and field progress summary 1`] = `
+exports[`TaskListTask > renders a task link and status 1`] = `
 <DocumentFragment>
   <ul>
     <li
@@ -158,11 +164,6 @@ exports[`TaskListTask > renders a task link, status and field progress summary 1
         <div
           class="_task-list__task-title_b29161"
         >
-          <p
-            class="_task-list__task-field-summary_b29161"
-          >
-            You have completed 1 of 3 fields
-          </p>
           <a
             class="_task-list__task-link_b29161"
             href="/review"

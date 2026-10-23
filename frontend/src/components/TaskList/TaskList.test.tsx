@@ -21,7 +21,7 @@ describe('TaskList', () => {
     expect(wrapper?.classList.contains('additional-class')).toBe(true)
     expect(screen.getByRole('heading', { level: 2, name: 'Section 1' })).toBeInTheDocument()
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
-    expect(screen.getByText('Not started')).toBeInTheDocument()
+    expect(screen.getByText('Not yet started')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -37,7 +37,7 @@ describe('TaskList', () => {
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 1 of 2 sections')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 1 of 2 mandatory sections')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Skip to first incomplete section' })).toHaveAttribute(
       'href',
       '#task-2',
@@ -53,24 +53,38 @@ describe('TaskList', () => {
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 1 of 1 section')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 1 of 1 mandatory section')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: 'Skip to first incomplete section' }),
     ).not.toBeInTheDocument()
   })
 
-  it('summarises progress by the number of completed tasks', () => {
+  it('counts only mandatory, applicable tasks in its progress summary', () => {
     render(
       <TaskList>
-        <TaskListSection title="Section 1" status="in-progress">
-          <TaskListTask id="task-1" title="Task 1" status="in-progress" />
-          <TaskListTask id="task-2" title="Task 2" status="in-progress" />
-          <TaskListTask id="task-3" title="Task 3" status="completed" />
+        <TaskListSection title="Mandatory section">
+          <TaskListTask id="completed-task" title="Completed task" status="completed" />
+          <TaskListTask id="first-incomplete-task" title="Incomplete task" status="not-started" />
+          <TaskListTask id="cannot-start-task" title="Cannot start task" status="cannot-start" />
+          <TaskListTask
+            id="not-applicable-task"
+            title="Not applicable task"
+            status="not-applicable"
+          />
+        </TaskListSection>
+        <TaskListSection title="Optional section" optional>
+          <TaskListTask id="optional-task" title="Optional task" status="not-started" />
         </TaskListSection>
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 1 of 3 sections')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 1 of 3 mandatory sections')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Skip to first incomplete section' })).toHaveAttribute(
+      'href',
+      '#first-incomplete-task',
+    )
+    expect(screen.getByText('Cannot start yet')).toBeInTheDocument()
+    expect(screen.getByText('Not applicable')).toBeInTheDocument()
   })
 })
 
@@ -89,22 +103,14 @@ describe('TaskListSection', () => {
 })
 
 describe('TaskListTask', () => {
-  it('renders a task link, status and field progress summary', () => {
+  it('renders a task link and status', () => {
     const { asFragment } = render(
       <ul>
-        <TaskListTask
-          id="task-3"
-          title="Review evidence"
-          href="/review"
-          status="in-progress"
-          completedFields={1}
-          totalFields={3}
-        />
+        <TaskListTask id="task-3" title="Review evidence" href="/review" status="in-progress" />
       </ul>,
     )
 
     expect(screen.getByRole('link', { name: 'Review evidence' })).toHaveAttribute('href', '/review')
-    expect(screen.getByText('You have completed 1 of 3 fields')).toBeInTheDocument()
     expect(screen.getByText('In progress')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
