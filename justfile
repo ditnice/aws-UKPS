@@ -9,6 +9,10 @@ regenerate:
 e2e *args:
     #!/usr/bin/env bash
     set -euo pipefail
+    # A separate project and ephemeral host ports let this run alongside `just stack-up` or a dev
+    # server. Playwright shares the frontend's network namespace, so it never uses the host ports.
+    export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-ukps-e2e}"
+    export UKPS_FRONTEND_PORT="${UKPS_FRONTEND_PORT:-0}" UKPS_BACKEND_PORT="${UKPS_BACKEND_PORT:-0}"
     trap 'docker compose --profile e2e down --volumes --remove-orphans' EXIT
     trap 'exit 130' INT
     trap 'exit 143' TERM

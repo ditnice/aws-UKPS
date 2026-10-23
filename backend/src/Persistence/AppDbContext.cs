@@ -30,7 +30,7 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     public DbSet<QaReview> QaReviews => Set<QaReview>();
     public DbSet<RecordStatusHistory> RecordStatusHistories => Set<RecordStatusHistory>();
     public DbSet<RecordEvent> RecordEvents => Set<RecordEvent>();
-    public DbSet<RecordEventFieldChange> RecordEventFieldChanges => Set<RecordEventFieldChange>();
+    public DbSet<RecordFieldAudit> RecordFieldAudits => Set<RecordFieldAudit>();
 
     // ── Shared Revision Content ──────────────────────────────────────────────
     public DbSet<RecordProductDetail> RecordProductDetails => Set<RecordProductDetail>();

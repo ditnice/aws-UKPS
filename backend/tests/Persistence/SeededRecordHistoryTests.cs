@@ -1,5 +1,6 @@
 using Shouldly;
 using UKPS.Api.Persistence.Data.Seeding;
+using UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
@@ -111,15 +112,16 @@ public sealed class SeededRecordHistoryTests
     [Fact]
     public void Revisions_ShouldMoveThroughTheWorkflowInOrder()
     {
+        ILookup<RecordRevision, RecordFieldAudit> audits = AuditsByRevision();
         foreach (RecordRevision revision in Payload.Records.SelectMany(r => r.Revisions))
         {
-            revision.UpdatedAt?.ShouldBeGreaterThanOrEqualTo(revision.CreatedAt);
-            revision.SubmittedAt?.ShouldBeGreaterThanOrEqualTo(
-                revision.UpdatedAt ?? revision.CreatedAt
-            );
+            DateTime? lastSaved = audits[revision].Select(a => (DateTime?)a.ChangedAt).Max();
+            DateTime? submitted = SubmittedAt(revision);
+            lastSaved?.ShouldBeGreaterThan(revision.CreatedAt);
+            submitted?.ShouldBeGreaterThan(lastSaved ?? revision.CreatedAt);
             foreach (QaReview review in revision.QaReviews)
             {
-                review.ReviewedAt!.Value.ShouldBeGreaterThan(revision.SubmittedAt!.Value);
+                review.ReviewedAt!.Value.ShouldBeGreaterThan(submitted!.Value);
             }
 
             QaOutcome? outcome = revision.QaReviews.SingleOrDefault()?.Outcome;
@@ -127,7 +129,7 @@ public sealed class SeededRecordHistoryTests
             {
                 QaOutcome.Approved => WorkflowStatus.Published,
                 QaOutcome.Rejected => WorkflowStatus.Rejected,
-                _ when revision.SubmittedAt is not null => WorkflowStatus.QAReview,
+                _ when submitted is not null => WorkflowStatus.QAReview,
                 _ => WorkflowStatus.Draft,
             };
             revision.WorkflowStatus.ShouldBe(expected);
@@ -151,7 +153,7 @@ public sealed class SeededRecordHistoryTests
             }
 
             published.ShouldNotBeEmpty();
-            DateTime lastSubmitted = published.Max(r => r.SubmittedAt!.Value);
+            DateTime lastSubmitted = published.Max(r => SubmittedAt(r)!.Value);
             record.ReviewedAt.ShouldNotBeNull().ShouldBeGreaterThanOrEqualTo(lastSubmitted);
         }
     }
@@ -229,26 +231,100 @@ public sealed class SeededRecordHistoryTests
     }
 
     [Fact]
-    public void Updates_ShouldRecordTheFieldsTheyChanged()
+    public void FieldAudits_ShouldChainEachSaveFromTheValueLeftByThePreviousOne()
     {
-        RecordEventFieldChange[] changes =
+        foreach (SeededRecord seeded in Payload.SeededRecords)
+        {
+            seeded.FieldAudits.Select(a => a.ChangedAt).ShouldBeInOrder();
+            Dictionary<string, string?> saved = new(StringComparer.Ordinal);
+            foreach (RecordFieldAudit audit in seeded.FieldAudits)
+            {
+                audit.Record.ShouldBeSameAs(seeded.Record);
+                audit.NewValue.ShouldNotBe(audit.OldValue);
+                audit.OldValue.ShouldBe(saved.GetValueOrDefault(audit.FieldPath));
+                saved[audit.FieldPath] = audit.NewValue;
+            }
+        }
+    }
+
+    [Fact]
+    public void FieldAudits_ShouldBeMadeByActiveMembersWhileTheRevisionIsADraft()
+    {
+        ILookup<Organisation, User> activeMembers = Payload
+            .Memberships.Where(m => m.Status == UserOrgMembershipStatus.Active)
+            .ToLookup(m => m.Organisation!, m => m.User!);
+
+        foreach (SeededRecord seeded in Payload.SeededRecords)
+        {
+            foreach (RecordFieldAudit audit in seeded.FieldAudits)
+            {
+                activeMembers[seeded.Record.Organisation!].ShouldContain(audit.ChangedByUser!);
+                audit.ChangedAt.ShouldBeGreaterThan(audit.Revision!.CreatedAt);
+                audit.ChangedAt.ShouldBeLessThan(SubmittedAt(audit.Revision) ?? DateTime.MaxValue);
+            }
+        }
+    }
+
+    [Fact]
+    public void FieldAudits_ShouldRecordTheFirstSaveOfEveryRecordAndEachChangeBeforePublishing()
+    {
+        ILookup<RecordRevision, RecordFieldAudit> audits = AuditsByRevision();
+        foreach (Record record in Payload.Records)
+        {
+            audits[record.Revisions.First()].ShouldNotBeEmpty();
+            foreach (RecordRevision revision in record.Revisions.Skip(1))
+            {
+                if (revision.WorkflowStatus != WorkflowStatus.Draft)
+                {
+                    audits[revision].ShouldNotBeEmpty();
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void FieldAudits_ShouldIncludeProvisionalValuesCorrectedWithinTheSameDraft()
+    {
+        Payload
+            .SeededRecords.SelectMany(r => r.FieldAudits)
+            .GroupBy(a => (a.Revision, a.FieldPath))
+            .ShouldContain(changes => changes.Count() > 1);
+    }
+
+    [Fact]
+    public void FieldAudits_AfterARejection_ShouldCorrectWhatQaSentBack()
+    {
+        ILookup<RecordRevision, RecordFieldAudit> audits = AuditsByRevision();
+        RecordRevision[] reworks =
         [
             .. Payload
-                .Records.SelectMany(r =>
-                    r.Events.Where(e => e.EventType == RecordEventType.RecordPublished).Skip(1)
-                )
-                .SelectMany(e =>
-                {
-                    e.FieldChanges.ShouldNotBeEmpty();
-                    return e.FieldChanges;
-                }),
+                .Records.SelectMany(r => r.Revisions)
+                .Where(r => r.BasedOnRevision?.WorkflowStatus == WorkflowStatus.Rejected),
         ];
 
-        changes.ShouldNotBeEmpty();
-        changes.ShouldAllBe(c => c.OldValue != c.NewValue);
-        changes.ShouldContain(c =>
-            c.OldValue == nameof(YesNoUnknown.Unknown) && c.NewValue != nameof(YesNoUnknown.Unknown)
-        );
+        reworks.ShouldNotBeEmpty();
+        foreach (RecordRevision rework in reworks)
+        {
+            IReadOnlyDictionary<string, string?> rejected = ValuesAfter(
+                audits,
+                rework.BasedOnRevision!
+            );
+            RecordFieldAudit[] corrections = [.. audits[rework]];
+            corrections.ShouldNotBeEmpty();
+            corrections.ShouldAllBe(c => c.OldValue == rejected.GetValueOrDefault(c.FieldPath));
+        }
+    }
+
+    [Fact]
+    public void FieldAudits_ForPublishedUpdates_ShouldShowFieldsDisclosedLater()
+    {
+        Payload
+            .SeededRecords.SelectMany(r => r.FieldAudits)
+            .Where(a => a.Revision!.BasedOnRevision is not null)
+            .ShouldContain(a =>
+                a.OldValue == nameof(YesNoUnknown.Unknown)
+                && a.NewValue != nameof(YesNoUnknown.Unknown)
+            );
     }
 
     [Fact]
@@ -257,11 +333,49 @@ public sealed class SeededRecordHistoryTests
         SeedingDataPayload again = DataSeederInMemory.BuildPayload(new SeedingOptions());
 
         static IEnumerable<string> History(SeedingDataPayload payload) =>
-            payload.Records.SelectMany(r =>
-                r.Events.Select(e => $"{e.EventType} {e.PerformedAt:O} {e.FieldChanges.Count}")
+            payload.SeededRecords.SelectMany(r =>
+                r.Record.Events.Select(e => $"{e.EventType} {e.PerformedAt:O}")
+                    .Concat(
+                        r.FieldAudits.Select(a =>
+                            $"{a.FieldPath} {a.ChangedAt:O} {a.OldValue} -> {a.NewValue}"
+                        )
+                    )
             );
 
         History(again).ShouldBe(History(Payload));
+    }
+
+    private static ILookup<RecordRevision, RecordFieldAudit> AuditsByRevision() =>
+        Payload.SeededRecords.SelectMany(r => r.FieldAudits).ToLookup(a => a.Revision!);
+
+    private static DateTime? SubmittedAt(RecordRevision revision) =>
+        revision
+            .Record!.Events.Where(e =>
+                ReferenceEquals(e.Revision, revision)
+                && e.EventType == RecordEventType.SubmittedToQa
+            )
+            .Select(e => (DateTime?)e.PerformedAt)
+            .LastOrDefault();
+
+    /// <summary>The audited field values as they stood when <paramref name="revision"/> was last saved.</summary>
+    private static Dictionary<string, string?> ValuesAfter(
+        ILookup<RecordRevision, RecordFieldAudit> audits,
+        RecordRevision revision
+    )
+    {
+        Dictionary<string, string?> values = new(StringComparer.Ordinal);
+        for (
+            RecordRevision? current = revision;
+            current is not null;
+            current = current.BasedOnRevision
+        )
+        {
+            foreach (RecordFieldAudit audit in audits[current].Reverse())
+            {
+                values.TryAdd(audit.FieldPath, audit.NewValue);
+            }
+        }
+        return values;
     }
 
     private static RecordRevision RevisionOf(object content) =>

@@ -15,18 +15,12 @@ internal sealed class RecordRevision
     public WorkflowStatus WorkflowStatus { get; set; }
     public int CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
-    public int? UpdatedBy { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public int? SubmittedBy { get; set; }
-    public DateTime? SubmittedAt { get; set; }
 
     // Navigation
     public Record? Record { get; set; }
     public RecordRevision? BasedOnRevision { get; set; }
     public ICollection<RecordRevision> DerivedRevisions { get; set; } = [];
     public Identity.User? CreatedByUser { get; set; }
-    public Identity.User? UpdatedByUser { get; set; }
-    public Identity.User? SubmittedByUser { get; set; }
     public ICollection<QaReview> QaReviews { get; set; } = [];
     public ICollection<RecordEvent> Events { get; set; } = [];
 }

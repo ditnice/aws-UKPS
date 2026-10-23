@@ -632,11 +632,7 @@ namespace UKPS.Api.Persistence.Migrations
                     based_on_revision_id = table.Column<int>(type: "integer", nullable: true),
                     workflow_status = table.Column<int>(type: "integer", nullable: false),
                     created_by = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false),
-                    updated_by = table.Column<int>(type: "integer", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamptz", nullable: true),
-                    submitted_by = table.Column<int>(type: "integer", nullable: true),
-                    submitted_at = table.Column<DateTime>(type: "timestamptz", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -644,20 +640,6 @@ namespace UKPS.Api.Persistence.Migrations
                     table.ForeignKey(
                         name: "fk_record_revisions_app_user_created_by",
                         column: x => x.created_by,
-                        principalSchema: "ukps",
-                        principalTable: "app_user",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_record_revisions_app_user_submitted_by",
-                        column: x => x.submitted_by,
-                        principalSchema: "ukps",
-                        principalTable: "app_user",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_record_revisions_app_user_updated_by",
-                        column: x => x.updated_by,
                         principalSchema: "ukps",
                         principalTable: "app_user",
                         principalColumn: "id",
@@ -1044,6 +1026,47 @@ namespace UKPS.Api.Persistence.Migrations
                         column: x => x.revision_id,
                         principalSchema: "ukps",
                         principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "record_field_audit",
+                schema: "ukps",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    record_id = table.Column<int>(type: "integer", nullable: false),
+                    revision_id = table.Column<int>(type: "integer", nullable: false),
+                    field_path = table.Column<string>(type: "text", nullable: false),
+                    old_value = table.Column<string>(type: "text", nullable: true),
+                    new_value = table.Column<string>(type: "text", nullable: true),
+                    changed_by = table.Column<int>(type: "integer", nullable: false),
+                    changed_at = table.Column<DateTime>(type: "timestamptz", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_record_field_audit", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_record_field_audit_app_user_changed_by",
+                        column: x => x.changed_by,
+                        principalSchema: "ukps",
+                        principalTable: "app_user",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_field_audit_record_revisions_revision_id",
+                        column: x => x.revision_id,
+                        principalSchema: "ukps",
+                        principalTable: "record_revisions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_record_field_audit_records_record_id",
+                        column: x => x.record_id,
+                        principalSchema: "ukps",
+                        principalTable: "records",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1727,30 +1750,6 @@ namespace UKPS.Api.Persistence.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "record_event_field_changes",
-                schema: "ukps",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    record_event_id = table.Column<int>(type: "integer", nullable: false),
-                    field_path = table.Column<string>(type: "text", nullable: false),
-                    old_value = table.Column<string>(type: "text", nullable: true),
-                    new_value = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_record_event_field_changes", x => x.id);
-                    table.ForeignKey(
-                        name: "fk_record_event_field_changes_record_events_record_event_id",
-                        column: x => x.record_event_id,
-                        principalSchema: "ukps",
-                        principalTable: "record_events",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "ix_app_user_work_email",
                 schema: "ukps",
@@ -1975,12 +1974,6 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "revision_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_record_event_field_change_record_event_id",
-                schema: "ukps",
-                table: "record_event_field_changes",
-                column: "record_event_id");
-
-            migrationBuilder.CreateIndex(
                 name: "ix_record_event_record_id_event_type",
                 schema: "ukps",
                 table: "record_events",
@@ -2003,6 +1996,24 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "record_events",
                 column: "qa_review_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_record_field_audit_changed_by",
+                schema: "ukps",
+                table: "record_field_audit",
+                column: "changed_by");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_record_field_audit_record_id",
+                schema: "ukps",
+                table: "record_field_audit",
+                column: "record_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_record_field_audit_revision_field_time",
+                schema: "ukps",
+                table: "record_field_audit",
+                columns: new[] { "revision_id", "field_path", "changed_at" });
 
             migrationBuilder.CreateIndex(
                 name: "ix_record_hta_revision_id",
@@ -2085,18 +2096,6 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 table: "record_revisions",
                 column: "record_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_record_revisions_submitted_by",
-                schema: "ukps",
-                table: "record_revisions",
-                column: "submitted_by");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_record_revisions_updated_by",
-                schema: "ukps",
-                table: "record_revisions",
-                column: "updated_by");
 
             migrationBuilder.CreateIndex(
                 name: "ix_record_status_histories_updated_by",
@@ -2384,7 +2383,11 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "record_event_field_changes",
+                name: "record_events",
+                schema: "ukps");
+
+            migrationBuilder.DropTable(
+                name: "record_field_audit",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
@@ -2496,7 +2499,7 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps");
 
             migrationBuilder.DropTable(
-                name: "record_events",
+                name: "qa_reviews",
                 schema: "ukps");
 
             migrationBuilder.DropTable(
@@ -2541,10 +2544,6 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "formulation_type",
-                schema: "ukps");
-
-            migrationBuilder.DropTable(
-                name: "qa_reviews",
                 schema: "ukps");
 
             migrationBuilder.DropTable(

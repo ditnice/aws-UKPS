@@ -22,6 +22,7 @@ internal sealed record SeedingDataPayload
             .Concat(Memberships)
             .Concat(Records)
             .Concat(SeededRecords.SelectMany(x => x.RevisionContent))
+            .Concat(SeededRecords.SelectMany(x => x.FieldAudits))
             .ToArray();
     }
 }
