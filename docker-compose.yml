@@ -6,7 +6,8 @@
 #
 # Authentication uses the dev bypass (frontend AUTHENTICATION_MODE=DEV and backend
 # DevAuthentication): every request acts as the seeded Super user in organisation 1.
-# No AWS access is needed and none of this configuration is secret.
+# The backend's Cognito and SQS calls go to Floci, a local AWS emulator, so no AWS access is
+# needed and none of this configuration is secret.
 
 name: ukps
 
@@ -30,6 +31,32 @@ services:
       timeout: 5s
       retries: 30
 
+  floci:
+    # Local AWS emulator for the backend's Cognito and SQS calls. The -compat variant includes the
+    # AWS CLI, which the init script and healthcheck use. Pinned by digest.
+    image: floci/floci:2.2.0-compat@sha256:8576f87f9b5004c74685b8743712a981f352d53e9c227daeba6d341d09aba4c7
+    environment:
+      FLOCI_DEFAULT_REGION: eu-west-2
+      # Service URLs Floci returns (such as queue URLs) use this host, so other containers can reach them.
+      FLOCI_HOSTNAME: floci
+      # Throwaway state, like Postgres: every run starts empty.
+      FLOCI_STORAGE_MODE: memory
+      # ECS looks for containers left by a previous run through the Docker socket, which isn't
+      # mounted, and retries for about 15 seconds before Floci starts.
+      FLOCI_SERVICES_ECS_ENABLED: "false"
+      # For the AWS CLI in the init script and healthcheck.
+      AWS_ACCESS_KEY_ID: e2e
+      AWS_SECRET_ACCESS_KEY: e2e
+      AWS_REGION: eu-west-2
+    volumes:
+      - ./scripts/floci/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
+    healthcheck:
+      # Healthy once the init script has finished: the user pool is the last thing it creates.
+      test: ["CMD-SHELL", "aws --endpoint-url http://localhost:4566 cognito-idp describe-user-pool --user-pool-id eu-west-2_e2e > /dev/null"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
   backend:
     build:
       context: ./backend
@@ -37,6 +64,8 @@ services:
       target: runtime
     depends_on:
       postgres:
+        condition: service_healthy
+      floci:
         condition: service_healthy
     environment:
       # No appsettings.E2E.json exists, so only appsettings.json and these variables apply.
@@ -48,14 +77,19 @@ services:
       DevAuthentication__IsEnabled: "true"
       DevAuthentication__UserRole: Super
       AWS__LoadSecrets: "false"
+      # Sends the SQS and SES clients to Floci.
+      AWS__ServiceURL: http://floci:4566
+      Cognito__ServiceUrlOverride: http://floci:4566/
       Cognito__Region: eu-west-2
       Cognito__UserPoolId: eu-west-2_e2e
       Cognito__ClientId: e2e
       Cognito__ClientSecret: e2e
       Email__FromAddress: no-reply@ukps.invalid
-      Email__QueueUrl: http://localhost/e2e-disabled
+      # Created by scripts/floci/init-aws.sh. 000000000000 is Floci's default account ID.
+      Email__QueueUrl: http://floci:4566/000000000000/ukps-e2e-email
+      # Off, so queued emails stay on the queue rather than going to SES.
       Email__ListenerEnabled: "false"
-      # Dummy credentials stop the AWS SDK probing for real ones.
+      # Dummy credentials stop the AWS SDK probing for real ones; Floci accepts them.
       AWS_ACCESS_KEY_ID: e2e
       AWS_SECRET_ACCESS_KEY: e2e
       AWS_REGION: eu-west-2

@@ -1,9 +1,11 @@
-import { goToNextPage } from 'tests/e2e/helpers/pagination'
-
 import { expect, test } from '../../fixtures/test'
+import { goToNextPage } from '../../helpers/pagination'
 import { requireEnvironmentVariable } from '../../helpers/test-environment'
 
 test.describe('Promoting and demoting a user', () => {
+  // Both tests change user roles, so running them in parallel lets one pick the other's user.
+  test.describe.configure({ mode: 'serial' })
+
   test('promoting a standard user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
 
@@ -14,6 +16,12 @@ test.describe('Promoting and demoting a user', () => {
       .filter({
         has: page.getByRole('cell', {
           name: 'Standard user',
+          exact: true,
+        }),
+      })
+      .filter({
+        has: page.getByRole('cell', {
+          name: 'Active',
           exact: true,
         }),
       })
@@ -46,7 +54,7 @@ test.describe('Promoting and demoting a user', () => {
       if (userEmail) break
 
       if (!(await goToNextPage(page))) {
-        throw new Error('No champion user with a visible Edit link found')
+        throw new Error('No active standard user with a visible Edit link found')
       }
     }
     await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
@@ -95,6 +103,12 @@ test.describe('Promoting and demoting a user', () => {
         }),
       })
       .filter({
+        has: page.getByRole('cell', {
+          name: 'Active',
+          exact: true,
+        }),
+      })
+      .filter({
         has: page.getByRole('link', {
           name: 'Edit',
           exact: true,
@@ -123,7 +137,7 @@ test.describe('Promoting and demoting a user', () => {
       if (userEmail) break
 
       if (!(await goToNextPage(page))) {
-        throw new Error('No champion user with a visible Edit link found')
+        throw new Error('No active champion user with a visible Edit link found')
       }
     }
 

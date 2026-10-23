@@ -1,5 +1,13 @@
+import { Page } from '@playwright/test'
+
 import { expect, test } from '../../fixtures/test'
 import { requireEnvironmentVariable } from '../../helpers/test-environment'
+
+function activeFilter(page: Page, label: string) {
+  return page.getByRole('list', { name: 'Active filters' }).getByRole('listitem').filter({
+    hasText: label,
+  })
+}
 
 test.describe('Searching and filtering users', () => {
   test('search and filter users page', async ({ page }) => {
@@ -11,23 +19,31 @@ test.describe('Searching and filtering users', () => {
   })
 
   test('search for a user', async ({ page }) => {
-    const userEmail = requireEnvironmentVariable('E2E_USER_EMAIL')
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}`)
+    await expect(page.getByText('Loading users', { exact: false })).toBeHidden()
+    const emails = page.locator('tbody tr td:nth-child(1)')
+    const userEmail = (await emails.last().innerText()).trim()
 
     await page.getByRole('textbox', { name: 'Filter users' }).fill(userEmail)
     await page.getByRole('button', { name: 'Apply filter', exact: true }).click()
 
-    await expect(page.getByText(userEmail, { exact: true })).toBeVisible()
+    await expect(activeFilter(page, userEmail)).toBeVisible()
+    await expect(emails).toHaveText([userEmail])
   })
 
   test('filter standard user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}`)
 
-    await page.getByLabel('Standard user').check()
+    await page.getByRole('checkbox', { name: 'Standard user', exact: true }).check()
 
-    await expect(page.getByText('Champion user')).toHaveCount(1)
+    await expect(activeFilter(page, 'Standard user')).toBeVisible()
+    const roles = page.locator('tbody tr td:nth-child(2)')
+    await expect(roles.first()).toBeVisible()
+    for (const role of await roles.allTextContents()) {
+      expect(role.trim()).toBe('Standard user')
+    }
   })
 
   const dateFilters = [
@@ -47,6 +63,8 @@ test.describe('Searching and filtering users', () => {
       })
       await filter.check()
       await expect(filter).toBeChecked()
+      // The previous, unfiltered rows stay on screen until the filtered results arrive.
+      await expect(activeFilter(page, filterOption.name)).toBeVisible()
       await expect(page.getByText('Loading users', { exact: false })).toBeHidden({ timeout: 15000 })
       const dates = page.locator('tbody tr td:nth-child(4)')
       const noUsersMessage = page.getByRole('cell', {
@@ -96,8 +114,11 @@ test.describe('Searching and filtering users', () => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
 
     await page.goto(`/portal/organisations/${organisationId}`)
+    // Checked back to back, so the second change is made before the first has landed.
     await page.getByRole('checkbox', { name: 'Active', exact: true }).check()
     await page.getByRole('checkbox', { name: 'Pending', exact: true }).check()
+    await expect(activeFilter(page, 'Active')).toBeVisible()
+    await expect(activeFilter(page, 'Pending')).toBeVisible()
 
     await expect(page.getByRole('checkbox', { name: 'Active', exact: true })).toBeChecked()
     await expect(page.getByRole('checkbox', { name: 'Pending', exact: true })).toBeChecked()

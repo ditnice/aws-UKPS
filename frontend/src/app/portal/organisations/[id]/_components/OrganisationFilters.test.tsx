@@ -21,7 +21,7 @@ beforeEach(() => {
 function renderFilters(search = '') {
   navigationState.searchParams = new URLSearchParams(search)
   const params = navigationState.searchParams
-  render(
+  return render(
     <OrganisationFilters
       query={parseUserListQuery({
         ...Object.fromEntries(params),
@@ -87,6 +87,35 @@ describe('OrganisationFilters', () => {
       pageSize: '25',
       sortBy: 'Email',
       sortDirection: 'Ascending',
+    })
+  })
+
+  it('keeps an earlier change that has not landed yet when another filter changes', async () => {
+    renderFilters('page=2')
+
+    // The mocked router never updates searchParams, as if both clicks beat the first navigation.
+    await user.click(screen.getByRole('checkbox', { name: 'Active' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Pending' }))
+
+    expect(router.push).toHaveBeenCalledTimes(2)
+    const url = new URL(router.push.mock.calls[1][0], 'https://example.test')
+    expect(url.searchParams.getAll('status')).toEqual(['Active', 'AwaitingSetup'])
+  })
+
+  it('builds on the new URL after a navigation it did not make', async () => {
+    const { rerender } = renderFilters('page=2')
+    await user.click(screen.getByRole('checkbox', { name: 'Active' }))
+    // Another control, such as a sort link, navigated before the filter change landed.
+    navigationState.searchParams = new URLSearchParams('sortBy=Email')
+    rerender(<OrganisationFilters query={parseUserListQuery({ sortBy: 'Email' })} />)
+
+    await user.click(screen.getByRole('checkbox', { name: 'Champion user' }))
+
+    const url = new URL(router.push.mock.calls[1][0], 'https://example.test')
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      sortBy: 'Email',
+      role: 'Champion',
+      page: '1',
     })
   })
 

@@ -67,7 +67,8 @@ Open `https://localhost:3000`, log in, and confirm in DevTools â†’ Application â
 ### Running E2E tests with Docker Compose
 
 The root `docker-compose.yml` runs Postgres, the backend and the frontend from their production
-Dockerfiles, plus a Playwright runner container. No certificates, AWS access or secrets are needed.
+Dockerfiles, plus a Playwright runner container. AWS is emulated locally by Floci, so no
+certificates, AWS access or secrets are needed.
 
 ```
 just e2e                          # build, run the whole Playwright suite, tear down
@@ -94,12 +95,17 @@ How the stack is set up:
   `DevAuthentication`, so every request is the seeded Super user (`example.user@email.com`) in
   organisation 1. Playwright runs with `E2E_AUTH_MODE=dev`, which runs the
   `*.authenticated.e2e.spec.ts` specs without the Cognito `auth-setup` project.
-- **Not covered:** real Cognito sign-in, MFA and sign-up, and emails (the SQS listener is off via
-  `Email__ListenerEnabled=false`). `auth/redirects.e2e.spec.ts` skips because the dev bypass never
+- **AWS:** [Floci](https://github.com/floci-io/floci) emulates Cognito and SQS, so inviting,
+  removing, deactivating and reactivating users work. `scripts/floci/init-aws.sh` creates the
+  `ukps-e2e-email` queue and the `eu-west-2_e2e` user pool when Floci starts; Floci keeps everything in
+  memory, so every run starts empty.
+- **Not covered:** real Cognito sign-in, MFA and sign-up, and sending emails (they are queued on Floci,
+  but the SQS listener that sends them is off via `Email__ListenerEnabled=false`). `auth/redirects.e2e.spec.ts` skips because the dev bypass never
   redirects to sign-in. Run `pnpm test:e2e:authenticated-dev` against the dev environment for
   real-auth coverage.
-- **Readiness:** the runtime images are distroless, so instead of Compose healthchecks the
-  Playwright container runs `tests/e2e/scripts/wait-for-stack.mjs` first.
+- **Readiness:** the backend waits for Postgres and Floci healthchecks. The backend and frontend
+  runtime images are distroless, so instead of Compose healthchecks for them the Playwright container
+  runs `tests/e2e/scripts/wait-for-stack.mjs` first.
 
 To explore the app or use Playwright UI mode from your machine:
 

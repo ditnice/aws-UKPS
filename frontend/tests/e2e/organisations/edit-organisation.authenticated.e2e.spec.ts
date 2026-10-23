@@ -10,8 +10,13 @@ const testOrganisation = {
 test('edit organisation details', async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}/edit`)
+  await expect(
+    page.getByRole('heading', { name: "Edit your organisation's details" }),
+  ).toBeVisible()
+  // The other tests in this file edit these values, possibly while this one runs.
   await expect(page).toHaveScreenshot('edit-organisation.png', {
     fullPage: true,
+    mask: [page.getByRole('textbox')],
     maxDiffPixelRatio: 0.02,
   })
 })
