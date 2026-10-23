@@ -1,17 +1,16 @@
 'use client'
 
 import clsx from 'clsx'
-import { useState, Children, isValidElement, ReactElement } from 'react'
-
-import ChevronDownIcon from '@nice-digital/icons/lib/ChevronDown'
+import { Children, isValidElement } from 'react'
 
 import { Tag } from '@/components/Tag/Tag'
 
 import styles from './TaskList.module.scss'
 
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 
-export type TaskStatus = 'not-started' | 'in-progress' | 'completed'
+export type TaskStatus =
+  'not-started' | 'in-progress' | 'completed' | 'cannot-start' | 'not-applicable'
 
 export type TaskListProps = {
   children: ReactNode
@@ -21,9 +20,8 @@ export type TaskListProps = {
 export type TaskListSectionProps = {
   children: ReactNode
   className?: string
-  collapsible?: boolean
-  defaultExpanded?: boolean
   description?: ReactNode
+  optional?: boolean
   status?: TaskStatus
   title: ReactNode
   titleHeadingLevel?: 2 | 3 | 4 | 5 | 6
@@ -31,13 +29,11 @@ export type TaskListSectionProps = {
 
 export type TaskListTaskProps = {
   className?: string
-  completedFields?: number
   description?: ReactNode
   href?: string
   id?: string
-  title: ReactNode
   status: TaskStatus
-  totalFields?: number
+  title: ReactNode
 }
 
 export type TaskListSummaryProps = {
@@ -47,18 +43,21 @@ export type TaskListSummaryProps = {
 }
 
 const taskStatusLabels: Record<TaskStatus, string> = {
-  'not-started': 'Not started',
+  'not-started': 'Not yet started',
   'in-progress': 'In progress',
   completed: 'Completed',
+  'cannot-start': 'Cannot start yet',
+  'not-applicable': 'Not applicable',
 }
 
-const taskStatusColours: Record<Exclude<TaskStatus, 'completed'>, 'blue' | 'yellow'> = {
+const taskStatusColours = {
   'not-started': 'blue',
   'in-progress': 'yellow',
-}
+  completed: 'green',
+} as const
 
-function TaskStatusLabel({ className, status }: { className: string; status: TaskStatus }) {
-  if (status === 'completed') {
+function TaskStatusLabel({ className, status }: { className?: string; status: TaskStatus }) {
+  if (status === 'cannot-start' || status === 'not-applicable') {
     return <span className={className}>{taskStatusLabels[status]}</span>
   }
 
@@ -72,7 +71,9 @@ function TaskStatusLabel({ className, status }: { className: string; status: Tas
 export function TaskList({ children, className }: TaskListProps) {
   const tasks = collectTasks(children)
   const completed = tasks.filter((task) => task.props.status === 'completed').length
-  const firstIncomplete = tasks.find((task) => task.props.status !== 'completed')
+  const firstIncomplete = tasks.find(
+    (task) => task.props.status === 'not-started' || task.props.status === 'in-progress',
+  )
 
   return (
     <>
@@ -93,7 +94,7 @@ export function TaskListSummary({ completed, total, firstIncompleteId }: TaskLis
   return (
     <div className={styles['task-list__summary']}>
       <p className={styles['task-list__summary-text']}>
-        You have completed {completed} of {total} {total === 1 ? 'section' : 'sections'}
+        You have completed {completed} of {total} mandatory {total === 1 ? 'section' : 'sections'}
       </p>
       {firstIncompleteId && (
         <a className={styles['task-list__summary-link']} href={`#${firstIncompleteId}`}>
@@ -107,26 +108,16 @@ export function TaskListSummary({ completed, total, firstIncompleteId }: TaskLis
 export function TaskListSection({
   children,
   className,
-  collapsible = false,
-  defaultExpanded = false,
   description,
   status,
   title,
   titleHeadingLevel = 2,
 }: TaskListSectionProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded)
   const TitleHeading = `h${titleHeadingLevel}` as const
 
   return (
     <section className={clsx(styles['task-list__section'], className)}>
-      <TitleHeading
-        className={clsx(
-          styles['task-list__section-title'],
-          collapsible && styles['task-list__section-title--collapsible'],
-        )}
-      >
-        {title}
-      </TitleHeading>
+      <TitleHeading className={styles['task-list__section-title']}>{title}</TitleHeading>
 
       {(description || status) && (
         <div className={styles['task-list__section-summary']}>
@@ -135,54 +126,23 @@ export function TaskListSection({
         </div>
       )}
 
-      {collapsible && (
-        <div className={styles['task-list__section-controls']}>
-          <button
-            type="button"
-            className={styles['task-list__toggle']}
-            aria-expanded={expanded}
-            onClick={() => setExpanded((current) => !current)}
-          >
-            <ChevronDownIcon
-              className={clsx(
-                styles['task-list__toggle-icon'],
-                expanded && styles['task-list__toggle-icon--expanded'],
-              )}
-            />
-            <span className={styles['task-list__toggle-text']}>
-              {expanded ? 'Hide all' : 'Show all'}
-            </span>
-          </button>
-        </div>
-      )}
-
-      <ul className={styles['task-list__tasks']} hidden={collapsible && !expanded}>
-        {children}
-      </ul>
+      <ul className={styles['task-list__tasks']}>{children}</ul>
     </section>
   )
 }
 
 export function TaskListTask({
   className,
-  completedFields,
   description,
   href,
   id,
-  title,
   status,
-  totalFields,
+  title,
 }: TaskListTaskProps) {
   return (
     <li id={id} className={clsx(styles['task-list__task'], className)}>
       <div className={styles['task-list__task-content']}>
         <div className={styles['task-list__task-title']}>
-          {completedFields !== undefined && totalFields !== undefined && (
-            <p className={styles['task-list__task-field-summary']}>
-              You have completed {completedFields} of {totalFields}{' '}
-              {totalFields === 1 ? 'field' : 'fields'}
-            </p>
-          )}
           {href ? (
             <a className={styles['task-list__task-link']} href={href}>
               {title}
@@ -198,14 +158,16 @@ export function TaskListTask({
   )
 }
 
-type AnyProps = { children?: ReactNode; status?: TaskStatus; id?: string }
+type AnyProps = { children?: ReactNode; status?: TaskStatus; id?: string; optional?: boolean }
 
 function collectTasks(children: ReactNode): ReactElement<AnyProps>[] {
   return Children.toArray(children).flatMap((child) => {
     if (!isValidElement<AnyProps>(child)) return []
 
+    if (child.props.optional) return []
+
     if (child.props.status && child.props.children === undefined) {
-      return [child]
+      return child.props.status === 'not-applicable' ? [] : [child]
     }
 
     return collectTasks(child.props.children)
