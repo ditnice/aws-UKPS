@@ -642,7 +642,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [Fact]
     public async Task UpdateUserRole_ShouldReturnError_WhenTheMembershipBelongsToTheCurrentUser()
     {
-        var userOrgMembership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
+        var userOrgMembership = await SetupUserOrgMembership();
         UserRole originalRole = userOrgMembership.UserRole;
         var harness = await CreateHarnessActingAsMembershipOwner(userOrgMembership);
 
@@ -669,7 +669,6 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     public async Task DeactivateMembership_ShouldReturnError_WhenTheMembershipBelongsToTheCurrentUser()
     {
         var userOrgMembership = await SetupUserOrgMembership(
-            modifier: x => x.UserRole = UserRole.Champion,
             overrideMembershipFaker: _membershipFaker.RuleFor(
                 x => x.Status,
                 _ => UserOrgMembershipStatus.Active
@@ -1145,11 +1144,15 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     {
         // Arrange
         var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
-        var otherOrganisation = await AddEntity(
-            _organisationFaker.Generate(),
+        await AddEntity(
+            new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                .RuleFor(x => x.User, _ => _userFaker.Generate())
+                .RuleFor(x => x.Organisation, _ => _organisationFaker.Generate())
+                .Generate(),
             TestContext.Current.CancellationToken
         );
-        await AddOtherMembership(otherOrganisation.Id, UserOrgMembershipStatus.Active);
 
         // Act
         var result = await _service.UpdateUserRole(
@@ -1171,11 +1174,15 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     {
         // Arrange
         var membership = await SetupUserOrgMembership(x => x.UserRole = UserRole.Champion);
-        var otherOrganisation = await AddEntity(
-            _organisationFaker.Generate(),
+        await AddEntity(
+            new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                .RuleFor(x => x.User, _ => _userFaker.Generate())
+                .RuleFor(x => x.Organisation, _ => _organisationFaker.Generate())
+                .Generate(),
             TestContext.Current.CancellationToken
         );
-        await AddOtherMembership(otherOrganisation.Id, UserOrgMembershipStatus.Active);
 
         // Act
         var result = await _service.DeactivateMembership(
