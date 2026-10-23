@@ -1,6 +1,6 @@
-import { buildUserActionHref } from '../../../src/app/portal/organisations/[id]/_lib/userActionAlert'
-import { expect, test } from '../fixtures/test'
-import { requireEnvironmentVariable } from '../helpers/test-environment'
+import { buildUserActionHref } from '../../../../src/app/portal/organisations/[id]/_lib/userActionAlert'
+import { expect, test } from '../../fixtures/test'
+import { requireEnvironmentVariable } from '../../helpers/test-environment'
 
 test('invites a user without mutating authenticated-dev identity data', async ({ page }) => {
   const organisationId = Number(requireEnvironmentVariable('E2E_ORGANISATION_ID'))

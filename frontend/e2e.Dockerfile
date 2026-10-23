@@ -31,6 +31,8 @@ COPY playwright.config.ts tsconfig.json ./
 COPY tests/e2e ./tests/e2e
 # invite-user.authenticated.e2e.spec.ts imports this helper from the app source.
 COPY src/app/portal/organisations/[[]id]/_lib/userActionAlert.ts ./src/app/portal/organisations/[id]/_lib/userActionAlert.ts
+# search-and-filter-users.authenticated.e2e.spec.ts imports the last-active filter presets.
+COPY src/app/portal/organisations/[[]id]/_lib/userLabels.ts ./src/app/portal/organisations/[id]/_lib/userLabels.ts
 
 RUN mkdir -p e2e-results && chmod a+rwx e2e-results
 

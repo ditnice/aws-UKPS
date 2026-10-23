@@ -2,8 +2,10 @@ import { defineConfig, devices } from '@playwright/test'
 import 'dotenv/config'
 
 import {
+  ephemeralStackOnlyTags,
   isAuthenticatedTargetAllowed,
   isDevAuthMode,
+  isEphemeralStack,
   isLocalBaseURL,
 } from './tests/e2e/helpers/test-environment'
 
@@ -19,6 +21,17 @@ if (isDevAuth && !isLocal) {
     `E2E_AUTH_MODE=dev only works against a local target, but PLAYWRIGHT_BASE_URL is ${baseURL}.`,
   )
 }
+/* Only the Docker Compose stack sets E2E_EPHEMERAL_STACK, as its data resets on every start.
+ * Elsewhere every project skips @mutates-data and @visual tests. The filter is set per project
+ * rather than at the top level because a CLI --grep-invert replaces the top-level one but is
+ * applied on top of a project's, so it can't let these tests run against a deployed environment. */
+const isEphemeral = isEphemeralStack()
+if (isEphemeral && !(isLocal && isDevAuth)) {
+  throw new Error(
+    `E2E_EPHEMERAL_STACK only works with E2E_AUTH_MODE=dev against a local target, but PLAYWRIGHT_BASE_URL is ${baseURL}.`,
+  )
+}
+const ephemeralStackFilter = isEphemeral ? {} : { grepInvert: ephemeralStackOnlyTags }
 const localWebServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? 'pnpm dev'
 const localChromiumOptions = isLocal
   ? { launchOptions: { args: ['--ignore-certificate-errors'] } }
@@ -38,6 +51,7 @@ const canRunAuthenticatedTests =
   isDevAuth || (hasAuthenticatedCredentials && isAuthenticatedTargetAllowed(baseURL))
 const authenticatedChromiumProject = {
   name: 'authenticated-chromium',
+  ...ephemeralStackFilter,
   testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
   use: {
     ...devices['Desktop Chrome'],
@@ -49,6 +63,7 @@ const authenticatedProjects = isDevAuth
   : [
       {
         name: 'auth-setup',
+        ...ephemeralStackFilter,
         testMatch: /auth\.setup\.ts/,
         use: {
           ...devices['Desktop Chrome'],
@@ -110,6 +125,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      ...ephemeralStackFilter,
       testIgnore: publicTestIgnore,
       use: {
         ...devices['Desktop Chrome'],
@@ -118,16 +134,19 @@ export default defineConfig({
     },
     {
       name: 'firefox',
+      ...ephemeralStackFilter,
       testIgnore: publicTestIgnore,
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
+      ...ephemeralStackFilter,
       testIgnore: publicTestIgnore,
       use: { ...devices['Desktop Safari'] },
     },
     {
       name: 'accessibility',
+      ...ephemeralStackFilter,
       testIgnore: /\.authenticated\.e2e\.spec\.ts/,
       testMatch: /accessibility\/.*\.e2e\.spec\.ts/,
       use: {
