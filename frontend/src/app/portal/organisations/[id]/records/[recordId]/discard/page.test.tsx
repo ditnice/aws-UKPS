@@ -2,6 +2,10 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getRecord, RecordDto } from '@/client/generated'
+import {
+  fakeRecordDtoMedicineRecordDto,
+  fakeRecordProductDetailDto,
+} from '@/client/generated/@faker-js/faker.gen'
 import { createServerApiClient } from '@/client/server-api'
 
 import DiscardRecordPage from './page'
@@ -57,48 +61,41 @@ vi.mock('./_components/DiscardRecordControls', () => ({
   DiscardRecordControls: ({
     organisationId,
     recordId,
-    recordType,
   }: {
     organisationId: number
     recordId: number
-    recordType: string
   }) => (
     <div
       data-testid="discard-record-controls"
       data-organisation-id={organisationId}
       data-record-id={recordId}
-      data-record-type={recordType}
     />
   ),
 }))
 
 type GetRecordResult = Awaited<ReturnType<typeof getRecord>>
 
-const medicineRecord: RecordDto = {
+const medicineRecord = {
+  ...fakeRecordDtoMedicineRecordDto(),
   recordType: 'Medicine',
-  recordId: 42,
-  organisationId: 7,
   recordStatus: 'Unpublished',
   displayStatus: 'Draft',
-  revisionId: 3,
-  recordClinicalTrials: [],
-  recordProductDetail: {
-    companyCode: 'GC22',
-    recordTitle: 'Early rheumatoid arthritis in adults',
-    namesAndIdentifiers: [],
-  },
-}
+  recordProductDetail: fakeRecordProductDetailDto(),
+} satisfies RecordDto
+
+const organisationId = String(medicineRecord.organisationId)
+const recordId = String(medicineRecord.recordId)
 
 const mockRecord = (result: Partial<GetRecordResult>) =>
   vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
 
-const renderPage = async (recordId = '42', recordType: string | undefined = 'Medicine') => {
+const renderPage = async () => {
   const page = await DiscardRecordPage({
-    params: Promise.resolve({ id: '7', recordId }),
-    searchParams: Promise.resolve({ recordType }),
+    params: Promise.resolve({ id: organisationId, recordId }),
+    searchParams: Promise.resolve({ recordType: medicineRecord.recordType }),
   })
   // The organisation wrapper mock renders the async discard view directly, so resolve it here.
-  const view = page.props.children({ id: 7 }) as ReactElement<unknown>
+  const view = page.props.children({ id: medicineRecord.organisationId }) as ReactElement<unknown>
   const viewComponent = view.type as (props: unknown) => Promise<ReactElement>
   render(await viewComponent(view.props))
 }
@@ -119,7 +116,10 @@ describe('DiscardRecordPage', () => {
     await renderPage()
 
     expect(getRecord).toHaveBeenCalledWith(
-      expect.objectContaining({ path: { id: 42 }, query: { recordType: 'Medicine' } }),
+      expect.objectContaining({
+        path: { id: medicineRecord.recordId },
+        query: { recordType: medicineRecord.recordType },
+      }),
     )
     expect(
       screen.getByRole('heading', { name: 'If you confirm, this record will be discarded' }),
@@ -128,12 +128,11 @@ describe('DiscardRecordPage', () => {
       'Confirm decision to discard record',
     )
     expect(screen.getByTestId('lead').textContent).toBe(
-      'Record title: Early rheumatoid arthritis in adults',
+      `Record title: ${medicineRecord.recordProductDetail.recordTitle}`,
     )
     const controls = screen.getByTestId('discard-record-controls')
-    expect(controls.getAttribute('data-organisation-id')).toBe('7')
-    expect(controls.getAttribute('data-record-id')).toBe('42')
-    expect(controls.getAttribute('data-record-type')).toBe('Medicine')
+    expect(controls.getAttribute('data-organisation-id')).toBe(organisationId)
+    expect(controls.getAttribute('data-record-id')).toBe(recordId)
   })
 
   it('links back to the record', async () => {
@@ -142,18 +141,18 @@ describe('DiscardRecordPage', () => {
     await renderPage()
 
     expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
-      '/portal/organisations/7/records/42?recordType=Medicine',
+      `/portal/organisations/${organisationId}/records/${recordId}?recordType=${medicineRecord.recordType}`,
     )
   })
 
   it.each([
-    ['an invalid record ID', 'abc', 'Medicine'],
-    ['a missing record type', '42', undefined],
-    ['an invalid record type', '42', 'Device'],
-  ])('returns not found for %s', async (_, recordId, recordType) => {
+    ['an invalid record ID', 'abc', medicineRecord.recordType],
+    ['a missing record type', recordId, undefined],
+    ['an invalid record type', recordId, 'Device'],
+  ])('returns not found for %s', async (_, recordIdParam, recordType) => {
     await expect(
       DiscardRecordPage({
-        params: Promise.resolve({ id: '7', recordId }),
+        params: Promise.resolve({ id: organisationId, recordId: recordIdParam }),
         searchParams: Promise.resolve({ recordType }),
       }),
     ).rejects.toThrow('NEXT_NOT_FOUND')
@@ -167,7 +166,7 @@ describe('DiscardRecordPage', () => {
 
   it('returns not found when the record belongs to a different organisation', async () => {
     mockRecord({
-      data: { ...medicineRecord, organisationId: 8 },
+      data: { ...medicineRecord, organisationId: medicineRecord.organisationId + 1 },
       error: undefined,
       response: new Response(),
     })

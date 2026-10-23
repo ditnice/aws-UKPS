@@ -18,7 +18,7 @@ const renderBanner = (displayStatus: RecordDisplayStatus, recordStatus: RecordSt
     />,
   )
 
-const actionLabels = () =>
+const getActionLabels = () =>
   [...document.querySelectorAll('[data-component="button-group"] > *')].map(
     (element) => element.textContent,
   )
@@ -58,7 +58,7 @@ describe('ManageRecordActionBanner', () => {
     (_, displayStatus, recordStatus, expected) => {
       renderBanner(displayStatus, recordStatus)
 
-      expect(actionLabels()).toEqual(expected)
+      expect(getActionLabels()).toEqual(expected)
     },
   )
 
