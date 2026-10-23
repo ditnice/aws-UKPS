@@ -173,7 +173,7 @@ public class RecordController(
     /// An HTTP 404 response if the record cannot be found.
     /// An HTTP 400 response if the record is not eligible to be discarded.
     /// </returns>
-    [HttpPost("{recordId}/discard")]
+    [HttpPatch("{recordId}/discard")]
     public async Task<IActionResult> DiscardDraftRecord(
         int recordId,
         CancellationToken cancellationToken

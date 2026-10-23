@@ -2284,7 +2284,7 @@ export type CreateRecordResponses = {
 
 export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
 
-export type PostRecordsByRecordIdDiscardData = {
+export type PatchRecordsByRecordIdDiscardData = {
     body?: never;
     path: {
         /**
@@ -2296,7 +2296,7 @@ export type PostRecordsByRecordIdDiscardData = {
     url: '/records/{recordId}/discard';
 };
 
-export type PostRecordsByRecordIdDiscardErrors = {
+export type PatchRecordsByRecordIdDiscardErrors = {
     /**
      * An HTTP 200 response if the record is successfully discarded.
      * An HTTP 404 response if the record cannot be found.
@@ -2305,7 +2305,7 @@ export type PostRecordsByRecordIdDiscardErrors = {
     401: AuthenticationProblemDetails;
 };
 
-export type PostRecordsByRecordIdDiscardError = PostRecordsByRecordIdDiscardErrors[keyof PostRecordsByRecordIdDiscardErrors];
+export type PatchRecordsByRecordIdDiscardError = PatchRecordsByRecordIdDiscardErrors[keyof PatchRecordsByRecordIdDiscardErrors];
 
 export type GetUsersMeData = {
     body?: never;

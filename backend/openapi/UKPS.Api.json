@@ -2078,7 +2078,7 @@
       }
     },
     "/records/{recordId}/discard": {
-      "post": {
+      "patch": {
         "tags": [
           "Record"
         ],
