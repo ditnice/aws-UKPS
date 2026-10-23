@@ -29,5 +29,4 @@ internal sealed class RecordEvent
     public RecordRevision? Revision { get; set; }
     public QaReview? QaReview { get; set; }
     public Identity.User? PerformedByUser { get; set; }
-    public ICollection<RecordEventFieldChange> FieldChanges { get; set; } = [];
 }
