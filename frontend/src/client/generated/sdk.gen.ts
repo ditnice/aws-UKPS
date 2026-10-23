@@ -195,7 +195,7 @@ export const createRecord = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
- * Discards a draft record by updating its status to discarded.
+ * Discards a draft record by updating its status to discarded and a new record event is made.
  */
 export const postRecordsByRecordIdDiscard = <ThrowOnError extends boolean = false>(options: Options<PostRecordsByRecordIdDiscardData, ThrowOnError>): RequestResult<unknown, PostRecordsByRecordIdDiscardErrors, ThrowOnError> => (options.client ?? client).post<unknown, PostRecordsByRecordIdDiscardErrors, ThrowOnError>({ url: '/records/{recordId}/discard', ...options });
 

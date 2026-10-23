@@ -164,7 +164,7 @@ public class RecordController(
     }
 
     /// <summary>
-    /// Discards a draft record by updating its status to discarded.
+    /// Discards a draft record by updating its status to discarded and a new record event is made.
     /// </summary>
     /// <param name="recordId">The unique identifier of the record to discard.</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>

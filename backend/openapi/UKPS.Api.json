@@ -2082,7 +2082,7 @@
         "tags": [
           "Record"
         ],
-        "summary": "Discards a draft record by updating its status to discarded.",
+        "summary": "Discards a draft record by updating its status to discarded and a new record event is made.",
         "parameters": [
           {
             "name": "recordId",
