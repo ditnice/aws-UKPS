@@ -1,5 +1,6 @@
 import { expect, test } from '../../fixtures/test'
 import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-environment'
+import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
 // A unique email, so a retry or an earlier run against a shared environment can't collide.
 const testUser = {
@@ -13,8 +14,8 @@ test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
 
   test('adding a new user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-    await page.goto(`/portal/organisations/${organisationId}`)
-    await expect(page.getByText('Organisation details')).toBeVisible()
+    const usersPage = new OrganisationUsersPage(page)
+    await usersPage.goto(organisationId)
 
     await page.getByRole('link', { name: 'Add a new user' }).click()
     await expect(page.getByRole('heading', { name: 'Add a new user' })).toBeVisible()
@@ -24,49 +25,16 @@ test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
 
     await page.getByRole('button', { name: 'Send invite' }).click()
 
-    await expect(page.getByText('Organisation details')).toBeVisible()
-    await page.getByRole('textbox', { name: 'Filter users' }).fill(testUser.workEmail)
-    await page
-      .getByRole('button', {
-        name: 'Apply filter',
-        exact: true,
-      })
-      .click()
-    const userRow = page.getByRole('row').filter({
-      has: page.getByRole('cell', {
-        name: testUser.workEmail,
-        exact: true,
-      }),
-    })
-    await expect(userRow).toBeVisible()
-    await expect(
-      userRow.getByRole('cell', {
-        name: 'Pending',
-        exact: true,
-      }),
-    ).toBeVisible()
+    await usersPage.expectLoaded()
+    await usersPage.expectUser(testUser.workEmail, 'Pending')
     // cannot test the email sending functionality yet
   })
 
   test('remove a user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-
-    await page.goto(`/portal/organisations/${organisationId}`)
-    await expect(page.getByText('Organisation details')).toBeVisible()
-    await page.getByRole('textbox', { name: 'Filter users' }).fill(testUser.workEmail)
-    await page
-      .getByRole('button', {
-        name: 'Apply filter',
-        exact: true,
-      })
-      .click()
-    const userRow = page.getByRole('row').filter({
-      has: page.getByRole('cell', {
-        name: testUser.workEmail,
-        exact: true,
-      }),
-    })
-    await userRow.getByRole('link', { name: 'Edit', exact: true }).click()
+    const usersPage = new OrganisationUsersPage(page)
+    await usersPage.goto(organisationId)
+    await usersPage.openUserAction(testUser.workEmail, 'Edit')
 
     await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
     await page.getByText('Remove user', { exact: true }).click()
@@ -75,15 +43,8 @@ test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
     await expect(page.getByRole('heading', { name: 'Remove user' })).toBeVisible()
     await page.getByRole('button', { name: 'Remove user' }).click()
 
-    await expect(page.getByText('Organisation details')).toBeVisible()
-    await page.getByRole('textbox', { name: 'Filter users' }).fill(testUser.workEmail)
-
-    await page
-      .getByRole('button', {
-        name: 'Apply filter',
-        exact: true,
-      })
-      .click()
-    await expect(page.getByText('No users found for this organisation')).toBeVisible()
+    await usersPage.expectLoaded()
+    await usersPage.filterByEmail(testUser.workEmail)
+    await expect(usersPage.noUsersMessage).toBeVisible()
   })
 })

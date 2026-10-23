@@ -1,8 +1,15 @@
 import { Page } from '@playwright/test'
 
+import {
+  lastActiveLabels,
+  lastActivePresetDays,
+  lastActivePresets,
+} from '../../../../src/app/portal/organisations/[id]/_lib/userLabels'
 import { expect, test } from '../../fixtures/test'
 import { requireEnvironmentVariable, visualTag } from '../../helpers/test-environment'
+import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
+// The active filters render with the table, so once one shows, the rows are the filtered results.
 function activeFilter(page: Page, label: string) {
   return page.getByRole('list', { name: 'Active filters' }).getByRole('listitem').filter({
     hasText: label,
@@ -25,8 +32,7 @@ test.describe('Searching and filtering users', () => {
     const emails = page.locator('tbody tr td:nth-child(1)')
     const userEmail = (await emails.last().innerText()).trim()
 
-    await page.getByRole('textbox', { name: 'Filter users' }).fill(userEmail)
-    await page.getByRole('button', { name: 'Apply filter', exact: true }).click()
+    await new OrganisationUsersPage(page).filterByEmail(userEmail)
 
     await expect(activeFilter(page, userEmail)).toBeVisible()
     await expect(emails).toHaveText([userEmail])
@@ -41,72 +47,49 @@ test.describe('Searching and filtering users', () => {
     await expect(activeFilter(page, 'Standard user')).toBeVisible()
     const roles = page.locator('tbody tr td:nth-child(2)')
     await expect(roles.first()).toBeVisible()
-    for (const role of await roles.allTextContents()) {
-      expect(role.trim()).toBe('Standard user')
-    }
+    await expect(roles.filter({ hasNotText: /^\s*Standard user\s*$/ })).toHaveCount(0)
   })
 
-  const dateFilters = [
-    { name: 'In the last week', days: 7 },
-    { name: 'In the last month', months: 1 },
-    { name: 'In the last 6 months', months: 6 },
-    { name: 'In the last year', months: 12 },
-  ]
-  for (const filterOption of dateFilters) {
-    test(`should filter users ${filterOption.name.toLowerCase()}`, async ({ page }) => {
+  for (const preset of lastActivePresets) {
+    const label = lastActiveLabels[preset]
+    test(`should filter users ${label.toLowerCase()}`, async ({ page }) => {
       const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
 
       await page.goto(`/portal/organisations/${organisationId}`)
-      const filter = page.getByRole('checkbox', {
-        name: filterOption.name,
-        exact: true,
-      })
+      const filter = page.getByRole('checkbox', { name: label, exact: true })
       await filter.check()
       await expect(filter).toBeChecked()
-      // The previous, unfiltered rows stay on screen until the filtered results arrive.
-      await expect(activeFilter(page, filterOption.name)).toBeVisible()
-      await expect(page.getByText('Loading users', { exact: false })).toBeHidden({ timeout: 15000 })
+      await expect(activeFilter(page, label)).toBeVisible()
+
       const dates = page.locator('tbody tr td:nth-child(4)')
       const noUsersMessage = page.getByRole('cell', {
         name: 'No users found for this organisation.',
       })
-
-      await expect
-        .poll(
-          async () => {
-            if (await noUsersMessage.isVisible()) return 'empty'
-            if ((await dates.count()) > 0) return 'results'
-            return 'loading'
-          },
-          {
-            timeout: 15000,
-          },
-        )
-        .not.toBe('loading')
+      await expect(noUsersMessage.or(dates.first())).toBeVisible()
 
       if (await noUsersMessage.isVisible()) {
         await expect(page.getByText('Showing results 0 to 0 of 0')).toBeVisible()
         await expect(dates).toHaveCount(0)
-      } else {
-        const cutoffDate = new Date()
-        if (filterOption.days) {
-          cutoffDate.setDate(cutoffDate.getDate() - filterOption.days)
-        }
-        if (filterOption.months) {
-          cutoffDate.setMonth(cutoffDate.getMonth() - filterOption.months)
-        }
-        cutoffDate.setHours(0, 0, 0, 0)
-
-        for (const date of await dates.allTextContents()) {
-          const [day, month, year] = date.trim().split('/').map(Number)
-          const lastActive = new Date(year, month - 1, day)
-
-          expect(
-            lastActive.getTime(),
-            `Filter "${filterOption.name}" returned user with Last Active date ${date.trim()}, which is before ${cutoffDate.toLocaleDateString('en-GB')}`,
-          ).toBeGreaterThanOrEqual(cutoffDate.getTime())
-        }
+        return
       }
+
+      // The same window as the app's filter, from the start of that day as the table shows dates only.
+      const cutoffDate = new Date(Date.now() - lastActivePresetDays[preset] * 24 * 60 * 60 * 1000)
+      cutoffDate.setHours(0, 0, 0, 0)
+      await expect
+        .poll(
+          async () =>
+            (await dates.allTextContents())
+              .map((date) => date.trim())
+              .filter((date) => {
+                const [day, month, year] = date.split('/').map(Number)
+                return new Date(year, month - 1, day) < cutoffDate
+              }),
+          {
+            message: `"${label}" should only list users active since ${cutoffDate.toLocaleDateString('en-GB')}`,
+          },
+        )
+        .toEqual([])
     })
   }
 
@@ -126,8 +109,6 @@ test.describe('Searching and filtering users', () => {
     await expect(page.getByRole('button', { name: 'Filters (2 Active)' })).toBeVisible()
     const statuses = page.locator('tbody tr td:nth-child(3)')
     await expect(statuses.first()).toBeVisible()
-    for (const status of await statuses.allTextContents()) {
-      expect(['Active', 'Pending']).toContain(status.trim())
-    }
+    await expect(statuses.filter({ hasNotText: /^\s*(Active|Pending)\s*$/ })).toHaveCount(0)
   })
 })

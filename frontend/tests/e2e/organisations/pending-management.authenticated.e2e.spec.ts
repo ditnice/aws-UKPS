@@ -2,6 +2,7 @@ import { Page } from '@playwright/test'
 
 import { expect, test } from '../fixtures/test'
 import { mutatesDataTag, requireEnvironmentVariable } from '../helpers/test-environment'
+import { OrganisationUsersPage } from '../pages/organisation-users.page'
 
 // Nothing seeds registration requests, so each test submits its own through the public form.
 async function requestAccess(page: Page, organisationId: string): Promise<string> {
@@ -20,26 +21,18 @@ async function requestAccess(page: Page, organisationId: string): Promise<string
 }
 
 async function openRequest(page: Page, organisationId: string, workEmail: string) {
-  await page.goto(`/portal/organisations/${organisationId}`)
-  await filterByEmail(page, workEmail)
-  const row = page.getByRole('row').filter({
-    has: page.getByRole('cell', { name: workEmail, exact: true }),
-  })
-  await expect(row.getByRole('cell', { name: 'Requested', exact: true })).toBeVisible()
-  return row
-}
-
-async function filterByEmail(page: Page, workEmail: string) {
-  await page.getByRole('textbox', { name: 'Filter users' }).fill(workEmail)
-  await page.getByRole('button', { name: 'Apply filter', exact: true }).click()
+  const usersPage = new OrganisationUsersPage(page)
+  await usersPage.goto(organisationId)
+  await usersPage.expectUser(workEmail, 'Requested')
+  return usersPage
 }
 
 test('approves a registration request', { tag: mutatesDataTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   const workEmail = await requestAccess(page, organisationId)
-  const row = await openRequest(page, organisationId, workEmail)
+  const usersPage = await openRequest(page, organisationId, workEmail)
 
-  await row.getByRole('link', { name: 'Approve', exact: true }).click()
+  await usersPage.row(workEmail).getByRole('link', { name: 'Approve', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Approve user' })).toBeVisible()
   await expect(page.getByText(`You are about to approve ${workEmail}'s request`)).toBeVisible()
   await page.getByRole('button', { name: 'Approve user' }).click()
@@ -47,19 +40,15 @@ test('approves a registration request', { tag: mutatesDataTag }, async ({ page }
   await expect(page.getByRole('heading', { name: 'Approval Email Sent' })).toBeVisible()
   await expect(page.getByText(`We’ve sent an email to ${workEmail}`)).toBeVisible()
   // Approving invites the requester, so they become a pending user.
-  await filterByEmail(page, workEmail)
-  const userRow = page.getByRole('row').filter({
-    has: page.getByRole('cell', { name: workEmail, exact: true }),
-  })
-  await expect(userRow.getByRole('cell', { name: 'Pending', exact: true })).toBeVisible()
+  await usersPage.expectUser(workEmail, 'Pending')
 })
 
 test('rejects a registration request', { tag: mutatesDataTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   const workEmail = await requestAccess(page, organisationId)
-  const row = await openRequest(page, organisationId, workEmail)
+  const usersPage = await openRequest(page, organisationId, workEmail)
 
-  await row.getByRole('link', { name: 'Reject', exact: true }).click()
+  await usersPage.row(workEmail).getByRole('link', { name: 'Reject', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Reject user' })).toBeVisible()
   await expect(page.getByText(`You are about to reject ${workEmail}'s request`)).toBeVisible()
   await page.getByRole('button', { name: 'Reject user' }).click()
@@ -67,6 +56,6 @@ test('rejects a registration request', { tag: mutatesDataTag }, async ({ page })
   await expect(page.getByRole('heading', { name: 'Rejection Email Sent' })).toBeVisible()
   await expect(page.getByText(`We’ve sent an email to ${workEmail}`)).toBeVisible()
   // Rejected requests aren't listed.
-  await filterByEmail(page, workEmail)
-  await expect(page.getByText('No users found for this organisation')).toBeVisible()
+  await usersPage.filterByEmail(workEmail)
+  await expect(usersPage.noUsersMessage).toBeVisible()
 })
