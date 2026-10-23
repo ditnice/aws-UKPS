@@ -60,7 +60,7 @@ describe('RecordsTablesFilters', () => {
 
     expect(screen.getByRole('textbox', { name: 'Search Records' })).toHaveValue('medicine')
     expect(screen.getByRole('checkbox', { name: 'Published' })).toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'On Hold' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'On hold' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Overdue' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Not overdue' })).not.toBeChecked()
   })
