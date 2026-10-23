@@ -24,4 +24,9 @@ public enum RecordStatus
     /// The record is archived and no longer active.
     /// </summary>
     Archived = 3,
+
+    /// <summary>
+    /// The record is discarded.
+    /// </summary>
+    Discarded = 4,
 }

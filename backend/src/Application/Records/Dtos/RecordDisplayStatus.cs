@@ -30,4 +30,9 @@ public enum RecordDisplayStatus
     /// The record is archived.
     /// </summary>
     Archived = 4,
+
+    /// <summary>
+    /// The record is discarded - it has never been submitted. It will not appear in the company portfolio and not be visible to any horizon scanners.
+    /// </summary>
+    Discarded = 5,
 }

@@ -162,4 +162,39 @@ public class RecordController(
                 )
         );
     }
+
+    /// <summary>
+    /// Discards a draft record by updating its status to discarded and a new record event is made.
+    /// </summary>
+    /// <param name="recordId">The unique identifier of the record to discard.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// An HTTP 200 response if the record is successfully discarded.
+    /// An HTTP 404 response if the record cannot be found.
+    /// An HTTP 400 response if the record is not eligible to be discarded.
+    /// </returns>
+    [HttpPatch("{recordId}/discard")]
+    public async Task<IActionResult> DiscardDraftRecord(
+        int recordId,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<DiscardRecordError> result = await recordService.DiscardDraftRecord(
+            recordId,
+            cancellationToken
+        );
+
+        if (result.IsOk)
+        {
+            return Ok();
+        }
+        return result.Error switch
+        {
+            DiscardRecordError.RecordNotFound => NotFound(),
+            DiscardRecordError.InvalidDiscard => BadRequest(),
+            _ => throw new InvalidOperationException(
+                $"Unexpected error when discarding draft record {recordId}."
+            ),
+        };
+    }
 }
