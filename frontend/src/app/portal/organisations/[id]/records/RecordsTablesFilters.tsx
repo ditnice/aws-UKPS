@@ -52,7 +52,9 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
       <FilterOptionsGroup
         heading="Record status"
         id="record-status-filter"
-        options={Object.values(RecordDisplayStatus)}
+        options={Object.values(RecordDisplayStatus).filter(
+          (status) => status !== RecordDisplayStatus.DISCARDED,
+        )}
         labels={recordStatusLabels}
         isSelected={(recordStatus: RecordDisplayStatus) =>
           query.recordStatus?.includes(recordStatus) ?? false

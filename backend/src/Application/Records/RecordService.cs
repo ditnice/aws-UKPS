@@ -148,18 +148,19 @@ internal partial class RecordService(
             currentUser,
             RecordStatusChangeReason.ManuallyDiscarded
         );
-        RecordRevision revision = new RecordRevision()
+
+        RecordRevision? latestRevision = await dbContext
+            .RecordRevisions.Where(r => r.RecordId == recordId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (latestRevision is not null)
         {
-            CreatedAt = performedAt,
-            CreatedByUser = currentUser,
-            WorkflowStatus = WorkflowStatus.Discarded,
-            Record = record,
-        };
-        dbContext.RecordRevisions.Add(revision);
+            latestRevision.WorkflowStatus = WorkflowStatus.Discarded;
+        }
         var recordEvent = new RecordEvent
         {
             Record = record,
-            EventType = RecordEventType.RecordDiscarded,
+            RevisionId = latestRevision?.Id,
+            EventType = RecordEventType.RecordStatusChanged,
             PerformedBy = currentUser.Id,
             PerformedAt = performedAt,
         };
@@ -344,7 +345,7 @@ internal partial class RecordService(
 
         bool authorisedToPerformOperation =
             _organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.DiscardRecord,
+                Operation.Update,
                 record.OrganisationId
             );
         return authorisedToPerformOperation;

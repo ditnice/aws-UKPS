@@ -41,9 +41,4 @@ public enum RecordEventType
     /// Indicates that the status of a record has changed.
     /// </summary>
     RecordStatusChanged = 6,
-
-    /// <summary>
-    /// Indicates that the record has been discarded.
-    /// </summary>
-    RecordDiscarded = 7,
 }

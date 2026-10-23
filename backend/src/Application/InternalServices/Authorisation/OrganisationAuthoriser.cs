@@ -10,7 +10,6 @@ internal class OrganisationAuthoriser : IOrganisationAuthoriser
     [
         Operation.Read,
         Operation.Create,
-        Operation.DiscardRecord,
     ];
 
     public OrganisationAuthoriser(ICurrentUserInfoService currentUserInfoService)
