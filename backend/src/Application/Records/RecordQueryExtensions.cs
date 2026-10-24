@@ -44,4 +44,17 @@ internal static class RecordQueryExtensions
                         ? RecordDisplayStatus.Published
                     : RecordDisplayStatus.Draft,
             });
+
+    /// <summary>
+    /// Filters to records that can be discarded: those that have never been submitted, so have a
+    /// single revision that is still a draft.
+    /// </summary>
+    /// <param name="records">The records to filter.</param>
+    /// <returns>The records that can be discarded.</returns>
+    public static IQueryable<Record> WhereDiscardable(this IQueryable<Record> records) =>
+        records.Where(r =>
+            r.RecordStatus == RecordStatus.Unpublished
+            && r.Revisions.Count == 1
+            && r.Revisions.All(rev => rev.WorkflowStatus == WorkflowStatus.Draft)
+        );
 }

@@ -197,6 +197,54 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetRecord_DiscardedRecord_ReturnsNotFound()
+    {
+        Record record = await AddRecord(RecordStatus.Discarded);
+        await AddRevision(record, 1, WorkflowStatus.Discarded);
+
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<GetRecordError.NotFound>();
+    }
+
+    [Theory]
+    [InlineData(RecordStatus.Unpublished, new[] { WorkflowStatus.Draft }, true)]
+    [InlineData(RecordStatus.Unpublished, new[] { WorkflowStatus.QAReview }, false)]
+    [InlineData(
+        RecordStatus.Unpublished,
+        new[] { WorkflowStatus.Rejected, WorkflowStatus.Draft },
+        false
+    )]
+    [InlineData(RecordStatus.Published, new[] { WorkflowStatus.Published }, false)]
+    [InlineData(
+        RecordStatus.Published,
+        new[] { WorkflowStatus.Published, WorkflowStatus.Draft },
+        false
+    )]
+    public async Task GetRecord_ReturnsWhetherRecordCanBeDiscarded(
+        RecordStatus recordStatus,
+        WorkflowStatus[] revisionStatuses,
+        bool expectedCanDiscard
+    )
+    {
+        ArgumentNullException.ThrowIfNull(revisionStatuses);
+        Record record = await AddRecord(recordStatus);
+        await AddRevisions(record, revisionStatuses);
+
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().CanDiscard.ShouldBe(expectedCanDiscard);
+    }
+
+    [Fact]
     public async Task GetRecord_VaccineRecord_ReturnsVaccineRecord()
     {
         Record record = await AddRecord(RecordStatus.Published, RecordType.Vaccine);
@@ -796,6 +844,14 @@ public class RecordViewServiceTests : DatabaseTestBase
                 .Generate(),
             TestContext.Current.CancellationToken
         );
+
+    private async Task AddRevisions(Record record, WorkflowStatus[] workflowStatuses)
+    {
+        for (int i = 0; i < workflowStatuses.Length; i++)
+        {
+            await AddRevision(record, i + 1, workflowStatuses[i]);
+        }
+    }
 
     private async Task<RegulatoryDate> AddDate(
         RecordRevision revision,

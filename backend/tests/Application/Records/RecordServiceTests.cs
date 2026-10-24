@@ -446,23 +446,47 @@ public class RecordServiceTests : DatabaseTestBase
         );
     }
 
-    [Fact]
-    public async Task DiscardDraftRecord_WhenSuccessful_UpdatesRecordStatus()
+    [Theory]
+    [InlineData(UserRole.Standard)]
+    [InlineData(UserRole.Champion)]
+    public async Task DiscardDraftRecord_WhenRecordIsDiscardable_DiscardsRecordAndRevision(
+        UserRole userRole
+    )
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        Record record = await CreateDraftRecord();
+        (Record record, User user) = await CreateRecordForDiscard(userRole: userRole);
 
         Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
             record.Id,
             cancellationToken
         );
+
         result.IsOk.ShouldBeTrue();
         Context.ChangeTracker.Clear();
 
         Record updatedRecord = await Context
             .Records.AsNoTracking()
+            .Include(r => r.Revisions)
+            .Include(r => r.StatusHistory)
+            .Include(r => r.Events)
             .SingleAsync(r => r.Id == record.Id, cancellationToken);
         updatedRecord.RecordStatus.ShouldBe(RecordStatus.Discarded);
+
+        RecordRevision revision = updatedRecord.Revisions.ShouldHaveSingleItem();
+        revision.WorkflowStatus.ShouldBe(WorkflowStatus.Discarded);
+
+        RecordStatusHistory history = updatedRecord.StatusHistory.ShouldHaveSingleItem();
+        history.FromStatus.ShouldBe(RecordStatus.Unpublished);
+        history.ToStatus.ShouldBe(RecordStatus.Discarded);
+        history.Reason.ShouldBe(RecordStatusChangeReason.ManuallyDiscarded);
+        history.UpdatedBy.ShouldBe(user.Id);
+        history.UpdatedAt.ShouldBe(_currentDateTime);
+
+        RecordEvent recordEvent = updatedRecord.Events.ShouldHaveSingleItem();
+        recordEvent.EventType.ShouldBe(RecordEventType.RecordStatusChanged);
+        recordEvent.RevisionId.ShouldBe(revision.Id);
+        recordEvent.PerformedBy.ShouldBe(user.Id);
+        recordEvent.PerformedAt.ShouldBe(_currentDateTime);
     }
 
     [Fact]
@@ -479,29 +503,95 @@ public class RecordServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task DiscardDraftRecord_WhenRecordIsPublished_ReturnsInvalidDiscardError()
+    public async Task DiscardDraftRecord_WhenRecordAlreadyDiscarded_ReturnsRecordNotFoundError()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        Record record = await CreateDraftRecord(RecordStatus.Published);
+        (Record record, _) = await CreateRecordForDiscard(
+            RecordStatus.Discarded,
+            revisionStatuses: [WorkflowStatus.Discarded]
+        );
 
         Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
             record.Id,
             cancellationToken
         );
+
         result.ShouldBeError();
-        result.Error.ShouldBeOfType<DiscardRecordError.InvalidDiscard>();
-
-        Context.ChangeTracker.Clear();
-
-        Record unchangedRecord = await Context
-            .Records.AsNoTracking()
-            .SingleAsync(r => r.Id == record.Id, cancellationToken);
-
-        unchangedRecord.RecordStatus.ShouldBe(RecordStatus.Published);
+        result.Error.ShouldBeOfType<DiscardRecordError.RecordNotFound>();
     }
 
-    private async Task<Record> CreateDraftRecord(
-        RecordStatus recordStatus = RecordStatus.Unpublished
+    [Fact]
+    public async Task DiscardDraftRecord_WhenRecordBelongsToAnotherOrganisation_ReturnsNotAllowedError()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        Organisation otherOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            cancellationToken
+        );
+        (Record record, _) = await CreateRecordForDiscard(organisationId: otherOrganisation.Id);
+
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
+            record.Id,
+            cancellationToken
+        );
+
+        result.ShouldBeError();
+        result.Error.ShouldBeOfType<DiscardRecordError.NotAllowed>();
+        await ShouldBeUnchanged(record.Id, RecordStatus.Unpublished, cancellationToken);
+    }
+
+    [Theory]
+    [InlineData(RecordStatus.Unpublished, new[] { WorkflowStatus.QAReview })]
+    [InlineData(RecordStatus.Unpublished, new[] { WorkflowStatus.Rejected, WorkflowStatus.Draft })]
+    [InlineData(RecordStatus.Published, new[] { WorkflowStatus.Published })]
+    [InlineData(RecordStatus.Published, new[] { WorkflowStatus.Published, WorkflowStatus.Draft })]
+    public async Task DiscardDraftRecord_WhenRecordHasBeenSubmitted_ReturnsInvalidDiscardError(
+        RecordStatus recordStatus,
+        WorkflowStatus[] revisionStatuses
+    )
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        (Record record, _) = await CreateRecordForDiscard(
+            recordStatus,
+            revisionStatuses: revisionStatuses
+        );
+
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
+            record.Id,
+            cancellationToken
+        );
+
+        result.ShouldBeError();
+        result.Error.ShouldBeOfType<DiscardRecordError.InvalidDiscard>();
+        await ShouldBeUnchanged(record.Id, recordStatus, cancellationToken);
+    }
+
+    private async Task ShouldBeUnchanged(
+        int recordId,
+        RecordStatus expectedStatus,
+        CancellationToken cancellationToken
+    )
+    {
+        Context.ChangeTracker.Clear();
+
+        Record record = await Context
+            .Records.AsNoTracking()
+            .Include(r => r.Revisions)
+            .Include(r => r.StatusHistory)
+            .Include(r => r.Events)
+            .SingleAsync(r => r.Id == recordId, cancellationToken);
+
+        record.RecordStatus.ShouldBe(expectedStatus);
+        record.Revisions.ShouldNotContain(r => r.WorkflowStatus == WorkflowStatus.Discarded);
+        record.StatusHistory.ShouldBeEmpty();
+        record.Events.ShouldBeEmpty();
+    }
+
+    private async Task<(Record Record, User User)> CreateRecordForDiscard(
+        RecordStatus recordStatus = RecordStatus.Unpublished,
+        UserRole userRole = UserRole.Standard,
+        int? organisationId = null,
+        WorkflowStatus[]? revisionStatuses = null
     )
     {
         var cancellationToken = TestContext.Current.CancellationToken;
@@ -514,14 +604,14 @@ public class RecordServiceTests : DatabaseTestBase
             {
                 CognitoUsername = user.CognitoUsername,
                 OrganisationId = _organisationId,
-                UserRole = UserRole.Champion,
+                UserRole = userRole,
             }
         );
 
         var membership = new UserOrgMembershipFaker()
             .RuleFor(x => x.UserId, user.Id)
             .RuleFor(x => x.OrganisationId, _organisationId)
-            .RuleFor(x => x.UserRole, UserRole.Champion)
+            .RuleFor(x => x.UserRole, userRole)
             .RuleFor(x => x.Status, UserOrgMembershipStatus.Active)
             .Generate();
 
@@ -529,18 +619,25 @@ public class RecordServiceTests : DatabaseTestBase
 
         Record record = new RecordFaker()
             .RuleFor(x => x.RecordStatus, recordStatus)
-            .RuleFor(x => x.OrganisationId, _organisationId)
+            .RuleFor(x => x.OrganisationId, organisationId ?? _organisationId)
             .RuleFor(x => x.CreatedByUser, user)
             .Generate();
 
-        RecordRevision revision = new RecordRevisionFaker()
-            .RuleFor(x => x.Record, record)
-            .RuleFor(x => x.WorkflowStatus, WorkflowStatus.Draft)
-            .RuleFor(x => x.CreatedByUser, user)
-            .Generate();
+        WorkflowStatus[] statuses = revisionStatuses ?? [WorkflowStatus.Draft];
+        RecordRevision[] revisions = statuses
+            .Select(
+                (status, i) =>
+                    new RecordRevisionFaker()
+                        .RuleFor(x => x.Record, record)
+                        .RuleFor(x => x.WorkflowStatus, status)
+                        .RuleFor(x => x.CreatedByUser, user)
+                        .RuleFor(x => x.CreatedAt, _currentDateTime.AddDays(i - statuses.Length))
+                        .Generate()
+            )
+            .ToArray();
 
-        await AddEntities(new[] { revision }, cancellationToken);
+        await AddEntities(revisions, cancellationToken);
 
-        return record;
+        return (record, user);
     }
 }

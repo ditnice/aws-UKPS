@@ -164,20 +164,21 @@ public class RecordController(
     }
 
     /// <summary>
-    /// Discards a draft record by updating its status to discarded and a new record event is made.
+    /// Discards a record that has never been submitted.
     /// </summary>
-    /// <param name="recordId">The unique identifier of the record to discard.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
-    /// <returns>
-    /// An HTTP 200 response if the record is successfully discarded.
-    /// An HTTP 404 response if the record cannot be found.
-    /// An HTTP 400 response if the record is not eligible to be discarded.
-    /// </returns>
-    [HttpPatch("{recordId}/discard")]
-    public async Task<IActionResult> DiscardDraftRecord(
-        int recordId,
-        CancellationToken cancellationToken
-    )
+    /// <param name="recordId">The identifier of the record to discard.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>An <see cref="ActionResult"/> indicating whether the record was discarded.</returns>
+    /// <response code="200">The record was discarded.</response>
+    /// <response code="400">The record has been submitted, so cannot be discarded.</response>
+    /// <response code="404">
+    /// The record was not found, has already been discarded, or is not accessible to the caller.
+    /// </response>
+    [HttpPatch("{recordId:int}/discard", Name = nameof(DiscardRecord))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DiscardRecord(int recordId, CancellationToken cancellationToken)
     {
         Result<DiscardRecordError> result = await recordService.DiscardDraftRecord(
             recordId,
@@ -188,13 +189,22 @@ public class RecordController(
         {
             return Ok();
         }
+
+        // Callers who cannot access the record get the same response as a missing record, so
+        // record identifiers from other organisations are not revealed.
         return result.Error switch
         {
-            DiscardRecordError.RecordNotFound => NotFound(),
-            DiscardRecordError.InvalidDiscard => BadRequest(),
-            _ => throw new InvalidOperationException(
-                $"Unexpected error when discarding draft record {recordId}."
+            DiscardRecordError.RecordNotFound or DiscardRecordError.NotAllowed => Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Not Found",
+                detail: "Record not found."
             ),
+            DiscardRecordError.InvalidDiscard => Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Record cannot be discarded",
+                detail: "Only records that have never been submitted can be discarded."
+            ),
+            _ => throw new UnreachableException("Unhandled DiscardRecordError variant."),
         };
     }
 }

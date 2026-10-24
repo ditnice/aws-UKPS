@@ -57,6 +57,7 @@ internal sealed class RecordViewService(
         }
 
         int revisionId = record.LatestRevisionId.Value;
+        bool canDiscard = await CanDiscard(recordId, record.OrganisationId, cancellationToken);
 
         return GetRecordResult.Ok(
             recordType switch
@@ -65,9 +66,10 @@ internal sealed class RecordViewService(
                     recordId,
                     record,
                     revisionId,
+                    canDiscard,
                     cancellationToken
                 ),
-                RecordType.Vaccine => GetVaccineRecord(recordId, record, revisionId),
+                RecordType.Vaccine => GetVaccineRecord(recordId, record, revisionId, canDiscard),
                 _ => throw new UnreachableException($"Unhandled record type {recordType}."),
             }
         );
@@ -91,10 +93,22 @@ internal sealed class RecordViewService(
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
+    private async Task<bool> CanDiscard(
+        int recordId,
+        int organisationId,
+        CancellationToken cancellationToken
+    ) =>
+        organisationAuthoriser.CanPerformOperationOnOrganisation(Operation.Create, organisationId)
+        && await dbContext
+            .Records.Where(r => r.Id == recordId)
+            .WhereDiscardable()
+            .AnyAsync(cancellationToken);
+
     private async Task<MedicineRecordDto> GetMedicineRecord(
         int recordId,
         RecordHeader record,
         int revisionId,
+        bool canDiscard,
         CancellationToken cancellationToken
     )
     {
@@ -106,6 +120,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
+            CanDiscard = canDiscard,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,
@@ -154,7 +169,8 @@ internal sealed class RecordViewService(
     private static VaccineRecordDto GetVaccineRecord(
         int recordId,
         RecordHeader record,
-        int revisionId
+        int revisionId,
+        bool canDiscard
     )
     {
         return new VaccineRecordDto
@@ -165,6 +181,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
+            CanDiscard = canDiscard,
         };
     }
 

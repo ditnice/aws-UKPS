@@ -5,7 +5,11 @@ import type { RecordDisplayStatus, RecordStatus } from '@/client/generated'
 
 import { ManageRecordActionBanner } from './ManageRecordActionBanner'
 
-const renderBanner = (displayStatus: RecordDisplayStatus, recordStatus: RecordStatus) =>
+const renderBanner = (
+  displayStatus: RecordDisplayStatus,
+  recordStatus: RecordStatus,
+  canDiscard = false,
+) =>
   render(
     <ManageRecordActionBanner
       record={{
@@ -14,6 +18,7 @@ const renderBanner = (displayStatus: RecordDisplayStatus, recordStatus: RecordSt
         recordType: 'Medicine',
         displayStatus,
         recordStatus,
+        canDiscard,
       }}
     />,
   )
@@ -26,11 +31,12 @@ const getActionLabels = () =>
 afterEach(cleanup)
 
 describe('ManageRecordActionBanner', () => {
-  it.each<[string, RecordDisplayStatus, RecordStatus, string[]]>([
+  it.each<[string, RecordDisplayStatus, RecordStatus, boolean, string[]]>([
     [
       'published',
       'Published',
       'Published',
+      false,
       [
         'Update record',
         'Change record status',
@@ -39,15 +45,24 @@ describe('ManageRecordActionBanner', () => {
       ],
     ],
     [
-      'an unpublished draft',
+      'a discardable draft',
       'Draft',
       'Unpublished',
+      true,
       ['Update record', 'Discard record', 'View record timeline'],
+    ],
+    [
+      'a draft that has been submitted',
+      'Draft',
+      'Unpublished',
+      false,
+      ['Update record', 'View record timeline'],
     ],
     [
       'a draft of a published record',
       'Draft',
       'Published',
+      false,
       [
         'Update record',
         'Change record status',
@@ -55,25 +70,26 @@ describe('ManageRecordActionBanner', () => {
         'View record timeline',
       ],
     ],
-    ['in QA review', 'QAReview', 'Unpublished', ['View record timeline']],
+    ['in QA review', 'QAReview', 'Unpublished', false, ['View record timeline']],
     [
       'on hold',
       'OnHold',
       'OnHold',
+      false,
       ['Change record status', 'Confirm status as current', 'View record timeline'],
     ],
-    ['archived', 'Archived', 'Archived', ['View record timeline']],
+    ['archived', 'Archived', 'Archived', false, ['View record timeline']],
   ])(
     'shows the permitted actions for a record that is %s',
-    (_, displayStatus, recordStatus, expected) => {
-      renderBanner(displayStatus, recordStatus)
+    (_, displayStatus, recordStatus, canDiscard, expected) => {
+      renderBanner(displayStatus, recordStatus, canDiscard)
 
       expect(getActionLabels()).toEqual(expected)
     },
   )
 
   it('links discard to the discard confirmation page', () => {
-    renderBanner('Draft', 'Unpublished')
+    renderBanner('Draft', 'Unpublished', true)
 
     expect(screen.getByRole('link', { name: 'Discard record' }).getAttribute('href')).toBe(
       '/portal/organisations/7/records/42/discard?recordType=Medicine',

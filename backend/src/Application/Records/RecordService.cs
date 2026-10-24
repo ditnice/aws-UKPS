@@ -7,6 +7,7 @@ using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using GetRecordsResult = UKPS.Api.Application.Common.Result<
@@ -29,6 +30,7 @@ internal partial class RecordService(
         currentDbUserEntityService;
 
     private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
+
     private const int PublishedRecordUpdateDueMonths = 3;
 
     public async Task<GetRecordsResult> GetOrganisationRecords(
@@ -129,42 +131,55 @@ internal partial class RecordService(
             r => r.Id == recordId,
             cancellationToken
         );
-        if (record is null)
+        if (record is null || record.RecordStatus == RecordStatus.Discarded)
         {
             return Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound());
         }
-        if (!await CanDiscardDraftRecord(record, cancellationToken))
+
+        if (
+            !_organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Create,
+                record.OrganisationId
+            )
+        )
+        {
+            return Result<DiscardRecordError>.Err(new DiscardRecordError.NotAllowed());
+        }
+
+        bool isDiscardable = await dbContext
+            .Records.Where(r => r.Id == recordId)
+            .WhereDiscardable()
+            .AnyAsync(cancellationToken);
+        if (!isDiscardable)
         {
             return Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard());
         }
 
-        var currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
+        RecordRevision revision = await dbContext.RecordRevisions.SingleAsync(
+            r => r.RecordId == recordId,
+            cancellationToken
+        );
+        User currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
+        DateTime performedAt = _timeProvider.GetUtcNow();
 
-        var performedAt = _timeProvider.GetUtcNow();
-
+        revision.WorkflowStatus = WorkflowStatus.Discarded;
         record.ChangeStatus(
             RecordStatus.Discarded,
             performedAt,
             currentUser,
             RecordStatusChangeReason.ManuallyDiscarded
         );
+        dbContext.RecordEvents.Add(
+            new RecordEvent
+            {
+                Record = record,
+                Revision = revision,
+                EventType = RecordEventType.RecordStatusChanged,
+                PerformedBy = currentUser.Id,
+                PerformedAt = performedAt,
+            }
+        );
 
-        RecordRevision? latestRevision = await dbContext
-            .RecordRevisions.Where(r => r.RecordId == recordId)
-            .FirstOrDefaultAsync(cancellationToken);
-        if (latestRevision is not null)
-        {
-            latestRevision.WorkflowStatus = WorkflowStatus.Discarded;
-        }
-        var recordEvent = new RecordEvent
-        {
-            Record = record,
-            RevisionId = latestRevision?.Id,
-            EventType = RecordEventType.RecordStatusChanged,
-            PerformedBy = currentUser.Id,
-            PerformedAt = performedAt,
-        };
-        dbContext.RecordEvents.Add(recordEvent);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result<DiscardRecordError>.Ok();
     }
@@ -318,39 +333,4 @@ internal partial class RecordService(
                     CompanyCode = b.CompanyCode,
                 }
         );
-
-    private async Task<bool> CanDiscardDraftRecord(
-        Record record,
-        CancellationToken cancellationToken
-    )
-    {
-        bool recordExistsAndIsUnpublished = record.RecordStatus == RecordStatus.Unpublished;
-
-        if (!recordExistsAndIsUnpublished)
-        {
-            return false;
-        }
-
-        bool onlyHasOneRecordRevisionAndItIsDraftStatus =
-            await dbContext.RecordRevisions.CountAsync(
-                r => r.RecordId == record.Id,
-                cancellationToken
-            ) == 1
-            && await dbContext.RecordRevisions.AnyAsync(
-                r => r.RecordId == record.Id && r.WorkflowStatus == WorkflowStatus.Draft,
-                cancellationToken
-            );
-
-        if (!onlyHasOneRecordRevisionAndItIsDraftStatus)
-        {
-            return false;
-        }
-
-        bool authorisedToPerformOperation =
-            _organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.Update,
-                record.OrganisationId
-            );
-        return authorisedToPerformOperation;
-    }
 }

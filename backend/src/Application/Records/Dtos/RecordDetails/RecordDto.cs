@@ -41,4 +41,9 @@ public abstract record RecordDto
     /// Gets the identifier of the latest revision.
     /// </summary>
     public required int RevisionId { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the caller can discard the record.
+    /// </summary>
+    public required bool CanDiscard { get; init; }
 }
