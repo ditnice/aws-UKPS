@@ -41,7 +41,7 @@ describes. You only touch the frontend to add a new control.
 |---|---|---|---|
 | `[FormSection(recordType, id, title)]` | class | `Order`, `RowSource` | One per record type. Every entity declaring the same section ID must agree on title and `Order` |
 | `[FormPage(id, title)]` | property | `Order` | Order within the section. Every declaration of the same page ID must agree |
-| `[FormField(id, label)]` | property | `Control`, `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` |
+| `[FormField(id, label, control)]` | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` |
 | `[FormRequired(message)]` | property | | |
 | `[FormMaxLength(max, message)]` | property | | `Text`, `Textarea` |
 | `[FormMaxItems(max, message)]` | property | | `Checkbox` |
@@ -76,7 +76,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
-        Control = FormControl.Textarea,
+        FormControl.Textarea,
         Hint = "Describe the indication as you intend to apply for licensing in the UK. ...\n\nYou can edit these details at any time throughout product development.")]
     [FormRequired("Enter the indication this product is seeking a licence for")]
     [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
@@ -87,7 +87,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.bnf_chapter_id",
         "Select the BNF chapter for this product",
-        Control = FormControl.HierarchicalSelect,
+        FormControl.HierarchicalSelect,
         Placeholder = "Choose BNF chapter",
         ChildLabel = "Select the BNF subchapter (optional)",
         ChildPlaceholder = "Choose BNF subchapter")]
@@ -97,14 +97,16 @@ internal sealed class MedicinesIndicationDetail
     [FormPage("paediatric", "Treating children", Order = 40)]
     [FormField(
         "medicines_indication_detail.indication_is_paediatric",
-        "Is this product intended to treat children?")]
+        "Is this product intended to treat children?",
+        FormControl.Radio)]
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
     [FormPage("cancer", "Treating cancer", Order = 50)]
     [FormField(
         "medicines_indication_detail.indication_is_cancer",
-        "Is this a product intended to treat cancer?")]
+        "Is this a product intended to treat cancer?",
+        FormControl.Radio)]
     [FormRequired("Select whether this product is intended to treat cancer")]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
@@ -112,6 +114,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
         "Is this product intended to treat a rare disease?",
+        FormControl.Radio,
         Hint = "A disease is rare if fewer than 5 in 10,000 people have it.")]
     [FormRequired("Select whether this product treats a rare disease")]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
@@ -144,7 +147,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail_therapeutic_area",
         "Select the most appropriate therapeutic area for this product (optional)",
-        Control = FormControl.HierarchicalSelect,
+        FormControl.HierarchicalSelect,
         Display = "combobox",
         Hint = "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.",
         Placeholder = "Choose a therapeutic area",
@@ -163,9 +166,9 @@ The scanner turns this into the following pages, in this order:
 | 10 | `indication` | `medicines_indication_detail.indication` | `Textarea` (explicit) | Column, string |
 | 20 | `bnf-chapter` | `medicines_indication_detail.bnf_chapter_id` | `HierarchicalSelect` (explicit) | Column, reference ID |
 | 30 | `therapeutic-area` | `medicines_indication_detail_therapeutic_area` | `HierarchicalSelect` (explicit) | Junction |
-| 40 | `paediatric` | `medicines_indication_detail.indication_is_paediatric` | `Radio` (inferred) | Column, enum |
-| 50 | `cancer` | `medicines_indication_detail.indication_is_cancer` | `Radio` (inferred) | Column, enum |
-| 60 | `rare-disease` | `medicines_indication_detail.indication_is_rare_disease` | `Radio` (inferred) | Column, enum |
+| 40 | `paediatric` | `medicines_indication_detail.indication_is_paediatric` | `Radio` | Column, enum |
+| 50 | `cancer` | `medicines_indication_detail.indication_is_cancer` | `Radio` | Column, enum |
+| 60 | `rare-disease` | `medicines_indication_detail.indication_is_rare_disease` | `Radio` | Column, enum |
 
 Declaration order in the file does not matter; only `Order` does. For example, the therapeutic
 area page is declared last but sorts third.
@@ -239,7 +242,7 @@ once it has been released.**
 [FormField(
     "medicines_indication_detail.bnf_chapter_id",
     "Select the BNF chapter for this product",
-    Control = FormControl.Select)]
+    FormControl.Select)]
 ```
 
 - **Page title**: a short name for the page.
@@ -252,15 +255,16 @@ once it has been released.**
 
 ### Choose a control
 
-Leave `Control` out when the inferred control is right:
+Every `[FormField]` names its control as the third argument. It must be one of the allowed
+controls for the property type:
 
-| Property type | Inferred | Allowed | Answer on the wire | Frontend component |
-|---|---|---|---|---|
-| `string` | `Text` | `Text`, `Textarea` | `string \| null` | `Input` / `Textarea` |
-| non-flags enum | `Radio` | `Radio`, `Select` | `string \| null` (member name) | NDS radios / `Select` |
-| `int?` reference FK | must be set | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID) | NDS radios / `Select` / parent and child `Select`s |
-| `[Flags]` enum | `Checkbox` | `Checkbox` | `string[]` (member names) | NDS checkboxes |
-| junction navigation | `Checkbox` | `Checkbox`, `HierarchicalSelect` | `string[]` (IDs) | NDS checkboxes / repeated parent and child `Select`s |
+| Property type | Allowed | Answer on the wire | Frontend component |
+|---|---|---|---|
+| `string` | `Text`, `Textarea` | `string \| null` | `Input` / `Textarea` |
+| non-flags enum | `Radio`, `Select` | `string \| null` (member name) | NDS radios / `Select` |
+| `int?` reference FK | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID) | NDS radios / `Select` / parent and child `Select`s |
+| `[Flags]` enum | `Checkbox` | `string[]` (member names) | NDS checkboxes |
+| junction navigation | `Checkbox`, `HierarchicalSelect` | `string[]` (IDs) | NDS checkboxes / repeated parent and child `Select`s |
 
 `HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
@@ -400,7 +404,7 @@ below is illustrative and is not a page in the current design:
 internal sealed class RecordProductDetail
 {
     [FormPage("names", "Product names", Order = 20)]
-    [FormField("record_product_detail.branded_name", "Branded name (optional)", Order = 10)]
+    [FormField("record_product_detail.branded_name", "Branded name (optional)", FormControl.Text, Order = 10)]
     [FormMaxLength(200, "Branded name must be 200 characters or fewer")]
     public string? BrandedName { get; set; }
     // ...
@@ -410,7 +414,7 @@ internal sealed class RecordProductDetail
 internal sealed class SomeOtherMedicineEntity
 {
     [FormPage("names", "Product names", Order = 20)]
-    [FormField("some_other_medicine_entity.development_code", "Development code", Order = 20)]
+    [FormField("some_other_medicine_entity.development_code", "Development code", FormControl.Text, Order = 20)]
     public string? DevelopmentCode { get; set; }
     // ...
 }
@@ -452,7 +456,7 @@ reports every problem in one exception.
 | Agreement | Declarations of one section ID disagree on title or order, or declarations of one page ID disagree on title or order. A page spans entities in different sections |
 | Order | Two sections, two pages in a section, or two questions on a page have the same `Order` |
 | Structure | A section has no pages, or a page has no questions |
-| Controls | The control does not suit the property type (see the table in step 4). An `int?` FK has no explicit control. A non-nullable column has no `[FormRequired]` |
+| Controls | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]` |
 | Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel` |
 | Options | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId` |
 | Rules | A rule is on a control it does not apply to, or a rule kind appears twice |
@@ -496,7 +500,7 @@ touches both backend and frontend.
 **Backend**
 
 1. Add the value to `FormControl` (`Persistence/FormAnnotations/FormControl.cs`).
-2. Add it to the control/type table in the scanner (inference and allowed types) and, if needed,
+2. Add it to the control/type table in the scanner (`ControlRules.Allowed`) and, if needed,
    add a binding.
 3. Describe its answer: the JSON shape it accepts, how it is normalised, and whether it has
    options or multiple values.

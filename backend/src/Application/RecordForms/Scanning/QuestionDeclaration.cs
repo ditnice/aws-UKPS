@@ -24,6 +24,5 @@ internal sealed record QuestionDeclaration
             ? AnswerShape.Multi
             : AnswerShape.Single;
 
-    /// <summary>The explicit control, or the one inferred from the binding (null if it must be set).</summary>
-    public FormControl? Control => Field.ExplicitControl ?? ControlRules.Infer(Binding.Kind);
+    public FormControl Control => Field.Control;
 }

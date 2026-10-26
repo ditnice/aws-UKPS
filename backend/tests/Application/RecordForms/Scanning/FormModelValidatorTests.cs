@@ -51,9 +51,6 @@ public class FormModelValidatorTests
     )]
     [InlineData("BrokenEntity.WrongControl uses control Radio which does not suit a Text binding.")]
     [InlineData(
-        "BrokenEntity.ReferenceWithoutControlId is a reference ID, so its Control must be set explicitly."
-    )]
-    [InlineData(
         "BrokenEntity.ChoiceWithoutProvider uses choice control Radio but no Enum provider of UnprovidedChoice is registered; register one or add [FormOptions]."
     )]
     [InlineData(

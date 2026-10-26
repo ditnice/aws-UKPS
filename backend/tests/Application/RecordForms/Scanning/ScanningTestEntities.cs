@@ -21,19 +21,19 @@ internal sealed class ValidEntity
     public int RevisionId { get; set; }
 
     [FormPage("text", "Text", Order = 10)]
-    [FormField("valid_entity.text", "Text", Order = 10)]
+    [FormField("valid_entity.text", "Text", FormControl.Text, Order = 10)]
     [FormMaxLength(10, "Too long")]
     public string? Text { get; set; }
 
     [FormPage("text", "Text", Order = 10)]
-    [FormField("valid_entity.choice", "Choice", Order = 20)]
+    [FormField("valid_entity.choice", "Choice", FormControl.Radio, Order = 20)]
     public YesNoUnknown? Choice { get; set; }
 
     [FormPage("chapter", "Chapter", Order = 20)]
     [FormField(
         "valid_entity.chapter_id",
         "Chapter",
-        Control = FormControl.HierarchicalSelect,
+        FormControl.HierarchicalSelect,
         ChildLabel = "Sub"
     )]
     public int? ChapterId { get; set; }
@@ -45,7 +45,7 @@ internal sealed class ValidEntity
     [FormField(
         "valid_entity_area",
         "Areas",
-        Control = FormControl.HierarchicalSelect,
+        FormControl.HierarchicalSelect,
         ChildLabel = "Condition",
         AddAnotherLabel = "Add another"
     )]
@@ -81,39 +81,33 @@ internal sealed class BrokenEntity
     [FormIgnore(" ")]
     public string? BlankReason { get; set; }
 
-    [FormField("broken_entity.no_page", "No page")]
+    [FormField("broken_entity.no_page", "No page", FormControl.Text)]
     public string? NoPage { get; set; }
 
     [FormPage("Bad Page", "Bad")]
-    [FormField("Broken.Bad ID", "Bad ID")]
+    [FormField("Broken.Bad ID", "Bad ID", FormControl.Text)]
     public string? BadIds { get; set; }
 
     [FormPage("broken", "Broken", Order = 10)]
-    [FormField("broken_entity.wrong_control", "Wrong control", Control = FormControl.Radio)]
+    [FormField("broken_entity.wrong_control", "Wrong control", FormControl.Radio)]
     public string? WrongControl { get; set; }
 
     [FormPage("broken", "Broken", Order = 10)]
-    [FormField("broken_entity.reference_without_control", "Reference")]
-    [FormOptions(OptionKeys.BnfChapters)]
-    public int? ReferenceWithoutControlId { get; set; }
-
-    [FormPage("broken", "Broken", Order = 10)]
-    [FormField("broken_entity.choice_without_provider", "Choice", Order = 1)]
+    [FormField("broken_entity.choice_without_provider", "Choice", FormControl.Radio, Order = 1)]
     public UnprovidedChoice? ChoiceWithoutProvider { get; set; }
 
     [FormPage("broken", "Broken", Order = 10)]
-    [FormField("broken_entity.wrong_enum", "Wrong enum", Order = 2)]
+    [FormField("broken_entity.wrong_enum", "Wrong enum", FormControl.Radio, Order = 2)]
     [FormOptions(OptionKeys.PaediatricStatus)]
     [FormMaxLength(5, "Not for choices")]
     public YesNoUnknown? WrongEnum { get; set; }
 
     [FormPage("broken", "Broken", Order = 10)]
-    [FormField("broken_entity.unknown_key", "Unknown key", Order = 3)]
+    [FormField("broken_entity.unknown_key", "Unknown key", FormControl.Radio, Order = 3)]
     [FormOptions("no-such-provider")]
     public YesNoUnknown? UnknownKey { get; set; }
 
     public RecordRevision? Revision { get; set; }
-    public BnfChapter? ReferenceWithoutControl { get; set; }
 }
 
 /// <summary>A FirstSave entity with a required column, and no RevisionId.</summary>
@@ -124,7 +118,7 @@ internal sealed class RowsEntity
     public int Id { get; set; }
 
     [FormPage("rows", "Rows", Order = 10)]
-    [FormField("rows_entity.required_name", "Name")]
+    [FormField("rows_entity.required_name", "Name", FormControl.Text)]
     [FormRequired("Enter a name")]
     public required string RequiredName { get; set; }
 }
@@ -140,7 +134,7 @@ internal sealed class DisagreeingEntity
     public int RevisionId { get; set; }
 
     [FormPage("text", "Different page title", Order = 10)]
-    [FormField("valid_entity.text", "Duplicate ID", Order = 30)]
+    [FormField("valid_entity.text", "Duplicate ID", FormControl.Text, Order = 30)]
     public string? Text { get; set; }
 
     public RecordRevision? Revision { get; set; }

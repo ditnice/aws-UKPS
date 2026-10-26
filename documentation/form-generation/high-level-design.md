@@ -31,7 +31,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
-        Control = FormControl.Textarea)]
+        FormControl.Textarea)]
     [FormRequired("Enter the indication this product is seeking a licence for")]
     [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
     public string? Indication { get; set; }
@@ -170,7 +170,7 @@ flowchart TD
     A["Assembly types with [FormSection(recordType, ...)]"] --> B["Collect annotated properties<br/>(FormPage, FormField, rules, FormOptions)"]
     M["EF IModel<br/>(columns, nullability, FKs, navigations)"] --> D
     B --> C["Group by page ID across entities;<br/>pages into sections"]
-    C --> D["Infer control; build bindings<br/>from EF metadata"]
+    C --> D["Build bindings<br/>from EF metadata"]
     D --> E["Order: sections → pages → questions"]
     E --> F["FormModelValidator<br/>(all errors reported together)"]
     F -- valid --> G["FormModelRegistry<br/>one FormModel per RecordType"]
@@ -233,17 +233,18 @@ Navigation properties need no annotation, unless they back a junction question (
 The coverage rule means a newly added column either becomes a question or is visibly marked as
 not one. It can never be silently left off the form.
 
-### Controls and inference
+### Controls
 
-`FormField.Control` is optional. When it is omitted, the scanner infers it from the property:
+Every `[FormField]` names its control as its third argument, so the control is always visible
+in the entity and a missing one is a compile error. The scanner checks it suits the property:
 
-| Property | Inferred control | Allowed controls |
-|---|---|---|
-| `string` | `Text` | `Text`, `Textarea` |
-| non-flags enum (nullable or not) | `Radio` | `Radio`, `Select` |
-| `int` / `int?` foreign key to reference data | none: must be set | `Radio`, `Select`, `HierarchicalSelect` |
-| `[Flags]` enum | `Checkbox` | `Checkbox` |
-| navigation collection to a junction entity | `Checkbox` | `Checkbox`, `HierarchicalSelect` |
+| Property | Allowed controls |
+|---|---|
+| `string` | `Text`, `Textarea` |
+| non-flags enum (nullable or not) | `Radio`, `Select` |
+| `int` / `int?` foreign key to reference data | `Radio`, `Select`, `HierarchicalSelect` |
+| `[Flags]` enum | `Checkbox` |
+| navigation collection to a junction entity | `Checkbox`, `HierarchicalSelect` |
 
 Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need an option provider,
 found by the property's type or named with `[FormOptions]`; `Text` and `Textarea` must not have
@@ -408,7 +409,7 @@ sequenceDiagram
     participant V as FormModelValidator
     participant R as FormModelRegistry
     H->>S: Scan assembly with AppDbContext.Model
-    S->>S: Read attributes, group pages, infer controls, build bindings
+    S->>S: Read attributes, group pages, build bindings
     S->>V: Candidate models (one per RecordType)
     alt Any problem
         V-->>H: FormModelException listing every problem

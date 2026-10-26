@@ -80,7 +80,7 @@ internal static class FormModelBuilder
         return new FormQuestion
         {
             Id = field.Id,
-            Control = question.Control!.Value,
+            Control = question.Control,
             Label = field.Label,
             Hint = field.Hint,
             Display = field.Display,
@@ -102,7 +102,7 @@ internal static class FormModelBuilder
     /// </summary>
     private static string? OptionKey(QuestionDeclaration question, OptionProviderRegistry options)
     {
-        FormControl control = question.Control!.Value;
+        FormControl control = question.Control;
         if (!ControlRules.IsChoice(control))
         {
             return null;

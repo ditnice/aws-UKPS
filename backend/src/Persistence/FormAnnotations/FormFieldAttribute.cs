@@ -13,31 +13,22 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// The question text. On a page with one question it is the page heading; otherwise it labels
 /// the input. Must not be blank.
 /// </param>
+/// <param name="control">
+/// The control to render. Must suit the binding: text or textarea for strings, radio or select
+/// for enums, radio, select or hierarchical select for reference IDs, checkbox for flags enums,
+/// and checkbox or hierarchical select for junctions.
+/// </param>
 [AttributeUsage(AttributeTargets.Property, Inherited = false)]
-internal sealed class FormFieldAttribute(string id, string label) : Attribute
+internal sealed class FormFieldAttribute(string id, string label, FormControl control) : Attribute
 {
-    private FormControl? _control;
-
     /// <summary>The question's ID, used as the payload, error and audit key.</summary>
     public string Id { get; } = id;
 
     /// <summary>The question text.</summary>
     public string Label { get; } = label;
 
-    /// <summary>The control to render. Inferred from the property type when not set.</summary>
-    /// <remarks>
-    /// Must suit the binding: text or textarea for strings, radio or select for enums, radio,
-    /// select or hierarchical select for reference IDs, checkbox for flags enums, and checkbox or
-    /// hierarchical select for junctions. Must be set explicitly on a reference ID property.
-    /// </remarks>
-    public FormControl Control
-    {
-        get => _control ?? default;
-        set => _control = value;
-    }
-
-    /// <summary>The control set explicitly, or null when it should be inferred.</summary>
-    public FormControl? ExplicitControl => _control;
+    /// <summary>The control to render.</summary>
+    public FormControl Control { get; } = control;
 
     /// <summary>Optional help text shown under the label.</summary>
     public string? Hint { get; set; }

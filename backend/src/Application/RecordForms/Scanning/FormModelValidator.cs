@@ -143,14 +143,8 @@ internal static partial class FormModelValidator
             problems.Add($"{where} has a blank label.");
         }
 
-        FormControl? control = question.Control;
-        if (control is null)
-        {
-            problems.Add($"{where} is a reference ID, so its Control must be set explicitly.");
-            return;
-        }
-
-        if (!ControlRules.Allowed(question.Binding.Kind).Contains(control.Value))
+        FormControl control = question.Control;
+        if (!ControlRules.Allowed(question.Binding.Kind).Contains(control))
         {
             problems.Add(
                 $"{where} uses control {control} which does not suit a {question.Binding.Kind} binding."
@@ -163,9 +157,9 @@ internal static partial class FormModelValidator
             problems.Add($"{where} is bound to a non-nullable column, so it needs [FormRequired].");
         }
 
-        ValidateOptions(question, control.Value, options, problems);
-        ValidateRules(question, control.Value, problems);
-        ValidatePresentation(question, control.Value, problems);
+        ValidateOptions(question, control, options, problems);
+        ValidateRules(question, control, problems);
+        ValidatePresentation(question, control, problems);
     }
 
     private static void ValidateOptions(

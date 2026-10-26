@@ -16,7 +16,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
-        Control = FormControl.Textarea,
+        FormControl.Textarea,
         Hint = "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups.\n\nYou can edit these details at any time throughout product development."
     )]
     [FormRequired("Enter the indication this product is seeking a licence for")]
@@ -31,7 +31,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.bnf_chapter_id",
         "Select the BNF chapter for this product",
-        Control = FormControl.HierarchicalSelect,
+        FormControl.HierarchicalSelect,
         Placeholder = "Choose BNF chapter",
         ChildLabel = "Select the BNF subchapter (optional)",
         ChildPlaceholder = "Choose BNF subchapter"
@@ -42,7 +42,8 @@ internal sealed class MedicinesIndicationDetail
     [FormPage("paediatric", "Treating children", Order = 40)]
     [FormField(
         "medicines_indication_detail.indication_is_paediatric",
-        "Is this product intended to treat children?"
+        "Is this product intended to treat children?",
+        FormControl.Radio
     )]
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
@@ -50,7 +51,8 @@ internal sealed class MedicinesIndicationDetail
     [FormPage("cancer", "Treating cancer", Order = 50)]
     [FormField(
         "medicines_indication_detail.indication_is_cancer",
-        "Is this a product intended to treat cancer?"
+        "Is this a product intended to treat cancer?",
+        FormControl.Radio
     )]
     [FormRequired("Select whether this product is intended to treat cancer")]
     public YesNoUnknown? IndicationIsCancer { get; set; }
@@ -59,6 +61,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
         "Is this product intended to treat a rare disease?",
+        FormControl.Radio,
         Hint = "A disease is rare if fewer than 5 in 10,000 people have it."
     )]
     [FormRequired("Select whether this product treats a rare disease")]
@@ -97,7 +100,7 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail_therapeutic_area",
         "Select the most appropriate therapeutic area for this product (optional)",
-        Control = FormControl.HierarchicalSelect,
+        FormControl.HierarchicalSelect,
         Display = "combobox",
         Hint = "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.",
         Placeholder = "Choose a therapeutic area",
