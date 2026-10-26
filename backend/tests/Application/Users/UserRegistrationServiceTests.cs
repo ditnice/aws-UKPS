@@ -330,7 +330,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             );
 
         user.ShouldNotBeNull();
-        user.OnboardingRecord?.OnboardingFlow.ShouldBe(OnboardingFlow.SelfSignUp);
+        user.OnboardingRecord.ShouldNotBeNull().OnboardingFlow.ShouldBe(OnboardingFlow.SelfSignUp);
         var membership = user.UserOrgMemberships.ShouldHaveSingleItem();
 
         membership.Status.ShouldBe(UserOrgMembershipStatus.AwaitingSetup);
