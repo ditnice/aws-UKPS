@@ -83,6 +83,31 @@ public class RecordViewServiceTests : DatabaseTestBase
         dto.RevisionId.ShouldBe(revision.Id);
     }
 
+    [Theory]
+    [InlineData(UserRole.Standard, "indication")]
+    [InlineData(UserRole.Champion, "indication")]
+    [InlineData(UserRole.Super, null)]
+    public async Task GetRecord_FirstPageId_IsOnlyGivenToUsersWhoCanEditContent(
+        UserRole role,
+        string? expectedFirstPageId
+    )
+    {
+        Record record = await AddRecord(RecordStatus.Unpublished);
+        await AddRevision(record, 1, WorkflowStatus.Draft);
+        _harness.UpdateCurrentUser(x => x with { UserRole = role });
+
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            TestContext.Current.CancellationToken
+        );
+
+        result
+            .ShouldBeSuccess()
+            .ShouldBeOfType<MedicineRecordDto>()
+            .FirstPageId.ShouldBe(expectedFirstPageId);
+    }
+
     [Fact]
     public async Task GetRecord_DraftAfterPublishedRevision_ReturnsDraftRevisionContent()
     {

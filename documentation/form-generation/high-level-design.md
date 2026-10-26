@@ -391,8 +391,11 @@ broken build lists everything to fix at once. The full catalogue is in
 ### Authorisation
 
 - Reading a page needs `Operation.Read` on the record's organisation.
-- Saving also needs a new `Operation.EditRecordContent`, granted to Standard, Champion and Super
-  users. `Operation.Update` is unchanged.
+- Saving also needs a new `Operation.EditRecordContent`, granted to Standard and Champion users
+  for their own organisation. Super users can read every record but never edit its content, so
+  their saves are rejected with 403. `Operation.Update` is unchanged.
+- The record view and record creation only return `firstPageId` (the link into the form) to
+  users who can edit the record's content.
 - Only draft revisions can be edited: a save to any other revision is rejected with
   `revision_not_draft`. The form pages are only for editing; viewing a record without editing
   it is a separate flow.
@@ -710,8 +713,9 @@ One migration (`AddRecordContentForms`) adds:
 - `therapeutic_areas.code`, so therapeutic areas are labelled with their code (`1: Addiction`,
   `1.3: Smoking cessation`) like BNF chapters. The seeder fills it from the source file.
 
-`Operation.EditRecordContent` is granted to Standard users in `OrganisationAuthoriser`; Champion
-and Super users already have every operation.
+`Operation.EditRecordContent` is granted to Standard users in `OrganisationAuthoriser`, and
+Champion users already have every operation on their organisation. Super users are explicitly
+denied it, although they keep every other operation on every organisation.
 
 The migration does not add any reference data. BNF chapters and therapeutic areas are already
 loaded by the synthetic data seeder; see [Reference data](reference-data.md).

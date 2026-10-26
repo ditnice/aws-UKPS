@@ -112,7 +112,7 @@ export type CreateRecordDto = {
     revisionId: number;
     /**
      * Gets the first page of the record's content form, where the user goes next, or null when
-     * the record type has no form yet.
+     * the record type has no form yet or the caller cannot edit record content.
      */
     firstPageId: null | string;
 };
@@ -903,7 +903,8 @@ export type RecordDtoMedicineRecordDto = {
     revisionId: number;
     /**
      * Gets the first page of the record type's content form, or null when the record type has
-     * no form yet. Links to it open the form for the latest revision.
+     * no form yet or the caller cannot edit record content. Links to it open the form for the
+     * latest revision.
      */
     firstPageId?: null | string;
 };
@@ -939,7 +940,8 @@ export type RecordDtoVaccineRecordDto = {
     revisionId: number;
     /**
      * Gets the first page of the record type's content form, or null when the record type has
-     * no form yet. Links to it open the form for the latest revision.
+     * no form yet or the caller cannot edit record content. Links to it open the form for the
+     * latest revision.
      */
     firstPageId?: null | string;
 };

@@ -3693,7 +3693,7 @@
               "null",
               "string"
             ],
-            "description": "Gets the first page of the record's content form, where the user goes next, or null when\nthe record type has no form yet."
+            "description": "Gets the first page of the record's content form, where the user goes next, or null when\nthe record type has no form yet or the caller cannot edit record content."
           }
         },
         "description": "Represents the result of creating a record."
@@ -5259,7 +5259,7 @@
               "null",
               "string"
             ],
-            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet. Links to it open the form for the latest revision."
+            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet or the caller cannot edit record content. Links to it open the form for the\nlatest revision."
           }
         },
         "description": "Represents the data held on the latest revision of a medicine record."
@@ -5315,7 +5315,7 @@
               "null",
               "string"
             ],
-            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet. Links to it open the form for the latest revision."
+            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet or the caller cannot edit record content. Links to it open the form for the\nlatest revision."
           }
         },
         "description": "Represents the data held on the latest revision of a vaccine record."

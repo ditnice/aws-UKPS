@@ -477,6 +477,44 @@ public class RecordFormServiceTests : DatabaseTestBase
             .ShouldBeOfType<SaveRecordPageError.NotAllowed>();
     }
 
+    [Fact]
+    public async Task SavePage_ChampionOfTheOrganisation_Saves()
+    {
+        _saveHarness = CreateHarness<IRecordFormSaveService>(UserRole.Champion, _organisation.Id);
+
+        await SaveOk("indication", Answer(Indication, "Hepatitis C"));
+
+        (await IndicationRow()).Indication.ShouldBe("Hepatitis C");
+    }
+
+    [Fact]
+    public async Task GetPage_SuperUser_CanReadAnyOrganisationsRecord()
+    {
+        _queryHarness = CreateHarness<IRecordFormQueryService>(
+            UserRole.Super,
+            _organisation.Id + 100
+        );
+
+        (await GetPage("indication")).Questions.Single().Id.ShouldBe(Indication);
+    }
+
+    [Fact]
+    public async Task SavePage_SuperUser_CannotEditAndWritesNothing()
+    {
+        uint versionBefore = await RevisionVersion();
+        _saveHarness = CreateHarness<IRecordFormSaveService>(UserRole.Super, _organisation.Id);
+
+        (await Save("indication", Answer(Indication, "Text")))
+            .ShouldBeError()
+            .ShouldBeOfType<SaveRecordPageError.CannotEdit>();
+
+        (
+            await Context.MedicinesIndicationDetails.AnyAsync(x => x.RevisionId == _revision.Id, Ct)
+        ).ShouldBeFalse();
+        (await ContentEvents().AnyAsync(Ct)).ShouldBeFalse();
+        (await RevisionVersion()).ShouldBe(versionBefore);
+    }
+
     private ServiceTestHarness<TService> CreateHarness<TService>(UserRole role, int organisationId)
         where TService : notnull
     {

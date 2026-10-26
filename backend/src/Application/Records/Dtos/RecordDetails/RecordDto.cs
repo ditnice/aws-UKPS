@@ -44,7 +44,8 @@ public abstract record RecordDto
 
     /// <summary>
     /// Gets the first page of the record type's content form, or null when the record type has
-    /// no form yet. Links to it open the form for the latest revision.
+    /// no form yet or the caller cannot edit record content. Links to it open the form for the
+    /// latest revision.
     /// </summary>
     public string? FirstPageId { get; init; }
 }

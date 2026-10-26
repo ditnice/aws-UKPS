@@ -82,7 +82,12 @@ internal class RecordCreationService : IRecordCreationService
             {
                 RecordId = record.Id,
                 RevisionId = revision.Id,
-                FirstPageId = _formModels.Find(record.RecordType)?.FirstPage.Id,
+                FirstPageId = _organisationAuthoriser.CanPerformOperationOnOrganisation(
+                    Operation.EditRecordContent,
+                    command.OrganisationId
+                )
+                    ? _formModels.Find(record.RecordType)?.FirstPage.Id
+                    : null,
             }
         );
     }

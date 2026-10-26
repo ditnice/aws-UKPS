@@ -17,7 +17,7 @@ public sealed record CreateRecordDto
 
     /// <summary>
     /// Gets the first page of the record's content form, where the user goes next, or null when
-    /// the record type has no form yet.
+    /// the record type has no form yet or the caller cannot edit record content.
     /// </summary>
     public required string? FirstPageId { get; init; }
 }

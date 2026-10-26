@@ -185,6 +185,26 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Theory]
+    [InlineData(UserRole.Standard, "indication")]
+    [InlineData(UserRole.Champion, "indication")]
+    [InlineData(UserRole.Super, null)]
+    public async Task CreateRecord_FirstPageId_IsOnlyGivenToUsersWhoCanEditContent(
+        UserRole userRole,
+        string? expectedFirstPageId
+    )
+    {
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = userRole,
+                OrganisationId = _organisation.Id,
+            }
+        );
+        CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
+        result.ShouldBeSuccess().FirstPageId.ShouldBe(expectedFirstPageId);
+    }
+
+    [Theory]
     [InlineData(UserRole.Champion)]
     [InlineData(UserRole.Standard)]
     public async Task CreateRecord_WhenTheUserIsOutsideTheOrganisation_ShouldReturnNotAuthorisedError(

@@ -13,6 +13,12 @@ internal class OrganisationAuthoriser : IOrganisationAuthoriser
         Operation.EditRecordContent,
     ];
 
+    // Super users can act on every organisation but must not change its record content.
+    private static readonly Operation[] _deniedOperationsForSuperUser =
+    [
+        Operation.EditRecordContent,
+    ];
+
     public OrganisationAuthoriser(ICurrentUserInfoService currentUserInfoService)
     {
         _currentUserInfoService = currentUserInfoService;
@@ -24,6 +30,8 @@ internal class OrganisationAuthoriser : IOrganisationAuthoriser
 
         return currentUser.UserRole switch
         {
+            UserRole.Super when _deniedOperationsForSuperUser.Contains(operation) =>
+                ValueOrAll<int>.None(),
             UserRole.Super => ValueOrAll<int>.All,
             UserRole.Champion => currentUser.OrganisationId,
             UserRole.Standard when _allowedOperationsForStandardUser.Contains(operation) =>

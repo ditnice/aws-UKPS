@@ -93,6 +93,12 @@ internal sealed class RecordViewService(
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
+    private bool CanEditContent(int organisationId) =>
+        organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.EditRecordContent,
+            organisationId
+        );
+
     private async Task<MedicineRecordDto> GetMedicineRecord(
         int recordId,
         RecordHeader record,
@@ -108,7 +114,9 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
-            FirstPageId = formModels.Find(RecordType.Medicine)?.FirstPage.Id,
+            FirstPageId = CanEditContent(record.OrganisationId)
+                ? formModels.Find(RecordType.Medicine)?.FirstPage.Id
+                : null,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,
