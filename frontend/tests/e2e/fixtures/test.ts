@@ -6,11 +6,55 @@ type AccessibilityOptions = {
   include?: string
 }
 
-type Fixtures = {
-  checkAccessibility: (options?: AccessibilityOptions) => Promise<void>
+type Options = {
+  /** Aborts and fails on any write request to the app, so a read-only test can't change data. */
+  readOnly: boolean
 }
 
-export const test = base.extend<Fixtures>({
+type Fixtures = {
+  checkAccessibility: (options?: AccessibilityOptions) => Promise<void>
+  readOnlyGuard: void
+}
+
+const readMethods = new Set(['GET', 'HEAD', 'OPTIONS'])
+// Renewing the session changes no data, and the browser does it whenever a token expires.
+const allowedWritePaths = new Set(['/backend-api/auth/refresh'])
+
+export const test = base.extend<Options & Fixtures>({
+  readOnly: [false, { option: true }],
+
+  readOnlyGuard: [
+    async ({ baseURL, context, readOnly }, fixtureUse) => {
+      if (!readOnly) {
+        await fixtureUse()
+        return
+      }
+
+      // Server actions are POSTs to the app, so aborting them stops the backend being called.
+      const appOrigin = baseURL ? new URL(baseURL).origin : undefined
+      const blocked: string[] = []
+      await context.route('**/*', async (route) => {
+        const request = route.request()
+        const url = new URL(request.url())
+        if (
+          readMethods.has(request.method()) ||
+          url.origin !== appOrigin ||
+          allowedWritePaths.has(url.pathname)
+        ) {
+          await route.fallback()
+          return
+        }
+        blocked.push(`${request.method()} ${url.pathname}`)
+        await route.abort('blockedbyclient')
+      })
+
+      await fixtureUse()
+
+      expect(blocked, 'A read-only test sent a write request').toEqual([])
+    },
+    { auto: true },
+  ],
+
   checkAccessibility: async ({ page }, fixtureUse, testInfo) => {
     await fixtureUse(async ({ exclude = [], include } = {}) => {
       let builder = new AxeBuilder({ page }).withTags([

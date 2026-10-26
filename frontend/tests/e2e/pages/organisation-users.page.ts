@@ -74,25 +74,48 @@ export class OrganisationUsersPage {
     await this.row(email).getByRole('link', { name: action, exact: true }).click()
   }
 
+  /** Opens the first listed user with the `action` link, or returns undefined if no user has it. */
+  async openUser(
+    organisationId: string,
+    query: Record<string, string>,
+    action: string,
+  ): Promise<string | undefined> {
+    await this.goto(organisationId, query)
+    await expect(this.noUsersMessage.or(this.cells('email').first())).toBeVisible()
+
+    const actionLink = this.page.getByRole('link', { name: action, exact: true })
+    const row = this.table.getByRole('row').filter({ has: actionLink }).first()
+    if ((await row.count()) === 0) {
+      return undefined
+    }
+    const email = (await row.getByRole('cell').first().innerText()).trim()
+    await row.getByRole('link', { name: action, exact: true }).click()
+    return email
+  }
+
   /* Specs that change a seeded user each claim theirs from opposite ends of the active standard
    * users sorted by email, so specs running in parallel never pick the same user. Organisation 1
    * is seeded with three active standard users. */
   async openActiveStandardUser(organisationId: string, sortDirection: SortDirection) {
-    await this.goto(organisationId, {
-      status: 'Active',
-      role: 'Standard',
-      sortBy: 'Email',
-      sortDirection,
-    })
-
-    const row = this.table
-      .getByRole('row')
-      .filter({ has: this.page.getByRole('link', { name: 'Edit', exact: true }) })
-      .first()
-    const email = (await row.getByRole('cell').first().innerText()).trim()
-    await row.getByRole('link', { name: 'Edit', exact: true }).click()
+    const email = await this.openUser(
+      organisationId,
+      { status: 'Active', role: 'Standard', sortBy: 'Email', sortDirection },
+      'Edit',
+    )
+    if (!email) {
+      throw new Error(`Organisation ${organisationId} has no active standard user to edit`)
+    }
 
     await expect(this.page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
     return email
+  }
+
+  /** Every confirm page has a Cancel link or button. Some go back in history, so this doesn't
+   * wait for a particular page; check the confirm page has gone. */
+  async cancel() {
+    await this.page
+      .getByRole('button', { name: 'Cancel', exact: true })
+      .or(this.page.getByRole('link', { name: 'Cancel', exact: true }))
+      .click()
   }
 }

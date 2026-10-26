@@ -107,6 +107,11 @@ How the stack is set up:
   (screenshot comparisons against Linux Chromium baselines) only run when `E2E_EPHEMERAL_STACK=true`,
   which only the Compose playwright service sets. Every Playwright project skips them otherwise, so
   deployed runs (`test:e2e:dev`, `test:e2e:authenticated-dev`) never change the environment's data.
+- **Read-only twins:** every `@mutates-data` test has an untagged twin in the same spec that goes
+  through the same journey to the final confirm page, cancels, and checks nothing changed, so deployed
+  runs still cover it. Twins use `test.use({ readOnly: true })`, which fails the test if the browser
+  sends any write request to the app, and skip with a reason when the environment has no suitable
+  record, such as a registration request.
   Tag new tests with `mutatesDataTag` or `visualTag` from `tests/e2e/helpers/test-environment.ts`.
 - **Readiness:** the backend waits for Postgres and Floci healthchecks. The backend and frontend
   runtime images are distroless, so instead of Compose healthchecks for them the Playwright container

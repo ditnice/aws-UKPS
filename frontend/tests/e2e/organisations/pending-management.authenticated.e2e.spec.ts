@@ -1,7 +1,11 @@
-import { type Page } from '@playwright/test'
+import { type Browser, type Page } from '@playwright/test'
 
 import { expect, test } from '../fixtures/test'
-import { mutatesDataTag, requireEnvironmentVariable } from '../helpers/test-environment'
+import {
+  isEphemeralStack,
+  mutatesDataTag,
+  requireEnvironmentVariable,
+} from '../helpers/test-environment'
 import { OrganisationUsersPage } from '../pages/organisation-users.page'
 
 // Nothing seeds registration requests, so each test submits its own through the public form.
@@ -58,4 +62,59 @@ test('rejects a registration request', { tag: mutatesDataTag }, async ({ page })
   // Rejected requests aren't listed.
   await usersPage.filterByEmail(workEmail)
   await expect(usersPage.noUsersMessage).toBeVisible()
+})
+
+/* Opens the `action` page for a registration request. A read-only test can't submit a request, so
+ * on the ephemeral stack one is submitted from a separate page outside the read-only guard, and a
+ * deployed environment must already have one. */
+async function openAnyRequest(
+  browser: Browser,
+  baseURL: string | undefined,
+  page: Page,
+  organisationId: string,
+  action: string,
+): Promise<string | undefined> {
+  const usersPage = new OrganisationUsersPage(page)
+  if (!isEphemeralStack()) {
+    return usersPage.openUser(
+      organisationId,
+      { status: 'RequestedAccess', sortBy: 'Email', sortDirection: 'Ascending' },
+      action,
+    )
+  }
+
+  const requestContext = await browser.newContext({ baseURL })
+  const workEmail = await requestAccess(await requestContext.newPage(), organisationId)
+  await requestContext.close()
+  await openRequest(page, organisationId, workEmail)
+  await usersPage.row(workEmail).getByRole('link', { name: action, exact: true }).click()
+  return workEmail
+}
+
+test.describe('Reviewing a registration request without saving', () => {
+  test.use({ readOnly: true })
+
+  for (const { action, verb } of [
+    { action: 'Approve', verb: 'approve' },
+    { action: 'Reject', verb: 'reject' },
+  ]) {
+    test(`opens ${verb} and cancels`, async ({ baseURL, browser, page }) => {
+      const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+      const workEmail = await openAnyRequest(browser, baseURL, page, organisationId, action)
+      if (!workEmail) {
+        test.skip(true, `Organisation ${organisationId} has no registration request to ${verb}`)
+        return
+      }
+
+      const heading = page.getByRole('heading', { name: `${action} user` })
+      await expect(heading).toBeVisible()
+      await expect(page.getByText(`You are about to ${verb} ${workEmail}'s request`)).toBeVisible()
+      const usersPage = new OrganisationUsersPage(page)
+      await usersPage.cancel()
+      await expect(heading).toBeHidden()
+
+      await usersPage.goto(organisationId)
+      await usersPage.expectUser(workEmail, 'Requested')
+    })
+  }
 })
