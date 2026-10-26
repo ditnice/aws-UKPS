@@ -2318,6 +2318,10 @@ export type DiscardRecordErrors = {
      * The record was not found, has already been discarded, or is not accessible to the caller.
      */
     404: ProblemDetails;
+    /**
+     * The record was updated by another operation while it was being discarded.
+     */
+    409: ProblemDetails;
 };
 
 export type DiscardRecordError = DiscardRecordErrors[keyof DiscardRecordErrors];

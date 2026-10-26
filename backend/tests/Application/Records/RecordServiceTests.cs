@@ -1,10 +1,13 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Configurations.RecordWorkflow;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -542,6 +545,41 @@ public class RecordServiceTests : DatabaseTestBase
         await ShouldBeUnchanged(record.Id, RecordStatus.Unpublished, cancellationToken);
     }
 
+    [Fact]
+    public async Task DiscardDraftRecord_WhenRevisionIsSubmittedBeforeSaving_ReturnsConcurrencyError()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        (Record record, _) = await CreateRecordForDiscard();
+
+        // The service reads the time after checking the record and before saving, so another
+        // user submits the revision then.
+        await using AppDbContext otherContext = Fixture.CreateContext();
+        IRecordService service = _harness
+            .ConfigureServices(services =>
+                services.AddSingleton<IDateTimeProvider>(
+                    new ChangeWhenTimeIsReadProvider(
+                        () =>
+                            otherContext
+                                .RecordRevisions.Where(r => r.RecordId == record.Id)
+                                .ExecuteUpdate(s =>
+                                    s.SetProperty(r => r.WorkflowStatus, WorkflowStatus.QAReview)
+                                ),
+                        _currentDateTime
+                    )
+                )
+            )
+            .Service;
+
+        Result<DiscardRecordError> result = await service.DiscardDraftRecord(
+            record.Id,
+            cancellationToken
+        );
+
+        result.ShouldBeError();
+        result.Error.ShouldBeOfType<DiscardRecordError.ConcurrencyError>();
+        await ShouldBeUnchanged(record.Id, RecordStatus.Unpublished, cancellationToken);
+    }
+
     [Theory]
     [InlineData(RecordStatus.Unpublished, new[] { WorkflowStatus.QAReview })]
     [InlineData(RecordStatus.Unpublished, new[] { WorkflowStatus.Rejected, WorkflowStatus.Draft })]
@@ -641,5 +679,17 @@ public class RecordServiceTests : DatabaseTestBase
         await AddEntities(revisions, cancellationToken);
 
         return (record, user);
+    }
+
+    private sealed class ChangeWhenTimeIsReadProvider(Action change, DateTime now)
+        : IDateTimeProvider
+    {
+        public DateTime GetUtcNow()
+        {
+            change();
+            return now;
+        }
+
+        public DateTimeOffset GetOffsetUtcNow() => new(GetUtcNow());
     }
 }

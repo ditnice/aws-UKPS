@@ -174,10 +174,12 @@ public class RecordController(
     /// <response code="404">
     /// The record was not found, has already been discarded, or is not accessible to the caller.
     /// </response>
+    /// <response code="409">The record was updated by another operation while it was being discarded.</response>
     [HttpPatch("{recordId:int}/discard", Name = nameof(DiscardRecord))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> DiscardRecord(int recordId, CancellationToken cancellationToken)
     {
         Result<DiscardRecordError> result = await recordService.DiscardDraftRecord(
@@ -203,6 +205,11 @@ public class RecordController(
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Record cannot be discarded",
                 detail: "Only records that have never been submitted can be discarded."
+            ),
+            DiscardRecordError.ConcurrencyError => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Record update conflict",
+                detail: "The record could not be discarded because it was updated by another operation. Please try again."
             ),
             _ => throw new UnreachableException("Unhandled DiscardRecordError variant."),
         };

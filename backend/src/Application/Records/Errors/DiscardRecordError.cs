@@ -25,4 +25,10 @@ public abstract record DiscardRecordError
     /// Represents an error that occurs when the record has been submitted, so cannot be discarded.
     /// </summary>
     internal sealed record InvalidDiscard() : DiscardRecordError;
+
+    /// <summary>
+    /// Represents an error that occurs when the record was updated by another operation while it
+    /// was being discarded.
+    /// </summary>
+    internal sealed record ConcurrencyError() : DiscardRecordError;
 }

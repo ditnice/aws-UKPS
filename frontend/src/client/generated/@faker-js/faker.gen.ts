@@ -1199,6 +1199,8 @@ export const fakeDiscardRecordResponse401 = (options?: Options): DiscardRecordEr
 
 export const fakeDiscardRecordResponse404 = (options?: Options): DiscardRecordErrors[404] => fakeProblemDetails(options);
 
+export const fakeDiscardRecordResponse409 = (options?: Options): DiscardRecordErrors[409] => fakeProblemDetails(options);
+
 export const fakeGetUsersMeResponse200 = (options?: Options): GetUsersMeResponses[200] => fakeUserInformationDto(options);
 
 export const fakeGetUsersMeResponse401 = (options?: Options): GetUsersMeErrors[401] => fakeAuthenticationProblemDetails(options);

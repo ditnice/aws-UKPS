@@ -155,8 +155,26 @@ internal partial class RecordService(
             return Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard());
         }
 
+        await ApplyDiscard(record, cancellationToken);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<DiscardRecordError>.Err(new DiscardRecordError.ConcurrencyError());
+        }
+        return Result<DiscardRecordError>.Ok();
+    }
+
+    /// <summary>
+    /// Sets the record and its only revision to discarded, and adds the timeline event.
+    /// </summary>
+    private async Task ApplyDiscard(Record record, CancellationToken cancellationToken)
+    {
         RecordRevision revision = await dbContext.RecordRevisions.SingleAsync(
-            r => r.RecordId == recordId,
+            r => r.RecordId == record.Id,
             cancellationToken
         );
         User currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
@@ -179,9 +197,6 @@ internal partial class RecordService(
                 PerformedAt = performedAt,
             }
         );
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return Result<DiscardRecordError>.Ok();
     }
 
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(
