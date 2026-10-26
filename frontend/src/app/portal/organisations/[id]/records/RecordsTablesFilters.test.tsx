@@ -22,7 +22,7 @@ const query: RecordsQuery = {
   search: 'medicine',
   recordType: ['Medicine'],
   recordStatus: ['Published', 'OnHold'],
-  updateStatus: 'Overdue',
+  updateStatus: ['Overdue'],
   page: 3,
   pageSize: 25,
   sortBy: 'Id',
@@ -60,7 +60,7 @@ describe('RecordsTablesFilters', () => {
 
     expect(screen.getByRole('textbox', { name: 'Search Records' })).toHaveValue('medicine')
     expect(screen.getByRole('checkbox', { name: 'Published' })).toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'On Hold' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'On hold' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Overdue' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Not overdue' })).not.toBeChecked()
   })
@@ -91,20 +91,28 @@ describe('RecordsTablesFilters', () => {
     expectNavigation({ recordStatus: ['Draft'], page: 1 })
   })
 
-  it('replaces the update status when a different option is selected', async () => {
+  it('adds a second update status without replacing the first', async () => {
     render(<RecordsTablesFilters query={query} />)
 
     await user.click(screen.getByRole('checkbox', { name: 'Not overdue' }))
 
-    expectNavigation({ ...query, updateStatus: 'NotOverdue', page: 1 })
+    expectNavigation({ ...query, updateStatus: ['Overdue', 'NotOverdue'], page: 1 })
   })
 
-  it('clears the selected update status when it is unchecked', async () => {
+  it('removes only the unchecked update status', async () => {
     render(<RecordsTablesFilters query={query} />)
 
     await user.click(screen.getByRole('checkbox', { name: 'Overdue' }))
 
-    expectNavigation({ ...query, updateStatus: undefined, page: 1 })
+    expectNavigation({ ...query, updateStatus: [], page: 1 })
+  })
+
+  it('starts an update status selection when none exist', async () => {
+    render(<RecordsTablesFilters query={{}} />)
+
+    await user.click(screen.getByRole('checkbox', { name: 'Not overdue' }))
+
+    expectNavigation({ updateStatus: ['NotOverdue'], page: 1 })
   })
 
   it('trims and encodes search text without losing the other query settings', async () => {

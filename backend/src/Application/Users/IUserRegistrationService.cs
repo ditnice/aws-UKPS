@@ -1,5 +1,5 @@
 global using GetUserRegistrationByIdResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Users.Dtos.RegisterUserConfirmationDto,
+    UKPS.Api.Application.Users.Dtos.RegisterUserDetailsDto,
     UKPS.Api.Application.Users.Errors.GetUserDetailsError
 >;
 using UKPS.Api.Application.Common;

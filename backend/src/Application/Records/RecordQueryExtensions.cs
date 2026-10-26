@@ -36,6 +36,8 @@ internal static class RecordQueryExtensions
                 DisplayStatus =
                     x.Record.RecordStatus == RecordStatus.OnHold ? RecordDisplayStatus.OnHold
                     : x.Record.RecordStatus == RecordStatus.Archived ? RecordDisplayStatus.Archived
+                    : x.Record.RecordStatus == RecordStatus.Discarded
+                        ? RecordDisplayStatus.Discarded
                     : x.Latest != null && x.Latest.WorkflowStatus == WorkflowStatus.QAReview
                         ? RecordDisplayStatus.QAReview
                     : x.Latest != null && x.Latest.WorkflowStatus == WorkflowStatus.Published

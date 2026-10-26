@@ -1820,9 +1820,12 @@
           {
             "name": "UpdateStatus",
             "in": "query",
-            "description": "Gets or initialises the update status filter. When set, only records that are\noverdue or not overdue for review will be returned.",
+            "description": "Gets or initialises the update status filters. When multiple values are set, records\nmatching any selected status will be returned.",
             "schema": {
-              "$ref": "#/components/schemas/UpdateStatus"
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UpdateStatus"
+              }
             }
           }
         ],
@@ -2133,6 +2136,48 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{recordId}/discard": {
+      "patch": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Discards a draft record by updating its status to discarded and a new record event is made.",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The unique identifier of the record to discard.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "An HTTP 200 response if the record is successfully discarded.\nAn HTTP 404 response if the record cannot be found.\nAn HTTP 400 response if the record is not eligible to be discarded.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3019,17 +3064,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterUserConfirmationDto"
+                  "$ref": "#/components/schemas/RegisterUserDetailsDto"
                 }
               }
             }
@@ -3537,7 +3582,8 @@
           "NextUpdateDue",
           "Id",
           "CompanyCode",
-          "DisplayStatus"
+          "DisplayStatus",
+          "RecordTitle"
         ],
         "type": "string",
         "description": "Specifies the fields by which records can be sorted."
@@ -4770,7 +4816,8 @@
           "QAReview",
           "Published",
           "OnHold",
-          "Archived"
+          "Archived",
+          "Discarded"
         ],
         "type": "string",
         "description": "Represents the status shown to users for a record. On hold and archived records show their\nrecord status; otherwise the workflow status of the latest revision is shown."
@@ -5185,6 +5232,14 @@
             ],
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date the record is next due for an update, when available.",
+            "format": "date-time"
           }
         },
         "description": "Represents the record summary returned by the record list endpoint."
@@ -5319,7 +5374,8 @@
           "Unpublished",
           "Published",
           "OnHold",
-          "Archived"
+          "Archived",
+          "Discarded"
         ],
         "type": "string",
         "description": "Represents the status of a record in the system."
@@ -5376,8 +5432,35 @@
       },
       "RegisterUserConfirmationDto": {
         "required": [
-          "id",
           "organisationName",
+          "fullName",
+          "workEmail",
+          "phoneNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the user's organisation."
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Gets the user's full name."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's work email address."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the user phone number."
+          }
+        },
+        "description": "Represents the details of a user who has been registered."
+      },
+      "RegisterUserDetailsDto": {
+        "required": [
+          "id",
           "fullName",
           "workEmail",
           "phoneNumber"
@@ -5386,12 +5469,8 @@
         "properties": {
           "id": {
             "type": "integer",
-            "description": "ID for the user.",
+            "description": "The Id to identify the registration details.",
             "format": "int32"
-          },
-          "organisationName": {
-            "type": "string",
-            "description": "Gets the name of the user's organisation."
           },
           "fullName": {
             "type": "string",
@@ -5610,10 +5689,10 @@
       "UpdateStatus": {
         "enum": [
           "Overdue",
-          "NotOverdue",
-          null
+          "NotOverdue"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "Represents the update status filter for records."
       },
       "UpdateUserDetailsCommand": {
         "required": [

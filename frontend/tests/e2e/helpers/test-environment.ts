@@ -23,6 +23,10 @@ export function isAuthenticatedTargetAllowed(baseURL: string | undefined): boole
   return Boolean(baseURL && getAuthenticatedOrigins().has(new URL(baseURL).origin))
 }
 
+export function isDevAuthMode(): boolean {
+  return process.env.E2E_AUTH_MODE === 'dev'
+}
+
 export function isLocalBaseURL(baseURL: string | undefined): boolean {
   return Boolean(baseURL && new URL(baseURL).hostname === 'localhost')
 }

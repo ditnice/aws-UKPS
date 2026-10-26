@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 const PageWrapper = (props: React.PropsWithChildren) => {
   return (
     <>
-      <PageHeader backLink={<BackLinkBrowser />} heading="Edit your details" />
+      <PageHeader backLink={<BackLinkBrowser />} heading="Edit personal details" />
       {props.children}
     </>
   )

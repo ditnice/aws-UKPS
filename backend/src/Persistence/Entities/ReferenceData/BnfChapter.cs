@@ -2,7 +2,7 @@ namespace UKPS.Api.Persistence.Entities.ReferenceData;
 
 /// <summary>
 /// BNF chapter hierarchy — medicines only.
-/// 15 top-level chapters, 125 total nodes including subsections.
+/// 15 top-level chapters, 126 total nodes including subsections.
 /// Self-referencing for arbitrary depth.
 /// </summary>
 internal sealed class BnfChapter

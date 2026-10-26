@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
-import { RegisterUserConfirmationDto } from '@/client/generated'
+import { RegisterUserDetailsDto } from '@/client/generated'
 import type { Client } from '@/client/generated/client'
 import { createServerApiClient } from '@/client/server-api'
 import { notFound, notFoundError } from '@/test-utils/nextNavigation'
@@ -23,11 +23,10 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-const testData: RegisterUserConfirmationDto = {
+const testData: RegisterUserDetailsDto = {
   id: 3,
   workEmail: 'example@email.com',
   fullName: 'Jane Smith',
-  organisationName: 'Example Pharma',
   phoneNumber: '01234 567890',
 }
 

@@ -36,9 +36,9 @@ export const PaginatedResultsAndFilterSummary = <
 }: PaginatedResultsAndFilterSummaryProps<T, TQuery, TFilter>) => {
   const router = useRouter()
   const activeFilters = getActiveFilters(query)
-  const activeFilterItems = activeFilters.map((af) => {
+  const activeFilterItems = activeFilters.map((af, index) => {
     const activeFiltersWithRemovedItem = activeFilters.filter(
-      (f) => f.key !== af.key && f.value !== af.value,
+      (_, filterIndex) => filterIndex !== index,
     )
     const updatedQuery = convertFiltersToQuery(activeFiltersWithRemovedItem, query)
     const href = `?${convertQueryToSearchParams(updatedQuery).toString()}`

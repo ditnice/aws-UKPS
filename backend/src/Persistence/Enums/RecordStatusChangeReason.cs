@@ -48,4 +48,9 @@ public enum RecordStatusChangeReason
     /// required period.
     /// </summary>
     ArchivedAutomatically = 7,
+
+    /// <summary>
+    /// Indicates that the record has been manually discarded - this can only happen when it is unpublished and a draft.
+    /// </summary>
+    ManuallyDiscarded = 8,
 }

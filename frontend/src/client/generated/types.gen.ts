@@ -165,7 +165,8 @@ export const GetRecordsQuerySortValue = {
     NEXT_UPDATE_DUE: 'NextUpdateDue',
     ID: 'Id',
     COMPANY_CODE: 'CompanyCode',
-    DISPLAY_STATUS: 'DisplayStatus'
+    DISPLAY_STATUS: 'DisplayStatus',
+    RECORD_TITLE: 'RecordTitle'
 } as const;
 
 /**
@@ -808,7 +809,8 @@ export const RecordDisplayStatus = {
     QA_REVIEW: 'QAReview',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived'
+    ARCHIVED: 'Archived',
+    DISCARDED: 'Discarded'
 } as const;
 
 /**
@@ -962,6 +964,10 @@ export type RecordListItemDto = {
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
+    /**
+     * Gets the date the record is next due for an update, when available.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1028,7 +1034,8 @@ export const RecordStatus = {
     UNPUBLISHED: 'Unpublished',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived'
+    ARCHIVED: 'Archived',
+    DISCARDED: 'Discarded'
 } as const;
 
 /**
@@ -1083,13 +1090,31 @@ export type RegisterUserCommandDto = {
  */
 export type RegisterUserConfirmationDto = {
     /**
-     * ID for the user.
-     */
-    id: number;
-    /**
      * Gets the name of the user's organisation.
      */
     organisationName: string;
+    /**
+     * Gets the user's full name.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the user phone number.
+     */
+    phoneNumber: string;
+};
+
+/**
+ * Represents the details of a user who has been registered.
+ */
+export type RegisterUserDetailsDto = {
+    /**
+     * The Id to identify the registration details.
+     */
+    id: number;
     /**
      * Gets the user's full name.
      */
@@ -1270,8 +1295,14 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
     userRole: UserRole;
 };
 
+/**
+ * Represents the update status filter for records.
+ */
 export const UpdateStatus = { OVERDUE: 'Overdue', NOT_OVERDUE: 'NotOverdue' } as const;
 
+/**
+ * Represents the update status filter for records.
+ */
 export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
 
 /**
@@ -2165,10 +2196,10 @@ export type GetOrganisationRecordsData = {
          */
         SortDirection?: SortDirection;
         /**
-         * Gets or initialises the update status filter. When set, only records that are
-         * overdue or not overdue for review will be returned.
+         * Gets or initialises the update status filters. When multiple values are set, records
+         * matching any selected status will be returned.
          */
-        UpdateStatus?: UpdateStatus;
+        UpdateStatus?: Array<UpdateStatus>;
     };
     url: '/records/organisations/{organisationId}';
 };
@@ -2281,6 +2312,29 @@ export type CreateRecordResponses = {
 };
 
 export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
+
+export type PatchRecordsByRecordIdDiscardData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the record to discard.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/discard';
+};
+
+export type PatchRecordsByRecordIdDiscardErrors = {
+    /**
+     * An HTTP 200 response if the record is successfully discarded.
+     * An HTTP 404 response if the record cannot be found.
+     * An HTTP 400 response if the record is not eligible to be discarded.
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type PatchRecordsByRecordIdDiscardError = PatchRecordsByRecordIdDiscardErrors[keyof PatchRecordsByRecordIdDiscardErrors];
 
 export type GetUsersMeData = {
     body?: never;
@@ -2628,7 +2682,7 @@ export type GetUserRegistrationByIdResponses = {
     /**
      * The membership request's details were successfully retrieved.
      */
-    200: RegisterUserConfirmationDto;
+    200: RegisterUserDetailsDto;
 };
 
 export type GetUserRegistrationByIdResponse = GetUserRegistrationByIdResponses[keyof GetUserRegistrationByIdResponses];

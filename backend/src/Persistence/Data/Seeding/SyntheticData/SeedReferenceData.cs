@@ -11,7 +11,7 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 internal sealed class SeedReferenceData
 {
     private static readonly HashSet<string> _medicinesOnlyProcedures = new(
-        ["Access consortium", "Project Orbis"],
+        ["Access Consortium", "Project Orbis"],
         StringComparer.Ordinal
     );
 
@@ -24,12 +24,18 @@ internal sealed class SeedReferenceData
                 Code = entry.Code,
                 Label = entry.Label,
                 DisplayOrder = entry.DisplayOrder,
+                IsArchived = entry.IsArchived,
             },
             (child, parent) => child.Parent = parent
         );
         TherapeuticAreas = CreateHierarchy(
             data.TherapeuticAreas,
-            entry => new TherapeuticArea { Label = entry.Label, DisplayOrder = entry.DisplayOrder },
+            entry => new TherapeuticArea
+            {
+                Label = entry.Label,
+                DisplayOrder = entry.DisplayOrder,
+                IsArchived = entry.IsArchived,
+            },
             (child, parent) => child.Parent = parent
         );
         FormulationTypes = CreateList(

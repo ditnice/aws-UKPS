@@ -480,6 +480,73 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         JsonNode.DeepEquals(inaccessibleBody, missingBody).ShouldBeTrue();
     }
 
+    [Fact]
+    public async Task DiscardDraftRecord_WhenSuccessful_ShouldReturnOk()
+    {
+        var recordId = 1;
+
+        _mockRecordService
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
+            .Returns(Result<DiscardRecordError>.Ok());
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Patch,
+            new Uri($"records/{recordId}/discard", UriKind.Relative)
+        );
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        await _mockRecordService
+            .Received(1)
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenRecordNotFound_ShouldReturnNotFound()
+    {
+        var recordId = 1;
+
+        _mockRecordService
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
+            .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound()));
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Patch,
+            new Uri($"records/{recordId}/discard", UriKind.Relative)
+        );
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        await _mockRecordService
+            .Received(1)
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenInvalidDiscard_ShouldReturnBadRequest()
+    {
+        var recordId = 1;
+
+        _mockRecordService
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
+            .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard()));
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Patch,
+            new Uri($"records/{recordId}/discard", UriKind.Relative)
+        );
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        await _mockRecordService
+            .Received(1)
+            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("?recordType=")]
@@ -514,10 +581,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         foreach (var type in query.RecordType)
             queryParams.Add($"recordType={Uri.EscapeDataString(type.ToString())}");
 
-        if (query.UpdateStatus.HasValue)
-            queryParams.Add(
-                $"updateStatus={Uri.EscapeDataString(query.UpdateStatus.Value.ToString())}"
-            );
+        foreach (var status in query.UpdateStatus)
+            queryParams.Add($"updateStatus={Uri.EscapeDataString(status.ToString())}");
 
         if (!string.IsNullOrWhiteSpace(query.Search))
             queryParams.Add($"search={Uri.EscapeDataString(query.Search)}");
@@ -597,7 +662,10 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             );
             RuleFor(
                 x => x.UpdateStatus,
-                f => f.Random.Bool(0.5f) ? f.PickRandom<UpdateStatus>() : null
+                f =>
+                    f.Random.Bool(0.5f)
+                        ? [f.PickRandom<UpdateStatus>()]
+                        : Array.Empty<UpdateStatus>()
             );
             RuleFor(x => x.Search, f => f.Random.Bool(0.5f) ? f.Lorem.Word() : null);
         }

@@ -13,7 +13,7 @@ const query: RecordsQuery = {
   search: 'medicine & vaccine',
   recordType: ['Medicine', 'Vaccine'],
   recordStatus: ['Published', 'OnHold'],
-  updateStatus: 'NotOverdue',
+  updateStatus: ['Overdue', 'NotOverdue'],
   page: 3,
   pageSize: 25,
   sortBy: 'CompanyCode',
@@ -26,11 +26,11 @@ describe('records query parsing', () => {
       search: undefined,
       recordType: [],
       recordStatus: [],
-      updateStatus: undefined,
+      updateStatus: [],
       page: 1,
       pageSize: 10,
-      sortBy: undefined,
-      sortDirection: undefined,
+      sortBy: 'DisplayStatus',
+      sortDirection: 'Ascending',
     })
   })
 
@@ -39,7 +39,7 @@ describe('records query parsing', () => {
       search: query.search,
       recordType: ['Medicine', 'Vaccine'],
       recordStatus: ['Published', 'OnHold'],
-      updateStatus: 'NotOverdue',
+      updateStatus: ['Overdue', 'NotOverdue'],
       page: '3',
       pageSize: '25',
       sortBy: 'CompanyCode',
@@ -71,9 +71,9 @@ describe('records query parsing', () => {
     ).toMatchObject({
       recordType: ['Medicine'],
       recordStatus: ['OnHold'],
-      updateStatus: undefined,
-      sortBy: undefined,
-      sortDirection: undefined,
+      updateStatus: [],
+      sortBy: 'DisplayStatus',
+      sortDirection: 'Ascending',
       page: 1,
       pageSize: 10,
     })
@@ -87,7 +87,13 @@ describe('records query parsing', () => {
   )
 
   it.each(['Overdue', 'NotOverdue'])('accepts the %s update status', (updateStatus) => {
-    expect(parseQueryFromSearchParams({ updateStatus }).updateStatus).toBe(updateStatus)
+    expect(parseQueryFromSearchParams({ updateStatus }).updateStatus).toEqual([updateStatus])
+  })
+
+  it('accepts multiple update statuses', () => {
+    expect(
+      parseQueryFromSearchParams({ updateStatus: ['Overdue', 'NotOverdue'] }).updateStatus,
+    ).toEqual(['Overdue', 'NotOverdue'])
   })
 })
 
@@ -101,7 +107,8 @@ describe('active records filters', () => {
     expect(getActiveFilters(query)).toEqual([
       { key: 'search', value: 'medicine & vaccine', label: 'medicine & vaccine' },
       { key: 'record-status', value: 'Published', label: 'Published' },
-      { key: 'record-status', value: 'OnHold', label: 'On Hold' },
+      { key: 'record-status', value: 'OnHold', label: 'On hold' },
+      { key: 'update-status', value: 'Overdue', label: 'Overdue' },
       { key: 'update-status', value: 'NotOverdue', label: 'Not overdue' },
     ])
   })
@@ -114,12 +121,20 @@ describe('active records filters', () => {
     expect(query).toEqual(original)
   })
 
+  it('removes only the selected update status', () => {
+    const remaining = getActiveFilters(query).filter(
+      (filter) => filter.key !== 'update-status' || filter.value !== 'Overdue',
+    )
+
+    expect(buildQueryFromFilters(remaining, query).updateStatus).toEqual(['NotOverdue'])
+  })
+
   it('clears all displayed filters when none remain', () => {
     expect(buildQueryFromFilters([], query)).toEqual({
       ...query,
       search: undefined,
       recordStatus: [],
-      updateStatus: undefined,
+      updateStatus: [],
     })
   })
 })
@@ -132,7 +147,7 @@ describe('records query serialization', () => {
     expect(params.toString()).toContain('search=medicine+%26+vaccine')
     expect(params.getAll('recordType')).toEqual(['Medicine', 'Vaccine'])
     expect(params.getAll('recordStatus')).toEqual(['Published', 'OnHold'])
-    expect(params.get('updateStatus')).toBe('NotOverdue')
+    expect(params.getAll('updateStatus')).toEqual(['Overdue', 'NotOverdue'])
     expect(params.get('page')).toBe('3')
     expect(params.get('pageSize')).toBe('25')
     expect(params.get('sortBy')).toBe('CompanyCode')
@@ -158,6 +173,7 @@ describe('records query serialization', () => {
         ...Object.fromEntries(params),
         recordType: params.getAll('recordType'),
         recordStatus: params.getAll('recordStatus'),
+        updateStatus: params.getAll('updateStatus'),
       }),
     ).toEqual(query)
   })

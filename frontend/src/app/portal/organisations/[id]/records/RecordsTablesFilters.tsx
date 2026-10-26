@@ -2,9 +2,10 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 
-import { FilterByInput, FilterPanel } from '@nice-digital/nds-filters'
+import { FilterPanel } from '@nice-digital/nds-filters'
 
 import { RecordDisplayStatus, UpdateStatus } from '@/client/generated'
+import { FilterByInput } from '@/components/FilterByInput/FilterByInput'
 
 import { FilterOptionsGroup } from '../_components/OrganisationFilters'
 
@@ -44,15 +45,18 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
         label="Search Records"
         name="search"
         buttonLabel="Apply filter"
+        hint="Search by record title, company code or record ID."
         inputProps={{
-          placeholder: 'Enter an email address',
+          placeholder: 'Enter record identifier',
           defaultValue: query.search ?? '',
         }}
       ></FilterByInput>
       <FilterOptionsGroup
         heading="Record status"
         id="record-status-filter"
-        options={Object.values(RecordDisplayStatus)}
+        options={Object.values(RecordDisplayStatus).filter(
+          (status) => status !== RecordDisplayStatus.DISCARDED,
+        )}
         labels={recordStatusLabels}
         isSelected={(recordStatus: RecordDisplayStatus) =>
           query.recordStatus?.includes(recordStatus) ?? false
@@ -69,11 +73,13 @@ const RecordsTablesFilters = ({ query }: RecordsTablesFiltersTypes) => {
         id="update-status-filter"
         options={Object.values(UpdateStatus)}
         labels={updateStatusLabels}
-        isSelected={(updateStatus: UpdateStatus) => query.updateStatus == updateStatus}
+        isSelected={(updateStatus: UpdateStatus) =>
+          query.updateStatus?.includes(updateStatus) ?? false
+        }
         onChanged={(updateStatus, isSelected) =>
           handleUpdatedQuery({
             ...query,
-            updateStatus: isSelected ? updateStatus : undefined,
+            updateStatus: addOrRemoveItem(query.updateStatus, updateStatus, isSelected),
           })
         }
       />

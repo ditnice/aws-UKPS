@@ -1,12 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import type { Client } from '@/client/generated/client'
 import {
   getUserDetailsWithinOrganisation,
   getUserRegistrationById,
 } from '@/client/generated/sdk.gen'
-import type { RegisterUserConfirmationDto, UserInformationDto } from '@/client/generated/types.gen'
+import type { RegisterUserDetailsDto, UserInformationDto } from '@/client/generated/types.gen'
 import { createServerApiClient } from '@/client/server-api'
 
 import { UserActionAlert } from './UserActionAlert'
@@ -22,24 +23,18 @@ vi.mock('@/client/server-api', () => ({
 }))
 
 const user: UserInformationDto = {
-  userId: 4,
-  fullName: 'Julie Brooks',
-  workTelephone: '01234 567890',
+  ...fakeUserInformationDto(),
   workEmail: 'julie.brooks@example.com',
-  organisationMembershipId: 9,
-  organisationId: 2,
-  organisationName: 'Example Pharma',
   userRole: 'Standard',
   status: 'Active',
 }
 
 const registration = {
   id: 4,
-  organisationName: 'Example Pharma',
   fullName: 'Jane Smith',
   workEmail: 'jane.smith@example.com',
   phoneNumber: '01234 567890',
-} satisfies RegisterUserConfirmationDto
+} satisfies RegisterUserDetailsDto
 
 const apiClient = {} as Client
 
@@ -266,7 +261,7 @@ describe('UserActionAlert (direct invocation)', () => {
         expect(
           screen.queryByRole('heading', { name: 'User removed from UK PharmaScan' }),
         ).not.toBeInTheDocument()
-        expect(screen.queryByText(/Julie Brooks/)).not.toBeInTheDocument()
+        expect(screen.queryByText(user.fullName, { exact: false })).not.toBeInTheDocument()
         expect(screen.queryByRole('link', { name: 'Dismiss' })).not.toBeInTheDocument()
       },
     )

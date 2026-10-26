@@ -9,6 +9,11 @@ namespace UKPS.Api.Application.Users.Dtos;
 public sealed record RegisterUserDetailsDto
 {
     /// <summary>
+    /// The Id to identify the registration details.
+    /// </summary>
+    public required int Id { get; init; }
+
+    /// <summary>
     /// Gets the user's full name.
     /// </summary>
     [Required]

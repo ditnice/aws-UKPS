@@ -112,11 +112,11 @@ public class UserRegistrationController : ControllerBase
     /// <response code="404">
     /// No membership request was found with the supplied identifier.
     /// </response>
-    [ProducesResponseType<RegisterUserConfirmationDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<RegisterUserDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [HttpGet("{id:int}", Name = nameof(GetUserRegistrationById))]
-    public async Task<ActionResult<RegisterUserConfirmationDto>> GetUserRegistrationById(
+    public async Task<ActionResult<RegisterUserDetailsDto>> GetUserRegistrationById(
         int organisationId,
         int id,
         CancellationToken cancellationToken
@@ -128,7 +128,7 @@ public class UserRegistrationController : ControllerBase
             cancellationToken
         );
 
-        return result.Match<ActionResult<RegisterUserConfirmationDto>>(
+        return result.Match<ActionResult<RegisterUserDetailsDto>>(
             user => Ok(user),
             error =>
                 error switch

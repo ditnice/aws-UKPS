@@ -25,4 +25,21 @@ public interface IRecordService
         GetRecordsQueryDto getRecordsQuery,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Discards a draft record identified by its unique ID.
+    /// </summary>
+    /// <param name="recordId">
+    /// The unique identifier of the draft record to discard.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="DiscardRecordError"/> indicating the outcome of the operation.
+    /// </returns>
+    Task<Result<DiscardRecordError>> DiscardDraftRecord(
+        int recordId,
+        CancellationToken cancellationToken
+    );
 }
