@@ -93,7 +93,7 @@ export function TaskList({ children, className }: TaskListProps) {
 export function TaskListSummary({ completed, total, firstIncompleteId }: TaskListSummaryProps) {
   return (
     <div className={styles['task-list__summary']}>
-      <p className={styles['task-list__summary-text']}>
+      <p className={clsx('lead', styles['task-list__summary-text'])}>
         You have completed {completed} of {total} mandatory {total === 1 ? 'section' : 'sections'}
       </p>
       {firstIncompleteId && (
@@ -111,7 +111,7 @@ export function TaskListSection({
   description,
   status,
   title,
-  titleHeadingLevel = 2,
+  titleHeadingLevel = 3,
 }: TaskListSectionProps) {
   const TitleHeading = `h${titleHeadingLevel}` as const
 
