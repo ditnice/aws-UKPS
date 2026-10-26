@@ -67,7 +67,8 @@ Open `https://localhost:3000`, log in, and confirm in DevTools â†’ Application â
 ### Running E2E tests with Docker Compose
 
 The root `docker-compose.yml` runs Postgres, the backend and the frontend from their production
-Dockerfiles, plus a Playwright runner container. No certificates, AWS access or secrets are needed.
+Dockerfiles, plus a Playwright runner container. AWS is emulated locally by Floci, so no
+certificates, AWS access or secrets are needed.
 
 ```
 just e2e                          # build, run the whole Playwright suite, tear down
@@ -94,22 +95,45 @@ How the stack is set up:
   `DevAuthentication`, so every request is the seeded Super user (`example.user@email.com`) in
   organisation 1. Playwright runs with `E2E_AUTH_MODE=dev`, which runs the
   `*.authenticated.e2e.spec.ts` specs without the Cognito `auth-setup` project.
-- **Not covered:** real Cognito sign-in, MFA and sign-up, and emails (the SQS listener is off via
-  `Email__ListenerEnabled=false`). `auth/redirects.e2e.spec.ts` skips because the dev bypass never
+- **AWS:** [Floci](https://github.com/floci-io/floci) emulates Cognito and SQS, so inviting,
+  removing, deactivating and reactivating users work. `scripts/floci/init-aws.sh` creates the
+  `ukps-e2e-email` queue and the `eu-west-2_e2e` user pool when Floci starts; Floci keeps everything in
+  memory, so every run starts empty.
+- **Not covered:** real Cognito sign-in, MFA and sign-up, and sending emails (they are queued on Floci,
+  but the SQS listener that sends them is off via `Email__ListenerEnabled=false`). `auth/redirects.e2e.spec.ts` skips because the dev bypass never
   redirects to sign-in. Run `pnpm test:e2e:authenticated-dev` against the dev environment for
   real-auth coverage.
-- **Readiness:** the runtime images are distroless, so instead of Compose healthchecks the
-  Playwright container runs `tests/e2e/scripts/wait-for-stack.mjs` first.
+- **Test tags:** tests tagged `@mutates-data` (they create, change or delete data) or `@visual`
+  (screenshot comparisons against Linux Chromium baselines) only run when `E2E_EPHEMERAL_STACK=true`,
+  which only the Compose playwright service sets. Every Playwright project skips them otherwise, so
+  deployed runs (`test:e2e:dev`, `test:e2e:authenticated-dev`) never change the environment's data.
+- **Read-only twins:** every `@mutates-data` test has an untagged twin in the same spec that goes
+  through the same journey to the final confirm page, cancels, and checks nothing changed, so deployed
+  runs still cover it. Twins use `test.use({ readOnly: true })`, which fails the test if the browser
+  sends any write request to the app, and skip with a reason when the environment has no suitable
+  record, such as a registration request. Nothing seeds registration requests, so on the Compose
+  stack the registration request twins submit one first from a separate, unguarded browser context;
+  they still never approve or reject it.
+  Tag new tests with `mutatesDataTag` or `visualTag` from `tests/e2e/helpers/test-environment.ts`.
+- **Test data:** give users a test creates an email from `uniqueEmail()` in
+  `tests/e2e/helpers/test-data.ts`. Its `playwright-` prefix lets specs that read the user list
+  avoid users that other specs create and remove.
+- **Readiness:** the backend waits for Postgres and Floci healthchecks. The backend and frontend
+  runtime images are distroless, so instead of Compose healthchecks for them the Playwright container
+  runs `tests/e2e/scripts/wait-for-stack.mjs` first.
 
 To explore the app or use Playwright UI mode from your machine:
 
 ```
 just stack-up                     # http://localhost:3000, backend on http://localhost:8080/scalar
 cd frontend
-PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=1 E2E_AUTH_MODE=dev \
-  E2E_ORGANISATION_ID=1 pnpm test:e2e:ui
+PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=true E2E_AUTH_MODE=dev \
+  E2E_EPHEMERAL_STACK=true E2E_ORGANISATION_ID=1 pnpm test:e2e:ui
 just stack-down
 ```
+
+Changes made by `@mutates-data` tests last until `just stack-down`; the backend reseeds when it
+restarts.
 
 `UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports. Both bind to `127.0.0.1` only, as
 dev authentication makes every request the Super user. `just stack-up` needs a fixed frontend port,
