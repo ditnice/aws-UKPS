@@ -4,7 +4,14 @@ import {
   organisationUserTableHeaders,
   type OrganisationUserTableHeaderKey,
 } from '../../../src/app/portal/organisations/[id]/_lib/userLabels'
-import { type SortDirection } from '../../../src/client/generated/types.gen'
+
+import type { SortDirection } from '../../../src/client/generated/types.gen'
+
+// ARIA has no way to select a column, so column cells are the one CSS selector.
+function columnCell(key: OrganisationUserTableHeaderKey): string {
+  const column = organisationUserTableHeaders.findIndex((header) => header.key === key) + 1
+  return `td:nth-child(${column})`
+}
 
 export class OrganisationUsersPage {
   readonly heading: Locator
@@ -52,9 +59,12 @@ export class OrganisationUsersPage {
 
   /** Every row's cell in one column, found from the app's own column order. */
   cells(key: OrganisationUserTableHeaderKey): Locator {
-    const column = organisationUserTableHeaders.findIndex((header) => header.key === key) + 1
-    // ARIA has no way to select a column, so this is the one CSS selector.
-    return this.table.locator(`tbody td:nth-child(${column})`)
+    return this.table.locator(`tbody ${columnCell(key)}`)
+  }
+
+  /** The row's cell in one column, found from the app's own column order. */
+  cell(row: Locator, key: OrganisationUserTableHeaderKey): Locator {
+    return row.locator(columnCell(key))
   }
 
   row(email: string): Locator {
@@ -88,7 +98,7 @@ export class OrganisationUsersPage {
     if ((await row.count()) === 0) {
       return undefined
     }
-    const email = (await row.getByRole('cell').first().innerText()).trim()
+    const email = (await this.cell(row, 'email').innerText()).trim()
     await row.getByRole('link', { name: action, exact: true }).click()
     return email
   }
@@ -108,6 +118,14 @@ export class OrganisationUsersPage {
 
     await expect(this.page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
     return email
+  }
+
+  /** Chooses an action on the manage user's access page and continues. The NDS radio's label
+   * covers its input, so this clicks the label as a user would, then checks the radio took it. */
+  async chooseAction(label: string) {
+    await this.page.getByText(label, { exact: true }).click()
+    await expect(this.page.getByRole('radio', { name: label, exact: true })).toBeChecked()
+    await this.page.getByRole('button', { name: 'Continue' }).click()
   }
 
   /** Every confirm page has a Cancel link or button. Some go back in history, so this doesn't

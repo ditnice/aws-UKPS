@@ -35,8 +35,13 @@ export const visualTag = '@visual'
 // Not followed by another tag character, so a tag such as @visual-regression wouldn't match.
 export const ephemeralStackOnlyTags = new RegExp(`(${mutatesDataTag}|${visualTag})(?![\\w-])`)
 
+/** For on/off variables such as PLAYWRIGHT_SKIP_WEB_SERVER: on only when set to `true`. */
+export function isFlagSet(name: string): boolean {
+  return process.env[name] === 'true'
+}
+
 export function isEphemeralStack(): boolean {
-  return ['1', 'true'].includes(process.env.E2E_EPHEMERAL_STACK ?? '')
+  return isFlagSet('E2E_EPHEMERAL_STACK')
 }
 
 export function isLocalBaseURL(baseURL: string | undefined): boolean {

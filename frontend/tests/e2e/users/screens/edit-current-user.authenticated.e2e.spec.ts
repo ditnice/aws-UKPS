@@ -9,7 +9,6 @@ test.describe('User details screen', () => {
     await expect(page).toHaveScreenshot('user-details.png', {
       fullPage: true,
       mask: [page.getByRole('textbox')],
-      maxDiffPixelRatio: 0.02,
     })
   })
 

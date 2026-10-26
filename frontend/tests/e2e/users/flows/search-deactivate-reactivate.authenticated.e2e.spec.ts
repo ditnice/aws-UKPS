@@ -16,8 +16,7 @@ test.describe('Deactivating and reactivating a user', { tag: mutatesDataTag }, (
     // The promote spec claims its user from the other end of the list.
     const userEmail = await usersPage.openActiveStandardUser(organisationId, 'Descending')
 
-    await page.getByText('Deactivate user', { exact: true }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await usersPage.chooseAction('Deactivate user')
 
     await expect(page.getByRole('heading', { name: 'Deactivate user' })).toBeVisible()
     await page.getByRole('button', { name: 'Deactivate User' }).click()
@@ -53,8 +52,7 @@ test.describe('Deactivating and reactivating a user without saving', () => {
     const usersPage = new OrganisationUsersPage(page)
     const userEmail = await usersPage.openActiveStandardUser(organisationId, 'Descending')
 
-    await page.getByText('Deactivate user', { exact: true }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await usersPage.chooseAction('Deactivate user')
 
     const heading = page.getByRole('heading', { name: 'Deactivate user' })
     await expect(heading).toBeVisible()

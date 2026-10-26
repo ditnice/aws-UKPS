@@ -7,7 +7,9 @@ type AccessibilityOptions = {
 }
 
 type Options = {
-  /** Aborts and fails on any write request to the app, so a read-only test can't change data. */
+  /** Aborts and fails on any write request the browser sends to the app, so a read-only test
+   * can't change data. It routes the browser context only: calls through `page.request` or the
+   * `request` fixture aren't checked, so a read-only test mustn't use them to write. */
   readOnly: boolean
 }
 

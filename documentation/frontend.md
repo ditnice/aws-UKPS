@@ -111,8 +111,13 @@ How the stack is set up:
   through the same journey to the final confirm page, cancels, and checks nothing changed, so deployed
   runs still cover it. Twins use `test.use({ readOnly: true })`, which fails the test if the browser
   sends any write request to the app, and skip with a reason when the environment has no suitable
-  record, such as a registration request.
+  record, such as a registration request. Nothing seeds registration requests, so on the Compose
+  stack the registration request twins submit one first from a separate, unguarded browser context;
+  they still never approve or reject it.
   Tag new tests with `mutatesDataTag` or `visualTag` from `tests/e2e/helpers/test-environment.ts`.
+- **Test data:** give users a test creates an email from `uniqueEmail()` in
+  `tests/e2e/helpers/test-data.ts`. Its `playwright-` prefix lets specs that read the user list
+  avoid users that other specs create and remove.
 - **Readiness:** the backend waits for Postgres and Floci healthchecks. The backend and frontend
   runtime images are distroless, so instead of Compose healthchecks for them the Playwright container
   runs `tests/e2e/scripts/wait-for-stack.mjs` first.
@@ -122,7 +127,7 @@ To explore the app or use Playwright UI mode from your machine:
 ```
 just stack-up                     # http://localhost:3000, backend on http://localhost:8080/scalar
 cd frontend
-PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=1 E2E_AUTH_MODE=dev \
+PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_SKIP_WEB_SERVER=true E2E_AUTH_MODE=dev \
   E2E_EPHEMERAL_STACK=true E2E_ORGANISATION_ID=1 pnpm test:e2e:ui
 just stack-down
 ```

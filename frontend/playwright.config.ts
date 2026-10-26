@@ -6,6 +6,7 @@ import {
   isAuthenticatedTargetAllowed,
   isDevAuthMode,
   isEphemeralStack,
+  isFlagSet,
   isLocalBaseURL,
 } from './tests/e2e/helpers/test-environment'
 
@@ -78,7 +79,7 @@ const authenticatedProjects = isDevAuth
         },
       },
     ]
-const skipWebServer = ['1', 'true'].includes(process.env.PLAYWRIGHT_SKIP_WEB_SERVER ?? '')
+const skipWebServer = isFlagSet('PLAYWRIGHT_SKIP_WEB_SERVER')
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -108,6 +109,8 @@ export default defineConfig({
         ]
       : []),
   ],
+  /* Screenshot comparisons allow for small anti-aliasing differences between runs. */
+  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02 } },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

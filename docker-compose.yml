@@ -138,7 +138,7 @@ services:
       HOME: /tmp
       CI: ${CI:-}
       PLAYWRIGHT_BASE_URL: http://localhost:3000
-      PLAYWRIGHT_SKIP_WEB_SERVER: "1"
+      PLAYWRIGHT_SKIP_WEB_SERVER: "true"
       E2E_AUTH_MODE: dev
       # Postgres and Floci reset on every start, so tests tagged @mutates-data or @visual may run.
       E2E_EPHEMERAL_STACK: "true"

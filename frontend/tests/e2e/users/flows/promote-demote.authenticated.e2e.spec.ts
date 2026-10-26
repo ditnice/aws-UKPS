@@ -16,8 +16,7 @@ test.describe('Promoting and demoting a user', { tag: mutatesDataTag }, () => {
     // The deactivate spec claims its user from the other end of the list.
     const userEmail = await usersPage.openActiveStandardUser(organisationId, 'Ascending')
 
-    await page.getByText('Change user permissions', { exact: true }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await usersPage.chooseAction('Change user permissions')
 
     await expect(page.getByRole('heading', { name: 'Change user permissions' })).toBeVisible()
     await page.getByRole('button', { name: 'Make champion user' }).click()
@@ -38,8 +37,7 @@ test.describe('Promoting and demoting a user', { tag: mutatesDataTag }, () => {
     await usersPage.openUserAction(userEmail, 'Edit')
 
     await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
-    await page.getByText('Change user permissions', { exact: true }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await usersPage.chooseAction('Change user permissions')
 
     await expect(page.getByRole('heading', { name: 'Change user permissions' })).toBeVisible()
     await page.getByRole('button', { name: 'Make standard user' }).click()
@@ -57,8 +55,7 @@ test.describe('Promoting and demoting a user without saving', () => {
     const usersPage = new OrganisationUsersPage(page)
     const userEmail = await usersPage.openActiveStandardUser(organisationId, 'Ascending')
 
-    await page.getByText('Change user permissions', { exact: true }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await usersPage.chooseAction('Change user permissions')
 
     const heading = page.getByRole('heading', { name: 'Change user permissions' })
     await expect(heading).toBeVisible()
@@ -85,8 +82,7 @@ test.describe('Promoting and demoting a user without saving', () => {
     }
 
     await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
-    await page.getByText('Change user permissions', { exact: true }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await usersPage.chooseAction('Change user permissions')
 
     const heading = page.getByRole('heading', { name: 'Change user permissions' })
     await expect(heading).toBeVisible()

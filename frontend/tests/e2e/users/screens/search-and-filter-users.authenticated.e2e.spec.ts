@@ -4,6 +4,7 @@ import {
   lastActivePresets,
 } from '../../../../src/app/portal/organisations/[id]/_lib/userLabels'
 import { expect, test } from '../../fixtures/test'
+import { testEmailPrefix } from '../../helpers/test-data'
 import { requireEnvironmentVariable, visualTag } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
@@ -12,9 +13,7 @@ test.describe('Searching and filtering users', () => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const usersPage = new OrganisationUsersPage(page)
     await usersPage.goto(organisationId)
-    await expect(usersPage.filterPanel).toHaveScreenshot('filter-panel.png', {
-      maxDiffPixelRatio: 0.02,
-    })
+    await expect(usersPage.filterPanel).toHaveScreenshot('filter-panel.png')
   })
 
   test('searches for a user by email', async ({ page }) => {
@@ -23,7 +22,9 @@ test.describe('Searching and filtering users', () => {
     await usersPage.goto(organisationId)
     const emails = usersPage.cells('email')
     await expect(emails.first()).toBeVisible()
-    const userEmail = (await emails.last().innerText()).trim()
+    // Other specs remove users they create, so this picks a seeded user, which no spec removes.
+    const seededEmails = emails.filter({ hasNotText: new RegExp(`^\\s*${testEmailPrefix}`) })
+    const userEmail = (await seededEmails.last().innerText()).trim()
 
     await usersPage.filterByEmail(userEmail)
 
@@ -65,8 +66,11 @@ test.describe('Searching and filtering users', () => {
         return
       }
 
-      // The same window as the app's filter, from the start of that day as the table shows dates only.
+      // The app filters from exactly this many days ago, but the table shows only dates, in the
+      // frontend server's time zone, which may differ from this machine's. So the cutoff is the
+      // start of the day before, which no time zone can push a matching user past.
       const cutoffDate = new Date(Date.now() - lastActivePresetDays[preset] * 24 * 60 * 60 * 1000)
+      cutoffDate.setDate(cutoffDate.getDate() - 1)
       cutoffDate.setHours(0, 0, 0, 0)
       await expect
         .poll(

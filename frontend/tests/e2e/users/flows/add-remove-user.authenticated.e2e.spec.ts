@@ -1,11 +1,12 @@
 import { expect, test } from '../../fixtures/test'
+import { uniqueEmail } from '../../helpers/test-data'
 import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
 // A unique email, so a retry or an earlier run against a shared environment can't collide.
 const testUser = {
   fullName: 'Test user',
-  workEmail: `playwright-${Date.now()}@example.com`,
+  workEmail: uniqueEmail('invite'),
   phoneNumber: '07123456789',
 }
 
@@ -41,8 +42,7 @@ test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
     await usersPage.openUserAction(testUser.workEmail, 'Edit')
 
     await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
-    await page.getByText('Remove user', { exact: true }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await usersPage.chooseAction('Remove user')
 
     await expect(page.getByRole('heading', { name: 'Remove user' })).toBeVisible()
     await page.getByRole('button', { name: 'Remove user' }).click()
@@ -96,8 +96,7 @@ test.describe('Adding and removing a user without saving', () => {
     }
 
     await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
-    await page.getByText('Remove user', { exact: true }).click()
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await usersPage.chooseAction('Remove user')
 
     const heading = page.getByRole('heading', { name: 'Remove user' })
     await expect(heading).toBeVisible()

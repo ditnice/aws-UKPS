@@ -73,6 +73,7 @@ export function OrganisationFilters({ query }: OrganisationFiltersProps) {
   // searchParams only changes once a pushed navigation lands, so a change made before then must
   // build on the last URL pushed here, or it would drop the earlier change. `pushed` tells our
   // own navigations landing apart from someone else's, such as a sort link, which resets this.
+  // The latest URL landing resets it too, so it only ever holds one burst of quick changes.
   const pendingSearch = useRef<{ latest: string; pushed: Set<string> } | null>(null)
 
   useEffect(() => {

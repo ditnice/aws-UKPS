@@ -1,6 +1,7 @@
 import { type Browser, type Page } from '@playwright/test'
 
 import { expect, test } from '../fixtures/test'
+import { uniqueEmail } from '../helpers/test-data'
 import {
   isEphemeralStack,
   mutatesDataTag,
@@ -10,7 +11,7 @@ import { OrganisationUsersPage } from '../pages/organisation-users.page'
 
 // Nothing seeds registration requests, so each test submits its own through the public form.
 async function requestAccess(page: Page, organisationId: string): Promise<string> {
-  const workEmail = `playwright-request-${Date.now()}-${test.info().workerIndex}@example.com`
+  const workEmail = uniqueEmail('request')
   await page.goto('/register/provide-details')
   const organisation = page.getByLabel('Select the organisation you are requesting access for')
   // Selected by ID, as other tests rename the organisation.
@@ -83,9 +84,15 @@ async function openAnyRequest(
     )
   }
 
+  // Only the ephemeral stack gets here, which is plain http, so the project's other context
+  // options, such as ignoreHTTPSErrors, aren't needed.
   const requestContext = await browser.newContext({ baseURL })
-  const workEmail = await requestAccess(await requestContext.newPage(), organisationId)
-  await requestContext.close()
+  let workEmail: string
+  try {
+    workEmail = await requestAccess(await requestContext.newPage(), organisationId)
+  } finally {
+    await requestContext.close()
+  }
   await openRequest(page, organisationId, workEmail)
   await usersPage.row(workEmail).getByRole('link', { name: action, exact: true }).click()
   return workEmail
