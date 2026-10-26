@@ -109,8 +109,6 @@ export default defineConfig({
         ]
       : []),
   ],
-  /* Screenshot comparisons allow for small anti-aliasing differences between runs. */
-  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02 } },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

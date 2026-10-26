@@ -104,22 +104,22 @@ test.describe('Editing organisation details without saving', () => {
       await expect(page.getByLabel(label)).toHaveValue(savedValues[index])
     }
   })
-})
 
-test('shows errors for empty fields', async ({ page }) => {
-  const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-  await gotoEditPage(page, organisationId)
+  test('shows errors for empty fields', async ({ page }) => {
+    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+    await gotoEditPage(page, organisationId)
 
-  for (const { label } of fields) {
-    await page.getByLabel(label).fill('')
-  }
-  await page.getByRole('button', { name: 'Submit' }).click()
-
-  for (const { label, emptyError } of fields) {
-    // The shared Textarea doesn't set aria-invalid, so only the address skips that check.
-    if (label !== 'Organisation address') {
-      await expect(page.getByLabel(label)).toHaveAttribute('aria-invalid', 'true')
+    for (const { label } of fields) {
+      await page.getByLabel(label).fill('')
     }
-    await expect(page.getByText(emptyError)).toBeVisible()
-  }
+    await page.getByRole('button', { name: 'Submit' }).click()
+
+    for (const { label, emptyError } of fields) {
+      // The shared Textarea doesn't set aria-invalid, so only the address skips that check.
+      if (label !== 'Organisation address') {
+        await expect(page.getByLabel(label)).toHaveAttribute('aria-invalid', 'true')
+      }
+      await expect(page.getByText(emptyError)).toBeVisible()
+    }
+  })
 })
