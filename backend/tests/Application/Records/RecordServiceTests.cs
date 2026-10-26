@@ -5,6 +5,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
+using UKPS.Api.Persistence.Configurations.RecordWorkflow;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
@@ -465,7 +466,8 @@ public class RecordServiceTests : DatabaseTestBase
         Context.ChangeTracker.Clear();
 
         Record updatedRecord = await Context
-            .Records.AsNoTracking()
+            .Records.IgnoreQueryFilters([RecordConfiguration.DiscardedFilter])
+            .AsNoTracking()
             .Include(r => r.Revisions)
             .Include(r => r.StatusHistory)
             .Include(r => r.Events)

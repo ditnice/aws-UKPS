@@ -809,8 +809,7 @@ export const RecordDisplayStatus = {
     QA_REVIEW: 'QAReview',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived',
-    DISCARDED: 'Discarded'
+    ARCHIVED: 'Archived'
 } as const;
 
 /**
@@ -879,7 +878,8 @@ export type RecordDtoMedicineRecordDto = {
      */
     revisionId: number;
     /**
-     * Gets a value indicating whether the caller can discard the record.
+     * Gets a value indicating whether the record can be discarded, because it has never been
+     * submitted.
      */
     canDiscard: boolean;
 };
@@ -914,7 +914,8 @@ export type RecordDtoVaccineRecordDto = {
      */
     revisionId: number;
     /**
-     * Gets a value indicating whether the caller can discard the record.
+     * Gets a value indicating whether the record can be discarded, because it has never been
+     * submitted.
      */
     canDiscard: boolean;
 };

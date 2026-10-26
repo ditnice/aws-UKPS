@@ -131,7 +131,7 @@ internal partial class RecordService(
             r => r.Id == recordId,
             cancellationToken
         );
-        if (record is null || record.RecordStatus == RecordStatus.Discarded)
+        if (record is null)
         {
             return Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound());
         }
@@ -148,8 +148,8 @@ internal partial class RecordService(
 
         bool isDiscardable = await dbContext
             .Records.Where(r => r.Id == recordId)
-            .WhereDiscardable()
-            .AnyAsync(cancellationToken);
+            .SelectLatestRevision()
+            .AnyAsync(x => x.IsDiscardable, cancellationToken);
         if (!isDiscardable)
         {
             return Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard());
@@ -189,7 +189,6 @@ internal partial class RecordService(
         GetRecordsQueryDto getRecordsQuery
     )
     {
-        input = input.Where(m => m.RecordStatus != RecordStatus.Discarded);
         if (getRecordsQuery.RecordType.Count > 0)
         {
             input = input.Where(m => getRecordsQuery.RecordType.Contains(m.RecordType));

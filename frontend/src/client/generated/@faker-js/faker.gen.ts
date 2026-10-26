@@ -295,8 +295,7 @@ export const fakeRecordDisplayStatus = (options?: Options): RecordDisplayStatus 
         'QAReview',
         'Published',
         'OnHold',
-        'Archived',
-        'Discarded'
+        'Archived'
     ]);
 };
 
