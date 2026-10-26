@@ -7,6 +7,7 @@ export const recordStatusLabels: Record<RecordDisplayStatus, string> = {
   Published: 'Published',
   OnHold: 'On hold',
   Archived: 'Archived',
+  Discarded: 'Discarded',
 }
 
 export const recordStatusTagColours: Record<RecordDisplayStatus, TagColour> = {
@@ -15,6 +16,7 @@ export const recordStatusTagColours: Record<RecordDisplayStatus, TagColour> = {
   Published: 'green',
   OnHold: 'orange',
   Archived: 'grey',
+  Discarded: 'red',
 }
 
 export const updateStatusLabels: Record<UpdateStatus, string> = {

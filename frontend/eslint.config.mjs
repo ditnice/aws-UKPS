@@ -9,7 +9,8 @@ const gitignorePath = fileURLToPath(new URL('../.gitignore', import.meta.url))
 // Local wrappers around NDS components that everything else should import
 // instead of the raw @nice-digital package. Each entry needs a matching
 // `no-restricted-imports` "off ramp" for its own directory below, since a
-// wrapper has to import the package it wraps.
+// wrapper has to import the package it wraps. `componentOnly` restricts just
+// the wrapped component, for packages whose other exports are still used.
 const ndsWrappers = [
   { dir: 'Table', pkg: '@nice-digital/nds-table', component: 'Table' },
   { dir: 'Button', pkg: '@nice-digital/nds-button', component: 'Button' },
@@ -19,10 +20,17 @@ const ndsWrappers = [
   { dir: 'PageHeader', pkg: '@nice-digital/nds-page-header', component: 'PageHeader' },
   { dir: 'Alert', pkg: '@nice-digital/nds-alert', component: 'Alert' },
   { dir: 'ActionBanner', pkg: '@nice-digital/nds-action-banner', component: 'ActionBanner' },
+  {
+    dir: 'FilterByInput',
+    pkg: '@nice-digital/nds-filters',
+    component: 'FilterByInput',
+    componentOnly: true,
+  },
 ]
 
-const restrictedImportPaths = ndsWrappers.map(({ pkg, dir, component }) => ({
+const restrictedImportPaths = ndsWrappers.map(({ pkg, dir, component, componentOnly }) => ({
   name: pkg,
+  ...(componentOnly && { importNames: [component] }),
   message: `Use the local wrapper @/components/${dir}/${component} instead.`,
 }))
 

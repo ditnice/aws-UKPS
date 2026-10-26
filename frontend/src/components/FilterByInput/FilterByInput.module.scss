@@ -1,0 +1,16 @@
+@use '@/styles/colours';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.header {
+  background: colours.$filter-group-heading-background;
+}
+
+.hint {
+  @include typography.font-size(p);
+  color: colours.$text;
+  font-weight: normal;
+  margin: 0;
+  padding: 0 utils.rem(spacing.$small) utils.rem(spacing.$small);
+}

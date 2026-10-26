@@ -3,7 +3,9 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
-import { FilterByInput, FilterGroup, FilterOption, FilterPanel } from '@nice-digital/nds-filters'
+import { FilterGroup, FilterOption, FilterPanel } from '@nice-digital/nds-filters'
+
+import { FilterByInput } from '@/components/FilterByInput/FilterByInput'
 
 import {
   filterableRoles,
