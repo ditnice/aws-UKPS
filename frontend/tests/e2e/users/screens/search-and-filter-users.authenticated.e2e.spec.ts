@@ -1,5 +1,3 @@
-import { Page } from '@playwright/test'
-
 import {
   lastActiveLabels,
   lastActivePresetDays,
@@ -9,65 +7,59 @@ import { expect, test } from '../../fixtures/test'
 import { requireEnvironmentVariable, visualTag } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
-// The active filters render with the table, so once one shows, the rows are the filtered results.
-function activeFilter(page: Page, label: string) {
-  return page.getByRole('list', { name: 'Active filters' }).getByRole('listitem').filter({
-    hasText: label,
-  })
-}
-
 test.describe('Searching and filtering users', () => {
-  test('search and filter users page', { tag: visualTag }, async ({ page }) => {
+  test('shows the filter panel', { tag: visualTag }, async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-    await page.goto(`/portal/organisations/${organisationId}`)
-    await expect(page.locator('.filter-panel')).toHaveScreenshot('filter-panel.png', {
+    const usersPage = new OrganisationUsersPage(page)
+    await usersPage.goto(organisationId)
+    await expect(usersPage.filterPanel).toHaveScreenshot('filter-panel.png', {
       maxDiffPixelRatio: 0.02,
     })
   })
 
-  test('search for a user', async ({ page }) => {
+  test('searches for a user by email', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-    await page.goto(`/portal/organisations/${organisationId}`)
-    await expect(page.getByText('Loading users', { exact: false })).toBeHidden()
-    const emails = page.locator('tbody tr td:nth-child(1)')
+    const usersPage = new OrganisationUsersPage(page)
+    await usersPage.goto(organisationId)
+    const emails = usersPage.cells('email')
+    await expect(emails.first()).toBeVisible()
     const userEmail = (await emails.last().innerText()).trim()
 
-    await new OrganisationUsersPage(page).filterByEmail(userEmail)
+    await usersPage.filterByEmail(userEmail)
 
-    await expect(activeFilter(page, userEmail)).toBeVisible()
+    await expect(usersPage.activeFilter(userEmail)).toBeVisible()
     await expect(emails).toHaveText([userEmail])
   })
 
-  test('filter standard user', async ({ page }) => {
+  test('filters to standard users', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-    await page.goto(`/portal/organisations/${organisationId}`)
+    const usersPage = new OrganisationUsersPage(page)
+    await usersPage.goto(organisationId)
 
     await page.getByRole('checkbox', { name: 'Standard user', exact: true }).check()
 
-    await expect(activeFilter(page, 'Standard user')).toBeVisible()
-    const roles = page.locator('tbody tr td:nth-child(2)')
+    await expect(usersPage.activeFilter('Standard user')).toBeVisible()
+    const roles = usersPage.cells('role')
     await expect(roles.first()).toBeVisible()
     await expect(roles.filter({ hasNotText: /^\s*Standard user\s*$/ })).toHaveCount(0)
   })
 
   for (const preset of lastActivePresets) {
     const label = lastActiveLabels[preset]
-    test(`should filter users ${label.toLowerCase()}`, async ({ page }) => {
+    test(`filters to users active ${label.toLowerCase()}`, async ({ page }) => {
       const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+      const usersPage = new OrganisationUsersPage(page)
+      await usersPage.goto(organisationId)
 
-      await page.goto(`/portal/organisations/${organisationId}`)
       const filter = page.getByRole('checkbox', { name: label, exact: true })
       await filter.check()
       await expect(filter).toBeChecked()
-      await expect(activeFilter(page, label)).toBeVisible()
+      await expect(usersPage.activeFilter(label)).toBeVisible()
 
-      const dates = page.locator('tbody tr td:nth-child(4)')
-      const noUsersMessage = page.getByRole('cell', {
-        name: 'No users found for this organisation.',
-      })
-      await expect(noUsersMessage.or(dates.first())).toBeVisible()
+      const dates = usersPage.cells('lastActive')
+      await expect(usersPage.noUsersMessage.or(dates.first())).toBeVisible()
 
-      if (await noUsersMessage.isVisible()) {
+      if (await usersPage.noUsersMessage.isVisible()) {
         await expect(page.getByText('Showing results 0 to 0 of 0')).toBeVisible()
         await expect(dates).toHaveCount(0)
         return
@@ -93,21 +85,22 @@ test.describe('Searching and filtering users', () => {
     })
   }
 
-  test('filter users by active and pending', async ({ page }) => {
+  test('filters to active and pending users', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+    const usersPage = new OrganisationUsersPage(page)
+    await usersPage.goto(organisationId)
 
-    await page.goto(`/portal/organisations/${organisationId}`)
     // Checked back to back, so the second change is made before the first has landed.
     await page.getByRole('checkbox', { name: 'Active', exact: true }).check()
     await page.getByRole('checkbox', { name: 'Pending', exact: true }).check()
-    await expect(activeFilter(page, 'Active')).toBeVisible()
-    await expect(activeFilter(page, 'Pending')).toBeVisible()
+    await expect(usersPage.activeFilter('Active')).toBeVisible()
+    await expect(usersPage.activeFilter('Pending')).toBeVisible()
 
     await expect(page.getByRole('checkbox', { name: 'Active', exact: true })).toBeChecked()
     await expect(page.getByRole('checkbox', { name: 'Pending', exact: true })).toBeChecked()
 
     await expect(page.getByRole('button', { name: 'Filters (2 Active)' })).toBeVisible()
-    const statuses = page.locator('tbody tr td:nth-child(3)')
+    const statuses = usersPage.cells('status')
     await expect(statuses.first()).toBeVisible()
     await expect(statuses.filter({ hasNotText: /^\s*(Active|Pending)\s*$/ })).toHaveCount(0)
   })

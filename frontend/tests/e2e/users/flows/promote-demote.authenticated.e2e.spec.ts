@@ -3,11 +3,11 @@ import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-e
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
 test.describe('Promoting and demoting a user', { tag: mutatesDataTag }, () => {
-  // 'demoting a champion user' demotes the user that 'promoting a standard user' promotes.
+  // 'demotes the champion user' demotes the user that 'promotes a standard user' promotes.
   test.describe.configure({ mode: 'serial' })
   let promotedUserEmail: string | undefined
 
-  test('promoting a standard user', async ({ page }) => {
+  test('promotes a standard user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const usersPage = new OrganisationUsersPage(page)
     // The deactivate spec claims its user from the other end of the list.
@@ -24,7 +24,7 @@ test.describe('Promoting and demoting a user', { tag: mutatesDataTag }, () => {
     promotedUserEmail = userEmail
   })
 
-  test('demoting a champion user', async ({ page }) => {
+  test('demotes the champion user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const userEmail = promotedUserEmail
     if (!userEmail) {

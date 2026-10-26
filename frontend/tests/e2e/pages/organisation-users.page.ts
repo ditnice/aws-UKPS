@@ -1,9 +1,14 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 
-import type { SortDirection } from '../../../src/client/generated/types.gen'
+import {
+  organisationUserTableHeaders,
+  type OrganisationUserTableHeaderKey,
+} from '../../../src/app/portal/organisations/[id]/_lib/userLabels'
+import { type SortDirection } from '../../../src/client/generated/types.gen'
 
 export class OrganisationUsersPage {
   readonly heading: Locator
+  readonly filterPanel: Locator
   readonly table: Locator
   readonly emailFilter: Locator
   readonly applyFilter: Locator
@@ -11,6 +16,10 @@ export class OrganisationUsersPage {
 
   constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { name: 'Organisation details' })
+    // The region stretches to the table's height, so this is the NDS panel inside it.
+    this.filterPanel = page
+      .getByRole('region', { name: 'Filter results' })
+      .locator('[data-component="filter-panel"]')
     this.table = page.getByRole('table', { name: 'Organisation Users' })
     this.emailFilter = page.getByRole('textbox', { name: 'Filter users' })
     this.applyFilter = page.getByRole('button', { name: 'Apply filter', exact: true })
@@ -31,6 +40,21 @@ export class OrganisationUsersPage {
   async filterByEmail(email: string) {
     await this.emailFilter.fill(email)
     await this.applyFilter.click()
+  }
+
+  /** The active filters render with the table, so once one shows, the rows are the filtered results. */
+  activeFilter(label: string): Locator {
+    return this.page
+      .getByRole('list', { name: 'Active filters' })
+      .getByRole('listitem')
+      .filter({ hasText: label })
+  }
+
+  /** Every row's cell in one column, found from the app's own column order. */
+  cells(key: OrganisationUserTableHeaderKey): Locator {
+    const column = organisationUserTableHeaders.findIndex((header) => header.key === key) + 1
+    // ARIA has no way to select a column, so this is the one CSS selector.
+    return this.table.locator(`tbody td:nth-child(${column})`)
   }
 
   row(email: string): Locator {

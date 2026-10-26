@@ -32,7 +32,8 @@ export function isDevAuthMode(): boolean {
  * rendering against Linux Chromium baselines. */
 export const mutatesDataTag = '@mutates-data'
 export const visualTag = '@visual'
-export const ephemeralStackOnlyTags = /@mutates-data|@visual/
+// Not followed by another tag character, so a tag such as @visual-regression wouldn't match.
+export const ephemeralStackOnlyTags = new RegExp(`(${mutatesDataTag}|${visualTag})(?![\\w-])`)
 
 export function isEphemeralStack(): boolean {
   return ['1', 'true'].includes(process.env.E2E_EPHEMERAL_STACK ?? '')

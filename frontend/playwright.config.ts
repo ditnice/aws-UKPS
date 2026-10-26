@@ -22,9 +22,8 @@ if (isDevAuth && !isLocal) {
   )
 }
 /* Only the Docker Compose stack sets E2E_EPHEMERAL_STACK, as its data resets on every start.
- * Elsewhere every project skips @mutates-data and @visual tests. The filter is set per project
- * rather than at the top level because a CLI --grep-invert replaces the top-level one but is
- * applied on top of a project's, so it can't let these tests run against a deployed environment. */
+ * Elsewhere every project skips @mutates-data and @visual tests. The filter is on each project
+ * because a command-line --grep or --grep-invert can't remove a project's filter. */
 const isEphemeral = isEphemeralStack()
 if (isEphemeral && !(isLocal && isDevAuth)) {
   throw new Error(

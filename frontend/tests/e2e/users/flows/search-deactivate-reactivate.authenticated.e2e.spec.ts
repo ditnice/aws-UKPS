@@ -2,12 +2,12 @@ import { expect, test } from '../../fixtures/test'
 import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
-test.describe('Searching, activating and deactivating a user', { tag: mutatesDataTag }, () => {
-  // 'reactivate a deactive user' reactivates the user that 'deactivate an active user' deactivates.
+test.describe('Deactivating and reactivating a user', { tag: mutatesDataTag }, () => {
+  // 'reactivates the deactivated user' reactivates the user the previous test deactivates.
   test.describe.configure({ mode: 'serial' })
   let deactivatedUserEmail: string | undefined
 
-  test('deactivate an active user', async ({ page }) => {
+  test('deactivates an active user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const usersPage = new OrganisationUsersPage(page)
     // The promote spec claims its user from the other end of the list.
@@ -24,7 +24,7 @@ test.describe('Searching, activating and deactivating a user', { tag: mutatesDat
     deactivatedUserEmail = userEmail
   })
 
-  test('reactivate a deactive user', async ({ page }) => {
+  test('reactivates the deactivated user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const userEmail = deactivatedUserEmail
     if (!userEmail) {

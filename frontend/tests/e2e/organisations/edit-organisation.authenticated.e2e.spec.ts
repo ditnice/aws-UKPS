@@ -7,7 +7,7 @@ const testOrganisation = {
   organisationEmail: 'test@example.com',
   phoneNumber: '07123456789',
 }
-test('edit organisation details', { tag: visualTag }, async ({ page }) => {
+test('shows the edit organisation page', { tag: visualTag }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}/edit`)
   await expect(
@@ -51,7 +51,7 @@ test.describe('Editing organisation details', { tag: mutatesDataTag }, () => {
   // another's change to the same organisation.
   test.describe.configure({ mode: 'serial' })
 
-  test('successfully edits the oganisation name', async ({ page }) => {
+  test('edits the organisation name', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}/edit`)
 
@@ -67,7 +67,7 @@ test.describe('Editing organisation details', { tag: mutatesDataTag }, () => {
     await expect(page.getByText('Organisation Details Updated')).toBeVisible()
   })
 
-  test('successfully edits the oganisation address', async ({ page }) => {
+  test('edits the organisation address', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}/edit`)
 
@@ -81,7 +81,7 @@ test.describe('Editing organisation details', { tag: mutatesDataTag }, () => {
     await expect(page.getByText('Organisation Details Updated')).toBeVisible()
   })
 
-  test('successfully edits the email', async ({ page }) => {
+  test('edits the head office email address', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}/edit`)
 
@@ -95,7 +95,7 @@ test.describe('Editing organisation details', { tag: mutatesDataTag }, () => {
     await expect(page.getByText('Organisation Details Updated')).toBeVisible()
   })
 
-  test('successfully edits the phone number', async ({ page }) => {
+  test('edits the head office phone number', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     await page.goto(`/portal/organisations/${organisationId}/edit`)
 
@@ -110,7 +110,7 @@ test.describe('Editing organisation details', { tag: mutatesDataTag }, () => {
   })
 })
 
-test('error messages for empty inputs', async ({ page }) => {
+test('shows errors for empty fields', async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}/edit`)
 

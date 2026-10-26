@@ -9,10 +9,10 @@ const testUser = {
   phoneNumber: '07123456789',
 }
 test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
-  // 'remove a user' removes the user that 'adding a new user' invites.
+  // 'removes the invited user' removes the user that 'invites a new user' invites.
   test.describe.configure({ mode: 'serial' })
 
-  test('adding a new user', async ({ page }) => {
+  test('invites a new user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const usersPage = new OrganisationUsersPage(page)
     await usersPage.goto(organisationId)
@@ -27,10 +27,10 @@ test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
 
     await usersPage.expectLoaded()
     await usersPage.expectUser(testUser.workEmail, 'Pending')
-    // cannot test the email sending functionality yet
+    // The invitation email is queued on Floci, but the listener that sends it is off in the stack.
   })
 
-  test('remove a user', async ({ page }) => {
+  test('removes the invited user', async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const usersPage = new OrganisationUsersPage(page)
     await usersPage.goto(organisationId)
