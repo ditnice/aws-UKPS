@@ -56,7 +56,8 @@ include children, so these saved values are offered and load into their parent a
 
 ## How the form uses it: option providers
 
-Questions refer to a named option provider with `[FormOptions(key)]`. A reference data provider
+A question uses the provider registered for its referenced entity, or the one named by
+`[FormOptions(key)]` when several are registered. A reference data provider
 is an EF query and a projection to `ReferenceOptionRow(Id, Label, IsArchived)`, run on every
 request, so changes to rows show up without a restart. The providers are:
 

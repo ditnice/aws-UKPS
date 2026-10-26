@@ -1,5 +1,6 @@
 using UKPS.Api.Application.RecordForms.Bindings;
 using UKPS.Api.Application.RecordForms.Model;
+using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
@@ -8,11 +9,14 @@ namespace UKPS.Api.Application.RecordForms.Scanning;
 /// <summary>Builds the immutable form models from declarations that passed validation.</summary>
 internal static class FormModelBuilder
 {
-    public static Dictionary<RecordType, FormModel> Build(IReadOnlyList<EntityDeclaration> entities)
+    public static Dictionary<RecordType, FormModel> Build(
+        IReadOnlyList<EntityDeclaration> entities,
+        OptionProviderRegistry options
+    )
     {
         Dictionary<EntityDeclaration, FormQuestion[]> questions = entities.ToDictionary(
             static e => e,
-            static e => BuildQuestions(e)
+            e => BuildQuestions(e, options)
         );
 
         return entities
@@ -22,7 +26,10 @@ internal static class FormModelBuilder
             .ToDictionary(static t => t, t => BuildForm(t, entities, questions));
     }
 
-    private static FormQuestion[] BuildQuestions(EntityDeclaration entity)
+    private static FormQuestion[] BuildQuestions(
+        EntityDeclaration entity,
+        OptionProviderRegistry options
+    )
     {
         // Every section of an entity shares its row source; validation rejects disagreement only
         // where it matters (FirstSave with required columns), so take the strictest.
@@ -44,10 +51,14 @@ internal static class FormModelBuilder
             includes
         );
 
-        return entity.Questions.Select(q => BuildQuestion(q, formEntity)).ToArray();
+        return entity.Questions.Select(q => BuildQuestion(q, formEntity, options)).ToArray();
     }
 
-    private static FormQuestion BuildQuestion(QuestionDeclaration question, FormEntity entity)
+    private static FormQuestion BuildQuestion(
+        QuestionDeclaration question,
+        FormEntity entity,
+        OptionProviderRegistry options
+    )
     {
         FormFieldAttribute field = question.Field;
         List<FormRule> rules = [];
@@ -79,10 +90,34 @@ internal static class FormModelBuilder
             ChildPlaceholder = field.ChildPlaceholder,
             AddAnotherLabel = field.AddAnotherLabel,
             Rules = [.. rules.OrderBy(static r => r.Kind)],
-            OptionKey = question.Options?.Key,
+            OptionKey = OptionKey(question, options),
             Entity = entity,
             Binding = BuildBinding(question),
         };
+    }
+
+    /// <summary>
+    /// The key named by <c>[FormOptions]</c>, or else the only provider of the expected kind and
+    /// source type. Null for text controls.
+    /// </summary>
+    private static string? OptionKey(QuestionDeclaration question, OptionProviderRegistry options)
+    {
+        FormControl control = question.Control!.Value;
+        if (!ControlRules.IsChoice(control))
+        {
+            return null;
+        }
+
+        if (question.Options is { } explicitOptions)
+        {
+            return explicitOptions.Key;
+        }
+
+        (OptionProviderKind kind, Type? source) = ControlRules.ExpectedProvider(
+            question.Binding,
+            control
+        );
+        return options.FindBySource(kind, source!).Single().Key;
     }
 
     private static IFormBinding BuildBinding(QuestionDeclaration question) =>

@@ -5,8 +5,10 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// strings so entities can refer to providers without depending on the Application layer.
 /// </summary>
 /// <remarks>
-/// Pass one to <see cref="FormOptionsAttribute"/>. Each key must be registered exactly once, and
-/// startup rejects a question whose key is unknown or whose provider does not suit it. A key is
+/// A question finds its provider by type, so it needs a key only to choose one of several
+/// providers of the same type: pass it to <see cref="FormOptionsAttribute"/>. Each key must be
+/// registered exactly once, and startup rejects a question whose key is unknown or whose provider
+/// does not suit it. A key is
 /// part of the form fingerprint, so renaming one, or changing its provider's definition, needs a
 /// form version bump. By convention, keys are lowercase slugs.
 /// </remarks>

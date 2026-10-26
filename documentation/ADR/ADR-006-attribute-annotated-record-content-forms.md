@@ -44,7 +44,9 @@ in-memory form model at startup.
   - a `[Flags]` enum becomes a flags binding;
   - an annotated navigation collection becomes a junction binding.
 - **Options come from named providers** registered in C# (`[FormOptions("bnf-top-level")]`),
-  because attributes cannot hold queries or tuples.
+  because attributes cannot hold queries or tuples. A question with no `[FormOptions]` uses the
+  only provider registered for its enum or referenced entity, so the key is needed only to
+  choose between several providers of one type.
 - **Coverage is enforced.** In a `[FormSection]` entity, every mapped scalar property must carry
   `[FormField]` or `[FormIgnore(reason)]`.
 - **Pages may span entities.** The same `[FormPage]` ID on properties of different entities

@@ -23,7 +23,7 @@ public class FormModelValidatorTests
 
         var (entities, scanProblems) = FormModelScanner.Scan(_model, [typeof(ValidEntity)]);
         scanProblems.ShouldBeEmpty();
-        FormModel form = FormModelBuilder.Build(entities)[RecordType.Vaccine];
+        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
 
         form.Pages.Select(static p => p.Id).ShouldBe(["text", "chapter", "areas"]);
         form.FindPage("text")!
@@ -32,6 +32,11 @@ public class FormModelValidatorTests
                 ("valid_entity.text", FormControl.Text),
                 ("valid_entity.choice", FormControl.Radio),
             ]);
+        form.FindPage("text")!
+            .Questions.Select(static q => q.OptionKey)
+            .ShouldBe([null, OptionKeys.YesNoUnknown]);
+        form.FindPage("chapter")!.Questions.Single().OptionKey.ShouldBe(OptionKeys.BnfChapters);
+        form.FindPage("areas")!.Questions.Single().OptionKey.ShouldBe(OptionKeys.TherapeuticAreas);
         form.FindPage("areas")!.Questions.Single().Shape.ShouldBe(AnswerShape.Multi);
         form.FindPage("areas")!.Questions.Single().Entity.Includes.ShouldBe(["Areas"]);
     }
@@ -49,7 +54,7 @@ public class FormModelValidatorTests
         "BrokenEntity.ReferenceWithoutControlId is a reference ID, so its Control must be set explicitly."
     )]
     [InlineData(
-        "BrokenEntity.ChoiceWithoutOptions uses choice control Radio but has no [FormOptions]."
+        "BrokenEntity.ChoiceWithoutProvider uses choice control Radio but no Enum provider of UnprovidedChoice is registered; register one or add [FormOptions]."
     )]
     [InlineData(
         "BrokenEntity.WrongEnum needs a Enum provider of YesNoUnknown, but 'paediatric-status' is a Enum provider of IndicationPaediatricStatus."
@@ -61,6 +66,21 @@ public class FormModelValidatorTests
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenEntity)).ShouldContain(expected);
+    }
+
+    [Fact]
+    public void Validate_SeveralProvidersOfOneType_AsksForFormOptions()
+    {
+        OptionProviderRegistry options = OptionProviderRegistry.CreateDefault();
+        options.AddEnum("yes-no", (YesNoUnknown.Yes, "Yes"), (YesNoUnknown.No, "No"));
+
+        var (entities, _) = FormModelScanner.Scan(_model, [typeof(ValidEntity)]);
+
+        FormModelValidator
+            .Validate(entities, options)
+            .ShouldContain(
+                "ValidEntity.Choice has several Enum providers of YesNoUnknown ('yes-no', 'yes-no-unknown'); choose one with [FormOptions]."
+            );
     }
 
     [Fact]

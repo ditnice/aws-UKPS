@@ -27,7 +27,6 @@ internal sealed class ValidEntity
 
     [FormPage("text", "Text", Order = 10)]
     [FormField("valid_entity.choice", "Choice", Order = 20)]
-    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? Choice { get; set; }
 
     [FormPage("chapter", "Chapter", Order = 20)]
@@ -37,7 +36,6 @@ internal sealed class ValidEntity
         Control = FormControl.HierarchicalSelect,
         ChildLabel = "Sub"
     )]
-    [FormOptions(OptionKeys.BnfChapters)]
     public int? ChapterId { get; set; }
 
     public RecordRevision? Revision { get; set; }
@@ -62,6 +60,13 @@ internal sealed class ValidEntityArea
     public int TherapeuticAreaId { get; set; }
     public ValidEntity? ValidEntity { get; set; }
     public TherapeuticArea? TherapeuticArea { get; set; }
+}
+
+/// <summary>An enum with no registered option provider.</summary>
+internal enum UnprovidedChoice
+{
+    First = 0,
+    Second = 1,
 }
 
 /// <summary>Breaks coverage, pairing, ID, control, option and rule checks.</summary>
@@ -93,8 +98,8 @@ internal sealed class BrokenEntity
     public int? ReferenceWithoutControlId { get; set; }
 
     [FormPage("broken", "Broken", Order = 10)]
-    [FormField("broken_entity.choice_without_options", "Choice", Order = 1)]
-    public YesNoUnknown? ChoiceWithoutOptions { get; set; }
+    [FormField("broken_entity.choice_without_provider", "Choice", Order = 1)]
+    public UnprovidedChoice? ChoiceWithoutProvider { get; set; }
 
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.wrong_enum", "Wrong enum", Order = 2)]

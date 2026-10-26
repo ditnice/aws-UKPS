@@ -1,3 +1,4 @@
+using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms.Scanning;
@@ -36,4 +37,22 @@ internal static class ControlRules
                 or FormControl.Select
                 or FormControl.Checkbox
                 or FormControl.HierarchicalSelect;
+
+    /// <summary>The kind and source type of provider a choice question needs.</summary>
+    public static (OptionProviderKind Kind, Type? Source) ExpectedProvider(
+        BindingInfo binding,
+        FormControl control
+    )
+    {
+        if (binding.Kind is BindingKind.Enum or BindingKind.Flags)
+        {
+            return (OptionProviderKind.Enum, binding.EnumType);
+        }
+
+        OptionProviderKind kind =
+            control == FormControl.HierarchicalSelect
+                ? OptionProviderKind.ReferenceTree
+                : OptionProviderKind.Reference;
+        return (kind, binding.ReferenceType);
+    }
 }

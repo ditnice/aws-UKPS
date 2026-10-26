@@ -29,7 +29,7 @@ describes. You only touch the frontend to add a new control.
 |---|---|
 | Attributes | `backend/src/Persistence/FormAnnotations/` |
 | Content entities | `backend/src/Persistence/Entities/MedicinesRevisionContent/`, `VaccinesRevisionContent/`, `SharedRevisionContent/` |
-| Option keys (string constants the entities use) | `backend/src/Persistence/FormAnnotations/OptionKeys.cs` |
+| Option keys (provider names, for registration and `[FormOptions]` overrides) | `backend/src/Persistence/FormAnnotations/OptionKeys.cs` |
 | Option providers | `backend/src/Application/RecordForms/Options/` (`MedicineOptionProviders.cs`) |
 | Form versions | `backend/src/Application/RecordForms/FormVersions.cs` |
 | Tests | `backend/tests/Application/RecordForms/` |
@@ -45,7 +45,7 @@ describes. You only touch the frontend to add a new control.
 | `[FormRequired(message)]` | property | | |
 | `[FormMaxLength(max, message)]` | property | | `Text`, `Textarea` |
 | `[FormMaxItems(max, message)]` | property | | `Checkbox` |
-| `[FormOptions(key)]` | property | | Name of a registered option provider |
+| `[FormOptions(key)]` | property | | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type |
 | `[FormIgnore(reason)]` | property | | Not a question. The reason is required |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`.
@@ -91,7 +91,6 @@ internal sealed class MedicinesIndicationDetail
         Placeholder = "Choose BNF chapter",
         ChildLabel = "Select the BNF subchapter (optional)",
         ChildPlaceholder = "Choose BNF subchapter")]
-    [FormOptions(OptionKeys.BnfChapters)]
     [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
@@ -99,7 +98,6 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.indication_is_paediatric",
         "Is this product intended to treat children?")]
-    [FormOptions(OptionKeys.PaediatricStatus)]
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
@@ -107,7 +105,6 @@ internal sealed class MedicinesIndicationDetail
     [FormField(
         "medicines_indication_detail.indication_is_cancer",
         "Is this a product intended to treat cancer?")]
-    [FormOptions(OptionKeys.YesNoUnknown)]
     [FormRequired("Select whether this product is intended to treat cancer")]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
@@ -116,7 +113,6 @@ internal sealed class MedicinesIndicationDetail
         "medicines_indication_detail.indication_is_rare_disease",
         "Is this product intended to treat a rare disease?",
         Hint = "A disease is rare if fewer than 5 in 10,000 people have it.")]
-    [FormOptions(OptionKeys.YesNoUnknown)]
     [FormRequired("Select whether this product treats a rare disease")]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
 
@@ -155,7 +151,6 @@ internal sealed class MedicinesIndicationDetail
         ChildLabel = "Select the disease or condition (optional)",
         ChildPlaceholder = "Choose a disease or condition",
         AddAnotherLabel = "Add another therapy area")]
-    [FormOptions(OptionKeys.TherapeuticAreas)]
     [FormMaxItems(3, "Select up to 3 therapeutic areas")]
     public ICollection<MedicinesIndicationDetailTherapeuticArea> TherapeuticAreas { get; set; } = [];
 }
@@ -284,8 +279,17 @@ ignored and the control renders as plain dropdowns or checkboxes.
 
 ## Step 5: Add options
 
-Choice controls (`Radio`, `Select`, `Checkbox`) need `[FormOptions(key)]`. The key names a
+Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) take their options from a
 provider registered in C#. Attributes cannot hold queries, so the list itself lives in code.
+
+You don't usually name the provider. A question uses the one provider registered for its type:
+- an enum property uses the enum provider of that enum;
+- a reference ID or junction uses the reference provider of the referenced entity, or the
+  reference tree provider for a `HierarchicalSelect`.
+
+Add `[FormOptions(key)]` only when several providers offer the same type, for example a second
+label set for `YesNoUnknown`. Startup fails if a question has no matching provider, or several
+and no `[FormOptions]`.
 
 ### Using an existing provider
 
@@ -299,7 +303,7 @@ provider registered in C#. Attributes cannot hold queries, so the list itself li
 ### Adding a provider
 
 Add its key to `OptionKeys` in `Persistence/FormAnnotations/` (it is only a string, so entities can
-use it without depending on Application). Then register the provider in
+use it in `[FormOptions]` without depending on Application). Then register the provider in
 `MedicineOptionProviders.cs`, or a vaccine equivalent:
 
 ```csharp
@@ -325,7 +329,9 @@ registry.AddReferenceTree<BnfChapter>(OptionKeys.BnfChapters,
 (`FormulationTypes` is illustrative; it is not registered yet.)
 
 The startup check fails in these cases:
-- the key does not exist;
+- no provider is registered for the question's type, or several are and the question has no
+  `[FormOptions]`;
+- the key named by `[FormOptions]` does not exist;
 - an enum provider's enum differs from the property's enum;
 - an enum provider is used on a reference ID or junction question, or a reference provider on
   an enum question;
@@ -448,7 +454,7 @@ reports every problem in one exception.
 | Structure | A section has no pages, or a page has no questions |
 | Controls | The control does not suit the property type (see the table in step 4). An `int?` FK has no explicit control. A non-nullable column has no `[FormRequired]` |
 | Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel` |
-| Options | A choice control has no `[FormOptions]`, or a text control has one. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId` |
+| Options | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId` |
 | Rules | A rule is on a control it does not apply to, or a rule kind appears twice |
 | Rows | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns |
 
@@ -513,7 +519,7 @@ touches both backend and frontend.
 - [ ] `[FormSection]` present, with the right `RowSource`
 - [ ] Page ID is a unique slug; question IDs follow `entity.property` and are new
 - [ ] `Order` values leave gaps and don't clash
-- [ ] Control suits the property type; choice controls have `[FormOptions]` with a registered key
+- [ ] Control suits the property type; choice controls have a provider registered for their type (or `[FormOptions]` naming one)
 - [ ] Rules added, with user-facing messages
 - [ ] Hint added if the design has one
 - [ ] `FormVersions.Medicine` bumped; `ExpectedVersion` and `ExpectedFingerprint` updated

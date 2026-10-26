@@ -36,7 +36,6 @@ internal sealed class MedicinesIndicationDetail
         ChildLabel = "Select the BNF subchapter (optional)",
         ChildPlaceholder = "Choose BNF subchapter"
     )]
-    [FormOptions(OptionKeys.BnfChapters)]
     [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
@@ -45,7 +44,6 @@ internal sealed class MedicinesIndicationDetail
         "medicines_indication_detail.indication_is_paediatric",
         "Is this product intended to treat children?"
     )]
-    [FormOptions(OptionKeys.PaediatricStatus)]
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
@@ -54,7 +52,6 @@ internal sealed class MedicinesIndicationDetail
         "medicines_indication_detail.indication_is_cancer",
         "Is this a product intended to treat cancer?"
     )]
-    [FormOptions(OptionKeys.YesNoUnknown)]
     [FormRequired("Select whether this product is intended to treat cancer")]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
@@ -64,7 +61,6 @@ internal sealed class MedicinesIndicationDetail
         "Is this product intended to treat a rare disease?",
         Hint = "A disease is rare if fewer than 5 in 10,000 people have it."
     )]
-    [FormOptions(OptionKeys.YesNoUnknown)]
     [FormRequired("Select whether this product treats a rare disease")]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
 
@@ -109,7 +105,6 @@ internal sealed class MedicinesIndicationDetail
         ChildPlaceholder = "Choose a disease or condition",
         AddAnotherLabel = "Add another therapy area"
     )]
-    [FormOptions(OptionKeys.TherapeuticAreas)]
     [FormMaxItems(3, "Select up to 3 therapeutic areas")]
     public ICollection<MedicinesIndicationDetailTherapeuticArea> TherapeuticAreas { get; set; } =
     [];

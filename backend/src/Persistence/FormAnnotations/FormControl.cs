@@ -9,6 +9,8 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// the property: <see cref="Text"/> for a string, <see cref="Radio"/> for an enum and
 /// <see cref="Checkbox"/> for a flags enum or a junction. A reference ID property has no
 /// inferred control and must set one. Startup rejects a control that does not suit the property.
+/// A choice control takes its options from the one provider registered for the property's enum
+/// or referenced entity, unless <see cref="FormOptionsAttribute"/> names another.
 /// </remarks>
 public enum FormControl
 {
@@ -28,24 +30,21 @@ public enum FormControl
 
     /// <summary>
     /// A single choice shown as radio buttons, best for a short list. Inferred for an enum
-    /// property, and allowed on a reference ID property. Needs
-    /// <see cref="FormOptionsAttribute"/> with an enum or flat reference provider. The answer is
-    /// one option value.
+    /// property, and allowed on a reference ID property. Takes an enum or flat reference provider.
+    /// The answer is one option value.
     /// </summary>
     Radio = 2,
 
     /// <summary>
     /// A single choice shown as a dropdown, best for a long list. Allowed on an enum or a
-    /// reference ID property. Needs <see cref="FormOptionsAttribute"/> with an enum or flat
-    /// reference provider, and may set <see cref="FormFieldAttribute.Placeholder"/>. The answer
-    /// is one option value.
+    /// reference ID property. Takes an enum or flat reference provider, and may set
+    /// <see cref="FormFieldAttribute.Placeholder"/>. The answer is one option value.
     /// </summary>
     Select = 3,
 
     /// <summary>
     /// Several choices shown as checkboxes. Inferred for a flags enum or a junction, and the only
-    /// control a flags enum allows. Needs <see cref="FormOptionsAttribute"/> and may have
-    /// <see cref="FormMaxItemsAttribute"/>. The answer is an array of option values.
+    /// control a flags enum allows. May have <see cref="FormMaxItemsAttribute"/>. The answer is an array of option values.
     /// </summary>
     Checkbox = 4,
 
@@ -55,8 +54,7 @@ public enum FormControl
     /// </summary>
     /// <remarks>
     /// Allowed on a reference ID property or a junction whose referenced entity has an
-    /// <c>int? ParentId</c>, and must be set explicitly. Needs
-    /// <see cref="FormOptionsAttribute"/> with a tree provider and
+    /// <c>int? ParentId</c>, and must be set explicitly. Takes a tree provider and needs
     /// <see cref="FormFieldAttribute.ChildLabel"/>; may set
     /// <see cref="FormFieldAttribute.Placeholder"/> and
     /// <see cref="FormFieldAttribute.ChildPlaceholder"/>. On a junction it may also set

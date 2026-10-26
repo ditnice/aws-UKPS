@@ -26,7 +26,7 @@ internal static class FormModelFactory
             throw new FormModelException(allProblems);
         }
 
-        return new FormModelRegistry(FormModelBuilder.Build(entities));
+        return new FormModelRegistry(FormModelBuilder.Build(entities, options));
     }
 
     /// <summary>

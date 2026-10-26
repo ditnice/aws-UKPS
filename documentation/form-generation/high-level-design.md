@@ -245,8 +245,9 @@ not one. It can never be silently left off the form.
 | `[Flags]` enum | `Checkbox` | `Checkbox` |
 | navigation collection to a junction entity | `Checkbox` | `Checkbox`, `HierarchicalSelect` |
 
-Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need `[FormOptions]`;
-`Text` and `Textarea` must not have it.
+Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need an option provider,
+found by the property's type or named with `[FormOptions]`; `Text` and `Textarea` must not have
+`[FormOptions]`.
 
 ### Hierarchical selects
 
@@ -325,8 +326,11 @@ says how the row comes to exist:
 ### Options
 
 Attributes can't hold queries or tuples, so options come from **named providers** registered in
-C#. A property refers to its provider by key: `[FormOptions(OptionKeys.BnfChapters)]`, or a raw
-string such as `[FormOptions("bnf-chapters")]`.
+C#. A question uses the one provider registered for its type: the enum provider of its enum, or
+the reference (or, for a `HierarchicalSelect`, reference tree) provider of its referenced
+entity. When several providers offer the same type, the property chooses one by key:
+`[FormOptions(OptionKeys.BnfChapters)]`, or a raw string such as `[FormOptions("bnf-chapters")]`.
+The resolved key is part of the form fingerprint either way.
 
 - **`EnumOptionProvider<TEnum>`** is a fixed list of enum members with labels, shown in the
   order given. The startup check makes sure its enum matches the bound property's enum.
@@ -339,7 +343,7 @@ string such as `[FormOptions("bnf-chapters")]`.
 
 Providers live in `Application/RecordForms/Options/` (for example `MedicineOptionProviders.cs`),
 and the keys are string constants in `Persistence/FormAnnotations/OptionKeys.cs`, so entities can
-use them without depending on Application. Option values are always strings on the wire: enum
+name them in `[FormOptions]` without depending on Application. Option values are always strings on the wire: enum
 names, or reference IDs as strings.
 
 ### Validation

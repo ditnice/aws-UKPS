@@ -176,39 +176,41 @@ internal static partial class FormModelValidator
     )
     {
         string where = question.Where;
-        bool isChoice = ControlRules.IsChoice(control);
-        if (question.Options is null)
+        if (!ControlRules.IsChoice(control))
         {
-            if (isChoice)
+            if (question.Options is not null)
             {
-                problems.Add($"{where} uses choice control {control} but has no [FormOptions].");
+                problems.Add($"{where} uses text control {control} but has [FormOptions].");
             }
 
             return;
         }
 
-        if (!isChoice)
-        {
-            problems.Add($"{where} uses text control {control} but has [FormOptions].");
-            return;
-        }
-
-        IOptionProvider? provider = options.Find(question.Options.Key);
-        if (provider is null)
-        {
-            problems.Add($"{where} uses unknown option provider '{question.Options.Key}'.");
-            return;
-        }
-
-        (OptionProviderKind expectedKind, Type? expectedSource) = ExpectedProvider(
-            question,
+        (OptionProviderKind expectedKind, Type? expectedSource) = ControlRules.ExpectedProvider(
+            question.Binding,
             control
         );
 
-        if (provider.Kind != expectedKind || provider.SourceType != expectedSource)
+        if (question.Options is null)
         {
-            problems.Add(
-                $"{where} needs a {expectedKind} provider of {expectedSource?.Name}, but '{provider.Key}' is a {provider.Kind} provider of {provider.SourceType.Name}."
+            ValidateDefaultProvider(
+                where,
+                control,
+                expectedKind,
+                expectedSource,
+                options,
+                problems
+            );
+        }
+        else
+        {
+            ValidateNamedProvider(
+                where,
+                question.Options.Key,
+                expectedKind,
+                expectedSource,
+                options,
+                problems
             );
         }
 
@@ -223,21 +225,54 @@ internal static partial class FormModelValidator
         }
     }
 
-    private static (OptionProviderKind Kind, Type? Source) ExpectedProvider(
-        QuestionDeclaration question,
-        FormControl control
+    /// <summary>Checks there is exactly one provider for a question with no [FormOptions].</summary>
+    private static void ValidateDefaultProvider(
+        string where,
+        FormControl control,
+        OptionProviderKind expectedKind,
+        Type? expectedSource,
+        OptionProviderRegistry options,
+        List<string> problems
     )
     {
-        if (question.Binding.Kind is BindingKind.Enum or BindingKind.Flags)
+        IReadOnlyList<IOptionProvider> candidates = expectedSource is null
+            ? []
+            : options.FindBySource(expectedKind, expectedSource);
+        if (candidates.Count == 0)
         {
-            return (OptionProviderKind.Enum, question.Binding.EnumType);
+            problems.Add(
+                $"{where} uses choice control {control} but no {expectedKind} provider of {expectedSource?.Name} is registered; register one or add [FormOptions]."
+            );
         }
+        else if (candidates.Count > 1)
+        {
+            problems.Add(
+                $"{where} has several {expectedKind} providers of {expectedSource?.Name} ({string.Join(", ", candidates.Select(static p => $"'{p.Key}'"))}); choose one with [FormOptions]."
+            );
+        }
+    }
 
-        OptionProviderKind kind =
-            control == FormControl.HierarchicalSelect
-                ? OptionProviderKind.ReferenceTree
-                : OptionProviderKind.Reference;
-        return (kind, question.Binding.ReferenceType);
+    /// <summary>Checks the provider named by [FormOptions] exists and suits the question.</summary>
+    private static void ValidateNamedProvider(
+        string where,
+        string key,
+        OptionProviderKind expectedKind,
+        Type? expectedSource,
+        OptionProviderRegistry options,
+        List<string> problems
+    )
+    {
+        IOptionProvider? provider = options.Find(key);
+        if (provider is null)
+        {
+            problems.Add($"{where} uses unknown option provider '{key}'.");
+        }
+        else if (provider.Kind != expectedKind || provider.SourceType != expectedSource)
+        {
+            problems.Add(
+                $"{where} needs a {expectedKind} provider of {expectedSource?.Name}, but '{provider.Key}' is a {provider.Kind} provider of {provider.SourceType.Name}."
+            );
+        }
     }
 
     private static void ValidateRules(

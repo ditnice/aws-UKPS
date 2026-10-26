@@ -19,6 +19,16 @@ internal sealed class OptionProviderRegistry
 
     public IOptionProvider? Find(string key) => _providers.GetValueOrDefault(key);
 
+    /// <summary>
+    /// The providers of a kind that offer <paramref name="source"/>, by key. A question with no
+    /// <c>[FormOptions]</c> uses the only one.
+    /// </summary>
+    public IReadOnlyList<IOptionProvider> FindBySource(OptionProviderKind kind, Type source) =>
+        _providers
+            .Values.Where(p => p.Kind == kind && p.SourceType == source)
+            .OrderBy(static p => p.Key, StringComparer.Ordinal)
+            .ToArray();
+
     /// <summary>Adds a fixed list of enum members, offered in the order given.</summary>
     public void AddEnum<TEnum>(string key, params (TEnum Value, string Label)[] items)
         where TEnum : struct, Enum => Add(new EnumOptionProvider<TEnum>(key, items));
