@@ -57,7 +57,7 @@ const MembershipDeactivated = async ({
     return (
       <>
         <PageHeader heading="Your account has been deactivated" />
-        <ChampionContacts />
+        {await ChampionContacts()}
       </>
     )
   }
