@@ -27,6 +27,23 @@ export function isDevAuthMode(): boolean {
   return process.env.E2E_AUTH_MODE === 'dev'
 }
 
+/* Tests with these tags only run on the ephemeral Docker Compose stack (`just e2e`), which resets
+ * its data on every start, so they never change a deployed environment's data or compare its
+ * rendering against Linux Chromium baselines. */
+export const mutatesDataTag = '@mutates-data'
+export const visualTag = '@visual'
+// Not followed by another tag character, so a tag such as @visual-regression wouldn't match.
+export const ephemeralStackOnlyTags = new RegExp(`(${mutatesDataTag}|${visualTag})(?![\\w-])`)
+
+/** For on/off variables such as PLAYWRIGHT_SKIP_WEB_SERVER: on only when set to `true`. */
+export function isFlagSet(name: string): boolean {
+  return process.env[name] === 'true'
+}
+
+export function isEphemeralStack(): boolean {
+  return isFlagSet('E2E_EPHEMERAL_STACK')
+}
+
 export function isLocalBaseURL(baseURL: string | undefined): boolean {
   return Boolean(baseURL && new URL(baseURL).hostname === 'localhost')
 }

@@ -9,5 +9,6 @@
 !tsconfig.json
 !tests/e2e/**
 !src/app/portal/organisations/*/_lib/userActionAlert.ts
+!src/app/portal/organisations/*/_lib/userLabels.ts
 tests/e2e/.auth/
 **/.env*

@@ -701,6 +701,86 @@
         }
       }
     },
+    "/users/me/organisations/current/champions": {
+      "get": {
+        "tags": [
+          "CurrentUserOrganisationChampion"
+        ],
+        "summary": "Gets the champion contacts for the current organisation.",
+        "operationId": "GetCurrentOrganisationChampions",
+        "responses": {
+          "200": {
+            "description": "The champion contacts were returned.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The user is not authorised to view champion contacts.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The user is not authenticated.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me/organisations": {
       "get": {
         "tags": [
@@ -1132,7 +1212,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "The membership is in an invalid state, or deactivation would leave no eligible champion.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -1419,7 +1499,7 @@
             }
           },
           "400": {
-            "description": "The supplied role is invalid.",
+            "description": "The supplied role is invalid, or the change would leave no eligible champion.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2716,7 +2796,7 @@
             }
           },
           "400": {
-            "description": "One of the user's organisation memberships is not in a state that allows removal.",
+            "description": "One of the user's organisation memberships is not in a state that allows removal, or removal would leave no eligible champion.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -6002,6 +6082,9 @@
   "tags": [
     {
       "name": "Authentication"
+    },
+    {
+      "name": "CurrentUserOrganisationChampion"
     },
     {
       "name": "CurrentUserOrganisation"

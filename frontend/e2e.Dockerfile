@@ -6,7 +6,7 @@
 # Node 24 on Debian 13 "trixie", the same base as the frontend build stage (see
 # Dockerfile). Playwright supports Debian 13 for `install --with-deps`.
 # checkov:skip=CKV_DOCKER_2: Short-lived test runner; readiness is handled by tests/e2e/scripts/wait-for-stack.mjs.
-FROM node:24.21.0-trixie@sha256:1278a37eb510ec1606fba0e80f554bcc941ae0b44f35ae373c4822ae7717c64d
+FROM node:24.22.1-trixie@sha256:016f604a11c4c725f0a4c62e29ff11adab153d297bf97046c9bf2ddb9f1011d3
 
 WORKDIR /app
 
@@ -31,6 +31,8 @@ COPY playwright.config.ts tsconfig.json ./
 COPY tests/e2e ./tests/e2e
 # invite-user.authenticated.e2e.spec.ts imports this helper from the app source.
 COPY src/app/portal/organisations/[[]id]/_lib/userActionAlert.ts ./src/app/portal/organisations/[id]/_lib/userActionAlert.ts
+# search-and-filter-users.authenticated.e2e.spec.ts imports the last-active filter presets.
+COPY src/app/portal/organisations/[[]id]/_lib/userLabels.ts ./src/app/portal/organisations/[id]/_lib/userLabels.ts
 
 RUN mkdir -p e2e-results && chmod a+rwx e2e-results
 

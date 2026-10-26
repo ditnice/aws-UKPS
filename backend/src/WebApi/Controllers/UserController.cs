@@ -193,7 +193,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// <param name="userId">The unique identifier of the user to remove.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <response code="200">The user was removed. Returns the name they now appear under.</response>
-    /// <response code="400">One of the user's organisation memberships is not in a state that allows removal.</response>
+    /// <response code="400">One of the user's organisation memberships is not in a state that allows removal, or removal would leave no eligible champion.</response>
     /// <response code="403">The caller attempted to remove themselves.</response>
     /// <response code="404">The specified user does not exist or is not accessible to the caller.</response>
     [ProducesResponseType<RemovedUserDto>(StatusCodes.Status200OK)]
@@ -226,6 +226,12 @@ public class UserController(IUserService userService) : ControllerBase
                             title: "Invalid membership state",
                             statusCode: StatusCodes.Status400BadRequest,
                             detail: $"The user's organisation membership is not in a state that allows this action. Current state [{x.TransitionResult.CurrentState}]"
+                        ),
+                    lastRemainingChampion: _ =>
+                        Problem(
+                            title: "Last remaining champion",
+                            statusCode: StatusCodes.Status400BadRequest,
+                            detail: "This action would leave an organisation without a champion user."
                         )
                 )
         );
