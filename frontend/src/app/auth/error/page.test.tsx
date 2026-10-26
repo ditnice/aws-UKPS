@@ -47,7 +47,7 @@ describe('MembershipDeactivated', () => {
     expect(
       screen.getByRole('heading', { name: 'Your account has been deactivated' }),
     ).toBeInTheDocument()
-    expect(await screen.findByTestId('champion-retrieval-error')).toHaveTextContent(
+    expect(screen.getByTestId('champion-retrieval-error')).toHaveTextContent(
       "An error occurred when retrieving your organisation's champion users. Please try again later.",
     )
     expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -58,7 +58,7 @@ describe('MembershipDeactivated', () => {
 
     await renderPage()
 
-    expect(await screen.findByTestId('champion-retrieval-error')).toBeInTheDocument()
+    expect(screen.getByTestId('champion-retrieval-error')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.queryByTestId('multiple-champions')).not.toBeInTheDocument()
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
@@ -69,7 +69,7 @@ describe('MembershipDeactivated', () => {
 
     await renderPage()
 
-    expect(await screen.findByTestId('champion-retrieval-error')).toBeInTheDocument()
+    expect(screen.getByTestId('champion-retrieval-error')).toBeInTheDocument()
     expect(screen.queryByTestId('single-champion')).not.toBeInTheDocument()
   })
 
@@ -78,7 +78,7 @@ describe('MembershipDeactivated', () => {
 
     await renderPage()
 
-    const contact = await screen.findByTestId('single-champion')
+    const contact = screen.getByTestId('single-champion')
     expect(contact).toHaveTextContent(
       "Contact your organisation's champion user to reactivate your account:",
     )
@@ -94,7 +94,6 @@ describe('MembershipDeactivated', () => {
 
     await renderPage()
 
-    await screen.findByTestId('single-champion')
     const client = await vi.mocked(createServerApiClient).mock.results[0].value
     expect(createServerApiClient).toHaveBeenCalledOnce()
     expect(getCurrentOrganisationChampions).toHaveBeenCalledOnce()
@@ -107,7 +106,7 @@ describe('MembershipDeactivated', () => {
 
     await renderPage()
 
-    const contacts = await screen.findByTestId('multiple-champions')
+    const contacts = screen.getByTestId('multiple-champions')
     expect(contacts).toHaveTextContent(
       "Contact one of your organisation's champion users to reactivate your account. Their email addresses are:",
     )
