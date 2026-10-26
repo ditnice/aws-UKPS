@@ -9,7 +9,7 @@ namespace UKPS.Api.WebApi.Controllers;
 /// Provides endpoints for champion contacts associated with the current user.
 /// </summary>
 /// <param name="userService">The user service.</param>
-[Authorize(Policy = AuthorisationPolicies.CurrentOrganisationChampionContacts)]
+[Authorize(Policy = AuthorisationPolicies.AllowDeactivatedMembership)]
 [ApiController]
 [Route("users/me")]
 public class CurrentUserOrganisationChampionController(IUserService userService) : ControllerBase

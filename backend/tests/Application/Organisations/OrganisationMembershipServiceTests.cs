@@ -697,7 +697,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(UserOrgStatus.Active)]
     [InlineData(UserOrgStatus.Inactive)]
-    public async Task UpdateUserRole_WhenLastEligibleChampion_ShouldRejectWithoutChanges(
+    public async Task UpdateUserRole_WhenLastEnabledChampion_ShouldRejectWithoutChanges(
         UserOrgStatus status
     )
     {
@@ -736,7 +736,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(UserOrgStatus.Active)]
     [InlineData(UserOrgStatus.Inactive)]
-    public async Task DeactivateMembership_WhenLastEligibleChampion_ShouldRejectWithoutChanges(
+    public async Task DeactivateMembership_WhenLastEnabledChampion_ShouldRejectWithoutChanges(
         UserOrgStatus status
     )
     {
@@ -821,7 +821,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(UserOrgStatus.Active)]
     [InlineData(UserOrgStatus.Inactive)]
-    public async Task DeactivateMembership_WhenAnotherEligibleChampionExists_ShouldSucceed(
+    public async Task DeactivateMembership_WhenAnotherEnabledChampionExists_ShouldSucceed(
         UserOrgStatus otherStatus
     )
     {
@@ -870,7 +870,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [InlineData(UserOrgStatus.AwaitingSetup, UserRole.Champion)]
     [InlineData(UserOrgStatus.Active, UserRole.Standard)]
     [InlineData(UserOrgStatus.Active, UserRole.Super)]
-    public async Task UpdateUserRole_WhenOtherMembershipIsNotEligibleChampion_ShouldRejectWithoutChanges(
+    public async Task UpdateUserRole_WhenOtherMembershipIsNotEnabledChampion_ShouldRejectWithoutChanges(
         UserOrgStatus otherStatus,
         UserRole otherRole
     )
@@ -927,7 +927,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [InlineData(UserOrgStatus.AwaitingSetup, UserRole.Champion)]
     [InlineData(UserOrgStatus.Active, UserRole.Standard)]
     [InlineData(UserOrgStatus.Active, UserRole.Super)]
-    public async Task DeactivateMembership_WhenOtherMembershipIsNotEligibleChampion_ShouldRejectWithoutChanges(
+    public async Task DeactivateMembership_WhenOtherMembershipIsNotEnabledChampion_ShouldRejectWithoutChanges(
         UserOrgStatus otherStatus,
         UserRole otherRole
     )
@@ -1107,7 +1107,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [InlineData(UserOrgStatus.Deactivated)]
     [InlineData(UserOrgStatus.Removed)]
     [InlineData(UserOrgStatus.AwaitingSetup)]
-    public async Task UpdateUserRole_WhenChampionIsNotEligible_ShouldAllowDemotion(
+    public async Task UpdateUserRole_WhenChampionIsNotEnabled_ShouldAllowDemotion(
         UserOrgStatus status
     )
     {

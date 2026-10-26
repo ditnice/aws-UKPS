@@ -5,8 +5,12 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 export const dynamic = 'force-dynamic'
 
-const ChampionContacts = ({ championEmails }: { championEmails: string[] | undefined }) => {
-  if (!championEmails || championEmails.length === 0) {
+const ChampionContacts = async () => {
+  const { data: championEmails, error } = await getCurrentOrganisationChampions({
+    client: await createServerApiClient(),
+  })
+
+  if (error || !championEmails || championEmails.length === 0) {
     return (
       <ErrorState data-testid="champion-retrieval-error">
         An error occurred when retrieving your organisation&apos;s champion users. Please try again
@@ -50,14 +54,10 @@ const MembershipDeactivated = async ({
   const code = Object.values(AuthenticationFailCode).find((x) => x == codeString)
 
   if (code === 'MembershipDeactivated') {
-    const { data: championEmails, error } = await getCurrentOrganisationChampions({
-      client: await createServerApiClient(),
-    })
-
     return (
       <>
         <PageHeader heading="Your account has been deactivated" />
-        <ChampionContacts championEmails={error ? undefined : championEmails} />
+        <ChampionContacts />
       </>
     )
   }

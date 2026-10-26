@@ -5,13 +5,6 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal static class UserOrgMembershipExtensions
 {
-    // Inactive only records a lack of recent activity, so an inactive champion is still contactable.
-    private static readonly UserOrgMembershipStatus[] _eligibleChampionStatuses =
-    [
-        UserOrgMembershipStatus.Active,
-        UserOrgMembershipStatus.Inactive,
-    ];
-
     public static Task<UserOrgMembership?> GetByOrgAndMembershipId(
         this DbSet<UserOrgMembership> dbSet,
         int orgId,
@@ -28,27 +21,27 @@ internal static class UserOrgMembershipExtensions
             );
     }
 
-    public static bool IsEligibleChampion(this UserOrgMembership membership) =>
+    public static bool IsEnabledChampion(this UserOrgMembership membership) =>
         membership.UserRole == UserRole.Champion
-        && _eligibleChampionStatuses.Contains(membership.Status);
+        && UserOrgMembership.EnabledStatuses.Contains(membership.Status);
 
-    public static IQueryable<UserOrgMembership> EligibleChampions(
+    public static IQueryable<UserOrgMembership> EnabledChampions(
         this IQueryable<UserOrgMembership> query,
         int organisationId
     ) =>
         query.Where(x =>
             x.OrganisationId == organisationId
             && x.UserRole == UserRole.Champion
-            && _eligibleChampionStatuses.Contains(x.Status)
+            && UserOrgMembership.EnabledStatuses.Contains(x.Status)
         );
 
-    public static Task<bool> AnyOtherEligibleChampion(
-        this DbSet<UserOrgMembership> dbSet,
+    public static Task<bool> AnyOtherEnabledChampion(
+        this IQueryable<UserOrgMembership> query,
         int organisationId,
         IReadOnlyCollection<int> excludedMembershipIds,
         CancellationToken cancellationToken
     ) =>
-        dbSet
-            .EligibleChampions(organisationId)
+        query
+            .EnabledChampions(organisationId)
             .AnyAsync(x => !excludedMembershipIds.Contains(x.Id), cancellationToken);
 }

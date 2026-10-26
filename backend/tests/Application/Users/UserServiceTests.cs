@@ -1651,13 +1651,13 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetCurrentOrganisationChampionEmails_ShouldReturnEligibleChampionEmailsSorted()
+    public async Task GetCurrentOrganisationChampionEmails_ShouldReturnEnabledChampionEmailsSorted()
     {
         // Arrange
         (User caller, UserOrgMembership callerMembership) = await AddUserWithMembership();
         Organisation organisation = callerMembership.Organisation!;
         // Added out of order, and one Inactive, to show both sorting and that Inactive counts
-        // as eligible
+        // as enabled
         await AddChampionContactTestMembership(organisation, "z.champion@example.com");
         await AddChampionContactTestMembership(organisation, "a.champion@example.com");
         await AddChampionContactTestMembership(
@@ -1720,7 +1720,7 @@ public class UserServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(UserOrgStatus.Deactivated, UserRole.Champion)]
     [InlineData(UserOrgStatus.Active, UserRole.Standard)]
-    public async Task GetCurrentOrganisationChampionEmails_WhenMembershipIsNotAnEligibleChampion_ShouldExcludeIt(
+    public async Task GetCurrentOrganisationChampionEmails_WhenMembershipIsNotAnEnabledChampion_ShouldExcludeIt(
         UserOrgStatus status,
         UserRole role
     )
@@ -2372,7 +2372,7 @@ public class UserServiceTests : DatabaseTestBase
     [InlineData(UserOrgStatus.AwaitingSetup, UserRole.Champion)]
     [InlineData(UserOrgStatus.Active, UserRole.Standard)]
     [InlineData(UserOrgStatus.Active, UserRole.Super)]
-    public async Task RemoveUser_WhenOtherMembershipIsNotEligibleChampion_ShouldRejectWithoutChanges(
+    public async Task RemoveUser_WhenOtherMembershipIsNotEnabledChampion_ShouldRejectWithoutChanges(
         UserOrgStatus otherStatus,
         UserRole otherRole
     )
@@ -2422,7 +2422,7 @@ public class UserServiceTests : DatabaseTestBase
     [InlineData(UserOrgStatus.Active, UserOrgStatus.Inactive)]
     [InlineData(UserOrgStatus.Inactive, UserOrgStatus.Active)]
     [InlineData(UserOrgStatus.Inactive, UserOrgStatus.Inactive)]
-    public async Task RemoveUser_WhenAnotherEligibleChampionExists_ShouldSucceed(
+    public async Task RemoveUser_WhenAnotherEnabledChampionExists_ShouldSucceed(
         UserOrgStatus targetStatus,
         UserOrgStatus otherStatus
     )
@@ -2490,7 +2490,7 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        // Same user, different organisation, eligible champion membership, would be safe to
+        // Same user, different organisation, enabled champion membership, would be safe to
         // remove in this organisation
         await AddEntity(
             new UserOrgMembershipFaker()
@@ -2505,7 +2505,7 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        // A second eligible champion
+        // A second enabled champion
         await AddChampionContactTestMembership(safeOrganisation, "safe.other@example.com");
 
         var blockedBeforeResult = await Service.GetUserDetailsWithinOrganisation(
@@ -2643,11 +2643,11 @@ public class UserServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(UserOrgStatus.Deactivated)]
     [InlineData(UserOrgStatus.AwaitingSetup)]
-    public async Task RemoveUser_WhenTargetChampionIsNotEligible_ShouldSucceed(UserOrgStatus status)
+    public async Task RemoveUser_WhenTargetChampionIsNotEnabled_ShouldSucceed(UserOrgStatus status)
     {
         // Arrange
-        // A champion by role whose status makes them ineligible, so the last-champion rule does
-        // not apply
+        // A champion by role whose status means they are not enabled, so the last-champion rule
+        // does not apply
         await AddCallerUser();
         (User target, UserOrgMembership membership) = await AddUserWithMembership(
             status: (UserOrgMembershipStatus)status

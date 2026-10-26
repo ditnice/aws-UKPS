@@ -16,17 +16,16 @@ internal static class AuthorisationPolicies
     public const string OrganisationSelection = nameof(OrganisationSelection);
 
     /// <summary>
-    /// A policy for the current-organisation champion contacts endpoint only. Allows users with a
-    /// resolved organisation, and users whose membership has been deactivated. Must not be used
-    /// by any other endpoint, as it admits deactivated users.
+    /// A policy that allows deactivated users. Allows users with a resolved organisation, and
+    /// users whose membership has been deactivated. Only use it for endpoints a deactivated user
+    /// needs, such as the champion contacts shown on the deactivated page.
     /// </summary>
-    public const string CurrentOrganisationChampionContacts = nameof(
-        CurrentOrganisationChampionContacts
-    );
+    public const string AllowDeactivatedMembership = nameof(AllowDeactivatedMembership);
 
     /// <summary>
     /// Registers the UKPS authorisation policies. The default policy requires an organisation to
-    /// have been resolved for the authenticated user. Users whose membership has been deactivated are excluded.
+    /// have been resolved for the authenticated user. Users whose membership has been deactivated
+    /// are excluded.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection.</returns>
@@ -62,7 +61,7 @@ internal static class AuthorisationPolicies
             );
 
             options.AddPolicy(
-                CurrentOrganisationChampionContacts,
+                AllowDeactivatedMembership,
                 policy =>
                     policy
                         .RequireAuthenticatedUser()

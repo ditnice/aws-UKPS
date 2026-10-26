@@ -21,6 +21,13 @@ internal sealed class UserOrgMembership
     public Organisation? Organisation { get; set; }
     public bool IsSelectedAsCurrentOrganisation { get; set; }
 
+    /// <summary>
+    /// The statuses of a membership that is enabled. Inactive only records a lack of recent
+    /// activity, so an inactive membership is still enabled.
+    /// </summary>
+    internal static IReadOnlyCollection<UserOrgMembershipStatus> EnabledStatuses { get; } =
+    [UserOrgMembershipStatus.Active, UserOrgMembershipStatus.Inactive];
+
     private UserOrgMembershipStateMachine _statusManager = new UserOrgMembershipStateMachine(
         UserOrgMembershipStatus.AwaitingSetup
     );
@@ -43,15 +50,7 @@ internal sealed class UserOrgMembership
     internal StateMachineTransitionResult<UserOrgMembershipStatus> TryRemove() =>
         _statusManager.TrySendCommand(UserOrgMembershipStateMachine.Command.Remove);
 
-    internal bool IsAuthorised()
-    {
-        UserOrgMembershipStatus[] authorisedStatuses =
-        [
-            UserOrgMembershipStatus.Active,
-            UserOrgMembershipStatus.Inactive,
-        ];
-        return authorisedStatuses.Contains(Status);
-    }
+    internal bool IsAuthorised() => EnabledStatuses.Contains(Status);
 
     /// <summary>
     /// Whether the user can manage the organisation through this membership: the membership

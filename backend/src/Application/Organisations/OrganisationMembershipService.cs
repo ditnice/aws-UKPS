@@ -207,13 +207,13 @@ internal sealed class OrganisationMembershipService(
     private bool IsCurrentUsersOwnMembership(UserOrgMembership membership) =>
         currentUserInfoService.IsCurrentUser(membership.User!.WorkEmail);
 
-    // Preserve an existing eligible champion; inactive champions are still contactable.
+    // Preserve an existing enabled champion; inactive champions are still contactable.
     private async Task<bool> WouldRemoveLastChampion(
         UserOrgMembership membership,
         CancellationToken cancellationToken
     ) =>
-        membership.IsEligibleChampion()
-        && !await dbContext.UserOrgMemberships.AnyOtherEligibleChampion(
+        membership.IsEnabledChampion()
+        && !await dbContext.UserOrgMemberships.AnyOtherEnabledChampion(
             membership.OrganisationId,
             [membership.Id],
             cancellationToken

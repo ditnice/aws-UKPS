@@ -172,7 +172,7 @@ internal partial class UserService(
         }
 
         List<string> championEmails = await dbContext
-            .UserOrgMemberships.EligibleChampions(organisationId.Value)
+            .UserOrgMemberships.EnabledChampions(organisationId.Value)
             .Select(x => x.User!.WorkEmail)
             .Distinct()
             .OrderBy(email => email)
@@ -665,15 +665,17 @@ internal partial class UserService(
     )
     {
         // Check every affected organisation before changing any memberships or user data.
+        // This runs one query per organisation the user is a champion of. A user is rarely a
+        // champion of many organisations, so a single combined query isn't worth the complexity.
         int[] removedMembershipIds = memberships.Select(m => m.Id).ToArray();
         var championOrganisationIds = memberships
-            .Where(m => m.IsEligibleChampion())
+            .Where(m => m.IsEnabledChampion())
             .Select(m => m.OrganisationId)
             .Distinct();
 
         foreach (int organisationId in championOrganisationIds)
         {
-            bool hasAnotherChampion = await dbContext.UserOrgMemberships.AnyOtherEligibleChampion(
+            bool hasAnotherChampion = await dbContext.UserOrgMemberships.AnyOtherEnabledChampion(
                 organisationId,
                 removedMembershipIds,
                 cancellationToken

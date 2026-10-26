@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getCurrentOrganisationChampions } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
-import { redirect } from '@/test-utils/nextNavigation'
 
 import MembershipDeactivated, { dynamic } from './page'
 
@@ -19,14 +18,11 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
-
 type ChampionResult = Awaited<ReturnType<typeof getCurrentOrganisationChampions<false>>>
 
 const mockChampions = (result: {
   data?: ChampionResult['data']
   error?: ChampionResult['error']
-  response?: Response
 }) => vi.mocked(getCurrentOrganisationChampions).mockResolvedValue(result as ChampionResult)
 
 const renderPage = async (code = 'MembershipDeactivated') =>
@@ -38,9 +34,7 @@ beforeEach(() => {
   )
 })
 
-// Direct invocation checks page orchestration and its returned synchronous tree.
-// The actual recovery-request redirect exception is covered in server-api.test.ts.
-describe('MembershipDeactivated (direct invocation)', () => {
+describe('MembershipDeactivated', () => {
   it('renders dynamically so champion contacts are not cached as a static page', () => {
     expect(dynamic).toBe('force-dynamic')
   })
@@ -53,7 +47,7 @@ describe('MembershipDeactivated (direct invocation)', () => {
     expect(
       screen.getByRole('heading', { name: 'Your account has been deactivated' }),
     ).toBeInTheDocument()
-    expect(screen.getByTestId('champion-retrieval-error')).toHaveTextContent(
+    expect(await screen.findByTestId('champion-retrieval-error')).toHaveTextContent(
       "An error occurred when retrieving your organisation's champion users. Please try again later.",
     )
     expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -64,18 +58,19 @@ describe('MembershipDeactivated (direct invocation)', () => {
 
     await renderPage()
 
-    expect(screen.getByTestId('champion-retrieval-error')).toBeInTheDocument()
+    expect(await screen.findByTestId('champion-retrieval-error')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.queryByTestId('multiple-champions')).not.toBeInTheDocument()
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
   })
 
-  it('prioritises a retrieval error over an empty champion list', async () => {
-    mockChampions({ data: [], error: { title: 'Forbidden' } })
+  it('prioritises a retrieval error over champion data', async () => {
+    mockChampions({ data: ['champion@example.com'], error: { title: 'Forbidden' } })
 
     await renderPage()
 
-    expect(screen.getByTestId('champion-retrieval-error')).toBeInTheDocument()
+    expect(await screen.findByTestId('champion-retrieval-error')).toBeInTheDocument()
+    expect(screen.queryByTestId('single-champion')).not.toBeInTheDocument()
   })
 
   it('shows a single champion email as a mailto link', async () => {
@@ -83,7 +78,7 @@ describe('MembershipDeactivated (direct invocation)', () => {
 
     await renderPage()
 
-    const contact = screen.getByTestId('single-champion')
+    const contact = await screen.findByTestId('single-champion')
     expect(contact).toHaveTextContent(
       "Contact your organisation's champion user to reactivate your account:",
     )
@@ -91,11 +86,19 @@ describe('MembershipDeactivated (direct invocation)', () => {
       'href',
       'mailto:champion@example.com',
     )
-    expect(createServerApiClient).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+  })
+
+  it('requests the champions with the server API client', async () => {
+    mockChampions({ data: ['champion@example.com'], error: undefined })
+
+    await renderPage()
+
+    await screen.findByTestId('single-champion')
     const client = await vi.mocked(createServerApiClient).mock.results[0].value
+    expect(createServerApiClient).toHaveBeenCalledOnce()
     expect(getCurrentOrganisationChampions).toHaveBeenCalledOnce()
     expect(getCurrentOrganisationChampions).toHaveBeenCalledWith({ client })
-    expect(screen.queryByRole('list')).not.toBeInTheDocument()
   })
 
   it('lists several champion emails with one mailto link per list item', async () => {
@@ -104,7 +107,7 @@ describe('MembershipDeactivated (direct invocation)', () => {
 
     await renderPage()
 
-    const contacts = screen.getByTestId('multiple-champions')
+    const contacts = await screen.findByTestId('multiple-champions')
     expect(contacts).toHaveTextContent(
       "Contact one of your organisation's champion users to reactivate your account. Their email addresses are:",
     )
@@ -116,19 +119,6 @@ describe('MembershipDeactivated (direct invocation)', () => {
         `mailto:${email}`,
       )
     })
-  })
-
-  it('renders the retrieval error without redirecting when the endpoint returns 401', async () => {
-    mockChampions({
-      data: undefined,
-      error: { code: 'MembershipDeactivated' },
-      response: new Response(null, { status: 401 }),
-    })
-
-    await renderPage()
-
-    expect(screen.getByTestId('champion-retrieval-error')).toBeInTheDocument()
-    expect(redirect).not.toHaveBeenCalled()
   })
 
   it('does not request champion contacts for an inactive organisation', async () => {
