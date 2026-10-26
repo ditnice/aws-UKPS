@@ -8,6 +8,13 @@ import { testEmailPrefix } from '../../helpers/test-data'
 import { requireEnvironmentVariable, visualTag } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
+/** Whether a dd/mm/yyyy date from the table is on or after `cutoff`. Anything else, such as the
+ * table's N/A for a user never active, is a user the filter shouldn't list. */
+function isActiveSince(date: string, cutoff: Date): boolean {
+  const [, day, month, year] = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(date) ?? []
+  return Boolean(day) && new Date(Number(year), Number(month) - 1, Number(day)) >= cutoff
+}
+
 test.describe('Searching and filtering users', () => {
   test('shows the filter panel', { tag: visualTag }, async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
@@ -77,12 +84,9 @@ test.describe('Searching and filtering users', () => {
           async () =>
             (await dates.allTextContents())
               .map((date) => date.trim())
-              .filter((date) => {
-                const [day, month, year] = date.split('/').map(Number)
-                return new Date(year, month - 1, day) < cutoffDate
-              }),
+              .filter((date) => !isActiveSince(date, cutoffDate)),
           {
-            message: `"${label}" should only list users active since ${cutoffDate.toLocaleDateString('en-GB')}`,
+            message: `"${label}" should only list users with a last-active date on or after ${cutoffDate.toLocaleDateString('en-GB')}`,
           },
         )
         .toEqual([])

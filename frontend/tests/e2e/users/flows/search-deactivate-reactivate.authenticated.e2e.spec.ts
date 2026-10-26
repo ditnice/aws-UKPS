@@ -15,6 +15,9 @@ test.describe('Deactivating and reactivating a user', { tag: mutatesDataTag }, (
     const usersPage = new OrganisationUsersPage(page)
     // The promote spec claims its user from the other end of the list.
     const userEmail = await usersPage.openActiveStandardUser(organisationId, 'Descending')
+    if (!userEmail) {
+      throw new Error(`Organisation ${organisationId} has no active standard user to edit`)
+    }
 
     await usersPage.chooseAction('Deactivate user')
 
@@ -51,6 +54,10 @@ test.describe('Deactivating and reactivating a user without saving', () => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const usersPage = new OrganisationUsersPage(page)
     const userEmail = await usersPage.openActiveStandardUser(organisationId, 'Descending')
+    if (!userEmail) {
+      test.skip(true, `Organisation ${organisationId} has no active standard user to edit`)
+      return
+    }
 
     await usersPage.chooseAction('Deactivate user')
 

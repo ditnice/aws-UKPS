@@ -15,6 +15,9 @@ test.describe('Promoting and demoting a user', { tag: mutatesDataTag }, () => {
     const usersPage = new OrganisationUsersPage(page)
     // The deactivate spec claims its user from the other end of the list.
     const userEmail = await usersPage.openActiveStandardUser(organisationId, 'Ascending')
+    if (!userEmail) {
+      throw new Error(`Organisation ${organisationId} has no active standard user to edit`)
+    }
 
     await usersPage.chooseAction('Change user permissions')
 
@@ -54,6 +57,10 @@ test.describe('Promoting and demoting a user without saving', () => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const usersPage = new OrganisationUsersPage(page)
     const userEmail = await usersPage.openActiveStandardUser(organisationId, 'Ascending')
+    if (!userEmail) {
+      test.skip(true, `Organisation ${organisationId} has no active standard user to edit`)
+      return
+    }
 
     await usersPage.chooseAction('Change user permissions')
 

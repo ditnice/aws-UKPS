@@ -105,15 +105,18 @@ export class OrganisationUsersPage {
 
   /* Specs that change a seeded user each claim theirs from opposite ends of the active standard
    * users sorted by email, so specs running in parallel never pick the same user. Organisation 1
-   * is seeded with three active standard users. */
-  async openActiveStandardUser(organisationId: string, sortDirection: SortDirection) {
+   * is seeded with three active standard users. Returns undefined if there is none. */
+  async openActiveStandardUser(
+    organisationId: string,
+    sortDirection: SortDirection,
+  ): Promise<string | undefined> {
     const email = await this.openUser(
       organisationId,
       { status: 'Active', role: 'Standard', sortBy: 'Email', sortDirection },
       'Edit',
     )
     if (!email) {
-      throw new Error(`Organisation ${organisationId} has no active standard user to edit`)
+      return undefined
     }
 
     await expect(this.page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
