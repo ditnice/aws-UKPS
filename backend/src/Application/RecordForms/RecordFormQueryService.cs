@@ -18,6 +18,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             recordId,
             revisionId,
             pageId,
+            track: false,
             cancellationToken
         );
         if (loaded is null)
@@ -30,7 +31,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
         }
 
         FormPage page = loaded.Page;
-        var rows = await loader.LoadRowsAsync(page, revisionId, cancellationToken);
+        var rows = await loader.LoadRowsAsync(page, revisionId, track: false, cancellationToken);
         Dictionary<string, FormAnswer> answers = RecordFormPageLoader.ReadAnswers(page, rows);
         var options = await loader.LoadOptionsAsync(page, answers, cancellationToken);
 
@@ -55,9 +56,6 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                 Answers = answers.ToDictionary(
                     static a => a.Key,
                     static a => a.Value.ToJson(),
-                    StringComparer.Ordinal
-                ),
-                Context = new Dictionary<string, System.Text.Json.JsonElement>(
                     StringComparer.Ordinal
                 ),
             }

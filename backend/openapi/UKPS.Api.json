@@ -3736,7 +3736,7 @@
           "HierarchicalSelect"
         ],
         "type": "string",
-        "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nnumeric values are sent to the frontend, so never renumber or reuse one."
+        "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
       },
       "GenomicTestMandatoryStatus": {
         "enum": [
@@ -5031,7 +5031,8 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "revisionId"
+          "revisionId",
+          "firstPageId"
         ],
         "properties": {
           "recordType": {
@@ -5270,7 +5271,8 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "revisionId"
+          "revisionId",
+          "firstPageId"
         ],
         "properties": {
           "recordType": {
@@ -5541,8 +5543,7 @@
           "page",
           "previousPageId",
           "questions",
-          "answers",
-          "context"
+          "answers"
         ],
         "type": "object",
         "properties": {
@@ -5595,10 +5596,6 @@
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: a string or null, or an array of strings\nfor multi-value questions."
-          },
-          "context": {
-            "type": "object",
-            "description": "Earlier answers this page depends on. Empty until conditions are built."
           }
         },
         "description": "One page of a record content form: its questions, options and current answers."
@@ -6043,7 +6040,7 @@
           "MaxItems"
         ],
         "type": "string",
-        "description": "A validation rule kind. Rules are evaluated in the order of these values, never in attribute\norder. Part of the HTTP API contract."
+        "description": "A validation rule kind. Rules are evaluated in the order of these values, never in attribute\norder. Part of the HTTP API contract: the member names are sent to the frontend, so never\nrename or remove one."
       },
       "SaveRecordPageCommand": {
         "required": [

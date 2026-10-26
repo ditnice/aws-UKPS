@@ -26,7 +26,8 @@ internal sealed class ReferenceOptionProvider<TEntity> : IOptionProvider
         Kind = kind;
         _query = query.Compile();
         _projection = projection;
-        Description = $"{kind}:{typeof(TEntity).Name}:{query}:{projection}";
+        Description =
+            $"{kind}:{typeof(TEntity).Name}:{ExpressionDescription.Describe(query)}:{ExpressionDescription.Describe(projection)}";
     }
 
     public string Key { get; }

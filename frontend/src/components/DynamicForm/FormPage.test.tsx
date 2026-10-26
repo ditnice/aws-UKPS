@@ -58,7 +58,6 @@ const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   previousPageId: null,
   questions: [question({})],
   answers: { 'medicines_indication_detail.indication': null },
-  context: {},
   ...overrides,
 })
 
@@ -390,6 +389,22 @@ describe('FormPage', () => {
       const child = screen.getByLabelText('Select the BNF subchapter (optional)')
       expect(child.getAttribute('aria-invalid')).toBeNull()
       expect(child.className).not.toMatch(/fieldError/)
+    })
+
+    it('describes every hierarchical select with the question hint', () => {
+      render(
+        <FormPage
+          page={page({
+            questions: [{ ...areasQuestion, hint: 'Select up to 2 therapeutic areas.' }],
+            answers: { areas: ['13', '2'] },
+          })}
+        />,
+      )
+
+      const hint = screen.getByText('Select up to 2 therapeutic areas.')
+      for (const select of screen.getAllByRole('combobox')) {
+        expect(select.getAttribute('aria-describedby')?.split(' ')).toContain(hint.id)
+      }
     })
 
     it('loads a saved child into its parent and child selects', () => {

@@ -37,7 +37,4 @@ public sealed record RecordPageDto
     /// for multi-value questions.
     /// </summary>
     public required IReadOnlyDictionary<string, JsonElement> Answers { get; init; }
-
-    /// <summary>Earlier answers this page depends on. Empty until conditions are built.</summary>
-    public required IReadOnlyDictionary<string, JsonElement> Context { get; init; }
 }

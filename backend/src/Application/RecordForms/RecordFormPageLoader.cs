@@ -18,16 +18,23 @@ internal sealed class RecordFormPageLoader(
     OptionProviderRegistry optionProviders
 )
 {
-    /// <summary>Finds the revision (tracked) and page, and checks the caller can read them.</summary>
+    /// <summary>
+    /// Finds the revision and page, and checks the caller can read them. The revision is tracked
+    /// when <paramref name="track"/> is set, for a save.
+    /// </summary>
     public async Task<(LoadedPage? Page, PageLookupFailure Failure)> LoadPageAsync(
         int recordId,
         int revisionId,
         string pageId,
+        bool track,
         CancellationToken cancellationToken
     )
     {
-        RecordRevision? revision = await dbContext
-            .RecordRevisions.Include(static r => r.Record)
+        IQueryable<RecordRevision> revisions = track
+            ? dbContext.RecordRevisions
+            : dbContext.RecordRevisions.AsNoTracking();
+        RecordRevision? revision = await revisions
+            .Include(static r => r.Record)
             .SingleOrDefaultAsync(
                 r => r.Id == revisionId && r.RecordId == recordId,
                 cancellationToken
@@ -61,17 +68,21 @@ internal sealed class RecordFormPageLoader(
         return (new LoadedPage(revision, record, model, page, canEdit), PageLookupFailure.NotFound);
     }
 
-    /// <summary>Loads (and tracks) the revision's row of every entity on the page.</summary>
+    /// <summary>
+    /// Loads the revision's row of every entity on the page, tracked when
+    /// <paramref name="track"/> is set, for a save.
+    /// </summary>
     public async Task<Dictionary<FormEntity, object?>> LoadRowsAsync(
         FormPage page,
         int revisionId,
+        bool track,
         CancellationToken cancellationToken
     )
     {
         Dictionary<FormEntity, object?> rows = [];
         foreach (FormEntity entity in page.Entities)
         {
-            rows[entity] = await entity.LoadAsync(dbContext, revisionId, cancellationToken);
+            rows[entity] = await entity.LoadAsync(dbContext, revisionId, track, cancellationToken);
         }
 
         return rows;

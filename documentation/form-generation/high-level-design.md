@@ -534,7 +534,6 @@ examples below use record 5, revision 7.
 | `previousPageId` | Target of Back, or `null` on the first page |
 | `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
-| `context` | Earlier answers this page depends on; empty until conditions are built |
 
 `GET /records/5/revisions/7/pages/therapeutic-area` returns `200 OK`:
 
@@ -575,8 +574,7 @@ examples below use record 5, revision 7.
   ],
   "answers": {
     "medicines_indication_detail_therapeutic_area": ["2"]
-  },
-  "context": {}
+  }
 }
 ```
 
@@ -736,7 +734,8 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
 ## Not in the first delivery
 
 - Conditional pages and questions (`ShowWhen`, `requiredWhen`) and clearing answers that no
-  longer apply. `context` is always empty.
+  longer apply. These will add a `context` member to the page response, holding the earlier
+  answers a page's conditions reference.
 - Add-another groups, precision dates and their bindings.
 - The searchable combobox: the hierarchical selects use plain dropdowns behind
   `display: "combobox"` until it exists.

@@ -20,6 +20,7 @@ internal sealed class FormEntity
         AppDbContext,
         int,
         IReadOnlyList<string>,
+        bool,
         CancellationToken,
         Task<object?>
     > _load;
@@ -40,7 +41,14 @@ internal sealed class FormEntity
         _load = _loadMethod
             .MakeGenericMethod(clrType)
             .CreateDelegate<
-                Func<AppDbContext, int, IReadOnlyList<string>, CancellationToken, Task<object?>>
+                Func<
+                    AppDbContext,
+                    int,
+                    IReadOnlyList<string>,
+                    bool,
+                    CancellationToken,
+                    Task<object?>
+                >
             >();
     }
 
@@ -52,12 +60,16 @@ internal sealed class FormEntity
 
     public string Name => ClrType.Name;
 
-    /// <summary>Loads and tracks the revision's row, or returns null when it has none yet.</summary>
+    /// <summary>
+    /// Loads the revision's row, tracked when it will be written, or returns null when it has
+    /// none yet.
+    /// </summary>
     public Task<object?> LoadAsync(
         AppDbContext dbContext,
         int revisionId,
+        bool track,
         CancellationToken cancellationToken
-    ) => _load(dbContext, revisionId, Includes, cancellationToken);
+    ) => _load(dbContext, revisionId, Includes, track, cancellationToken);
 
     /// <summary>Creates and adds a new row for the revision.</summary>
     public object AddRow(AppDbContext dbContext, int revisionId)
@@ -72,13 +84,13 @@ internal sealed class FormEntity
         AppDbContext dbContext,
         int revisionId,
         IReadOnlyList<string> includes,
+        bool track,
         CancellationToken cancellationToken
     )
         where T : class
     {
-        IQueryable<T> query = dbContext
-            .Set<T>()
-            .Where(x => EF.Property<int>(x, "RevisionId") == revisionId);
+        IQueryable<T> query = track ? dbContext.Set<T>() : dbContext.Set<T>().AsNoTracking();
+        query = query.Where(x => EF.Property<int>(x, "RevisionId") == revisionId);
         foreach (string include in includes)
         {
             query = query.Include(include);

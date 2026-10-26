@@ -2,7 +2,7 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 
 /// <summary>
 /// The input a record content question is rendered with. Part of the HTTP API contract: the
-/// numeric values are sent to the frontend, so never renumber or reuse one.
+/// member names are sent to the frontend, so never rename or remove one.
 /// </summary>
 /// <remarks>
 /// Every <see cref="FormFieldAttribute"/> names one. Startup rejects a control that does not suit

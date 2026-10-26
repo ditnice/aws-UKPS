@@ -137,7 +137,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         page.PreviousPageId.ShouldBeNull();
         page.Questions.Single().Id.ShouldBe(Indication);
         page.Answers[Indication].ValueKind.ShouldBe(JsonValueKind.Null);
-        page.Context.ShouldBeEmpty();
     }
 
     [Fact]

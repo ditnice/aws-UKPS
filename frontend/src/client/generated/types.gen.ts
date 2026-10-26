@@ -147,7 +147,7 @@ export type EamsOpinionDecision = typeof EamsOpinionDecision[keyof typeof EamsOp
 
 /**
  * The input a record content question is rendered with. Part of the HTTP API contract: the
- * numeric values are sent to the frontend, so never renumber or reuse one.
+ * member names are sent to the frontend, so never rename or remove one.
  */
 export const FormControl = {
     TEXT: 'Text',
@@ -160,7 +160,7 @@ export const FormControl = {
 
 /**
  * The input a record content question is rendered with. Part of the HTTP API contract: the
- * numeric values are sent to the frontend, so never renumber or reuse one.
+ * member names are sent to the frontend, so never rename or remove one.
  */
 export type FormControl = typeof FormControl[keyof typeof FormControl];
 
@@ -906,7 +906,7 @@ export type RecordDtoMedicineRecordDto = {
      * no form yet or the caller cannot edit record content. Links to it open the form for the
      * latest revision.
      */
-    firstPageId?: null | string;
+    firstPageId: null | string;
 };
 
 /**
@@ -943,7 +943,7 @@ export type RecordDtoVaccineRecordDto = {
      * no form yet or the caller cannot edit record content. Links to it open the form for the
      * latest revision.
      */
-    firstPageId?: null | string;
+    firstPageId: null | string;
 };
 
 /**
@@ -1085,12 +1085,6 @@ export type RecordPageDto = {
      * for multi-value questions.
      */
     answers: {
-        [key: string]: unknown;
-    };
-    /**
-     * Earlier answers this page depends on. Empty until conditions are built.
-     */
-    context: {
         [key: string]: unknown;
     };
 };
@@ -1419,7 +1413,8 @@ export type RespondToMultiFactorAuthenticationChallengeCommand = {
 
 /**
  * A validation rule kind. Rules are evaluated in the order of these values, never in attribute
- * order. Part of the HTTP API contract.
+ * order. Part of the HTTP API contract: the member names are sent to the frontend, so never
+ * rename or remove one.
  */
 export const RuleKind = {
     REQUIRED: 'Required',
@@ -1429,7 +1424,8 @@ export const RuleKind = {
 
 /**
  * A validation rule kind. Rules are evaluated in the order of these values, never in attribute
- * order. Part of the HTTP API contract.
+ * order. Part of the HTTP API contract: the member names are sent to the frontend, so never
+ * rename or remove one.
  */
 export type RuleKind = typeof RuleKind[keyof typeof RuleKind];
 

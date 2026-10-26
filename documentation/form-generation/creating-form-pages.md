@@ -332,6 +332,11 @@ registry.AddReferenceTree<BnfChapter>(OptionKeys.BnfChapters,
 
 (`FormulationTypes` is illustrative; it is not registered yet.)
 
+The query and projection are described for the form fingerprint by `ExpressionDescription`, so
+they must not capture variables: use literals in the lambdas. Startup fails on a captured
+variable, or on an expression node the describer does not support yet; extend it if a provider
+needs one.
+
 The startup check fails in these cases:
 - no provider is registered for the question's type, or several are and the question has no
   `[FormOptions]`;

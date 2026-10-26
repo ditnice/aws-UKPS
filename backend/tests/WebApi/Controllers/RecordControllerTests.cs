@@ -365,6 +365,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             RecordStatus = RecordStatus.Published,
             DisplayStatus = RecordDisplayStatus.Draft,
             RevisionId = 3,
+            FirstPageId = "indication",
             RecordClinicalTrials = [],
         };
         _mockRecordViewService

@@ -54,7 +54,8 @@ For the design behind it, see the [high-level design](high-level-design.md).
 
 **Response:** `200 { "recordId": 5, "revisionId": 7, "firstPageId": "indication" }`, then the
 browser goes to `/portal/records/5/revisions/7/indication`. (`firstPageId` is `null` for a record
-type with no form, and the browser then goes to the records list.)
+type with no form, or for a user who cannot edit record content, and the browser then goes to
+the records list.)
 
 All of the following are written in one transaction at `T0`.
 

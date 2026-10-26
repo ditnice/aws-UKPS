@@ -32,6 +32,7 @@ internal sealed class RecordFormSaveService(
             recordId,
             revisionId,
             pageId,
+            track: true,
             cancellationToken
         );
         SaveRecordPageError? error = CheckCanSave(loaded, failure, command);
@@ -41,7 +42,7 @@ internal sealed class RecordFormSaveService(
         }
 
         FormPage page = loaded!.Page;
-        var rows = await loader.LoadRowsAsync(page, revisionId, cancellationToken);
+        var rows = await loader.LoadRowsAsync(page, revisionId, track: true, cancellationToken);
         Dictionary<string, FormAnswer> before = RecordFormPageLoader.ReadAnswers(page, rows);
         var options = await loader.LoadOptionsAsync(page, before, cancellationToken);
 

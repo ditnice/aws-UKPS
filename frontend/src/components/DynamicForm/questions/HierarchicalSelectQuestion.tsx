@@ -9,6 +9,8 @@ import type { QuestionProps } from '../types'
 
 const emptyEntry: HierarchicalEntry = { parent: '', child: '' }
 
+const describedBy = (ids: (string | undefined)[]) => ids.filter(Boolean).join(' ') || undefined
+
 type EntryProps = {
   question: Question
   name: string
@@ -17,6 +19,8 @@ type EntryProps = {
   onChange: (entry: HierarchicalEntry) => void
   onBlur: () => void
   error?: string
+  /** The ID of the question's hint, which every select is described by. */
+  hintId?: string
   labelAsHeading: boolean
 }
 
@@ -29,6 +33,7 @@ function HierarchicalEntrySelects({
   onChange,
   onBlur,
   error,
+  hintId,
   labelAsHeading,
 }: EntryProps) {
   const parentId = `${name}-${index}-parent`
@@ -38,7 +43,8 @@ function HierarchicalEntrySelects({
   const entrySuffix = question.multiple && index > 0 ? ` (${index + 1})` : ''
   const showParentLabel = !labelAsHeading || entrySuffix !== ''
   // The question's error is shown once, above the first parent select; every select is styled
-  // as invalid and described by that one message.
+  // as invalid and described by that one message (the first parent select adds it itself).
+  // Every select is also described by the question's hint.
   const ownsError = Boolean(error) && index === 0
   const errorId = error ? `${name}-0-parent-error` : undefined
 
@@ -49,7 +55,7 @@ function HierarchicalEntrySelects({
         {entrySuffix}
       </label>
       <Select
-        aria-describedby={ownsError ? undefined : errorId}
+        aria-describedby={describedBy([hintId, ownsError ? undefined : errorId])}
         error={Boolean(error)}
         errorMessage={ownsError ? error : undefined}
         id={parentId}
@@ -80,7 +86,7 @@ function HierarchicalEntrySelects({
             {entrySuffix && <span className="visually-hidden">{entrySuffix}</span>}
           </label>
           <Select
-            aria-describedby={errorId}
+            aria-describedby={describedBy([hintId, errorId])}
             error={Boolean(error)}
             id={childId}
             label={null}
@@ -117,6 +123,7 @@ export function HierarchicalSelectQuestion({
   labelAsHeading,
 }: QuestionProps<HierarchicalEntry | HierarchicalEntry[]>) {
   const entries = Array.isArray(value) ? value : [value]
+  const hintId = question.hint ? `${name}-hint` : undefined
   const maxItems =
     question.rules.find((rule) => rule.kind === RuleKind.MAX_ITEMS)?.value ?? Infinity
 
@@ -127,7 +134,7 @@ export function HierarchicalSelectQuestion({
   return (
     <div>
       {question.hint && (
-        <p className="input__hint" id={`${name}-hint`}>
+        <p className="input__hint" id={hintId}>
           {question.hint}
         </p>
       )}
@@ -138,6 +145,7 @@ export function HierarchicalSelectQuestion({
           <HierarchicalEntrySelects
             entry={entry}
             error={error}
+            hintId={hintId}
             index={index}
             labelAsHeading={labelAsHeading}
             name={name}

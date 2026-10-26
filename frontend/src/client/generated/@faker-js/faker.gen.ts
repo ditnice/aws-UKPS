@@ -377,7 +377,7 @@ export const fakeRecordDtoVaccineRecordDto = (options?: Options): RecordDtoVacci
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
         revisionId: f.number.int(),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { firstPageId: f.datatype.boolean() ? f.string.uuid() : null }
+        firstPageId: f.datatype.boolean() ? f.string.uuid() : null
     };
 };
 
@@ -564,8 +564,7 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
         page: fakeRecordPagePageDto(options),
         previousPageId: f.datatype.boolean() ? f.string.uuid() : null,
         questions: f.helpers.multiple(() => fakeRecordPageQuestionDto(options)),
-        answers: {},
-        context: {}
+        answers: {}
     };
 };
 
@@ -999,7 +998,7 @@ export const fakeRecordDtoMedicineRecordDto = (options?: Options): RecordDtoMedi
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
         revisionId: f.number.int(),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { firstPageId: f.datatype.boolean() ? f.string.uuid() : null }
+        firstPageId: f.datatype.boolean() ? f.string.uuid() : null
     };
 };
 

@@ -93,11 +93,17 @@ internal sealed class RecordViewService(
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
-    private bool CanEditContent(int organisationId) =>
+    /// <summary>
+    /// The first page of the record type's content form, or null when the type has no form or
+    /// the caller cannot edit the record's content.
+    /// </summary>
+    private string? FirstPageId(RecordHeader record) =>
         organisationAuthoriser.CanPerformOperationOnOrganisation(
             Operation.EditRecordContent,
-            organisationId
-        );
+            record.OrganisationId
+        )
+            ? formModels.Find(record.RecordType)?.FirstPage.Id
+            : null;
 
     private async Task<MedicineRecordDto> GetMedicineRecord(
         int recordId,
@@ -114,9 +120,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
-            FirstPageId = CanEditContent(record.OrganisationId)
-                ? formModels.Find(RecordType.Medicine)?.FirstPage.Id
-                : null,
+            FirstPageId = FirstPageId(record),
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,
@@ -162,11 +166,7 @@ internal sealed class RecordViewService(
     }
 
     // TODO: Populate the vaccine record sections.
-    private static VaccineRecordDto GetVaccineRecord(
-        int recordId,
-        RecordHeader record,
-        int revisionId
-    )
+    private VaccineRecordDto GetVaccineRecord(int recordId, RecordHeader record, int revisionId)
     {
         return new VaccineRecordDto
         {
@@ -176,6 +176,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
+            FirstPageId = FirstPageId(record),
         };
     }
 

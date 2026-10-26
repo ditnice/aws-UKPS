@@ -47,5 +47,5 @@ public abstract record RecordDto
     /// no form yet or the caller cannot edit record content. Links to it open the form for the
     /// latest revision.
     /// </summary>
-    public string? FirstPageId { get; init; }
+    public required string? FirstPageId { get; init; }
 }
