@@ -130,6 +130,8 @@ public sealed class SeededRecordHistoryTests
                 QaOutcome.Approved => WorkflowStatus.Published,
                 QaOutcome.Rejected => WorkflowStatus.Rejected,
                 _ when submitted is not null => WorkflowStatus.QAReview,
+                _ when revision.Record!.RecordStatus == RecordStatus.Discarded =>
+                    WorkflowStatus.Discarded,
                 _ => WorkflowStatus.Draft,
             };
             revision.WorkflowStatus.ShouldBe(expected);
@@ -145,7 +147,7 @@ public sealed class SeededRecordHistoryTests
             [
                 .. record.Revisions.Where(r => r.WorkflowStatus == WorkflowStatus.Published),
             ];
-            if (record.RecordStatus == RecordStatus.Unpublished)
+            if (record.RecordStatus is RecordStatus.Unpublished or RecordStatus.Discarded)
             {
                 published.ShouldBeEmpty();
                 record.ReviewedAt.ShouldBeNull();
@@ -328,6 +330,52 @@ public sealed class SeededRecordHistoryTests
     }
 
     [Fact]
+    public void DiscardedRecords_ShouldOnlyHaveHadASingleDraftRevision()
+    {
+        foreach (
+            Record record in Payload.Records.Where(r => r.RecordStatus == RecordStatus.Discarded)
+        )
+        {
+            RecordRevision revision = record.Revisions.ShouldHaveSingleItem();
+            revision.WorkflowStatus.ShouldBe(WorkflowStatus.Discarded);
+            revision.QaReviews.ShouldBeEmpty();
+            SubmittedAt(revision).ShouldBeNull();
+            record.ReviewedAt.ShouldBeNull();
+        }
+    }
+
+    [Fact]
+    public void DiscardedRecords_ShouldRecordTheDiscardInTheStatusHistoryAndEvents()
+    {
+        ILookup<Organisation, User> activeMembers = Payload
+            .Memberships.Where(m => m.Status == UserOrgMembershipStatus.Active)
+            .ToLookup(m => m.Organisation!, m => m.User!);
+        ILookup<RecordRevision, RecordFieldAudit> audits = AuditsByRevision();
+
+        foreach (
+            Record record in Payload.Records.Where(r => r.RecordStatus == RecordStatus.Discarded)
+        )
+        {
+            record.StatusHistory.Count.ShouldBe(2);
+            RecordStatusHistory history = record.StatusHistory.Last();
+            history.FromStatus.ShouldBe(RecordStatus.Unpublished);
+            history.ToStatus.ShouldBe(RecordStatus.Discarded);
+            history.Reason.ShouldBe(RecordStatusChangeReason.ManuallyDiscarded);
+            activeMembers[record.Organisation!].ShouldContain(history.UpdatedByUser!);
+
+            RecordEvent discard = record.Events.Last();
+            discard.EventType.ShouldBe(RecordEventType.RecordStatusChanged);
+            discard.Revision.ShouldBeSameAs(record.Revisions.Single());
+            discard.PerformedByUser.ShouldBeSameAs(history.UpdatedByUser);
+            discard.PerformedAt.ShouldBe(history.UpdatedAt);
+            discard.PerformedAt.ShouldBeGreaterThan(
+                audits[record.Revisions.Single()].Max(a => a.ChangedAt)
+            );
+            discard.PerformedAt.ShouldBeLessThanOrEqualTo(DataSetToday());
+        }
+    }
+
+    [Fact]
     public void BuildPayload_ShouldGiveTheSameRecordHistoryEachTime()
     {
         SeedingDataPayload again = DataSeederInMemory.BuildPayload(new SeedingOptions());
@@ -344,6 +392,9 @@ public sealed class SeededRecordHistoryTests
 
         History(again).ShouldBe(History(Payload));
     }
+
+    private static DateTime DataSetToday() =>
+        SyntheticDataLoader.DataSet.AsOf.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
     private static ILookup<RecordRevision, RecordFieldAudit> AuditsByRevision() =>
         Payload.SeededRecords.SelectMany(r => r.FieldAudits).ToLookup(a => a.Revision!);

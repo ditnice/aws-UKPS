@@ -3,6 +3,9 @@ using Bogus;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 
@@ -11,6 +14,7 @@ namespace UKPS.Api.Persistence.Data.Seeding;
 internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
 {
     internal const int UsersPerOrganisation = 16;
+    private const float DiscardedRecordsPerOrganisation = 2;
 
     // The internal organisation is seeded first so that it gets ID 1, which the default
     // development user's claims refer to.
@@ -55,7 +59,7 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         RuleFor(x => x.Organisations, _ => CreateOrganisations());
         RuleFor(x => x.Users, (f, o) => FakeUsers(f, o));
         RuleFor(x => x.Memberships, (f, o) => FakeMemberships(f, o));
-        RuleFor(x => x.SeededRecords, (_, o) => CreateRecords(o));
+        RuleFor(x => x.SeededRecords, (f, o) => CreateRecords(f, o));
     }
 
     private Organisation[] CreateOrganisations() =>
@@ -190,7 +194,12 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         return faker.Random.Bool(0.25f) ? UserRole.Champion : UserRole.Standard;
     }
 
-    private SeededRecord[] CreateRecords(SeedingDataPayload payload)
+    /// <summary>
+    /// Creates a record from each synthetic record, mixing in records that were discarded soon
+    /// after being started: about <see cref="DiscardedRecordsPerOrganisation"/> per organisation,
+    /// whatever its size.
+    /// </summary>
+    private SeededRecord[] CreateRecords(Faker faker, SeedingDataPayload payload)
     {
         Dictionary<string, Organisation> organisations = payload.Organisations.ToDictionary(
             o => o.OrganisationName,
@@ -207,20 +216,99 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                 .Where(u => u.UserType == UserType.QaUser),
         ];
 
+        Dictionary<string, float> discardChances = _dataSet
+            .Records.CountBy(r => r.OrganisationName, StringComparer.Ordinal)
+            .ToDictionary(
+                x => x.Key,
+                x => DiscardedRecordsPerOrganisation / x.Value,
+                StringComparer.Ordinal
+            );
+
         RecordHistoryFactory factory = new(new RecordContentFactory(_referenceData), _dataSet.AsOf);
-        return
-        [
-            .. _dataSet.Records.Select(record =>
+        List<SeededRecord> records = [];
+        foreach (SyntheticRecord record in _dataSet.Records)
+        {
+            Organisation organisation = organisations[record.OrganisationName];
+            User[] authors = [.. activeMembers[organisation]];
+            if (faker.Random.Bool(discardChances[record.OrganisationName]))
             {
-                Organisation organisation = organisations[record.OrganisationName];
-                return factory.Create(
-                    record,
-                    organisation,
-                    [.. activeMembers[organisation]],
-                    reviewers
-                );
-            }),
-        ];
+                records.Add(CreateDiscardedRecord(faker, organisation, faker.PickRandom(authors)));
+            }
+            records.Add(factory.Create(record, organisation, authors, reviewers));
+        }
+        return [.. records];
+    }
+
+    private SeededRecord CreateDiscardedRecord(Faker faker, Organisation organisation, User author)
+    {
+        DateTime today = ToUtc(_dataSet.AsOf);
+        DateTime createdAt = faker.Date.Between(today.AddYears(-1), today.AddDays(-1));
+
+        Record record = new()
+        {
+            Organisation = organisation,
+            RecordType = RecordType.Medicine,
+            CreatedAt = createdAt,
+            CreatedByUser = author,
+        };
+        RecordRevision revision = new()
+        {
+            Record = record,
+            WorkflowStatus = WorkflowStatus.Draft,
+            CreatedAt = createdAt,
+            CreatedByUser = author,
+        };
+        record.Revisions.Add(revision);
+        record.StatusHistory.Add(
+            new RecordStatusHistory
+            {
+                Record = record,
+                ToStatus = RecordStatus.Unpublished,
+                UpdatedAt = createdAt,
+                UpdatedByUser = author,
+            }
+        );
+        record.Events.Add(
+            new RecordEvent
+            {
+                Record = record,
+                Revision = revision,
+                EventType = RecordEventType.RecordCreated,
+                PerformedAt = createdAt,
+                PerformedByUser = author,
+            }
+        );
+
+        DiscardedDraft draft = new(faker, revision, author);
+        RecordProductDetail productDetail = draft.SaveProductDetail();
+        MedicinesIndicationDetail indicationDetail = draft.SaveIndicationAnswers();
+        Discard(record, revision, faker.Date.Between(draft.LastSavedAt, today), author);
+
+        return new SeededRecord(record, [productDetail, indicationDetail], draft.Audits);
+    }
+
+    /// <summary>
+    /// Discards a record that was never submitted, along with its only revision.
+    /// </summary>
+    private static void Discard(Record record, RecordRevision revision, DateTime at, User author)
+    {
+        revision.WorkflowStatus = WorkflowStatus.Discarded;
+        record.ChangeStatus(
+            RecordStatus.Discarded,
+            at,
+            author,
+            RecordStatusChangeReason.ManuallyDiscarded
+        );
+        record.Events.Add(
+            new RecordEvent
+            {
+                Record = record,
+                Revision = revision,
+                EventType = RecordEventType.RecordStatusChanged,
+                PerformedAt = at,
+                PerformedByUser = author,
+            }
+        );
     }
 
     private static DateTime ToUtc(DateOnly date) =>
