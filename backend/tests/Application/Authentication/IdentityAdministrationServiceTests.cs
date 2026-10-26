@@ -828,11 +828,12 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
 
-        await registrationHarness.Service.ApproveRequest(
+        var approveResult = await registrationHarness.Service.ApproveRequest(
             organisation.Id,
             request.Id,
             TestContext.Current.CancellationToken
         );
+        approveResult.ShouldBeSuccess();
 
         var user =
             await registrationHarness
