@@ -2,7 +2,6 @@ using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
-using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.RecordForms;
 
@@ -40,8 +39,6 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             {
                 FormVersion = loaded.Model.Version,
                 RevisionVersion = loaded.Revision.Version,
-                ReadOnly =
-                    !loaded.CanEdit || loaded.Revision.WorkflowStatus != WorkflowStatus.Draft,
                 OrganisationId = loaded.Record.OrganisationId,
                 RecordId = recordId,
                 RevisionId = revisionId,

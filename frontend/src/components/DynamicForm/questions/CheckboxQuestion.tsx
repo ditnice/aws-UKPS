@@ -10,7 +10,6 @@ export function CheckboxQuestion({
   onChange,
   onBlur,
   error,
-  disabled,
 }: QuestionProps<string[]>) {
   const toggle = (optionValue: string, checked: boolean) =>
     onChange(checked ? [...value, optionValue] : value.filter((v) => v !== optionValue))
@@ -20,7 +19,6 @@ export function CheckboxQuestion({
       {question.options?.map((option) => (
         <Checkbox
           checked={value.includes(option.value)}
-          disabled={disabled}
           error={Boolean(error)}
           key={option.value}
           label={option.label}

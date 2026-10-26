@@ -5534,7 +5534,6 @@
         "required": [
           "formVersion",
           "revisionVersion",
-          "readOnly",
           "organisationId",
           "recordId",
           "revisionId",
@@ -5555,10 +5554,6 @@
             "type": "integer",
             "description": "The revision's concurrency token. Echo it back on save.",
             "format": "uint32"
-          },
-          "readOnly": {
-            "type": "boolean",
-            "description": "True when the page must be shown without Save: the revision is not a draft, or the caller cannot edit."
           },
           "organisationId": {
             "type": "integer",

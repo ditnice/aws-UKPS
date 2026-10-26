@@ -9,7 +9,6 @@ export function TextQuestion({
   onChange,
   onBlur,
   error,
-  disabled,
   labelAsHeading,
 }: QuestionProps<string>) {
   return (
@@ -20,7 +19,6 @@ export function TextQuestion({
         </label>
       )}
       <Input
-        disabled={disabled}
         error={Boolean(error)}
         errorMessage={error}
         hint={question.hint ?? undefined}

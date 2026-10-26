@@ -122,7 +122,6 @@ export function FormPage({ page }: FormPageProps) {
                   data-question-id={question.id}
                 >
                   <Component
-                    disabled={page.readOnly}
                     error={getFieldErrorMessage(field.state.meta.errors)}
                     labelAsHeading={singleQuestion}
                     name={field.name}
@@ -138,15 +137,13 @@ export function FormPage({ page }: FormPageProps) {
         })}
 
         <div className={styles.actions}>
-          {!page.readOnly && (
-            <form.Subscribe selector={(state) => state.isSubmitting}>
-              {(isSubmitting) => (
-                <Button disabled={isSubmitting} buttonType="submit" variant="cta">
-                  Save and continue
-                </Button>
-              )}
-            </form.Subscribe>
-          )}
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button disabled={isSubmitting} buttonType="submit" variant="cta">
+                Save and continue
+              </Button>
+            )}
+          </form.Subscribe>
           {/* TODO: link to the tasklist once it exists. */}
           <Link href="#">Return to tasklist</Link>
         </div>

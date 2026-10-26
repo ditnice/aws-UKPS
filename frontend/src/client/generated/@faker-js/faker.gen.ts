@@ -557,7 +557,6 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
     return {
         formVersion: f.string.sample(),
         revisionVersion: f.number.int(),
-        readOnly: f.datatype.boolean(),
         organisationId: f.number.int(),
         recordId: f.number.int(),
         revisionId: f.number.int(),

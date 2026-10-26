@@ -17,7 +17,6 @@ type EntryProps = {
   onChange: (entry: HierarchicalEntry) => void
   onBlur: () => void
   error?: string
-  disabled: boolean
   labelAsHeading: boolean
 }
 
@@ -30,7 +29,6 @@ function HierarchicalEntrySelects({
   onChange,
   onBlur,
   error,
-  disabled,
   labelAsHeading,
 }: EntryProps) {
   const parentId = `${name}-${index}-parent`
@@ -52,7 +50,6 @@ function HierarchicalEntrySelects({
       </label>
       <Select
         aria-describedby={ownsError ? undefined : errorId}
-        disabled={disabled}
         error={Boolean(error)}
         errorMessage={ownsError ? error : undefined}
         id={parentId}
@@ -84,7 +81,6 @@ function HierarchicalEntrySelects({
           </label>
           <Select
             aria-describedby={errorId}
-            disabled={disabled}
             error={Boolean(error)}
             id={childId}
             label={null}
@@ -118,7 +114,6 @@ export function HierarchicalSelectQuestion({
   onChange,
   onBlur,
   error,
-  disabled,
   labelAsHeading,
 }: QuestionProps<HierarchicalEntry | HierarchicalEntry[]>) {
   const entries = Array.isArray(value) ? value : [value]
@@ -141,7 +136,6 @@ export function HierarchicalSelectQuestion({
 
         <div key={index}>
           <HierarchicalEntrySelects
-            disabled={disabled}
             entry={entry}
             error={error}
             index={index}
@@ -151,7 +145,7 @@ export function HierarchicalSelectQuestion({
             onChange={(next) => replace(index, next)}
             question={question}
           />
-          {question.multiple && index > 0 && !disabled && (
+          {question.multiple && index > 0 && (
             <Button onClick={() => update(entries.filter((_, i) => i !== index))} variant="link">
               Remove
               <span className="visually-hidden"> entry {index + 1}</span>
@@ -159,7 +153,7 @@ export function HierarchicalSelectQuestion({
           )}
         </div>
       ))}
-      {question.multiple && !disabled && entries.length < maxItems && (
+      {question.multiple && entries.length < maxItems && (
         <Button onClick={() => update([...entries, emptyEntry])} variant="primary">
           {question.addAnotherLabel ?? 'Add another'}
         </Button>

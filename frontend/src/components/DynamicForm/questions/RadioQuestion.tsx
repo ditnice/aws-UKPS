@@ -10,14 +10,12 @@ export function RadioQuestion({
   onChange,
   onBlur,
   error,
-  disabled,
 }: QuestionProps<string>) {
   return (
     <FormGroup groupError={error} hint={question.hint ?? undefined} legend={question.label}>
       {question.options?.map((option) => (
         <Radio
           checked={value === option.value}
-          disabled={disabled}
           error={Boolean(error)}
           key={option.value}
           label={option.label}

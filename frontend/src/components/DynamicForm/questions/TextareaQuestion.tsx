@@ -10,11 +10,9 @@ export function TextareaQuestion({
   onChange,
   onBlur,
   error,
-  disabled,
 }: QuestionProps<string>) {
   return (
     <Textarea
-      disabled={disabled}
       error={Boolean(error)}
       errorMessage={error}
       hint={question.hint ?? undefined}

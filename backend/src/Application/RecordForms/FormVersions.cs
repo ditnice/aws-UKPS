@@ -9,7 +9,7 @@ namespace UKPS.Api.Application.RecordForms;
 /// </summary>
 internal static class FormVersions
 {
-    public const string Medicine = "2026.10.1";
+    public const string Medicine = "2026.10.2";
 
     public static string? For(RecordType recordType) =>
         recordType switch

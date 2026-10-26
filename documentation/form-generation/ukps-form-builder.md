@@ -208,7 +208,6 @@ Form.For(RecordType.Medicine, version: "2026.10.1")
 {
   "formVersion": "2026.10.1",
   "revisionVersion": 4711,
-  "readOnly": false,
   "section": { "id": "product", "title": "Product" },
   "page": { "id": "product-detail", "title": "Product details" },
   "questions": [
@@ -249,12 +248,11 @@ Form.For(RecordType.Medicine, version: "2026.10.1")
 - Question-level `showWhen` included when present; page-level `ShowWhen` is not (server never serves a non-applicable page).
 - `context` holds every earlier-page answer that this page needs on the client: questions referenced by `showWhen`, `requiredWhen` **and** `compare(otherId)`.
 - `revisionVersion` is the revision's concurrency token (`RecordRevision.Version`, i.e. `xmin`). The client echoes it on PUT so a save based on stale data is rejected, not just simultaneous saves.
-- `readOnly` is `true` when the revision is not `Draft`, or the caller can read but not edit (no `EditRecordContent`). The page still renders, with inputs disabled.
 
 ### GET — status codes
 | Status | When |
 |---|---|
-| 200 | Page served (`readOnly` may be `true`) |
+| 200 | Page served |
 | 404 | Record/revision/page not found, record in another organisation, or page does not currently apply (ADR-004 concealment) |
 
 ### PUT — request
@@ -303,7 +301,7 @@ One DB transaction. Returns `Result<SavePageDto, SavePageError>`.
 
 ## 8. Frontend renderer
 
-- Route: `frontend/src/app/portal/records/[recordId]/revisions/[revisionId]/[pageId]/page.tsx` (server component) → fetch GET via `server-api` → `<FormPage>` (client). 404 → `not-found`; `readOnly: true` → read-only notice with disabled inputs and no Save button. This is the first `/portal/records/...` route; existing record UI is under `/portal/organisations/[id]/records`.
+- Route: `frontend/src/app/portal/records/[recordId]/revisions/[revisionId]/[pageId]/page.tsx` (server component) → fetch GET via `server-api` → `<FormPage>` (client). 404 → `not-found`. This is the first `/portal/records/...` route; existing record UI is under `/portal/organisations/[id]/records`.
 - Suggested shared code: `frontend/src/lib/dynamic-form/` (`buildZodSchema.ts`, `evaluateCondition.ts`, `buildPayload.ts`, `applyServerErrors.ts`) and `frontend/src/components/DynamicForm/` (`FormPage.tsx`, `questionRegistry.tsx`, `PrecisionDateInput/`, `AddAnotherGroup/`).
 - `questionRegistry` maps `type` → component wrapping existing design-system components.
 - Each question renders in `form.Field name={question.id}`; group children use TanStack array fields (0-based) so names match server error keys. Nested groups render an `AddAnotherGroup` inside an item (one level only).

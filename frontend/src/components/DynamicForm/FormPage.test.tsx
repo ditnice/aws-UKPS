@@ -50,7 +50,6 @@ const tree = [
 const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
   revisionVersion: 4711,
-  readOnly: false,
   organisationId: 3,
   recordId: 5,
   revisionId: 7,
@@ -132,13 +131,6 @@ describe('FormPage', () => {
       )
 
       expect(screen.getByRole('textbox')).toHaveValue('Saved')
-    })
-
-    it('disables inputs and hides Save on a read-only page', () => {
-      render(<FormPage page={page({ readOnly: true })} />)
-
-      expect(screen.getByRole('textbox')).toBeDisabled()
-      expect(screen.queryByRole('button', { name: 'Save and continue' })).toBeNull()
     })
   })
 

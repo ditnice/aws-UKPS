@@ -9,7 +9,6 @@ export type QuestionProps<TValue extends FormValue = FormValue> = {
   onChange: (value: TValue) => void
   onBlur: () => void
   error?: string
-  disabled: boolean
   /** True on a single-question page, where the label is already the page heading. */
   labelAsHeading: boolean
 }

@@ -11,9 +11,6 @@ public sealed record RecordPageDto
     /// <summary>The revision's concurrency token. Echo it back on save.</summary>
     public required uint RevisionVersion { get; init; }
 
-    /// <summary>True when the page must be shown without Save: the revision is not a draft, or the caller cannot edit.</summary>
-    public required bool ReadOnly { get; init; }
-
     /// <summary>The organisation that owns the record; used for links back to its records list.</summary>
     public required int OrganisationId { get; init; }
 

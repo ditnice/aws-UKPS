@@ -132,7 +132,6 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         page.FormVersion.ShouldBe(FormVersions.Medicine);
         page.RevisionVersion.ShouldBe(await RevisionVersion());
-        page.ReadOnly.ShouldBeFalse();
         page.OrganisationId.ShouldBe(_organisation.Id);
         page.Section.Title.ShouldBe("Indication details");
         page.PreviousPageId.ShouldBeNull();
@@ -187,15 +186,6 @@ public class RecordFormServiceTests : DatabaseTestBase
             .Options!.Single()
             .Children!.Select(static c => c.Value)
             .ShouldBe([$"{_condition.Id}", $"{_otherCondition.Id}"]);
-    }
-
-    [Fact]
-    public async Task GetPage_SubmittedRevision_IsReadOnly()
-    {
-        _revision.WorkflowStatus = WorkflowStatus.QAReview;
-        await Context.SaveChangesAsync(Ct);
-
-        (await GetPage("indication")).ReadOnly.ShouldBeTrue();
     }
 
     [Fact]

@@ -1051,10 +1051,6 @@ export type RecordPageDto = {
      */
     revisionVersion: number;
     /**
-     * True when the page must be shown without Save: the revision is not a draft, or the caller cannot edit.
-     */
-    readOnly: boolean;
-    /**
      * The organisation that owns the record; used for links back to its records list.
      */
     organisationId: number;

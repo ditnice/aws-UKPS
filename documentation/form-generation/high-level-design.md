@@ -388,13 +388,14 @@ broken build lists everything to fix at once. The full catalogue is in
   - A save racing another one is caught by EF's concurrency check, which also returns
     `revision_changed`.
 
-### Authorisation and read-only pages
+### Authorisation
 
 - Reading a page needs `Operation.Read` on the record's organisation.
 - Saving also needs a new `Operation.EditRecordContent`, granted to Standard, Champion and Super
   users. `Operation.Update` is unchanged.
-- Only draft revisions can be edited. A page is served with `readOnly: true` when the revision
-  is not a draft or the caller cannot edit. The frontend then disables inputs and hides Save.
+- Only draft revisions can be edited: a save to any other revision is rejected with
+  `revision_not_draft`. The form pages are only for editing; viewing a record without editing
+  it is a separate flow.
 - A missing record, revision or page, and a record the caller cannot read, all return the same
   neutral 404 ([ADR-004](../ADR/ADR-004-authorisation-failures-and-resource-concealment.md)).
 
@@ -454,7 +455,7 @@ sequenceDiagram
         B-->>R: 404 (neutral)
         R-->>U: Not found page
     else Found
-        B->>B: Check Read and EditRecordContent, work out readOnly
+        B->>B: Check Read
         B->>P: Read answers through bindings (one query per content row)
         B->>P: Load options (archived only if already saved)
         B-->>R: 200 RecordPageDto
@@ -524,7 +525,6 @@ examples below use record 5, revision 7.
 | Field | Meaning |
 |---|---|
 | `formVersion`, `revisionVersion` | Echo both back on save |
-| `readOnly` | Show the page without Save |
 | `organisationId` | Used for links back to the records list |
 | `recordId`, `revisionId` | Used to build page URLs |
 | `section`, `page` | IDs and titles; the section title is the page caption |
@@ -539,7 +539,6 @@ examples below use record 5, revision 7.
 {
   "formVersion": "2026.10.1",
   "revisionVersion": 4711,
-  "readOnly": false,
   "organisationId": 3,
   "section": { "id": "indication-details", "title": "Indication details" },
   "page": { "id": "therapeutic-area", "title": "Therapeutic area" },
