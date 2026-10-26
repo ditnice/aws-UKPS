@@ -7,6 +7,10 @@
   padding: spacing.$medium * 1px 0;
 }
 
+.task-list__section-title:has(+ .task-list__section-summary) {
+  border-bottom: 0;
+}
+
 .task-list__tasks {
   margin: 0;
 }
@@ -23,12 +27,18 @@
 }
 
 .task-list__section-summary {
+  border-bottom: 1px solid colours.$border;
   display: flex;
   justify-content: space-between;
+  padding-bottom: spacing.$medium * 1px;
 }
 
 .task-list__section-description {
   min-width: 0;
+}
+
+.task-list__task-description {
+  margin-top: spacing.$small * 1px;
 }
 
 .task-list__summary {
