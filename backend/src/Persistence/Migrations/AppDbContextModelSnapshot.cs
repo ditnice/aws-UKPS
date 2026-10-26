@@ -19,7 +19,7 @@ namespace UKPS.Api.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("ukps")
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1340,7 +1340,7 @@ namespace UKPS.Api.Persistence.Migrations
                     b.ToTable("record_events", "ukps");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordEventFieldChange", b =>
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordFieldAudit", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1348,6 +1348,14 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("changed_at");
+
+                    b.Property<int>("ChangedBy")
+                        .HasColumnType("integer")
+                        .HasColumnName("changed_by");
 
                     b.Property<string>("FieldPath")
                         .IsRequired()
@@ -1362,17 +1370,27 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("old_value");
 
-                    b.Property<int>("RecordEventId")
+                    b.Property<int>("RecordId")
                         .HasColumnType("integer")
-                        .HasColumnName("record_event_id");
+                        .HasColumnName("record_id");
+
+                    b.Property<int>("RevisionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("revision_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_record_event_field_changes");
+                        .HasName("pk_record_field_audit");
 
-                    b.HasIndex("RecordEventId")
-                        .HasDatabaseName("ix_record_event_field_change_record_event_id");
+                    b.HasIndex("ChangedBy")
+                        .HasDatabaseName("ix_record_field_audit_changed_by");
 
-                    b.ToTable("record_event_field_changes", "ukps");
+                    b.HasIndex("RecordId")
+                        .HasDatabaseName("ix_record_field_audit_record_id");
+
+                    b.HasIndex("RevisionId", "FieldPath", "ChangedAt")
+                        .HasDatabaseName("ix_record_field_audit_revision_field_time");
+
+                    b.ToTable("record_field_audit", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", b =>
@@ -1400,22 +1418,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("record_id");
 
-                    b.Property<DateTime?>("SubmittedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("submitted_at");
-
-                    b.Property<int?>("SubmittedBy")
-                        .HasColumnType("integer")
-                        .HasColumnName("submitted_by");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("updated_at");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("integer")
-                        .HasColumnName("updated_by");
-
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -1437,12 +1439,6 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasIndex("RecordId")
                         .HasDatabaseName("ix_record_revisions_record_id");
-
-                    b.HasIndex("SubmittedBy")
-                        .HasDatabaseName("ix_record_revisions_submitted_by");
-
-                    b.HasIndex("UpdatedBy")
-                        .HasDatabaseName("ix_record_revisions_updated_by");
 
                     b.ToTable("record_revisions", "ukps");
                 });
@@ -3100,16 +3096,34 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("Revision");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordEventFieldChange", b =>
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordFieldAudit", b =>
                 {
-                    b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordEvent", "RecordEvent")
-                        .WithMany("FieldChanges")
-                        .HasForeignKey("RecordEventId")
+                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "ChangedByUser")
+                        .WithMany()
+                        .HasForeignKey("ChangedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_record_event_field_changes_record_events_record_event_id");
+                        .HasConstraintName("fk_record_field_audit_app_user_changed_by");
 
-                    b.Navigation("RecordEvent");
+                    b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.Record", "Record")
+                        .WithMany()
+                        .HasForeignKey("RecordId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_record_field_audit_records_record_id");
+
+                    b.HasOne("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", "Revision")
+                        .WithMany()
+                        .HasForeignKey("RevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_record_field_audit_record_revisions_revision_id");
+
+                    b.Navigation("ChangedByUser");
+
+                    b.Navigation("Record");
+
+                    b.Navigation("Revision");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", b =>
@@ -3134,27 +3148,11 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_record_revisions_records_record_id");
 
-                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "SubmittedByUser")
-                        .WithMany()
-                        .HasForeignKey("SubmittedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_revisions_app_user_submitted_by");
-
-                    b.HasOne("UKPS.Api.Persistence.Entities.Identity.User", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_record_revisions_app_user_updated_by");
-
                     b.Navigation("BasedOnRevision");
 
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Record");
-
-                    b.Navigation("SubmittedByUser");
-
-                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordStatusHistory", b =>
@@ -3570,11 +3568,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Navigation("Revisions");
 
                     b.Navigation("StatusHistory");
-                });
-
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordEvent", b =>
-                {
-                    b.Navigation("FieldChanges");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.RecordWorkflow.RecordRevision", b =>

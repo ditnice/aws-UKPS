@@ -112,14 +112,18 @@ just stack-down
 ```
 
 `UKPS_FRONTEND_PORT` and `UKPS_BACKEND_PORT` change the host ports. Both bind to `127.0.0.1` only, as
-dev authentication makes every request the Super user. `just e2e` accepts `0` to pick a free port;
-`just stack-up` needs a fixed frontend port, because the frontend only accepts form submissions and
-API calls from the origin your browser uses (`http://localhost:<port>`).
+dev authentication makes every request the Super user. `just stack-up` needs a fixed frontend port,
+because the frontend only accepts form submissions and API calls from the origin your browser uses
+(`http://localhost:<port>`).
+
+`just e2e` runs as its own Compose project (`ukps-e2e`) with free ports picked at random (`0`), so it
+doesn't clash with `just stack-up` or with `pnpm dev`/`just run`, and its teardown leaves those
+running. Set `COMPOSE_PROJECT_NAME`, `UKPS_FRONTEND_PORT` or `UKPS_BACKEND_PORT` to override this.
 
 #### Running in a CI pipeline (e.g. TeamCity)
 
-- Build step: `CI=true COMPOSE_PROJECT_NAME=ukps-e2e-<build number> UKPS_FRONTEND_PORT=0
-  UKPS_BACKEND_PORT=0 just e2e`. The project name and ephemeral ports let builds share an agent.
+- Build step: `CI=true COMPOSE_PROJECT_NAME=ukps-e2e-<build number> just e2e`. A project name for
+  each build lets builds share an agent.
 - XML report processing: `e2e-results/junit.xml`.
 - Artifacts: `e2e-results/**`.
 - The agent needs Docker with Compose v2 and BuildKit, on x86_64 (`backend/Dockerfile` copies

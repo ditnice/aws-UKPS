@@ -41,9 +41,4 @@ public enum RecordEventType
     /// Indicates that the status of a record has changed.
     /// </summary>
     RecordStatusChanged = 6,
-
-    /// <summary>
-    /// Indicates that answers on a record content form page have been changed.
-    /// </summary>
-    RecordContentUpdated = 7,
 }

@@ -2,10 +2,12 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using GetRecordsResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Common.PaginatedResponseDto<UKPS.Api.Application.Records.Dtos.RecordListItemDto>,
@@ -17,13 +19,16 @@ namespace UKPS.Api.Application.Records;
 internal partial class RecordService(
     AppDbContext dbContext,
     IDateTimeProvider timeProvider,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    CurrentDbUserEntityService currentDbUserEntityService
 ) : IRecordService
 {
     private readonly IDateTimeProvider _timeProvider = timeProvider;
 
-    private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
+    private readonly CurrentDbUserEntityService _currentDbUserEntityService =
+        currentDbUserEntityService;
 
+    private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
     private const int PublishedRecordUpdateDueMonths = 3;
 
     public async Task<GetRecordsResult> GetOrganisationRecords(
@@ -115,11 +120,61 @@ internal partial class RecordService(
         return organisationExists ? null : new GetRecordsError.OrganisationNotFound(organisationId);
     }
 
+    public async Task<Result<DiscardRecordError>> DiscardDraftRecord(
+        int recordId,
+        CancellationToken cancellationToken
+    )
+    {
+        Record? record = await dbContext.Records.FirstOrDefaultAsync(
+            r => r.Id == recordId,
+            cancellationToken
+        );
+        if (record is null)
+        {
+            return Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound());
+        }
+        if (!await CanDiscardDraftRecord(record, cancellationToken))
+        {
+            return Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard());
+        }
+
+        var currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
+
+        var performedAt = _timeProvider.GetUtcNow();
+
+        record.ChangeStatus(
+            RecordStatus.Discarded,
+            performedAt,
+            currentUser,
+            RecordStatusChangeReason.ManuallyDiscarded
+        );
+
+        RecordRevision? latestRevision = await dbContext
+            .RecordRevisions.Where(r => r.RecordId == recordId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (latestRevision is not null)
+        {
+            latestRevision.WorkflowStatus = WorkflowStatus.Discarded;
+        }
+        var recordEvent = new RecordEvent
+        {
+            Record = record,
+            RevisionId = latestRevision?.Id,
+            EventType = RecordEventType.RecordStatusChanged,
+            PerformedBy = currentUser.Id,
+            PerformedAt = performedAt,
+        };
+        dbContext.RecordEvents.Add(recordEvent);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Result<DiscardRecordError>.Ok();
+    }
+
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(
         IQueryable<RecordInformationTrackingProjection> input,
         GetRecordsQueryDto getRecordsQuery
     )
     {
+        input = input.Where(m => m.RecordStatus != RecordStatus.Discarded);
         if (getRecordsQuery.RecordType.Count > 0)
         {
             input = input.Where(m => getRecordsQuery.RecordType.Contains(m.RecordType));
@@ -156,6 +211,9 @@ internal partial class RecordService(
             input = input.Where(m =>
                 (m.Title != null && EF.Functions.ILike(m.Title, pattern, "\\"))
                 || EF.Functions.ILike(m.CompanyCode, pattern, "\\")
+#pragma warning disable CA1305, MA0011 // Translated to SQL, so locale does not apply
+                || EF.Functions.ILike(m.Id.ToString(), pattern, "\\")
+#pragma warning restore CA1305, MA0011
             );
         }
 
@@ -260,4 +318,39 @@ internal partial class RecordService(
                     CompanyCode = b.CompanyCode,
                 }
         );
+
+    private async Task<bool> CanDiscardDraftRecord(
+        Record record,
+        CancellationToken cancellationToken
+    )
+    {
+        bool recordExistsAndIsUnpublished = record.RecordStatus == RecordStatus.Unpublished;
+
+        if (!recordExistsAndIsUnpublished)
+        {
+            return false;
+        }
+
+        bool onlyHasOneRecordRevisionAndItIsDraftStatus =
+            await dbContext.RecordRevisions.CountAsync(
+                r => r.RecordId == record.Id,
+                cancellationToken
+            ) == 1
+            && await dbContext.RecordRevisions.AnyAsync(
+                r => r.RecordId == record.Id && r.WorkflowStatus == WorkflowStatus.Draft,
+                cancellationToken
+            );
+
+        if (!onlyHasOneRecordRevisionAndItIsDraftStatus)
+        {
+            return false;
+        }
+
+        bool authorisedToPerformOperation =
+            _organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Update,
+                record.OrganisationId
+            );
+        return authorisedToPerformOperation;
+    }
 }

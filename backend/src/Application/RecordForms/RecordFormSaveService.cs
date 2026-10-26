@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.RecordForms.Dtos;
@@ -127,8 +128,8 @@ internal sealed class RecordFormSaveService(
     }
 
     /// <summary>
-    /// Touches the revision, so its concurrency token moves on, and writes one audit event with a
-    /// field change per changed question.
+    /// Touches the revision, so its concurrency token moves on, and writes a field audit row per
+    /// changed question.
     /// </summary>
     private async Task RecordChangeAsync(
         LoadedPage loaded,
@@ -143,31 +144,25 @@ internal sealed class RecordFormSaveService(
         User user = await currentDbUserEntityService.GetCurrentUser(cancellationToken);
         RecordRevision revision = loaded.Revision;
 
-        // Check the update against the version the page was loaded at, so a save that lands in
-        // between is caught as a concurrency conflict.
-        dbContext.Entry(revision).Property(static r => r.Version).OriginalValue =
-            command.RevisionVersion;
-        revision.UpdatedAt = time;
-        revision.UpdatedBy = user.Id;
+        // Update the revision row, checked against the version the page was loaded at, so a save
+        // that lands in between is caught as a concurrency conflict. No revision column changes on
+        // a content save, so an unchanged column is marked modified to force the UPDATE, which
+        // moves xmin on.
+        EntityEntry<RecordRevision> entry = dbContext.Entry(revision);
+        entry.Property(static r => r.Version).OriginalValue = command.RevisionVersion;
+        entry.Property(static r => r.WorkflowStatus).IsModified = true;
 
-        dbContext.RecordEvents.Add(
-            new RecordEvent
+        dbContext.RecordFieldAudits.AddRange(
+            changed.Select(q => new RecordFieldAudit
             {
                 RecordId = loaded.Record.Id,
                 RevisionId = revision.Id,
-                EventType = RecordEventType.RecordContentUpdated,
-                PerformedBy = user.Id,
-                PerformedAt = time,
-                Note = loaded.Page.Id,
-                FieldChanges = changed
-                    .Select(q => new RecordEventFieldChange
-                    {
-                        FieldPath = q.Id,
-                        OldValue = before[q.Id].ToAuditText(),
-                        NewValue = after[q.Id].ToAuditText(),
-                    })
-                    .ToList(),
-            }
+                FieldPath = q.Id,
+                OldValue = before[q.Id].ToAuditText(),
+                NewValue = after[q.Id].ToAuditText(),
+                ChangedBy = user.Id,
+                ChangedAt = time,
+            })
         );
     }
 }

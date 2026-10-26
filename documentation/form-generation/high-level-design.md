@@ -110,7 +110,7 @@ flowchart LR
     subgraph DB["Postgres (ukps schema)"]
         T[("Content tables<br/>medicines_indication_details,<br/>medicines_indication_detail_therapeutic_areas")]
         RD[("Reference data<br/>bnf_chapters, therapeutic_areas")]
-        AU[("Audit<br/>record_events,<br/>record_event_field_changes")]
+        AU[("Audit<br/>record_field_audit")]
         RV[("record_revisions<br/>(xmin concurrency token)")]
     end
 
@@ -218,7 +218,8 @@ entities** declare the same `[FormPage]` ID, their questions are merged into one
 
 The startup check enforces both.
 
-Saving a merged page writes to several tables in one `SaveChangesAsync` and one audit event.
+Saving a merged page writes to several tables, and a field audit row per changed question, in
+one `SaveChangesAsync`.
 
 ### Coverage: every column is accounted for
 
@@ -384,7 +385,9 @@ broken build lists everything to fix at once. The full catalogue is in
 - **`revisionVersion`** is the revision's Postgres `xmin` (`RecordRevision.Version`, a new `uint`
   configured with `IsRowVersion()`). The client echoes it on save, and a stale value returns 409
   `revision_changed`.
-  - Every save that changes something updates the revision row, so the token moves on.
+  - Every save that changes something updates the revision row, so the token moves on. No
+    revision column changes on a content save, so the save marks `workflow_status` as modified
+    (with its current value) to force the `UPDATE`.
   - A save racing another one is caught by EF's concurrency check, which also returns
     `revision_changed`.
 
@@ -498,8 +501,8 @@ sequenceDiagram
                 B-->>F: 200 { nextPageId }
             else Changed
                 B->>P: Write changed answers through bindings (creating FirstSave rows)
-                B->>P: Update revision UpdatedAt/UpdatedBy
-                B->>P: INSERT record_events + record_event_field_changes
+                B->>P: Touch the revision row so xmin moves on
+                B->>P: INSERT record_field_audit (one row per changed question)
                 Note over B,P: One SaveChangesAsync, checked against xmin
                 alt Another save landed first
                     B-->>F: 409 revision_changed
@@ -685,14 +688,13 @@ All three use `ProblemDetails`:
 
 ## Audit
 
-Every save that changes something writes:
+Every save that changes something writes one `record_field_audit` row per changed question. Each
+row holds the record and revision IDs, `field_path` set to the question ID, the old and new
+values, and the user and time of the save (`changed_by`, `changed_at`).
 
-- one `record_events` row with `event_type = 7` (`RecordContentUpdated`, a new enum value). It
-  holds the record and revision IDs, the user and time, and has `note` set to the page ID.
-- one `record_event_field_changes` row per changed question, with `field_path` set to the
-  question ID.
-
-A merged page that spans several entities still writes **one** event.
+A page save does not write a `record_events` row. Field changes are audited per field, as the
+synthetic data seeder does, and the record timeline's events are kept for workflow changes such
+as creation, submission and status changes.
 
 Values are stored as text:
 - Single values are stored raw (`Unknown`, `12`, the indication text), so they can be queried
@@ -704,7 +706,6 @@ Values are stored as text:
 
 One migration (`AddRecordContentForms`) adds:
 
-- `RecordEventType.RecordContentUpdated = 7` (an enum value; no schema change);
 - `RecordRevision.Version` (`uint`, `IsRowVersion()`, which Npgsql maps to `xmin`), following
   `UserRegistrationRequestConfiguration.cs`. `xmin` is a system column, so this is a model change
   only;

@@ -20,7 +20,7 @@ For the design behind it, see the [high-level design](high-level-design.md).
   | `RecordType` | `0` Medicine, `1` Vaccine |
   | `RecordStatus` | `0` Unpublished, `1` Published, `2` OnHold, `3` Archived |
   | `WorkflowStatus` | `0` Draft, `1` QAReview, `2` Published, `3` Rejected |
-  | `RecordEventType` | `0` RecordCreated, `7` RecordContentUpdated |
+  | `RecordEventType` | `0` RecordCreated |
   | `NameAndIdentifierType` | `0` GenericName, `1` OtherIdentifier |
   | `IndicationPaediatricStatus` | `0` Unknown, `1` ExclusivelyChildren, `2` ExclusivelyAdults, `3` BothChildrenAndAdults |
   | `YesNoUnknown` | `0` Unknown, `1` No, `2` Yes |
@@ -91,8 +91,6 @@ All of the following are written in one transaction at `T0`.
 | `based_on_revision_id` | `null` |
 | `workflow_status` | `0` (Draft) |
 | `created_by` / `created_at` | `12` / `T0` |
-| `updated_by` / `updated_at` | `null` / `null` |
-| `submitted_by` / `submitted_at` | `null` / `null` |
 | `xmin` | Set by Postgres; note it, it changes on every later save |
 
 ### `record_events` (1 row inserted)
@@ -105,7 +103,7 @@ All of the following are written in one transaction at `T0`.
 | `performed_by` / `performed_at` | `12` / `T0` |
 | `note` | `null` |
 
-No `record_event_field_changes` rows are written for record creation.
+No `record_field_audit` rows are written for record creation.
 
 ### `record_product_details` (1 row inserted)
 
@@ -151,19 +149,19 @@ select * from ukps.medicines_indication_details where revision_id = :revision_id
 
 ## What every page save writes
 
-Steps 1 to 6 each write the same four things, at that step's time `Tn`, in one transaction:
+Steps 1 to 6 each write the same three things, at that step's time `Tn`, in one transaction:
 
 1. **The answer** in its content table (see each step). The first save that writes an answer
    also inserts the `medicines_indication_details` row.
-2. **`record_revisions`**, row `7` updated: `updated_by = 12`, `updated_at = Tn`, and `xmin`
-   changes. Nothing else on the row changes.
-3. **`record_events`**, 1 row inserted: `record_id = 5`, `revision_id = 7`, `event_type = 7`
-   (RecordContentUpdated), `performed_by = 12`, `performed_at = Tn`, `note` = the page ID,
-   `qa_review_id = null`.
-4. **`record_event_field_changes`**, 1 row inserted per changed question, linked by
-   `record_event_id`: `field_path` = the question ID, `old_value` = the previous answer,
-   `new_value` = the new answer. Single values are stored as plain text and lists as JSON;
-   no answer is `null`.
+2. **`record_revisions`**, row `7` updated so that `xmin` changes. No column value changes: the
+   save rewrites `workflow_status` with its current value, checked against the `xmin` the page
+   was loaded with.
+3. **`record_field_audit`**, 1 row inserted per changed question: `record_id = 5`,
+   `revision_id = 7`, `field_path` = the question ID, `old_value` = the previous answer,
+   `new_value` = the new answer, `changed_by = 12`, `changed_at = Tn`. Single values are stored
+   as plain text and lists as JSON; no answer is `null`.
+
+No `record_events` row is written for a page save.
 
 `records`, `record_status_histories`, `record_product_details` and `record_names_and_identifiers`
 are not touched by any page save.
@@ -189,9 +187,8 @@ Each save's response is `200 { "nextPageId": "..." }` and the browser moves to t
 | Table | Change |
 |---|---|
 | `medicines_indication_details` | **1 row inserted**: `id = 9`, `revision_id = 7`, `indication = Chronic hepatitis C infection in adults with genotype 1`; every other column `null` |
-| `record_revisions` (row `7`) | `updated_by = 12`, `updated_at = T1`, new `xmin` |
-| `record_events` | Insert, `event_type = 7`, `note = indication` |
-| `record_event_field_changes` | `field_path = medicines_indication_detail.indication`, `old_value = null`, `new_value = Chronic hepatitis C infection in adults with genotype 1` |
+| `record_revisions` (row `7`) | new `xmin` |
+| `record_field_audit` | `changed_at = T1`, `field_path = medicines_indication_detail.indication`, `old_value = null`, `new_value = Chronic hepatitis C infection in adults with genotype 1` |
 
 Leading and trailing spaces are trimmed before saving, so typing `"  text  "` stores `text`.
 
@@ -207,9 +204,8 @@ up the latest value in the same way.
 | Table | Change |
 |---|---|
 | `medicines_indication_details` (row `9`) | `bnf_chapter_id`: `null` → `40` |
-| `record_revisions` (row `7`) | `updated_by = 12`, `updated_at = T2`, new `xmin` |
-| `record_events` | Insert, `event_type = 7`, `note = bnf-chapter` |
-| `record_event_field_changes` | `field_path = medicines_indication_detail.bnf_chapter_id`, `old_value = null`, `new_value = 40` |
+| `record_revisions` (row `7`) | new `xmin` |
+| `record_field_audit` | `changed_at = T2`, `field_path = medicines_indication_detail.bnf_chapter_id`, `old_value = null`, `new_value = 40` |
 
 The answer is the most specific choice: the subchapter's ID here. Choosing only the chapter
 would store the chapter's ID. The audit stores the ID, not its label.
@@ -226,9 +222,8 @@ choice: the condition if one is picked, otherwise the area.
 |---|---|
 | `medicines_indication_detail_therapeutic_areas` | 1 row inserted: (`medicines_indication_detail_id = 9`, `therapeutic_area_id = 51`) |
 | `medicines_indication_details` | Not changed |
-| `record_revisions` (row `7`) | `updated_by = 12`, `updated_at = T3`, new `xmin` |
-| `record_events` | Insert, `event_type = 7`, `note = therapeutic-area` |
-| `record_event_field_changes` | `field_path = medicines_indication_detail_therapeutic_area`, `old_value = null`, `new_value = ["51"]` |
+| `record_revisions` (row `7`) | new `xmin` |
+| `record_field_audit` | `changed_at = T3`, `field_path = medicines_indication_detail_therapeutic_area`, `old_value = null`, `new_value = ["51"]` |
 
 Selections are sorted as text before they are compared and audited, so choosing `["7","10"]`
 would be stored in the audit as `["10","7"]`. Choosing the same option twice is rejected with
@@ -246,9 +241,8 @@ audit rows and does not touch the revision.
 | Table | Change |
 |---|---|
 | `medicines_indication_details` (row `9`) | `indication_is_paediatric`: `null` → `2` (ExclusivelyAdults) |
-| `record_revisions` (row `7`) | `updated_by = 12`, `updated_at = T4`, new `xmin` |
-| `record_events` | Insert, `event_type = 7`, `note = paediatric` |
-| `record_event_field_changes` | `field_path = medicines_indication_detail.indication_is_paediatric`, `old_value = null`, `new_value = ExclusivelyAdults` |
+| `record_revisions` (row `7`) | new `xmin` |
+| `record_field_audit` | `changed_at = T4`, `field_path = medicines_indication_detail.indication_is_paediatric`, `old_value = null`, `new_value = ExclusivelyAdults` |
 
 The content table stores the enum's integer; the audit stores its name.
 
@@ -262,9 +256,8 @@ The content table stores the enum's integer; the audit stores its name.
 | Table | Change |
 |---|---|
 | `medicines_indication_details` (row `9`) | `indication_is_cancer`: `null` → `1` (No) |
-| `record_revisions` (row `7`) | `updated_by = 12`, `updated_at = T5`, new `xmin` |
-| `record_events` | Insert, `event_type = 7`, `note = cancer` |
-| `record_event_field_changes` | `field_path = medicines_indication_detail.indication_is_cancer`, `old_value = null`, `new_value = No` |
+| `record_revisions` (row `7`) | new `xmin` |
+| `record_field_audit` | `changed_at = T5`, `field_path = medicines_indication_detail.indication_is_cancer`, `old_value = null`, `new_value = No` |
 
 ## Step 6: Treating a rare disease
 
@@ -276,9 +269,8 @@ The content table stores the enum's integer; the audit stores its name.
 | Table | Change |
 |---|---|
 | `medicines_indication_details` (row `9`) | `indication_is_rare_disease`: `null` → `1` (No) |
-| `record_revisions` (row `7`) | `updated_by = 12`, `updated_at = T6`, new `xmin` |
-| `record_events` | Insert, `event_type = 7`, `note = rare-disease` |
-| `record_event_field_changes` | `field_path = medicines_indication_detail.indication_is_rare_disease`, `old_value = null`, `new_value = No` |
+| `record_revisions` (row `7`) | new `xmin` |
+| `record_field_audit` | `changed_at = T6`, `field_path = medicines_indication_detail.indication_is_rare_disease`, `old_value = null`, `new_value = No` |
 
 ## Final state
 
@@ -288,13 +280,13 @@ After step 6, for record `5`:
 |---|---|
 | `records` | 1, unchanged since step 0 |
 | `record_status_histories` | 1, unchanged since step 0 |
-| `record_revisions` | 1, `updated_at = T6`, `workflow_status = 0` (still Draft) |
+| `record_revisions` | 1, `workflow_status = 0` (still Draft), `xmin` changed by every save |
 | `record_product_details` | 1, unchanged since step 0 |
 | `record_names_and_identifiers` | 2, unchanged since step 0 |
 | `medicines_indication_details` | 1 (created in step 1), with `indication`, `bnf_chapter_id = 40`, `indication_is_paediatric = 2`, `indication_is_cancer = 1`, `indication_is_rare_disease = 1` |
 | `medicines_indication_detail_therapeutic_areas` | 1 (`51`) |
-| `record_events` | 7: one `event_type = 0`, then six `event_type = 7` with notes `indication`, `bnf-chapter`, `therapeutic-area`, `paediatric`, `cancer`, `rare-disease` |
-| `record_event_field_changes` | 6, one per page |
+| `record_events` | 1, the `event_type = 0` creation event |
+| `record_field_audit` | 6, one per page, in page order |
 
 The record stays `Unpublished` and the revision stays `Draft`; answering the pages does not
 submit anything.
@@ -303,7 +295,7 @@ submit anything.
 
 ```sql
 -- Revision
-select xmin, updated_at, updated_by, workflow_status
+select xmin, workflow_status
 from ukps.record_revisions where id = :revision_id;
 
 -- Answers
@@ -317,17 +309,14 @@ join ukps.therapeutic_areas a on a.id = t.therapeutic_area_id
 where t.medicines_indication_detail_id =
   (select id from ukps.medicines_indication_details where revision_id = :revision_id);
 
--- Audit trail, in order
-select e.id, e.event_type, e.note, e.performed_by, e.performed_at,
-       c.field_path, c.old_value, c.new_value
-from ukps.record_events e
-left join ukps.record_event_field_changes c on c.record_event_id = e.id
-where e.record_id = :record_id
-order by e.id, c.id;
+-- Field audit, in order
+select field_path, old_value, new_value, changed_by, changed_at
+from ukps.record_field_audit
+where revision_id = :revision_id
+order by id;
 ```
 
-The audit query should return seven rows: the creation event (with no field change) followed by one
-row per page in order.
+The audit query should return six rows, one per page in order.
 
 ## Coming back through Update record
 
@@ -335,8 +324,8 @@ Open the record from **View** in the organisation records table, select **Update
 step through the pages:
 
 - **Saving a page without changing it** writes nothing at all: no answer update, no audit rows,
-  and `record_revisions.updated_at` and `xmin` stay the same.
-- **Changing an answer** writes the same four things as above, with `old_value` set to the
+  and `record_revisions.xmin` stays the same.
+- **Changing an answer** writes the same three things as above, with `old_value` set to the
   previous answer. For example, changing cancer from No to Yes writes
   `old_value = No`, `new_value = Yes`.
 - **Removing a therapeutic area** deletes its junction row; adding one inserts a row. Areas that

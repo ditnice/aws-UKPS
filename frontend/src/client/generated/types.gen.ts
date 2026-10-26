@@ -833,7 +833,8 @@ export const RecordDisplayStatus = {
     QA_REVIEW: 'QAReview',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived'
+    ARCHIVED: 'Archived',
+    DISCARDED: 'Discarded'
 } as const;
 
 /**
@@ -1236,7 +1237,8 @@ export const RecordStatus = {
     UNPUBLISHED: 'Unpublished',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived'
+    ARCHIVED: 'Archived',
+    DISCARDED: 'Discarded'
 } as const;
 
 /**
@@ -2533,6 +2535,29 @@ export type CreateRecordResponses = {
 };
 
 export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
+
+export type PatchRecordsByRecordIdDiscardData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the record to discard.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/discard';
+};
+
+export type PatchRecordsByRecordIdDiscardErrors = {
+    /**
+     * An HTTP 200 response if the record is successfully discarded.
+     * An HTTP 404 response if the record cannot be found.
+     * An HTTP 400 response if the record is not eligible to be discarded.
+     */
+    401: AuthenticationProblemDetails;
+};
+
+export type PatchRecordsByRecordIdDiscardError = PatchRecordsByRecordIdDiscardErrors[keyof PatchRecordsByRecordIdDiscardErrors];
 
 export type GetRecordFormPageData = {
     body?: never;

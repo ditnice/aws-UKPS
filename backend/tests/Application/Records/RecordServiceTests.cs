@@ -1,8 +1,12 @@
 using Bogus;
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
+using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
@@ -15,6 +19,7 @@ using GetRecordsResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Records.Errors.GetRecordsError
 >;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
+using SortDirection = UKPS.Api.Application.Common.SortDirection;
 
 namespace UKPS.Api.Tests.Application.Records;
 
@@ -127,7 +132,9 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldNotBeEmpty();
-        dto.TotalCount.ShouldBe(OrganisationRecords.Count);
+        dto.TotalCount.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
     }
 
     [Fact]
@@ -170,7 +177,9 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        dto.TotalCount.ShouldBe(OrganisationRecords.Count);
+        dto.TotalCount.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
         dto.Page.ShouldBe(2);
         dto.PageSize.ShouldBe(1);
         dto.Items.Count.ShouldBe(1);
@@ -191,7 +200,9 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldBeEmpty();
-        dto.TotalCount.ShouldBe(OrganisationRecords.Count);
+        dto.TotalCount.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
         dto.Page.ShouldBe(pageBeyondLast);
     }
 
@@ -228,6 +239,7 @@ public class RecordServiceTests : DatabaseTestBase
         dto.Items.Select(x => x.Id)
             .ShouldBe(
                 OrganisationRecords
+                    .Where(r => r.RecordStatus != RecordStatus.Discarded)
                     .Where(r => statuses.Contains(GetExpectedDisplayStatus(r)))
                     .Select(r => r.Id),
                 ignoreOrder: true
@@ -263,7 +275,9 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        dto.Items.Count.ShouldBe(OrganisationRecords.Count);
+        dto.Items.Count.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
     }
 
     [Fact]
@@ -306,7 +320,8 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldNotBeEmpty();
-        dto.Items.Select(x => x.DisplayStatus).ShouldBeInOrder(sortDirection);
+        dto.Items.Select(x => x.DisplayStatus)
+            .ShouldBeInOrder((Shouldly.SortDirection)sortDirection);
     }
 
     [Fact]
@@ -321,7 +336,8 @@ public class RecordServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess();
 
         dto.Items.ShouldNotBeEmpty();
-        dto.Items.Select(x => x.DisplayStatus).ShouldBeInOrder(SortDirection.Ascending);
+        dto.Items.Select(x => x.DisplayStatus)
+            .ShouldBeInOrder((Shouldly.SortDirection)SortDirection.Ascending);
     }
 
     [Fact]
@@ -335,7 +351,11 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        foreach (Record record in OrganisationRecords)
+        foreach (
+            Record record in OrganisationRecords.Where(r =>
+                r.RecordStatus != RecordStatus.Discarded
+            )
+        )
         {
             RecordListItemDto item = dto.Items.Single(x => x.Id == record.Id);
             string companyCode = GetExpectedCompanyCode(record);
@@ -396,8 +416,15 @@ public class RecordServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess();
 
-        dto.TotalCount.ShouldBe(OrganisationRecords.Count);
-        dto.Items.Select(x => x.Id).ShouldContainSet(OrganisationRecords.Select(x => x.Id));
+        dto.TotalCount.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
+        dto.Items.Select(x => x.Id)
+            .ShouldContainSet(
+                OrganisationRecords
+                    .Where(r => r.RecordStatus != RecordStatus.Discarded)
+                    .Select(x => x.Id)
+            );
     }
 
     [Fact]
@@ -410,7 +437,110 @@ public class RecordServiceTests : DatabaseTestBase
         );
 
         var dto = result.ShouldBeSuccess();
-        dto.Items.Select(x => x.Id).ShouldContainSet(OrganisationRecords.Select(x => x.Id));
-        dto.Items.Count.ShouldBe(OrganisationRecords.Count);
+        var expectedRecords = OrganisationRecords
+            .Where(r => r.RecordStatus != RecordStatus.Discarded)
+            .ToList();
+        dto.Items.Select(x => x.Id).ShouldContainSet(expectedRecords.Select(x => x.Id));
+        dto.Items.Count.ShouldBe(
+            OrganisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+        );
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenSuccessful_UpdatesRecordStatus()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        Record record = await CreateDraftRecord();
+
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
+            record.Id,
+            cancellationToken
+        );
+        result.IsOk.ShouldBeTrue();
+        Context.ChangeTracker.Clear();
+
+        Record updatedRecord = await Context
+            .Records.AsNoTracking()
+            .SingleAsync(r => r.Id == record.Id, cancellationToken);
+        updatedRecord.RecordStatus.ShouldBe(RecordStatus.Discarded);
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenRecordNotFound_ReturnsRecordNotFoundError()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
+            int.MaxValue,
+            cancellationToken
+        );
+        result.ShouldBeError();
+        result.Error.ShouldBeOfType<DiscardRecordError.RecordNotFound>();
+    }
+
+    [Fact]
+    public async Task DiscardDraftRecord_WhenRecordIsPublished_ReturnsInvalidDiscardError()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        Record record = await CreateDraftRecord(RecordStatus.Published);
+
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
+            record.Id,
+            cancellationToken
+        );
+        result.ShouldBeError();
+        result.Error.ShouldBeOfType<DiscardRecordError.InvalidDiscard>();
+
+        Context.ChangeTracker.Clear();
+
+        Record unchangedRecord = await Context
+            .Records.AsNoTracking()
+            .SingleAsync(r => r.Id == record.Id, cancellationToken);
+
+        unchangedRecord.RecordStatus.ShouldBe(RecordStatus.Published);
+    }
+
+    private async Task<Record> CreateDraftRecord(
+        RecordStatus recordStatus = RecordStatus.Unpublished
+    )
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        User user = new UserFaker().Generate();
+        await AddEntities(new[] { user }, cancellationToken);
+
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = user.CognitoUsername,
+                OrganisationId = _organisationId,
+                UserRole = UserRole.Champion,
+            }
+        );
+
+        var membership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.UserId, user.Id)
+            .RuleFor(x => x.OrganisationId, _organisationId)
+            .RuleFor(x => x.UserRole, UserRole.Champion)
+            .RuleFor(x => x.Status, UserOrgMembershipStatus.Active)
+            .Generate();
+
+        await AddEntities(new[] { membership }, cancellationToken);
+
+        Record record = new RecordFaker()
+            .RuleFor(x => x.RecordStatus, recordStatus)
+            .RuleFor(x => x.OrganisationId, _organisationId)
+            .RuleFor(x => x.CreatedByUser, user)
+            .Generate();
+
+        RecordRevision revision = new RecordRevisionFaker()
+            .RuleFor(x => x.Record, record)
+            .RuleFor(x => x.WorkflowStatus, WorkflowStatus.Draft)
+            .RuleFor(x => x.CreatedByUser, user)
+            .Generate();
+
+        await AddEntities(new[] { revision }, cancellationToken);
+
+        return record;
     }
 }

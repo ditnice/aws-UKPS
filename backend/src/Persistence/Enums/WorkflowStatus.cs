@@ -24,4 +24,9 @@ public enum WorkflowStatus
     /// The revision has been reviewed and rejected.
     /// </summary>
     Rejected = 3,
+
+    /// <summary>
+    /// The revision has been discarded.
+    /// </summary>
+    Discarded = 4,
 }

@@ -426,7 +426,7 @@ internal sealed class SomeOtherMedicineEntity
 ```
 
 The `names` page shows both questions, ordered by `FormField.Order`. One save writes both
-tables, and the audit records them as one event.
+tables, with a field audit row for each changed question.
 
 Keep the page metadata in one place to avoid mismatches: declare the page ID, title and order as
 constants (for example in a `MedicinePages` static class) and use the constants in every

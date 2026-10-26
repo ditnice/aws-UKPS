@@ -7,18 +7,13 @@ import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Tag } from '@/components/Tag/Tag'
+import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../_components/OrganisationPageWrapper'
 import { recordStatusLabels, recordStatusTagColours } from '../labels'
 
 import { ManageRecordActionBanner } from './_components/ManageRecordActionBanner'
 import { MedicineRecordDetails } from './_components/MedicineRecordDetails'
-
-const parseRecordId = (value: string): number | null =>
-  /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null
-
-const parseRecordType = (value: string | string[] | undefined): RecordType | null =>
-  value === 'Medicine' || value === 'Vaccine' ? value : null
 
 type RecordPageProps = {
   params: Promise<{ id: string; recordId: string }>
@@ -27,8 +22,9 @@ type RecordPageProps = {
 
 const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
   const { id: organisationId, recordId: recordIdParam } = await params
-  const recordId = parseRecordId(recordIdParam)
-  const recordType = parseRecordType((await searchParams).recordType)
+  const { recordType: recordTypeParam } = await searchParams
+  const recordId = parsePositiveInteger(recordIdParam)
+  const recordType = Object.values(RecordType).find((type) => type === recordTypeParam)
 
   if (!recordId || !recordType) {
     notFound()
@@ -98,6 +94,7 @@ const RecordView = async ({ organisationId, recordId, recordType }: RecordViewPr
       />
 
       <ManageRecordActionBanner
+        record={record}
         updateRecordHref={
           record.firstPageId
             ? `/portal/records/${record.recordId}/revisions/${record.revisionId}/${record.firstPageId}`

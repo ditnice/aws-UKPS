@@ -12,8 +12,6 @@ internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<Rec
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.WorkflowStatus);
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz").IsRequired();
-        builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
-        builder.Property(x => x.SubmittedAt).HasColumnType("timestamptz");
         builder.Property(x => x.Version).IsRowVersion();
 
         builder
@@ -32,18 +30,6 @@ internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<Rec
             .HasOne(x => x.CreatedByUser)
             .WithMany()
             .HasForeignKey(x => x.CreatedBy)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.UpdatedByUser)
-            .WithMany()
-            .HasForeignKey(x => x.UpdatedBy)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasOne(x => x.SubmittedByUser)
-            .WithMany()
-            .HasForeignKey(x => x.SubmittedBy)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

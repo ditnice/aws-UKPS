@@ -228,19 +228,15 @@ public class RecordFormServiceTests : DatabaseTestBase
         RecordRevision revision = await Context
             .RecordRevisions.AsNoTracking()
             .SingleAsync(r => r.Id == _revision.Id, Ct);
-        revision.UpdatedAt.ShouldBe(_now);
-        revision.UpdatedBy.ShouldBe(_user.Id);
         revision.Version.ShouldNotBe(versionBefore);
 
-        RecordEvent recordEvent = await ContentEvents().SingleAsync(Ct);
-        recordEvent.RecordId.ShouldBe(_record.Id);
-        recordEvent.PerformedBy.ShouldBe(_user.Id);
-        recordEvent.PerformedAt.ShouldBe(_now);
-        recordEvent.Note.ShouldBe("indication");
-        RecordEventFieldChange change = recordEvent.FieldChanges.Single();
-        change.FieldPath.ShouldBe(Indication);
-        change.OldValue.ShouldBeNull();
-        change.NewValue.ShouldBe("Chronic hepatitis C");
+        RecordFieldAudit audit = await FieldAudits().SingleAsync(Ct);
+        audit.RecordId.ShouldBe(_record.Id);
+        audit.FieldPath.ShouldBe(Indication);
+        audit.OldValue.ShouldBeNull();
+        audit.NewValue.ShouldBe("Chronic hepatitis C");
+        audit.ChangedBy.ShouldBe(_user.Id);
+        audit.ChangedAt.ShouldBe(_now);
     }
 
     [Fact]
@@ -276,28 +272,27 @@ public class RecordFormServiceTests : DatabaseTestBase
             .Order()
             .ShouldBe(new[] { _area.Id, _condition.Id }.Order());
 
-        var changes = await ContentEvents()
-            .OrderBy(static e => e.Id)
-            .Select(static e => new { e.Note, Change = e.FieldChanges.Single() })
+        List<RecordFieldAudit> changes = await FieldAudits()
+            .OrderBy(static a => a.Id)
             .ToListAsync(Ct);
         changes
-            .Select(static c => c.Note)
+            .Select(static c => c.FieldPath)
             .ShouldBe([
-                "indication",
-                "bnf-chapter",
-                "therapeutic-area",
-                "paediatric",
-                "cancer",
-                "rare-disease",
+                Indication,
+                BnfChapter,
+                TherapeuticAreas,
+                Paediatric,
+                "medicines_indication_detail.indication_is_cancer",
+                "medicines_indication_detail.indication_is_rare_disease",
             ]);
-        changes[1].Change.NewValue.ShouldBe($"{_bnfSection.Id}");
+        changes[1].NewValue.ShouldBe($"{_bnfSection.Id}");
         changes[2]
-            .Change.NewValue.ShouldBe(
+            .NewValue.ShouldBe(
                 JsonSerializer.Serialize(
                     new[] { $"{_area.Id}", $"{_condition.Id}" }.Order(StringComparer.Ordinal)
                 )
             );
-        changes[3].Change.NewValue.ShouldBe("ExclusivelyAdults");
+        changes[3].NewValue.ShouldBe("ExclusivelyAdults");
     }
 
     [Fact]
@@ -309,7 +304,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         await SaveOk("indication", Answer(Indication, " Hepatitis C "));
 
         (await RevisionVersion()).ShouldBe(version);
-        (await ContentEvents().CountAsync(Ct)).ShouldBe(1);
+        (await FieldAudits().CountAsync(Ct)).ShouldBe(1);
     }
 
     [Fact]
@@ -318,7 +313,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         await SaveOk("therapeutic-area", Answer(TherapeuticAreas, Array.Empty<string>()));
 
         (await Context.MedicinesIndicationDetails.AnyAsync(Ct)).ShouldBeFalse();
-        (await ContentEvents().AnyAsync(Ct)).ShouldBeFalse();
+        (await FieldAudits().AnyAsync(Ct)).ShouldBeFalse();
     }
 
     [Fact]
@@ -338,9 +333,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             .TherapeuticAreas.Select(static t => t.TherapeuticAreaId)
             .Order()
             .ShouldBe(new[] { _condition.Id, _otherCondition.Id }.Order());
-        RecordEventFieldChange change = (
-            await ContentEvents().OrderBy(static e => e.Id).LastAsync(Ct)
-        ).FieldChanges.Single();
+        RecordFieldAudit change = await FieldAudits().OrderBy(static a => a.Id).LastAsync(Ct);
         change.OldValue.ShouldBe(
             JsonSerializer.Serialize(
                 new[] { $"{_area.Id}", $"{_condition.Id}" }.Order(StringComparer.Ordinal)
@@ -510,7 +503,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         (
             await Context.MedicinesIndicationDetails.AnyAsync(x => x.RevisionId == _revision.Id, Ct)
         ).ShouldBeFalse();
-        (await ContentEvents().AnyAsync(Ct)).ShouldBeFalse();
+        (await FieldAudits().AnyAsync(Ct)).ShouldBeFalse();
         (await RevisionVersion()).ShouldBe(versionBefore);
     }
 
@@ -592,13 +585,8 @@ public class RecordFormServiceTests : DatabaseTestBase
             .Include(static x => x.TherapeuticAreas)
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
-    private IQueryable<RecordEvent> ContentEvents() =>
-        Context
-            .RecordEvents.AsNoTracking()
-            .Include(static e => e.FieldChanges)
-            .Where(e =>
-                e.RevisionId == _revision.Id && e.EventType == RecordEventType.RecordContentUpdated
-            );
+    private IQueryable<RecordFieldAudit> FieldAudits() =>
+        Context.RecordFieldAudits.AsNoTracking().Where(a => a.RevisionId == _revision.Id);
 
     private static JsonElement Json<T>(T value) => JsonSerializer.SerializeToElement(value);
 

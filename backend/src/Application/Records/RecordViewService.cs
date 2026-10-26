@@ -30,7 +30,7 @@ internal sealed class RecordViewService(
     {
         RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
 
-        if (record is null)
+        if (record is null || record.RecordStatus == RecordStatus.Discarded)
         {
             return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }
