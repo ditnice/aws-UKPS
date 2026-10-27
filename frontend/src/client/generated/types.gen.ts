@@ -2037,6 +2037,35 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
+export type GetCurrentOrganisationChampionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/organisations/current/champions';
+};
+
+export type GetCurrentOrganisationChampionsErrors = {
+    /**
+     * The user is not authenticated.
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The user is not authorised to view champion contacts.
+     */
+    403: ProblemDetails;
+};
+
+export type GetCurrentOrganisationChampionsError = GetCurrentOrganisationChampionsErrors[keyof GetCurrentOrganisationChampionsErrors];
+
+export type GetCurrentOrganisationChampionsResponses = {
+    /**
+     * The champion contacts were returned.
+     */
+    200: Array<string>;
+};
+
+export type GetCurrentOrganisationChampionsResponse = GetCurrentOrganisationChampionsResponses[keyof GetCurrentOrganisationChampionsResponses];
+
 export type GetCurrentUserOrganisationsData = {
     body?: never;
     path?: never;
@@ -2193,7 +2222,7 @@ export type DeactivateMembershipData = {
 
 export type DeactivateMembershipErrors = {
     /**
-     * Bad Request
+     * The membership is in an invalid state, or deactivation would leave no eligible champion.
      */
     400: ProblemDetails;
     /**
@@ -2288,7 +2317,7 @@ export type UpdateUserRoleData = {
 
 export type UpdateUserRoleErrors = {
     /**
-     * The supplied role is invalid.
+     * The supplied role is invalid, or the change would leave no eligible champion.
      */
     400: ProblemDetails;
     /**
@@ -2798,7 +2827,7 @@ export type RemoveUserData = {
 
 export type RemoveUserErrors = {
     /**
-     * One of the user's organisation memberships is not in a state that allows removal.
+     * One of the user's organisation memberships is not in a state that allows removal, or removal would leave no eligible champion.
      */
     400: ProblemDetails;
     /**

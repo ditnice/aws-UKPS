@@ -1,8 +1,11 @@
+using UKPS.Api.Persistence.Enums;
+
 namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal class UserOnboardingRecord
 {
     public required Guid SetupToken { get; init; }
+    public required OnboardingFlow OnboardingFlow { get; init; }
     public Guid? CorrelationId { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required int CreatedByUserId { get; init; }

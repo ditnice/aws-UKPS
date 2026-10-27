@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 
 import { FilterGroup, FilterOption, FilterPanel } from '@nice-digital/nds-filters'
 
@@ -71,21 +72,37 @@ export function OrganisationFilters({ query }: OrganisationFiltersProps) {
   const selectedRoles = searchParams.getAll('role')
   const selectedLastActive = searchParams.get('lastActive')
 
+  // searchParams only changes once a pushed navigation lands, so a change made before then must
+  // build on the last URL pushed here, or it would drop the earlier change. `pushed` tells our
+  // own navigations landing apart from someone else's, such as a sort link, which resets this.
+  // The latest URL landing resets it too, so it only ever holds one burst of quick changes.
+  const pendingSearch = useRef<{ latest: string; pushed: Set<string> } | null>(null)
+
+  useEffect(() => {
+    const pending = pendingSearch.current
+    const current = searchParams.toString()
+    if (pending && (current === pending.latest || !pending.pushed.has(current))) {
+      pendingSearch.current = null
+    }
+  }, [searchParams])
+
   // Every filter change resets to the first page, as the previous page may no
   // longer exist within the newly filtered results.
   function updateParams(mutate: (params: URLSearchParams) => void) {
-    const params = new URLSearchParams(searchParams.toString())
+    const pending = pendingSearch.current
+    const params = new URLSearchParams(pending?.latest ?? searchParams.toString())
     mutate(params)
     params.set('page', '1')
 
-    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    const search = params.toString()
+    pendingSearch.current = { latest: search, pushed: new Set(pending?.pushed).add(search) }
+    router.push(`${pathname}?${search}`, { scroll: false })
   }
 
   function handleMultiChanged(key: MultiFilterKey, value: string, isSelected: boolean) {
-    const selected = searchParams.getAll(key)
-    const next = isSelected ? [...selected, value] : selected.filter((entry) => entry !== value)
-
     updateParams((params) => {
+      const selected = params.getAll(key)
+      const next = isSelected ? [...selected, value] : selected.filter((entry) => entry !== value)
       params.delete(key)
       next.forEach((entry) => params.append(key, entry))
     })

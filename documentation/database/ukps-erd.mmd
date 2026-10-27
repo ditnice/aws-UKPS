@@ -84,6 +84,7 @@ erDiagram
             uuid correlation_id UK "nullable"
             timestamptz created_at
             integer created_by_user_id FK
+            integer onboarding_flow
             integer resend_count
             integer resulting_user_id FK, UK
         }

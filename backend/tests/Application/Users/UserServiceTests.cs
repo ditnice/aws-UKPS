@@ -1650,6 +1650,260 @@ public class UserServiceTests : DatabaseTestBase
         result.Select(x => x.Id).ShouldBe([validMemberships.Single().OrganisationId]);
     }
 
+    [Fact]
+    public async Task GetCurrentOrganisationChampionEmails_ShouldReturnEnabledChampionEmailsSorted()
+    {
+        // Arrange
+        (User caller, UserOrgMembership callerMembership) = await AddUserWithMembership();
+        Organisation organisation = callerMembership.Organisation!;
+        // Added out of order, and one Inactive, to show both sorting and that Inactive counts
+        // as enabled
+        await AddChampionContactTestMembership(organisation, "z.champion@example.com");
+        await AddChampionContactTestMembership(organisation, "a.champion@example.com");
+        await AddChampionContactTestMembership(
+            organisation,
+            "m.champion@example.com",
+            UserOrgMembershipStatus.Inactive
+        );
+        _harness.UpdateCurrentUser(caller);
+
+        // Act
+        var result = await Service.GetCurrentOrganisationChampionEmails(
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result
+            .ShouldBeSuccess()
+            .ShouldBe([
+                "a.champion@example.com",
+                "m.champion@example.com",
+                "z.champion@example.com",
+            ]);
+    }
+
+    [Fact]
+    public async Task GetCurrentOrganisationChampionEmails_WhenChampionHasMultipleMemberships_ShouldReturnTheEmailOnce()
+    {
+        // Arrange
+        (User caller, UserOrgMembership callerMembership) = await AddUserWithMembership();
+        Organisation organisation = callerMembership.Organisation!;
+        UserOrgMembership champion = await AddChampionContactTestMembership(
+            organisation,
+            "champion@example.com"
+        );
+        // Same user, same organisation, different pharmaceutical entity
+        await AddEntity(
+            new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                .RuleFor(x => x.AllowedPharmaceuticalEntity, _ => PharmaceuticalEntity.Vaccines)
+                .Generate()
+                .Update(x =>
+                {
+                    x.UserId = champion.UserId;
+                    x.OrganisationId = organisation.Id;
+                }),
+            TestContext.Current.CancellationToken
+        );
+        _harness.UpdateCurrentUser(caller);
+
+        // Act
+        var result = await Service.GetCurrentOrganisationChampionEmails(
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result.ShouldBeSuccess().ShouldBe(["champion@example.com"]);
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Deactivated, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Active, UserRole.Standard)]
+    public async Task GetCurrentOrganisationChampionEmails_WhenMembershipIsNotAnEnabledChampion_ShouldExcludeIt(
+        UserOrgStatus status,
+        UserRole role
+    )
+    {
+        // Arrange
+        (User caller, UserOrgMembership callerMembership) = await AddUserWithMembership();
+        await AddChampionContactTestMembership(
+            callerMembership.Organisation!,
+            "excluded@example.com",
+            (UserOrgMembershipStatus)status,
+            role
+        );
+        _harness.UpdateCurrentUser(caller);
+
+        // Act
+        var result = await Service.GetCurrentOrganisationChampionEmails(
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result.ShouldBeSuccess().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCurrentOrganisationChampionEmails_WhenChampionIsInAnotherOrganisation_ShouldExcludeThem()
+    {
+        // Arrange
+        (User caller, _) = await AddUserWithMembership();
+        await AddChampionContactTestMembership(
+            _organisationFaker.Generate().Update(x => x.Status = UserOrgStatus.Active),
+            "other-organisation@example.com"
+        );
+        _harness.UpdateCurrentUser(caller);
+
+        // Act
+        var result = await Service.GetCurrentOrganisationChampionEmails(
+            TestContext.Current.CancellationToken
+        );
+
+        // Assert
+        result.ShouldBeSuccess().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCurrentOrganisationChampionEmails_ShouldAllowActiveInactiveAndDeactivatedCallers()
+    {
+        UserOrgMembershipStatus[] allowedStatuses =
+        [
+            UserOrgMembershipStatus.Active,
+            UserOrgMembershipStatus.Inactive,
+            UserOrgMembershipStatus.Deactivated,
+        ];
+        foreach (UserOrgMembershipStatus status in allowedStatuses)
+        {
+            (User caller, UserOrgMembership membership) = await AddUserWithMembership(
+                status: status
+            );
+            string email = $"champion-{status}@example.com";
+            await AddChampionContactTestMembership(membership.Organisation!, email);
+            _harness.UpdateCurrentUser(caller);
+
+            var result = await Service.GetCurrentOrganisationChampionEmails(
+                TestContext.Current.CancellationToken
+            );
+
+            result.ShouldBeSuccess().ShouldBe([email]);
+        }
+    }
+
+    [Fact]
+    public async Task GetCurrentOrganisationChampionEmails_ShouldReturnNotAllowed_WhenNoPersistedCurrentOrganisationExists()
+    {
+        (User caller, _) = await AddUserWithManyMemberships(
+            2,
+            organisationStatus: UserOrgStatus.Active
+        );
+        _harness.UpdateCurrentUser(caller);
+
+        var result = await Service.GetCurrentOrganisationChampionEmails(
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<GetCurrentOrganisationChampionsError.NotAllowed>();
+    }
+
+    [Fact]
+    public async Task GetCurrentOrganisationChampionEmails_ShouldReturnNotAllowed_WhenCallerMembershipIsNotEligible()
+    {
+        UserOrgMembershipStatus[] disallowedStatuses =
+        [
+            UserOrgMembershipStatus.Removed,
+            UserOrgMembershipStatus.AwaitingSetup,
+        ];
+        foreach (UserOrgMembershipStatus status in disallowedStatuses)
+        {
+            (User caller, _) = await AddUserWithMembership(status: status);
+            _harness.UpdateCurrentUser(caller);
+
+            var result = await Service.GetCurrentOrganisationChampionEmails(
+                TestContext.Current.CancellationToken
+            );
+
+            result
+                .ShouldBeError()
+                .ShouldBeOfType<GetCurrentOrganisationChampionsError.NotAllowed>();
+        }
+    }
+
+    [Fact]
+    public async Task GetCurrentOrganisationChampionEmails_ShouldUseExplicitlySelectedDeactivatedMembership()
+    {
+        (User caller, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            2,
+            organisationStatus: UserOrgStatus.Active
+        );
+        caller.TryUpdateCurrentOrganisation(memberships[1].OrganisationId).ShouldBeTrue();
+        foreach (UserOrgMembership membership in memberships)
+        {
+            membership.Deactivate();
+        }
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await AddChampionContactTestMembership(
+            memberships[0].Organisation!,
+            "other-selected@example.com"
+        );
+        await AddChampionContactTestMembership(
+            memberships[1].Organisation!,
+            "selected-champion@example.com"
+        );
+        _harness.UpdateCurrentUser(caller);
+
+        var result = await Service.GetCurrentOrganisationChampionEmails(
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().ShouldBe(["selected-champion@example.com"]);
+    }
+
+    [Fact]
+    public async Task GetCurrentOrganisationChampionEmails_ShouldAllowDeactivatedCaller_WhenOrganisationIsNotActive()
+    {
+        foreach (
+            UserOrgStatus status in Enum.GetValues<UserOrgStatus>().Except([UserOrgStatus.Active])
+        )
+        {
+            (User caller, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+                1,
+                status: UserOrgMembershipStatus.Deactivated,
+                organisationStatus: status
+            );
+            string email = $"champion-organisation-{status}@example.com";
+            await AddChampionContactTestMembership(memberships.Single().Organisation!, email);
+            _harness.UpdateCurrentUser(caller);
+
+            var result = await Service.GetCurrentOrganisationChampionEmails(
+                TestContext.Current.CancellationToken
+            );
+
+            result.ShouldBeSuccess().ShouldBe([email]);
+        }
+    }
+
+    private async Task<UserOrgMembership> AddChampionContactTestMembership(
+        Organisation organisation,
+        string email,
+        UserOrgMembershipStatus status = UserOrgMembershipStatus.Active,
+        UserRole role = UserRole.Champion
+    )
+    {
+        User user = new UserFaker().RuleFor(x => x.WorkEmail, _ => email).Generate();
+        UserOrgMembership membership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.Status, _ => status)
+            .RuleFor(x => x.UserRole, _ => role)
+            .RuleFor(x => x.AllowedPharmaceuticalEntity, _ => PharmaceuticalEntity.Medicines)
+            .Generate()
+            .Update(x =>
+            {
+                x.User = user;
+                x.Organisation = organisation;
+            });
+        return await AddEntity(membership, TestContext.Current.CancellationToken);
+    }
+
     private async Task<(User User, UserOrgMembership Membership)> AddUserWithMembership(
         Action<User>? configureUser = null,
         UserOrgMembershipStatus status = UserOrgMembershipStatus.Active
@@ -1882,6 +2136,7 @@ public class UserServiceTests : DatabaseTestBase
             ?? (await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken)).Id;
         var record = new UserOnboardingRecord
         {
+            OnboardingFlow = OnboardingFlow.Invite,
             SetupToken = Guid.NewGuid(),
             CorrelationId = Guid.NewGuid(),
             CreatedAt = _currentDateTime.AddDays(-1),
@@ -2110,6 +2365,310 @@ public class UserServiceTests : DatabaseTestBase
         databaseMemberships.Count.ShouldBe(memberships.Length);
         databaseMemberships.ShouldAllBe(m => m.Status == UserOrgMembershipStatus.Removed);
         _harness.Cognito.GetUser(target.CognitoUsername).ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Deactivated, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Removed, UserRole.Champion)]
+    [InlineData(UserOrgStatus.AwaitingSetup, UserRole.Champion)]
+    [InlineData(UserOrgStatus.Active, UserRole.Standard)]
+    [InlineData(UserOrgStatus.Active, UserRole.Super)]
+    public async Task RemoveUser_WhenOtherMembershipIsNotEnabledChampion_ShouldRejectWithoutChanges(
+        UserOrgStatus otherStatus,
+        UserRole otherRole
+    )
+    {
+        // Arrange
+        var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
+        await AddCallerUser();
+        (User target, UserOrgMembership membership) = await AddUserWithMembership();
+        membership.UserRole = UserRole.Champion;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var otherMembership = await AddChampionContactTestMembership(
+            membership.Organisation!,
+            "other@example.com",
+            otherMembershipStatus,
+            otherRole
+        );
+        AddCognitoAccount(target);
+
+        // Act
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<RemoveUserError.LastRemainingChampion>()
+            .UserId.ShouldBe(target.Id);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedOtherMembership.Status.ShouldBe(otherMembershipStatus);
+        savedOtherMembership.UserRole.ShouldBe(otherRole);
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldNotBeNull();
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Active, UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Active, UserOrgStatus.Inactive)]
+    [InlineData(UserOrgStatus.Inactive, UserOrgStatus.Active)]
+    [InlineData(UserOrgStatus.Inactive, UserOrgStatus.Inactive)]
+    public async Task RemoveUser_WhenAnotherEnabledChampionExists_ShouldSucceed(
+        UserOrgStatus targetStatus,
+        UserOrgStatus otherStatus
+    )
+    {
+        // Arrange
+        var otherMembershipStatus = (UserOrgMembershipStatus)otherStatus;
+        await AddCallerUser();
+        (User target, UserOrgMembership membership) = await AddUserWithMembership(
+            status: (UserOrgMembershipStatus)targetStatus
+        );
+        membership.UserRole = UserRole.Champion;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var otherMembership = await AddChampionContactTestMembership(
+            membership.Organisation!,
+            "other@example.com",
+            otherMembershipStatus
+        );
+        AddCognitoAccount(target);
+
+        // Act
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.ShouldBeSuccess();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+        var savedOtherMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == otherMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Removed);
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedOtherMembership.Status.ShouldBe(otherMembershipStatus);
+        savedOtherMembership.UserRole.ShouldBe(UserRole.Champion);
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenAnyOrganisationWouldLoseItsLastChampion_ShouldLeaveEverythingUnchanged()
+    {
+        // Arrange
+        var user = _userFaker.Generate();
+        Organisation blockedOrganisation = _organisationFaker
+            .RuleFor(
+                x => x.UserOrgMemberships,
+                _ =>
+                    _userOrgMembershipFaker
+                        .RuleFor(x => x.User, _ => user)
+                        .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                        .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                        .Generate(1)
+                        .ToList()
+            )
+            .Generate();
+
+        await AddEntity(blockedOrganisation, TestContext.Current.CancellationToken);
+
+        var safeOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        // Same user, different organisation, enabled champion membership, would be safe to
+        // remove in this organisation
+        await AddEntity(
+            new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                .Generate()
+                .Update(x =>
+                {
+                    x.User = user;
+                    x.Organisation = safeOrganisation;
+                }),
+            TestContext.Current.CancellationToken
+        );
+
+        // A second enabled champion
+        await AddChampionContactTestMembership(safeOrganisation, "safe.other@example.com");
+
+        var blockedBeforeResult = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            blockedOrganisation.Id,
+            TestContext.Current.CancellationToken
+        );
+        var blockedBefore = blockedBeforeResult.ShouldBeSuccess();
+
+        var safeBeforeResult = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            safeOrganisation.Id,
+            TestContext.Current.CancellationToken
+        );
+        var safeBefore = safeBeforeResult.ShouldBeSuccess();
+
+        // Act
+        var result = await Service.RemoveUser(user.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.ShouldBeError().ShouldBeOfType<RemoveUserError.LastRemainingChampion>();
+
+        var blockedAfterResult = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            blockedOrganisation.Id,
+            TestContext.Current.CancellationToken
+        );
+        var blockedAfter = blockedAfterResult.ShouldBeSuccess();
+
+        var safeAfterResult = await Service.GetUserDetailsWithinOrganisation(
+            user.Id,
+            safeOrganisation.Id,
+            TestContext.Current.CancellationToken
+        );
+        var safeAfter = safeAfterResult.ShouldBeSuccess();
+
+        blockedAfter.ShouldBe(blockedBefore);
+        safeAfter.ShouldBe(safeBefore);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenOtherChampionMembershipsBelongToTarget_ShouldRejectRemoval()
+    {
+        // Arrange
+        await AddCallerUser();
+        (User target, UserOrgMembership membership) = await AddUserWithMembership();
+        membership.UserRole = UserRole.Champion;
+        membership.AllowedPharmaceuticalEntity = PharmaceuticalEntity.Medicines;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Same user, same org, different pharmaceutical entity, must not count as another
+        // champion for removal purposes
+        var targetVaccinesMembership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Inactive)
+            .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+            .RuleFor(x => x.AllowedPharmaceuticalEntity, _ => PharmaceuticalEntity.Vaccines)
+            .Generate()
+            .Update(x =>
+            {
+                x.UserId = target.Id;
+                x.OrganisationId = membership.OrganisationId;
+            });
+        await AddEntity(targetVaccinesMembership, TestContext.Current.CancellationToken);
+
+        // Act
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<RemoveUserError.LastRemainingChampion>()
+            .UserId.ShouldBe(target.Id);
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+        var savedVaccinesMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == targetVaccinesMembership.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
+        savedVaccinesMembership.Status.ShouldBe(UserOrgMembershipStatus.Inactive);
+        savedVaccinesMembership.UserRole.ShouldBe(UserRole.Champion);
+    }
+
+    [Fact]
+    public async Task RemoveUser_WhenEveryAffectedOrganisationHasAnotherChampion_ShouldSucceed()
+    {
+        // Arrange
+        await AddCallerUser();
+        (User target, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(2);
+
+        memberships[0].UserRole = UserRole.Champion;
+        memberships[1].UserRole = UserRole.Champion;
+
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var otherChampionInFirstOrg = await AddChampionContactTestMembership(
+            memberships[0].Organisation!,
+            "first.champion@example.com"
+        );
+        var otherChampionInSecondOrg = await AddChampionContactTestMembership(
+            memberships[1].Organisation!,
+            "second.champion@example.com"
+        );
+        AddCognitoAccount(target);
+
+        // Act
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.ShouldBeSuccess();
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var saved = await verifyContext
+            .UserOrgMemberships.Where(x => x.UserId == target.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        saved.Count.ShouldBe(memberships.Length);
+        saved.ShouldAllBe(x => x.Status == UserOrgMembershipStatus.Removed);
+
+        var savedOtherChampions = await verifyContext
+            .UserOrgMemberships.Where(x =>
+                x.Id == otherChampionInFirstOrg.Id || x.Id == otherChampionInSecondOrg.Id
+            )
+            .ToListAsync(TestContext.Current.CancellationToken);
+        savedOtherChampions.Count.ShouldBe(2);
+        savedOtherChampions.ShouldAllBe(x =>
+            x.Status == UserOrgMembershipStatus.Active && x.UserRole == UserRole.Champion
+        );
+        _harness.Cognito.GetUser(target.CognitoUsername).ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData(UserOrgStatus.Deactivated)]
+    [InlineData(UserOrgStatus.AwaitingSetup)]
+    public async Task RemoveUser_WhenTargetChampionIsNotEnabled_ShouldSucceed(UserOrgStatus status)
+    {
+        // Arrange
+        // A champion by role whose status means they are not enabled, so the last-champion rule
+        // does not apply
+        await AddCallerUser();
+        (User target, UserOrgMembership membership) = await AddUserWithMembership(
+            status: (UserOrgMembershipStatus)status
+        );
+        membership.UserRole = UserRole.Champion;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Act
+        var result = await Service.RemoveUser(target.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.ShouldBeSuccess();
+
+        await using AppDbContext verifyContext = Fixture.CreateContext();
+        var savedMembership = await verifyContext.UserOrgMemberships.SingleAsync(
+            x => x.Id == membership.Id,
+            TestContext.Current.CancellationToken
+        );
+        savedMembership.Status.ShouldBe(UserOrgMembershipStatus.Removed);
+        savedMembership.UserRole.ShouldBe(UserRole.Champion);
     }
 
     [Fact]

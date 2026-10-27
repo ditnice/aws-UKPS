@@ -4,6 +4,7 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal record CreateInitialisedUserCommand
 {
+    public required OnboardingFlow OnboardingFlow { get; init; }
     public required CognitoUsername CognitoUsername { get; init; }
     public required DateTime Now { get; init; }
     public required int CurrentUserId { get; init; }

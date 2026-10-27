@@ -422,6 +422,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("created_by_user_id");
 
+                    b.Property<int>("OnboardingFlow")
+                        .HasColumnType("integer")
+                        .HasColumnName("onboarding_flow");
+
                     b.Property<int>("ResendCount")
                         .HasColumnType("integer")
                         .HasColumnName("resend_count");

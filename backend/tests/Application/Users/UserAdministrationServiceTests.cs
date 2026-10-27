@@ -71,6 +71,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             );
 
         foundUserRecord.ShouldNotBeNull();
+        foundUserRecord.OnboardingFlow.ShouldBe(OnboardingFlow.Invite);
         foundUserRecord.CreatedAt.ShouldBe(_currentTime);
         foundUserRecord.CreatedByUserId.ShouldBe(_creator.Id);
         foundUserRecord.ResultingUserId.ShouldBe(result.ShouldBeSuccess());

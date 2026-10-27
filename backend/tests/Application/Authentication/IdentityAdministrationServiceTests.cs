@@ -11,6 +11,7 @@ using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.Users;
+using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Fakers;
@@ -154,6 +155,29 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         UserSignUpRequestEmail email = _harness
             .Emails.Sent.Last()
             .ShouldBeOfType<UserSignUpRequestEmail>();
+        email.Link.ShouldBe(testLink);
+    }
+
+    [Fact]
+    public async Task ResendSetupToken_WhenSetupWithSelfSignUp_ShouldSucceedAndEmailANewSetupLink()
+    {
+        var testLink = new Uri("https://example.com/setup");
+        _setupLinkCreator.GetSetupLink(Arg.Any<Guid>()).Returns(testLink);
+
+        UserOnboardingRecord entity = await OnboardUserViaSelfSignUpFlow();
+        int emailsSentDuringOnboarding = _harness.Emails.Sent.Count;
+
+        ResendSetupTokenResult result = await _harness.Service.ResendSetupToken(
+            new ResendSetupTokenCommand() { SetupToken = entity.SetupToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Emails.Sent.Count.ShouldBe(emailsSentDuringOnboarding + 1);
+        UserMembershipRequestApprovedNotificationEmail email = _harness
+            .Emails.Sent.Last()
+            .ShouldBeOfType<UserMembershipRequestApprovedNotificationEmail>();
         email.Link.ShouldBe(testLink);
     }
 
@@ -665,7 +689,9 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     [InlineData(true)]
     public async Task RemovedUser_ShouldNotBeAbleToContinueOnboarding(bool setupStarted)
     {
-        UserOnboardingRecord originalRecord = await OnboardUserWithTimeOffset(minutesInPast: 5);
+        UserOnboardingRecord originalRecord = await OnboardUserViaInviteWithTimeOffset(
+            minutesInPast: 5
+        );
         var resendResult = await _harness.Service.ResendSetupToken(
             new ResendSetupTokenCommand { SetupToken = originalRecord.SetupToken },
             TestContext.Current.CancellationToken
@@ -754,7 +780,9 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         CognitoUsername userIdentityId
     )> CreateAndDoInitialUserSetup()
     {
-        UserOnboardingRecord onboardingRecord = await OnboardUserWithTimeOffset(minutesInPast: 15);
+        UserOnboardingRecord onboardingRecord = await OnboardUserViaInviteWithTimeOffset(
+            minutesInPast: 15
+        );
         MultiFactorAuthenticationSetupDto setupResult = await SetupUserWithTimeOffset(
             onboardingRecord.SetupToken,
             0
@@ -766,7 +794,61 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         );
     }
 
-    private async Task<UserOnboardingRecord> OnboardUserWithTimeOffset(int minutesInPast)
+    private async Task<UserOnboardingRecord> OnboardUserViaSelfSignUpFlow()
+    {
+        var registrationHarness = new ServiceTestHarness<IUserRegistrationService>(_harness)
+            .UpdateCurrentUser(x => x with { CognitoUsername = _creator.CognitoUsername })
+            .UpdateCurrentTime(_testTime);
+
+        var organisationFaker = new OrganisationFaker().RuleFor(
+            x => x.Status,
+            _ => UserOrgStatus.Active
+        );
+        Organisation organisation = await AddEntity(
+            organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        var registrationRequest = new RegisterUserCommandDto()
+        {
+            FullName = "Test",
+            WorkEmail = "example@email.com",
+            PhoneNumber = new TelephoneNumberFaker().Generate(),
+        };
+        var registrationResult = await registrationHarness.Service.RegisterUser(
+            organisation.Id,
+            registrationRequest,
+            TestContext.Current.CancellationToken
+        );
+        registrationResult.ShouldBeSuccess();
+        var request = await registrationHarness
+            .GetClearedContext()
+            .UserRegistrationRequests.FirstAsync(
+                x => x.WorkEmail == registrationRequest.WorkEmail,
+                TestContext.Current.CancellationToken
+            );
+
+        var approveResult = await registrationHarness.Service.ApproveRequest(
+            organisation.Id,
+            request.Id,
+            TestContext.Current.CancellationToken
+        );
+        approveResult.ShouldBeSuccess();
+
+        var user =
+            await registrationHarness
+                .GetClearedContext()
+                .Users.Include(x => x.OnboardingRecord)
+                .FirstOrDefaultAsync(
+                    x => x.WorkEmail == request.WorkEmail,
+                    TestContext.Current.CancellationToken
+                )
+            ?? throw new InvalidOperationException("Could not find expected user.");
+
+        return user.OnboardingRecord!;
+    }
+
+    private async Task<UserOnboardingRecord> OnboardUserViaInviteWithTimeOffset(int minutesInPast)
     {
         var organisationFaker = new OrganisationFaker();
         Organisation organisation = await AddEntity(
@@ -823,7 +905,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         int? consumedMinutesInThePast = null
     )
     {
-        var onboardingRecord = await OnboardUserWithTimeOffset(createdMinutesInThePast);
+        var onboardingRecord = await OnboardUserViaInviteWithTimeOffset(createdMinutesInThePast);
         if (consumedMinutesInThePast is { } value)
         {
             await SetupUserWithTimeOffset(onboardingRecord.SetupToken, value);

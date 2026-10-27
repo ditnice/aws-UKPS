@@ -16,8 +16,16 @@ internal static class AuthorisationPolicies
     public const string OrganisationSelection = nameof(OrganisationSelection);
 
     /// <summary>
+    /// A policy that allows deactivated users. Allows users with a resolved organisation, and
+    /// users whose membership has been deactivated. Only use it for endpoints a deactivated user
+    /// needs, such as the champion contacts shown on the deactivated page.
+    /// </summary>
+    public const string AllowDeactivatedMembership = nameof(AllowDeactivatedMembership);
+
+    /// <summary>
     /// Registers the UKPS authorisation policies. The default policy requires an organisation to
-    /// have been resolved for the authenticated user.
+    /// have been resolved for the authenticated user. Users whose membership has been deactivated
+    /// are excluded.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection.</returns>
@@ -40,7 +48,31 @@ internal static class AuthorisationPolicies
 
             options.AddPolicy(
                 OrganisationSelection,
-                policy => policy.RequireAuthenticatedUser().RequireClaim(UkpsClaimTypes.Username)
+                policy =>
+                    policy
+                        .RequireAuthenticatedUser()
+                        .RequireClaim(UkpsClaimTypes.Username)
+                        .RequireAssertion(context =>
+                            !context.User.HasClaim(
+                                UkpsClaimTypes.OrganisationSelectionFailure,
+                                AuthenticationFailCode.MembershipDeactivated.ToString()
+                            )
+                        )
+            );
+
+            options.AddPolicy(
+                AllowDeactivatedMembership,
+                policy =>
+                    policy
+                        .RequireAuthenticatedUser()
+                        .RequireClaim(UkpsClaimTypes.Username)
+                        .RequireAssertion(context =>
+                            context.User.FindFirst(UkpsClaimTypes.OrganisationId) is not null
+                            || context.User.HasClaim(
+                                UkpsClaimTypes.OrganisationSelectionFailure,
+                                AuthenticationFailCode.MembershipDeactivated.ToString()
+                            )
+                        )
             );
         });
     }
