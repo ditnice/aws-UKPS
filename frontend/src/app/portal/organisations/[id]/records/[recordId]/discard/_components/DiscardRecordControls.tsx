@@ -3,14 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import type { RecordType } from '@/client/generated'
+import { discardRecord } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
-// TODO: replace with the generated discardRecord client call once the endpoint is available.
-const discardRecord = async (_options: { path: { id: number } }): Promise<{ error?: unknown }> => ({
-  error: undefined,
-})
+import { buildRecordActionHref } from '../../../_lib/recordActionAlert'
 
 export type DiscardRecordControlsProps = {
   organisationId: number
@@ -27,12 +24,12 @@ export const DiscardRecordControls = ({ organisationId, recordId }: DiscardRecor
     setLoading(true)
 
     try {
-      const result = await discardRecord({ path: { id: recordId } })
+      const result = await discardRecord({ path: { recordId } })
       if (result.error) {
         setHasError(true)
         return
       }
-      router.push(`/portal/organisations/${organisationId}/records`)
+      router.push(buildRecordActionHref(organisationId, 'discarded'))
     } finally {
       setLoading(false)
     }

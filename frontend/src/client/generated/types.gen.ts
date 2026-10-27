@@ -809,8 +809,7 @@ export const RecordDisplayStatus = {
     QA_REVIEW: 'QAReview',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived',
-    DISCARDED: 'Discarded'
+    ARCHIVED: 'Archived'
 } as const;
 
 /**
@@ -878,6 +877,11 @@ export type RecordDtoMedicineRecordDto = {
      * Gets the identifier of the latest revision.
      */
     revisionId: number;
+    /**
+     * Gets a value indicating whether the record can be discarded, because it has never been
+     * submitted.
+     */
+    canDiscard: boolean;
 };
 
 /**
@@ -909,6 +913,11 @@ export type RecordDtoVaccineRecordDto = {
      * Gets the identifier of the latest revision.
      */
     revisionId: number;
+    /**
+     * Gets a value indicating whether the record can be discarded, because it has never been
+     * submitted.
+     */
+    canDiscard: boolean;
 };
 
 /**
@@ -2313,11 +2322,11 @@ export type CreateRecordResponses = {
 
 export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
 
-export type PatchRecordsByRecordIdDiscardData = {
+export type DiscardRecordData = {
     body?: never;
     path: {
         /**
-         * The unique identifier of the record to discard.
+         * The identifier of the record to discard.
          */
         recordId: number;
     };
@@ -2325,16 +2334,33 @@ export type PatchRecordsByRecordIdDiscardData = {
     url: '/records/{recordId}/discard';
 };
 
-export type PatchRecordsByRecordIdDiscardErrors = {
+export type DiscardRecordErrors = {
     /**
-     * An HTTP 200 response if the record is successfully discarded.
-     * An HTTP 404 response if the record cannot be found.
-     * An HTTP 400 response if the record is not eligible to be discarded.
+     * The record has been submitted, so cannot be discarded.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The record was not found, has already been discarded, or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record was updated by another operation while it was being discarded.
+     */
+    409: ProblemDetails;
 };
 
-export type PatchRecordsByRecordIdDiscardError = PatchRecordsByRecordIdDiscardErrors[keyof PatchRecordsByRecordIdDiscardErrors];
+export type DiscardRecordError = DiscardRecordErrors[keyof DiscardRecordErrors];
+
+export type DiscardRecordResponses = {
+    /**
+     * The record was discarded.
+     */
+    200: unknown;
+};
 
 export type GetUsersMeData = {
     body?: never;
