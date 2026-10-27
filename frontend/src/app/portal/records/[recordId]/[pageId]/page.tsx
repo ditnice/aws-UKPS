@@ -10,22 +10,21 @@ import { parsePositiveInteger } from '@/lib/valueParsing'
 const pageIdPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 type RecordFormRouteProps = {
-  params: Promise<{ recordId: string; revisionId: string; pageId: string }>
+  params: Promise<{ recordId: string; pageId: string }>
 }
 
-/** A page of a record revision's content form, described by the backend. */
+/** A page of a record's content form, described by the backend. */
 const RecordFormRoute = async ({ params }: RecordFormRouteProps) => {
-  const { recordId: recordIdParam, revisionId: revisionIdParam, pageId } = await params
+  const { recordId: recordIdParam, pageId } = await params
   const recordId = parsePositiveInteger(recordIdParam)
-  const revisionId = parsePositiveInteger(revisionIdParam)
 
-  if (!recordId || !revisionId || !pageIdPattern.test(pageId)) {
+  if (!recordId || !pageIdPattern.test(pageId)) {
     notFound()
   }
 
   const { data: page, response } = await getRecordFormPage({
     client: await createServerApiClient(),
-    path: { recordId, revisionId, pageId },
+    path: { recordId, pageId },
   })
 
   if (response?.status === 404) {

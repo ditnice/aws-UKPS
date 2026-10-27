@@ -11,7 +11,6 @@ public interface IRecordFormQueryService
     /// <summary>Loads a page's questions, options and current answers.</summary>
     Task<GetRecordPageResult> GetPage(
         int recordId,
-        int revisionId,
         string pageId,
         CancellationToken cancellationToken
     );

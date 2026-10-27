@@ -8,7 +8,10 @@ public sealed record RecordPageDto
     /// <summary>The form's version. Echo it back on save.</summary>
     public required string FormVersion { get; init; }
 
-    /// <summary>The revision's concurrency token. Echo it back on save.</summary>
+    /// <summary>
+    /// The concurrency token of the record's latest revision, which the page reads and writes.
+    /// Echo it back on save.
+    /// </summary>
     public required uint RevisionVersion { get; init; }
 
     /// <summary>The organisation that owns the record; used for links back to its records list.</summary>
@@ -16,9 +19,6 @@ public sealed record RecordPageDto
 
     /// <summary>The record the page belongs to.</summary>
     public required int RecordId { get; init; }
-
-    /// <summary>The revision the page reads and writes.</summary>
-    public required int RevisionId { get; init; }
 
     /// <summary>The section the page belongs to.</summary>
     public required RecordPageSectionDto Section { get; init; }

@@ -67,7 +67,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     )
     {
         Record record = await AddRecord(recordStatus);
-        RecordRevision revision = await AddRevision(record, 1, workflowStatus);
+        await AddRevision(record, 1, workflowStatus);
 
         GetRecordResult result = await Service.GetRecord(
             record.Id,
@@ -80,7 +80,6 @@ public class RecordViewServiceTests : DatabaseTestBase
         dto.OrganisationId.ShouldBe(_organisation.Id);
         dto.RecordStatus.ShouldBe(recordStatus);
         dto.ReviewedAt.ShouldBe(_reviewedAt);
-        dto.RevisionId.ShouldBe(revision.Id);
     }
 
     [Theory]
@@ -133,7 +132,6 @@ public class RecordViewServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.RecordStatus.ShouldBe(RecordStatus.Published);
         dto.DisplayStatus.ShouldBe(RecordDisplayStatus.Draft);
-        dto.RevisionId.ShouldBe(draft.Id);
         dto.RecordProductDetail.ShouldNotBeNull().RecordTitle.ShouldBe($"Title {draft.Id}");
     }
 
@@ -163,7 +161,7 @@ public class RecordViewServiceTests : DatabaseTestBase
                 ? WorkflowStatus.Rejected
                 : WorkflowStatus.Published
         );
-        RecordRevision latest = await AddRevision(record, 2, latestWorkflowStatus);
+        await AddRevision(record, 2, latestWorkflowStatus);
 
         GetRecordResult result = await Service.GetRecord(
             record.Id,
@@ -173,7 +171,6 @@ public class RecordViewServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.RecordStatus.ShouldBe(recordStatus);
-        dto.RevisionId.ShouldBe(latest.Id);
         dto.DisplayStatus.ShouldBe(expectedDisplayStatus);
     }
 
@@ -225,7 +222,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     public async Task GetRecord_VaccineRecord_ReturnsVaccineRecord()
     {
         Record record = await AddRecord(RecordStatus.Published, RecordType.Vaccine);
-        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
+        await AddRevision(record, 1, WorkflowStatus.Published);
 
         GetRecordResult result = await Service.GetRecord(
             record.Id,
@@ -235,7 +232,6 @@ public class RecordViewServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<VaccineRecordDto>();
         dto.RecordId.ShouldBe(record.Id);
-        dto.RevisionId.ShouldBe(revision.Id);
     }
 
     [Theory]

@@ -52,8 +52,8 @@ For the design behind it, see the [high-level design](high-level-design.md).
 
 **Request:** `POST /records` from `/portal/organisations/3/records/create`.
 
-**Response:** `200 { "recordId": 5, "revisionId": 7, "firstPageId": "indication" }`, then the
-browser goes to `/portal/records/5/revisions/7/indication`. (`firstPageId` is `null` for a record
+**Response:** `200 { "recordId": 5, "firstPageId": "indication" }`, then the
+browser goes to `/portal/records/5/indication`. (`firstPageId` is `null` for a record
 type with no form, or for a user who cannot edit record content, and the browser then goes to
 the records list.)
 
@@ -170,7 +170,7 @@ Each save's response is `200 { "nextPageId": "..." }` and the browser moves to t
 
 ## Step 1: Indication
 
-**Request:** `PUT /records/5/revisions/7/pages/indication`
+**Request:** `PUT /records/5/pages/indication`
 
 ```json
 {
@@ -194,7 +194,7 @@ Leading and trailing spaces are trimmed before saving, so typing `"  text  "` st
 
 ## Step 2: BNF chapter
 
-**Request:** `PUT /records/5/revisions/7/pages/bnf-chapter`, with answers
+**Request:** `PUT /records/5/pages/bnf-chapter`, with answers
 `{ "medicines_indication_detail.bnf_chapter_id": "40" }`. Its `revisionVersion` is the new `xmin`
 from step 1, which the browser received when it loaded the BNF chapter page. Each page load picks
 up the latest value in the same way.
@@ -212,7 +212,7 @@ would store the chapter's ID. The audit stores the ID, not its label.
 
 ## Step 3: Therapeutic area
 
-**Request:** `PUT /records/5/revisions/7/pages/therapeutic-area`, with answers
+**Request:** `PUT /records/5/pages/therapeutic-area`, with answers
 `{ "medicines_indication_detail_therapeutic_area": ["51"] }`. Each entry is the most specific
 choice: the condition if one is picked, otherwise the area.
 
@@ -233,7 +233,7 @@ audit rows and does not touch the revision.
 
 ## Step 4: Treating children
 
-**Request:** `PUT /records/5/revisions/7/pages/paediatric`, with answers
+**Request:** `PUT /records/5/pages/paediatric`, with answers
 `{ "medicines_indication_detail.indication_is_paediatric": "ExclusivelyAdults" }`.
 
 **Response:** `{ "nextPageId": "cancer" }`
@@ -248,7 +248,7 @@ The content table stores the enum's integer; the audit stores its name.
 
 ## Step 5: Treating cancer
 
-**Request:** `PUT /records/5/revisions/7/pages/cancer`, with answers
+**Request:** `PUT /records/5/pages/cancer`, with answers
 `{ "medicines_indication_detail.indication_is_cancer": "No" }`.
 
 **Response:** `{ "nextPageId": "rare-disease" }`
@@ -261,7 +261,7 @@ The content table stores the enum's integer; the audit stores its name.
 
 ## Step 6: Treating a rare disease
 
-**Request:** `PUT /records/5/revisions/7/pages/rare-disease`, with answers
+**Request:** `PUT /records/5/pages/rare-disease`, with answers
 `{ "medicines_indication_detail.indication_is_rare_disease": "No" }`.
 
 **Response:** `{ "nextPageId": null }`, and the browser goes to `/portal/organisations/3/records`.

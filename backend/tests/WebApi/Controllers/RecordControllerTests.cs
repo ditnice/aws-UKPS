@@ -76,7 +76,6 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     private readonly CreateRecordDto _defaultCreateRecordDto = new CreateRecordDto
     {
         RecordId = 1,
-        RevisionId = 2,
         FirstPageId = "indication",
     };
 
@@ -364,7 +363,6 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             OrganisationId = OrganisationId,
             RecordStatus = RecordStatus.Published,
             DisplayStatus = RecordDisplayStatus.Draft,
-            RevisionId = 3,
             FirstPageId = "indication",
             RecordClinicalTrials = [],
         };
@@ -387,7 +385,6 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         record.OrganisationId.ShouldBe(expected.OrganisationId);
         record.RecordStatus.ShouldBe(expected.RecordStatus);
         record.DisplayStatus.ShouldBe(expected.DisplayStatus);
-        record.RevisionId.ShouldBe(expected.RevisionId);
     }
 
     [Fact]

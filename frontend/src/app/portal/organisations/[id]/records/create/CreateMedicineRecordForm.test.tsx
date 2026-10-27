@@ -399,7 +399,7 @@ describe('CreateMedicineRecordForm', () => {
 
     it('goes to the first page of the record content form when there is one', async () => {
       mocks.createRecord.mockResolvedValue({
-        data: { recordId: 5, revisionId: 7, firstPageId: 'indication' },
+        data: { recordId: 5, firstPageId: 'indication' },
         error: undefined,
         response: { ok: true },
       })
@@ -409,7 +409,7 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/revisions/7/indication')
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/indication')
       })
     })
 

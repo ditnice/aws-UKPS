@@ -14,7 +14,7 @@ namespace UKPS.Api.WebApi.Controllers;
 /// <param name="saveService">Service used to validate and save form pages.</param>
 [Authorize]
 [ApiController]
-[Route("records/{recordId:int}/revisions/{revisionId:int}/pages/{pageId}")]
+[Route("records/{recordId:int}/pages/{pageId}")]
 public class RecordFormController(
     IRecordFormQueryService queryService,
     IRecordFormSaveService saveService
@@ -23,31 +23,28 @@ public class RecordFormController(
     private const string CodeExtension = "code";
 
     /// <summary>
-    /// Retrieves a page of a revision's content form: its questions, rules, options and current
-    /// answers.
+    /// Retrieves a page of a record's content form: its questions, rules, options and the current
+    /// answers on the record's latest revision.
     /// </summary>
-    /// <param name="recordId">The record the revision belongs to.</param>
-    /// <param name="revisionId">The revision to read.</param>
+    /// <param name="recordId">The record to read.</param>
     /// <param name="pageId">The page to read.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The page.</returns>
     /// <response code="200">Returns the page.</response>
     /// <response code="404">
-    /// The record, revision or page was not found or is not accessible to the caller.
+    /// The record or page was not found or is not accessible to the caller.
     /// </response>
     [HttpGet(Name = nameof(GetRecordFormPage))]
     [ProducesResponseType<RecordPageDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RecordPageDto>> GetRecordFormPage(
         int recordId,
-        int revisionId,
         string pageId,
         CancellationToken cancellationToken
     )
     {
         GetRecordPageResult result = await queryService.GetPage(
             recordId,
-            revisionId,
             pageId,
             cancellationToken
         );
@@ -65,10 +62,10 @@ public class RecordFormController(
     }
 
     /// <summary>
-    /// Validates and saves every answer on a page of a draft revision's content form.
+    /// Validates and saves every answer on a page of a record's content form, to the record's
+    /// latest revision, which must be a draft.
     /// </summary>
-    /// <param name="recordId">The record the revision belongs to.</param>
-    /// <param name="revisionId">The revision to write.</param>
+    /// <param name="recordId">The record to write.</param>
     /// <param name="pageId">The page to save.</param>
     /// <param name="command">Every answer on the page, with the versions it was loaded at.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
@@ -77,7 +74,7 @@ public class RecordFormController(
     /// <response code="400">One or more answers are missing, malformed or invalid.</response>
     /// <response code="403">The caller can read the record but not edit it.</response>
     /// <response code="404">
-    /// The record, revision or page was not found or is not accessible to the caller.
+    /// The record or page was not found or is not accessible to the caller.
     /// </response>
     /// <response code="409">
     /// The revision is not a draft, or the form or revision changed since the page was loaded.
@@ -91,7 +88,6 @@ public class RecordFormController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<SaveRecordPageDto>> SaveRecordFormPage(
         int recordId,
-        int revisionId,
         string pageId,
         SaveRecordPageCommand command,
         CancellationToken cancellationToken
@@ -99,7 +95,6 @@ public class RecordFormController(
     {
         SaveRecordPageResult result = await saveService.SavePage(
             recordId,
-            revisionId,
             pageId,
             command,
             cancellationToken

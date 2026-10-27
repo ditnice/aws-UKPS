@@ -52,7 +52,6 @@ const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   revisionVersion: 4711,
   organisationId: 3,
   recordId: 5,
-  revisionId: 7,
   section: { id: 'indication-details', title: 'Indication details' },
   page: { id: 'indication', title: 'Indication' },
   previousPageId: null,
@@ -118,7 +117,7 @@ describe('FormPage', () => {
       expect(screen.getByRole('heading', { level: 1, name: /Indication$/ })).toBeInTheDocument()
       expect(screen.getByLabelText('Other')).toBeInTheDocument()
       expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
-        '/portal/records/5/revisions/7/indication',
+        '/portal/records/5/indication',
       )
     })
 
@@ -141,10 +140,10 @@ describe('FormPage', () => {
       save()
 
       await waitFor(() => {
-        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/revisions/7/bnf-chapter')
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/bnf-chapter')
       })
       expect(mocks.saveRecordFormPage).toHaveBeenCalledWith({
-        path: { recordId: 5, revisionId: 7, pageId: 'indication' },
+        path: { recordId: 5, pageId: 'indication' },
         body: {
           formVersion: '2026.10.1',
           revisionVersion: 4711,
@@ -218,7 +217,7 @@ describe('FormPage', () => {
       ).toBeInTheDocument()
       expect(screen.getByRole('link', { name: 'Reload this page' })).toHaveAttribute(
         'href',
-        '/portal/records/5/revisions/7/indication',
+        '/portal/records/5/indication',
       )
     })
 

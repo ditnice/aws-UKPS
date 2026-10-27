@@ -87,7 +87,7 @@ flowchart LR
     end
 
     subgraph Frontend["Frontend (Next.js)"]
-        R["Route<br/>portal/records/[recordId]/revisions/[revisionId]/[pageId]"]
+        R["Route<br/>portal/records/[recordId]/[pageId]"]
         FP["FormPage<br/>(TanStack Form)"]
         QR["questionRegistry<br/>Input / Textarea / Select / Radio / Checkbox / HierarchicalSelect"]
         DF["lib/dynamic-form<br/>answers, buildZodSchema,<br/>buildPayload, applyServerErrors"]
@@ -154,7 +154,7 @@ flowchart LR
 | Server-side page validation | `backend/src/Application/RecordForms/Rules/PageAnswerValidator.cs`, `AnswerParser.cs`, `RuleEvaluator.cs` |
 | Controller | `backend/src/WebApi/Controllers/RecordFormController.cs` |
 | Shared rule fixture | `backend/tests/Application/RecordForms/Fixtures/rule-cases.json` (run by `RuleCasesTests` and `frontend/src/lib/dynamic-form/ruleCases.test.ts`) |
-| Page route | `frontend/src/app/portal/records/[recordId]/revisions/[revisionId]/[pageId]/page.tsx` |
+| Page route | `frontend/src/app/portal/records/[recordId]/[pageId]/page.tsx` |
 | Renderer and question components | `frontend/src/components/DynamicForm/` (`FormPage.tsx`, `questionRegistry.tsx`, `questions/`) |
 | Form logic | `frontend/src/lib/dynamic-form/` |
 
@@ -438,12 +438,12 @@ sequenceDiagram
     F->>B: POST /records
     B->>P: INSERT record, revision 1 (Draft), product detail row, RecordCreated event
     P-->>B: OK
-    B-->>F: 200 { recordId, revisionId, firstPageId }
-    F->>F: router.push(/portal/records/{recordId}/revisions/{revisionId}/{firstPageId})
+    B-->>F: 200 { recordId, firstPageId }
+    F->>F: router.push(/portal/records/{recordId}/{firstPageId})
 ```
 
 The record details page (`/portal/organisations/{id}/records/{recordId}`) links its **Update
-record** button to the same URL, using `revisionId` and `firstPageId` from
+record** button to the same URL, using `firstPageId` from
 `GET /records/{id}`. This lets users return to a record and change their answers.
 
 ### Loading a page
@@ -454,8 +454,8 @@ sequenceDiagram
     participant R as Next.js route (server)
     participant B as Backend
     participant P as Postgres
-    U->>R: GET /portal/records/5/revisions/7/bnf-chapter
-    R->>B: GET /records/5/revisions/7/pages/bnf-chapter
+    U->>R: GET /portal/records/5/bnf-chapter
+    R->>B: GET /records/5/pages/bnf-chapter
     B->>P: Load revision (status, xmin, organisation, record type)
     alt Not found, other organisation, or unknown page
         B-->>R: 404 (neutral)
@@ -482,7 +482,7 @@ sequenceDiagram
     alt Client validation fails
         F-->>U: Errors shown against fields
     else Valid
-        F->>B: PUT /records/5/revisions/7/pages/bnf-chapter { formVersion, revisionVersion, answers }
+        F->>B: PUT /records/5/pages/bnf-chapter { formVersion, revisionVersion, answers }
         B->>P: Load revision
         alt Not found, cannot read, or unknown page
             B-->>F: 404
@@ -519,8 +519,8 @@ sequenceDiagram
 
 | Method | Route | Purpose |
 |---|---|---|
-| GET | `/records/{recordId}/revisions/{revisionId}/pages/{pageId}` | Page structure, rules, options and current answers |
-| PUT | `/records/{recordId}/revisions/{revisionId}/pages/{pageId}` | Validate and save every answer on the page |
+| GET | `/records/{recordId}/pages/{pageId}` | Page structure, rules, options and current answers |
+| PUT | `/records/{recordId}/pages/{pageId}` | Validate and save every answer on the page |
 
 JSON property names are camelCase, except answer and error keys, which are question IDs exactly
 as declared. Enum values are serialised by name, for example `"Textarea"` and `"Required"`. The
@@ -532,13 +532,13 @@ examples below use record 5, revision 7.
 |---|---|
 | `formVersion`, `revisionVersion` | Echo both back on save |
 | `organisationId` | Used for links back to the records list |
-| `recordId`, `revisionId` | Used to build page URLs |
+| `recordId` | Used to build page URLs |
 | `section`, `page` | IDs and titles; the section title is the page caption |
 | `previousPageId` | Target of Back, or `null` on the first page |
 | `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 
-`GET /records/5/revisions/7/pages/therapeutic-area` returns `200 OK`:
+`GET /records/5/pages/therapeutic-area` returns `200 OK`:
 
 ```json
 {
@@ -623,7 +623,7 @@ Send `null` for an unanswered single-value question and `[]` for an unanswered c
 
 #### Request
 
-`PUT /records/5/revisions/7/pages/therapeutic-area`:
+`PUT /records/5/pages/therapeutic-area`:
 
 ```json
 {

@@ -198,8 +198,8 @@ Form.For(RecordType.Medicine, version: "2026.10.1")
 
 | Method | Route | Purpose |
 |---|---|---|
-| GET | `/records/{recordId}/revisions/{revisionId}/pages/{pageId}` | Page structure, rules, options, current answers, context |
-| PUT | `/records/{recordId}/revisions/{revisionId}/pages/{pageId}` | Validate and save the whole page; returns next page |
+| GET | `/records/{recordId}/pages/{pageId}` | Page structure, rules, options, current answers, context |
+| PUT | `/records/{recordId}/pages/{pageId}` | Validate and save the whole page; returns next page |
 
 (No form-overview endpoint in v1.)
 
@@ -301,7 +301,7 @@ One DB transaction. Returns `Result<SavePageDto, SavePageError>`.
 
 ## 8. Frontend renderer
 
-- Route: `frontend/src/app/portal/records/[recordId]/revisions/[revisionId]/[pageId]/page.tsx` (server component) → fetch GET via `server-api` → `<FormPage>` (client). 404 → `not-found`. This is the first `/portal/records/...` route; existing record UI is under `/portal/organisations/[id]/records`.
+- Route: `frontend/src/app/portal/records/[recordId]/[pageId]/page.tsx` (server component) → fetch GET via `server-api` → `<FormPage>` (client). 404 → `not-found`. This is the first `/portal/records/...` route; existing record UI is under `/portal/organisations/[id]/records`.
 - Suggested shared code: `frontend/src/lib/dynamic-form/` (`buildZodSchema.ts`, `evaluateCondition.ts`, `buildPayload.ts`, `applyServerErrors.ts`) and `frontend/src/components/DynamicForm/` (`FormPage.tsx`, `questionRegistry.tsx`, `PrecisionDateInput/`, `AddAnotherGroup/`).
 - `questionRegistry` maps `type` → component wrapping existing design-system components.
 - Each question renders in `form.Field name={question.id}`; group children use TanStack array fields (0-based) so names match server error keys. Nested groups render an `AddAnotherGroup` inside an item (one level only).

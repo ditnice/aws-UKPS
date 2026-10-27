@@ -69,7 +69,7 @@ internal sealed class RecordViewService(
                     revisionId,
                     cancellationToken
                 ),
-                RecordType.Vaccine => GetVaccineRecord(recordId, record, revisionId),
+                RecordType.Vaccine => GetVaccineRecord(recordId, record),
                 _ => throw new UnreachableException($"Unhandled record type {recordType}."),
             }
         );
@@ -119,7 +119,6 @@ internal sealed class RecordViewService(
             RecordStatus = record.RecordStatus,
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
-            RevisionId = revisionId,
             FirstPageId = FirstPageId(record),
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
@@ -166,7 +165,7 @@ internal sealed class RecordViewService(
     }
 
     // TODO: Populate the vaccine record sections.
-    private VaccineRecordDto GetVaccineRecord(int recordId, RecordHeader record, int revisionId)
+    private VaccineRecordDto GetVaccineRecord(int recordId, RecordHeader record)
     {
         return new VaccineRecordDto
         {
@@ -175,7 +174,6 @@ internal sealed class RecordViewService(
             RecordStatus = record.RecordStatus,
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
-            RevisionId = revisionId,
             FirstPageId = FirstPageId(record),
         };
     }

@@ -29,7 +29,7 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string Indication = "medicines_indication_detail.indication";
-    private const string PageUrl = "/records/5/revisions/7/pages/indication";
+    private const string PageUrl = "/records/5/pages/indication";
 
     private static readonly Dictionary<string, SaveRecordPageError> _conflicts = new(
         StringComparer.Ordinal
@@ -77,7 +77,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     {
         RecordPageDto page = CreatePage();
         _mockQueryService
-            .GetPage(5, 7, "indication", Arg.Any<CancellationToken>())
+            .GetPage(5, "indication", Arg.Any<CancellationToken>())
             .Returns(GetRecordPageResult.Ok(page));
 
         HttpResponseMessage response = await _client.GetAsync(Url(PageUrl), Ct);
@@ -94,15 +94,15 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     public async Task GetRecordFormPage_InaccessibleAndMissingPages_ReturnIdenticalResponses()
     {
         _mockQueryService
-            .GetPage(5, 7, "indication", Arg.Any<CancellationToken>())
+            .GetPage(5, "indication", Arg.Any<CancellationToken>())
             .Returns(GetRecordPageResult.Err(new GetRecordPageError.NotAllowed()));
         _mockQueryService
-            .GetPage(5, 7, "unknown", Arg.Any<CancellationToken>())
+            .GetPage(5, "unknown", Arg.Any<CancellationToken>())
             .Returns(GetRecordPageResult.Err(new GetRecordPageError.NotFound()));
 
         await ShouldBeIdenticalNotFound(
             await _client.GetAsync(Url(PageUrl), Ct),
-            await _client.GetAsync(Url("/records/5/revisions/7/pages/unknown"), Ct)
+            await _client.GetAsync(Url("/records/5/pages/unknown"), Ct)
         );
     }
 
@@ -112,7 +112,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         _mockSaveService
             .SavePage(
                 5,
-                7,
                 "indication",
                 Arg.Any<SaveRecordPageCommand>(),
                 Arg.Any<CancellationToken>()
@@ -129,7 +128,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             .Received(1)
             .SavePage(
                 5,
-                7,
                 "indication",
                 Arg.Is<SaveRecordPageCommand>(c =>
                     c.FormVersion == "2026.10.3"
@@ -173,9 +171,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        await _mockSaveService
-            .DidNotReceiveWithAnyArgs()
-            .SavePage(default, default, default!, default!, Ct);
+        await _mockSaveService.DidNotReceiveWithAnyArgs().SavePage(default, default!, default!, Ct);
     }
 
     [Fact]
@@ -196,7 +192,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
 
         await ShouldBeIdenticalNotFound(
             await Save(PageUrl),
-            await Save("/records/5/revisions/7/pages/unknown")
+            await Save("/records/5/pages/unknown")
         );
     }
 
@@ -235,7 +231,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
 
     private void SetSaveResult(SaveRecordPageError error, string pageId = "indication") =>
         _mockSaveService
-            .SavePage(5, 7, pageId, Arg.Any<SaveRecordPageCommand>(), Arg.Any<CancellationToken>())
+            .SavePage(5, pageId, Arg.Any<SaveRecordPageCommand>(), Arg.Any<CancellationToken>())
             .Returns(SaveRecordPageResult.Err(error));
 
     private static async Task ShouldBeIdenticalNotFound(
@@ -264,7 +260,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             RevisionVersion = 42,
             OrganisationId = 1,
             RecordId = 5,
-            RevisionId = 7,
             Section = new RecordPageSectionDto
             {
                 Id = "indication-details",

@@ -23,7 +23,6 @@ internal sealed class RecordFormSaveService(
 {
     public async Task<SaveRecordPageResult> SavePage(
         int recordId,
-        int revisionId,
         string pageId,
         SaveRecordPageCommand command,
         CancellationToken cancellationToken
@@ -31,7 +30,6 @@ internal sealed class RecordFormSaveService(
     {
         var (loaded, failure) = await loader.LoadPageAsync(
             recordId,
-            revisionId,
             pageId,
             track: true,
             cancellationToken
@@ -43,7 +41,12 @@ internal sealed class RecordFormSaveService(
         }
 
         FormPage page = loaded!.Page;
-        var rows = await loader.LoadRowsAsync(page, revisionId, track: true, cancellationToken);
+        var rows = await loader.LoadRowsAsync(
+            page,
+            loaded.Revision.Id,
+            track: true,
+            cancellationToken
+        );
         Dictionary<string, FormAnswer> before = RecordFormPageLoader.ReadAnswers(page, rows);
         var options = await loader.LoadOptionsAsync(page, before, cancellationToken);
 
@@ -64,7 +67,7 @@ internal sealed class RecordFormSaveService(
 
         foreach (FormQuestion question in changed)
         {
-            object row = rows[question.Entity] ??= AddRow(question.Entity, revisionId);
+            object row = rows[question.Entity] ??= AddRow(question.Entity, loaded.Revision.Id);
             question.Binding.Write(dbContext, row, after[question.Id]);
         }
 

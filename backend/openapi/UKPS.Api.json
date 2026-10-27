@@ -2119,28 +2119,18 @@
         }
       }
     },
-    "/records/{recordId}/revisions/{revisionId}/pages/{pageId}": {
+    "/records/{recordId}/pages/{pageId}": {
       "get": {
         "tags": [
           "RecordForm"
         ],
-        "summary": "Retrieves a page of a revision's content form: its questions, rules, options and current\nanswers.",
+        "summary": "Retrieves a page of a record's content form: its questions, rules, options and the current\nanswers on the record's latest revision.",
         "operationId": "GetRecordFormPage",
         "parameters": [
           {
             "name": "recordId",
             "in": "path",
-            "description": "The record the revision belongs to.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "revisionId",
-            "in": "path",
-            "description": "The revision to read.",
+            "description": "The record to read.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -2179,7 +2169,7 @@
             }
           },
           "404": {
-            "description": "The record, revision or page was not found or is not accessible to the caller.",
+            "description": "The record or page was not found or is not accessible to the caller.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2224,23 +2214,13 @@
         "tags": [
           "RecordForm"
         ],
-        "summary": "Validates and saves every answer on a page of a draft revision's content form.",
+        "summary": "Validates and saves every answer on a page of a record's content form, to the record's\nlatest revision, which must be a draft.",
         "operationId": "SaveRecordFormPage",
         "parameters": [
           {
             "name": "recordId",
             "in": "path",
-            "description": "The record the revision belongs to.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "revisionId",
-            "in": "path",
-            "description": "The revision to write.",
+            "description": "The record to write.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -2340,7 +2320,7 @@
             }
           },
           "404": {
-            "description": "The record, revision or page was not found or is not accessible to the caller.",
+            "description": "The record or page was not found or is not accessible to the caller.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3715,7 +3695,6 @@
       "CreateRecordDto": {
         "required": [
           "recordId",
-          "revisionId",
           "firstPageId"
         ],
         "type": "object",
@@ -3723,11 +3702,6 @@
           "recordId": {
             "type": "integer",
             "description": "Gets the identifier of the newly created record.",
-            "format": "int32"
-          },
-          "revisionId": {
-            "type": "integer",
-            "description": "Gets the identifier of the initial revision created for the record.",
             "format": "int32"
           },
           "firstPageId": {
@@ -5074,7 +5048,6 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "revisionId",
           "firstPageId"
         ],
         "properties": {
@@ -5293,11 +5266,6 @@
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
           },
-          "revisionId": {
-            "type": "integer",
-            "description": "Gets the identifier of the latest revision.",
-            "format": "int32"
-          },
           "firstPageId": {
             "type": [
               "null",
@@ -5314,7 +5282,6 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "revisionId",
           "firstPageId"
         ],
         "properties": {
@@ -5349,11 +5316,6 @@
             ],
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
-          },
-          "revisionId": {
-            "type": "integer",
-            "description": "Gets the identifier of the latest revision.",
-            "format": "int32"
           },
           "firstPageId": {
             "type": [
@@ -5581,7 +5543,6 @@
           "revisionVersion",
           "organisationId",
           "recordId",
-          "revisionId",
           "section",
           "page",
           "previousPageId",
@@ -5596,7 +5557,7 @@
           },
           "revisionVersion": {
             "type": "integer",
-            "description": "The revision's concurrency token. Echo it back on save.",
+            "description": "The concurrency token of the record's latest revision, which the page reads and writes.\nEcho it back on save.",
             "format": "uint32"
           },
           "organisationId": {
@@ -5607,11 +5568,6 @@
           "recordId": {
             "type": "integer",
             "description": "The record the page belongs to.",
-            "format": "int32"
-          },
-          "revisionId": {
-            "type": "integer",
-            "description": "The revision the page reads and writes.",
             "format": "int32"
           },
           "section": {

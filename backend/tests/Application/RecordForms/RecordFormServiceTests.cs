@@ -188,12 +188,12 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetPage_UnknownPageOrRevision_IsNotFound()
+    public async Task GetPage_UnknownPageOrRecord_IsNotFound()
     {
-        (await _queryHarness.Service.GetPage(_record.Id, _revision.Id, "unknown", Ct))
+        (await _queryHarness.Service.GetPage(_record.Id, "unknown", Ct))
             .ShouldBeError()
             .ShouldBeOfType<GetRecordPageError.NotFound>();
-        (await _queryHarness.Service.GetPage(_record.Id + 1, _revision.Id, "indication", Ct))
+        (await _queryHarness.Service.GetPage(_record.Id + 1, "indication", Ct))
             .ShouldBeError()
             .ShouldBeOfType<GetRecordPageError.NotFound>();
     }
@@ -206,7 +206,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             _organisation.Id + 100
         );
 
-        (await harness.Service.GetPage(_record.Id, _revision.Id, "indication", Ct))
+        (await harness.Service.GetPage(_record.Id, "indication", Ct))
             .ShouldBeError()
             .ShouldBeOfType<GetRecordPageError.NotAllowed>();
     }
@@ -457,6 +457,27 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetPage_EarlierRevisions_ReadsTheLatestRevision()
+    {
+        await AddEarlierPublishedRevision();
+
+        (await GetPage("indication")).RevisionVersion.ShouldBe(await RevisionVersion());
+    }
+
+    [Fact]
+    public async Task SavePage_EarlierRevisions_WritesTheLatestRevision()
+    {
+        RecordRevision earlier = await AddEarlierPublishedRevision();
+
+        await SaveOk("indication", Answer(Indication, "Text"));
+
+        (await IndicationRow()).Indication.ShouldBe("Text");
+        (
+            await Context.RecordFieldAudits.AnyAsync(a => a.RevisionId == earlier.Id, Ct)
+        ).ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task SavePage_AnotherOrganisationsRecord_IsNotAllowed()
     {
         _saveHarness = CreateHarness<IRecordFormSaveService>(
@@ -534,10 +555,19 @@ public class RecordFormServiceTests : DatabaseTestBase
             Ct
         );
 
+    private async Task<RecordRevision> AddEarlierPublishedRevision() =>
+        await AddEntity(
+            new RecordRevisionFaker()
+                .RuleFor(x => x.RecordId, _record.Id)
+                .RuleFor(x => x.CreatedBy, _user.Id)
+                .RuleFor(x => x.WorkflowStatus, WorkflowStatus.Published)
+                .RuleFor(x => x.CreatedAt, _revision.CreatedAt.AddDays(-1))
+                .Generate(),
+            Ct
+        );
+
     private async Task<RecordPageDto> GetPage(string pageId) =>
-        (
-            await _queryHarness.Service.GetPage(_record.Id, _revision.Id, pageId, Ct)
-        ).ShouldBeSuccess();
+        (await _queryHarness.Service.GetPage(_record.Id, pageId, Ct)).ShouldBeSuccess();
 
     private async Task<SaveRecordPageResult> Save(
         string pageId,
@@ -547,7 +577,6 @@ public class RecordFormServiceTests : DatabaseTestBase
     ) =>
         await _saveHarness.Service.SavePage(
             _record.Id,
-            _revision.Id,
             pageId,
             new SaveRecordPageCommand
             {

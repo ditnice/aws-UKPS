@@ -19,12 +19,12 @@ internal sealed class RecordFormPageLoader(
 )
 {
     /// <summary>
-    /// Finds the revision and page, and checks the caller can read them. The revision is tracked
+    /// Finds the record's latest revision and the page, and checks the caller can read them. A
+    /// record has at most one draft revision, which is always its latest. The revision is tracked
     /// when <paramref name="track"/> is set, for a save.
     /// </summary>
     public async Task<(LoadedPage? Page, PageLookupFailure Failure)> LoadPageAsync(
         int recordId,
-        int revisionId,
         string pageId,
         bool track,
         CancellationToken cancellationToken
@@ -35,10 +35,10 @@ internal sealed class RecordFormPageLoader(
             : dbContext.RecordRevisions.AsNoTracking();
         RecordRevision? revision = await revisions
             .Include(static r => r.Record)
-            .SingleOrDefaultAsync(
-                r => r.Id == revisionId && r.RecordId == recordId,
-                cancellationToken
-            );
+            .Where(r => r.RecordId == recordId)
+            .OrderByDescending(static r => r.CreatedAt)
+            .ThenByDescending(static r => r.Id)
+            .FirstOrDefaultAsync(cancellationToken);
         if (revision?.Record is not { } record)
         {
             return (null, PageLookupFailure.NotFound);

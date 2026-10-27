@@ -97,7 +97,7 @@ const RecordView = async ({ organisationId, recordId, recordType }: RecordViewPr
         record={record}
         updateRecordHref={
           record.firstPageId
-            ? `/portal/records/${record.recordId}/revisions/${record.revisionId}/${record.firstPageId}`
+            ? `/portal/records/${record.recordId}/${record.firstPageId}`
             : undefined
         }
       />

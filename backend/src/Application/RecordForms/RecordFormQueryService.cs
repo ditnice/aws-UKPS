@@ -9,14 +9,12 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
 {
     public async Task<GetRecordPageResult> GetPage(
         int recordId,
-        int revisionId,
         string pageId,
         CancellationToken cancellationToken
     )
     {
         var (loaded, failure) = await loader.LoadPageAsync(
             recordId,
-            revisionId,
             pageId,
             track: false,
             cancellationToken
@@ -31,7 +29,12 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
         }
 
         FormPage page = loaded.Page;
-        var rows = await loader.LoadRowsAsync(page, revisionId, track: false, cancellationToken);
+        var rows = await loader.LoadRowsAsync(
+            page,
+            loaded.Revision.Id,
+            track: false,
+            cancellationToken
+        );
         Dictionary<string, FormAnswer> answers = RecordFormPageLoader.ReadAnswers(page, rows);
         var options = await loader.LoadOptionsAsync(page, answers, cancellationToken);
 
@@ -42,7 +45,6 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                 RevisionVersion = loaded.Revision.Version,
                 OrganisationId = loaded.Record.OrganisationId,
                 RecordId = recordId,
-                RevisionId = revisionId,
                 Section = new RecordPageSectionDto
                 {
                     Id = page.SectionId,

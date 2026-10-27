@@ -93,9 +93,6 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
             );
 
             var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
-            dto.RevisionId.ShouldBe(
-                record.Revisions.OrderBy(r => r.CreatedAt).ThenBy(r => r.Id).Last().Id
-            );
             dto.RecordProductDetail.ShouldNotBeNull();
             dto.MedicinesIndicationDetail.ShouldNotBeNull().TherapeuticAreas.ShouldNotBeEmpty();
         }

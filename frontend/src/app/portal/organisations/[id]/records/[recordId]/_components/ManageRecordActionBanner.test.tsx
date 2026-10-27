@@ -5,7 +5,7 @@ import type { RecordDisplayStatus, RecordStatus } from '@/client/generated'
 
 import { ManageRecordActionBanner } from './ManageRecordActionBanner'
 
-const updateRecordHref = '/portal/records/42/revisions/3/indication'
+const updateRecordHref = '/portal/records/42/indication'
 
 const renderBanner = (
   displayStatus: RecordDisplayStatus,

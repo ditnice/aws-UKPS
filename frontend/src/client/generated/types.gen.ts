@@ -107,10 +107,6 @@ export type CreateRecordDto = {
      */
     recordId: number;
     /**
-     * Gets the identifier of the initial revision created for the record.
-     */
-    revisionId: number;
-    /**
      * Gets the first page of the record's content form, where the user goes next, or null when
      * the record type has no form yet or the caller cannot edit record content.
      */
@@ -899,10 +895,6 @@ export type RecordDtoMedicineRecordDto = {
      */
     reviewedAt?: null | string;
     /**
-     * Gets the identifier of the latest revision.
-     */
-    revisionId: number;
-    /**
      * Gets the first page of the record type's content form, or null when the record type has
      * no form yet or the caller cannot edit record content. Links to it open the form for the
      * latest revision.
@@ -935,10 +927,6 @@ export type RecordDtoVaccineRecordDto = {
      * Gets the date the record was last reviewed, when available.
      */
     reviewedAt?: null | string;
-    /**
-     * Gets the identifier of the latest revision.
-     */
-    revisionId: number;
     /**
      * Gets the first page of the record type's content form, or null when the record type has
      * no form yet or the caller cannot edit record content. Links to it open the form for the
@@ -1050,7 +1038,8 @@ export type RecordPageDto = {
      */
     formVersion: string;
     /**
-     * The revision's concurrency token. Echo it back on save.
+     * The concurrency token of the record's latest revision, which the page reads and writes.
+     * Echo it back on save.
      */
     revisionVersion: number;
     /**
@@ -1061,10 +1050,6 @@ export type RecordPageDto = {
      * The record the page belongs to.
      */
     recordId: number;
-    /**
-     * The revision the page reads and writes.
-     */
-    revisionId: number;
     /**
      * The section the page belongs to.
      */
@@ -2563,20 +2548,16 @@ export type GetRecordFormPageData = {
     body?: never;
     path: {
         /**
-         * The record the revision belongs to.
+         * The record to read.
          */
         recordId: number;
-        /**
-         * The revision to read.
-         */
-        revisionId: number;
         /**
          * The page to read.
          */
         pageId: string;
     };
     query?: never;
-    url: '/records/{recordId}/revisions/{revisionId}/pages/{pageId}';
+    url: '/records/{recordId}/pages/{pageId}';
 };
 
 export type GetRecordFormPageErrors = {
@@ -2585,7 +2566,7 @@ export type GetRecordFormPageErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The record, revision or page was not found or is not accessible to the caller.
+     * The record or page was not found or is not accessible to the caller.
      */
     404: ProblemDetails;
 };
@@ -2608,20 +2589,16 @@ export type SaveRecordFormPageData = {
     body: SaveRecordPageCommand;
     path: {
         /**
-         * The record the revision belongs to.
+         * The record to write.
          */
         recordId: number;
-        /**
-         * The revision to write.
-         */
-        revisionId: number;
         /**
          * The page to save.
          */
         pageId: string;
     };
     query?: never;
-    url: '/records/{recordId}/revisions/{revisionId}/pages/{pageId}';
+    url: '/records/{recordId}/pages/{pageId}';
 };
 
 export type SaveRecordFormPageErrors = {
@@ -2638,7 +2615,7 @@ export type SaveRecordFormPageErrors = {
      */
     403: ProblemDetails;
     /**
-     * The record, revision or page was not found or is not accessible to the caller.
+     * The record or page was not found or is not accessible to the caller.
      */
     404: ProblemDetails;
     /**

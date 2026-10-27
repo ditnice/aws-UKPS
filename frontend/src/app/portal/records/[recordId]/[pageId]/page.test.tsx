@@ -22,8 +22,7 @@ vi.mock('@/components/DynamicForm/FormPage', () => ({
   ),
 }))
 
-const params = (recordId = '5', revisionId = '7', pageId = 'indication') =>
-  Promise.resolve({ recordId, revisionId, pageId })
+const params = (recordId = '5', pageId = 'indication') => Promise.resolve({ recordId, pageId })
 
 const renderRoute = async (routeParams = params()) =>
   render((await RecordFormRoute({ params: routeParams })) as ReactElement)
@@ -35,13 +34,11 @@ afterEach(() => {
 
 describe('RecordFormRoute', () => {
   it.each([
-    ['0', '7', 'indication'],
-    ['5', 'x', 'indication'],
-    ['5', '7', 'Not A Page'],
-  ])('is not found for invalid parameters (%s, %s, %s)', async (recordId, revisionId, pageId) => {
-    await expect(renderRoute(params(recordId, revisionId, pageId))).rejects.toThrow(
-      'NEXT_NOT_FOUND',
-    )
+    ['0', 'indication'],
+    ['x', 'indication'],
+    ['5', 'Not A Page'],
+  ])('is not found for invalid parameters (%s, %s)', async (recordId, pageId) => {
+    await expect(renderRoute(params(recordId, pageId))).rejects.toThrow('NEXT_NOT_FOUND')
     expect(getRecordFormPage).not.toHaveBeenCalled()
   })
 
@@ -77,7 +74,7 @@ describe('RecordFormRoute', () => {
 
     expect(screen.getByTestId('form-page')).toHaveTextContent('indication')
     expect(getRecordFormPage).toHaveBeenCalledWith(
-      expect.objectContaining({ path: { recordId: 5, revisionId: 7, pageId: 'indication' } }),
+      expect.objectContaining({ path: { recordId: 5, pageId: 'indication' } }),
     )
   })
 })

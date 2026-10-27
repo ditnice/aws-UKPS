@@ -74,7 +74,6 @@ export const fakeCreateRecordDto = (options?: Options): CreateRecordDto => {
     const f = options?.faker ?? faker;
     return {
         recordId: f.number.int(),
-        revisionId: f.number.int(),
         firstPageId: f.datatype.boolean() ? f.string.uuid() : null
     };
 };
@@ -378,7 +377,6 @@ export const fakeRecordDtoVaccineRecordDto = (options?: Options): RecordDtoVacci
         recordStatus: fakeRecordStatus(options),
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
-        revisionId: f.number.int(),
         firstPageId: f.datatype.boolean() ? f.string.uuid() : null
     };
 };
@@ -561,7 +559,6 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
         revisionVersion: f.number.int(),
         organisationId: f.number.int(),
         recordId: f.number.int(),
-        revisionId: f.number.int(),
         section: fakeRecordPageSectionDto(options),
         page: fakeRecordPagePageDto(options),
         previousPageId: f.datatype.boolean() ? f.string.uuid() : null,
@@ -999,7 +996,6 @@ export const fakeRecordDtoMedicineRecordDto = (options?: Options): RecordDtoMedi
         recordStatus: fakeRecordStatus(options),
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
-        revisionId: f.number.int(),
         firstPageId: f.datatype.boolean() ? f.string.uuid() : null
     };
 };
@@ -1307,7 +1303,6 @@ export const fakeGetRecordFormPageRequest = (options?: Options): Omit<GetRecordF
     return {
         path: {
             recordId: f.number.int(),
-            revisionId: f.number.int(),
             pageId: f.string.uuid()
         }
     };
@@ -1325,7 +1320,6 @@ export const fakeSaveRecordFormPageRequest = (options?: Options): Omit<SaveRecor
         body: fakeSaveRecordPageCommand(options),
         path: {
             recordId: f.number.int(),
-            revisionId: f.number.int(),
             pageId: f.string.uuid()
         }
     };

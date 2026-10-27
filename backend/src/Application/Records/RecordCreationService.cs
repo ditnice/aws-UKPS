@@ -81,7 +81,6 @@ internal class RecordCreationService : IRecordCreationService
             new CreateRecordDto()
             {
                 RecordId = record.Id,
-                RevisionId = revision.Id,
                 FirstPageId = _organisationAuthoriser.CanPerformOperationOnOrganisation(
                     Operation.EditRecordContent,
                     command.OrganisationId

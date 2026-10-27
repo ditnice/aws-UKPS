@@ -69,7 +69,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         // Go straight into the record's content form, when its type has one.
         router.push(
           created?.firstPageId
-            ? `/portal/records/${created.recordId}/revisions/${created.revisionId}/${created.firstPageId}`
+            ? `/portal/records/${created.recordId}/${created.firstPageId}`
             : `/portal/organisations/${organisationId}/records`,
         )
         return

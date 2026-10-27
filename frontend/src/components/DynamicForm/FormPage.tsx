@@ -23,8 +23,8 @@ import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 import styles from './DynamicForm.module.scss'
 import { questionRegistry } from './questionRegistry'
 
-export const pageHref = (page: Pick<RecordPageDto, 'recordId' | 'revisionId'>, pageId: string) =>
-  `/portal/records/${page.recordId}/revisions/${page.revisionId}/${pageId}`
+export const pageHref = (page: Pick<RecordPageDto, 'recordId'>, pageId: string) =>
+  `/portal/records/${page.recordId}/${pageId}`
 
 export const conflictCodes = ['revision_not_draft', 'revision_changed', 'form_version_changed']
 
@@ -50,7 +50,7 @@ export function FormPage({ page }: FormPageProps) {
       setSaveState({ kind: 'idle' })
       setOtherErrors([])
       const { data, error, response } = await saveRecordFormPage({
-        path: { recordId: page.recordId, revisionId: page.revisionId, pageId: page.page.id },
+        path: { recordId: page.recordId, pageId: page.page.id },
         body: {
           formVersion: page.formVersion,
           revisionVersion: page.revisionVersion,

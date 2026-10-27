@@ -14,7 +14,6 @@ public interface IRecordFormSaveService
     /// </summary>
     Task<SaveRecordPageResult> SavePage(
         int recordId,
-        int revisionId,
         string pageId,
         SaveRecordPageCommand command,
         CancellationToken cancellationToken

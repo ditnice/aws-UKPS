@@ -200,16 +200,17 @@ export const createRecord = <ThrowOnError extends boolean = false>(options: Opti
 export const patchRecordsByRecordIdDiscard = <ThrowOnError extends boolean = false>(options: Options<PatchRecordsByRecordIdDiscardData, ThrowOnError>): RequestResult<unknown, PatchRecordsByRecordIdDiscardErrors, ThrowOnError> => (options.client ?? client).patch<unknown, PatchRecordsByRecordIdDiscardErrors, ThrowOnError>({ url: '/records/{recordId}/discard', ...options });
 
 /**
- * Retrieves a page of a revision's content form: its questions, rules, options and current
- * answers.
+ * Retrieves a page of a record's content form: its questions, rules, options and the current
+ * answers on the record's latest revision.
  */
-export const getRecordFormPage = <ThrowOnError extends boolean = false>(options: Options<GetRecordFormPageData, ThrowOnError>): RequestResult<GetRecordFormPageResponses, GetRecordFormPageErrors, ThrowOnError> => (options.client ?? client).get<GetRecordFormPageResponses, GetRecordFormPageErrors, ThrowOnError>({ url: '/records/{recordId}/revisions/{revisionId}/pages/{pageId}', ...options });
+export const getRecordFormPage = <ThrowOnError extends boolean = false>(options: Options<GetRecordFormPageData, ThrowOnError>): RequestResult<GetRecordFormPageResponses, GetRecordFormPageErrors, ThrowOnError> => (options.client ?? client).get<GetRecordFormPageResponses, GetRecordFormPageErrors, ThrowOnError>({ url: '/records/{recordId}/pages/{pageId}', ...options });
 
 /**
- * Validates and saves every answer on a page of a draft revision's content form.
+ * Validates and saves every answer on a page of a record's content form, to the record's
+ * latest revision, which must be a draft.
  */
 export const saveRecordFormPage = <ThrowOnError extends boolean = false>(options: Options<SaveRecordFormPageData, ThrowOnError>): RequestResult<SaveRecordFormPageResponses, SaveRecordFormPageErrors, ThrowOnError> => (options.client ?? client).put<SaveRecordFormPageResponses, SaveRecordFormPageErrors, ThrowOnError>({
-    url: '/records/{recordId}/revisions/{revisionId}/pages/{pageId}',
+    url: '/records/{recordId}/pages/{pageId}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
