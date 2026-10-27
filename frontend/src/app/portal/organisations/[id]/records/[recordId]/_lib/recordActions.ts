@@ -35,3 +35,6 @@ export const getRecordActions = ({
 
 export const canDiscardRecord = (record: RecordStatuses) =>
   getRecordActions(record).includes('discard')
+
+export const canChangeRecordStatus = (record: RecordStatuses) =>
+  getRecordActions(record).includes('changeStatus')

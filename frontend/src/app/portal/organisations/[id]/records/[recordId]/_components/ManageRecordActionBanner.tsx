@@ -16,6 +16,7 @@ type ManageRecordActionBannerProps = {
 export const ManageRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
   const actions = getRecordActions(record)
   const discardHref = `/portal/organisations/${record.organisationId}/records/${record.recordId}/discard?recordType=${record.recordType}`
+  const changeRecordStatusHref = `/portal/organisations/${record.organisationId}/records/${record.recordId}/change-record-status?recordType=${record.recordType}`
 
   return (
     <ActionBanner
@@ -29,7 +30,11 @@ export const ManageRecordActionBanner = ({ record }: ManageRecordActionBannerPro
               Update record
             </Button>
           )}
-          {actions.includes('changeStatus') && <Button>Change record status</Button>}
+          {actions.includes('changeStatus') && (
+            <Button elementType={Link} href={changeRecordStatusHref}>
+              Change record status
+            </Button>
+          )}
           {actions.includes('confirmCurrent') && <Button>Confirm information as current</Button>}
           {actions.includes('discard') && (
             <Button elementType={Link} href={discardHref}>
