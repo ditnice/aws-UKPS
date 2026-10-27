@@ -34,7 +34,7 @@ services:
   floci:
     # Local AWS emulator for the backend's Cognito and SQS calls. The -compat variant includes the
     # AWS CLI, which the init script and healthcheck use. Pinned by digest.
-    image: floci/floci:2.2.0-compat@sha256:8576f87f9b5004c74685b8743712a981f352d53e9c227daeba6d341d09aba4c7
+    image: floci/floci:2.3.0-compat@sha256:ecfd33bb98d3e0ce0e11d528730f0827c08ab18c9b331865203d67ec65c10c07
     environment:
       FLOCI_DEFAULT_REGION: eu-west-2
       # Service URLs Floci returns (such as queue URLs) use this host, so other containers can reach them.
