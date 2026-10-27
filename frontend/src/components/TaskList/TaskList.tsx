@@ -104,7 +104,7 @@ export function TaskListSummary({ completed, total, firstIncompleteHref }: TaskL
       <p className="lead">
         You have completed {completed} of {total} mandatory {total === 1 ? 'task' : 'tasks'}
       </p>
-      {firstIncompleteHref && <a href={firstIncompleteHref}>Skip to first incomplete section</a>}
+      {firstIncompleteHref && <a href={firstIncompleteHref}>Skip to first incomplete task</a>}
     </div>
   )
 }

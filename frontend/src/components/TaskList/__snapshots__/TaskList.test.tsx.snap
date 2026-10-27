@@ -13,7 +13,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
     <a
       href="/task-2"
     >
-      Skip to first incomplete section
+      Skip to first incomplete task
     </a>
   </div>
   <div

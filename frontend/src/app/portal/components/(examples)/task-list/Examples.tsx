@@ -65,7 +65,7 @@ export function Examples() {
             />
             <TaskListTask
               title="Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)"
-              description="Complete the indication details section first. If your product is a biosimilar, you will not need to complete this section."
+              description="Complete the indication details task first. If your product is a biosimilar, you will not need to complete this task."
               status="cannot-start"
             />
           </TaskListSection>
@@ -123,7 +123,7 @@ export function Examples() {
           <TaskListSection title="Provide special designation information">
             <TaskListTask
               title="Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)"
-              description="Complete the indication details section first."
+              description="Complete the indication details task first."
               status="cannot-start"
             />
           </TaskListSection>
@@ -153,7 +153,7 @@ export function Examples() {
           <TaskListSection title="Provide special designation information">
             <TaskListTask
               title="Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)"
-              description="Complete the indication details section first."
+              description="This product does not have a special designation."
               status="not-applicable"
             />
           </TaskListSection>

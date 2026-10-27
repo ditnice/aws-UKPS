@@ -41,7 +41,7 @@ describe('TaskList', () => {
     )
 
     expect(screen.getByText('You have completed 1 of 2 mandatory tasks')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Skip to first incomplete section' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Skip to first incomplete task' })).toHaveAttribute(
       'href',
       '/task-2',
     )
@@ -58,7 +58,7 @@ describe('TaskList', () => {
 
     expect(screen.getByText('You have completed 1 of 1 mandatory task')).toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: 'Skip to first incomplete section' }),
+      screen.queryByRole('link', { name: 'Skip to first incomplete task' }),
     ).not.toBeInTheDocument()
   })
 
@@ -74,7 +74,7 @@ describe('TaskList', () => {
 
     expect(screen.getByText('You have completed 0 of 2 mandatory tasks')).toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: 'Skip to first incomplete section' }),
+      screen.queryByRole('link', { name: 'Skip to first incomplete task' }),
     ).not.toBeInTheDocument()
   })
 
@@ -93,7 +93,7 @@ describe('TaskList', () => {
 
     expect(screen.getByText('You have completed 1 of 3 mandatory tasks')).toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: 'Skip to first incomplete section' }),
+      screen.queryByRole('link', { name: 'Skip to first incomplete task' }),
     ).not.toBeInTheDocument()
   })
 
@@ -147,7 +147,7 @@ describe('TaskList', () => {
     )
 
     expect(screen.getByText('You have completed 2 of 5 mandatory tasks')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Skip to first incomplete section' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Skip to first incomplete task' })).toHaveAttribute(
       'href',
       '/first-incomplete-task',
     )
@@ -199,7 +199,7 @@ describe('TaskList', () => {
 
     expect(screen.queryByText(/You have completed/)).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: 'Skip to first incomplete section' }),
+      screen.queryByRole('link', { name: 'Skip to first incomplete task' }),
     ).not.toBeInTheDocument()
   })
 })
