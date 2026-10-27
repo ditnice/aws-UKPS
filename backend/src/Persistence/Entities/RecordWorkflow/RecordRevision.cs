@@ -16,6 +16,8 @@ internal sealed class RecordRevision
     public int CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    public uint Version { get; set; }
+
     // Navigation
     public Record? Record { get; set; }
     public RecordRevision? BasedOnRevision { get; set; }

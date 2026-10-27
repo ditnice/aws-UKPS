@@ -70,6 +70,7 @@ const medicineRecord: RecordDto = {
   recordStatus: 'Published',
   displayStatus: 'QAReview',
   revisionId: 3,
+  canDiscard: false,
   recordClinicalTrials: [],
   recordProductDetail: {
     companyCode: 'GC22',

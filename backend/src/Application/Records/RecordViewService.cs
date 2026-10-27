@@ -45,11 +45,7 @@ internal sealed class RecordViewService(
 
         RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
 
-        if (
-            record is null
-            || record.OrganisationId != organisationId
-            || record.RecordStatus == RecordStatus.Discarded
-        )
+        if (record is null || record.OrganisationId != organisationId)
         {
             return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }
@@ -98,7 +94,8 @@ internal sealed class RecordViewService(
                 x.Record.RecordStatus,
                 x.Record.ReviewedAt,
                 x.LatestRevisionId,
-                x.DisplayStatus
+                x.DisplayStatus,
+                x.IsDiscardable
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -117,6 +114,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
+            CanDiscard = record.IsDiscardable,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,
@@ -176,6 +174,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
+            CanDiscard = record.IsDiscardable,
         };
     }
 
@@ -531,6 +530,7 @@ internal sealed class RecordViewService(
         RecordStatus RecordStatus,
         DateTime? ReviewedAt,
         int? LatestRevisionId,
-        RecordDisplayStatus DisplayStatus
+        RecordDisplayStatus DisplayStatus,
+        bool IsDiscardable
     );
 }

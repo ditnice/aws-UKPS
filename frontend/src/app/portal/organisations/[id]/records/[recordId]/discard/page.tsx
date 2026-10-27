@@ -9,7 +9,6 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../../_components/OrganisationPageWrapper'
-import { canDiscardRecord } from '../_lib/recordActions'
 
 import { DiscardRecordControls } from './_components/DiscardRecordControls'
 
@@ -60,7 +59,7 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
 
   if (
     response?.status === 404 ||
-    (record && (record.organisationId !== organisationId || !canDiscardRecord(record)))
+    (record && (record.organisationId !== organisationId || !record.canDiscard))
   ) {
     notFound()
   }

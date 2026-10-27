@@ -22,4 +22,9 @@ internal sealed record RecordWithLatestRevision
     /// Gets the status shown to users for the record.
     /// </summary>
     public RecordDisplayStatus DisplayStatus { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the record can be discarded.
+    /// </summary>
+    public bool IsDiscardable { get; init; }
 }

@@ -5,6 +5,7 @@ using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
+using UKPS.Api.Persistence.Configurations.RecordWorkflow;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
@@ -31,7 +32,11 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
         await Context.SaveChangesAsync(ct);
         Context.ChangeTracker.Clear();
 
-        (await Context.Records.CountAsync(ct)).ShouldBe(500);
+        (
+            await Context
+                .Records.IgnoreQueryFilters([RecordConfiguration.DiscardedFilter])
+                .CountAsync(ct)
+        ).ShouldBe(572);
         Organisation first = await Context.Organisations.SingleAsync(o => o.Id == 1, ct);
         first.OrganisationType.ShouldBe(OrganisationType.Internal);
 
@@ -50,7 +55,16 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
                 }
             );
             await ShouldListEveryRecord(organisationRecords, ct);
-            await ShouldShowEveryRecord(viewHarness.Service, organisationRecords, ct);
+            await ShouldShowEveryRecord(
+                viewHarness.Service,
+                organisationRecords.Where(r => r.RecordStatus != RecordStatus.Discarded),
+                ct
+            );
+            await ShouldHideDiscardedRecords(
+                viewHarness.Service,
+                organisationRecords.Where(r => r.RecordStatus == RecordStatus.Discarded),
+                ct
+            );
         }
     }
 
@@ -75,7 +89,30 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
                 ct
             );
 
-        result.ShouldBeSuccess().TotalCount.ShouldBe(organisationRecords.Count());
+        result
+            .ShouldBeSuccess()
+            .TotalCount.ShouldBe(
+                organisationRecords.Count(r => r.RecordStatus != RecordStatus.Discarded)
+            );
+    }
+
+    private static async Task ShouldHideDiscardedRecords(
+        IRecordViewService service,
+        IEnumerable<Record> records,
+        CancellationToken ct
+    )
+    {
+        foreach (Record record in records)
+        {
+            Result<RecordDto, GetRecordError> result = await service.GetRecord(
+                record.Id,
+                RecordType.Medicine,
+                record.OrganisationId,
+                ct
+            );
+
+            result.ShouldBeError().ShouldBeOfType<GetRecordError.NotFound>();
+        }
     }
 
     private static async Task ShouldShowEveryRecord(

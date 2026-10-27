@@ -2,35 +2,35 @@ import { describe, expect, it } from 'vitest'
 
 import type { RecordDisplayStatus, RecordStatus } from '@/client/generated'
 
-import { canDiscardRecord, getRecordActions } from './recordActions'
+import { getRecordActions } from './recordActions'
 
 describe('getRecordActions', () => {
-  it.each<[string, RecordDisplayStatus, RecordStatus, string[]]>([
+  it.each<[string, RecordDisplayStatus, RecordStatus, boolean, string[]]>([
     [
       'published',
       'Published',
       'Published',
+      false,
       ['update', 'changeStatus', 'confirmCurrent', 'viewTimeline'],
     ],
-    ['an unpublished draft', 'Draft', 'Unpublished', ['update', 'discard', 'viewTimeline']],
+    ['a discardable draft', 'Draft', 'Unpublished', true, ['update', 'discard', 'viewTimeline']],
+    ['a draft that has been submitted', 'Draft', 'Unpublished', false, ['update', 'viewTimeline']],
     [
       'a draft of a published record',
       'Draft',
       'Published',
+      false,
       ['update', 'changeStatus', 'confirmCurrent', 'viewTimeline'],
     ],
-    ['in QA review', 'QAReview', 'Unpublished', ['viewTimeline']],
-    ['on hold', 'OnHold', 'OnHold', ['changeStatus', 'confirmOnHold', 'viewTimeline']],
-    ['archived', 'Archived', 'Archived', ['viewTimeline']],
-  ])('returns the actions for a record that is %s', (_, displayStatus, recordStatus, expected) => {
-    expect(getRecordActions({ displayStatus, recordStatus })).toEqual(expected)
-  })
-})
-
-describe('canDiscardRecord', () => {
-  it('allows an unpublished draft to be discarded', () => {
-    expect(canDiscardRecord({ displayStatus: 'Draft', recordStatus: 'Unpublished' })).toBe(true)
-  })
+    ['in QA review', 'QAReview', 'Unpublished', false, ['viewTimeline']],
+    ['on hold', 'OnHold', 'OnHold', false, ['changeStatus', 'confirmOnHold', 'viewTimeline']],
+    ['archived', 'Archived', 'Archived', false, ['viewTimeline']],
+  ])(
+    'returns the actions for a record that is %s',
+    (_, displayStatus, recordStatus, canDiscard, expected) => {
+      expect(getRecordActions({ displayStatus, recordStatus, canDiscard })).toEqual(expected)
+    },
+  )
 
   it.each<[RecordDisplayStatus, RecordStatus]>([
     ['Draft', 'Published'],
@@ -39,9 +39,11 @@ describe('canDiscardRecord', () => {
     ['OnHold', 'OnHold'],
     ['Archived', 'Archived'],
   ])(
-    'does not allow a %s record with record status %s to be discarded',
+    'does not offer discard for a %s record with record status %s',
     (displayStatus, recordStatus) => {
-      expect(canDiscardRecord({ displayStatus, recordStatus })).toBe(false)
+      expect(getRecordActions({ displayStatus, recordStatus, canDiscard: true })).not.toContain(
+        'discard',
+      )
     },
   )
 })

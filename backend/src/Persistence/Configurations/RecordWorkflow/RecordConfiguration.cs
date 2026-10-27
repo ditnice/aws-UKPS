@@ -1,11 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Persistence.Configurations.RecordWorkflow;
 
 internal sealed class RecordConfiguration : IEntityTypeConfiguration<Record>
 {
+    /// <summary>
+    /// The name of the query filter that hides discarded records. Queries that need discarded
+    /// records opt out with <c>IgnoreQueryFilters([RecordConfiguration.DiscardedFilter])</c>.
+    /// </summary>
+    internal const string DiscardedFilter = "Discarded";
+
     public void Configure(EntityTypeBuilder<Record> builder)
     {
         builder.HasKey(x => x.Id);
@@ -29,6 +36,10 @@ internal sealed class RecordConfiguration : IEntityTypeConfiguration<Record>
                 x.ReviewedAt,
             })
             .HasDatabaseName("ix_record_type_status_reviewed_at");
+
+        // Discarded records are hidden everywhere. Only queries that start from records are
+        // filtered: revisions, events and other tables still include those of discarded records.
+        builder.HasQueryFilter(DiscardedFilter, x => x.RecordStatus != RecordStatus.Discarded);
 
         builder
             .HasOne(x => x.Organisation)
