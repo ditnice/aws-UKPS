@@ -7,6 +7,7 @@ using UKPS.Api.Application.InternalServices.UserOnboarding;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using OnboardingUserResult = UKPS.Api.Application.Common.Result<
     int,
@@ -40,7 +41,11 @@ internal sealed partial class UserAdministrationService(
             return OnboardingUserResult.Err(new OnboardUserError.NotAllowed());
         }
         Result<User, OnboardUserError> createUserResult =
-            await userOnboardingService.InitialiseNewUserSetup(command, cancellationToken);
+            await userOnboardingService.InitialiseNewUserSetup(
+                command,
+                OnboardingFlow.Invite,
+                cancellationToken
+            );
         return await createUserResult.Match(
             onOk: async result =>
             {

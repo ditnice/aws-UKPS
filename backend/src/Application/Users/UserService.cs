@@ -14,6 +14,10 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using GetCurrentOrganisationChampionsResult = UKPS.Api.Application.Common.Result<
+    System.Collections.Generic.IReadOnlyCollection<string>,
+    UKPS.Api.Application.Users.Errors.GetCurrentOrganisationChampionsError
+>;
 using GetUserInformationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.UserInformationDto,
     UKPS.Api.Application.Users.Errors.GetUsersError
@@ -131,6 +135,51 @@ internal partial class UserService(
             })
             .OrderBy(x => x.OrganisationName, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    public async Task<GetCurrentOrganisationChampionsResult> GetCurrentOrganisationChampionEmails(
+        CancellationToken cancellationToken
+    )
+    {
+        User user = await currentDbUserEntityService.GetCurrentUser(
+            q => q.Include(x => x.UserOrgMemberships),
+            cancellationToken
+        );
+
+        int? organisationId = user.FindCurrentOrganisationId();
+        if (organisationId is null)
+        {
+            return GetCurrentOrganisationChampionsResult.Err(
+                new GetCurrentOrganisationChampionsError.NotAllowed()
+            );
+        }
+
+        UserOrgMembershipStatus[] allowedCallerStatuses =
+        [
+            UserOrgMembershipStatus.Active,
+            UserOrgMembershipStatus.Inactive,
+            UserOrgMembershipStatus.Deactivated,
+        ];
+
+        bool callerIsMember = user.UserOrgMemberships!.Any(x =>
+            x.OrganisationId == organisationId && allowedCallerStatuses.Contains(x.Status)
+        );
+
+        if (!callerIsMember)
+        {
+            return GetCurrentOrganisationChampionsResult.Err(
+                new GetCurrentOrganisationChampionsError.NotAllowed()
+            );
+        }
+
+        List<string> championEmails = await dbContext
+            .UserOrgMemberships.EnabledChampions(organisationId.Value)
+            .Select(x => x.User!.WorkEmail)
+            .Distinct()
+            .OrderBy(email => email)
+            .ToListAsync(cancellationToken);
+
+        return GetCurrentOrganisationChampionsResult.Ok(championEmails);
     }
 
     public async Task<GetUsersResult> GetUsers(
@@ -562,21 +611,10 @@ internal partial class UserService(
                 return RemoveUserResult.Err(new RemoveUserError.CannotRemoveSelf(userId));
             }
 
-            List<UserOrgMembership> memberships = await dbContext
-                .UserOrgMemberships.Where(m => m.UserId == userId)
-                .ToListAsync(cancellationToken);
-
-            foreach (UserOrgMembership membership in memberships)
+            RemoveUserError? membershipError = await RemoveMemberships(userId, cancellationToken);
+            if (membershipError is not null)
             {
-                var transitionResult = membership.TryRemove();
-                if (!transitionResult.Success)
-                {
-                    return RemoveUserResult.Err(
-                        new RemoveUserError.NotAllowedInCurrentState(
-                            transitionResult.ConvertToUserOrgStatusTransitionResult()
-                        )
-                    );
-                }
+                return RemoveUserResult.Err(membershipError);
             }
 
             await AnonymiseUserAndAuditHistory(user, currentUser, cancellationToken);
@@ -594,6 +632,65 @@ internal partial class UserService(
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    private async Task<RemoveUserError?> RemoveMemberships(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        List<UserOrgMembership> memberships = await dbContext
+            .UserOrgMemberships.Where(m => m.UserId == userId)
+            .ToListAsync(cancellationToken);
+
+        if (await WouldRemoveLastChampion(memberships, cancellationToken))
+        {
+            return new RemoveUserError.LastRemainingChampion(userId);
+        }
+
+        foreach (UserOrgMembership membership in memberships)
+        {
+            var transitionResult = membership.TryRemove();
+            if (!transitionResult.Success)
+            {
+                return new RemoveUserError.NotAllowedInCurrentState(
+                    transitionResult.ConvertToUserOrgStatusTransitionResult()
+                );
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<bool> WouldRemoveLastChampion(
+        IReadOnlyCollection<UserOrgMembership> memberships,
+        CancellationToken cancellationToken
+    )
+    {
+        // Check every affected organisation before changing any memberships or user data.
+        // This runs one query per organisation the user is a champion of. A user is rarely a
+        // champion of many organisations, so a single combined query isn't worth the complexity.
+        int[] removedMembershipIds = memberships.Select(m => m.Id).ToArray();
+        var championOrganisationIds = memberships
+            .Where(m => m.IsEnabledChampion())
+            .Select(m => m.OrganisationId)
+            .Distinct();
+
+        foreach (int organisationId in championOrganisationIds)
+        {
+            bool hasAnotherChampion = await dbContext.UserOrgMemberships.AnyOtherEnabledChampion(
+                organisationId,
+                removedMembershipIds,
+                cancellationToken
+            );
+
+            if (!hasAnotherChampion)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private async Task AnonymiseUserAndAuditHistory(

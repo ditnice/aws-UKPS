@@ -105,9 +105,7 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
         if (memberships.Length == 1)
         {
-            return new MembershipSelection(
-                GuardMembershipIsSelectable(memberships.Single(), context)
-            );
+            return GuardMembershipIsSelectable(memberships.Single(), context);
         }
 
         var selectedMembership = memberships.FirstOrDefault(x => x.IsSelectedAsCurrentOrganisation);
@@ -139,35 +137,56 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
         // None of the user's memberships are selectable, so selecting a different
         // organisation would not help. Fail using the most relevant membership.
+        return GetNonSelectableMembershipSelection(memberships, selectedMembership, context);
+    }
+
+    private static MembershipSelection GetNonSelectableMembershipSelection(
+        UserOrgMembership[] memberships,
+        UserOrgMembership? selectedMembership,
+        TokenValidatedContext context
+    )
+    {
         var failingMembership =
             selectedMembership
             ?? memberships.FirstOrDefault(x => x.Status == UserOrgMembershipStatus.Deactivated)
             ?? memberships[0];
-        return new MembershipSelection(GuardMembershipIsSelectable(failingMembership, context));
+
+        if (
+            selectedMembership is null
+            && failingMembership.Status == UserOrgMembershipStatus.Deactivated
+        )
+        {
+            // No membership was explicitly selected, so this one was picked arbitrarily.
+            // Keep failing rather than guessing the user's organisation.
+            context.Fail(AuthenticationFailCode.MembershipDeactivated.ToString());
+            return MembershipSelection.Failed;
+        }
+
+        return GuardMembershipIsSelectable(failingMembership, context);
     }
 
-    private static UserOrgMembership? GuardMembershipIsSelectable(
+    private static MembershipSelection GuardMembershipIsSelectable(
         UserOrgMembership userOrgMembership,
         TokenValidatedContext context
     )
     {
         if (userOrgMembership.Status == UserOrgMembershipStatus.Deactivated)
         {
-            context.Fail(AuthenticationFailCode.MembershipDeactivated.ToString());
-            return null;
+            // Authenticated, but only the deactivated recovery endpoint is available.
+            return new MembershipSelection(null, AuthenticationFailCode.MembershipDeactivated);
         }
         if (!userOrgMembership.IsAuthorised())
         {
             context.Fail(AuthenticationFailCode.MembershipNotInValidState.ToString());
-            return null;
+            return MembershipSelection.Failed;
         }
         if (!userOrgMembership.IsOrganisationActive())
         {
             context.Fail(AuthenticationFailCode.OrganisationNotActive.ToString());
-            return null;
+            return MembershipSelection.Failed;
         }
 
-        return userOrgMembership;
+        return new MembershipSelection(userOrgMembership);
     }
 
     private static bool ValidateTokenUse(TokenValidatedContext context)

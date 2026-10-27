@@ -485,6 +485,31 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
+    public async Task DeactivateMembership_LastRemainingChampion_ReturnsBadRequestProblemDetails()
+    {
+        _organisationMembershipService
+            .DeactivateMembership(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                DeactivateUserMembershipResult.Err(
+                    new OrganisationMembershipDeactivateUserError.LastRemainingChampion(2)
+                )
+            );
+
+        ActionResult<OrganisationMembershipDto> result = await _controller.DeactivateMembership(
+            1,
+            2,
+            TestContext.Current.CancellationToken
+        );
+
+        ObjectResult response = result.Result.ShouldBeOfType<ObjectResult>();
+        response.StatusCode.ShouldBe((int)HttpStatusCode.BadRequest);
+        ProblemDetails problem = response.Value.ShouldBeOfType<ProblemDetails>();
+        problem.Status.ShouldBe(400);
+        problem.Title.ShouldBe("Last remaining champion");
+        problem.Detail.ShouldBe("This action would leave an organisation without a champion user.");
+    }
+
+    [Fact]
     public async Task ReactivateMembership_ShouldPassValuesToTheService()
     {
         var organisationId = 1;
@@ -610,6 +635,37 @@ public class OrganisationControllerTests : IClassFixture<WebApplicationFactory<P
         result
             .Result.ShouldBeOfType<ObjectResult>()
             .StatusCode.ShouldBe((int)HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task UpdateUserRole_LastRemainingChampion_ReturnsBadRequestProblemDetails()
+    {
+        _organisationMembershipService
+            .UpdateUserRole(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<UpdateOrgMembershipUserRoleCommandDto>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                UpdateUserRoleResult.Err(
+                    new OrganisationMembershipUpdateUserRoleError.LastRemainingChampion(2)
+                )
+            );
+
+        ActionResult<OrganisationMembershipDto> result = await _controller.UpdateUserRole(
+            1,
+            2,
+            new UpdateOrgMembershipUserRoleCommandDto() { UserRole = UserRole.Standard },
+            TestContext.Current.CancellationToken
+        );
+
+        ObjectResult response = result.Result.ShouldBeOfType<ObjectResult>();
+        response.StatusCode.ShouldBe((int)HttpStatusCode.BadRequest);
+        ProblemDetails problem = response.Value.ShouldBeOfType<ProblemDetails>();
+        problem.Status.ShouldBe(400);
+        problem.Title.ShouldBe("Last remaining champion");
+        problem.Detail.ShouldBe("This action would leave an organisation without a champion user.");
     }
 
     [Fact]

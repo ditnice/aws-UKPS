@@ -8,6 +8,7 @@ using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.InternalServices.UserOnboarding;
 
@@ -36,6 +37,7 @@ internal sealed partial class UserOnboardingService
 
     public async Task<Result<User, OnboardUserError>> InitialiseNewUserSetup(
         OnboardUserCommandDto command,
+        OnboardingFlow onboardingFlow,
         CancellationToken cancellationToken
     )
     {
@@ -74,13 +76,20 @@ internal sealed partial class UserOnboardingService
             cancellationToken
         );
         return await result.Match(
-            onOk: () => CreateANewUserInDatabase(cognitoUsername, command, cancellationToken),
+            onOk: () =>
+                CreateANewUserInDatabase(
+                    cognitoUsername,
+                    onboardingFlow,
+                    command,
+                    cancellationToken
+                ),
             onErr: HandleIdentityUserCreationFailed
         );
     }
 
     private async Task<Result<User, OnboardUserError>> CreateANewUserInDatabase(
         CognitoUsername cognitoUsername,
+        OnboardingFlow onboardingFlow,
         OnboardUserCommandDto command,
         CancellationToken cancellationToken
     )
@@ -89,6 +98,7 @@ internal sealed partial class UserOnboardingService
         var user = User.CreateInitialisedUser(
             new()
             {
+                OnboardingFlow = onboardingFlow,
                 CognitoUsername = cognitoUsername,
                 FullName = command.FullName,
                 WorkEmail = command.NewUserEmail,

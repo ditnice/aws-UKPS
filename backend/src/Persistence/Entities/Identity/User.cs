@@ -159,6 +159,7 @@ internal sealed class User
     {
         var userOnboardingRecord = new UserOnboardingRecord()
         {
+            OnboardingFlow = command.OnboardingFlow,
             SetupToken = Guid.CreateVersion7(),
             CreatedByUserId = command.CurrentUserId,
             CreatedAt = command.Now,

@@ -643,6 +643,32 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task RemoveUser_WhenLastRemainingChampion_ShouldReturnBadRequestProblemDetails()
+    {
+        _mockUserService
+            .RemoveUser(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RemovedUserDto, RemoveUserError>.Err(
+                    new RemoveUserError.LastRemainingChampion(1)
+                )
+            );
+
+        var response = await _client.DeleteAsync(
+            new Uri($"{UsersUrl}/{1}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+        problem.ShouldNotBeNull();
+        problem.Status.ShouldBe(400);
+        problem.Title.ShouldBe("Last remaining champion");
+        problem.Detail.ShouldBe("This action would leave an organisation without a champion user.");
+    }
+
     private static Uri UserWithinOrganisationUrl(int userId, int organisationId) =>
         new($"{UsersUrl}/{userId}/organisations/{organisationId}", UriKind.Relative);
 

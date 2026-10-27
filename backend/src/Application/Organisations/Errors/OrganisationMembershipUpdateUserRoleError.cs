@@ -35,4 +35,11 @@ public abstract record OrganisationMembershipUpdateUserRoleError
     /// <param name="MembershipId">The identifier of the protected membership.</param>
     public sealed record CannotManageSuperRole(int MembershipId)
         : OrganisationMembershipUpdateUserRoleError;
+
+    /// <summary>
+    /// Represents an error that occurs when the change would leave an organisation without a champion.
+    /// </summary>
+    /// <param name="MembershipId">The identifier of the champion membership.</param>
+    public sealed record LastRemainingChampion(int MembershipId)
+        : OrganisationMembershipUpdateUserRoleError;
 }

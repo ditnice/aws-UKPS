@@ -180,6 +180,7 @@ internal class UserRegistrationService : IUserRegistrationService
 
         var result = await _userOnboardingService.InitialiseNewUserSetup(
             MapToOnboardUserCommandDto(registrationRequest),
+            OnboardingFlow.SelfSignUp,
             cancellationToken
         );
         return await result.Match(

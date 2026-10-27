@@ -234,10 +234,9 @@ public class OrganisationEndpointTests : DatabaseTestBase
     public async Task DeactivateMembership_ValidRequest_ReturnsOkAndPersistsInactiveStatus()
     {
         UserOrgMembership membership = await SeedMembership(
-            overrideMembershipFaker: new UserOrgMembershipFaker().RuleFor(
-                x => x.Status,
-                _ => UserOrgMembershipStatus.Active
-            )
+            overrideMembershipFaker: new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Standard)
         );
         var uri = new Uri(
             $"/organisations/{membership.OrganisationId}/memberships/{membership.Id}/deactivate",

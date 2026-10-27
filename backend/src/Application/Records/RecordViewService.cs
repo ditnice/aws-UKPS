@@ -45,7 +45,11 @@ internal sealed class RecordViewService(
 
         RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
 
-        if (record is null || record.OrganisationId != organisationId)
+        if (
+            record is null
+            || record.OrganisationId != organisationId
+            || record.RecordStatus == RecordStatus.Discarded
+        )
         {
             return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }

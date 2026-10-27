@@ -51,7 +51,9 @@ describe('SignInMfaForm', () => {
       screen.getByText(`Enter the 6-digit authentication code shown in the app.`),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Contact UKPS support' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'I do not have access to my authenticator device' }),
+    ).toBeInTheDocument()
   })
   it('redirects on successful authentication', async () => {
     renderValidForm()
