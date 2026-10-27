@@ -2136,6 +2136,7 @@ public class UserServiceTests : DatabaseTestBase
             ?? (await AddEntity(_userFaker.Generate(), TestContext.Current.CancellationToken)).Id;
         var record = new UserOnboardingRecord
         {
+            OnboardingFlow = OnboardingFlow.Invite,
             SetupToken = Guid.NewGuid(),
             CorrelationId = Guid.NewGuid(),
             CreatedAt = _currentDateTime.AddDays(-1),

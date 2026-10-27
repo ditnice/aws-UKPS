@@ -23,6 +23,11 @@ patchedDependencies:
 # These scoped exceptions allow installation; they do not assert runtime compatibility.
 peerDependencyRules:
   allowedVersions:
+    # These plugins (bundled by eslint-config-next) don't list ESLint 10 in their peer ranges yet,
+    # but eslint-config-next >=16.4.0 shims the removed rule-context APIs for them.
+    'eslint-plugin-import@2.32.0>eslint': '10'
+    'eslint-plugin-jsx-a11y@6.10.2>eslint': '10'
+    'eslint-plugin-react@7.37.5>eslint': '10'
     '@headlessui/react@1.7.19>react': '19'
     '@headlessui/react@1.7.19>react-dom': '19'
     '@nice-digital/design-system@5.6.1>react': '19'
