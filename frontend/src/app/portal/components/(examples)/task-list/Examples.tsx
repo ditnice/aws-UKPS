@@ -96,18 +96,18 @@ export function Examples() {
         <TaskList>
           <TaskListSection title="Provide product record details">
             <TaskListTask
-              id="names-and-identifiers-2"
+              id="names-and-identifiers-3"
               title="Names and identifiers"
-              href="#names-and-identifiers-2"
+              href="#names-and-identifiers-3"
               status="completed"
             />
           </TaskListSection>
 
           <TaskListSection title="Provide indication and development information">
             <TaskListTask
-              id="indication-details-2"
+              id="indication-details-3"
               title="Indication details"
-              href="#indication-details-2"
+              href="#indication-details-3"
               status="not-started"
             />
           </TaskListSection>

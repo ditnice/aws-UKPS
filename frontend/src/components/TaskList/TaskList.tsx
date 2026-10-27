@@ -1,9 +1,8 @@
-'use client'
-
 import clsx from 'clsx'
 import { Children, isValidElement } from 'react'
 
 import { Tag } from '@/components/Tag/Tag'
+import type { TagColour } from '@/components/Tag/Tag'
 
 import styles from './TaskList.module.scss'
 
@@ -21,6 +20,7 @@ export type TaskListSectionProps = {
   children: ReactNode
   className?: string
   description?: ReactNode
+  /** Excludes this section from the progress summary. Does not change how the section renders. */
   optional?: boolean
   status?: TaskStatus
   title: ReactNode
@@ -39,7 +39,7 @@ export type TaskListTaskProps = {
 export type TaskListSummaryProps = {
   completed: number
   total: number
-  firstIncompleteId?: string
+  firstIncompleteHref?: string
 }
 
 const taskStatusLabels: Record<TaskStatus, string> = {
@@ -54,7 +54,7 @@ const taskStatusColours = {
   'not-started': 'blue',
   'in-progress': 'yellow',
   completed: 'green',
-} as const
+} as const satisfies Record<Exclude<TaskStatus, 'cannot-start' | 'not-applicable'>, TagColour>
 
 function TaskStatusLabel({ className, status }: { className?: string; status: TaskStatus }) {
   if (status === 'cannot-start' || status === 'not-applicable') {
@@ -69,19 +69,28 @@ function TaskStatusLabel({ className, status }: { className?: string; status: Ta
 }
 
 export function TaskList({ children, className }: TaskListProps) {
-  const tasks = collectTasks(children)
-  const completed = tasks.filter((task) => task.props.status === 'completed').length
-  const firstIncomplete = tasks.find(
-    (task) => task.props.status === 'not-started' || task.props.status === 'in-progress',
-  )
+  const sectionTasks = collectSections(children)
+    .filter((section) => !section.props.optional)
+    .map((section) =>
+      collectTasks(section.props.children).filter((task) => task.props.status !== 'not-applicable'),
+    )
+    .filter((tasks) => tasks.length > 0)
+  const isSectionCompleted = (tasks: ReactElement<AnyProps>[]) =>
+    tasks.every((task) => task.props.status === 'completed')
+  const completed = sectionTasks.filter(isSectionCompleted).length
+  const firstIncomplete = sectionTasks
+    .find((tasks) => !isSectionCompleted(tasks))
+    ?.find((task) => task.props.status === 'not-started' || task.props.status === 'in-progress')
 
   return (
     <>
-      <TaskListSummary
-        completed={completed}
-        total={tasks.length}
-        firstIncompleteId={firstIncomplete?.props.id}
-      />
+      {sectionTasks.length > 0 && (
+        <TaskListSummary
+          completed={completed}
+          total={sectionTasks.length}
+          firstIncompleteHref={firstIncomplete?.props.href}
+        />
+      )}
 
       <div className={clsx(styles['task-list'], className)} data-component="task-list">
         {children}
@@ -90,14 +99,14 @@ export function TaskList({ children, className }: TaskListProps) {
   )
 }
 
-export function TaskListSummary({ completed, total, firstIncompleteId }: TaskListSummaryProps) {
+export function TaskListSummary({ completed, total, firstIncompleteHref }: TaskListSummaryProps) {
   return (
     <div className={styles['task-list__summary']}>
-      <p className={clsx('lead', styles['task-list__summary-text'])}>
+      <p className="lead">
         You have completed {completed} of {total} mandatory {total === 1 ? 'section' : 'sections'}
       </p>
-      {firstIncompleteId && (
-        <a className={styles['task-list__summary-link']} href={`#${firstIncompleteId}`}>
+      {firstIncompleteHref && (
+        <a className={styles['task-list__summary-link']} href={firstIncompleteHref}>
           Skip to first incomplete section
         </a>
       )}
@@ -158,16 +167,26 @@ export function TaskListTask({
   )
 }
 
-type AnyProps = { children?: ReactNode; status?: TaskStatus; id?: string; optional?: boolean }
+type AnyProps = { children?: ReactNode; status?: TaskStatus; href?: string }
+
+function collectSections(children: ReactNode): ReactElement<TaskListSectionProps>[] {
+  return Children.toArray(children).flatMap((child) => {
+    if (!isValidElement<AnyProps>(child)) return []
+
+    if (child.type === TaskListSection) {
+      return [child as ReactElement<TaskListSectionProps>]
+    }
+
+    return collectSections(child.props.children)
+  })
+}
 
 function collectTasks(children: ReactNode): ReactElement<AnyProps>[] {
   return Children.toArray(children).flatMap((child) => {
     if (!isValidElement<AnyProps>(child)) return []
 
-    if (child.props.optional) return []
-
     if (child.props.status && child.props.children === undefined) {
-      return child.props.status === 'not-applicable' ? [] : [child]
+      return [child]
     }
 
     return collectTasks(child.props.children)

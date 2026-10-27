@@ -6,13 +6,13 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
     class="_task-list__summary_b29161"
   >
     <p
-      class="_task-list__summary-text_b29161"
+      class="lead"
     >
-      You have completed 1 of 3 mandatory sections
+      You have completed 0 of 2 mandatory sections
     </p>
     <a
       class="_task-list__summary-link_b29161"
-      href="#task-2"
+      href="/task-2"
     >
       Skip to first incomplete section
     </a>
@@ -24,11 +24,11 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
     <section
       class="_task-list__section_b29161"
     >
-      <h2
+      <h3
         class="_task-list__section-title_b29161"
       >
         Section 1
-      </h2>
+      </h3>
       <div
         class="_task-list__section-summary_b29161"
       >
@@ -92,7 +92,12 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
             <div
               class="_task-list__task-title_b29161"
             >
-              Task 2
+              <a
+                class="_task-list__task-link_b29161"
+                href="/task-2"
+              >
+                Task 2
+              </a>
             </div>
           </div>
           <span
@@ -112,11 +117,11 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
     <section
       class="_task-list__section_b29161"
     >
-      <h2
+      <h3
         class="_task-list__section-title_b29161"
       >
         Section 2
-      </h2>
+      </h3>
       <ul
         class="_task-list__tasks_b29161"
       >
@@ -182,6 +187,56 @@ exports[`TaskListTask > renders a task link and status 1`] = `
         >
           In progress
         </span>
+      </span>
+    </li>
+  </ul>
+</DocumentFragment>
+`;
+
+exports[`TaskListTask > renders the cannot-start status as plain text 1`] = `
+<DocumentFragment>
+  <ul>
+    <li
+      class="_task-list__task_b29161"
+    >
+      <div
+        class="_task-list__task-content_b29161"
+      >
+        <div
+          class="_task-list__task-title_b29161"
+        >
+          Special designation
+        </div>
+      </div>
+      <span
+        class="_task-list__status_b29161"
+      >
+        Cannot start yet
+      </span>
+    </li>
+  </ul>
+</DocumentFragment>
+`;
+
+exports[`TaskListTask > renders the not-applicable status as plain text 1`] = `
+<DocumentFragment>
+  <ul>
+    <li
+      class="_task-list__task_b29161"
+    >
+      <div
+        class="_task-list__task-content_b29161"
+      >
+        <div
+          class="_task-list__task-title_b29161"
+        >
+          Special designation
+        </div>
+      </div>
+      <span
+        class="_task-list__status_b29161"
+      >
+        Not applicable
       </span>
     </li>
   </ul>
