@@ -220,7 +220,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldPreserveIdentityWithoutOrganisationClaims_WhenSelectedMembershipIsDeactivatedAndNoneAreSelectable()
+    public async Task Handle_ShouldPreserveIdentityWithoutOrganisationClaims_WhenSelectedMembershipIsDeactivated()
     {
         UserOrgMembership[] memberships =
             _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
@@ -353,7 +353,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldRequireOrganisationSelection_WhenSelectedMembershipIsNoLongerAuthorised()
+    public async Task Handle_ShouldPreserveIdentityWithoutOrganisationClaims_WhenSelectedMembershipIsDeactivatedAndOthersAreAuthorised()
     {
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
@@ -370,14 +370,11 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
 
         await _handler.Handle(context, CancellationToken.None);
 
-        AssertOrganisationSelectionRequired(
-            context,
-            AuthenticationFailCode.SelectedOrganisationIsNotValid
-        );
+        AssertOrganisationSelectionRequired(context, AuthenticationFailCode.MembershipDeactivated);
     }
 
     [Fact]
-    public async Task Handle_ShouldAppendClaimsForOnlyAuthorisedMembership_WhenOtherMembershipsAreNotAuthorised()
+    public async Task Handle_ShouldRequireOrganisationSelection_WhenNoneSelectedAndOthersAreDeactivated()
     {
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
@@ -393,18 +390,38 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
 
         await _handler.Handle(context, CancellationToken.None);
 
-        context.Result.ShouldBeNull();
-        var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
-        identity.FindFirst(UkpsClaimTypes.OrganisationSelectionFailure).ShouldBeNull();
-        AssertIdentityMatchesUserAndMembership(
-            identity,
-            _userWithMultipleMemberships,
-            memberships[1]
+        AssertOrganisationSelectionRequired(
+            context,
+            AuthenticationFailCode.SelectedOrganisationRequired
         );
     }
 
     [Fact]
-    public async Task Handle_ShouldFail_WhenMultipleMembershipsAndNoneAreAuthorised()
+    public async Task Handle_ShouldRequireOrganisationSelection_WhenMultipleMembershipsAreDeactivatedAndNoneSelected()
+    {
+        UserOrgMembership[] memberships =
+            _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
+        foreach (UserOrgMembership membership in memberships)
+        {
+            membership.Deactivate();
+        }
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        AssertOrganisationSelectionRequired(
+            context,
+            AuthenticationFailCode.SelectedOrganisationRequired
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFail_WhenMultipleMembershipsAndNoneAreSelectable()
     {
         User testUser = _userFaker
             .RuleFor(
@@ -412,6 +429,13 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
                 _ =>
                     _membershipFaker
                         .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Deactivated)
+                        .RuleFor(
+                            x => x.Organisation,
+                            _ =>
+                                new OrganisationFaker()
+                                    .RuleFor(x => x.Status, _ => UserOrgStatus.Inactive)
+                                    .Generate()
+                        )
                         .Generate(2)
             )
             .Generate();

@@ -1708,7 +1708,7 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetCurrentUserOrganisations_ShouldExcludeUnauthorisedMembershipsAndInactiveOrganisations()
+    public async Task GetCurrentUserOrganisations_ShouldIncludeDeactivatedButExcludeRemovedMembershipsAndInactiveOrganisations()
     {
         (User user, UserOrgMembership[] validMemberships) = await AddUserWithManyMemberships(
             1,
@@ -1734,8 +1734,18 @@ public class UserServiceTests : DatabaseTestBase
                     .Generate()
                     .Update(o => o.Status = UserOrgStatus.Deactivated);
             });
+        UserOrgMembership removedMembership = new UserOrgMembershipFaker()
+            .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Removed)
+            .Generate()
+            .Update(x =>
+            {
+                x.UserId = user.Id;
+                x.Organisation = _organisationFaker
+                    .Generate()
+                    .Update(o => o.Status = UserOrgStatus.Active);
+            });
         await AddEntities(
-            [deactivatedMembership, inactiveOrganisationMembership],
+            [deactivatedMembership, inactiveOrganisationMembership, removedMembership],
             TestContext.Current.CancellationToken
         );
         _harness.UpdateCurrentUser(user);
@@ -1745,7 +1755,12 @@ public class UserServiceTests : DatabaseTestBase
                 TestContext.Current.CancellationToken
             );
 
-        result.Select(x => x.Id).ShouldBe([validMemberships.Single().OrganisationId]);
+        result
+            .Select(x => x.Id)
+            .ShouldBe(
+                [validMemberships.Single().OrganisationId, deactivatedMembership.OrganisationId],
+                ignoreOrder: true
+            );
     }
 
     private static CurrentUser ChampionWithAnotherOrganisationSelected(

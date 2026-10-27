@@ -110,9 +110,10 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
         var selectedMembership = memberships.FirstOrDefault(x => x.IsSelectedAsCurrentOrganisation);
 
+        // Guarded, as a selectable membership may be deactivated.
         if (selectedMembership is not null && selectedMembership.IsSelectable())
         {
-            return new MembershipSelection(selectedMembership);
+            return GuardMembershipIsSelectable(selectedMembership, context);
         }
 
         UserOrgMembership[] selectableMemberships = memberships
@@ -121,8 +122,8 @@ internal class TokenValidationHandler : ITokenValidationHandler
 
         if (selectableMemberships.Length == 1)
         {
-            // Only one organisation can be managed, so there is nothing for the user to select.
-            return new MembershipSelection(selectableMemberships[0]);
+            // Only one organisation can be selected, so there is nothing for the user to choose.
+            return GuardMembershipIsSelectable(selectableMemberships[0], context);
         }
 
         if (selectableMemberships.Length > 1)
