@@ -2162,12 +2162,13 @@
         "tags": [
           "Record"
         ],
-        "summary": "Discards a draft record by updating its status to discarded and a new record event is made.",
+        "summary": "Discards a record that has never been submitted.",
+        "operationId": "DiscardRecord",
         "parameters": [
           {
             "name": "recordId",
             "in": "path",
-            "description": "The unique identifier of the record to discard.",
+            "description": "The identifier of the record to discard.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -2176,8 +2177,71 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "The record was discarded."
+          },
+          "400": {
+            "description": "The record has been submitted, so cannot be discarded.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found, has already been discarded, or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record was updated by another operation while it was being discarded.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "An HTTP 200 response if the record is successfully discarded.\nAn HTTP 404 response if the record cannot be found.\nAn HTTP 400 response if the record is not eligible to be discarded.",
+            "description": "Unauthorized",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4816,8 +4880,7 @@
           "QAReview",
           "Published",
           "OnHold",
-          "Archived",
-          "Discarded"
+          "Archived"
         ],
         "type": "string",
         "description": "Represents the status shown to users for a record. On hold and archived records show their\nrecord status; otherwise the workflow status of the latest revision is shown."
@@ -4851,7 +4914,8 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "revisionId"
+          "revisionId",
+          "canDiscard"
         ],
         "properties": {
           "recordType": {
@@ -5073,6 +5137,10 @@
             "type": "integer",
             "description": "Gets the identifier of the latest revision.",
             "format": "int32"
+          },
+          "canDiscard": {
+            "type": "boolean",
+            "description": "Gets a value indicating whether the record can be discarded, because it has never been\nsubmitted."
           }
         },
         "description": "Represents the data held on the latest revision of a medicine record."
@@ -5083,7 +5151,8 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "revisionId"
+          "revisionId",
+          "canDiscard"
         ],
         "properties": {
           "recordType": {
@@ -5122,6 +5191,10 @@
             "type": "integer",
             "description": "Gets the identifier of the latest revision.",
             "format": "int32"
+          },
+          "canDiscard": {
+            "type": "boolean",
+            "description": "Gets a value indicating whether the record can be discarded, because it has never been\nsubmitted."
           }
         },
         "description": "Represents the data held on the latest revision of a vaccine record."

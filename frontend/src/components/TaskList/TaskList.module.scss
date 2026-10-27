@@ -1,15 +1,14 @@
 @use '@/styles/colours';
-@use '@/styles/utils';
 @use '@/styles/spacing';
-
-.task-list {
-  border-top: 1px solid colours.$border;
-}
 
 .task-list__section-title {
   border-bottom: 1px solid colours.$border;
-  margin: 0;
+  margin-bottom: 0;
   padding: spacing.$medium * 1px 0;
+}
+
+.task-list__section-title:has(+ .task-list__section-summary) {
+  border-bottom: 0;
 }
 
 .task-list__tasks {
@@ -27,48 +26,15 @@
   flex-shrink: 0;
 }
 
-.task-list__section-title--collapsible {
-  border-bottom: 0;
-}
-
-.task-list__task-field-summary {
-  margin: spacing.$small * 1px 0;
-}
-
 .task-list__section-summary {
-  display: flex;
-  justify-content: space-between;
-}
-
-.task-list__section-description {
-  min-width: 0;
-}
-
-.task-list__section-controls {
   border-bottom: 1px solid colours.$border;
-  padding-bottom: spacing.$small * 1px;
+  padding-bottom: spacing.$medium * 1px;
 }
 
-.task-list__toggle {
-  border: 0;
-  color: colours.$link;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.task-list__toggle-icon {
-  margin-right: utils.rem(spacing.$small);
-  transition: all 0.25s ease;
-}
-
-.task-list__toggle-icon--expanded {
-  transform: rotate(-180deg);
+.task-list__task-description {
+  margin-top: spacing.$small * 1px;
 }
 
 .task-list__summary {
-  margin-bottom: spacing.$large * 1px;
-}
-
-.task-list__summary-text {
   margin-bottom: spacing.$large * 1px;
 }

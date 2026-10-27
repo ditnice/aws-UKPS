@@ -48,3 +48,7 @@ All dates are relative to `TODAY` in `transform_synthetic_data.py`.
 The seeder then gives each record a workflow history (drafts, QA reviews, publications, reviews
 and status changes). Earlier revisions show estimates that later changed and answers that started
 as Unknown, and each update records its field changes.
+
+The seeder also mixes in a few discarded records, which the source data has none of: about two
+per pharmaceutical organisation, whatever its size. Each has a single draft revision with
+generated product details and a few indication answers, discarded before it was ever submitted.

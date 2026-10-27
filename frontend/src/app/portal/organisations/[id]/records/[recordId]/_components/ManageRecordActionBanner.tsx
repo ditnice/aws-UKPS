@@ -9,7 +9,7 @@ import { getRecordActions } from '../_lib/recordActions'
 type ManageRecordActionBannerProps = {
   record: Pick<
     RecordDto,
-    'organisationId' | 'recordId' | 'recordType' | 'displayStatus' | 'recordStatus'
+    'organisationId' | 'recordId' | 'recordType' | 'displayStatus' | 'recordStatus' | 'canDiscard'
   >
 }
 
