@@ -7,7 +7,7 @@ describe('TaskList', () => {
   it('renders sections and tasks inside the task list', () => {
     const { asFragment, container } = render(
       <TaskList className="additional-class">
-        <TaskListSection title="Section 1" description="Complete these first" status="in-progress">
+        <TaskListSection title="Section 1" description="Complete these first">
           <TaskListTask id="task-1" title="Task 1" href="/task-1" status="completed" />
           <TaskListTask id="task-2" title="Task 2" href="/task-2" status="in-progress" />
         </TaskListSection>
@@ -22,23 +22,25 @@ describe('TaskList', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'Section 1' })).toBeInTheDocument()
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
     expect(screen.getByText('Not yet started')).toBeInTheDocument()
-    expect(screen.getByText('You have completed 0 of 2 mandatory sections')).toBeInTheDocument()
+    expect(screen.getByText('Complete these first')).toBeInTheDocument()
+    expect(screen.getAllByText('In progress')).toHaveLength(1)
+    expect(screen.getByText('You have completed 1 of 3 mandatory tasks')).toBeInTheDocument()
     expect(asFragment()).toMatchSnapshot()
   })
 
   it('shows progress and a skip link to the first incomplete task', () => {
     render(
       <TaskList>
-        <TaskListSection title="Section 1" status="completed">
+        <TaskListSection title="Section 1">
           <TaskListTask id="task-1" title="Task 1" status="completed" />
         </TaskListSection>
-        <TaskListSection title="Section 2" status="in-progress">
+        <TaskListSection title="Section 2">
           <TaskListTask id="task-2" title="Task 2" href="/task-2" status="in-progress" />
         </TaskListSection>
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 1 of 2 mandatory sections')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 1 of 2 mandatory tasks')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Skip to first incomplete section' })).toHaveAttribute(
       'href',
       '/task-2',
@@ -48,13 +50,13 @@ describe('TaskList', () => {
   it('does not render the skip link when all tasks are completed', () => {
     render(
       <TaskList>
-        <TaskListSection title="Section 1" status="completed">
+        <TaskListSection title="Section 1">
           <TaskListTask id="task-1" title="Task 1" status="completed" />
         </TaskListSection>
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 1 of 1 mandatory section')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 1 of 1 mandatory task')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: 'Skip to first incomplete section' }),
     ).not.toBeInTheDocument()
@@ -70,7 +72,7 @@ describe('TaskList', () => {
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 0 of 1 mandatory section')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 0 of 2 mandatory tasks')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: 'Skip to first incomplete section' }),
     ).not.toBeInTheDocument()
@@ -89,13 +91,13 @@ describe('TaskList', () => {
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 0 of 2 mandatory sections')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 1 of 3 mandatory tasks')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: 'Skip to first incomplete section' }),
     ).not.toBeInTheDocument()
   })
 
-  it('counts only mandatory, applicable sections in its progress summary', () => {
+  it('counts only mandatory, applicable tasks in its progress summary', () => {
     render(
       <TaskList>
         <TaskListSection title="Optional section" optional>
@@ -144,13 +146,34 @@ describe('TaskList', () => {
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 1 of 2 mandatory sections')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 2 of 5 mandatory tasks')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Skip to first incomplete section' })).toHaveAttribute(
       'href',
       '/first-incomplete-task',
     )
     expect(screen.getByText('Cannot start yet')).toBeInTheDocument()
     expect(screen.getAllByText('Not applicable')).toHaveLength(2)
+  })
+
+  it('counts tasks inside fragments and plain elements', () => {
+    render(
+      <TaskList>
+        <>
+          <div>
+            <TaskListSection title="Section 1">
+              <>
+                <TaskListTask title="Task 1" status="completed" />
+              </>
+            </TaskListSection>
+          </div>
+          <TaskListSection title="Section 2">
+            <TaskListTask title="Task 2" status="not-started" />
+          </TaskListSection>
+        </>
+      </TaskList>,
+    )
+
+    expect(screen.getByText('You have completed 1 of 2 mandatory tasks')).toBeInTheDocument()
   })
 
   it('does not render the progress summary when there are no mandatory, applicable tasks', () => {

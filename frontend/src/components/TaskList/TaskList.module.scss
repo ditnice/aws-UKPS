@@ -28,13 +28,7 @@
 
 .task-list__section-summary {
   border-bottom: 1px solid colours.$border;
-  display: flex;
-  justify-content: space-between;
   padding-bottom: spacing.$medium * 1px;
-}
-
-.task-list__section-description {
-  min-width: 0;
 }
 
 .task-list__task-description {

@@ -21,7 +21,7 @@ export function Examples() {
               id="indication-details"
               title="Indication details"
               href="#indication-details"
-              status="completed"
+              status="not-started"
             />
             <TaskListTask
               id="development-background"
@@ -29,6 +29,44 @@ export function Examples() {
               href="#development-background"
               description="Enter development details for this product, such as the originator company and whether it is a repurposed medicine."
               status="not-started"
+            />
+          </TaskListSection>
+
+          <TaskListSection title="Provide clinical trial information">
+            <TaskListTask
+              id="clinical-trials"
+              title="Clinical trials"
+              href="#clinical-trials"
+              status="not-started"
+            />
+          </TaskListSection>
+
+          <TaskListSection title="Provide regulatory, access, and launch information">
+            <TaskListTask
+              id="mhra-procedure-dates"
+              title="Medicines and Healthcare Regulatory Agency (MHRA) procedure and dates"
+              href="#mhra-procedure-dates"
+              status="not-started"
+            />
+            <TaskListTask
+              id="hta-launch"
+              title="Health Technology Assessment (HTA) and launch"
+              href="#hta-launch"
+              status="not-started"
+            />
+          </TaskListSection>
+
+          <TaskListSection title="Provide special designation information">
+            <TaskListTask
+              id="orphan-atmp-classification"
+              title="Orphan medicine status and Advanced Therapy Medicinal Product (ATMP) classification"
+              href="#orphan-atmp-classification"
+              status="not-started"
+            />
+            <TaskListTask
+              title="Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)"
+              description="Complete the indication details section first. If your product is a biosimilar, you will not need to complete this section."
+              status="cannot-start"
             />
           </TaskListSection>
 

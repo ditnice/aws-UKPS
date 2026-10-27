@@ -8,22 +8,19 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
     <p
       class="lead"
     >
-      You have completed 0 of 2 mandatory sections
+      You have completed 1 of 3 mandatory tasks
     </p>
     <a
-      class="_task-list__summary-link_b29161"
       href="/task-2"
     >
       Skip to first incomplete section
     </a>
   </div>
   <div
-    class="_task-list_b29161 additional-class"
+    class="additional-class"
     data-component="task-list"
   >
-    <section
-      class="_task-list__section_b29161"
-    >
+    <section>
       <h3
         class="_task-list__section-title_b29161"
       >
@@ -32,22 +29,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
       <div
         class="_task-list__section-summary_b29161"
       >
-        <div
-          class="_task-list__section-description_b29161"
-        >
-          Complete these first
-        </div>
-        <span
-          class="_task-list__status_b29161"
-        >
-          <span
-            class="tag"
-            data-component="tag"
-            style="background-color: rgb(255, 238, 128); color: rgb(122, 60, 28);"
-          >
-            In progress
-          </span>
-        </span>
+        Complete these first
       </div>
       <ul
         class="_task-list__tasks_b29161"
@@ -56,14 +38,9 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           class="_task-list__task_b29161"
           id="task-1"
         >
-          <div
-            class="_task-list__task-content_b29161"
-          >
-            <div
-              class="_task-list__task-title_b29161"
-            >
+          <div>
+            <div>
               <a
-                class="_task-list__task-link_b29161"
                 href="/task-1"
               >
                 Task 1
@@ -86,14 +63,9 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           class="_task-list__task_b29161"
           id="task-2"
         >
-          <div
-            class="_task-list__task-content_b29161"
-          >
-            <div
-              class="_task-list__task-title_b29161"
-            >
+          <div>
+            <div>
               <a
-                class="_task-list__task-link_b29161"
                 href="/task-2"
               >
                 Task 2
@@ -114,9 +86,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
         </li>
       </ul>
     </section>
-    <section
-      class="_task-list__section_b29161"
-    >
+    <section>
       <h3
         class="_task-list__section-title_b29161"
       >
@@ -129,12 +99,8 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           class="_task-list__task_b29161"
           id="task-3"
         >
-          <div
-            class="_task-list__task-content_b29161"
-          >
-            <div
-              class="_task-list__task-title_b29161"
-            >
+          <div>
+            <div>
               Task 3
             </div>
           </div>
@@ -163,14 +129,9 @@ exports[`TaskListTask > renders a task link and status 1`] = `
       class="_task-list__task_b29161"
       id="task-3"
     >
-      <div
-        class="_task-list__task-content_b29161"
-      >
-        <div
-          class="_task-list__task-title_b29161"
-        >
+      <div>
+        <div>
           <a
-            class="_task-list__task-link_b29161"
             href="/review"
           >
             Review evidence
@@ -199,12 +160,8 @@ exports[`TaskListTask > renders the cannot-start status as plain text 1`] = `
     <li
       class="_task-list__task_b29161"
     >
-      <div
-        class="_task-list__task-content_b29161"
-      >
-        <div
-          class="_task-list__task-title_b29161"
-        >
+      <div>
+        <div>
           Special designation
         </div>
       </div>
@@ -224,12 +181,8 @@ exports[`TaskListTask > renders the not-applicable status as plain text 1`] = `
     <li
       class="_task-list__task_b29161"
     >
-      <div
-        class="_task-list__task-content_b29161"
-      >
-        <div
-          class="_task-list__task-title_b29161"
-        >
+      <div>
+        <div>
           Special designation
         </div>
       </div>

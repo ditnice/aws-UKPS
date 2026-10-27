@@ -20,9 +20,8 @@ export type TaskListSectionProps = {
   children: ReactNode
   className?: string
   description?: ReactNode
-  /** Excludes this section from the progress summary. Does not change how the section renders. */
+  /** Excludes this section's tasks from the progress summary. Does not change how the section renders. */
   optional?: boolean
-  status?: TaskStatus
   title: ReactNode
   titleHeadingLevel?: 2 | 3 | 4 | 5 | 6
 }
@@ -69,30 +68,30 @@ function TaskStatusLabel({ className, status }: { className?: string; status: Ta
 }
 
 export function TaskList({ children, className }: TaskListProps) {
-  const sectionTasks = collectSections(children)
+  const sections = collectSections(children)
     .filter((section) => !section.props.optional)
     .map((section) =>
       collectTasks(section.props.children).filter((task) => task.props.status !== 'not-applicable'),
     )
-    .filter((tasks) => tasks.length > 0)
-  const isSectionCompleted = (tasks: ReactElement<AnyProps>[]) =>
-    tasks.every((task) => task.props.status === 'completed')
-  const completed = sectionTasks.filter(isSectionCompleted).length
-  const firstIncomplete = sectionTasks
-    .find((tasks) => !isSectionCompleted(tasks))
+  const tasks = sections.flat()
+  const completed = tasks.filter((task) => task.props.status === 'completed').length
+  // Only the first incomplete section is searched. If none of its tasks can be started yet, the
+  // skip link is hidden rather than jumping past that section to a later one.
+  const firstIncomplete = sections
+    .find((sectionTasks) => sectionTasks.some((task) => task.props.status !== 'completed'))
     ?.find((task) => task.props.status === 'not-started' || task.props.status === 'in-progress')
 
   return (
     <>
-      {sectionTasks.length > 0 && (
+      {tasks.length > 0 && (
         <TaskListSummary
           completed={completed}
-          total={sectionTasks.length}
+          total={tasks.length}
           firstIncompleteHref={firstIncomplete?.props.href}
         />
       )}
 
-      <div className={clsx(styles['task-list'], className)} data-component="task-list">
+      <div className={className} data-component="task-list">
         {children}
       </div>
     </>
@@ -103,13 +102,9 @@ export function TaskListSummary({ completed, total, firstIncompleteHref }: TaskL
   return (
     <div className={styles['task-list__summary']}>
       <p className="lead">
-        You have completed {completed} of {total} mandatory {total === 1 ? 'section' : 'sections'}
+        You have completed {completed} of {total} mandatory {total === 1 ? 'task' : 'tasks'}
       </p>
-      {firstIncompleteHref && (
-        <a className={styles['task-list__summary-link']} href={firstIncompleteHref}>
-          Skip to first incomplete section
-        </a>
-      )}
+      {firstIncompleteHref && <a href={firstIncompleteHref}>Skip to first incomplete section</a>}
     </div>
   )
 }
@@ -118,22 +113,16 @@ export function TaskListSection({
   children,
   className,
   description,
-  status,
   title,
   titleHeadingLevel = 3,
 }: TaskListSectionProps) {
   const TitleHeading = `h${titleHeadingLevel}` as const
 
   return (
-    <section className={clsx(styles['task-list__section'], className)}>
+    <section className={className}>
       <TitleHeading className={styles['task-list__section-title']}>{title}</TitleHeading>
 
-      {(description || status) && (
-        <div className={styles['task-list__section-summary']}>
-          <div className={styles['task-list__section-description']}>{description}</div>
-          {status && <TaskStatusLabel className={styles['task-list__status']} status={status} />}
-        </div>
-      )}
+      {description && <div className={styles['task-list__section-summary']}>{description}</div>}
 
       <ul className={styles['task-list__tasks']}>{children}</ul>
     </section>
@@ -150,16 +139,8 @@ export function TaskListTask({
 }: TaskListTaskProps) {
   return (
     <li id={id} className={clsx(styles['task-list__task'], className)}>
-      <div className={styles['task-list__task-content']}>
-        <div className={styles['task-list__task-title']}>
-          {href ? (
-            <a className={styles['task-list__task-link']} href={href}>
-              {title}
-            </a>
-          ) : (
-            title
-          )}
-        </div>
+      <div>
+        <div>{href ? <a href={href}>{title}</a> : title}</div>
         {description && <div className={styles['task-list__task-description']}>{description}</div>}
       </div>
       <TaskStatusLabel className={styles['task-list__status']} status={status} />
@@ -167,11 +148,11 @@ export function TaskListTask({
   )
 }
 
-type AnyProps = { children?: ReactNode; status?: TaskStatus; href?: string }
-
+// Sections and tasks are found by component type, looking through fragments and plain elements.
+// Wrapping them in another component hides them from the summary.
 function collectSections(children: ReactNode): ReactElement<TaskListSectionProps>[] {
   return Children.toArray(children).flatMap((child) => {
-    if (!isValidElement<AnyProps>(child)) return []
+    if (!isValidElement<{ children?: ReactNode }>(child)) return []
 
     if (child.type === TaskListSection) {
       return [child as ReactElement<TaskListSectionProps>]
@@ -181,12 +162,12 @@ function collectSections(children: ReactNode): ReactElement<TaskListSectionProps
   })
 }
 
-function collectTasks(children: ReactNode): ReactElement<AnyProps>[] {
+function collectTasks(children: ReactNode): ReactElement<TaskListTaskProps>[] {
   return Children.toArray(children).flatMap((child) => {
-    if (!isValidElement<AnyProps>(child)) return []
+    if (!isValidElement<{ children?: ReactNode }>(child)) return []
 
-    if (child.props.status && child.props.children === undefined) {
-      return [child]
+    if (child.type === TaskListTask) {
+      return [child as ReactElement<TaskListTaskProps>]
     }
 
     return collectTasks(child.props.children)
