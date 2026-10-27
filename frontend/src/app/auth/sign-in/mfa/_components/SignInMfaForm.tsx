@@ -114,9 +114,9 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         Continue
       </Button>
 
-      {/* TODO - link this up when the page is created */}
+      {/* TODO 620 - link this up when the page is created */}
       <p className={styles.helpLink}>
-        <Link href="/">Contact UKPS support</Link>
+        <Link href="/">I do not have access to my authenticator device</Link>
       </p>
     </form>
   )
