@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url'
 import { includeIgnoreFile } from '@eslint/config-helpers'
 import coreWebVitals from 'eslint-config-next/core-web-vitals'
 import typescript from 'eslint-config-next/typescript'
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript'
+import importX from 'eslint-plugin-import-x'
 
 const gitignorePath = fileURLToPath(new URL('../.gitignore', import.meta.url))
 
@@ -57,15 +59,13 @@ const eslintConfig = [
   ...coreWebVitals,
   ...typescript,
   {
+    // eslint-plugin-import's `order` rule crashes on ESLint 10 (it calls removed SourceCode
+    // APIs), so our import rules use the maintained import-x fork instead.
+    plugins: {
+      'import-x': importX,
+    },
     settings: {
-      'import/parsers': {
-        '@typescript-eslint/parser': ['.ts', '.tsx'],
-      },
-      'import/resolver': {
-        typescript: {
-          project: ['./tsconfig.json'],
-        },
-      },
+      'import-x/resolver-next': [createTypeScriptImportResolver({ project: './tsconfig.json' })],
     },
     rules: {
       '@typescript-eslint/ban-ts-comment': 'warn',
@@ -83,10 +83,10 @@ const eslintConfig = [
           caughtErrorsIgnorePattern: '^(_|ignore)',
         },
       ],
-      'import/first': 'error',
-      'import/newline-after-import': 'error',
-      'import/no-unresolved': 'error',
-      'import/order': [
+      'import-x/first': 'error',
+      'import-x/newline-after-import': 'error',
+      'import-x/no-unresolved': 'error',
+      'import-x/order': [
         'error',
         {
           'newlines-between': 'always',
