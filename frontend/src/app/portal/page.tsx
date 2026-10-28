@@ -1,9 +1,7 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { getUsersMe } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
-import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 export default async function PortalDashboard() {

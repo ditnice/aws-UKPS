@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import React from 'react'
 
 import styles from './NavLinks.module.scss'
 
 export type NavLinkItem = {
   href: string
-  label: string
+  label: string | React.ReactElement
 }
 
 export type NavLinksProps = {

@@ -17,12 +17,38 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   const links = [
     {
       href: `/portal/organisations/${me?.organisationId}/records`,
-      label: 'View and manage records',
+      label: (
+        <>
+          View and
+          <br />
+          manage records
+        </>
+      ),
     },
     ...(me?.userRole === 'Standard'
       ? []
-      : [{ href: `/portal/organisations/${me?.organisationId}`, label: 'Manage my organisation' }]),
-    { href: '/portal/user/me', label: 'Manage my details' },
+      : [
+          {
+            href: `/portal/organisations/${me?.organisationId}`,
+            label: (
+              <>
+                Manage my
+                <br />
+                organisation
+              </>
+            ),
+          },
+        ]),
+    {
+      href: '/portal/user/me',
+      label: (
+        <>
+          Manage my
+          <br />
+          details{' '}
+        </>
+      ),
+    },
   ]
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
