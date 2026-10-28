@@ -1,5 +1,4 @@
 import { ApplicationLayout } from '@/components/Layout/ApplicationLayout'
-import { UserOrganisationContext } from '@/components/Layout/Header/Header'
 import { OrganisationSwitcher } from '@/components/Layout/Header/OrganisationSwitcher/OrganisationSwitcher'
 import { inter, lora } from '@/styles/fonts'
 import '@/styles/global.scss'
@@ -11,47 +10,6 @@ import type { ReactNode } from 'react'
 export const metadata = {
   description: 'An essential first step to market access for medicines.',
   title: 'UK PharmaScan Portal',
-}
-
-export const createLinks = (me: UserOrganisationContext | undefined) => {
-  if (!me) return []
-
-  return [
-    {
-      href: `/portal/organisations/${me.organisationId}/records`,
-      label: (
-        <>
-          View and
-          <br />
-          manage records
-        </>
-      ),
-    },
-    ...(me.userRole === 'Standard'
-      ? []
-      : [
-          {
-            href: `/portal/organisations/${me.organisationId}`,
-            label: (
-              <>
-                Manage my
-                <br />
-                organisation
-              </>
-            ),
-          },
-        ]),
-    {
-      href: '/portal/user/me',
-      label: (
-        <>
-          Manage my
-          <br />
-          details{' '}
-        </>
-      ),
-    },
-  ]
 }
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
