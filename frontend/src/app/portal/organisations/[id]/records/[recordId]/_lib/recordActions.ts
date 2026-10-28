@@ -1,4 +1,4 @@
-import type { RecordDto } from '@/client/generated'
+import type { RecordDto, RecordType } from '@/client/generated'
 
 export type RecordAction =
   'update' | 'changeStatus' | 'confirmCurrent' | 'confirmOnHold' | 'discard' | 'viewTimeline'
@@ -34,3 +34,6 @@ export const getRecordActions = ({
 
 export const canChangeRecordStatus = (record: RecordActionState) =>
   getRecordActions(record).includes('changeStatus')
+
+export const buildRecordHref = (organisationId: number, recordId: number, recordType: RecordType) =>
+  `/portal/organisations/${organisationId}/records/${recordId}?recordType=${recordType}`

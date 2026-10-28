@@ -8,7 +8,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../../_components/OrganisationPageWrapper'
-import { canChangeRecordStatus } from '../_lib/recordActions'
+import { canChangeRecordStatus, buildRecordHref } from '../_lib/recordActions'
 
 import { ChangeRecordStatusActions } from './_components/ChangeRecordStatusActions'
 
@@ -69,11 +69,7 @@ const ChangeRecordStatus = async ({
   }
 
   const backLink = (
-    <BackLink
-      href={`/portal/organisations/${organisationId}/records/${recordId}?recordType=${recordType}`}
-    >
-      Back
-    </BackLink>
+    <BackLink href={buildRecordHref(organisationId, recordId, recordType)}>Back</BackLink>
   )
 
   if (error || !record) {

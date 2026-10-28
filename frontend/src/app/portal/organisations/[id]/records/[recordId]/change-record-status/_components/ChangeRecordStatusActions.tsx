@@ -10,7 +10,9 @@ import { Radio } from '@nice-digital/nds-radio'
 import type { RecordStatus, RecordType } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
-interface ChangeRecordStatusProps {
+import { buildRecordHref } from '../../_lib/recordActions'
+
+type ChangeRecordStatusProps = {
   organisationId: number
   recordId: number
   recordType: RecordType
@@ -74,9 +76,7 @@ export const ChangeRecordStatusActions = ({
       return
     }
 
-    router.push(
-      `/portal/organisations/${organisationId}/records/${recordId}/change-record-status/${option.path}?recordType=${recordType}`,
-    )
+    router.push(buildRecordHref(organisationId, recordId, recordType))
   }
 
   return (
