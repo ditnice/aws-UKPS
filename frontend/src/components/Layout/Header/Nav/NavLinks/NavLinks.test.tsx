@@ -11,11 +11,13 @@ vi.mock('next/link', async () => ({
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
-const links: NavLinkItem[] = [
-  { href: '/', label: 'Home' },
-  { href: '/about-us', label: 'About' },
-  { href: '/portal', label: 'Dashboard' },
-  { href: '/portal/components', label: 'Components' },
+type StringLabelledNavLinkItem = NavLinkItem & { stringLabel: string }
+
+const links: StringLabelledNavLinkItem[] = [
+  { href: '/', label: <>Home</>, stringLabel: 'Home' },
+  { href: '/about-us', label: 'About', stringLabel: 'About' },
+  { href: '/portal', label: 'Dashboard', stringLabel: 'Dashboard' },
+  { href: '/portal/components', label: 'Components', stringLabel: 'Components' },
 ]
 
 const getLinkByLabel = (label: string) => screen.getByRole('link', { name: label })
@@ -26,12 +28,11 @@ const assertLinkIsNotActive = (label: string) =>
 const assertOnlySpecifiedLinkIsActive = (expectedActiveLink: string) => {
   assertLinkIsActive(expectedActiveLink)
   links
-    .map((x) => x.label)
-    .filter((x) => x != expectedActiveLink)
-    .forEach(assertLinkIsNotActive)
+    .filter((x) => x.stringLabel != expectedActiveLink)
+    .forEach((x) => assertLinkIsNotActive(x.stringLabel))
 }
 const assertAllLinksAreNotActive = () => {
-  links.map((x) => x.label).forEach(assertLinkIsNotActive)
+  links.map((x) => x.stringLabel).forEach(assertLinkIsNotActive)
 }
 
 describe('NavLinks', () => {
@@ -42,8 +43,8 @@ describe('NavLinks', () => {
 
     expect(screen.getAllByRole('listitem')).toHaveLength(links.length)
 
-    links.forEach(({ label, href }) => {
-      const link = getLinkByLabel(label)
+    links.forEach(({ href, stringLabel }) => {
+      const link = getLinkByLabel(stringLabel)
       expect(link).toBeInTheDocument()
       expect(link).toHaveAttribute('href', href)
     })
