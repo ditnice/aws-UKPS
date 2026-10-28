@@ -12,6 +12,7 @@ internal sealed class MedicinesIndicationDetail
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("indication", "Indication", Order = 10)]
     [FormField(
         "medicines_indication_detail.indication",
@@ -27,6 +28,7 @@ internal sealed class MedicinesIndicationDetail
     /// The most specific BNF entry chosen: a subchapter when one is picked, otherwise the
     /// top-level chapter.
     /// </summary>
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("bnf-chapter", "BNF chapter", Order = 20)]
     [FormField(
         "medicines_indication_detail.bnf_chapter_id",
@@ -39,6 +41,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("paediatric", "Treating children", Order = 40)]
     [FormField(
         "medicines_indication_detail.indication_is_paediatric",
@@ -48,6 +51,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("cancer", "Treating cancer", Order = 50)]
     [FormField(
         "medicines_indication_detail.indication_is_cancer",
@@ -57,6 +61,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat cancer")]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("rare-disease", "Treating a rare disease", Order = 60)]
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
@@ -96,6 +101,7 @@ internal sealed class MedicinesIndicationDetail
     /// or condition when one is picked, otherwise the top-level area.
     /// See MedicinesIndicationDetailTherapeuticArea junction table.
     /// </summary>
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("therapeutic-area", "Therapeutic area", Order = 30)]
     [FormField(
         "medicines_indication_detail_therapeutic_area",

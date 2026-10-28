@@ -9,6 +9,7 @@ internal sealed record QuestionDeclaration
 {
     public required Type EntityType { get; init; }
     public required PropertyInfo Property { get; init; }
+    public required FormTaskAttribute Task { get; init; }
     public required FormPageAttribute Page { get; init; }
     public required FormFieldAttribute Field { get; init; }
     public FormRequiredAttribute? Required { get; init; }

@@ -130,7 +130,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 5,
                 "indication",
                 Arg.Is<SaveRecordPageCommand>(c =>
-                    c.FormVersion == "2026.10.3"
+                    c.FormVersion == "2026.10.4"
                     && c.RevisionVersion == 42
                     && c.Answers[Indication].GetString() == "Hepatitis C"
                 ),
@@ -166,7 +166,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     {
         HttpResponseMessage response = await _client.PutAsJsonAsync(
             Url(PageUrl),
-            new { formVersion = "2026.10.3", revisionVersion = 42 },
+            new { formVersion = "2026.10.4", revisionVersion = 42 },
             Ct
         );
 
@@ -219,7 +219,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             Url(path),
             new SaveRecordPageCommand
             {
-                FormVersion = "2026.10.3",
+                FormVersion = "2026.10.4",
                 RevisionVersion = 42,
                 Answers = new Dictionary<string, JsonElement>(StringComparer.Ordinal)
                 {
@@ -256,7 +256,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     private static RecordPageDto CreatePage() =>
         new()
         {
-            FormVersion = "2026.10.3",
+            FormVersion = "2026.10.4",
             RevisionVersion = 42,
             OrganisationId = 1,
             RecordId = 5,

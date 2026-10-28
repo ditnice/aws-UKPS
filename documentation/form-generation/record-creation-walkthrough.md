@@ -10,6 +10,12 @@ with SQL to check them. Use it to confirm the flow behaves as intended.
 
 For the design behind it, see the [high-level design](high-level-design.md).
 
+The record task list is available at `GET /records/{recordId}/tasks`. It reads the latest revision
+and returns the form's sections and tasks, including each task's first page and a status derived
+from saved answers. This read does not write to the database. A task is `completed` when all its
+required questions have answers, `in-progress` when it has at least one answer but required
+answers remain, and `not-started` when it has no saved answers.
+
 ## Conventions
 
 - All tables are in the `ukps` schema.

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Reflection;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Persistence;
@@ -73,6 +74,14 @@ internal sealed class JunctionBinding : IFormBinding
             _add.Invoke(collection, [item]);
         }
     }
+
+    public Expression HasAnswerExpression(ParameterExpression row) =>
+        Expression.Call(
+            typeof(Enumerable),
+            nameof(Enumerable.Any),
+            [_junctionType],
+            Expression.Property(row, _navigation)
+        );
 
     private IEnumerable<object> Items(object? row) =>
         row is null || _navigation.GetValue(row) is not IEnumerable items

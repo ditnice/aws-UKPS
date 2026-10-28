@@ -26,6 +26,8 @@ import { questionRegistry } from './questionRegistry'
 export const pageHref = (page: Pick<RecordPageDto, 'recordId'>, pageId: string) =>
   `/portal/records/${page.recordId}/${pageId}`
 
+export const taskListHref = (recordId: number) => `/portal/records/${recordId}/tasks`
+
 export const conflictCodes = ['revision_not_draft', 'revision_changed', 'form_version_changed']
 
 type SaveState = { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kind: 'failed' }
@@ -144,8 +146,7 @@ export function FormPage({ page }: FormPageProps) {
               </Button>
             )}
           </form.Subscribe>
-          {/* TODO: link to the tasklist once it exists. */}
-          <Link href="#">Return to tasklist</Link>
+          <Link href={taskListHref(page.recordId)}>Return to tasklist</Link>
         </div>
       </form>
     </>

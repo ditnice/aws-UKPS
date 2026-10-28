@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Reflection;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Persistence;
@@ -60,5 +61,24 @@ internal sealed class FlagsBinding : IFormBinding
 
         object? value = bits == 0 && _isNullable ? null : Enum.ToObject(_enumType, bits);
         _property.SetValue(row, value);
+    }
+
+    public Expression HasAnswerExpression(ParameterExpression row)
+    {
+        Expression value = Expression.Property(row, _property);
+        Expression enumValue = _isNullable
+            ? Expression.Property(value, nameof(Nullable<int>.Value))
+            : value;
+        Expression hasFlag = Expression.NotEqual(
+            enumValue,
+            Expression.Constant(Enum.ToObject(_enumType, 0), _enumType)
+        );
+
+        return _isNullable
+            ? Expression.AndAlso(
+                Expression.Property(value, nameof(Nullable<int>.HasValue)),
+                hasFlag
+            )
+            : hasFlag;
     }
 }

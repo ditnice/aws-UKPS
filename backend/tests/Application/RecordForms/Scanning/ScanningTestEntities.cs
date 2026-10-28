@@ -20,15 +20,18 @@ internal sealed class ValidEntity
     [FormIgnore("Revision ownership")]
     public int RevisionId { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("text", "Text", Order = 10)]
     [FormField("valid_entity.text", "Text", FormControl.Text, Order = 10)]
     [FormMaxLength(10, "Too long")]
     public string? Text { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("text", "Text", Order = 10)]
     [FormField("valid_entity.choice", "Choice", FormControl.Radio, Order = 20)]
     public YesNoUnknown? Choice { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("chapter", "Chapter", Order = 20)]
     [FormField(
         "valid_entity.chapter_id",
@@ -41,6 +44,7 @@ internal sealed class ValidEntity
     public RecordRevision? Revision { get; set; }
     public BnfChapter? Chapter { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("areas", "Areas", Order = 30)]
     [FormField(
         "valid_entity_area",
@@ -81,27 +85,33 @@ internal sealed class BrokenEntity
     [FormIgnore(" ")]
     public string? BlankReason { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormField("broken_entity.no_page", "No page", FormControl.Text)]
     public string? NoPage { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("Bad Page", "Bad")]
     [FormField("Broken.Bad ID", "Bad ID", FormControl.Text)]
     public string? BadIds { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.wrong_control", "Wrong control", FormControl.Radio)]
     public string? WrongControl { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.choice_without_provider", "Choice", FormControl.Radio, Order = 1)]
     public UnprovidedChoice? ChoiceWithoutProvider { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.wrong_enum", "Wrong enum", FormControl.Radio, Order = 2)]
     [FormOptions(OptionKeys.PaediatricStatus)]
     [FormMaxLength(5, "Not for choices")]
     public YesNoUnknown? WrongEnum { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.unknown_key", "Unknown key", FormControl.Radio, Order = 3)]
     [FormOptions("no-such-provider")]
@@ -117,6 +127,7 @@ internal sealed class RowsEntity
     [FormIgnore("Database identity")]
     public int Id { get; set; }
 
+    [FormTask("rows-task", "Rows task", Order = 10)]
     [FormPage("rows", "Rows", Order = 10)]
     [FormField("rows_entity.required_name", "Name", FormControl.Text)]
     [FormRequired("Enter a name")]
@@ -133,6 +144,7 @@ internal sealed class DisagreeingEntity
     [FormIgnore("Revision ownership")]
     public int RevisionId { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("text", "Different page title", Order = 10)]
     [FormField("valid_entity.text", "Duplicate ID", FormControl.Text, Order = 30)]
     public string? Text { get; set; }

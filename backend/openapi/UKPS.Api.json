@@ -2462,6 +2462,89 @@
         }
       }
     },
+    "/records/{recordId}/tasks": {
+      "get": {
+        "tags": [
+          "RecordTaskList"
+        ],
+        "summary": "Retrieves the record's sections, task titles, statuses and first-page links.",
+        "operationId": "GetRecordTaskList",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to read.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the task list.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordTaskListDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordTaskListDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordTaskListDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record is not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -5910,6 +5993,82 @@
         "type": "string",
         "description": "Represents the status of a record in the system."
       },
+      "RecordTaskListDto": {
+        "required": [
+          "recordId",
+          "sections"
+        ],
+        "type": "object",
+        "properties": {
+          "recordId": {
+            "type": "integer",
+            "description": "The record this task list belongs to.",
+            "format": "int32"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordTaskListSectionDto"
+            },
+            "description": "Sections and their ordered tasks."
+          }
+        },
+        "description": "The task list for a record's latest revision."
+      },
+      "RecordTaskListSectionDto": {
+        "required": [
+          "id",
+          "title",
+          "tasks"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The section ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The section title."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordTaskListTaskDto"
+            },
+            "description": "The ordered tasks in the section."
+          }
+        },
+        "description": "A section of a record task list."
+      },
+      "RecordTaskListTaskDto": {
+        "required": [
+          "id",
+          "title",
+          "status",
+          "firstPageId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title."
+          },
+          "status": {
+            "type": "string",
+            "description": "The persisted-answer status: `not-started`, `in-progress` or `completed`."
+          },
+          "firstPageId": {
+            "type": "string",
+            "description": "The ID of this task's first page."
+          }
+        },
+        "description": "A task and its current status."
+      },
       "RecordType": {
         "enum": [
           "Medicine",
@@ -6606,6 +6765,9 @@
     },
     {
       "name": "RecordForm"
+    },
+    {
+      "name": "RecordTaskList"
     },
     {
       "name": "User"

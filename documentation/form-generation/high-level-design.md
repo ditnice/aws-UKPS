@@ -17,8 +17,9 @@ That idea is replaced here, and the brief is kept only as background.
 ## Overview
 
 The form is declared **on the EF content entities themselves**, using attributes. Each property that
-a user answers carries the question's ID, label, hint, page, rules and options. Every other
-property is explicitly ignored, with a reason.
+a user answers carries the question's ID, label, hint, task, page, rules and options. Every other
+property is explicitly ignored, with a reason. The hierarchy is section → task → page → question;
+all questions in a task repeat that task's ID, title and order.
 
 ```csharp
 [FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
@@ -70,13 +71,13 @@ model, telling it which column or junction table holds the answer.
 
 | Area | Scope |
 |---|---|
-| Medicine form, section "Indication details" | 6 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer, treating a rare disease |
+| Medicine form, section and task "Indication details" | 1 task with 6 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer, treating a rare disease |
 | Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another") |
 | Rules | `Required`, `MaxLength`, `MaxItems` |
 | Bindings | Column (string, enum, reference ID), flags enum, junction table |
 | Entry points | Record creation redirects to the first page; **Update record** on the record details page opens the first page. Both use `firstPageId`, returned by `POST /records` and `GET /records/{id}` |
 | Audit | One event per save, one row per changed answer |
-| Later | Conditional pages and questions, add-another groups, precision dates, vaccine forms, tasklist, searchable combobox |
+| Later | Conditional pages and questions, add-another groups, precision dates, vaccine forms, searchable combobox |
 
 ## Architecture
 
@@ -521,6 +522,42 @@ sequenceDiagram
 |---|---|---|
 | GET | `/records/{recordId}/pages/{pageId}` | Page structure, rules, options and current answers |
 | PUT | `/records/{recordId}/pages/{pageId}` | Validate and save every answer on the page |
+| GET | `/records/{recordId}/tasks` | Sections and tasks with titles, answer status and each task's first-page ID |
+
+The task-list endpoint returns sections in form order and tasks in section order. Each task has a
+`firstPageId` for its link and a status computed from saved answers on the record's latest
+revision:
+
+| Status | Meaning |
+|---|---|
+| `not-started` | No answer has been saved for the task |
+| `in-progress` | At least one answer is saved, but one or more required questions are unanswered |
+| `completed` | Every required question has a saved answer; unanswered optional questions do not prevent completion |
+
+The endpoint is read-only. Missing and inaccessible records both return `404`, so record access
+is not disclosed.
+
+Example `GET /records/5/tasks` response:
+
+```json
+{
+  "recordId": 5,
+  "sections": [
+    {
+      "id": "indication-details",
+      "title": "Indication details",
+      "tasks": [
+        {
+          "id": "indication-details",
+          "title": "Indication details",
+          "status": "in-progress",
+          "firstPageId": "indication"
+        }
+      ]
+    }
+  ]
+}
+```
 
 JSON property names are camelCase, except answer and error keys, which are question IDs exactly
 as declared. Enum values are serialised by name, for example `"Textarea"` and `"Required"`. The

@@ -1232,6 +1232,60 @@ export const RecordStatus = {
 export type RecordStatus = typeof RecordStatus[keyof typeof RecordStatus];
 
 /**
+ * The task list for a record's latest revision.
+ */
+export type RecordTaskListDto = {
+    /**
+     * The record this task list belongs to.
+     */
+    recordId: number;
+    /**
+     * Sections and their ordered tasks.
+     */
+    sections: Array<RecordTaskListSectionDto>;
+};
+
+/**
+ * A section of a record task list.
+ */
+export type RecordTaskListSectionDto = {
+    /**
+     * The section ID.
+     */
+    id: string;
+    /**
+     * The section title.
+     */
+    title: string;
+    /**
+     * The ordered tasks in the section.
+     */
+    tasks: Array<RecordTaskListTaskDto>;
+};
+
+/**
+ * A task and its current status.
+ */
+export type RecordTaskListTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title.
+     */
+    title: string;
+    /**
+     * The persisted-answer status: `not-started`, `in-progress` or `completed`.
+     */
+    status: string;
+    /**
+     * The ID of this task's first page.
+     */
+    firstPageId: string;
+};
+
+/**
  * Represents the type of a record, such as Medicine or Vaccine.
  */
 export const RecordType = { MEDICINE: 'Medicine', VACCINE: 'Vaccine' } as const;
@@ -2664,6 +2718,40 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type GetRecordTaskListData = {
+    body?: never;
+    path: {
+        /**
+         * The record to read.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/tasks';
+};
+
+export type GetRecordTaskListErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The record is not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+};
+
+export type GetRecordTaskListError = GetRecordTaskListErrors[keyof GetRecordTaskListErrors];
+
+export type GetRecordTaskListResponses = {
+    /**
+     * Returns the task list.
+     */
+    200: RecordTaskListDto;
+};
+
+export type GetRecordTaskListResponse = GetRecordTaskListResponses[keyof GetRecordTaskListResponses];
 
 export type GetUsersMeData = {
     body?: never;

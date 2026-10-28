@@ -12,7 +12,7 @@ internal sealed class FormModel
         RecordType = recordType;
         Version = version;
         Sections = sections;
-        Pages = sections.SelectMany(static s => s.Pages).ToArray();
+        Pages = sections.SelectMany(static s => s.Tasks).SelectMany(static t => t.Pages).ToArray();
         _pageIndex = Pages
             .Select(static (page, index) => (page.Id, index))
             .ToDictionary(static x => x.Id, static x => x.index, StringComparer.Ordinal);
@@ -24,6 +24,9 @@ internal sealed class FormModel
 
     /// <summary>Every page in form order: section order, then page order.</summary>
     public IReadOnlyList<FormPage> Pages { get; }
+
+    /// <summary>Every task in form order: section order, then task order.</summary>
+    public IReadOnlyList<FormTask> Tasks => Sections.SelectMany(static s => s.Tasks).ToArray();
 
     public FormPage FirstPage => Pages[0];
 
