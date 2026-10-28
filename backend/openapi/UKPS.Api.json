@@ -4813,6 +4813,18 @@
           }
         }
       },
+      "RecordAction": {
+        "enum": [
+          "Update",
+          "ChangeStatus",
+          "ConfirmCurrent",
+          "ConfirmOnHold",
+          "Discard",
+          "ViewTimeline"
+        ],
+        "type": "string",
+        "description": "Defines the actions a user can take on a record."
+      },
       "RecordClinicalTrialDto": {
         "required": [
           "studyName",
@@ -4915,7 +4927,7 @@
           "recordStatus",
           "displayStatus",
           "revisionId",
-          "canDiscard"
+          "actions"
         ],
         "properties": {
           "recordType": {
@@ -5138,9 +5150,12 @@
             "description": "Gets the identifier of the latest revision.",
             "format": "int32"
           },
-          "canDiscard": {
-            "type": "boolean",
-            "description": "Gets a value indicating whether the record can be discarded, because it has never been\nsubmitted."
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAction"
+            },
+            "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
           }
         },
         "description": "Represents the data held on the latest revision of a medicine record."
@@ -5152,7 +5167,7 @@
           "recordStatus",
           "displayStatus",
           "revisionId",
-          "canDiscard"
+          "actions"
         ],
         "properties": {
           "recordType": {
@@ -5192,9 +5207,12 @@
             "description": "Gets the identifier of the latest revision.",
             "format": "int32"
           },
-          "canDiscard": {
-            "type": "boolean",
-            "description": "Gets a value indicating whether the record can be discarded, because it has never been\nsubmitted."
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAction"
+            },
+            "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
           }
         },
         "description": "Represents the data held on the latest revision of a vaccine record."

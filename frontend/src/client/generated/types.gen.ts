@@ -771,6 +771,23 @@ export type ProblemDetails = {
 };
 
 /**
+ * Defines the actions a user can take on a record.
+ */
+export const RecordAction = {
+    UPDATE: 'Update',
+    CHANGE_STATUS: 'ChangeStatus',
+    CONFIRM_CURRENT: 'ConfirmCurrent',
+    CONFIRM_ON_HOLD: 'ConfirmOnHold',
+    DISCARD: 'Discard',
+    VIEW_TIMELINE: 'ViewTimeline'
+} as const;
+
+/**
+ * Defines the actions a user can take on a record.
+ */
+export type RecordAction = typeof RecordAction[keyof typeof RecordAction];
+
+/**
  * Represents a clinical trial on a record.
  */
 export type RecordClinicalTrialDto = {
@@ -878,10 +895,10 @@ export type RecordDtoMedicineRecordDto = {
      */
     revisionId: number;
     /**
-     * Gets a value indicating whether the record can be discarded, because it has never been
-     * submitted.
+     * Gets the actions the user can take on the record, given its status and the workflow status
+     * of its latest revision.
      */
-    canDiscard: boolean;
+    actions: Array<RecordAction>;
 };
 
 /**
@@ -914,10 +931,10 @@ export type RecordDtoVaccineRecordDto = {
      */
     revisionId: number;
     /**
-     * Gets a value indicating whether the record can be discarded, because it has never been
-     * submitted.
+     * Gets the actions the user can take on the record, given its status and the workflow status
+     * of its latest revision.
      */
-    canDiscard: boolean;
+    actions: Array<RecordAction>;
 };
 
 /**

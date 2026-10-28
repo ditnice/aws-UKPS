@@ -80,7 +80,7 @@ const medicineRecord = {
   recordType: 'Medicine',
   recordStatus: 'Unpublished',
   displayStatus: 'Draft',
-  canDiscard: true,
+  actions: ['Update', 'Discard', 'ViewTimeline'],
   recordProductDetail: fakeRecordProductDetailDto(),
 } satisfies RecordDto
 
@@ -177,7 +177,7 @@ describe('DiscardRecordPage', () => {
 
   it('returns not found when the record cannot be discarded', async () => {
     mockRecord({
-      data: { ...medicineRecord, canDiscard: false },
+      data: { ...medicineRecord, actions: ['Update', 'ViewTimeline'] },
       error: undefined,
       response: new Response(),
     })

@@ -146,16 +146,32 @@ internal partial class RecordService(
             return Result<DiscardRecordError>.Err(new DiscardRecordError.NotAllowed());
         }
 
-        bool isDiscardable = await dbContext
+        var latest = await dbContext
             .Records.Where(r => r.Id == recordId)
             .SelectLatestRevision()
-            .AnyAsync(x => x.IsDiscardable, cancellationToken);
-        if (!isDiscardable)
+            .Select(x => new { x.LatestRevisionId, x.HasSingleRevision })
+            .SingleAsync(cancellationToken);
+        RecordRevision? latestRevision = await dbContext.RecordRevisions.FirstOrDefaultAsync(
+            r => r.Id == latest.LatestRevisionId,
+            cancellationToken
+        );
+        if (latestRevision is null)
         {
             return Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard());
         }
 
-        await ApplyDiscard(record, cancellationToken);
+        User currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
+        bool isDiscarded = record.TryDiscard(
+            latestRevision,
+            latest.HasSingleRevision,
+            _timeProvider.GetUtcNow(),
+            currentUser,
+            RecordStatusChangeReason.ManuallyDiscarded
+        );
+        if (!isDiscarded)
+        {
+            return Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard());
+        }
 
         try
         {
@@ -166,37 +182,6 @@ internal partial class RecordService(
             return Result<DiscardRecordError>.Err(new DiscardRecordError.ConcurrencyError());
         }
         return Result<DiscardRecordError>.Ok();
-    }
-
-    /// <summary>
-    /// Sets the record and its only revision to discarded, and adds the timeline event.
-    /// </summary>
-    private async Task ApplyDiscard(Record record, CancellationToken cancellationToken)
-    {
-        RecordRevision revision = await dbContext.RecordRevisions.SingleAsync(
-            r => r.RecordId == record.Id,
-            cancellationToken
-        );
-        User currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
-        DateTime performedAt = _timeProvider.GetUtcNow();
-
-        revision.WorkflowStatus = WorkflowStatus.Discarded;
-        record.ChangeStatus(
-            RecordStatus.Discarded,
-            performedAt,
-            currentUser,
-            RecordStatusChangeReason.ManuallyDiscarded
-        );
-        dbContext.RecordEvents.Add(
-            new RecordEvent
-            {
-                Record = record,
-                Revision = revision,
-                EventType = RecordEventType.RecordStatusChanged,
-                PerformedBy = currentUser.Id,
-                PerformedAt = performedAt,
-            }
-        );
     }
 
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(
