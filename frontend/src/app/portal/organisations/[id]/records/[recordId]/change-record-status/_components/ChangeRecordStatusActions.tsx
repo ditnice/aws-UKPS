@@ -83,17 +83,13 @@ export const ChangeRecordStatusActions = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <FormGroup
-        name="manage record status"
-        groupError={radioError ? 'Select an option' : undefined}
-      >
+      <FormGroup name="action" groupError={radioError ? 'Select an option' : undefined}>
         {availableActions.map((option) => (
           <Radio
             key={option.action}
             label={option.label}
             value={option.action}
             hint={option.hint}
-            name="action"
             onChange={() => {
               setSelectedAction(option.action)
               setRadioError(false)
