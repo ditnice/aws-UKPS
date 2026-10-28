@@ -2,6 +2,8 @@ import { ApplicationLayout } from '@/components/Layout/ApplicationLayout'
 import { inter, lora } from '@/styles/fonts'
 import '@/styles/global.scss'
 
+import { getUserOrganisationContext } from './_lib/userOrganisationContext'
+
 import type { ReactNode } from 'react'
 
 export const metadata = {
@@ -9,11 +11,13 @@ export const metadata = {
   title: 'UK PharmaScan Portal',
 }
 
-export default function PortalLayout({ children }: { children: ReactNode }) {
+export default async function PortalLayout({ children }: { children: ReactNode }) {
+  const organisationContext = await getUserOrganisationContext()
+
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
       <body>
-        <ApplicationLayout>{children}</ApplicationLayout>
+        <ApplicationLayout organisationContext={organisationContext}>{children}</ApplicationLayout>
       </body>
     </html>
   )

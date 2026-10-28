@@ -116,6 +116,43 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task Handle_ShouldAppendSelectableOrganisationIdClaims_WhenUserHasMultipleMemberships()
+    {
+        UserOrgMembership[] memberships =
+            _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
+        await Context
+            .Organisations.Where(x => x.Id == memberships[2].OrganisationId)
+            .ExecuteUpdateAsync(
+                x => x.SetProperty(o => o.Status, UserOrgStatus.Inactive),
+                TestContext.Current.CancellationToken
+            );
+        Context.ChangeTracker.Clear();
+        var user = await Context
+            .Users.Include(x => x.UserOrgMemberships)!
+                .ThenInclude(x => x.Organisation)
+            .SingleAsync(
+                x => x.Id == _userWithMultipleMemberships.Id,
+                TestContext.Current.CancellationToken
+            );
+        user.TryUpdateCurrentOrganisation(memberships[0].OrganisationId).ShouldBeTrue();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        context.Result.ShouldBeNull();
+        var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
+        identity
+            .FindAll(UkpsClaimTypes.SelectableOrganisationId)
+            .Select(x => x.Value)
+            .ShouldBe(memberships[..2].Select(x => $"{x.OrganisationId}"), ignoreOrder: true);
+    }
+
+    [Fact]
     public async Task Handle_ShouldRequireRecoveryOrFail_WhenUserDoesNotHaveAuthorisedMembership()
     {
         var invalidStatuses = Enum.GetValues<UserOrgMembershipStatus>()
@@ -183,7 +220,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldPreserveIdentityWithoutOrganisationClaims_WhenSelectedMembershipIsDeactivatedAndNoneAreSelectable()
+    public async Task Handle_ShouldPreserveIdentityWithoutOrganisationClaims_WhenSelectedMembershipIsDeactivated()
     {
         UserOrgMembership[] memberships =
             _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
@@ -316,7 +353,7 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task Handle_ShouldRequireOrganisationSelection_WhenSelectedMembershipIsNoLongerAuthorised()
+    public async Task Handle_ShouldPreserveIdentityWithoutOrganisationClaims_WhenSelectedMembershipIsDeactivatedAndOthersAreAuthorised()
     {
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
@@ -333,14 +370,11 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
 
         await _handler.Handle(context, CancellationToken.None);
 
-        AssertOrganisationSelectionRequired(
-            context,
-            AuthenticationFailCode.SelectedOrganisationIsNotValid
-        );
+        AssertOrganisationSelectionRequired(context, AuthenticationFailCode.MembershipDeactivated);
     }
 
     [Fact]
-    public async Task Handle_ShouldAppendClaimsForOnlyAuthorisedMembership_WhenOtherMembershipsAreNotAuthorised()
+    public async Task Handle_ShouldRequireOrganisationSelection_WhenNoneSelectedAndOthersAreDeactivated()
     {
         var context = CreateTokenValidatedContext(
             tokenUse: "access",
@@ -356,18 +390,38 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
 
         await _handler.Handle(context, CancellationToken.None);
 
-        context.Result.ShouldBeNull();
-        var identity = context.Principal!.Identity.ShouldBeOfType<ClaimsIdentity>();
-        identity.FindFirst(UkpsClaimTypes.OrganisationSelectionFailure).ShouldBeNull();
-        AssertIdentityMatchesUserAndMembership(
-            identity,
-            _userWithMultipleMemberships,
-            memberships[1]
+        AssertOrganisationSelectionRequired(
+            context,
+            AuthenticationFailCode.SelectedOrganisationRequired
         );
     }
 
     [Fact]
-    public async Task Handle_ShouldFail_WhenMultipleMembershipsAndNoneAreAuthorised()
+    public async Task Handle_ShouldRequireOrganisationSelection_WhenMultipleMembershipsAreDeactivatedAndNoneSelected()
+    {
+        UserOrgMembership[] memberships =
+            _userWithMultipleMemberships.UserOrgMemberships!.ToArray();
+        foreach (UserOrgMembership membership in memberships)
+        {
+            membership.Deactivate();
+        }
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var context = CreateTokenValidatedContext(
+            tokenUse: "access",
+            clientId: ClientId,
+            username: _userWithMultipleMemberships.CognitoUsername
+        );
+
+        await _handler.Handle(context, CancellationToken.None);
+
+        AssertOrganisationSelectionRequired(
+            context,
+            AuthenticationFailCode.SelectedOrganisationRequired
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFail_WhenMultipleMembershipsAndNoneAreSelectable()
     {
         User testUser = _userFaker
             .RuleFor(
@@ -375,6 +429,13 @@ public sealed class TokenValidationHandlerTests : DatabaseTestBase
                 _ =>
                     _membershipFaker
                         .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Deactivated)
+                        .RuleFor(
+                            x => x.Organisation,
+                            _ =>
+                                new OrganisationFaker()
+                                    .RuleFor(x => x.Status, _ => UserOrgStatus.Inactive)
+                                    .Generate()
+                        )
                         .Generate(2)
             )
             .Generate();

@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { postAuthMfa } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
-import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { buildSelectOrganisationHref } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
@@ -62,7 +62,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         credentials: 'include',
       })
       if (!response.error) {
-        router.push(returnTo ?? routeOnSuccessfulAuth)
+        router.push(buildSelectOrganisationHref(returnTo))
       }
       if (response.error?.status === 401) {
         formApi.setErrorMap({

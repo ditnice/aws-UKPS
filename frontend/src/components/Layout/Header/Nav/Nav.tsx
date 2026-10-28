@@ -5,9 +5,10 @@ import { NavLinks } from './NavLinks/NavLinks'
 
 export type NavProps = {
   isExpanded: boolean
+  organisationId?: number
 }
 
-export function Nav({ isExpanded }: NavProps) {
+export function Nav({ isExpanded, organisationId }: NavProps) {
   return (
     <>
       <div
@@ -18,7 +19,7 @@ export function Nav({ isExpanded }: NavProps) {
       >
         <nav className={styles.nav} aria-label="primary navigation">
           <div className={styles.menuWrapper}>
-            <NavLinks />
+            <NavLinks organisationId={organisationId} />
           </div>
         </nav>
       </div>

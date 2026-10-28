@@ -831,6 +831,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
+            RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
             RuleFor(
                 x => x.Status,
                 f =>
