@@ -25,7 +25,7 @@ const renderActions = (recordStatus: RecordStatus = 'Published') =>
     />,
   )
 
-const getRadioLabels = () =>
+const getRadioValues = () =>
   screen.getAllByRole('radio').map((radio) => radio.getAttribute('value'))
 
 describe('ChangeRecordStatusActions', () => {
@@ -35,7 +35,7 @@ describe('ChangeRecordStatusActions', () => {
   ])('offers the actions for a %s record', (recordStatus, expected) => {
     renderActions(recordStatus)
 
-    expect(getRadioLabels()).toEqual(expected)
+    expect(getRadioValues()).toEqual(expected)
   })
 
   it('does not select an action by default', () => {

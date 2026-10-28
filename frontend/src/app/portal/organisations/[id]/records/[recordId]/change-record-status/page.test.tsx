@@ -8,7 +8,7 @@ import {
 } from '@/client/generated/@faker-js/faker.gen'
 import { createServerApiClient } from '@/client/server-api'
 
-import ChangeRecordPage from './page'
+import ChangeRecordStatusPage from './page'
 
 import type { ReactElement, ReactNode } from 'react'
 
@@ -94,7 +94,7 @@ const mockRecord = (result: Partial<GetRecordResult>) =>
   vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
 
 const renderPage = async () => {
-  const page = await ChangeRecordPage({
+  const page = await ChangeRecordStatusPage({
     params: Promise.resolve({ id: organisationId, recordId }),
     searchParams: Promise.resolve({ recordType: medicineRecord.recordType }),
   })
@@ -112,7 +112,7 @@ beforeEach(() => {
 
 afterEach(cleanup)
 
-describe('ChangeRecordPage', () => {
+describe('ChangeRecordStatusPage', () => {
   it('renders the heading, record title and actions', async () => {
     mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
 
@@ -167,7 +167,7 @@ describe('ChangeRecordPage', () => {
     ['an invalid record type', recordId, 'Device'],
   ])('returns not found for %s', async (_, recordIdParam, recordType) => {
     await expect(
-      ChangeRecordPage({
+      ChangeRecordStatusPage({
         params: Promise.resolve({ id: organisationId, recordId: recordIdParam }),
         searchParams: Promise.resolve({ recordType }),
       }),

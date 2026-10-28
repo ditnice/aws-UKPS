@@ -12,12 +12,12 @@ import { canChangeRecordStatus } from '../_lib/recordActions'
 
 import { ChangeRecordStatusActions } from './_components/ChangeRecordStatusActions'
 
-type ChangeRecordPageProps = {
+type ChangeRecordStatusPageProps = {
   params: Promise<{ id: string; recordId: string }>
   searchParams: Promise<{ recordType?: string | string[] }>
 }
 
-const ChangeRecordPage = async ({ params, searchParams }: ChangeRecordPageProps) => {
+const ChangeRecordStatusPage = async ({ params, searchParams }: ChangeRecordStatusPageProps) => {
   const { id: organisationId, recordId: recordIdParam } = await params
   const { recordType: recordTypeParam } = await searchParams
   const recordId = parsePositiveInteger(recordIdParam)
@@ -30,7 +30,7 @@ const ChangeRecordPage = async ({ params, searchParams }: ChangeRecordPageProps)
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
       {(organisation) => (
-        <ChangeRecord
+        <ChangeRecordStatus
           organisationId={organisation.id}
           recordId={recordId}
           recordType={recordType}
@@ -40,13 +40,17 @@ const ChangeRecordPage = async ({ params, searchParams }: ChangeRecordPageProps)
   )
 }
 
-type ChangeRecordProps = {
+type ChangeRecordStatusProps = {
   organisationId: number
   recordId: number
   recordType: RecordType
 }
 
-const ChangeRecord = async ({ organisationId, recordId, recordType }: ChangeRecordProps) => {
+const ChangeRecordStatus = async ({
+  organisationId,
+  recordId,
+  recordType,
+}: ChangeRecordStatusProps) => {
   const {
     data: record,
     error,
@@ -113,4 +117,4 @@ const ChangeRecord = async ({ organisationId, recordId, recordType }: ChangeReco
   )
 }
 
-export default ChangeRecordPage
+export default ChangeRecordStatusPage

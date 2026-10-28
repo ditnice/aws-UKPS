@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { boolean } from 'zod'
 
-import { RecordDisplayStatus, RecordStatus } from '@/client/generated'
+import type { RecordDisplayStatus, RecordStatus } from '@/client/generated'
 
 import { canChangeRecordStatus, getRecordActions } from './recordActions'
 
