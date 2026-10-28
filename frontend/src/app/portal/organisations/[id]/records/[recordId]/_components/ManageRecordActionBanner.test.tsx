@@ -95,4 +95,12 @@ describe('ManageRecordActionBanner', () => {
       '/portal/organisations/7/records/42/discard?recordType=Medicine',
     )
   })
+
+  it('links change record status to the change record status page', () => {
+    renderBanner('Published', 'Published')
+
+    expect(screen.getByRole('link', { name: 'Change record status' }).getAttribute('href')).toBe(
+      '/portal/organisations/7/records/42/change-record-status?recordType=Medicine',
+    )
+  })
 })

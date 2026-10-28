@@ -19,6 +19,7 @@ interface ChangeRecordStatusProps {
 
 type RecordStatusAction = 'Archive' | 'PlaceOnHold' | 'RemoveHold'
 
+// TODO: Action pages to continue to not yet built, destination pages will come from URP-380, URP-382 and URP-419, placeholder paths provided here
 const actionOptions: {
   action: RecordStatusAction
   label: string
@@ -65,10 +66,6 @@ export const ChangeRecordStatusActions = ({
     }
   })
 
-  if (!availableActions.length) {
-    return <p>No actions are available for this record.</p>
-  }
-
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const option = availableActions.find((option) => option.action === selectedAction)
@@ -104,7 +101,6 @@ export const ChangeRecordStatusActions = ({
       </FormGroup>
 
       <ButtonGroup>
-        {/* TODO: Pages to continue to not yet built, destination pages will come from URP-380, URP-382 and URP-419 */}
         <Button type="submit" variant="cta">
           Continue
         </Button>

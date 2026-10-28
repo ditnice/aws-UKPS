@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { boolean } from 'zod'
 
-import type { RecordDisplayStatus, RecordStatus } from '@/client/generated'
+import { RecordDisplayStatus, RecordStatus } from '@/client/generated'
 
-import { getRecordActions } from './recordActions'
+import { canChangeRecordStatus, getRecordActions } from './recordActions'
 
 describe('getRecordActions', () => {
   it.each<[string, RecordDisplayStatus, RecordStatus, boolean, string[]]>([
@@ -43,6 +44,24 @@ describe('getRecordActions', () => {
     (displayStatus, recordStatus) => {
       expect(getRecordActions({ displayStatus, recordStatus, canDiscard: true })).not.toContain(
         'discard',
+      )
+    },
+  )
+})
+
+describe('canChangeRecordStatus', () => {
+  it.each<[RecordDisplayStatus, RecordStatus, boolean]>([
+    ['Published', 'Published', true],
+    ['Draft', 'Published', true],
+    ['OnHold', 'OnHold', true],
+    ['Draft', 'Unpublished', false],
+    ['QAReview', 'Unpublished', false],
+    ['Archived', 'Archived', false],
+  ])(
+    'for a %s record with record status %s returns %s',
+    (displayStatus, recordStatus, expected) => {
+      expect(canChangeRecordStatus({ displayStatus, recordStatus, canDiscard: false })).toBe(
+        expected,
       )
     },
   )
