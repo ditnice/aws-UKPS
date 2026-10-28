@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi;
@@ -81,6 +83,10 @@ public class SelectedOrganisationMismatchTests : IClassFixture<WebApplicationFac
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureNoDatabase();
+                builder.UseSetting(
+                    "ConnectionStrings:DefaultConnection",
+                    "Host=localhost;Database=unused"
+                );
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
                 builder.UseSetting(
                     $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
@@ -90,6 +96,10 @@ public class SelectedOrganisationMismatchTests : IClassFixture<WebApplicationFac
                 {
                     services.RemoveAll<DevAuthenticationClaims>();
                     services.AddSingleton(claims);
+                    // Resolving the real email service creates an SQS client, which needs AWS
+                    // credentials.
+                    services.RemoveAll<IEmailService>();
+                    services.AddSingleton(Substitute.For<IEmailService>());
                 });
             })
             .CreateClient();
