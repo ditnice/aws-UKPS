@@ -5,15 +5,22 @@ import { Container } from '@nice-digital/nds-container'
 import styles from './ApplicationLayout.module.scss'
 import { Footer } from './Footer/Footer'
 import { Header } from './Header/Header'
+import { NavLinkItem } from './Header/Nav/NavLinks/NavLinks'
 import { Main } from './Main/Main'
 
 import type { ReactNode } from 'react'
 
-export function ApplicationLayout({ children }: { children: ReactNode }) {
+export function ApplicationLayout({
+  links,
+  children,
+}: {
+  links: NavLinkItem[]
+  children: ReactNode
+}) {
   return (
     <>
       <div className={styles.contentWrapper}>
-        <Header skipLinkId="content-start" />
+        <Header skipLinkId="content-start" links={links} />
         <Main className={styles.mainContent} id="content-start">
           <Container>{children}</Container>
         </Main>

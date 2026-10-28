@@ -13,7 +13,14 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
       <body>
-        <ApplicationLayout>{children}</ApplicationLayout>
+        <ApplicationLayout
+          links={[
+            { href: '/', label: 'Home' },
+            { href: '/register', label: 'Request a user account' },
+          ]}
+        >
+          {children}
+        </ApplicationLayout>
       </body>
     </html>
   )

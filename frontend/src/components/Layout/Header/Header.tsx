@@ -7,13 +7,15 @@ import { useState } from 'react'
 import { Account } from './Account/Account'
 import styles from './Header.module.scss'
 import { Nav } from './Nav/Nav'
+import { NavLinkItem } from './Nav/NavLinks/NavLinks'
 import { SkipLink } from './SkipLink/SkipLink'
 
 export type HeaderProps = {
   skipLinkId: string
+  links: NavLinkItem[]
 }
 
-export function Header({ skipLinkId }: HeaderProps) {
+export function Header({ skipLinkId, links }: HeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const handleMobileMenuBtnClick = () => {
@@ -65,7 +67,7 @@ export function Header({ skipLinkId }: HeaderProps) {
               </div>
             </div>
           </div>
-          <Nav isExpanded={isExpanded} />
+          <Nav isExpanded={isExpanded} links={links} />
         </header>
       </div>
     </>

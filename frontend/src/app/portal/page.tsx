@@ -1,27 +1,17 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
+import { getUsersMe } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 
-export default function PortalDashboard() {
-  return (
-    <>
-      <PageHeader heading="Your dashboard" />
+export default async function PortalDashboard() {
+  const { data: me, error } = await getUsersMe({ client: await createServerApiClient() })
 
-      <p>Development quick reference links:</p>
-      <ul>
-        <li>
-          <Link href="/portal/notfound">Not found example</Link>
-        </li>
-        <li>
-          <Link href="/portal/components">Components</Link>
-        </li>
-        <li>
-          <Link href="/portal/organisations/1">Organisation 1 manage org</Link>
-        </li>
-        <li>
-          <Link href="/portal/organisations/1/records">Organisation 1 records dashboard</Link>
-        </li>
-      </ul>
-    </>
-  )
+  if (!me || error) {
+    return <ErrorState>Unable to load the data for the current user.</ErrorState>
+  }
+
+  return redirect(`/portal/organisations/${me.organisationId}/records`)
 }

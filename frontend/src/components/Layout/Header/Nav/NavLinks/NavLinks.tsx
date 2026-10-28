@@ -5,46 +5,27 @@ import { usePathname } from 'next/navigation'
 
 import styles from './NavLinks.module.scss'
 
-type NavLinkItem = {
+export type NavLinkItem = {
   href: string
   label: string
 }
 
 export type NavLinksProps = {
-  rootLinks?: NavLinkItem[]
-  portalLinks?: NavLinkItem[]
-}
-
-const defaultRootLinks: NavLinkItem[] = [
-  { href: '/', label: 'Home' },
-  { href: '/about-us', label: 'About' },
-]
-
-const defaultPortalLinks: NavLinkItem[] = [
-  { href: '/portal', label: 'Dashboard' },
-  { href: '/portal/components', label: 'Components' },
-  { href: '/portal/user/me', label: 'Manage my details' },
-]
-
-function isPortalPath(pathname: string) {
-  return pathname === '/portal' || pathname.startsWith('/portal/')
+  links: NavLinkItem[]
 }
 
 function isActiveLink(pathname: string, href: string) {
-  if (href === '/') {
-    return pathname === href
+  const hrefPath = href.split(/[?#]/)[0]
+
+  if (hrefPath === '/') {
+    return pathname === hrefPath
   }
 
-  return pathname === href || pathname.startsWith(`${href}/`)
+  return pathname === hrefPath
 }
 
-export function NavLinks({
-  rootLinks = defaultRootLinks,
-  portalLinks = defaultPortalLinks,
-}: NavLinksProps) {
+export function NavLinks({ links }: NavLinksProps) {
   const pathname = usePathname()
-  const links = isPortalPath(pathname) ? portalLinks : rootLinks
-
   return (
     <ul className={styles.menuList} aria-labelledby="header-menu-button">
       {links.map(({ href, label }) => (

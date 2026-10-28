@@ -19,9 +19,17 @@ beforeEach(() => {
   user = userEvent.setup()
 })
 
+const renderDefaultHeader = () => {
+  const links = [
+    { href: '/test1', label: 'Test link 1' },
+    { href: '/test2', label: 'Test link 2' },
+  ]
+  render(<Header links={links} skipLinkId="content-start" />)
+}
+
 describe('Header', () => {
   it('renders collapsed by default', () => {
-    render(<Header skipLinkId="content-start" />)
+    renderDefaultHeader()
 
     const toggle = screen.getByRole('button', { name: 'Expand site menu' })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
@@ -33,7 +41,7 @@ describe('Header', () => {
   })
 
   it('renders expanded after the mobile menu button is clicked', async () => {
-    render(<Header skipLinkId="content-start" />)
+    renderDefaultHeader()
 
     await user.click(screen.getByRole('button', { name: 'Expand site menu' }))
 

@@ -1,3 +1,5 @@
+import { getUsersMe } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { ApplicationLayout } from '@/components/Layout/ApplicationLayout'
 import { inter, lora } from '@/styles/fonts'
 import '@/styles/global.scss'
@@ -9,11 +11,23 @@ export const metadata = {
   title: 'UK PharmaScan Portal',
 }
 
-export default function PortalLayout({ children }: { children: ReactNode }) {
+export default async function PortalLayout({ children }: { children: ReactNode }) {
+  const { data: me } = await getUsersMe({ client: await createServerApiClient() })
+
+  const links = [
+    {
+      href: `/portal/organisations/${me?.organisationId}/records`,
+      label: 'View and manage records',
+    },
+    ...(me?.userRole === 'Standard'
+      ? []
+      : [{ href: `/portal/organisations/${me?.organisationId}`, label: 'Manage my organisation' }]),
+    { href: '/portal/user/me', label: 'Manage my details' },
+  ]
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
       <body>
-        <ApplicationLayout>{children}</ApplicationLayout>
+        <ApplicationLayout links={links}>{children}</ApplicationLayout>
       </body>
     </html>
   )
