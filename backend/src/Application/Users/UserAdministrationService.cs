@@ -2,6 +2,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.UserOnboarding;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
@@ -17,6 +18,7 @@ namespace UKPS.Api.Application.Users;
 
 internal sealed partial class UserAdministrationService(
     IOrganisationAuthoriser organisationAuthoriser,
+    ICurrentUserInfoService currentUserInfoService,
     IEmailService emailService,
     ISetupLinkCreator setupLinkCreator,
     UserOnboardingService userOnboardingService,
@@ -28,6 +30,8 @@ internal sealed partial class UserAdministrationService(
         CancellationToken cancellationToken
     )
     {
+        currentUserInfoService.ThrowIfOrganisationNotSelected(command.OrganisationId);
+
         var authorised = organisationAuthoriser.CanPerformOperationOnOrganisation(
             Operation.SignUpUser,
             command.OrganisationId

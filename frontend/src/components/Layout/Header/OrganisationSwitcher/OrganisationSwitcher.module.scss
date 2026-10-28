@@ -1,0 +1,32 @@
+@use '@/styles/colours';
+@use '@/styles/layout';
+@use '@/styles/media-queries';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.organisationNav {
+  @include layout.container;
+  border-bottom: 1px solid colours.$border;
+  display: flex;
+  flex-direction: column;
+  font-family: typography.get-font-family(sans);
+  gap: utils.rem(spacing.$x-small);
+  padding: utils.rem(spacing.$small 0);
+
+  @include media-queries.mq($from: sm) {
+    align-items: baseline;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.title {
+  @include typography.font-size(p);
+  font-weight: bold;
+}
+
+.link {
+  @include typography.font-size(p);
+  @include typography.link-default;
+}

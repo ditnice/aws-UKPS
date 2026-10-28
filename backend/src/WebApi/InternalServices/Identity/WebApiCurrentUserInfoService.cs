@@ -55,6 +55,20 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             );
     }
 
+    private static int[] FindSelectableOrganisationIds(ClaimsPrincipal claimsPrincipal)
+    {
+        return claimsPrincipal
+            .FindAll(UkpsClaimTypes.SelectableOrganisationId)
+            .Select(claim =>
+                int.TryParse(claim.Value, CultureInfo.InvariantCulture, out var organisationId)
+                    ? organisationId
+                    : throw new InvalidOperationException(
+                        $"Invalid {UkpsClaimTypes.SelectableOrganisationId} claim value."
+                    )
+            )
+            .ToArray();
+    }
+
     private static CognitoUsername FindCognitoUsername(ClaimsPrincipal claimsPrincipal)
     {
         string usernameValue =
@@ -73,6 +87,7 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             UserRole = FindUserRole(claimsPrincipal),
             Email = FindUserEmail(claimsPrincipal),
             CognitoUsername = FindCognitoUsername(claimsPrincipal),
+            SelectableOrganisationIds = FindSelectableOrganisationIds(claimsPrincipal),
         };
     }
 }

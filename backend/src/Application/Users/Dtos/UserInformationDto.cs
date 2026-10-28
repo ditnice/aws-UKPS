@@ -51,4 +51,9 @@ public sealed record UserInformationDto
     /// Gets the user's membership status within the organisation.
     /// </summary>
     public required UserOrgStatus Status { get; init; }
+
+    /// <summary>
+    /// Gets whether the user can select more than one organisation. Only set for the current user.
+    /// </summary>
+    public bool HasMultipleOrganisations { get; init; }
 }

@@ -39,4 +39,10 @@ public enum AuthenticationFailCode
     /// The organisation for the user's membership is not active.
     /// </summary>
     OrganisationNotActive = 6,
+
+    /// <summary>
+    /// The user is a member of the requested organisation, but it is not their selected
+    /// organisation.
+    /// </summary>
+    SelectedOrganisationMismatch = 7,
 }
