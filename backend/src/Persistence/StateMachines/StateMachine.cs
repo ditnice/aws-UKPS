@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace UKPS.Api.Persistence.Entities.Identity;
+namespace UKPS.Api.Persistence.StateMachines;
 
 internal abstract class StateMachine<TState, TCommand>
     where TState : notnull
