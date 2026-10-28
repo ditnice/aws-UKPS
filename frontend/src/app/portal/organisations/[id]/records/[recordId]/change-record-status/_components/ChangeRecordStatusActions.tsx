@@ -76,7 +76,9 @@ export const ChangeRecordStatusActions = ({
       return
     }
 
-    router.push(buildRecordHref(organisationId, recordId, recordType))
+    router.push(
+      `/portal/organisations/${organisationId}/records/${recordId}/change-record-status/${option.path}?recordType=${recordType}`,
+    )
   }
 
   return (
@@ -106,7 +108,7 @@ export const ChangeRecordStatusActions = ({
         </Button>
         <Button
           elementType={Link}
-          href={`/portal/organisations/${organisationId}/records/${recordId}?recordType=${recordType}`}
+          href={buildRecordHref(organisationId, recordId, recordType)}
           variant="secondary"
         >
           Cancel

@@ -5,6 +5,7 @@ import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
+import { buildRecordHref } from './[recordId]/_lib/recordActions'
 import {
   organisationRecordsTableHeaders,
   recordStatusLabels,
@@ -59,9 +60,7 @@ const RecordsTable = async ({ organisationId, data: records, query }: RecordsTab
               return <>{data.title}</>
             case 'actions':
               return (
-                <Link
-                  href={`/portal/organisations/${organisationId}/records/${data.id}?recordType=${data.recordType}`}
-                >
+                <Link href={buildRecordHref(organisationId, data.id, data.recordType)}>
                   View<span className="visually-hidden"> record {data.id}</span>
                 </Link>
               )

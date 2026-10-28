@@ -9,6 +9,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../../_components/OrganisationPageWrapper'
+import { buildRecordHref } from '../_lib/recordActions'
 
 import { DiscardRecordControls } from './_components/DiscardRecordControls'
 
@@ -65,11 +66,7 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
   }
 
   const backLink = (
-    <BackLink
-      href={`/portal/organisations/${organisationId}/records/${recordId}?recordType=${recordType}`}
-    >
-      Back
-    </BackLink>
+    <BackLink href={buildRecordHref(organisationId, recordId, recordType)}>Back</BackLink>
   )
 
   if (error || !record) {

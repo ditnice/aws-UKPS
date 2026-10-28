@@ -8,7 +8,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../../_components/OrganisationPageWrapper'
-import { canChangeRecordStatus, buildRecordHref } from '../_lib/recordActions'
+import { buildRecordHref, canChangeRecordStatus } from '../_lib/recordActions'
 
 import { ChangeRecordStatusActions } from './_components/ChangeRecordStatusActions'
 
