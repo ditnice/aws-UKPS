@@ -37,7 +37,7 @@
     <PackageReference Include="AWSSDK.SimpleEmailV2" Version="4.0.106.7" />
     <PackageReference Include="Bogus" Version="35.6.5" />
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
-    <PackageReference Include="libphonenumber-csharp" Version="9.0.41" />
+    <PackageReference Include="libphonenumber-csharp" Version="9.0.42" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
