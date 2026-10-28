@@ -2,7 +2,9 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, type ReactElement } from 'react'
+
+import { UserRole } from '@/client/generated'
 
 import { Account } from './Account/Account'
 import styles from './Header.module.scss'
@@ -10,12 +12,20 @@ import { Nav } from './Nav/Nav'
 import { NavLinkItem } from './Nav/NavLinks/NavLinks'
 import { SkipLink } from './SkipLink/SkipLink'
 
+export type UserOrganisationContext = {
+  organisationId: number
+  organisationName: string
+  hasMultipleOrganisations: boolean
+  userRole: UserRole
+}
+
 export type HeaderProps = {
   skipLinkId: string
   links: NavLinkItem[]
+  headerExtension?: ReactElement
 }
 
-export function Header({ skipLinkId, links }: HeaderProps) {
+export function Header({ skipLinkId, links, headerExtension }: HeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const handleMobileMenuBtnClick = () => {
@@ -70,6 +80,7 @@ export function Header({ skipLinkId, links }: HeaderProps) {
           <Nav isExpanded={isExpanded} links={links} />
         </header>
       </div>
+      {headerExtension}
     </>
   )
 }

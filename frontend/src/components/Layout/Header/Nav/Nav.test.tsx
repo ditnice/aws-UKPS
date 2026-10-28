@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Nav, NavProps } from './Nav'
@@ -37,5 +37,19 @@ describe('Nav', () => {
     const navigation = screen.getByRole('navigation', { name: 'primary navigation' })
     expect(navigation.parentElement).toHaveClass(styles.wrapperExpanded)
     expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('renders the links it is given', () => {
+    renderDefaultNav()
+
+    const navigation = screen.getByRole('navigation', { name: 'primary navigation' })
+    expect(within(navigation).getByRole('link', { name: 'Test link 1' })).toHaveAttribute(
+      'href',
+      '/test1',
+    )
+    expect(within(navigation).getByRole('link', { name: 'Test link 2' })).toHaveAttribute(
+      'href',
+      '/test2',
+    )
   })
 })

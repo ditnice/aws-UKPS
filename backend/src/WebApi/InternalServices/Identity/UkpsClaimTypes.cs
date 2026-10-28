@@ -30,4 +30,10 @@ internal static class UkpsClaimTypes
     /// resolved for them. The value is the name of the relevant <see cref="AuthenticationFailCode"/>.
     /// </summary>
     public const string OrganisationSelectionFailure = "organisation_selection_failure";
+
+    /// <summary>
+    /// The claim type representing an organisation the user can select, with one claim per
+    /// organisation. The value is the organisation identifier.
+    /// </summary>
+    public const string SelectableOrganisationId = "selectable_organisation_id";
 }

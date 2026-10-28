@@ -2,7 +2,7 @@ import { cookies, headers } from 'next/headers'
 import { redirect, unstable_rethrow } from 'next/navigation'
 import 'server-only'
 
-import { buildSignInHref } from '@/lib/auth/routing'
+import { buildSignInHref, getOrganisationSelectionHref } from '@/lib/auth/routing'
 
 import { AuthenticationFailCode } from './generated'
 import { createClient } from './generated/client'
@@ -10,7 +10,6 @@ import { createClient } from './generated/client'
 import type { Client } from './generated/client'
 
 const fallbackReturnTo = '/portal'
-const selectOrganisationPath = '/portal/organisations/select'
 
 export async function createServerApiClient(): Promise<Client> {
   const baseUrl = process.env.BACKEND_API_BASE_URL
@@ -20,7 +19,7 @@ export async function createServerApiClient(): Promise<Client> {
   }
 
   const accessToken = (await cookies()).get('access_token')?.value
-  const returnTo = (await headers()).get('x-ukps-return-to') ?? fallbackReturnTo
+  const returnTo = (await headers()).get('x-ukps-return-to') ?? undefined
 
   const client: Client = createClient({
     baseUrl,
@@ -37,36 +36,37 @@ export async function createServerApiClient(): Promise<Client> {
   return client
 }
 
-function createServerFetch(returnTo: string): typeof fetch {
+function createServerFetch(returnTo: string | undefined): typeof fetch {
   return async (input, init) => {
     const response = await globalThis.fetch(input, init)
 
-    if (response.status === 401 && !isAuthRequest(input)) {
-      const content = await response
-        .clone()
-        .json()
-        .catch(() => null)
-
-      if (isOrganisationSelectionFailCode(content?.code)) {
-        redirect(selectOrganisationPath)
-      }
-
-      if (isAuthorisationFailCode(content?.code)) {
-        redirectToAuthenticationError(content?.code)
-      }
-
-      redirect(buildSignInHref(returnTo))
+    if ((response.status !== 401 && response.status !== 409) || isAuthRequest(input)) {
+      return response
     }
 
-    return response
-  }
-}
+    console.log('Hello, this is a test')
 
-function isOrganisationSelectionFailCode(value: unknown): boolean {
-  return (
-    value === AuthenticationFailCode.SELECTED_ORGANISATION_REQUIRED ||
-    value === AuthenticationFailCode.SELECTED_ORGANISATION_IS_NOT_VALID
-  )
+    const content = await response
+      .clone()
+      .json()
+      .catch(() => null)
+
+    const organisationSelectionHref = getOrganisationSelectionHref(content, returnTo)
+    if (organisationSelectionHref) {
+      redirect(organisationSelectionHref)
+    }
+
+    // Other conflicts are for the caller to handle.
+    if (response.status === 409) {
+      return response
+    }
+
+    if (isAuthorisationFailCode(content?.code)) {
+      redirectToAuthenticationError(content?.code)
+    }
+
+    redirect(buildSignInHref(returnTo ?? fallbackReturnTo))
+  }
 }
 
 function isAuthorisationFailCode(value: unknown): value is AuthenticationFailCode {

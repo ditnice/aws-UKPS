@@ -368,11 +368,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             RecordClinicalTrials = [],
         };
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Ok(expected));
 
         var response = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -393,11 +393,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecord_ReturnsNotFound_WhenRecordNotFound()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotFound(1)));
 
         var response = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -408,7 +408,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecord_ReturnsNotFound_WhenRecordTypeDoesNotMatch()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(
                 Result<RecordDto, GetRecordError>.Err(
                     new GetRecordError.RecordTypeMismatch(
@@ -420,7 +420,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             );
 
         var response = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -431,11 +431,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecord_ReturnsNotFound_WhenNotAllowed()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
 
         var response = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -446,18 +446,18 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecord_InaccessibleAndMissingRecords_ReturnIdenticalResponses()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
         _mockRecordViewService
-            .GetRecord(2, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(2, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotFound(2)));
 
         var inaccessibleResponse = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
         var missingResponse = await _client.GetAsync(
-            new Uri("/records/2?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/2?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -574,10 +574,16 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
 
     [Theory]
     [InlineData("")]
-    [InlineData("?recordType=")]
-    [InlineData("?recordType=Banana")]
-    [InlineData("?recordType=5")]
-    public async Task GetRecord_ReturnsBadRequest_WhenRecordTypeMissingOrInvalid(string query)
+    [InlineData("?organisationId=4")]
+    [InlineData("?organisationId=4&recordType=")]
+    [InlineData("?organisationId=4&recordType=Banana")]
+    [InlineData("?organisationId=4&recordType=5")]
+    [InlineData("?recordType=Medicine")]
+    [InlineData("?recordType=Medicine&organisationId=")]
+    [InlineData("?recordType=Medicine&organisationId=abc")]
+    public async Task GetRecord_ReturnsBadRequest_WhenRecordTypeOrOrganisationMissingOrInvalid(
+        string query
+    )
     {
         var response = await _client.GetAsync(
             new Uri($"/records/1{query}", UriKind.Relative),
@@ -587,7 +593,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         await _mockRecordViewService
             .DidNotReceiveWithAnyArgs()
-            .GetRecord(default, default, TestContext.Current.CancellationToken);
+            .GetRecord(default, default, default, TestContext.Current.CancellationToken);
     }
 
     private static Uri AppendQueryParams(string url, GetRecordsQueryDto query)

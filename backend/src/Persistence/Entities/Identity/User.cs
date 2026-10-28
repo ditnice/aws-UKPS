@@ -88,6 +88,25 @@ internal sealed class User
     internal bool CanSelectAsCurrentOrganisation(int organisationId) =>
         FindSelectableMembership(organisationId) is not null;
 
+    internal int? FindSoleSelectableOrganisationId()
+    {
+        int[] organisationIds = SelectableOrganisationIds();
+        return organisationIds.Length == 1 ? organisationIds[0] : null;
+    }
+
+    internal bool HasMultipleSelectableOrganisations() => SelectableOrganisationIds().Length > 1;
+
+    private int[] SelectableOrganisationIds()
+    {
+        GuardAgainstUserMembershipsNotLoaded();
+
+        return UserOrgMemberships
+            .Where(x => x.IsSelectable())
+            .Select(x => x.OrganisationId)
+            .Distinct()
+            .ToArray();
+    }
+
     private UserOrgMembership? FindSelectableMembership(int organisationId)
     {
         GuardAgainstUserMembershipsNotLoaded();
