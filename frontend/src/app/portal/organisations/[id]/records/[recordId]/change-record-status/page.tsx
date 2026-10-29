@@ -8,7 +8,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../../_components/OrganisationPageWrapper'
-import { buildRecordHref, canChangeRecordStatus } from '../_lib/recordActions'
+import { buildRecordHref } from '../_lib/recordLinks'
 
 import { ChangeRecordStatusActions } from './_components/ChangeRecordStatusActions'
 
@@ -63,7 +63,8 @@ const ChangeRecordStatus = async ({
 
   if (
     response?.status === 404 ||
-    (record && (record.organisationId !== organisationId || !canChangeRecordStatus(record)))
+    (record &&
+      (record.organisationId !== organisationId || !record.actions.includes('ChangeStatus')))
   ) {
     notFound()
   }

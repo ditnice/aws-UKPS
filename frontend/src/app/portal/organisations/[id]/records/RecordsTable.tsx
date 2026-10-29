@@ -5,7 +5,7 @@ import { Tag } from '@/components/Tag/Tag'
 
 import { ApplicationTableWithPagination } from '../_components/ApplicationTable'
 
-import { buildRecordHref } from './[recordId]/_lib/recordActions'
+import { buildRecordHref } from './[recordId]/_lib/recordLinks'
 import {
   organisationRecordsTableHeaders,
   recordStatusLabels,

@@ -364,7 +364,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             RecordStatus = RecordStatus.Published,
             DisplayStatus = RecordDisplayStatus.Draft,
             RevisionId = 3,
-            CanDiscard = false,
+            Actions = [RecordAction.Update, RecordAction.ViewTimeline],
             RecordClinicalTrials = [],
         };
         _mockRecordViewService
@@ -387,6 +387,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         record.RecordStatus.ShouldBe(expected.RecordStatus);
         record.DisplayStatus.ShouldBe(expected.DisplayStatus);
         record.RevisionId.ShouldBe(expected.RevisionId);
+        record.Actions.ShouldBe(expected.Actions);
     }
 
     [Fact]

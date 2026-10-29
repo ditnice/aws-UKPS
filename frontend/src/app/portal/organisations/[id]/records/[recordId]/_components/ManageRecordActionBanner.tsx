@@ -4,17 +4,12 @@ import type { RecordDto } from '@/client/generated'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
-import { getRecordActions } from '../_lib/recordActions'
-
 type ManageRecordActionBannerProps = {
-  record: Pick<
-    RecordDto,
-    'organisationId' | 'recordId' | 'recordType' | 'displayStatus' | 'recordStatus' | 'canDiscard'
-  >
+  record: Pick<RecordDto, 'organisationId' | 'recordId' | 'recordType' | 'actions'>
 }
 
 export const ManageRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
-  const actions = getRecordActions(record)
+  const { actions } = record
   const discardHref = `/portal/organisations/${record.organisationId}/records/${record.recordId}/discard?recordType=${record.recordType}`
   const changeRecordStatusHref = `/portal/organisations/${record.organisationId}/records/${record.recordId}/change-record-status?recordType=${record.recordType}`
 
@@ -25,24 +20,24 @@ export const ManageRecordActionBanner = ({ record }: ManageRecordActionBannerPro
       headingLevel={2}
       cta={
         <ButtonGroup>
-          {actions.includes('update') && (
+          {actions.includes('Update') && (
             <Button variant="cta" buttonType="button">
               Update record
             </Button>
           )}
-          {actions.includes('changeStatus') && (
+          {actions.includes('ChangeStatus') && (
             <Button elementType={Link} href={changeRecordStatusHref}>
               Change record status
             </Button>
           )}
-          {actions.includes('confirmCurrent') && <Button>Confirm information as current</Button>}
-          {actions.includes('discard') && (
+          {actions.includes('ConfirmCurrent') && <Button>Confirm information as current</Button>}
+          {actions.includes('Discard') && (
             <Button elementType={Link} href={discardHref}>
               Discard record
             </Button>
           )}
-          {actions.includes('confirmOnHold') && <Button>Confirm status as current</Button>}
-          {actions.includes('viewTimeline') && (
+          {actions.includes('ConfirmOnHold') && <Button>Confirm status as current</Button>}
+          {actions.includes('ViewTimeline') && (
             <Button variant="secondary">View record timeline</Button>
           )}
         </ButtonGroup>

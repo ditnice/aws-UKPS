@@ -83,7 +83,7 @@ const medicineRecord = {
   recordType: 'Medicine',
   recordStatus: 'Published',
   displayStatus: 'Published',
-  canDiscard: false,
+  actions: ['Update', 'ChangeStatus', 'ConfirmCurrent', 'ViewTimeline'],
   recordProductDetail: fakeRecordProductDetailDto(),
 } satisfies RecordDto
 
@@ -191,14 +191,14 @@ describe('ChangeRecordStatusPage', () => {
   })
 
   it.each([
-    ['Archived', 'Archived'],
-    ['QAReview', 'Unpublished'],
-    ['Draft', 'Unpublished'],
+    ['Archived', 'Archived', ['ViewTimeline']],
+    ['QAReview', 'Unpublished', ['ViewTimeline']],
+    ['Draft', 'Unpublished', ['Update', 'Discard', 'ViewTimeline']],
   ] as const)(
     'returns not found for a %s record whose status cannot be changed',
-    async (displayStatus, recordStatus) => {
+    async (displayStatus, recordStatus, actions) => {
       mockRecord({
-        data: { ...medicineRecord, displayStatus, recordStatus },
+        data: { ...medicineRecord, displayStatus, recordStatus, actions: [...actions] },
         error: undefined,
         response: new Response(),
       })

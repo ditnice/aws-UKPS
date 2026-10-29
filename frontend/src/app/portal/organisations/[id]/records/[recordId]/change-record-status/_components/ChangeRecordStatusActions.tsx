@@ -10,7 +10,7 @@ import { Radio } from '@nice-digital/nds-radio'
 import type { RecordStatus, RecordType } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
-import { buildRecordHref } from '../../_lib/recordActions'
+import { buildRecordHref } from '../../_lib/recordLinks'
 
 type ChangeRecordStatusProps = {
   organisationId: number

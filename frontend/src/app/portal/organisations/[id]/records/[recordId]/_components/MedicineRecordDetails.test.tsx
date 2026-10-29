@@ -14,7 +14,7 @@ const record: RecordDtoMedicineRecordDto = {
   recordStatus: 'Published',
   displayStatus: 'Published',
   revisionId: 3,
-  canDiscard: false,
+  actions: ['ViewTimeline'],
   recordClinicalTrialInformation: { recruitingInUk: 'Yes' },
   recordClinicalTrials: [
     {

@@ -7,6 +7,7 @@ using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
@@ -51,7 +52,7 @@ internal sealed class RecordViewService(
         }
 
         // Every record is created with a revision, so this only guards against bad data.
-        if (record.LatestRevisionId is null)
+        if (record.LatestRevisionId is null || record.LatestRevisionStatus is null)
         {
             return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }
@@ -64,6 +65,10 @@ internal sealed class RecordViewService(
         }
 
         int revisionId = record.LatestRevisionId.Value;
+        IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
+            new(record.RecordStatus, record.LatestRevisionStatus.Value),
+            record.HasSingleRevision
+        );
 
         return GetRecordResult.Ok(
             recordType switch
@@ -72,9 +77,10 @@ internal sealed class RecordViewService(
                     recordId,
                     record,
                     revisionId,
+                    actions,
                     cancellationToken
                 ),
-                RecordType.Vaccine => GetVaccineRecord(recordId, record, revisionId),
+                RecordType.Vaccine => GetVaccineRecord(recordId, record, revisionId, actions),
                 _ => throw new UnreachableException($"Unhandled record type {recordType}."),
             }
         );
@@ -95,7 +101,8 @@ internal sealed class RecordViewService(
                 x.Record.ReviewedAt,
                 x.LatestRevisionId,
                 x.DisplayStatus,
-                x.IsDiscardable
+                x.LatestRevisionStatus,
+                x.HasSingleRevision
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -103,6 +110,7 @@ internal sealed class RecordViewService(
         int recordId,
         RecordHeader record,
         int revisionId,
+        IReadOnlyCollection<RecordAction> actions,
         CancellationToken cancellationToken
     )
     {
@@ -114,7 +122,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
-            CanDiscard = record.IsDiscardable,
+            Actions = actions,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,
@@ -163,7 +171,8 @@ internal sealed class RecordViewService(
     private static VaccineRecordDto GetVaccineRecord(
         int recordId,
         RecordHeader record,
-        int revisionId
+        int revisionId,
+        IReadOnlyCollection<RecordAction> actions
     )
     {
         return new VaccineRecordDto
@@ -174,7 +183,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             RevisionId = revisionId,
-            CanDiscard = record.IsDiscardable,
+            Actions = actions,
         };
     }
 
@@ -531,6 +540,7 @@ internal sealed class RecordViewService(
         DateTime? ReviewedAt,
         int? LatestRevisionId,
         RecordDisplayStatus DisplayStatus,
-        bool IsDiscardable
+        WorkflowStatus? LatestRevisionStatus,
+        bool HasSingleRevision
     );
 }

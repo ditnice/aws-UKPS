@@ -304,23 +304,46 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(RecordStatus.Unpublished, new[] { WorkflowStatus.Draft }, true)]
-    [InlineData(RecordStatus.Unpublished, new[] { WorkflowStatus.QAReview }, false)]
+    [InlineData(
+        RecordStatus.Unpublished,
+        new[] { WorkflowStatus.Draft },
+        new[] { RecordAction.Update, RecordAction.Discard, RecordAction.ViewTimeline }
+    )]
+    [InlineData(
+        RecordStatus.Unpublished,
+        new[] { WorkflowStatus.QAReview },
+        new[] { RecordAction.ViewTimeline }
+    )]
     [InlineData(
         RecordStatus.Unpublished,
         new[] { WorkflowStatus.Rejected, WorkflowStatus.Draft },
-        false
+        new[] { RecordAction.Update, RecordAction.ViewTimeline }
     )]
-    [InlineData(RecordStatus.Published, new[] { WorkflowStatus.Published }, false)]
     [InlineData(
         RecordStatus.Published,
-        new[] { WorkflowStatus.Published, WorkflowStatus.Draft },
-        false
+        new[] { WorkflowStatus.Published },
+        new[]
+        {
+            RecordAction.Update,
+            RecordAction.ChangeStatus,
+            RecordAction.ConfirmCurrent,
+            RecordAction.ViewTimeline,
+        }
     )]
-    public async Task GetRecord_ReturnsWhetherRecordCanBeDiscarded(
+    [InlineData(
+        RecordStatus.Published,
+        new[] { WorkflowStatus.Published, WorkflowStatus.QAReview },
+        new[] { RecordAction.ViewTimeline }
+    )]
+    [InlineData(
+        RecordStatus.OnHold,
+        new[] { WorkflowStatus.Published, WorkflowStatus.Draft },
+        new[] { RecordAction.ChangeStatus, RecordAction.ConfirmOnHold, RecordAction.ViewTimeline }
+    )]
+    public async Task GetRecord_ReturnsPermittedActions(
         RecordStatus recordStatus,
         WorkflowStatus[] revisionStatuses,
-        bool expectedCanDiscard
+        RecordAction[] expectedActions
     )
     {
         ArgumentNullException.ThrowIfNull(revisionStatuses);
@@ -334,7 +357,7 @@ public class RecordViewServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeSuccess().CanDiscard.ShouldBe(expectedCanDiscard);
+        result.ShouldBeSuccess().Actions.ShouldBe(expectedActions, ignoreOrder: true);
     }
 
     [Fact]
