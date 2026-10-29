@@ -4,6 +4,7 @@ import { inter, lora } from '@/styles/fonts'
 import '@/styles/global.scss'
 
 import { getUserOrganisationContext } from './_lib/userOrganisationContext'
+import { createLinks } from './linkCreation'
 
 import type { ReactNode } from 'react'
 
