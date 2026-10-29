@@ -40,17 +40,21 @@ internal sealed partial class UserAdministrationService(
         {
             return OnboardingUserResult.Err(new OnboardUserError.NotAllowed());
         }
-        Result<User, OnboardUserError> createUserResult =
+        Result<UserOnboardingOutcome, OnboardUserError> onboardingResult =
             await userOnboardingService.InitialiseNewUserSetup(
                 command,
                 OnboardingFlow.Invite,
                 cancellationToken
             );
-        return await createUserResult.Match(
-            onOk: async result =>
+        return await onboardingResult.Match(
+            onOk: async outcome =>
             {
-                await SendUserSignUpRequestedEmail(result, cancellationToken);
-                return OnboardingUserResult.Ok(result.Id);
+                // TODO: notify existing users once "added to organisation" email is designed.
+                if (outcome.IsNewUser)
+                {
+                    await SendUserSignUpRequestedEmail(outcome.User, cancellationToken);
+                }
+                return OnboardingUserResult.Ok(outcome.User.Id);
             },
             onErr: err => Task.FromResult(OnboardingUserResult.Err(err))
         );

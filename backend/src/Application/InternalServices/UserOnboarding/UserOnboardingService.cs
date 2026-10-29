@@ -35,33 +35,30 @@ internal sealed partial class UserOnboardingService
         _logger = logger;
     }
 
-    public async Task<Result<User, OnboardUserError>> InitialiseNewUserSetup(
+    public async Task<Result<UserOnboardingOutcome, OnboardUserError>> InitialiseNewUserSetup(
         OnboardUserCommandDto command,
         OnboardingFlow onboardingFlow,
         CancellationToken cancellationToken
     )
     {
-        // This method currently assumes that a user will only ever have one membership. This will need to be updated in the future.
-
-        User? existingUser = await _dbContext.Users.FirstOrDefaultAsync(
-            x => x.WorkEmail == command.NewUserEmail,
-            cancellationToken
-        );
+        User? existingUser = await _dbContext
+            .Users.Include(x => x.UserOrgMemberships)
+            .FirstOrDefaultAsync(x => x.WorkEmail == command.NewUserEmail, cancellationToken);
         if (existingUser is not null)
         {
-            return Result<User, OnboardUserError>.Err(
-                new OnboardUserError.UserEmailAlreadyExists()
-            );
+            return await AddMembershipToExistingUser(existingUser, command, cancellationToken);
         }
 
-        Task<Result<User, OnboardUserError>> HandleIdentityUserCreationFailed(
+        Task<Result<UserOnboardingOutcome, OnboardUserError>> HandleIdentityUserCreationFailed(
             CreateNewUserError error
         )
         {
             return error switch
             {
                 CreateNewUserError.UsernameAlreadyExists => Task.FromResult(
-                    Result<User, OnboardUserError>.Err(new OnboardUserError.UsernameAlreadyExists())
+                    Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                        new OnboardUserError.UsernameAlreadyExists()
+                    )
                 ),
                 _ => throw new InvalidOperationException(
                     $"An unexpected error occurred when creating a new user [{error}]"
@@ -87,7 +84,7 @@ internal sealed partial class UserOnboardingService
         );
     }
 
-    private async Task<Result<User, OnboardUserError>> CreateANewUserInDatabase(
+    private async Task<Result<UserOnboardingOutcome, OnboardUserError>> CreateANewUserInDatabase(
         CognitoUsername cognitoUsername,
         OnboardingFlow onboardingFlow,
         OnboardUserCommandDto command,
@@ -123,7 +120,9 @@ internal sealed partial class UserOnboardingService
                 )
             )
         {
-            return Result<User, OnboardUserError>.Err(new OnboardUserError.InvalidOrganisation());
+            return Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                new OnboardUserError.InvalidOrganisation()
+            );
         }
         catch (DbUpdateException updateException)
             when (updateException.InnerException is PostgresException postgresException
@@ -134,14 +133,61 @@ internal sealed partial class UserOnboardingService
                 )
             )
         {
-            return Result<User, OnboardUserError>.Err(
+            return Result<UserOnboardingOutcome, OnboardUserError>.Err(
                 new OnboardUserError.UserEmailAlreadyExists()
             );
         }
 
         string sanitisedGuid = Sanitise(user.OnboardingRecord!.SetupToken);
         LogNewUserOnboardingRecordCreated(sanitisedGuid);
-        return Result<User, OnboardUserError>.Ok(user);
+        return Result<UserOnboardingOutcome, OnboardUserError>.Ok(
+            new UserOnboardingOutcome(user, true)
+        );
+    }
+
+    private async Task<Result<UserOnboardingOutcome, OnboardUserError>> AddMembershipToExistingUser(
+        User existingUser,
+        OnboardUserCommandDto command,
+        CancellationToken cancellationToken
+    )
+    {
+        UserOrgMembershipStatus status = existingUser.IsSetupPending()
+            ? UserOrgMembershipStatus.AwaitingSetup
+            : UserOrgMembershipStatus.Active;
+
+        bool added = existingUser.TryAddMembership(
+            command.OrganisationId,
+            status,
+            _dateTimeProvider.GetUtcNow()
+        );
+        if (!added)
+        {
+            return Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                new OnboardUserError.UserEmailAlreadyExists()
+            );
+        }
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException updateException)
+            when (updateException.InnerException is PostgresException postgresException
+                && string.Equals(
+                    postgresException.ConstraintName,
+                    ConstraintNames.UserMembershipRequiresOrganisation,
+                    StringComparison.Ordinal
+                )
+            )
+        {
+            return Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                new OnboardUserError.InvalidOrganisation()
+            );
+        }
+
+        return Result<UserOnboardingOutcome, OnboardUserError>.Ok(
+            new UserOnboardingOutcome(existingUser, false)
+        );
     }
 
     [LoggerMessage(

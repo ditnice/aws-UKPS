@@ -59,6 +59,13 @@ internal sealed class User
         }
     }
 
+    internal bool IsSetupPending()
+    {
+        GuardAgainstUserMembershipsNotLoaded();
+
+        return UserOrgMemberships.Any(x => x.Status == UserOrgMembershipStatus.AwaitingSetup);
+    }
+
     internal bool TryUpdateCurrentOrganisation(int organisationId)
     {
         GuardAgainstUserMembershipsNotLoaded();
@@ -183,6 +190,28 @@ internal sealed class User
             CreatedAt = command.Now,
             UserOrgMemberships = [membership],
         };
+    }
+
+    internal bool TryAddMembership(int organisationId, UserOrgMembershipStatus status, DateTime now)
+    {
+        GuardAgainstUserMembershipsNotLoaded();
+
+        if (UserOrgMemberships.Any(x => x.OrganisationId == organisationId))
+        {
+            return false;
+        }
+
+        UserOrgMemberships.Add(
+            new UserOrgMembership()
+            {
+                Status = status,
+                AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
+                UserRole = UserRole.Standard,
+                CreatedAt = now,
+                OrganisationId = organisationId,
+            }
+        );
+        return true;
     }
 
     [MemberNotNull(nameof(UserOrgMemberships))]

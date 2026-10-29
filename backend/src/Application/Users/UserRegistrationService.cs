@@ -184,11 +184,11 @@ internal class UserRegistrationService : IUserRegistrationService
             cancellationToken
         );
         return await result.Match(
-            targetUser =>
+            outcome =>
                 HandleOnboardingSuccess(
                     transaction,
                     registrationRequest,
-                    targetUser,
+                    outcome,
                     cancellationToken
                 ),
             err => HandleUserOnBoardingError(transaction, err, cancellationToken)
@@ -273,24 +273,28 @@ internal class UserRegistrationService : IUserRegistrationService
     private async Task<Result<ApproveRequestError>> HandleOnboardingSuccess(
         IDbContextTransaction transaction,
         UserRegistrationRequest registrationRequest,
-        User targetUser,
+        UserOnboardingOutcome outcome,
         CancellationToken cancellationToken
     )
     {
-        registrationRequest.ResultingUser = targetUser;
+        registrationRequest.ResultingUser = outcome.User;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
-        Uri link = _setupLinkCreator.GetSetupLink(targetUser.OnboardingRecord!.SetupToken);
-        await _emailService.SendEmail(
-            new()
-            {
-                RecipientAddress = targetUser.WorkEmail,
-                PersonIdentifier = targetUser.CognitoUsername,
-                Email = new UserMembershipRequestApprovedNotificationEmail() { Link = link },
-            },
-            cancellationToken
-        );
+        // TODO: email approved existing users once that email is designed.
+        if (outcome.IsNewUser)
+        {
+            // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
+            Uri link = _setupLinkCreator.GetSetupLink(outcome.User.OnboardingRecord!.SetupToken);
+            await _emailService.SendEmail(
+                new()
+                {
+                    RecipientAddress = outcome.User.WorkEmail,
+                    PersonIdentifier = outcome.User.CognitoUsername,
+                    Email = new UserMembershipRequestApprovedNotificationEmail() { Link = link },
+                },
+                cancellationToken
+            );
+        }
         await transaction.CommitAsync(cancellationToken);
         return Result<ApproveRequestError>.Ok();
     }

@@ -3237,7 +3237,7 @@
             }
           },
           "409": {
-            "description": "A user with the supplied username already exists.",
+            "description": "A user with the supplied username already exists, or the user is already a\nmember of the specified organisation.",
             "content": {
               "text/plain": {
                 "schema": {

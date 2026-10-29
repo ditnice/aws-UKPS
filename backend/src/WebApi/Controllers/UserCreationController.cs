@@ -42,7 +42,8 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// The current user does not have permission to onboard users.
     /// </response>
     /// <response code="409">
-    /// A user with the supplied username already exists.
+    /// A user with the supplied username already exists, or the user is already a
+    /// member of the specified organisation.
     /// </response>
     [Authorize]
     [HttpPost("onboard")]
