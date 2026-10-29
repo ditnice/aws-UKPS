@@ -9,7 +9,7 @@ namespace UKPS.Api.Tests.Persistence.Entities.RecordWorkflow;
 
 public sealed class RecordTests
 {
-    private static readonly DateTime Now = new(2026, 3, 20, 15, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _now = new(2026, 3, 20, 15, 0, 0, DateTimeKind.Utc);
 
     [Theory]
     [InlineData(
@@ -138,7 +138,7 @@ public sealed class RecordTests
         bool isDiscarded = record.TryDiscard(
             revision,
             hasSingleRevision: true,
-            Now,
+            _now,
             user,
             RecordStatusChangeReason.ManuallyDiscarded
         );
@@ -152,13 +152,13 @@ public sealed class RecordTests
         history.ToStatus.ShouldBe(RecordStatus.Discarded);
         history.Reason.ShouldBe(RecordStatusChangeReason.ManuallyDiscarded);
         history.UpdatedByUser.ShouldBe(user);
-        history.UpdatedAt.ShouldBe(Now);
+        history.UpdatedAt.ShouldBe(_now);
 
         RecordEvent recordEvent = record.Events.ShouldHaveSingleItem();
         recordEvent.EventType.ShouldBe(RecordEventType.RecordStatusChanged);
         recordEvent.Revision.ShouldBe(revision);
         recordEvent.PerformedByUser.ShouldBe(user);
-        recordEvent.PerformedAt.ShouldBe(Now);
+        recordEvent.PerformedAt.ShouldBe(_now);
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public sealed class RecordTests
         bool isDiscarded = record.TryDiscard(
             revision,
             hasSingleRevision: false,
-            Now,
+            _now,
             new UserFaker().Generate(),
             RecordStatusChangeReason.ManuallyDiscarded
         );
@@ -191,7 +191,7 @@ public sealed class RecordTests
         bool isDiscarded = record.TryDiscard(
             revision,
             hasSingleRevision: true,
-            Now,
+            _now,
             new UserFaker().Generate(),
             RecordStatusChangeReason.ManuallyDiscarded
         );

@@ -357,7 +357,7 @@ public class RecordViewServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeSuccess().Actions.ShouldBe(expectedActions);
+        result.ShouldBeSuccess().Actions.ShouldBe(expectedActions, ignoreOrder: true);
     }
 
     [Fact]

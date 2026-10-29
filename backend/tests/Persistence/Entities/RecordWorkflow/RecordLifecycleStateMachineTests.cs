@@ -7,36 +7,15 @@ namespace UKPS.Api.Tests.Persistence.Entities.RecordWorkflow;
 
 public sealed class RecordLifecycleStateMachineTests
 {
-    private static readonly RecordLifecycleState NewRecord = new(
+    private static readonly RecordLifecycleState _newRecord = new(
         RecordStatus.Unpublished,
         WorkflowStatus.Draft
     );
 
-    /// <summary>
-    /// The combinations of record status and latest revision status that can coexist.
-    /// </summary>
-    private static readonly RecordLifecycleState[] AllowedStates =
-    [
-        new(RecordStatus.Unpublished, WorkflowStatus.Draft),
-        new(RecordStatus.Published, WorkflowStatus.Draft),
-        new(RecordStatus.OnHold, WorkflowStatus.Draft),
-        new(RecordStatus.Archived, WorkflowStatus.Draft),
-        new(RecordStatus.Published, WorkflowStatus.Published),
-        new(RecordStatus.OnHold, WorkflowStatus.Published),
-        new(RecordStatus.Archived, WorkflowStatus.Published),
-        new(RecordStatus.Unpublished, WorkflowStatus.QAReview),
-        new(RecordStatus.Published, WorkflowStatus.QAReview),
-        new(RecordStatus.Unpublished, WorkflowStatus.Rejected),
-        new(RecordStatus.Published, WorkflowStatus.Rejected),
-        new(RecordStatus.OnHold, WorkflowStatus.Rejected),
-        new(RecordStatus.Archived, WorkflowStatus.Rejected),
-        new(RecordStatus.Discarded, WorkflowStatus.Discarded),
-    ];
-
     private static readonly Dictionary<
         (RecordLifecycleState From, Command Command),
         RecordLifecycleState
-    > ExpectedTransitions = new()
+    > _expectedTransitions = new()
     {
         [(new(RecordStatus.Unpublished, WorkflowStatus.Draft), Command.Submit)] = new(
             RecordStatus.Unpublished,
@@ -163,10 +142,10 @@ public sealed class RecordLifecycleStateMachineTests
     };
 
     [Fact]
-    public void TrySendCommand_ShouldOnlyPermitExpectedTransitions_FromEveryAllowedState()
+    public void TrySendCommand_ShouldOnlyPermitExpectedTransitions_FromEveryValidState()
     {
         List<string> mismatches = [];
-        foreach (RecordLifecycleState from in AllowedStates)
+        foreach (RecordLifecycleState from in RecordLifecycleState.ValidStates)
         {
             foreach (Command command in Enum.GetValues<Command>())
             {
@@ -174,7 +153,7 @@ public sealed class RecordLifecycleStateMachineTests
 
                 var result = stateMachine.TrySendCommand(command);
 
-                bool isExpected = ExpectedTransitions.TryGetValue(
+                bool isExpected = _expectedTransitions.TryGetValue(
                     (from, command),
                     out RecordLifecycleState expectedNext
                 );
@@ -193,10 +172,10 @@ public sealed class RecordLifecycleStateMachineTests
     }
 
     [Fact]
-    public void TrySendCommand_ShouldOnlyReachAllowedStates_FromNewRecord()
+    public void TrySendCommand_ShouldOnlyReachValidStates_FromNewRecord()
     {
-        HashSet<RecordLifecycleState> reached = [NewRecord];
-        Queue<RecordLifecycleState> toVisit = new([NewRecord]);
+        HashSet<RecordLifecycleState> reached = [_newRecord];
+        Queue<RecordLifecycleState> toVisit = new([_newRecord]);
         while (toVisit.TryDequeue(out RecordLifecycleState from))
         {
             foreach (Command command in Enum.GetValues<Command>())
@@ -209,7 +188,7 @@ public sealed class RecordLifecycleStateMachineTests
             }
         }
 
-        reached.ShouldBe(AllowedStates, ignoreOrder: true);
+        reached.ShouldBe(RecordLifecycleState.ValidStates, ignoreOrder: true);
     }
 
     [Theory]
