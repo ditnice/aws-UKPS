@@ -44,8 +44,6 @@ function createServerFetch(returnTo: string | undefined): typeof fetch {
       return response
     }
 
-    console.log('Hello, this is a test')
-
     const content = await response
       .clone()
       .json()
