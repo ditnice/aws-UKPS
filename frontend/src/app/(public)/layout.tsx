@@ -20,8 +20,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
               href: '/register',
               label: (
                 <>
-                  Request a user
-                  <br />
+                  Request a user <br />
                   account
                 </>
               ),

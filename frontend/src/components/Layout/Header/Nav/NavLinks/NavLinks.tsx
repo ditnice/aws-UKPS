@@ -15,18 +15,20 @@ export type NavLinksProps = {
   links: NavLinkItem[]
 }
 
-function isActiveLink(pathname: string, href: string) {
-  const hrefPath = href.split(/[?#]/)[0]
+function matchesPath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
 
-  if (hrefPath === '/') {
-    return pathname === hrefPath
-  }
-
-  return pathname === hrefPath
+function getActiveHref(pathname: string, links: NavLinkItem[]): string | undefined {
+  return links
+    .map(({ href }) => href)
+    .filter((href) => matchesPath(pathname, href))
+    .sort((a, b) => b.length - a.length)[0]
 }
 
 export function NavLinks({ links }: NavLinksProps) {
   const pathname = usePathname()
+  const activeHref = getActiveHref(pathname, links)
   return (
     <ul className={styles.menuList} aria-labelledby="header-menu-button">
       {links.map(({ href, label }) => (
@@ -34,7 +36,7 @@ export function NavLinks({ links }: NavLinksProps) {
           <Link
             href={href}
             className={styles.link}
-            aria-current={isActiveLink(pathname, href) ? 'page' : undefined}
+            aria-current={href == activeHref ? 'page' : undefined}
           >
             {label}
           </Link>

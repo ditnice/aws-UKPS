@@ -8,8 +8,7 @@ export const createLinks = (me: UserOrganisationContext | undefined) => {
       href: `/portal/organisations/${me.organisationId}/records`,
       label: (
         <>
-          View and
-          <br />
+          View and <br />
           manage records
         </>
       ),
@@ -21,8 +20,7 @@ export const createLinks = (me: UserOrganisationContext | undefined) => {
             href: `/portal/organisations/${me.organisationId}`,
             label: (
               <>
-                Manage my
-                <br />
+                Manage my <br />
                 organisation
               </>
             ),
@@ -32,9 +30,8 @@ export const createLinks = (me: UserOrganisationContext | undefined) => {
       href: '/portal/user/me',
       label: (
         <>
-          Manage my
-          <br />
-          details{' '}
+          Manage my <br />
+          details
         </>
       ),
     },
