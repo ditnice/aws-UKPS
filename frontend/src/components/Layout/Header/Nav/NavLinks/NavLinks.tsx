@@ -16,9 +16,13 @@ export type NavLinksProps = {
 }
 
 function matchesPath(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`)
+  if (href === '/') {
+    return pathname === href
+  }
+  return pathname === href || pathname.startsWith(href)
 }
 
+// Only the most specific matching link is active.
 function getActiveHref(pathname: string, links: NavLinkItem[]): string | undefined {
   return links
     .map(({ href }) => href)
@@ -36,7 +40,7 @@ export function NavLinks({ links }: NavLinksProps) {
           <Link
             href={href}
             className={styles.link}
-            aria-current={href == activeHref ? 'page' : undefined}
+            aria-current={href === activeHref ? 'page' : undefined}
           >
             {label}
           </Link>

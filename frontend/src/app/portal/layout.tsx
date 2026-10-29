@@ -18,9 +18,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   const links = createLinks(me)
   const headerExtension = me?.hasMultipleOrganisations ? (
     <OrganisationSwitcher organisationName={me.organisationName} />
-  ) : (
-    <></>
-  )
+  ) : undefined
 
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">

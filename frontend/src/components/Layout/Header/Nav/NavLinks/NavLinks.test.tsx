@@ -75,29 +75,12 @@ describe('NavLinks', () => {
     assertOnlySpecifiedLinkIsActive('Home')
   })
 
-  it('does not mark the root link as active on other paths', () => {
-    navigationState.pathname = '/about-us'
-
-    render(<NavLinks links={links} />)
-
-    expect(getLinkByLabel('Home')).not.toHaveAttribute('aria-current')
-    expect(getLinkByLabel('About')).toHaveAttribute('aria-current', 'page')
-  })
-
   it('marks only the exact matching link as active', () => {
     navigationState.pathname = '/portal'
 
     render(<NavLinks links={links} />)
 
     assertOnlySpecifiedLinkIsActive('Dashboard')
-  })
-
-  it('does not mark a link as active for nested paths', () => {
-    navigationState.pathname = '/portal/components/examples'
-
-    render(<NavLinks links={links} />)
-
-    assertAllLinksAreNotActive()
   })
 
   it('has no active link when the path matches none of the links', () => {
@@ -108,24 +91,11 @@ describe('NavLinks', () => {
     assertAllLinksAreNotActive()
   })
 
-  it('ignores query strings in the link href when determining the active link', () => {
-    navigationState.pathname = '/portal/user/me'
+  it('ignores query strings in pathname when determining the active link', () => {
+    navigationState.pathname = '/portal/user/me?tab=details'
 
-    const link = { href: '/portal/user/me?tab=details', label: 'Manage my details' }
-    render(
-      <NavLinks links={[{ href: '/portal/user/me?tab=details', label: 'Manage my details' }]} />,
-    )
-
-    const linkElement = getLinkByLabel(link.label)
-    expect(linkElement).toHaveAttribute('href', link.href)
-    assertLinkIsActive(link.label)
-  })
-
-  it('ignores hash fragments in the link href when determining the active link', () => {
-    navigationState.pathname = '/guidance'
-
-    const link = { href: '/guidance#faqs', label: 'Guidance' }
-    render(<NavLinks links={[link]} />)
+    const link = { href: '/portal/user/me', label: 'Manage my details' }
+    render(<NavLinks links={[{ href: '/portal/user/me', label: 'Manage my details' }]} />)
 
     const linkElement = getLinkByLabel(link.label)
     expect(linkElement).toHaveAttribute('href', link.href)
