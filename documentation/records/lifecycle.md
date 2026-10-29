@@ -25,7 +25,7 @@ Follows one medicine record from its first save to archive, then a second record
 
 ### The lifecycle at a glance
 
-Numbers refer to the stages outlined below. A new revision is branched, and its content copied forward, in two places: after a QA rejection and when a published record is updated. Both lead back into the same editing loop.
+Numbers refer to the stages outlined below. A new revision is branched, and its content copied forward, by the first save in two places: after a QA rejection and when a published record is updated. Both lead back into the same editing loop.
 
 ```mermaid
 %%{init: {"flowchart": {"nodeSpacing": 90, "rankSpacing": 70}}}%%
@@ -38,7 +38,7 @@ flowchart TD
     DECISION -->|"8. approve"| PUBLISHED(["Published"])
     DECISION --->|"5. reject"| BRANCH
     PUBLISHED -->|"10. update"| BRANCH
-    BRANCH["6, 10. Branch a new revision<br/>copy-forward"] --> EDIT
+    BRANCH["6, 10. First save branches a new revision<br/>copy-forward"] --> EDIT
     PUBLISHED --> CONFIRM["9. Confirm as current"]
     CONFIRM --> PUBLISHED
     PUBLISHED -->|"11. put on hold"| HOLD(["On hold"])
@@ -342,6 +342,7 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 
 > [!WARNING]
 > - **`old_value` comes from the database.** It is user 7's persisted value, so compute it on the server inside the save transaction.
+> - **Concurrent saves.** A save is blocked if the page changed since it loaded. See [validation and concurrency](validation-and-concurrency.md).
 > - **"Last edited by" comes from the audit.** `record_revisions` has no `updated_by` / `updated_at`, so use the latest `record_field_audit` row for the revision.
 
 <br>
@@ -407,7 +408,7 @@ User 7 submits revision 1.
 
 > [!WARNING]
 > - **Read-only is app-enforced.** Nothing in the database stops writes to a `qa_review` revision's content, so every save path must check `workflow_status = draft`.
-> - **Validation.** Drafts may be incomplete, so required-field validation belongs here rather than on save. Section columns that are `NOT NULL` (e.g. `medicines_treatment_details.proposed_place_in_therapy`) mean that row can't be inserted until the field is filled.
+> - **Validation.** Drafts may be incomplete. A save only checks the page being saved, and completeness and cross-page rules are checked on check your answers and again here (see [validation and concurrency](validation-and-concurrency.md)). Section columns that are `NOT NULL` (e.g. `medicines_treatment_details.proposed_place_in_therapy`) mean that row can't be inserted until the field is filled.
 
 For this first round the QA diff is every netted audit row on revision 1. It has no `based_on_revision_id`, so every field shows as new.
 
@@ -452,11 +453,13 @@ The QA user (15) rejects revision 1 with the note *"Public pipeline shows UK sub
 
 ## Stage 6: Pharma user edits after rejection
 
-User 7 opens the rejected record to make QA's changes. This branches a new **revision 2** from revision 1, and every section row is **copied forward** with new PKs (08:45). They then make the two edits QA asked for (08:58).
+User 7 opens the rejected record to make the two changes QA asked for. Opening it writes nothing. Their first save (08:45) branches a new **revision 2** from revision 1, **copies forward** every section row with new PKs, and writes the page, all in one transaction. Their second save (08:58) goes into revision 2 like any other draft save.
 
 <br>
 
-### Branch and copy-forward (08:45)
+### First save: Regulatory and HTA page (08:45)
+
+There is no draft, so the save branches revision 2 and copies revision 1 forward before writing the page.
 
 **`record_revisions`** is inserted:
 
@@ -508,13 +511,23 @@ flowchart LR
 
 <br>
 
-### Edits (08:58)
-
-**`regulatory_dates`** is updated in place, on the copied-forward row:
+Then the page is written. **`regulatory_dates`** is updated in place, on the copied-forward row:
 
 | id | revision_id | date_event | date_precision | date_value | is_confidential |
 | --- | --- | --- | --- | --- | --- |
 | 3 | 2 | `uk_submission` | `estimated_quarter` | ~~2026-07-01~~ 2026-04-01 | false |
+
+**`record_field_audit`** is inserted:
+
+| id | record_id | revision_id | field_path | old_value | new_value | changed_by | changed_at |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 24 | 1 | **2** | `record_mhra_date.uk_submission_date` | `{"date_precision": "estimated_quarter", "date_value": "2026-07-01", "is_confidential": false}` | `{"date_precision": "estimated_quarter", "date_value": "2026-04-01", "is_confidential": false}` | 7 | 2026-01-16T08:45:00Z |
+
+<br>
+
+### Second save: Indication page (08:58)
+
+Revision 2 is now the draft, so the save writes to it directly.
 
 **`medicines_indication_detail_therapeutic_areas`** is inserted:
 
@@ -522,12 +535,11 @@ flowchart LR
 | --- | --- |
 | 2 | 22 |
 
-**`record_field_audit`** is inserted (`record_id` 1, `revision_id` **2**, `changed_by` 7, `changed_at` 2026-01-16T08:58:00Z):
+**`record_field_audit`** is inserted:
 
-| id | field_path | old_value | new_value |
-| --- | --- | --- | --- |
-| 24 | `record_mhra_date.uk_submission_date` | `{"date_precision": "estimated_quarter", "date_value": "2026-07-01", "is_confidential": false}` | `{"date_precision": "estimated_quarter", "date_value": "2026-04-01", "is_confidential": false}` |
-| 25 | `medicines_indication_detail_therapeutic_areas` | `{"therapeutic_area_id": [14]}` | `{"therapeutic_area_id": [14, 22]}` |
+| id | record_id | revision_id | field_path | old_value | new_value | changed_by | changed_at |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 25 | 1 | 2 | `medicines_indication_detail_therapeutic_areas` | `{"therapeutic_area_id": [14]}` | `{"therapeutic_area_id": [14, 22]}` | 7 | 2026-01-16T08:58:00Z |
 
 <br>
 
@@ -626,7 +638,7 @@ Three months later user 9 confirms nothing has changed. No revision, QA review o
 
 ## Stage 10: Update a published record
 
-The UK submission has now happened, so user 9 updates the record. A new **revision 3** is branched from revision 2 and copied forward exactly as in [stage 6](#stage-6-pharma-user-edits-after-rejection): `regulatory_dates` 3 and 4 become 5 and 6, and `record_mhra_dates` 3 and `record_htas` 3 are remapped to them. `record_events` 8 (`revision_created`, `revision_id` 3) is inserted. Then the user edits (09:05).
+The UK submission has now happened, so user 9 updates the record. Their first save (09:05) branches a new **revision 3** from revision 2 and copies it forward exactly as in [stage 6](#stage-6-pharma-user-edits-after-rejection): `regulatory_dates` 3 and 4 become 5 and 6, and `record_mhra_dates` 3 and `record_htas` 3 are remapped to them. `record_events` 8 (`revision_created`, `revision_id` 3) is inserted. The same save then writes the edits.
 
 **`regulatory_dates`** is updated in place, changing precision as well as value:
 

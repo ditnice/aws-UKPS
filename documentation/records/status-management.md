@@ -1,6 +1,6 @@
 # Record status management
 
-How a record's status and its latest revision's status combine: which pairings can exist, the transitions between them, the actions offered for each, and the status shown to users. For the rows written at each step, see the [record lifecycle](README.md).
+How a record's status and its latest revision's status combine: which pairings can exist, the transitions between them, the actions offered for each, and the status shown to users. For the rows written at each step, see the [record lifecycle](lifecycle.md).
 
 **Contents**
 
@@ -45,19 +45,19 @@ In this table, *x* stands for `draft`, `published` or `rejected`, and the latest
 
 | Command | From | To | Scenario |
 | --- | --- | --- | --- |
-| Submit | (`unpublished`, `draft`) | (`unpublished`, `qa_review`) | First submission, or resubmission after a rejection ([stages 4, 7](README.md#stage-4-submit-to-qa)) |
-| Submit | (`published`, `draft`) | (`published`, `qa_review`) | Submitting an update to a published record ([stage 10](README.md#stage-10-update-a-published-record)) |
-| Approve | (`unpublished`, `qa_review`) | (`published`, `published`) | First publication ([stage 8](README.md#stage-8-qa-approves)) |
-| Approve | (`published`, `qa_review`) | (`published`, `published`) | An update is published ([stage 10](README.md#stage-10-update-a-published-record)) |
-| Reject | (`unpublished`, `qa_review`) | (`unpublished`, `rejected`) | First submission rejected ([stage 5](README.md#stage-5-qa-rejects)) |
+| Submit | (`unpublished`, `draft`) | (`unpublished`, `qa_review`) | First submission, or resubmission after a rejection ([stages 4, 7](lifecycle.md#stage-4-submit-to-qa)) |
+| Submit | (`published`, `draft`) | (`published`, `qa_review`) | Submitting an update to a published record ([stage 10](lifecycle.md#stage-10-update-a-published-record)) |
+| Approve | (`unpublished`, `qa_review`) | (`published`, `published`) | First publication ([stage 8](lifecycle.md#stage-8-qa-approves)) |
+| Approve | (`published`, `qa_review`) | (`published`, `published`) | An update is published ([stage 10](lifecycle.md#stage-10-update-a-published-record)) |
+| Reject | (`unpublished`, `qa_review`) | (`unpublished`, `rejected`) | First submission rejected ([stage 5](lifecycle.md#stage-5-qa-rejects)) |
 | Reject | (`published`, `qa_review`) | (`published`, `rejected`) | An update to a published record is rejected |
-| CreateRevision | (`unpublished`, `rejected`) | (`unpublished`, `draft`) | Editing after a rejection ([stage 6](README.md#stage-6-pharma-user-edits-after-rejection)) |
-| CreateRevision | (`published`, `published`) | (`published`, `draft`) | Updating a published record ([stage 10](README.md#stage-10-update-a-published-record)) |
+| CreateRevision | (`unpublished`, `rejected`) | (`unpublished`, `draft`) | Editing after a rejection ([stage 6](lifecycle.md#stage-6-pharma-user-edits-after-rejection)) |
+| CreateRevision | (`published`, `published`) | (`published`, `draft`) | Updating a published record ([stage 10](lifecycle.md#stage-10-update-a-published-record)) |
 | CreateRevision | (`published`, `rejected`) | (`published`, `draft`) | Editing after an update is rejected |
-| PutOnHold | (`published`, *x*) | (`on_hold`, *x*) | [Stage 11](README.md#stage-11-put-on-hold) |
+| PutOnHold | (`published`, *x*) | (`on_hold`, *x*) | [Stage 11](lifecycle.md#stage-11-put-on-hold) |
 | Resume | (`on_hold`, *x*) | (`published`, *x*) | The trial resumes or plans are refiled |
-| Archive | (`published`, *x*) or (`on_hold`, *x*) | (`archived`, *x*) | By a user, or automatically ([stage 12](README.md#stage-12-archive)) |
-| Discard | (`unpublished`, `draft`) | (`discarded`, `discarded`) | First revision only, by a user or automatically ([stage 13](README.md#stage-13-discard-a-draft-record)) |
+| Archive | (`published`, *x*) or (`on_hold`, *x*) | (`archived`, *x*) | By a user, or automatically ([stage 12](lifecycle.md#stage-12-archive)) |
+| Discard | (`unpublished`, `draft`) | (`discarded`, `discarded`) | First revision only, by a user or automatically ([stage 13](lifecycle.md#stage-13-discard-a-draft-record)) |
 
 > [!WARNING]
 > - **CreateRevision creates a new revision.** The `draft` in the new state is the new revision's status. The revision it was created from keeps its status, so a `rejected` revision stays `rejected`.
@@ -106,7 +106,7 @@ Discarded records aren't returned, so they have no actions.
 
 ## Display status
 
-The display status for horizon scanners is the same as the `record_status` saved against the record in the database. Unpublished and discarded records aren't visible to them, and the latest revision's status is never shown. A record in the middle of an update is still `Published` to them, and they see the content of its latest `published` revision ([stage 10](README.md#stage-10-update-a-published-record)).
+The display status for horizon scanners is the same as the `record_status` saved against the record in the database. Unpublished and discarded records aren't visible to them, and the latest revision's status is never shown. A record in the middle of an update is still `Published` to them, and they see the content of its latest `published` revision ([stage 10](lifecycle.md#stage-10-update-a-published-record)).
 
 However, pharma users need to be able to see what stage of the lifecycle their most recent revision is at. The display status for them is determined according to the following:
 <br>
