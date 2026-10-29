@@ -52,7 +52,7 @@ flowchart TD
 
 ### Status models
 
-Two independent axes: `record_revisions.workflow_status` (per revision) and `records.record_status` (per record).
+Two axes: `record_revisions.workflow_status` (per revision) and `records.record_status` (per record). Each moves through its own states, but not every pairing is allowed. [Status management](status-management.md) covers which pairings can coexist, the transitions between them, and the actions and display status for each.
 
 ```mermaid
 stateDiagram-v2
@@ -75,9 +75,9 @@ stateDiagram-v2
     state "records.record_status" as rs {
         [*] --> Unpublished: record created
         Unpublished --> Published: first QA approval
-        Published --> OnHold: user, with reason
+        Published --> OnHold: user, with reason (not while in QA review)
         OnHold --> Published: TrialResumed / PlansRefiled
-        Published --> Archived: user, or system (ArchivedAutomatically)
+        Published --> Archived: user, or system (not while in QA review)
         OnHold --> Archived: user, or system (ArchivedAutomatically)
         Unpublished --> Discarded: user, or system after a year untouched
     }
@@ -342,7 +342,6 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 
 > [!WARNING]
 > - **`old_value` comes from the database.** It is user 7's persisted value, so compute it on the server inside the save transaction.
-> - **No concurrency check.** Revision and section tables have no concurrency token. If both users save the same page at once, the last write wins silently. Both saves are audited, but the earlier edit is lost from the content.
 > - **"Last edited by" comes from the audit.** `record_revisions` has no `updated_by` / `updated_at`, so use the latest `record_field_audit` row for the revision.
 
 <br>
@@ -386,7 +385,7 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 
 ## Stage 4: Submit to QA
 
-User 7 submits revision 1. No section content or audit rows are written.
+User 7 submits revision 1.
 
 **`record_revisions`** is updated:
 
@@ -685,7 +684,8 @@ User 7 puts the record on hold because the trial is paused.
 | 11 | 1 | NULL | NULL | `record_status_changed` | 7 | 2026-09-01T16:00:00Z | NULL | NULL |
 
 > [!WARNING]
-> - **Revisions are untouched.** Revision 3 stays `published` while the record is `on_hold`. `workflow_status` and `record_status` are independent, so check the right one.
+> - **Revisions are untouched.** Revision 3 stays `published` while the record is `on_hold`. `workflow_status` and `record_status` are separate columns, so check the right one.
+> - **Status rules.** A record can't be put on hold while its latest revision is in QA review, and while on hold no revision can be created, edited or submitted. See [status management](status-management.md).
 > - **The history row is the source of truth.** The event is record-level (`revision_id` NULL). From, to and reason live in `record_status_histories`, and the event is just the timeline entry.
 > - **Review clock.** `reviewed_at` changes for a user-initiated status change. Next review due: medicine + on hold = `reviewed_at` + 6 months.
 > - **Reasons depend on direction.** `trial_resumed` and `plans_refiled` are only valid for `on_hold → published`. This is checked by the app only.
@@ -720,6 +720,7 @@ User 7 archives the record because development has been discontinued.
 
 > [!WARNING]
 > - **Automatic archive.** When the system archives a record, `updated_by` and `performed_by` are NULL, `reason` is `archived_automatically`, and `reviewed_at` is **not** touched.
+> - **Status rules.** A record can't be archived while its latest revision is in QA review, and a draft left on an archived record stays `draft` forever. See [status management](status-management.md).
 
 <br>
 
@@ -793,7 +794,7 @@ When a draft first revision has been untouched for a year, the system discards i
 | `regulatory_dates` insert and delete order (`RESTRICT` FKs) | [2](#stage-2-further-saves-in-the-same-session) |
 | Clearing dependent fields produces audit rows | [2](#stage-2-further-saves-in-the-same-session) |
 | Append-every-save audit needs netting, ordered by `changed_at, id` | [2](#stage-2-further-saves-in-the-same-session) |
-| `old_value` from the database. No concurrency token. "Last edited by" from the audit | [3](#stage-3-a-colleague-continues-in-a-separate-session) |
+| `old_value` from the database. "Last edited by" from the audit | [3](#stage-3-a-colleague-continues-in-a-separate-session) |
 | Submitter and time only on the `submitted_to_qa` event | [4](#stage-4-submit-to-qa) |
 | Read-only and one-open-revision rules not enforced in the database | [4](#stage-4-submit-to-qa) |
 | `NOT NULL` section columns block partial drafts | [4](#stage-4-submit-to-qa) |
@@ -805,7 +806,8 @@ When a draft first revision has been untouched for a year, the system discards i
 | No status history row when already published | [10](#stage-10-update-a-published-record) |
 | Superseded revisions stay published. Current = latest published | [10](#stage-10-update-a-published-record) |
 | Publication diff may span several revisions | [10](#stage-10-update-a-published-record) |
-| `workflow_status` and `record_status` are independent | [11](#stage-11-put-on-hold) |
+| `workflow_status` and `record_status` are separate, but not every pairing is allowed | [Status management](status-management.md), [11](#stage-11-put-on-hold) |
+| No hold or archive while the latest revision is in QA review | [11](#stage-11-put-on-hold), [12](#stage-12-archive) |
 | Automatic archive: NULL actor, `reviewed_at` untouched | [12](#stage-12-archive) |
 | Discard eligibility: exactly one revision, still `draft` (not just `unpublished`) | [13](#stage-13-discard-a-draft-record) |
 | "Untouched for a year" measured from the audit | [13](#stage-13-discard-a-draft-record) |
