@@ -1,5 +1,6 @@
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Records;
 
@@ -24,7 +25,12 @@ internal sealed record RecordWithLatestRevision
     public RecordDisplayStatus DisplayStatus { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether the record can be discarded.
+    /// Gets the workflow status of the latest revision, or <c>null</c> if the record has none.
     /// </summary>
-    public bool IsDiscardable { get; init; }
+    public WorkflowStatus? LatestRevisionStatus { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the record has only one revision.
+    /// </summary>
+    public bool HasSingleRevision { get; init; }
 }

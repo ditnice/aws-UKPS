@@ -59,7 +59,7 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
 
   if (
     response?.status === 404 ||
-    (record && (record.organisationId !== organisationId || !record.canDiscard))
+    (record && (record.organisationId !== organisationId || !record.actions.includes('Discard')))
   ) {
     notFound()
   }
