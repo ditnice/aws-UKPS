@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
 import { postAuthLogin } from '@/client/generated'
-import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
@@ -109,11 +108,11 @@ describe('SignInForm', () => {
         credentials: 'include',
       })
 
-      expect(router.push).toHaveBeenCalledWith(routeOnSuccessfulAuth)
+      expect(router.push).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
 
-  it('redirects to the returnTo path after successful authentication', async () => {
+  it('redirects to the organisation selection page with the returnTo path after successful authentication', async () => {
     render(<SignInForm returnTo="/portal/organisations/1?tab=users" />)
 
     await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
@@ -122,7 +121,9 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith('/portal/organisations/1?tab=users')
+      expect(router.push).toHaveBeenCalledWith(
+        '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
+      )
     })
   })
 

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
@@ -25,19 +26,21 @@ internal class LoginService : ILoginService
         CancellationToken cancellationToken
     )
     {
-        var user = await _appDbContext.Users.GetByEmailOrDefault(
-            request.Username,
-            cancellationToken
-        );
+        var user = await GetUserWithMemberships(request.Username, cancellationToken);
         if (user is null)
         {
             return InitiateAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised());
         }
-        return await _identityService.InitiateAuthentication(
+        var result = await _identityService.InitiateAuthentication(
             user.CognitoUsername,
             request.Password,
             cancellationToken
         );
+        if (result.IsOk)
+        {
+            await ResetCurrentOrganisation(user, cancellationToken);
+        }
+        return result;
     }
 
     public async Task<InitiateAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
@@ -45,20 +48,22 @@ internal class LoginService : ILoginService
         CancellationToken cancellationToken
     )
     {
-        var user = await _appDbContext.Users.GetByEmailOrDefault(
-            command.Username,
-            cancellationToken
-        );
+        var user = await GetUserWithMemberships(command.Username, cancellationToken);
         if (user is null)
         {
             return InitiateAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised());
         }
-        return await _identityService.RespondToMultiFactorAuthenticationChallenge(
+        var result = await _identityService.RespondToMultiFactorAuthenticationChallenge(
             user.CognitoUsername,
             command.AuthenticationSession,
             command.Code,
             cancellationToken
         );
+        if (result.IsOk)
+        {
+            await ResetCurrentOrganisation(user, cancellationToken);
+        }
+        return result;
     }
 
     public Task<InitiateAuthenticationResult> RefreshAuthenticationToken(
@@ -74,5 +79,27 @@ internal class LoginService : ILoginService
         return string.IsNullOrWhiteSpace(refreshToken)
             ? Task.CompletedTask
             : _identityService.RevokeRefreshToken(refreshToken, cancellationToken);
+    }
+
+    private Task<User?> GetUserWithMemberships(string email, CancellationToken cancellationToken) =>
+        _appDbContext
+            .Users.Include(x => x.UserOrgMemberships)!
+                .ThenInclude(x => x.Organisation)
+            .GetByEmailOrDefault(email, cancellationToken);
+
+    // Each sign-in clears the selected organisation, then selects it again only when there is
+    // just one to choose. If the flag is left null (for users with multiple memberships), they
+    // are routed to the organisation picker page.
+    private async Task ResetCurrentOrganisation(User user, CancellationToken cancellationToken)
+    {
+        user.ResetCurrentOrganisation();
+        await _appDbContext.SaveChangesAsync(cancellationToken);
+
+        int? soleOrganisationId = user.FindSoleSelectableOrganisationId();
+        if (soleOrganisationId.HasValue)
+        {
+            user.TryUpdateCurrentOrganisation(soleOrganisationId.Value);
+            await _appDbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }

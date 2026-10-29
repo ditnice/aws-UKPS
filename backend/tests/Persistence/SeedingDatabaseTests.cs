@@ -5,6 +5,7 @@ using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
+using UKPS.Api.Persistence.Configurations.RecordWorkflow;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
@@ -31,7 +32,11 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
         await Context.SaveChangesAsync(ct);
         Context.ChangeTracker.Clear();
 
-        (await Context.Records.CountAsync(ct)).ShouldBe(572);
+        (
+            await Context
+                .Records.IgnoreQueryFilters([RecordConfiguration.DiscardedFilter])
+                .CountAsync(ct)
+        ).ShouldBe(572);
         Organisation first = await Context.Organisations.SingleAsync(o => o.Id == 1, ct);
         first.OrganisationType.ShouldBe(OrganisationType.Internal);
 
@@ -102,6 +107,7 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
             Result<RecordDto, GetRecordError> result = await service.GetRecord(
                 record.Id,
                 RecordType.Medicine,
+                record.OrganisationId,
                 ct
             );
 
@@ -120,6 +126,7 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
             Result<RecordDto, GetRecordError> result = await service.GetRecord(
                 record.Id,
                 RecordType.Medicine,
+                record.OrganisationId,
                 ct
             );
 

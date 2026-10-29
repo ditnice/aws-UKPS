@@ -21,6 +21,7 @@ internal partial class RecordService(
     AppDbContext dbContext,
     IDateTimeProvider timeProvider,
     IOrganisationAuthoriser organisationAuthoriser,
+    ICurrentUserInfoService currentUserInfoService,
     CurrentDbUserEntityService currentDbUserEntityService
 ) : IRecordService
 {
@@ -104,6 +105,8 @@ internal partial class RecordService(
         CancellationToken cancellationToken
     )
     {
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
+
         bool actionPermitted = _organisationAuthoriser.CanPerformOperationOnOrganisation(
             operation,
             organisationId

@@ -53,10 +53,12 @@ internal sealed class UserOrgMembership
     internal bool IsAuthorised() => EnabledStatuses.Contains(Status);
 
     /// <summary>
-    /// Whether the user can manage the organisation through this membership: the membership
-    /// must be authorised and the organisation itself must be active.
+    /// Whether the user can select the organisation as their current organisation: the membership
+    /// must be authorised or deactivated and the organisation itself must be active. Deactivated
+    /// memberships are selectable so the user can reach the deactivated page for that organisation.
     /// </summary>
-    internal bool IsSelectable() => IsAuthorised() && IsOrganisationActive();
+    internal bool IsSelectable() =>
+        (IsAuthorised() || Status == UserOrgMembershipStatus.Deactivated) && IsOrganisationActive();
 
     internal bool IsOrganisationActive()
     {

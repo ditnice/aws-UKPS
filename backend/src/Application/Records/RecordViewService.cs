@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
@@ -17,30 +18,36 @@ using GetRecordResult = Result<RecordDto, GetRecordError>;
 
 internal sealed class RecordViewService(
     AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser
+    IOrganisationAuthoriser organisationAuthoriser,
+    ICurrentUserInfoService currentUserInfoService
 ) : IRecordViewService
 {
     public async Task<GetRecordResult> GetRecord(
         int recordId,
         RecordType recordType,
+        int organisationId,
         CancellationToken cancellationToken
     )
     {
-        RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
 
-        if (record is null)
-        {
-            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
-        }
-
+        // Authorise against the requested organisation before looking the record up, so an
+        // unauthorised caller gets the same response whether or not the record exists.
         if (
             !organisationAuthoriser.CanPerformOperationOnOrganisation(
                 Operation.Read,
-                record.OrganisationId
+                organisationId
             )
         )
         {
             return GetRecordResult.Err(new GetRecordError.NotAllowed(recordId));
+        }
+
+        RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
+
+        if (record is null || record.OrganisationId != organisationId)
+        {
+            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }
 
         // Every record is created with a revision, so this only guards against bad data.

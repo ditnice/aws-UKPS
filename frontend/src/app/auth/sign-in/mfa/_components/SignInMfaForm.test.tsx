@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthMfa } from '@/client/generated'
-import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
@@ -69,10 +68,10 @@ describe('SignInMfaForm', () => {
         },
         credentials: 'include',
       })
-      expect(mockPush).toHaveBeenCalledWith(routeOnSuccessfulAuth)
+      expect(mockPush).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
-  it('redirects to the returnTo path on successful authentication', async () => {
+  it('redirects to the organisation selection page with the returnTo path on successful authentication', async () => {
     render(
       <SignInMfaForm
         username={exampleUserEmail}
@@ -83,7 +82,9 @@ describe('SignInMfaForm', () => {
     await updateForm(validFormValues)
     await submitForm()
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/portal/organisations/1?tab=users')
+      expect(mockPush).toHaveBeenCalledWith(
+        '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
+      )
     })
   })
   it('shows security code error on 401 response', async () => {
