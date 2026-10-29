@@ -11,7 +11,8 @@ export const AuthenticationFailCode = {
     SELECTED_ORGANISATION_IS_NOT_VALID: 'SelectedOrganisationIsNotValid',
     MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
     MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState',
-    ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive'
+    ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive',
+    SELECTED_ORGANISATION_MISMATCH: 'SelectedOrganisationMismatch'
 } as const;
 
 export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];
@@ -27,6 +28,10 @@ export type AuthenticationProblemDetails = {
     detail?: null | string;
     instance?: null | string;
     code?: null | AuthenticationFailCode;
+    /**
+     * Gets the organisation the request was for, when it is not the user's selected organisation.
+     */
+    organisationId?: null | number;
     challengeType?: null | UkpsChallengeType;
     /**
      * Gets the session identifier associated with the authentication challenge.
@@ -791,6 +796,23 @@ export type ProblemDetails = {
 };
 
 /**
+ * Defines the actions a user can take on a record.
+ */
+export const RecordAction = {
+    UPDATE: 'Update',
+    CHANGE_STATUS: 'ChangeStatus',
+    CONFIRM_CURRENT: 'ConfirmCurrent',
+    CONFIRM_ON_HOLD: 'ConfirmOnHold',
+    DISCARD: 'Discard',
+    VIEW_TIMELINE: 'ViewTimeline'
+} as const;
+
+/**
+ * Defines the actions a user can take on a record.
+ */
+export type RecordAction = typeof RecordAction[keyof typeof RecordAction];
+
+/**
  * Represents a clinical trial on a record.
  */
 export type RecordClinicalTrialDto = {
@@ -829,8 +851,7 @@ export const RecordDisplayStatus = {
     QA_REVIEW: 'QAReview',
     PUBLISHED: 'Published',
     ON_HOLD: 'OnHold',
-    ARCHIVED: 'Archived',
-    DISCARDED: 'Discarded'
+    ARCHIVED: 'Archived'
 } as const;
 
 /**
@@ -900,6 +921,11 @@ export type RecordDtoMedicineRecordDto = {
      * latest revision.
      */
     firstPageId: null | string;
+    /**
+     * Gets the actions the user can take on the record, given its status and the workflow status
+     * of its latest revision.
+     */
+    actions: Array<RecordAction>;
 };
 
 /**
@@ -933,6 +959,11 @@ export type RecordDtoVaccineRecordDto = {
      * latest revision.
      */
     firstPageId: null | string;
+    /**
+     * Gets the actions the user can take on the record, given its status and the workflow status
+     * of its latest revision.
+     */
+    actions: Array<RecordAction>;
 };
 
 /**
@@ -1630,6 +1661,10 @@ export type UserInformationDto = {
      * Gets the user's membership status within the organisation.
      */
     status: UserOrgStatus;
+    /**
+     * Gets whether the user can select more than one organisation. Only set for the current user.
+     */
+    hasMultipleOrganisations: boolean;
 };
 
 /**
@@ -2053,6 +2088,10 @@ export type GetCurrentOrganisationChampionsErrors = {
      * The user is not authorised to view champion contacts.
      */
     403: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetCurrentOrganisationChampionsError = GetCurrentOrganisationChampionsErrors[keyof GetCurrentOrganisationChampionsErrors];
@@ -2146,6 +2185,10 @@ export type GetOrganisationByIdErrors = {
      * No organisation exists with the specified identifier.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetOrganisationByIdError = GetOrganisationByIdErrors[keyof GetOrganisationByIdErrors];
@@ -2191,6 +2234,10 @@ export type UpdateOrganisationDetailsErrors = {
      * No organisation exists with the specified identifier.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type UpdateOrganisationDetailsError = UpdateOrganisationDetailsErrors[keyof UpdateOrganisationDetailsErrors];
@@ -2237,6 +2284,10 @@ export type DeactivateMembershipErrors = {
      * The specified organisation membership could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type DeactivateMembershipError = DeactivateMembershipErrors[keyof DeactivateMembershipErrors];
@@ -2283,6 +2334,10 @@ export type ReactivateMembershipErrors = {
      * The specified organisation membership could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type ReactivateMembershipError = ReactivateMembershipErrors[keyof ReactivateMembershipErrors];
@@ -2332,6 +2387,10 @@ export type UpdateUserRoleErrors = {
      * The specified organisation membership could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type UpdateUserRoleError = UpdateUserRoleErrors[keyof UpdateUserRoleErrors];
@@ -2364,7 +2423,7 @@ export type PostOrganisationsErrors = {
     /**
      * Conflict
      */
-    409: ProblemDetails;
+    409: AuthenticationProblemDetails;
 };
 
 export type PostOrganisationsError = PostOrganisationsErrors[keyof PostOrganisationsErrors];
@@ -2458,6 +2517,10 @@ export type GetOrganisationRecordsErrors = {
      * The specified organisation does not exist.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetOrganisationRecordsError = GetOrganisationRecordsErrors[keyof GetOrganisationRecordsErrors];
@@ -2484,13 +2547,17 @@ export type GetRecordData = {
          * The expected type of the record.
          */
         recordType: RecordType;
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
     };
     url: '/records/{id}';
 };
 
 export type GetRecordErrors = {
     /**
-     * The record type is missing or invalid.
+     * The record type or organisation is missing or invalid.
      */
     400: ValidationProblemDetails;
     /**
@@ -2498,9 +2565,13 @@ export type GetRecordErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The requested record was not found or is not accessible to the caller.
+     * The requested record was not found in the organisation or is not accessible to the caller.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetRecordError = GetRecordErrors[keyof GetRecordErrors];
@@ -2537,6 +2608,10 @@ export type CreateRecordErrors = {
      * The caller is not authorised to create the requested record.
      */
     403: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type CreateRecordError = CreateRecordErrors[keyof CreateRecordErrors];
@@ -2550,11 +2625,11 @@ export type CreateRecordResponses = {
 
 export type CreateRecordResponse = CreateRecordResponses[keyof CreateRecordResponses];
 
-export type PatchRecordsByRecordIdDiscardData = {
+export type DiscardRecordData = {
     body?: never;
     path: {
         /**
-         * The unique identifier of the record to discard.
+         * The identifier of the record to discard.
          */
         recordId: number;
     };
@@ -2562,16 +2637,33 @@ export type PatchRecordsByRecordIdDiscardData = {
     url: '/records/{recordId}/discard';
 };
 
-export type PatchRecordsByRecordIdDiscardErrors = {
+export type DiscardRecordErrors = {
     /**
-     * An HTTP 200 response if the record is successfully discarded.
-     * An HTTP 404 response if the record cannot be found.
-     * An HTTP 400 response if the record is not eligible to be discarded.
+     * The record has been submitted, so cannot be discarded.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The record was not found, has already been discarded, or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record was updated by another operation while it was being discarded.
+     */
+    409: AuthenticationProblemDetails;
 };
 
-export type PatchRecordsByRecordIdDiscardError = PatchRecordsByRecordIdDiscardErrors[keyof PatchRecordsByRecordIdDiscardErrors];
+export type DiscardRecordError = DiscardRecordErrors[keyof DiscardRecordErrors];
+
+export type DiscardRecordResponses = {
+    /**
+     * The record was discarded.
+     */
+    200: unknown;
+};
 
 export type GetRecordFormPageData = {
     body?: never;
@@ -2598,6 +2690,10 @@ export type GetRecordFormPageErrors = {
      * The record or page was not found or is not accessible to the caller.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetRecordFormPageError = GetRecordFormPageErrors[keyof GetRecordFormPageErrors];
@@ -2651,7 +2747,7 @@ export type SaveRecordFormPageErrors = {
      * The revision is not a draft, or the form or revision changed since the page was loaded.
      * The `code` member says which.
      */
-    409: ProblemDetails;
+    409: AuthenticationProblemDetails;
 };
 
 export type SaveRecordFormPageError = SaveRecordFormPageErrors[keyof SaveRecordFormPageErrors];
@@ -2677,6 +2773,10 @@ export type GetUsersMeErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetUsersMeError = GetUsersMeErrors[keyof GetUsersMeErrors];
@@ -2757,6 +2857,10 @@ export type GetUsersErrors = {
      * Returned if the caller is not authorised to view the users of the organisation.
      */
     403: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];
@@ -2800,6 +2904,10 @@ export type GetUserDetailsWithinOrganisationErrors = {
      * Returned if the organisation does not exist or the user is not a member of it.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetUserDetailsWithinOrganisationError = GetUserDetailsWithinOrganisationErrors[keyof GetUserDetailsWithinOrganisationErrors];
@@ -2842,6 +2950,10 @@ export type RemoveUserErrors = {
      * The specified user does not exist or is not accessible to the caller.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type RemoveUserError = RemoveUserErrors[keyof RemoveUserErrors];
@@ -2886,7 +2998,7 @@ export type PatchUsersByUserIdErrors = {
     /**
      * The request conflicts with the existing data such as another users email.
      */
-    409: ProblemDetails;
+    409: AuthenticationProblemDetails;
 };
 
 export type PatchUsersByUserIdError = PatchUsersByUserIdErrors[keyof PatchUsersByUserIdErrors];
@@ -2926,7 +3038,7 @@ export type PostUsersOnboardErrors = {
     /**
      * A user with the supplied username already exists.
      */
-    409: ProblemDetails;
+    409: AuthenticationProblemDetails;
 };
 
 export type PostUsersOnboardError = PostUsersOnboardErrors[keyof PostUsersOnboardErrors];
@@ -3003,6 +3115,10 @@ export type GetUserRegistrationByIdErrors = {
      * No membership request was found with the supplied identifier.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type GetUserRegistrationByIdError = GetUserRegistrationByIdErrors[keyof GetUserRegistrationByIdErrors];
@@ -3045,6 +3161,10 @@ export type ApproveErrors = {
      * The membership request could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type ApproveError = ApproveErrors[keyof ApproveErrors];
@@ -3085,6 +3205,10 @@ export type RejectErrors = {
      * The membership request could not be found.
      */
     404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
 };
 
 export type RejectError = RejectErrors[keyof RejectErrors];

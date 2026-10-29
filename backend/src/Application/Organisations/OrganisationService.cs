@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Organisations.Errors;
 using UKPS.Api.Persistence;
@@ -19,16 +20,19 @@ internal sealed class OrganisationService : IOrganisationService
 
     private readonly AppDbContext _dbContext;
     private readonly IOrganisationAuthoriser _organisationAuthoriser;
+    private readonly ICurrentUserInfoService _currentUserInfoService;
 
     public OrganisationService(
         AppDbContext dbContext,
         IOrganisationMembershipService membershipService,
-        IOrganisationAuthoriser organisationAuthoriser
+        IOrganisationAuthoriser organisationAuthoriser,
+        ICurrentUserInfoService currentUserInfoService
     )
     {
         _dbContext = dbContext;
         Memberships = membershipService;
         _organisationAuthoriser = organisationAuthoriser;
+        _currentUserInfoService = currentUserInfoService;
     }
 
     public async Task<GetOrganisationResult> GetOrganisationById(
@@ -36,6 +40,8 @@ internal sealed class OrganisationService : IOrganisationService
         CancellationToken cancellationToken
     )
     {
+        _currentUserInfoService.ThrowIfOrganisationNotSelected(id);
+
         if (!_organisationAuthoriser.CanPerformOperationOnOrganisation(Operation.Read, id))
         {
             return GetOrganisationResult.Err(new GetOrganisationByIdError.NotAllowed(id));
@@ -55,6 +61,8 @@ internal sealed class OrganisationService : IOrganisationService
         CancellationToken cancellationToken
     )
     {
+        _currentUserInfoService.ThrowIfOrganisationNotSelected(id);
+
         if (!_organisationAuthoriser.CanPerformOperationOnOrganisation(Operation.Update, id))
         {
             return UpdateOrganisationResult.Err(new UpdateOrganisationDetailsError.NotAllowed(id));

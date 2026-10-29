@@ -15,6 +15,7 @@ public interface IRecordViewService
     /// </summary>
     /// <param name="recordId">The unique identifier of the record.</param>
     /// <param name="recordType">The expected type of the record.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains
@@ -24,6 +25,7 @@ public interface IRecordViewService
     Task<Result<RecordDto, GetRecordError>> GetRecord(
         int recordId,
         RecordType recordType,
+        int organisationId,
         CancellationToken cancellationToken
     );
 }

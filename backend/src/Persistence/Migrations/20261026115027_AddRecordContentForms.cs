@@ -17,15 +17,6 @@ namespace UKPS.Api.Persistence.Migrations
                 type: "text",
                 nullable: false,
                 defaultValue: "");
-
-            migrationBuilder.AddColumn<uint>(
-                name: "xmin",
-                schema: "ukps",
-                table: "record_revisions",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                defaultValue: 0u);
         }
 
         /// <inheritdoc />
@@ -35,11 +26,6 @@ namespace UKPS.Api.Persistence.Migrations
                 name: "code",
                 schema: "ukps",
                 table: "therapeutic_areas");
-
-            migrationBuilder.DropColumn(
-                name: "xmin",
-                schema: "ukps",
-                table: "record_revisions");
         }
     }
 }

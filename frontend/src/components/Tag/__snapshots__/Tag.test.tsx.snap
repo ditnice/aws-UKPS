@@ -35,7 +35,7 @@ exports[`Tag > renders a remove action 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'blue' colour variant 1`] = `
+exports[`Tag > renders the blue colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -47,7 +47,7 @@ exports[`Tag > renders the 'blue' colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'green' colour variant 1`] = `
+exports[`Tag > renders the green colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -59,7 +59,7 @@ exports[`Tag > renders the 'green' colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'grey' colour variant 1`] = `
+exports[`Tag > renders the grey colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -71,7 +71,7 @@ exports[`Tag > renders the 'grey' colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'magenta' colour variant 1`] = `
+exports[`Tag > renders the magenta colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -83,7 +83,7 @@ exports[`Tag > renders the 'magenta' colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'orange' colour variant 1`] = `
+exports[`Tag > renders the orange colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -95,7 +95,7 @@ exports[`Tag > renders the 'orange' colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'purple' colour variant 1`] = `
+exports[`Tag > renders the purple colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -107,7 +107,7 @@ exports[`Tag > renders the 'purple' colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'red' colour variant 1`] = `
+exports[`Tag > renders the red colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -119,7 +119,7 @@ exports[`Tag > renders the 'red' colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'teal' colour variant 1`] = `
+exports[`Tag > renders the teal colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"
@@ -131,7 +131,7 @@ exports[`Tag > renders the 'teal' colour variant 1`] = `
 </DocumentFragment>
 `;
 
-exports[`Tag > renders the 'yellow' colour variant 1`] = `
+exports[`Tag > renders the yellow colour variant 1`] = `
 <DocumentFragment>
   <span
     class="tag"

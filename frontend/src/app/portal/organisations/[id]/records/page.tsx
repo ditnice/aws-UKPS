@@ -7,6 +7,8 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import OrganisationPageWrapper from '../_components/OrganisationPageWrapper'
 
+import { RecordActionAlert } from './_components/RecordActionAlert'
+import { parseRecordAction, type RecordActionSearchParams } from './_lib/recordActionAlert'
 import { RecordsFetch } from './RecordsFetch'
 import { OrganisationRecordsSearchParams, parseQueryFromSearchParams } from './recordsQuery'
 import { RecordsQueryResultsSummary } from './RecordsQueryResultsSummary'
@@ -15,16 +17,19 @@ import RecordsTablesFilters from './RecordsTablesFilters'
 
 type OrganisationRecordsPage = {
   params: Promise<{ id: string }>
-  searchParams: Promise<OrganisationRecordsSearchParams>
+  searchParams: Promise<OrganisationRecordsSearchParams & RecordActionSearchParams>
 }
 const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRecordsPage) => {
   const { id: organisationId } = await params
-  const query = parseQueryFromSearchParams(await searchParams)
+  const resolvedSearchParams = await searchParams
+  const query = parseQueryFromSearchParams(resolvedSearchParams)
+  const recordAction = parseRecordAction(resolvedSearchParams)
 
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
       {(organisation) => (
         <>
+          {recordAction && <RecordActionAlert action={recordAction} />}
           <PageHeader heading={`${organisation.organisationName}`} />
           <CreateMedicineRecordActionBanner organisationId={organisationId} />
           <TableAndFiltersGrid

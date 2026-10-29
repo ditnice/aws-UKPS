@@ -1,4 +1,5 @@
 using Amazon.CognitoIdentityProvider.Model;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -9,7 +10,9 @@ using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
+using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
 using LoginResult = UKPS.Api.Application.Common.Result<
@@ -201,6 +204,108 @@ public class LoginServiceTests : DatabaseTestBase
 
         exception.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_WhenUserHasOneSelectableOrganisation_ShouldSelectIt()
+    {
+        UserOrgMembership[] memberships = await AddMemberships(
+            UserOrgStatus.Active,
+            UserOrgStatus.Inactive
+        );
+
+        await CompleteFullLogin();
+
+        (await GetSelectedOrganisationIds()).ShouldBe([memberships[0].OrganisationId]);
+    }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_WhenUserHasManySelectableOrganisations_ShouldClearTheSelection()
+    {
+        UserOrgMembership[] memberships = await AddMemberships(
+            UserOrgStatus.Active,
+            UserOrgStatus.Active
+        );
+        await SelectOrganisation(memberships[1]);
+
+        await CompleteFullLogin();
+
+        (await GetSelectedOrganisationIds()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Login_WhenAChallengeIsReturned_ShouldNotChangeTheSelection()
+    {
+        UserOrgMembership[] memberships = await AddMemberships(
+            UserOrgStatus.Active,
+            UserOrgStatus.Active
+        );
+        await SelectOrganisation(memberships[1]);
+
+        await AttemptLoginAndGetChallenge();
+
+        (await GetSelectedOrganisationIds()).ShouldBe([memberships[1].OrganisationId]);
+    }
+
+    [Fact]
+    public async Task RefreshAuthenticationToken_ShouldNotChangeTheSelection()
+    {
+        UserOrgMembership[] memberships = await AddMemberships(
+            UserOrgStatus.Active,
+            UserOrgStatus.Active
+        );
+        AuthenticationCredentialsDto credentials = await CompleteFullLogin();
+        await SelectOrganisation(memberships[1]);
+
+        LoginResult result = await _harness.Service.RefreshAuthenticationToken(
+            new RefreshAuthenticationTokenCommand() { RefreshToken = credentials.RefreshToken },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+        (await GetSelectedOrganisationIds()).ShouldBe([memberships[1].OrganisationId]);
+    }
+
+    private async Task<UserOrgMembership[]> AddMemberships(
+        params UserOrgStatus[] organisationStatuses
+    )
+    {
+        UserOrgMembership[] memberships = organisationStatuses
+            .Select(status =>
+                new UserOrgMembershipFaker()
+                    .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                    .Generate()
+                    .Update(x =>
+                    {
+                        x.UserId = _user.Id;
+                        x.Organisation = new OrganisationFaker()
+                            .Generate()
+                            .Update(o => o.Status = status);
+                    })
+            )
+            .ToArray();
+
+        await AddEntities(memberships, TestContext.Current.CancellationToken);
+        return memberships;
+    }
+
+    private async Task SelectOrganisation(UserOrgMembership membership)
+    {
+        await Context
+            .UserOrgMemberships.Where(x => x.Id == membership.Id)
+            .ExecuteUpdateAsync(
+                x => x.SetProperty(m => m.IsSelectedAsCurrentOrganisation, true),
+                TestContext.Current.CancellationToken
+            );
+    }
+
+    private Task<int[]> GetSelectedOrganisationIds() =>
+        _harness
+            .GetClearedContext()
+            .UserOrgMemberships.Where(x =>
+                x.UserId == _user.Id && x.IsSelectedAsCurrentOrganisation
+            )
+            .Select(x => x.OrganisationId)
+            .ToArrayAsync(TestContext.Current.CancellationToken);
 
     private async Task<InitiateAuthenticationError.Challenge> AttemptLoginAndGetChallenge()
     {

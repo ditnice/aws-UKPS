@@ -10,7 +10,7 @@ import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
-import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { buildSelectOrganisationHref } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
@@ -54,7 +54,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
       })
 
       if (!result.error) {
-        router.push(returnTo ?? routeOnSuccessfulAuth)
+        router.push(buildSelectOrganisationHref(returnTo))
         return
       }
 

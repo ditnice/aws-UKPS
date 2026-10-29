@@ -21,17 +21,18 @@ type RecordPageProps = {
 }
 
 const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
-  const { id: organisationId, recordId: recordIdParam } = await params
+  const { id, recordId: recordIdParam } = await params
   const { recordType: recordTypeParam } = await searchParams
+  const organisationId = parsePositiveInteger(id)
   const recordId = parsePositiveInteger(recordIdParam)
   const recordType = Object.values(RecordType).find((type) => type === recordTypeParam)
 
-  if (!recordId || !recordType) {
+  if (!organisationId || !recordId || !recordType) {
     notFound()
   }
 
   return (
-    <OrganisationPageWrapper organisationId={organisationId}>
+    <OrganisationPageWrapper organisationId={id}>
       {(organisation) => (
         <RecordView organisationId={organisation.id} recordId={recordId} recordType={recordType} />
       )}
@@ -53,10 +54,10 @@ const RecordView = async ({ organisationId, recordId, recordType }: RecordViewPr
   } = await getRecord({
     client: await createServerApiClient(),
     path: { id: recordId },
-    query: { recordType },
+    query: { recordType, organisationId },
   })
 
-  if (response?.status === 404 || (record && record.organisationId !== organisationId)) {
+  if (response?.status === 404) {
     notFound()
   }
 

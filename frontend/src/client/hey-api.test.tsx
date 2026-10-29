@@ -123,6 +123,73 @@ describe('createClientConfig', () => {
     )
   })
 
+  it.each(['SelectedOrganisationRequired', 'SelectedOrganisationIsNotValid'])(
+    'redirects to the organisation selection page without refreshing for a 401 with %s',
+    async (code) => {
+      const original = Response.json({ code }, { status: 401 })
+      const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(original)
+      vi.stubGlobal('fetch', fetchMock)
+      const replace = stubLocation('/portal/organisations/2/records', '?page=2')
+
+      const response = await configuredFetch()(protectedUrl)
+
+      expect(response).toBe(original)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(replace).toHaveBeenCalledWith(
+        '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F2%2Frecords%3Fpage%3D2',
+      )
+    },
+  )
+
+  it('redirects a selected organisation mismatch to the switch page for the requested organisation', async () => {
+    const conflict = Response.json(
+      { code: 'SelectedOrganisationMismatch', organisationId: 2 },
+      { status: 409 },
+    )
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(conflict))
+    const replace = stubLocation('/portal/organisations/2/records', '?page=2')
+
+    const response = await configuredFetch()(protectedUrl)
+
+    expect(response).toBe(conflict)
+    expect(replace).toHaveBeenCalledWith(
+      '/portal/organisations/switch?organisationId=2&returnTo=%2Fportal%2Forganisations%2F2%2Frecords%3Fpage%3D2',
+    )
+  })
+
+  it.each(['/portal/organisations/select', '/portal/organisations/switch'])(
+    'does not redirect when already on %s',
+    async (pathname) => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn<typeof fetch>()
+          .mockResolvedValue(
+            Response.json(
+              { code: 'SelectedOrganisationMismatch', organisationId: 2 },
+              { status: 409 },
+            ),
+          ),
+      )
+      const replace = stubLocation(pathname, '')
+
+      await configuredFetch()(protectedUrl)
+
+      expect(replace).not.toHaveBeenCalled()
+    },
+  )
+
+  it('returns other conflict responses without redirecting', async () => {
+    const conflict = Response.json({ title: 'Conflict' }, { status: 409 })
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(conflict))
+    const replace = stubLocation()
+
+    const response = await configuredFetch()(protectedUrl)
+
+    expect(response).toBe(conflict)
+    expect(replace).not.toHaveBeenCalled()
+  })
+
   it('does not redirect unauthorised auth requests', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }))
     vi.stubGlobal('fetch', fetchMock)

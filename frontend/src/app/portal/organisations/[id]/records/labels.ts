@@ -7,7 +7,6 @@ export const recordStatusLabels: Record<RecordDisplayStatus, string> = {
   Published: 'Published',
   OnHold: 'On hold',
   Archived: 'Archived',
-  Discarded: 'Discarded',
 }
 
 export const recordStatusTagColours: Record<RecordDisplayStatus, TagColour> = {
@@ -16,7 +15,6 @@ export const recordStatusTagColours: Record<RecordDisplayStatus, TagColour> = {
   Published: 'green',
   OnHold: 'orange',
   Archived: 'grey',
-  Discarded: 'red',
 }
 
 export const updateStatusLabels: Record<UpdateStatus, string> = {
@@ -24,15 +22,8 @@ export const updateStatusLabels: Record<UpdateStatus, string> = {
   NotOverdue: 'Not overdue',
 }
 
-const recordsTableHeaderKeys = [
-  'id',
-  'company-code',
-  'records-title',
-  'record-status',
-  'next-update',
-  'actions',
-] as const
-export type RecordsTableHeaderKey = (typeof recordsTableHeaderKeys)[number]
+export type RecordsTableHeaderKey =
+  'id' | 'company-code' | 'records-title' | 'record-status' | 'next-update' | 'actions'
 export type RecordsTableHeader = {
   key: RecordsTableHeaderKey
   label: string

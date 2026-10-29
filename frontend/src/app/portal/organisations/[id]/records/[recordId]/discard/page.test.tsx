@@ -80,6 +80,7 @@ const medicineRecord = {
   recordType: 'Medicine',
   recordStatus: 'Unpublished',
   displayStatus: 'Draft',
+  actions: ['Update', 'Discard', 'ViewTimeline'],
   recordProductDetail: fakeRecordProductDetailDto(),
 } satisfies RecordDto
 
@@ -118,7 +119,10 @@ describe('DiscardRecordPage', () => {
     expect(getRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { id: medicineRecord.recordId },
-        query: { recordType: medicineRecord.recordType },
+        query: {
+          recordType: medicineRecord.recordType,
+          organisationId: medicineRecord.organisationId,
+        },
       }),
     )
     expect(
@@ -174,15 +178,9 @@ describe('DiscardRecordPage', () => {
     await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND')
   })
 
-  it.each([
-    ['a draft of a published record', 'Draft', 'Published'],
-    ['published', 'Published', 'Published'],
-    ['in QA review', 'QAReview', 'Unpublished'],
-    ['on hold', 'OnHold', 'OnHold'],
-    ['archived', 'Archived', 'Archived'],
-  ] as const)('returns not found when the record is %s', async (_, displayStatus, recordStatus) => {
+  it('returns not found when the record cannot be discarded', async () => {
     mockRecord({
-      data: { ...medicineRecord, displayStatus, recordStatus },
+      data: { ...medicineRecord, actions: ['Update', 'ViewTimeline'] },
       error: undefined,
       response: new Response(),
     })
