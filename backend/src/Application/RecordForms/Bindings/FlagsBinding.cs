@@ -14,6 +14,10 @@ internal sealed class FlagsBinding : IFormBinding
     private readonly Type _enumType;
     private readonly bool _isNullable;
 
+    public AnswerShape Shape => AnswerShape.Multi;
+
+    public string Description => $"flags:{_property.DeclaringType!.Name}.{_property.Name}";
+
     public FlagsBinding(PropertyInfo property)
     {
         _property = property;
@@ -21,10 +25,6 @@ internal sealed class FlagsBinding : IFormBinding
         _isNullable = underlying is not null;
         _enumType = underlying ?? property.PropertyType;
     }
-
-    public AnswerShape Shape => AnswerShape.Multi;
-
-    public string Description => $"flags:{_property.DeclaringType!.Name}.{_property.Name}";
 
     public FormAnswer Read(object? row)
     {

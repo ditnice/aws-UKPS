@@ -7,6 +7,15 @@ internal sealed class FormModel
 {
     private readonly Dictionary<string, int> _pageIndex;
 
+    public RecordType RecordType { get; }
+    public string Version { get; }
+    public IReadOnlyList<FormSection> Sections { get; }
+
+    /// <summary>Every page in form order: section order, then page order.</summary>
+    public IReadOnlyList<FormPage> Pages { get; }
+
+    public FormPage FirstPage => Pages[0];
+
     public FormModel(RecordType recordType, string version, IReadOnlyList<FormSection> sections)
     {
         RecordType = recordType;
@@ -17,15 +26,6 @@ internal sealed class FormModel
             .Select(static (page, index) => (page.Id, index))
             .ToDictionary(static x => x.Id, static x => x.index, StringComparer.Ordinal);
     }
-
-    public RecordType RecordType { get; }
-    public string Version { get; }
-    public IReadOnlyList<FormSection> Sections { get; }
-
-    /// <summary>Every page in form order: section order, then page order.</summary>
-    public IReadOnlyList<FormPage> Pages { get; }
-
-    public FormPage FirstPage => Pages[0];
 
     public FormPage? FindPage(string pageId) =>
         _pageIndex.TryGetValue(pageId, out int index) ? Pages[index] : null;

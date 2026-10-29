@@ -104,6 +104,14 @@ describe('FormPage', () => {
       expect(screen.getByRole('link', { name: 'Return to tasklist' })).toBeInTheDocument()
     })
 
+    it('keeps a hidden label on the input of a single-question page', () => {
+      render(<FormPage page={page({ questions: [question({ type: 'Text' })] })} />)
+
+      expect(
+        screen.getByLabelText('What is the indication this product is seeking a licence for?'),
+      ).toBe(screen.getByRole('textbox'))
+    })
+
     it('uses the page title as the heading of a page with several questions', () => {
       render(
         <FormPage

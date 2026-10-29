@@ -18,6 +18,13 @@ internal sealed class JunctionBinding : IFormBinding
     private readonly MethodInfo _add;
     private readonly MethodInfo _remove;
 
+    public AnswerShape Shape => AnswerShape.Multi;
+
+    public string NavigationName => _navigation.Name;
+
+    public string Description =>
+        $"junction:{_navigation.DeclaringType!.Name}.{_navigation.Name}:{_junctionType.Name}.{_referenceIdProperty.Name}";
+
     public JunctionBinding(
         PropertyInfo navigation,
         Type junctionType,
@@ -31,13 +38,6 @@ internal sealed class JunctionBinding : IFormBinding
         _add = collectionType.GetMethod(nameof(ICollection<>.Add))!;
         _remove = collectionType.GetMethod(nameof(ICollection<>.Remove))!;
     }
-
-    public AnswerShape Shape => AnswerShape.Multi;
-
-    public string NavigationName => _navigation.Name;
-
-    public string Description =>
-        $"junction:{_navigation.DeclaringType!.Name}.{_navigation.Name}:{_junctionType.Name}.{_referenceIdProperty.Name}";
 
     public FormAnswer Read(object? row) =>
         FormAnswer.Multi(
