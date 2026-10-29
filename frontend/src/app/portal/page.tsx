@@ -4,6 +4,8 @@ import { getUsersMe } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PortalDashboard() {
   const { data: me, error } = await getUsersMe({ client: await createServerApiClient() })
 
