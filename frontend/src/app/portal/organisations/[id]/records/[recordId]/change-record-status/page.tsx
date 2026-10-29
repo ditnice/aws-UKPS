@@ -58,7 +58,7 @@ const ChangeRecordStatus = async ({
   } = await getRecord({
     client: await createServerApiClient(),
     path: { id: recordId },
-    query: { recordType },
+    query: { recordType, organisationId },
   })
 
   if (
