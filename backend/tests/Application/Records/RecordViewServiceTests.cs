@@ -68,7 +68,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     )
     {
         Record record = await AddRecord(recordStatus);
-        RecordRevision revision = await AddRevision(record, 1, workflowStatus);
+        await AddRevision(record, 1, workflowStatus);
 
         GetRecordResult result = await Service.GetRecord(
             record.Id,
@@ -82,7 +82,32 @@ public class RecordViewServiceTests : DatabaseTestBase
         dto.OrganisationId.ShouldBe(_organisation.Id);
         dto.RecordStatus.ShouldBe(recordStatus);
         dto.ReviewedAt.ShouldBe(_reviewedAt);
-        dto.RevisionId.ShouldBe(revision.Id);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard, "indication")]
+    [InlineData(UserRole.Champion, "indication")]
+    [InlineData(UserRole.Super, null)]
+    public async Task GetRecord_FirstPageId_IsOnlyGivenToUsersWhoCanEditContent(
+        UserRole role,
+        string? expectedFirstPageId
+    )
+    {
+        Record record = await AddRecord(RecordStatus.Unpublished);
+        await AddRevision(record, 1, WorkflowStatus.Draft);
+        _harness.UpdateCurrentUser(x => x with { UserRole = role });
+
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result
+            .ShouldBeSuccess()
+            .ShouldBeOfType<MedicineRecordDto>()
+            .FirstPageId.ShouldBe(expectedFirstPageId);
     }
 
     [Fact]
@@ -111,7 +136,6 @@ public class RecordViewServiceTests : DatabaseTestBase
         var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.RecordStatus.ShouldBe(RecordStatus.Published);
         dto.DisplayStatus.ShouldBe(RecordDisplayStatus.Draft);
-        dto.RevisionId.ShouldBe(draft.Id);
         dto.RecordProductDetail.ShouldNotBeNull().RecordTitle.ShouldBe($"Title {draft.Id}");
     }
 
@@ -141,7 +165,7 @@ public class RecordViewServiceTests : DatabaseTestBase
                 ? WorkflowStatus.Rejected
                 : WorkflowStatus.Published
         );
-        RecordRevision latest = await AddRevision(record, 2, latestWorkflowStatus);
+        await AddRevision(record, 2, latestWorkflowStatus);
 
         GetRecordResult result = await Service.GetRecord(
             record.Id,
@@ -152,7 +176,6 @@ public class RecordViewServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
         dto.RecordStatus.ShouldBe(recordStatus);
-        dto.RevisionId.ShouldBe(latest.Id);
         dto.DisplayStatus.ShouldBe(expectedDisplayStatus);
     }
 
@@ -364,7 +387,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     public async Task GetRecord_VaccineRecord_ReturnsVaccineRecord()
     {
         Record record = await AddRecord(RecordStatus.Published, RecordType.Vaccine);
-        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
+        await AddRevision(record, 1, WorkflowStatus.Published);
 
         GetRecordResult result = await Service.GetRecord(
             record.Id,
@@ -375,7 +398,6 @@ public class RecordViewServiceTests : DatabaseTestBase
 
         var dto = result.ShouldBeSuccess().ShouldBeOfType<VaccineRecordDto>();
         dto.RecordId.ShouldBe(record.Id);
-        dto.RevisionId.ShouldBe(revision.Id);
     }
 
     [Theory]
@@ -503,11 +525,21 @@ public class RecordViewServiceTests : DatabaseTestBase
         var bnfChapter = await AddEntity(new BnfChapter { Code = "1.1", Label = "Dyspepsia" }, ct);
         var formulationType = await AddEntity(new FormulationType { Label = "Tablet" }, ct);
         var areaB = await AddEntity(
-            new TherapeuticArea { Label = "Oncology", DisplayOrder = 2 },
+            new TherapeuticArea
+            {
+                Code = "14",
+                Label = "Oncology",
+                DisplayOrder = 2,
+            },
             ct
         );
         var areaA = await AddEntity(
-            new TherapeuticArea { Label = "Cardiology", DisplayOrder = 1 },
+            new TherapeuticArea
+            {
+                Code = "4",
+                Label = "Cardiology",
+                DisplayOrder = 1,
+            },
             ct
         );
         await AddEntity(

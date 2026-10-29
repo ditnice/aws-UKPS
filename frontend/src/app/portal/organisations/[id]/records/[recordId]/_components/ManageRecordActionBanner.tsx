@@ -6,9 +6,17 @@ import { Button, ButtonGroup } from '@/components/Button/Button'
 
 type ManageRecordActionBannerProps = {
   record: Pick<RecordDto, 'organisationId' | 'recordId' | 'recordType' | 'actions'>
+  /**
+   * The record's content form, or undefined when its type has no form yet or the user cannot
+   * edit its content. Update record is only shown when this is set.
+   */
+  updateRecordHref?: string
 }
 
-export const ManageRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
+export const ManageRecordActionBanner = ({
+  record,
+  updateRecordHref,
+}: ManageRecordActionBannerProps) => {
   const { actions } = record
   const discardHref = `/portal/organisations/${record.organisationId}/records/${record.recordId}/discard?recordType=${record.recordType}`
 
@@ -19,8 +27,8 @@ export const ManageRecordActionBanner = ({ record }: ManageRecordActionBannerPro
       headingLevel={2}
       cta={
         <ButtonGroup>
-          {actions.includes('Update') && (
-            <Button variant="cta" buttonType="button">
+          {actions.includes('Update') && updateRecordHref && (
+            <Button elementType={Link} href={updateRecordHref} variant="cta">
               Update record
             </Button>
           )}

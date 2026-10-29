@@ -11,7 +11,8 @@ public sealed record CreateRecordDto
     public required int RecordId { get; init; }
 
     /// <summary>
-    /// Gets the identifier of the initial revision created for the record.
+    /// Gets the first page of the record's content form, where the user goes next, or null when
+    /// the record type has no form yet or the caller cannot edit record content.
     /// </summary>
-    public required int RevisionId { get; init; }
+    public required string? FirstPageId { get; init; }
 }
