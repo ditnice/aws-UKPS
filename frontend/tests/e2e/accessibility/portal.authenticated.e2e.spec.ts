@@ -5,7 +5,7 @@ test('portal dashboard has no automatically detectable violations', async ({
   page,
 }) => {
   await page.goto('/portal')
-  await expect(page.getByRole('heading', { name: 'Your dashboard' })).toBeVisible()
+  await expect(page).toHaveURL(/\/portal\/organisations\/1\/records$/)
 
   await checkAccessibility()
 })
