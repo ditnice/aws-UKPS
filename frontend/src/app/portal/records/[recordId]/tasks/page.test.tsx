@@ -29,6 +29,7 @@ type GetRecordTaskListResult = Awaited<ReturnType<typeof getRecordTaskList>>
 const taskList = {
   data: {
     recordId: 42,
+    organisationId: 7,
     sections: [
       {
         id: 'indication-details',
@@ -80,6 +81,10 @@ describe('RecordTaskListPage', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Indication details' }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
+      'href',
+      '/portal/organisations/7/records/42',
+    )
     expect(screen.getByRole('link', { name: 'Indication details' })).toHaveAttribute(
       'href',
       '/portal/records/42/indication',

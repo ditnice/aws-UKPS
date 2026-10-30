@@ -1271,6 +1271,10 @@ export type RecordTaskListDto = {
      */
     recordId: number;
     /**
+     * The organisation that owns the record; used for links back to the record.
+     */
+    organisationId: number;
+    /**
      * Sections and their ordered tasks.
      */
     sections: Array<RecordTaskListSectionDto>;

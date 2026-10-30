@@ -63,7 +63,12 @@ internal sealed class RecordTaskListQueryService(
             cancellationToken
         );
         return GetRecordTaskListResult.Ok(
-            new RecordTaskListDto { RecordId = record.Id, Sections = sections }
+            new RecordTaskListDto
+            {
+                RecordId = record.Id,
+                OrganisationId = record.OrganisationId,
+                Sections = sections,
+            }
         );
     }
 

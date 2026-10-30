@@ -57,7 +57,11 @@ const RecordTaskListPage = async ({ params }: RecordTaskListPageProps) => {
   return (
     <>
       <PageHeader
-        backLink={<BackLink href={`/portal/records/${recordId}`}>Back</BackLink>}
+        backLink={
+          <BackLink href={`/portal/organisations/${taskList.organisationId}/records/${recordId}`}>
+            Back
+          </BackLink>
+        }
         heading="Task list"
       />
 

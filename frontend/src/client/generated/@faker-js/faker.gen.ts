@@ -417,6 +417,7 @@ export const fakeRecordTaskListDto = (options?: Options): RecordTaskListDto => {
     const f = options?.faker ?? faker;
     return {
         recordId: f.number.int(),
+        organisationId: f.number.int(),
         sections: f.helpers.multiple(() => fakeRecordTaskListSectionDto(options))
     };
 };

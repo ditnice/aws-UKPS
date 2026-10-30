@@ -6466,6 +6466,7 @@
       "RecordTaskListDto": {
         "required": [
           "recordId",
+          "organisationId",
           "sections"
         ],
         "type": "object",
@@ -6473,6 +6474,11 @@
           "recordId": {
             "type": "integer",
             "description": "The record this task list belongs to.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used for links back to the record.",
             "format": "int32"
           },
           "sections": {
