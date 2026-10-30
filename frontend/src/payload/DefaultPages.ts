@@ -54,18 +54,25 @@ export type SitePage = {
   title: string
 }
 
+// TODO Add Read More Section. Not added as the link block doesn't exist
+
 export const defaultPages: SitePage[] = [
   {
     layout: [
       {
         blockType: 'textSection',
-        body: 'Home Test',
-        heading: 'UK PharmaScan',
+        body: `
+UK PharmaScan is a database of information on new medicines, indications, and formulations in the pharmaceutical pipeline. It is the primary source of information used by all of the UK's national horizon scanning organisations, NHS England and NHS Improvement to enable early engagement in planning and preparing the NHS for the introduction of new medicines, and to support faster NHS adoption. It is populated by companies on a confidential and secure platform.
+
+Early engagement and NHS planning have been shown to improve the speed of medicines uptake. By regularly entering comprehensive information on pipeline medicines into UK PharmaScan, product developers ensure the NHS horizon scanning organisations have the information they need.
+
+There is no charge for pharmaceutical companies to use UK PharmaScan.`,
+        heading: 'What is UK PharmaScan?',
         variant: 'homeStandard',
       },
     ],
     path: '/',
     slug: 'home',
-    title: 'Home',
+    title: 'UK PharmaScan',
   },
 ]
