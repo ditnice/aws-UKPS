@@ -4,6 +4,8 @@ import type { RecordDto } from '@/client/generated'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
+import { buildRecordHref } from '../_lib/recordLinks'
+
 type ManageRecordActionBannerProps = {
   record: Pick<RecordDto, 'organisationId' | 'recordId' | 'recordType' | 'actions'>
   /**
@@ -18,7 +20,18 @@ export const ManageRecordActionBanner = ({
   updateRecordHref,
 }: ManageRecordActionBannerProps) => {
   const { actions } = record
-  const discardHref = `/portal/organisations/${record.organisationId}/records/${record.recordId}/discard?recordType=${record.recordType}`
+  const discardHref = buildRecordHref(
+    record.organisationId,
+    record.recordId,
+    record.recordType,
+    'discard',
+  )
+  const changeRecordStatusHref = buildRecordHref(
+    record.organisationId,
+    record.recordId,
+    record.recordType,
+    'change-record-status',
+  )
 
   return (
     <ActionBanner
@@ -32,7 +45,11 @@ export const ManageRecordActionBanner = ({
               Update record
             </Button>
           )}
-          {actions.includes('ChangeStatus') && <Button>Change record status</Button>}
+          {actions.includes('ChangeStatus') && (
+            <Button elementType={Link} href={changeRecordStatusHref}>
+              Change record status
+            </Button>
+          )}
           {actions.includes('ConfirmCurrent') && <Button>Confirm information as current</Button>}
           {actions.includes('Discard') && (
             <Button elementType={Link} href={discardHref}>

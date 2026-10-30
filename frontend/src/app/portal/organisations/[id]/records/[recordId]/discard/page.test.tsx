@@ -42,17 +42,17 @@ vi.mock('../../../_components/OrganisationPageWrapper', () => ({
 vi.mock('@nice-digital/nds-page-header', () => ({
   PageHeader: ({
     heading,
-    lead,
+    preheading,
     breadcrumbs,
   }: {
     heading: string
-    lead: ReactNode
+    preheading: ReactNode
     breadcrumbs: ReactNode
   }) => (
     <>
       {breadcrumbs}
+      <p data-testid="preheading">{preheading}</p>
       <h1>{heading}</h1>
-      <p data-testid="lead">{lead}</p>
     </>
   ),
 }))
@@ -131,8 +131,8 @@ describe('DiscardRecordPage', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'Confirm decision to discard record',
     )
-    expect(screen.getByTestId('lead').textContent).toBe(
-      `Record title: ${medicineRecord.recordProductDetail.recordTitle}`,
+    expect(screen.getByTestId('preheading').textContent).toBe(
+      medicineRecord.recordProductDetail.recordTitle,
     )
     const controls = screen.getByTestId('discard-record-controls')
     expect(controls.getAttribute('data-organisation-id')).toBe(organisationId)
