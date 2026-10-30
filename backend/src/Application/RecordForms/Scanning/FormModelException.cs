@@ -3,6 +3,8 @@ namespace UKPS.Api.Application.RecordForms.Scanning;
 /// <summary>Thrown at startup when the form attributes describe an invalid form.</summary>
 internal sealed class FormModelException : InvalidOperationException
 {
+    public IReadOnlyList<string> Problems { get; } = [];
+
     public FormModelException() { }
 
     public FormModelException(string? message)
@@ -20,6 +22,4 @@ internal sealed class FormModelException : InvalidOperationException
     {
         Problems = problems;
     }
-
-    public IReadOnlyList<string> Problems { get; } = [];
 }

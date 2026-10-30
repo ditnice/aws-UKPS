@@ -27,6 +27,14 @@ internal sealed class FormEntity
 
     private readonly PropertyInfo _revisionIdProperty;
 
+    public Type ClrType { get; }
+    public FormRowSource RowSource { get; }
+
+    /// <summary>Navigations loaded with the row, because junction questions read them.</summary>
+    public IReadOnlyList<string> Includes { get; }
+
+    public string Name => ClrType.Name;
+
     public FormEntity(
         Type clrType,
         FormRowSource rowSource,
@@ -51,14 +59,6 @@ internal sealed class FormEntity
                 >
             >();
     }
-
-    public Type ClrType { get; }
-    public FormRowSource RowSource { get; }
-
-    /// <summary>Navigations loaded with the row, because junction questions read them.</summary>
-    public IReadOnlyList<string> Includes { get; }
-
-    public string Name => ClrType.Name;
 
     /// <summary>
     /// Loads the revision's row, tracked when it will be written, or returns null when it has

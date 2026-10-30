@@ -15,6 +15,11 @@ internal sealed class ReferenceOptionProvider<TEntity> : IOptionProvider
     private readonly Func<IQueryable<TEntity>, IQueryable<TEntity>> _query;
     private readonly Expression<Func<TEntity, ReferenceOptionRow>> _projection;
 
+    public string Key { get; }
+    public OptionProviderKind Kind { get; }
+    public Type SourceType => typeof(TEntity);
+    public string Description { get; }
+
     public ReferenceOptionProvider(
         string key,
         OptionProviderKind kind,
@@ -29,11 +34,6 @@ internal sealed class ReferenceOptionProvider<TEntity> : IOptionProvider
         Description =
             $"{kind}:{typeof(TEntity).Name}:{ExpressionDescription.Describe(query)}:{ExpressionDescription.Describe(projection)}";
     }
-
-    public string Key { get; }
-    public OptionProviderKind Kind { get; }
-    public Type SourceType => typeof(TEntity);
-    public string Description { get; }
 
     public async Task<IReadOnlyList<FormOption>> GetOptionsAsync(
         AppDbContext dbContext,
@@ -50,7 +50,7 @@ internal sealed class ReferenceOptionProvider<TEntity> : IOptionProvider
 
         return Kind == OptionProviderKind.ReferenceTree
             ? BuildTree(rows, saved)
-            : rows.Where(row => IsOffered(row, saved)).Select(ToOption).ToArray();
+            : rows.Where(row => IsSelectable(row, saved)).Select(ToOption).ToArray();
     }
 
     private static FormOption[] BuildTree(List<ReferenceOptionRow> rows, HashSet<int> saved)
@@ -74,12 +74,12 @@ internal sealed class ReferenceOptionProvider<TEntity> : IOptionProvider
             // Children of an archived parent are only offered if they are already saved.
             FormOption[] offeredChildren = children[parent.Id]
                 .Where(child =>
-                    parent.IsArchived ? saved.Contains(child.Id) : IsOffered(child, saved)
+                    parent.IsArchived ? saved.Contains(child.Id) : IsSelectable(child, saved)
                 )
                 .Select(ToOption)
                 .ToArray();
             if (
-                IsOffered(parent, saved)
+                IsSelectable(parent, saved)
                 || offeredChildren.Any(c =>
                     saved.Contains(int.Parse(c.Value, CultureInfo.InvariantCulture))
                 )
@@ -92,7 +92,11 @@ internal sealed class ReferenceOptionProvider<TEntity> : IOptionProvider
         return [.. options];
     }
 
-    private static bool IsOffered(ReferenceOptionRow row, HashSet<int> saved) =>
+    /// <summary>
+    /// A row can be selected unless it is archived; archived rows stay selectable on records that
+    /// already have them saved.
+    /// </summary>
+    private static bool IsSelectable(ReferenceOptionRow row, HashSet<int> saved) =>
         !row.IsArchived || saved.Contains(row.Id);
 
     private static FormOption ToOption(ReferenceOptionRow row) =>

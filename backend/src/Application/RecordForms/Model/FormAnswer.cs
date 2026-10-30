@@ -10,13 +10,6 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
 {
     private static readonly IReadOnlyList<string> _noValues = [];
 
-    private FormAnswer(AnswerShape shape, string? value, IReadOnlyList<string> values)
-    {
-        Shape = shape;
-        Value = value;
-        Values = values;
-    }
-
     public AnswerShape Shape { get; }
 
     /// <summary>The answer of a single-value question; null when unanswered.</summary>
@@ -26,6 +19,13 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
     public IReadOnlyList<string> Values { get; }
 
     public bool IsEmpty => Shape == AnswerShape.Single ? Value is null : Values.Count == 0;
+
+    private FormAnswer(AnswerShape shape, string? value, IReadOnlyList<string> values)
+    {
+        Shape = shape;
+        Value = value;
+        Values = values;
+    }
 
     public static FormAnswer Single(string? value) => new(AnswerShape.Single, value, _noValues);
 
