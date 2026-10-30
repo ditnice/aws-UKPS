@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
@@ -19,15 +20,18 @@ internal class RecordCreationService : IRecordCreationService
     private readonly IOrganisationAuthoriser _organisationAuthoriser;
     private readonly ICurrentUserInfoService _currentUserInfoService;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly FormModelRegistry _formModels;
 
     public RecordCreationService(
         CurrentDbUserEntityService currentDbUserEntityService,
         AppDbContext dbContext,
         IOrganisationAuthoriser organisationAuthoriser,
         ICurrentUserInfoService currentUserInfoService,
-        IDateTimeProvider dateTimeProvider
+        IDateTimeProvider dateTimeProvider,
+        FormModelRegistry formModels
     )
     {
+        _formModels = formModels;
         _currentDbUserEntityService = currentDbUserEntityService;
         _dbContext = dbContext;
         _organisationAuthoriser = organisationAuthoriser;
@@ -79,7 +83,16 @@ internal class RecordCreationService : IRecordCreationService
         await _dbContext.AddAsync(recordProductDetail, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return CreateRecordResult.Ok(
-            new CreateRecordDto() { RecordId = record.Id, RevisionId = revision.Id }
+            new CreateRecordDto()
+            {
+                RecordId = record.Id,
+                FirstPageId = _organisationAuthoriser.CanPerformOperationOnOrganisation(
+                    Operation.EditRecordContent,
+                    command.OrganisationId
+                )
+                    ? _formModels.Find(record.RecordType)?.FirstPage.Id
+                    : null,
+            }
         );
     }
 

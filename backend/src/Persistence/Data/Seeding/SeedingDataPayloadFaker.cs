@@ -282,33 +282,19 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         DiscardedDraft draft = new(faker, revision, author);
         RecordProductDetail productDetail = draft.SaveProductDetail();
         MedicinesIndicationDetail indicationDetail = draft.SaveIndicationAnswers();
-        Discard(record, revision, faker.Date.Between(draft.LastSavedAt, today), author);
-
-        return new SeededRecord(record, [productDetail, indicationDetail], draft.Audits);
-    }
-
-    /// <summary>
-    /// Discards a record that was never submitted, along with its only revision.
-    /// </summary>
-    private static void Discard(Record record, RecordRevision revision, DateTime at, User author)
-    {
-        revision.WorkflowStatus = WorkflowStatus.Discarded;
-        record.ChangeStatus(
-            RecordStatus.Discarded,
-            at,
+        bool isDiscarded = record.TryDiscard(
+            revision,
+            hasSingleRevision: true,
+            faker.Date.Between(draft.LastSavedAt, today),
             author,
             RecordStatusChangeReason.ManuallyDiscarded
         );
-        record.Events.Add(
-            new RecordEvent
-            {
-                Record = record,
-                Revision = revision,
-                EventType = RecordEventType.RecordStatusChanged,
-                PerformedAt = at,
-                PerformedByUser = author,
-            }
-        );
+        if (!isDiscarded)
+        {
+            throw new InvalidOperationException("The seeded draft record could not be discarded.");
+        }
+
+        return new SeededRecord(record, [productDetail, indicationDetail], draft.Audits);
     }
 
     private static DateTime ToUtc(DateOnly date) =>

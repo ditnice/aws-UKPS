@@ -39,6 +39,49 @@ internal sealed class Record
     public ICollection<RecordStatusHistory> StatusHistory { get; set; } = [];
     public ICollection<RecordEvent> Events { get; set; } = [];
 
+    /// <summary>
+    /// Gets the actions a user can take on a record, in <see cref="RecordAction"/> order.
+    /// </summary>
+    /// <param name="state">The record's status and its latest revision's workflow status.</param>
+    /// <param name="hasSingleRevision">Whether the record has only one revision.</param>
+    /// <returns>The permitted actions.</returns>
+    internal static IReadOnlyCollection<RecordAction> GetPermittedActions(
+        RecordLifecycleState state,
+        bool hasSingleRevision
+    )
+    {
+        return new RecordLifecycleStateMachine(state)
+            .GetPermittedCommands()
+            .Where(x => x != RecordLifecycleStateMachine.Command.Discard || hasSingleRevision)
+            .Select(x => ConvertCommandToAction(x, state.RecordStatus))
+            .OfType<RecordAction>()
+            .Append(RecordAction.ViewTimeline)
+            .Distinct()
+            .Order()
+            .ToArray();
+    }
+
+    private static RecordAction? ConvertCommandToAction(
+        RecordLifecycleStateMachine.Command command,
+        RecordStatus recordStatus
+    )
+    {
+        return command switch
+        {
+            RecordLifecycleStateMachine.Command.EditDraft
+            or RecordLifecycleStateMachine.Command.CreateRevision => RecordAction.Update,
+            RecordLifecycleStateMachine.Command.PutOnHold
+            or RecordLifecycleStateMachine.Command.Resume
+            or RecordLifecycleStateMachine.Command.Archive => RecordAction.ChangeStatus,
+            RecordLifecycleStateMachine.Command.ConfirmCurrent => recordStatus
+            == RecordStatus.OnHold
+                ? RecordAction.ConfirmOnHold
+                : RecordAction.ConfirmCurrent,
+            RecordLifecycleStateMachine.Command.Discard => RecordAction.Discard,
+            _ => null,
+        };
+    }
+
     /// <summary>Changes the record's status and records the change in its status history.</summary>
     /// <param name="toStatus">The new status.</param>
     /// <param name="time">When the status changed.</param>
@@ -110,5 +153,51 @@ internal sealed class Record
         );
 
         return (record, revision);
+    }
+
+    /// <summary>
+    /// Discards the record and its latest revision, and adds the timeline event. A record can only
+    /// be discarded while its only revision is a draft.
+    /// </summary>
+    /// <param name="latestRevision">The record's latest revision.</param>
+    /// <param name="hasSingleRevision">Whether the latest revision is the record's only one.</param>
+    /// <param name="time">When the record was discarded.</param>
+    /// <param name="discardedBy">The user who discarded it, or null when discarded automatically.</param>
+    /// <param name="reason">Why the record was discarded.</param>
+    /// <returns>Whether the record was discarded. Nothing is changed when it can't be.</returns>
+    internal bool TryDiscard(
+        RecordRevision latestRevision,
+        bool hasSingleRevision,
+        DateTime time,
+        User? discardedBy,
+        RecordStatusChangeReason reason
+    )
+    {
+        if (!hasSingleRevision)
+        {
+            return false;
+        }
+
+        var result = new RecordLifecycleStateMachine(
+            new(RecordStatus, latestRevision.WorkflowStatus)
+        ).TrySendCommand(RecordLifecycleStateMachine.Command.Discard);
+        if (!result.Success)
+        {
+            return false;
+        }
+
+        latestRevision.WorkflowStatus = result.CurrentState.LatestRevisionStatus;
+        ChangeStatus(result.CurrentState.RecordStatus, time, discardedBy, reason);
+        Events.Add(
+            new RecordEvent
+            {
+                Record = this,
+                Revision = latestRevision,
+                EventType = RecordEventType.RecordStatusChanged,
+                PerformedAt = time,
+                PerformedByUser = discardedBy,
+            }
+        );
+        return true;
     }
 }

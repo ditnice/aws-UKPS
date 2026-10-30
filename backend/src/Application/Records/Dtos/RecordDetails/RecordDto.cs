@@ -38,13 +38,15 @@ public abstract record RecordDto
     public DateTime? ReviewedAt { get; init; }
 
     /// <summary>
-    /// Gets the identifier of the latest revision.
+    /// Gets the first page of the record type's content form, or null when the record type has
+    /// no form yet or the caller cannot edit record content. Links to it open the form for the
+    /// latest revision.
     /// </summary>
-    public required int RevisionId { get; init; }
+    public required string? FirstPageId { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether the record can be discarded, because it has never been
-    /// submitted.
+    /// Gets the actions the user can take on the record, given its status and the workflow status
+    /// of its latest revision.
     /// </summary>
-    public required bool CanDiscard { get; init; }
+    public required IReadOnlyCollection<RecordAction> Actions { get; init; }
 }
