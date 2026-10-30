@@ -40,7 +40,8 @@ describes. You only touch the frontend to add a new control.
 | Attribute | On | Arguments | Notes |
 |---|---|---|---|
 | `[FormSection(recordType, id, title)]` | class | `Order`, `RowSource` | One per record type. Every entity declaring the same section ID must agree on title and `Order` |
-| `[FormPage(id, title)]` | property | `Order` | Order within the section. Every declaration of the same page ID must agree |
+| `[FormTask(id, title)]` | property | `Order` | Required on every question. Every declaration of the same task ID must agree on title, `Order` and section |
+| `[FormPage(id, title)]` | property | `Order` | Order within the task. Every declaration of the same page ID must agree |
 | `[FormField(id, label, control)]` | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` |
 | `[FormRequired(message)]` | property | | |
 | `[FormMaxLength(max, message)]` | property | | `Text`, `Textarea` |
@@ -50,6 +51,12 @@ describes. You only touch the frontend to add a new control.
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
+
+The form hierarchy is **section → task → page → question**. Put `[FormTask]` and `[FormPage]`
+on each question property. Repeat the same task ID, title and order for all questions in that task;
+page order is local to its task, and question order is local to its page. A task may contain many
+pages, and a page may contain questions from multiple entities as long as they share the same
+section and task.
 
 ## Worked example: the Indication details section
 
@@ -72,6 +79,7 @@ internal sealed class MedicinesIndicationDetail
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("indication", "Indication", Order = 10)]
     [FormField(
         "medicines_indication_detail.indication",
@@ -83,6 +91,7 @@ internal sealed class MedicinesIndicationDetail
     public string? Indication { get; set; }
 
     // The most specific BNF entry chosen: a subchapter, or the chapter if none is picked.
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("bnf-chapter", "BNF chapter", Order = 20)]
     [FormField(
         "medicines_indication_detail.bnf_chapter_id",
@@ -94,6 +103,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("paediatric", "Treating children", Order = 40)]
     [FormField(
         "medicines_indication_detail.indication_is_paediatric",
@@ -102,6 +112,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("cancer", "Treating cancer", Order = 50)]
     [FormField(
         "medicines_indication_detail.indication_is_cancer",
@@ -110,6 +121,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat cancer")]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("rare-disease", "Treating a rare disease", Order = 60)]
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
@@ -143,6 +155,7 @@ internal sealed class MedicinesIndicationDetail
     public ReferenceData.FormulationType? FormulationType { get; set; }
 
     // Junction navigation backing a multi-select question.
+    [FormTask("indication-details", "Indication details", Order = 10)]
     [FormPage("therapeutic-area", "Therapeutic area", Order = 30)]
     [FormField(
         "medicines_indication_detail_therapeutic_area",
@@ -159,7 +172,7 @@ internal sealed class MedicinesIndicationDetail
 }
 ```
 
-The scanner turns this into the following pages, in this order:
+The scanner turns this into one task, containing the following pages in order:
 
 | Order | Page ID | Question ID | Control | Binding |
 |---|---|---|---|---|
@@ -238,6 +251,7 @@ once it has been released.**
 ## Step 4: Add the page and the field
 
 ```csharp
+[FormTask("indication-details", "Indication details", Order = 10)]
 [FormPage("bnf-chapter", "BNF chapter", Order = 20)]
 [FormField(
     "medicines_indication_detail.bnf_chapter_id",
@@ -246,8 +260,8 @@ once it has been released.**
 ```
 
 - **Page title**: a short name for the page.
-- **Single-question page**: the question's label becomes the `<h1>`, and the section title is
-  shown as the caption above it.
+- **Single-question page**: the question's label becomes the `<h1>`, and the task title is shown
+  as the caption above it.
 - **Page with several questions**: the page title is the `<h1>`, each question shows its own
   label, and `FormField.Order` sets their order.
 - **Gaps in `Order`**: leave gaps (10, 20, 30) so that pages can be inserted later without
@@ -399,15 +413,16 @@ Only needed if the existing rules can't express what a page needs. Agree it with
 
 ## Pages that span entities
 
-A page can hold questions from several entities. Declare the same `[FormPage]` ID, with the
-same title and `Order`, on each property. The entities must be in the same section. The example
-below is illustrative and is not a page in the current design:
+A page can hold questions from several entities. Declare the same `[FormTask]` ID, title and
+order, and the same `[FormPage]` ID, title and order, on each property. The entities must be in
+the same section. The example below is illustrative and is not a page in the current design:
 
 ```csharp
 [FormSection(RecordType.Medicine, "product-details", "Product details",
     Order = 10, RowSource = FormRowSource.RecordCreation)]
 internal sealed class RecordProductDetail
 {
+    [FormTask("product-names", "Product names", Order = 10)]
     [FormPage("names", "Product names", Order = 20)]
     [FormField("record_product_detail.branded_name", "Branded name (optional)", FormControl.Text, Order = 10)]
     [FormMaxLength(200, "Branded name must be 200 characters or fewer")]
@@ -418,6 +433,7 @@ internal sealed class RecordProductDetail
 [FormSection(RecordType.Medicine, "product-details", "Product details", Order = 10)]
 internal sealed class SomeOtherMedicineEntity
 {
+    [FormTask("product-names", "Product names", Order = 10)]
     [FormPage("names", "Product names", Order = 20)]
     [FormField("some_other_medicine_entity.development_code", "Development code", FormControl.Text, Order = 20)]
     public string? DevelopmentCode { get; set; }
@@ -428,9 +444,8 @@ internal sealed class SomeOtherMedicineEntity
 The `names` page shows both questions, ordered by `FormField.Order`. One save writes both
 tables, with a field audit row for each changed question.
 
-Keep the page metadata in one place to avoid mismatches: declare the page ID, title and order as
-constants (for example in a `MedicinePages` static class) and use the constants in every
-`[FormPage]`.
+Keep task and page metadata in one place to avoid mismatches: declare their IDs, titles and orders
+as constants and use the constants in every `[FormTask]` and `[FormPage]`.
 
 ## Step 7: Bump the form version
 
@@ -456,10 +471,10 @@ reports every problem in one exception.
 | Area | Fails when |
 |---|---|
 | Coverage | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation |
-| Pairing | `[FormField]` has no `[FormPage]`, or `[FormPage]` has no `[FormField]` |
-| IDs | A page or question ID is badly formed or duplicated within the form |
-| Agreement | Declarations of one section ID disagree on title or order, or declarations of one page ID disagree on title or order. A page spans entities in different sections |
-| Order | Two sections, two pages in a section, or two questions on a page have the same `Order` |
+| Pairing | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]` |
+| IDs | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list` |
+| Agreement | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title or order. A page spans tasks |
+| Order | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order` |
 | Structure | A section has no pages, or a page has no questions |
 | Controls | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]` |
 | Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel` |
@@ -495,7 +510,8 @@ You do not need to regenerate the OpenAPI spec or the frontend client for a new 
 travels as data through the existing DTOs.
 
 Finally, try it locally. Create a medicine record, or open an existing one from the organisation
-records table and select **Update record**. Then step through to your page.
+records table and select **Update record**. Both open the task list: choose your task and step
+through to your page.
 
 ## Adding a new control
 

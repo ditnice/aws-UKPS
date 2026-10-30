@@ -18,6 +18,10 @@ internal static partial class FormModelValidator
 {
     private const string RevisionIdProperty = "RevisionId";
 
+    // Page IDs are the last segment of /portal/records/{recordId}/{pageId}, so a page cannot take
+    // the ID of a fixed route beside them.
+    private const string TaskListRoute = "task-list";
+
     public static IReadOnlyList<string> Validate(
         IReadOnlyList<EntityDeclaration> entities,
         OptionProviderRegistry options
@@ -129,12 +133,29 @@ internal static partial class FormModelValidator
         }
 
         if (
+            !SlugPattern().IsMatch(question.Task.Id)
+            || string.IsNullOrWhiteSpace(question.Task.Title)
+        )
+        {
+            problems.Add(
+                $"{where} declares task '{question.Task.Id}' with a badly formed ID or a blank title."
+            );
+        }
+
+        if (
             !SlugPattern().IsMatch(question.Page.Id)
             || string.IsNullOrWhiteSpace(question.Page.Title)
         )
         {
             problems.Add(
                 $"{where} declares page '{question.Page.Id}' with a badly formed ID or a blank title."
+            );
+        }
+
+        if (string.Equals(question.Page.Id, TaskListRoute, StringComparison.Ordinal))
+        {
+            problems.Add(
+                $"{where} declares page '{TaskListRoute}', which is reserved for the task list."
             );
         }
 
@@ -382,7 +403,7 @@ internal static partial class FormModelValidator
                 x.Entity.Questions.Select(q => (Question: q, SectionId: x.Section.Id))
             )
             .ToArray();
-        ValidatePages(form, questions, problems);
+        ValidateTasks(form, questions, problems);
 
         foreach (
             var duplicate in questions
@@ -394,6 +415,55 @@ internal static partial class FormModelValidator
         }
     }
 
+    private static void ValidateTasks(
+        string form,
+        (QuestionDeclaration Question, string SectionId)[] questions,
+        List<string> problems
+    )
+    {
+        var tasks = questions
+            .GroupBy(static x => x.Question.Task.Id, StringComparer.Ordinal)
+            .ToArray();
+        ValidateTaskMetadata(form, tasks, problems);
+        ValidatePages(form, questions, problems);
+    }
+
+    private static void ValidateTaskMetadata(
+        string form,
+        IGrouping<string, (QuestionDeclaration Question, string SectionId)>[] tasks,
+        List<string> problems
+    )
+    {
+        foreach (var task in tasks)
+        {
+            if (
+                task.Select(static x => (x.Question.Task.Title, x.Question.Task.Order, x.SectionId))
+                    .Distinct()
+                    .Count() > 1
+            )
+            {
+                problems.Add(
+                    $"{form} declares task '{task.Key}' with different titles, orders or sections."
+                );
+            }
+        }
+
+        foreach (
+            var section in tasks
+                .Select(static task => task.First())
+                .GroupBy(static x => x.SectionId, StringComparer.Ordinal)
+        )
+        {
+            ReportTies(
+                section,
+                static x => x.Question.Task.Order,
+                static x => $"task '{x.Question.Task.Id}'",
+                $"{form}, section '{section.Key}',",
+                problems
+            );
+        }
+    }
+
     private static void ValidatePages(
         string form,
         (QuestionDeclaration Question, string SectionId)[] questions,
@@ -401,7 +471,10 @@ internal static partial class FormModelValidator
     )
     {
         var pages = questions
-            .GroupBy(static x => x.Question.Page.Id, StringComparer.Ordinal)
+            .GroupBy(
+                static x => (x.SectionId, TaskId: x.Question.Task.Id, x.Question.Page.Id),
+                EqualityComparer<(string SectionId, string TaskId, string Id)>.Default
+            )
             .ToArray();
         foreach (var page in pages)
         {
@@ -411,13 +484,8 @@ internal static partial class FormModelValidator
                     .Count() > 1
             )
             {
-                problems.Add($"{form} declares page '{page.Key}' with different titles or orders.");
-            }
-
-            if (page.Select(static x => x.SectionId).Distinct(StringComparer.Ordinal).Count() > 1)
-            {
                 problems.Add(
-                    $"{form} has page '{page.Key}' spanning entities in different sections."
+                    $"{form} declares page '{page.Key.Id}' with different titles or orders."
                 );
             }
 
@@ -425,24 +493,36 @@ internal static partial class FormModelValidator
                 page,
                 static x => x.Question.Field.Order,
                 static x => $"question '{x.Question.Field.Id}'",
-                $"{form}, page '{page.Key}',",
+                $"{form}, page '{page.Key.Id}',",
                 problems
             );
         }
 
         foreach (
-            var section in pages
+            var task in pages
                 .Select(static p => p.First())
-                .GroupBy(static x => x.SectionId, StringComparer.Ordinal)
+                .GroupBy(static x => x.Question.Task.Id, StringComparer.Ordinal)
         )
         {
             ReportTies(
-                section,
+                task,
                 static x => x.Question.Page.Order,
                 static x => $"page '{x.Question.Page.Id}'",
-                $"{form}, section '{section.Key}',",
+                $"{form}, task '{task.Key}',",
                 problems
             );
+        }
+
+        foreach (
+            var page in questions
+                .GroupBy(static x => x.Question.Page.Id, StringComparer.Ordinal)
+                .Where(static page =>
+                    page.Select(x => x.Question.Task.Id).Distinct(StringComparer.Ordinal).Count()
+                    > 1
+                )
+        )
+        {
+            problems.Add($"{form} has page '{page.Key}' in more than one task.");
         }
     }
 

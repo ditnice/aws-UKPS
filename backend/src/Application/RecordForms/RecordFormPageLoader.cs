@@ -8,8 +8,8 @@ using UKPS.Api.Persistence.Entities.RecordWorkflow;
 namespace UKPS.Api.Application.RecordForms;
 
 /// <summary>
-/// The steps the page query and save services share: finding and authorising the page, and
-/// reading its rows, answers and options.
+/// The steps the form services share: finding and authorising the record's form or one of its
+/// pages, and reading a page's rows, answers and options.
 /// </summary>
 internal sealed class RecordFormPageLoader(
     AppDbContext dbContext,
@@ -19,13 +19,45 @@ internal sealed class RecordFormPageLoader(
 )
 {
     /// <summary>
-    /// Finds the record's latest revision and the page, and checks the caller can read them. A
-    /// record has at most one draft revision, which is always its latest. The revision is tracked
-    /// when <paramref name="track"/> is set, for a save.
+    /// Finds the record's latest revision and the page, and checks the caller can read them. The
+    /// revision is tracked when <paramref name="track"/> is set, for a save.
     /// </summary>
     public async Task<(LoadedPage? Page, PageLookupFailure Failure)> LoadPageAsync(
         int recordId,
         string pageId,
+        bool track,
+        CancellationToken cancellationToken
+    )
+    {
+        var (form, failure) = await LoadFormAsync(recordId, track, cancellationToken);
+        if (form is null)
+        {
+            return (null, failure);
+        }
+
+        FormPage? page = form.Model.FindPage(pageId);
+        if (page is null)
+        {
+            return (null, PageLookupFailure.NotFound);
+        }
+
+        bool canEdit = organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.EditRecordContent,
+            form.Record.OrganisationId
+        );
+        return (
+            new LoadedPage(form.Revision, form.Record, form.Model, page, canEdit),
+            PageLookupFailure.NotFound
+        );
+    }
+
+    /// <summary>
+    /// Finds the record's latest revision and its form, and checks the caller can read them. A
+    /// record has at most one draft revision, which is always its latest. The revision is tracked
+    /// when <paramref name="track"/> is set, for a save.
+    /// </summary>
+    public async Task<(LoadedForm? Form, PageLookupFailure Failure)> LoadFormAsync(
+        int recordId,
         bool track,
         CancellationToken cancellationToken
     )
@@ -55,17 +87,9 @@ internal sealed class RecordFormPageLoader(
         }
 
         FormModel? model = formModels.Find(record.RecordType);
-        FormPage? page = model?.FindPage(pageId);
-        if (model is null || page is null)
-        {
-            return (null, PageLookupFailure.NotFound);
-        }
-
-        bool canEdit = organisationAuthoriser.CanPerformOperationOnOrganisation(
-            Operation.EditRecordContent,
-            record.OrganisationId
-        );
-        return (new LoadedPage(revision, record, model, page, canEdit), PageLookupFailure.NotFound);
+        return model is null
+            ? (null, PageLookupFailure.NotFound)
+            : (new LoadedForm(revision, record, model), PageLookupFailure.NotFound);
     }
 
     /// <summary>

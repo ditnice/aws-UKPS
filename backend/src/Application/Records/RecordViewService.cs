@@ -109,16 +109,14 @@ internal sealed class RecordViewService(
             .SingleOrDefaultAsync(cancellationToken);
 
     /// <summary>
-    /// The first page of the record type's content form, or null when the type has no form or
-    /// the caller cannot edit the record's content.
+    /// Whether the record type has a content form and the caller can edit the record's content.
     /// </summary>
-    private string? FirstPageId(RecordHeader record) =>
-        organisationAuthoriser.CanPerformOperationOnOrganisation(
+    private bool CanEditContent(RecordHeader record) =>
+        formModels.Find(record.RecordType) is not null
+        && organisationAuthoriser.CanPerformOperationOnOrganisation(
             Operation.EditRecordContent,
             record.OrganisationId
-        )
-            ? formModels.Find(record.RecordType)?.FirstPage.Id
-            : null;
+        );
 
     private async Task<MedicineRecordDto> GetMedicineRecord(
         int recordId,
@@ -135,7 +133,7 @@ internal sealed class RecordViewService(
             RecordStatus = record.RecordStatus,
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
-            FirstPageId = FirstPageId(record),
+            CanEditContent = CanEditContent(record),
             Actions = actions,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
@@ -195,7 +193,7 @@ internal sealed class RecordViewService(
             RecordStatus = record.RecordStatus,
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
-            FirstPageId = FirstPageId(record),
+            CanEditContent = CanEditContent(record),
             Actions = actions,
         };
     }

@@ -20,15 +20,18 @@ internal sealed class ValidEntity
     [FormIgnore("Revision ownership")]
     public int RevisionId { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("text", "Text", Order = 10)]
     [FormField("valid_entity.text", "Text", FormControl.Text, Order = 10)]
     [FormMaxLength(10, "Too long")]
     public string? Text { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("text", "Text", Order = 10)]
     [FormField("valid_entity.choice", "Choice", FormControl.Radio, Order = 20)]
     public YesNoUnknown? Choice { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("chapter", "Chapter", Order = 20)]
     [FormField(
         "valid_entity.chapter_id",
@@ -41,6 +44,7 @@ internal sealed class ValidEntity
     public RecordRevision? Revision { get; set; }
     public BnfChapter? Chapter { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("areas", "Areas", Order = 30)]
     [FormField(
         "valid_entity_area",
@@ -81,31 +85,51 @@ internal sealed class BrokenEntity
     [FormIgnore(" ")]
     public string? BlankReason { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormField("broken_entity.no_page", "No page", FormControl.Text)]
     public string? NoPage { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("Bad Page", "Bad")]
     [FormField("Broken.Bad ID", "Bad ID", FormControl.Text)]
     public string? BadIds { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.wrong_control", "Wrong control", FormControl.Radio)]
     public string? WrongControl { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.choice_without_provider", "Choice", FormControl.Radio, Order = 1)]
     public UnprovidedChoice? ChoiceWithoutProvider { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.wrong_enum", "Wrong enum", FormControl.Radio, Order = 2)]
     [FormOptions(OptionKeys.PaediatricStatus)]
     [FormMaxLength(5, "Not for choices")]
     public YesNoUnknown? WrongEnum { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken", "Broken", Order = 10)]
     [FormField("broken_entity.unknown_key", "Unknown key", FormControl.Radio, Order = 3)]
     [FormOptions("no-such-provider")]
     public YesNoUnknown? UnknownKey { get; set; }
+
+    [FormPage("no-task", "No task", Order = 20)]
+    [FormField("broken_entity.no_task", "No task", FormControl.Text)]
+    public string? NoTask { get; set; }
+
+    [FormTask("Bad Task", " ", Order = 20)]
+    [FormPage("bad-task", "Bad task", Order = 30)]
+    [FormField("broken_entity.bad_task", "Bad task", FormControl.Text)]
+    public string? BadTask { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("task-list", "Task list", Order = 40)]
+    [FormField("broken_entity.reserved_page", "Reserved page", FormControl.Text)]
+    public string? ReservedPage { get; set; }
 
     public RecordRevision? Revision { get; set; }
 }
@@ -117,6 +141,7 @@ internal sealed class RowsEntity
     [FormIgnore("Database identity")]
     public int Id { get; set; }
 
+    [FormTask("rows-task", "Rows task", Order = 10)]
     [FormPage("rows", "Rows", Order = 10)]
     [FormField("rows_entity.required_name", "Name", FormControl.Text)]
     [FormRequired("Enter a name")]
@@ -133,9 +158,36 @@ internal sealed class DisagreeingEntity
     [FormIgnore("Revision ownership")]
     public int RevisionId { get; set; }
 
+    [FormTask("valid-task", "Valid task", Order = 10)]
     [FormPage("text", "Different page title", Order = 10)]
     [FormField("valid_entity.text", "Duplicate ID", FormControl.Text, Order = 30)]
     public string? Text { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+}
+
+/// <summary>
+/// Disagrees with <see cref="ValidEntity"/> about task metadata, and puts one of its pages in
+/// another task with the same order.
+/// </summary>
+[FormSection(RecordType.Vaccine, "valid", "Valid", Order = 10)]
+internal sealed class TaskConflictEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("valid-task", "Different task title", Order = 10)]
+    [FormPage("extra", "Extra", Order = 40)]
+    [FormField("task_conflict_entity.extra", "Extra", FormControl.Text)]
+    public string? Extra { get; set; }
+
+    [FormTask("other-task", "Other task", Order = 10)]
+    [FormPage("text", "Text", Order = 10)]
+    [FormField("task_conflict_entity.moved", "Moved", FormControl.Text, Order = 30)]
+    public string? Moved { get; set; }
 
     public RecordRevision? Revision { get; set; }
 }

@@ -11,9 +11,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.10.3";
+    private const string ExpectedVersion = "2026.10.4";
     private const string ExpectedFingerprint =
-        "6745a50045e874cdf0a648c423d1850a7762efa4d7d6d0871c922d67656f7e11";
+        "dca00534e695b14709d2a5ad39a252493ec89e4954a45116c6c4cf67be11ce59";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -86,7 +86,7 @@ public class MedicineFormModelTests
     {
         FormModel model = Model;
 
-        model.PreviousPage(model.FirstPage).ShouldBeNull();
+        model.PreviousPage(model.Pages[0]).ShouldBeNull();
         model.NextPage(model.FindPage("indication")!)!.Id.ShouldBe("bnf-chapter");
         model.PreviousPage(model.FindPage("bnf-chapter")!)!.Id.ShouldBe("indication");
         model.NextPage(model.FindPage("rare-disease")!).ShouldBeNull();

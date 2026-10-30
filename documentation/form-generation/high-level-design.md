@@ -17,8 +17,9 @@ That idea is replaced here, and the brief is kept only as background.
 ## Overview
 
 The form is declared **on the EF content entities themselves**, using attributes. Each property that
-a user answers carries the question's ID, label, hint, page, rules and options. Every other
-property is explicitly ignored, with a reason.
+a user answers carries the question's ID, label, hint, task, page, rules and options. Every other
+property is explicitly ignored, with a reason. The hierarchy is section → task → page → question;
+all questions in a task repeat that task's ID, title and order.
 
 ```csharp
 [FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
@@ -70,13 +71,13 @@ model, telling it which column or junction table holds the answer.
 
 | Area | Scope |
 |---|---|
-| Medicine form, section "Indication details" | 6 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer, treating a rare disease |
+| Medicine form, section and task "Indication details" | 1 task with 6 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer, treating a rare disease |
 | Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another") |
 | Rules | `Required`, `MaxLength`, `MaxItems` |
 | Bindings | Column (string, enum, reference ID), flags enum, junction table |
-| Entry points | Record creation redirects to the first page; **Update record** on the record details page opens the first page. Both use `firstPageId`, returned by `POST /records` and `GET /records/{id}` |
+| Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and `GET /records/{id}`, is true: the record type has a form and the user can edit it |
 | Audit | One event per save, one row per changed answer |
-| Later | Conditional pages and questions, add-another groups, precision dates, vaccine forms, tasklist, searchable combobox |
+| Later | Conditional pages and questions, add-another groups, precision dates, vaccine forms, searchable combobox |
 
 ## Architecture
 
@@ -203,8 +204,10 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 - **Pages.** `[FormPage(id, title, Order = n)]` on a property places its question on that page.
   The page's `Order` places it within its section.
 - **Questions.** On a page with several questions, `FormField.Order` sets their order.
-- **Form order** is section order, then page order. Back goes to the previous page and Save and
-  continue goes to the next. Saving the last page returns to the organisation's records list.
+- **Form order** is section order, then task order, then page order. A user enters a task from
+  the task list and steps through its pages: Back goes to the previous page in the task, and Save
+  and continue goes to the next. On a task's first page, Back returns to the task list. On its last
+  page the button reads **Save and return to task list**, and saving returns to the task list.
 - **No ties.** Two sections or pages with the same `Order`, or two questions on the same page
   with the same `Order`, fail startup. Attribute order in source is never relied on.
 
@@ -397,8 +400,8 @@ broken build lists everything to fix at once. The full catalogue is in
 - Saving also needs a new `Operation.EditRecordContent`, granted to Standard and Champion users
   for their own organisation. Super users can read every record but never edit its content, so
   their saves are rejected with 403. `Operation.Update` is unchanged.
-- The record view and record creation only return `firstPageId` (the link into the form) to
-  users who can edit the record's content.
+- The record view and record creation return `canEditContent`, which is only true for users who
+  can edit the record's content. It controls the links into the task list.
 - Only draft revisions can be edited: a save to any other revision is rejected with
   `revision_not_draft`. The form pages are only for editing; viewing a record without editing
   it is a separate flow.
@@ -438,13 +441,13 @@ sequenceDiagram
     F->>B: POST /records
     B->>P: INSERT record, revision 1 (Draft), product detail row, RecordCreated event
     P-->>B: OK
-    B-->>F: 200 { recordId, firstPageId }
-    F->>F: router.push(/portal/records/{recordId}/{firstPageId})
+    B-->>F: 200 { recordId, canEditContent }
+    F->>F: router.push(/portal/records/{recordId}/task-list)
 ```
 
 The record details page (`/portal/organisations/{id}/records/{recordId}`) links its **Update
-record** button to the same URL, using `firstPageId` from
-`GET /records/{id}`. This lets users return to a record and change their answers.
+record** button to the same URL, when `canEditContent` from `GET /records/{id}` is true. This
+lets users return to a record and change their answers.
 
 ### Loading a page
 
@@ -477,7 +480,7 @@ sequenceDiagram
     participant F as FormPage (browser)
     participant B as Backend
     participant P as Postgres
-    U->>F: Save and continue
+    U->>F: Save and continue (or Save and return to task list)
     F->>F: Validate with Zod (same rules and messages)
     alt Client validation fails
         F-->>U: Errors shown against fields
@@ -508,7 +511,7 @@ sequenceDiagram
                     B-->>F: 409 revision_changed
                 else Saved
                     B-->>F: 200 { nextPageId }
-                    F->>F: Go to next page, or records list when nextPageId is null
+                    F->>F: Go to next page, or the task list when nextPageId is null
                 end
             end
         end
@@ -521,6 +524,43 @@ sequenceDiagram
 |---|---|---|
 | GET | `/records/{recordId}/pages/{pageId}` | Page structure, rules, options and current answers |
 | PUT | `/records/{recordId}/pages/{pageId}` | Validate and save every answer on the page |
+| GET | `/records/{recordId}/task-list` | Sections and tasks with titles, answer status and each task's first-page ID |
+
+The task-list endpoint returns sections in form order and tasks in section order. Each task has a
+`firstPageId` for its link and a status computed from saved answers on the record's latest
+revision:
+
+| Status | Meaning |
+|---|---|
+| `NotStarted` | No answer has been saved for the task |
+| `InProgress` | At least one answer is saved, but one or more required questions are unanswered |
+| `Completed` | Every required question has a saved answer; unanswered optional questions do not prevent completion |
+
+The endpoint is read-only. Missing and inaccessible records both return `404`, so record access
+is not disclosed.
+
+Example `GET /records/5/task-list` response:
+
+```json
+{
+  "recordId": 5,
+  "organisationId": 3,
+  "sections": [
+    {
+      "id": "indication-details",
+      "title": "Indication details",
+      "tasks": [
+        {
+          "id": "indication-details",
+          "title": "Indication details",
+          "status": "InProgress",
+          "firstPageId": "indication"
+        }
+      ]
+    }
+  ]
+}
+```
 
 JSON property names are camelCase, except answer and error keys, which are question IDs exactly
 as declared. Enum values are serialised by name, for example `"Textarea"` and `"Required"`. The
@@ -531,10 +571,10 @@ examples below use record 5, revision 7.
 | Field | Meaning |
 |---|---|
 | `formVersion`, `revisionVersion` | Echo both back on save |
-| `organisationId` | Used for links back to the records list |
 | `recordId` | Used to build page URLs |
-| `section`, `page` | IDs and titles; the section title is the page caption |
-| `previousPageId` | Target of Back, or `null` on the first page |
+| `section`, `task`, `page` | IDs and titles; the task title is the page caption |
+| `previousPageId` | Target of Back, or `null` on the task's first page, where Back goes to the task list |
+| `nextPageId` | The next page in the task, or `null` on the task's last page, where the button reads **Save and return to task list** |
 | `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 
@@ -544,10 +584,11 @@ examples below use record 5, revision 7.
 {
   "formVersion": "2026.10.1",
   "revisionVersion": 4711,
-  "organisationId": 3,
   "section": { "id": "indication-details", "title": "Indication details" },
+  "task": { "id": "indication-details", "title": "Indication details" },
   "page": { "id": "therapeutic-area", "title": "Therapeutic area" },
   "previousPageId": "bnf-chapter",
+  "nextPageId": "paediatric",
   "questions": [
     {
       "id": "medicines_indication_detail_therapeutic_area",
@@ -615,7 +656,7 @@ Send `null` for an unanswered single-value question and `[]` for an unanswered c
 
 | Status | When | Body |
 |---|---|---|
-| 200 | Saved, or nothing changed | `{ nextPageId }` (`null` after the last page) |
+| 200 | Saved, or nothing changed | `{ nextPageId }` (`null` after the task's last page) |
 | 400 | Missing, unknown or malformed answers, invalid options, failed rules | `ValidationProblemDetails`, keyed by question ID |
 | 403 | Can read the record but not edit it | `ProblemDetails` |
 | 404 | Not found or not readable (concealed) | `ProblemDetails` |
@@ -643,8 +684,8 @@ The order of checkbox values does not matter; the server sorts them before compa
 { "nextPageId": "paediatric" }
 ```
 
-Saving the last page returns `{ "nextPageId": null }`, and the frontend goes to the
-organisation's records list.
+Saving a task's last page returns `{ "nextPageId": null }`, and the frontend goes back to the
+record's task list.
 
 #### 400 Bad Request
 
@@ -740,6 +781,4 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
 - Add-another groups, precision dates and their bindings.
 - The searchable combobox: the hierarchical selects use plain dropdowns behind
   `display: "combobox"` until it exists.
-- The tasklist: "Return to tasklist" is a placeholder link that goes nowhere, and saving the last
-  page goes to the records list.
 - Vaccine forms, and vaccine record creation.

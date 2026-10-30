@@ -26,6 +26,8 @@ import { questionRegistry } from './questionRegistry'
 export const pageHref = (page: Pick<RecordPageDto, 'recordId'>, pageId: string) =>
   `/portal/records/${page.recordId}/${pageId}`
 
+export const taskListHref = (recordId: number) => `/portal/records/${recordId}/task-list`
+
 export const conflictCodes = ['revision_not_draft', 'revision_changed', 'form_version_changed']
 
 type SaveState = { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kind: 'failed' }
@@ -41,7 +43,7 @@ export function FormPage({ page }: FormPageProps) {
   const [saveState, setSaveState] = useState<SaveState>({ kind: 'idle' })
   const [otherErrors, setOtherErrors] = useState<string[]>([])
   const schema = useMemo(() => buildZodSchema(questions), [questions])
-  const recordsHref = `/portal/organisations/${page.organisationId}/records`
+  const tasksHref = taskListHref(page.recordId)
   const singleQuestion = questions.length === 1
 
   const form = useForm({
@@ -59,7 +61,8 @@ export function FormPage({ page }: FormPageProps) {
       })
 
       if (response?.ok && data) {
-        router.push(data.nextPageId ? pageHref(page, data.nextPageId) : recordsHref)
+        // The task list is the root of the journey: each task ends back on it.
+        router.push(data.nextPageId ? pageHref(page, data.nextPageId) : tasksHref)
         return
       }
 
@@ -81,13 +84,15 @@ export function FormPage({ page }: FormPageProps) {
   })
 
   const heading = singleQuestion ? questions[0].label : page.page.title
-  const backLink = page.previousPageId ? (
-    <BackLink href={pageHref(page, page.previousPageId)}>Back</BackLink>
-  ) : undefined
+  const backLink = (
+    <BackLink href={page.previousPageId ? pageHref(page, page.previousPageId) : tasksHref}>
+      Back
+    </BackLink>
+  )
 
   return (
     <>
-      <PageHeader backLink={backLink} heading={heading} preheading={page.section.title} />
+      <PageHeader backLink={backLink} heading={heading} preheading={page.task.title} />
 
       {saveState.kind === 'conflict' && (
         <Alert type="caution">
@@ -140,12 +145,11 @@ export function FormPage({ page }: FormPageProps) {
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button disabled={isSubmitting} buttonType="submit" variant="cta">
-                Save and continue
+                {page.nextPageId ? 'Save and continue' : 'Save and return to task list'}
               </Button>
             )}
           </form.Subscribe>
-          {/* TODO: link to the tasklist once it exists. */}
-          <Link href="#">Return to tasklist</Link>
+          <Link href={tasksHref}>Return to task list</Link>
         </div>
       </form>
     </>

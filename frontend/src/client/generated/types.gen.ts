@@ -112,10 +112,10 @@ export type CreateRecordDto = {
      */
     recordId: number;
     /**
-     * Gets the first page of the record's content form, where the user goes next, or null when
-     * the record type has no form yet or the caller cannot edit record content.
+     * Gets whether the record type has a content form and the caller can edit it. When true, the
+     * user goes next to the record's task list.
      */
-    firstPageId: null | string;
+    canEditContent: boolean;
 };
 
 /**
@@ -916,11 +916,10 @@ export type RecordDtoMedicineRecordDto = {
      */
     reviewedAt?: null | string;
     /**
-     * Gets the first page of the record type's content form, or null when the record type has
-     * no form yet or the caller cannot edit record content. Links to it open the form for the
-     * latest revision.
+     * Gets whether the record type has a content form and the caller can edit it. When true,
+     * Update record links to the record's task list, which edits the latest revision.
      */
-    firstPageId: null | string;
+    canEditContent: boolean;
     /**
      * Gets the actions the user can take on the record, given its status and the workflow status
      * of its latest revision.
@@ -954,11 +953,10 @@ export type RecordDtoVaccineRecordDto = {
      */
     reviewedAt?: null | string;
     /**
-     * Gets the first page of the record type's content form, or null when the record type has
-     * no form yet or the caller cannot edit record content. Links to it open the form for the
-     * latest revision.
+     * Gets whether the record type has a content form and the caller can edit it. When true,
+     * Update record links to the record's task list, which edits the latest revision.
      */
-    firstPageId: null | string;
+    canEditContent: boolean;
     /**
      * Gets the actions the user can take on the record, given its status and the workflow status
      * of its latest revision.
@@ -1074,10 +1072,6 @@ export type RecordPageDto = {
      */
     revisionVersion: number;
     /**
-     * The organisation that owns the record; used for links back to its records list.
-     */
-    organisationId: number;
-    /**
      * The record the page belongs to.
      */
     recordId: number;
@@ -1086,13 +1080,22 @@ export type RecordPageDto = {
      */
     section: RecordPageSectionDto;
     /**
+     * The task the page belongs to. Its title is the page caption.
+     */
+    task: RecordPageTaskDto;
+    /**
      * The page's ID and title.
      */
     page: RecordPagePageDto;
     /**
-     * The target of Back, or null on the first page.
+     * The target of Back, or null on the first page of the task.
      */
     previousPageId: null | string;
+    /**
+     * The page after this one in its task, or null on the task's last page, where saving returns
+     * to the task list.
+     */
+    nextPageId: null | string;
     /**
      * The questions on the page, in order.
      */
@@ -1211,7 +1214,7 @@ export type RecordPageRuleDto = {
 };
 
 /**
- * The section a page belongs to. Its title is the page caption.
+ * The section a page belongs to.
  */
 export type RecordPageSectionDto = {
     /**
@@ -1219,7 +1222,21 @@ export type RecordPageSectionDto = {
      */
     id: string;
     /**
-     * The section title, shown as the page caption.
+     * The section title.
+     */
+    title: string;
+};
+
+/**
+ * The task a page belongs to. Its title is the page caption.
+ */
+export type RecordPageTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title, shown as the page caption.
      */
     title: string;
 };
@@ -1261,6 +1278,80 @@ export const RecordStatus = {
  * Represents the status of a record in the system.
  */
 export type RecordStatus = typeof RecordStatus[keyof typeof RecordStatus];
+
+/**
+ * The task list for a record's latest revision.
+ */
+export type RecordTaskListDto = {
+    /**
+     * The record this task list belongs to.
+     */
+    recordId: number;
+    /**
+     * The organisation that owns the record; used for links back to the record.
+     */
+    organisationId: number;
+    /**
+     * Sections and their ordered tasks.
+     */
+    sections: Array<RecordTaskListSectionDto>;
+};
+
+/**
+ * A section of a record task list.
+ */
+export type RecordTaskListSectionDto = {
+    /**
+     * The section ID.
+     */
+    id: string;
+    /**
+     * The section title.
+     */
+    title: string;
+    /**
+     * The ordered tasks in the section.
+     */
+    tasks: Array<RecordTaskListTaskDto>;
+};
+
+/**
+ * A task and its current status.
+ */
+export type RecordTaskListTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title.
+     */
+    title: string;
+    /**
+     * The task's status, derived from the saved answers.
+     */
+    status: RecordTaskStatus;
+    /**
+     * The ID of this task's first page.
+     */
+    firstPageId: string;
+};
+
+/**
+ * Represents the status of a task in a record's task list, derived from the answers saved on the
+ * record's latest revision.
+ */
+export const RecordTaskStatus = {
+    NOT_STARTED: 'NotStarted',
+    IN_PROGRESS: 'InProgress',
+    COMPLETED: 'Completed'
+} as const;
+
+/**
+ * Represents the status of a task in a record's task list, derived from the answers saved on the
+ * record's latest revision.
+ */
+export type RecordTaskStatus = typeof RecordTaskStatus[keyof typeof RecordTaskStatus];
 
 /**
  * Represents the type of a record, such as Medicine or Vaccine.
@@ -1473,7 +1564,7 @@ export type SaveRecordPageCommand = {
  */
 export type SaveRecordPageDto = {
     /**
-     * The next page, or null after the last page.
+     * The next page in the task, or null after the task's last page.
      */
     nextPageId: null | string;
 };
@@ -2760,6 +2851,44 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type GetRecordTaskListData = {
+    body?: never;
+    path: {
+        /**
+         * The record to read.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/task-list';
+};
+
+export type GetRecordTaskListErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The record is not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type GetRecordTaskListError = GetRecordTaskListErrors[keyof GetRecordTaskListErrors];
+
+export type GetRecordTaskListResponses = {
+    /**
+     * Returns the task list.
+     */
+    200: RecordTaskListDto;
+};
+
+export type GetRecordTaskListResponse = GetRecordTaskListResponses[keyof GetRecordTaskListResponses];
 
 export type GetUsersMeData = {
     body?: never;

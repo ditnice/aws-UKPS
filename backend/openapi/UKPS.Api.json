@@ -2736,6 +2736,109 @@
         }
       }
     },
+    "/records/{recordId}/task-list": {
+      "get": {
+        "tags": [
+          "RecordTaskList"
+        ],
+        "summary": "Retrieves the record's sections, task titles, statuses and first-page links.",
+        "operationId": "GetRecordTaskList",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to read.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the task list.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordTaskListDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordTaskListDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordTaskListDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record is not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -4198,7 +4301,7 @@
       "CreateRecordDto": {
         "required": [
           "recordId",
-          "firstPageId"
+          "canEditContent"
         ],
         "type": "object",
         "properties": {
@@ -4207,12 +4310,9 @@
             "description": "Gets the identifier of the newly created record.",
             "format": "int32"
           },
-          "firstPageId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the first page of the record's content form, where the user goes next, or null when\nthe record type has no form yet or the caller cannot edit record content."
+          "canEditContent": {
+            "type": "boolean",
+            "description": "Gets whether the record type has a content form and the caller can edit it. When true, the\nuser goes next to the record's task list."
           }
         },
         "description": "Represents the result of creating a record."
@@ -5562,7 +5662,7 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "firstPageId",
+          "canEditContent",
           "actions"
         ],
         "properties": {
@@ -5781,12 +5881,9 @@
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
           },
-          "firstPageId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet or the caller cannot edit record content. Links to it open the form for the\nlatest revision."
+          "canEditContent": {
+            "type": "boolean",
+            "description": "Gets whether the record type has a content form and the caller can edit it. When true,\nUpdate record links to the record's task list, which edits the latest revision."
           },
           "actions": {
             "type": "array",
@@ -5804,7 +5901,7 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "firstPageId",
+          "canEditContent",
           "actions"
         ],
         "properties": {
@@ -5840,12 +5937,9 @@
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
           },
-          "firstPageId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet or the caller cannot edit record content. Links to it open the form for the\nlatest revision."
+          "canEditContent": {
+            "type": "boolean",
+            "description": "Gets whether the record type has a content form and the caller can edit it. When true,\nUpdate record links to the record's task list, which edits the latest revision."
           },
           "actions": {
             "type": "array",
@@ -6071,11 +6165,12 @@
         "required": [
           "formVersion",
           "revisionVersion",
-          "organisationId",
           "recordId",
           "section",
+          "task",
           "page",
           "previousPageId",
+          "nextPageId",
           "questions",
           "answers"
         ],
@@ -6090,11 +6185,6 @@
             "description": "The concurrency token of the record's latest revision, which the page reads and writes.\nEcho it back on save.",
             "format": "uint32"
           },
-          "organisationId": {
-            "type": "integer",
-            "description": "The organisation that owns the record; used for links back to its records list.",
-            "format": "int32"
-          },
           "recordId": {
             "type": "integer",
             "description": "The record the page belongs to.",
@@ -6103,6 +6193,10 @@
           "section": {
             "description": "The section the page belongs to.",
             "$ref": "#/components/schemas/RecordPageSectionDto"
+          },
+          "task": {
+            "description": "The task the page belongs to. Its title is the page caption.",
+            "$ref": "#/components/schemas/RecordPageTaskDto"
           },
           "page": {
             "description": "The page's ID and title.",
@@ -6113,7 +6207,14 @@
               "null",
               "string"
             ],
-            "description": "The target of Back, or null on the first page."
+            "description": "The target of Back, or null on the first page of the task."
+          },
+          "nextPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The page after this one in its task, or null on the task's last page, where saving returns\nto the task list."
           },
           "questions": {
             "type": "array",
@@ -6311,10 +6412,28 @@
           },
           "title": {
             "type": "string",
-            "description": "The section title, shown as the page caption."
+            "description": "The section title."
           }
         },
-        "description": "The section a page belongs to. Its title is the page caption."
+        "description": "The section a page belongs to."
+      },
+      "RecordPageTaskDto": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title, shown as the page caption."
+          }
+        },
+        "description": "The task a page belongs to. Its title is the page caption."
       },
       "RecordProductDetailDto": {
         "required": [
@@ -6359,6 +6478,97 @@
         ],
         "type": "string",
         "description": "Represents the status of a record in the system."
+      },
+      "RecordTaskListDto": {
+        "required": [
+          "recordId",
+          "organisationId",
+          "sections"
+        ],
+        "type": "object",
+        "properties": {
+          "recordId": {
+            "type": "integer",
+            "description": "The record this task list belongs to.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used for links back to the record.",
+            "format": "int32"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordTaskListSectionDto"
+            },
+            "description": "Sections and their ordered tasks."
+          }
+        },
+        "description": "The task list for a record's latest revision."
+      },
+      "RecordTaskListSectionDto": {
+        "required": [
+          "id",
+          "title",
+          "tasks"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The section ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The section title."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordTaskListTaskDto"
+            },
+            "description": "The ordered tasks in the section."
+          }
+        },
+        "description": "A section of a record task list."
+      },
+      "RecordTaskListTaskDto": {
+        "required": [
+          "id",
+          "title",
+          "status",
+          "firstPageId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title."
+          },
+          "status": {
+            "description": "The task's status, derived from the saved answers.",
+            "$ref": "#/components/schemas/RecordTaskStatus"
+          },
+          "firstPageId": {
+            "type": "string",
+            "description": "The ID of this task's first page."
+          }
+        },
+        "description": "A task and its current status."
+      },
+      "RecordTaskStatus": {
+        "enum": [
+          "NotStarted",
+          "InProgress",
+          "Completed"
+        ],
+        "type": "string",
+        "description": "Represents the status of a task in a record's task list, derived from the answers saved on the\nrecord's latest revision."
       },
       "RecordType": {
         "enum": [
@@ -6607,7 +6817,7 @@
               "null",
               "string"
             ],
-            "description": "The next page, or null after the last page."
+            "description": "The next page in the task, or null after the task's last page."
           }
         },
         "description": "Where to go after saving a page."
@@ -7061,6 +7271,9 @@
     },
     {
       "name": "RecordForm"
+    },
+    {
+      "name": "RecordTaskList"
     },
     {
       "name": "User"
