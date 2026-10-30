@@ -24,7 +24,7 @@ public sealed class DataSeederInMemoryTests
         payload.Organisations.Count.ShouldBe(50);
         payload.Users.Count.ShouldBe(800);
         payload.Memberships.Count.ShouldBe(801); //Additional membership for dev user
-        payload.Records.Count.ShouldBe(572); // 500 synthetic records and 72 discarded ones
+        payload.Records.Count.ShouldBe(566); // 500 synthetic records and 66 discarded ones
     }
 
     [Fact]

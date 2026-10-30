@@ -9,8 +9,8 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 
 /// <summary>
-/// Fills in the start of a draft that is later discarded: the product details page in one save,
-/// then a few indication answers saved one at a time, auditing each save.
+/// Fills in the start of a draft that is later discarded: the product details from the creation
+/// page, then a few indication answers saved one at a time, auditing each save.
 /// </summary>
 internal sealed class DiscardedDraft(Faker faker, RecordRevision revision, User author)
 {
@@ -22,27 +22,34 @@ internal sealed class DiscardedDraft(Faker faker, RecordRevision revision, User 
     /// <summary>Gets the time of the latest save to the draft.</summary>
     public DateTime LastSavedAt { get; private set; } = revision.CreatedAt;
 
-    /// <summary>Saves the product details page with generated values.</summary>
+    /// <summary>Saves the creation page's product details with generated values.</summary>
     public RecordProductDetail SaveProductDetail()
     {
         RecordProductDetail productDetail = new RecordProductDetailFaker(RecordType.Medicine)
             .RuleFor(x => x.Revision, revision)
             .UseSeed(faker.Random.Int())
             .Generate();
+        string genericName = faker.Lorem.Word();
         productDetail.NamesAndIdentifiers.Add(
             new RecordNameAndIdentifier
             {
                 RecordProductDetail = productDetail,
-                Name = faker.Lorem.Word(),
+                Name = genericName,
                 NameType = NameAndIdentifierType.GenericName,
                 DisplayOrder = 1,
             }
         );
 
-        DateTime savedAt = NextSaveTime();
-        Audit("record_product_detail.record_title", productDetail.RecordTitle, savedAt);
+        // The creation page is saved with the record.
+        DateTime savedAt = revision.CreatedAt;
         Audit("record_product_detail.company_code", productDetail.CompanyCode, savedAt);
         Audit("record_product_detail.branded_name", productDetail.BrandedName, savedAt);
+        Audit("record_product_detail.record_title", productDetail.RecordTitle, savedAt);
+        Audit(
+            "record_names_and_identifiers",
+            RecordNameAndIdentifier.AuditText([genericName], []),
+            savedAt
+        );
         return productDetail;
     }
 

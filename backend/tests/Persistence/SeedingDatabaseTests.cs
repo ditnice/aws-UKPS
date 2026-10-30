@@ -36,7 +36,7 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
             await Context
                 .Records.IgnoreQueryFilters([RecordConfiguration.DiscardedFilter])
                 .CountAsync(ct)
-        ).ShouldBe(572);
+        ).ShouldBe(566);
         Organisation first = await Context.Organisations.SingleAsync(o => o.Id == 1, ct);
         first.OrganisationType.ShouldBe(OrganisationType.Internal);
 
