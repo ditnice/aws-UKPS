@@ -112,10 +112,10 @@ export type CreateRecordDto = {
      */
     recordId: number;
     /**
-     * Gets the first page of the record's content form, where the user goes next, or null when
-     * the record type has no form yet or the caller cannot edit record content.
+     * Gets whether the record type has a content form and the caller can edit it. When true, the
+     * user goes next to the record's task list.
      */
-    firstPageId: null | string;
+    canEditContent: boolean;
 };
 
 /**
@@ -916,11 +916,10 @@ export type RecordDtoMedicineRecordDto = {
      */
     reviewedAt?: null | string;
     /**
-     * Gets the first page of the record type's content form, or null when the record type has
-     * no form yet or the caller cannot edit record content. Links to it open the form for the
-     * latest revision.
+     * Gets whether the record type has a content form and the caller can edit it. When true,
+     * Update record links to the record's task list, which edits the latest revision.
      */
-    firstPageId: null | string;
+    canEditContent: boolean;
     /**
      * Gets the actions the user can take on the record, given its status and the workflow status
      * of its latest revision.
@@ -954,11 +953,10 @@ export type RecordDtoVaccineRecordDto = {
      */
     reviewedAt?: null | string;
     /**
-     * Gets the first page of the record type's content form, or null when the record type has
-     * no form yet or the caller cannot edit record content. Links to it open the form for the
-     * latest revision.
+     * Gets whether the record type has a content form and the caller can edit it. When true,
+     * Update record links to the record's task list, which edits the latest revision.
      */
-    firstPageId: null | string;
+    canEditContent: boolean;
     /**
      * Gets the actions the user can take on the record, given its status and the workflow status
      * of its latest revision.
@@ -1074,10 +1072,6 @@ export type RecordPageDto = {
      */
     revisionVersion: number;
     /**
-     * The organisation that owns the record; used for links back to its records list.
-     */
-    organisationId: number;
-    /**
      * The record the page belongs to.
      */
     recordId: number;
@@ -1090,9 +1084,14 @@ export type RecordPageDto = {
      */
     page: RecordPagePageDto;
     /**
-     * The target of Back, or null on the first page.
+     * The target of Back, or null on the first page of the task.
      */
     previousPageId: null | string;
+    /**
+     * The page after this one in its task, or null on the task's last page, where saving returns
+     * to the task list.
+     */
+    nextPageId: null | string;
     /**
      * The questions on the page, in order.
      */
@@ -1547,7 +1546,7 @@ export type SaveRecordPageCommand = {
  */
 export type SaveRecordPageDto = {
     /**
-     * The next page, or null after the last page.
+     * The next page in the task, or null after the task's last page.
      */
     nextPageId: null | string;
 };

@@ -75,7 +75,7 @@ export const fakeCreateRecordDto = (options?: Options): CreateRecordDto => {
     const f = options?.faker ?? faker;
     return {
         recordId: f.number.int(),
-        firstPageId: f.datatype.boolean() ? f.string.uuid() : null
+        canEditContent: f.datatype.boolean()
     };
 };
 
@@ -389,7 +389,7 @@ export const fakeRecordDtoVaccineRecordDto = (options?: Options): RecordDtoVacci
         recordStatus: fakeRecordStatus(options),
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
-        firstPageId: f.datatype.boolean() ? f.string.uuid() : null,
+        canEditContent: f.datatype.boolean(),
         actions: f.helpers.multiple(() => fakeRecordAction(options))
     };
 };
@@ -607,11 +607,11 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
     return {
         formVersion: f.string.sample(),
         revisionVersion: f.number.int(),
-        organisationId: f.number.int(),
         recordId: f.number.int(),
         section: fakeRecordPageSectionDto(options),
         page: fakeRecordPagePageDto(options),
         previousPageId: f.datatype.boolean() ? f.string.uuid() : null,
+        nextPageId: f.datatype.boolean() ? f.string.uuid() : null,
         questions: f.helpers.multiple(() => fakeRecordPageQuestionDto(options)),
         answers: {}
     };
@@ -1048,7 +1048,7 @@ export const fakeRecordDtoMedicineRecordDto = (options?: Options): RecordDtoMedi
         recordStatus: fakeRecordStatus(options),
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
-        firstPageId: f.datatype.boolean() ? f.string.uuid() : null,
+        canEditContent: f.datatype.boolean(),
         actions: f.helpers.multiple(() => fakeRecordAction(options))
     };
 };

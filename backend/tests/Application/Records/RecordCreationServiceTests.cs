@@ -185,12 +185,12 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(UserRole.Standard, "indication")]
-    [InlineData(UserRole.Champion, "indication")]
-    [InlineData(UserRole.Super, null)]
-    public async Task CreateRecord_FirstPageId_IsOnlyGivenToUsersWhoCanEditContent(
+    [InlineData(UserRole.Standard, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Super, false)]
+    public async Task CreateRecord_CanEditContent_IsOnlyTrueForUsersWhoCanEditContent(
         UserRole userRole,
-        string? expectedFirstPageId
+        bool expected
     )
     {
         _harness.UpdateCurrentUser(x =>
@@ -201,7 +201,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
             }
         );
         CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
-        result.ShouldBeSuccess().FirstPageId.ShouldBe(expectedFirstPageId);
+        result.ShouldBeSuccess().CanEditContent.ShouldBe(expected);
     }
 
     [Theory]

@@ -50,11 +50,11 @@ const tree = [
 const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
   revisionVersion: 4711,
-  organisationId: 3,
   recordId: 5,
   section: { id: 'indication-details', title: 'Indication details' },
   page: { id: 'indication', title: 'Indication' },
   previousPageId: null,
+  nextPageId: 'bnf-chapter',
   questions: [question({})],
   answers: { 'medicines_indication_detail.indication': null },
   ...overrides,
@@ -100,8 +100,27 @@ describe('FormPage', () => {
         }),
       ).toBeInTheDocument()
       expect(screen.getByText('Indication details')).toBeInTheDocument()
-      expect(screen.queryByRole('link', { name: 'Back' })).toBeNull()
       expect(screen.getByRole('link', { name: 'Return to tasklist' })).toBeInTheDocument()
+    })
+
+    it('goes back to the task list from the first page of a task', () => {
+      render(<FormPage page={page()} />)
+
+      expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
+        'href',
+        '/portal/records/5/tasks',
+      )
+    })
+
+    it('labels the button by whether the task has another page', () => {
+      render(<FormPage page={page()} />)
+      expect(screen.getByRole('button', { name: 'Save and continue' })).toBeInTheDocument()
+
+      cleanup()
+      render(<FormPage page={page({ nextPageId: null })} />)
+      expect(
+        screen.getByRole('button', { name: 'Save and return to task list' }),
+      ).toBeInTheDocument()
     })
 
     it('keeps a hidden label on the input of a single-question page', () => {
@@ -160,19 +179,24 @@ describe('FormPage', () => {
       })
     })
 
-    it('goes to the records list after the last page', async () => {
+    it('returns to the task list after the last page of a task', async () => {
       mocks.saveRecordFormPage.mockResolvedValue({
         data: { nextPageId: null },
         response: { ok: true, status: 200 },
       })
       render(
-        <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+        <FormPage
+          page={page({
+            nextPageId: null,
+            answers: { 'medicines_indication_detail.indication': 'x' },
+          })}
+        />,
       )
 
-      save()
+      fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
 
       await waitFor(() => {
-        expect(mocks.push).toHaveBeenCalledWith('/portal/organisations/3/records')
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/tasks')
       })
     })
 

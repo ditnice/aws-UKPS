@@ -97,9 +97,7 @@ const RecordView = async ({ organisationId, recordId, recordType }: RecordViewPr
       <ManageRecordActionBanner
         record={record}
         updateRecordHref={
-          record.firstPageId
-            ? `/portal/records/${record.recordId}/${record.firstPageId}`
-            : undefined
+          record.canEditContent ? `/portal/records/${record.recordId}/tasks` : undefined
         }
       />
 

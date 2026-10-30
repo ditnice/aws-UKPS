@@ -510,7 +510,8 @@ You do not need to regenerate the OpenAPI spec or the frontend client for a new 
 travels as data through the existing DTOs.
 
 Finally, try it locally. Create a medicine record, or open an existing one from the organisation
-records table and select **Update record**. Then step through to your page.
+records table and select **Update record**. Both open the task list: choose your task and step
+through to your page.
 
 ## Adding a new control
 

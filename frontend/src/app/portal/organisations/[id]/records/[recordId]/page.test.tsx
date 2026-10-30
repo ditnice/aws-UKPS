@@ -69,7 +69,7 @@ const medicineRecord: RecordDto = {
   organisationId: 7,
   recordStatus: 'Published',
   displayStatus: 'QAReview',
-  firstPageId: null,
+  canEditContent: false,
   actions: ['ViewTimeline'],
   recordClinicalTrials: [],
   recordProductDetail: {

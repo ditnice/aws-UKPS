@@ -4301,7 +4301,7 @@
       "CreateRecordDto": {
         "required": [
           "recordId",
-          "firstPageId"
+          "canEditContent"
         ],
         "type": "object",
         "properties": {
@@ -4310,12 +4310,9 @@
             "description": "Gets the identifier of the newly created record.",
             "format": "int32"
           },
-          "firstPageId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the first page of the record's content form, where the user goes next, or null when\nthe record type has no form yet or the caller cannot edit record content."
+          "canEditContent": {
+            "type": "boolean",
+            "description": "Gets whether the record type has a content form and the caller can edit it. When true, the\nuser goes next to the record's task list."
           }
         },
         "description": "Represents the result of creating a record."
@@ -5665,7 +5662,7 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "firstPageId",
+          "canEditContent",
           "actions"
         ],
         "properties": {
@@ -5884,12 +5881,9 @@
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
           },
-          "firstPageId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet or the caller cannot edit record content. Links to it open the form for the\nlatest revision."
+          "canEditContent": {
+            "type": "boolean",
+            "description": "Gets whether the record type has a content form and the caller can edit it. When true,\nUpdate record links to the record's task list, which edits the latest revision."
           },
           "actions": {
             "type": "array",
@@ -5907,7 +5901,7 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "firstPageId",
+          "canEditContent",
           "actions"
         ],
         "properties": {
@@ -5943,12 +5937,9 @@
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
           },
-          "firstPageId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet or the caller cannot edit record content. Links to it open the form for the\nlatest revision."
+          "canEditContent": {
+            "type": "boolean",
+            "description": "Gets whether the record type has a content form and the caller can edit it. When true,\nUpdate record links to the record's task list, which edits the latest revision."
           },
           "actions": {
             "type": "array",
@@ -6174,11 +6165,11 @@
         "required": [
           "formVersion",
           "revisionVersion",
-          "organisationId",
           "recordId",
           "section",
           "page",
           "previousPageId",
+          "nextPageId",
           "questions",
           "answers"
         ],
@@ -6192,11 +6183,6 @@
             "type": "integer",
             "description": "The concurrency token of the record's latest revision, which the page reads and writes.\nEcho it back on save.",
             "format": "uint32"
-          },
-          "organisationId": {
-            "type": "integer",
-            "description": "The organisation that owns the record; used for links back to its records list.",
-            "format": "int32"
           },
           "recordId": {
             "type": "integer",
@@ -6216,7 +6202,14 @@
               "null",
               "string"
             ],
-            "description": "The target of Back, or null on the first page."
+            "description": "The target of Back, or null on the first page of the task."
+          },
+          "nextPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The page after this one in its task, or null on the task's last page, where saving returns\nto the task list."
           },
           "questions": {
             "type": "array",
@@ -6801,7 +6794,7 @@
               "null",
               "string"
             ],
-            "description": "The next page, or null after the last page."
+            "description": "The next page in the task, or null after the task's last page."
           }
         },
         "description": "Where to go after saving a page."

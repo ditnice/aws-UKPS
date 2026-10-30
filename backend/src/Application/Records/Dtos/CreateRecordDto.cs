@@ -11,8 +11,8 @@ public sealed record CreateRecordDto
     public required int RecordId { get; init; }
 
     /// <summary>
-    /// Gets the first page of the record's content form, where the user goes next, or null when
-    /// the record type has no form yet or the caller cannot edit record content.
+    /// Gets whether the record type has a content form and the caller can edit it. When true, the
+    /// user goes next to the record's task list.
     /// </summary>
-    public required string? FirstPageId { get; init; }
+    public required bool CanEditContent { get; init; }
 }

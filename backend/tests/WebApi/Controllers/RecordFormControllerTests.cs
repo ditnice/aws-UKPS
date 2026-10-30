@@ -258,7 +258,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         {
             FormVersion = "2026.10.4",
             RevisionVersion = 42,
-            OrganisationId = 1,
             RecordId = 5,
             Section = new RecordPageSectionDto
             {
@@ -267,6 +266,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             },
             Page = new RecordPagePageDto { Id = "indication", Title = "Indication" },
             PreviousPageId = null,
+            NextPageId = "bnf-chapter",
             Questions =
             [
                 new RecordPageQuestionDto

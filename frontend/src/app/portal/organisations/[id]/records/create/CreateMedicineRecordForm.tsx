@@ -66,10 +66,10 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       const data = createRecordCommandSchema.parse(value)
       const { data: created, error, response } = await createRecord({ body: data })
       if (response?.ok) {
-        // Go straight into the record's content form, when its type has one.
+        // Go to the record's task list, when its type has a content form the user can edit.
         router.push(
-          created?.firstPageId
-            ? `/portal/records/${created.recordId}/${created.firstPageId}`
+          created?.canEditContent
+            ? `/portal/records/${created.recordId}/tasks`
             : `/portal/organisations/${organisationId}/records`,
         )
         return

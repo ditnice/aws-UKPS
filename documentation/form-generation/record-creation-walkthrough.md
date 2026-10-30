@@ -58,10 +58,11 @@ answers remain, and `NotStarted` when it has no saved answers.
 
 **Request:** `POST /records` from `/portal/organisations/3/records/create`.
 
-**Response:** `200 { "recordId": 5, "firstPageId": "indication" }`, then the
-browser goes to `/portal/records/5/indication`. (`firstPageId` is `null` for a record
-type with no form, or for a user who cannot edit record content, and the browser then goes to
-the records list.)
+**Response:** `200 { "recordId": 5, "canEditContent": true }`, then the
+browser goes to the task list at `/portal/records/5/tasks`. Selecting the **Indication
+details** task opens `/portal/records/5/indication`. (`canEditContent` is `false` for a record type
+with no form, or for a user who cannot edit record content, and the browser then goes to the
+records list.)
 
 All of the following are written in one transaction at `T0`.
 
@@ -270,7 +271,8 @@ The content table stores the enum's integer; the audit stores its name.
 **Request:** `PUT /records/5/pages/rare-disease`, with answers
 `{ "medicines_indication_detail.indication_is_rare_disease": "No" }`.
 
-**Response:** `{ "nextPageId": null }`, and the browser goes to `/portal/organisations/3/records`.
+**Response:** `{ "nextPageId": null }`. This is the last page of the task, so its button reads
+**Save and return to task list**, and the browser goes back to `/portal/records/5/tasks`.
 
 | Table | Change |
 |---|---|
@@ -326,8 +328,8 @@ The audit query should return six rows, one per page in order.
 
 ## Coming back through Update record
 
-Open the record from **View** in the organisation records table, select **Update record**, and
-step through the pages:
+Open the record from **View** in the organisation records table, select **Update record** to open the
+task list, then choose the task and step through its pages:
 
 - **Saving a page without changing it** writes nothing at all: no answer update, no audit rows,
   and `record_revisions.xmin` stays the same.

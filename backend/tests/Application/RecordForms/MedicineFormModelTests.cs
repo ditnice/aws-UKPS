@@ -86,7 +86,7 @@ public class MedicineFormModelTests
     {
         FormModel model = Model;
 
-        model.PreviousPage(model.FirstPage).ShouldBeNull();
+        model.PreviousPage(model.Pages[0]).ShouldBeNull();
         model.NextPage(model.FindPage("indication")!)!.Id.ShouldBe("bnf-chapter");
         model.PreviousPage(model.FindPage("bnf-chapter")!)!.Id.ShouldBe("indication");
         model.NextPage(model.FindPage("rare-disease")!).ShouldBeNull();
