@@ -14,12 +14,7 @@ internal sealed class SeedDataWriter
     public async Task Write(SeedingDataPayload seedingData, CancellationToken cancellationToken)
     {
         await ClearExistingDatabase(cancellationToken);
-
-        foreach (var entity in seedingData.GetAllEntities())
-        {
-            await _appDbContext.AddAsync(entity, cancellationToken);
-        }
-        await _appDbContext.SaveChangesAsync(cancellationToken);
+        await seedingData.SaveAsync(_appDbContext, cancellationToken);
     }
 
     private async Task ClearExistingDatabase(CancellationToken cancellationToken)
