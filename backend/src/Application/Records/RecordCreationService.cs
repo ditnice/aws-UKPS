@@ -81,6 +81,9 @@ internal class RecordCreationService : IRecordCreationService
         };
 
         await _dbContext.AddAsync(recordProductDetail, cancellationToken);
+        _dbContext.RecordFieldAudits.AddRange(
+            CreateFieldAudits(command, record, revision, time, currentUser)
+        );
         await _dbContext.SaveChangesAsync(cancellationToken);
         return CreateRecordResult.Ok(
             new CreateRecordDto()
@@ -119,5 +122,42 @@ internal class RecordCreationService : IRecordCreationService
                 }
         );
         return genericNames.Concat(otherIdentifiers).ToArray();
+    }
+
+    /// <summary>
+    /// Audits each field answered on the creation page as a change from null. Unanswered fields
+    /// are not audited.
+    /// </summary>
+    private static RecordFieldAudit[] CreateFieldAudits(
+        CreateRecordCommand command,
+        Record record,
+        RecordRevision revision,
+        DateTime time,
+        User currentUser
+    )
+    {
+        (string FieldPath, string? Value)[] fields =
+        [
+            ("record_product_detail.company_code", command.CompanyCode),
+            ("record_product_detail.branded_name", command.BrandedName),
+            ("record_product_detail.record_title", command.RecordTitle),
+            (
+                "record_name_and_identifier",
+                RecordNameAndIdentifier.AuditText(command.GenericNames, command.OtherIdentifiers)
+            ),
+        ];
+        return fields
+            .Where(static field => field.Value is not null)
+            .Select(field => new RecordFieldAudit
+            {
+                Record = record,
+                Revision = revision,
+                FieldPath = field.FieldPath,
+                OldValue = null,
+                NewValue = field.Value,
+                ChangedByUser = currentUser,
+                ChangedAt = time,
+            })
+            .ToArray();
     }
 }

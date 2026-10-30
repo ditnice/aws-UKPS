@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
@@ -12,4 +14,21 @@ internal sealed class RecordNameAndIdentifier
 
     // Navigation
     public RecordProductDetail? RecordProductDetail { get; set; }
+
+    /// <summary>
+    /// The field audit value of a revision's names and identifiers: one JSON object keyed by
+    /// <see cref="NameAndIdentifierType"/> member name in a fixed order, each type's names in
+    /// display order, so the same collection always serialises the same way.
+    /// </summary>
+    public static string AuditText(
+        IEnumerable<string> genericNames,
+        IEnumerable<string> otherIdentifiers
+    ) => JsonSerializer.Serialize(new AuditValue([.. genericNames], [.. otherIdentifiers]));
+
+    private sealed record AuditValue(
+        [property: JsonPropertyName(nameof(NameAndIdentifierType.GenericName))]
+            string[] GenericName,
+        [property: JsonPropertyName(nameof(NameAndIdentifierType.OtherIdentifier))]
+            string[] OtherIdentifier
+    );
 }

@@ -103,7 +103,17 @@ All of the following are written in one transaction at `T0`.
 | `performed_by` / `performed_at` | `12` / `T0` |
 | `note` | `null` |
 
-No `record_field_audit` rows are written for record creation.
+### `record_field_audit` (1 row per answered field inserted)
+
+Each row has `record_id = 5`, `revision_id = 7`, `old_value = null`, `changed_by = 12` and
+`changed_at = T0`. A blank branded name is not audited.
+
+| `field_path` | `new_value` |
+|---|---|
+| `record_product_detail.company_code` | `GS-7977` |
+| `record_product_detail.branded_name` | `Sovaldi` |
+| `record_product_detail.record_title` | `Chronic hepatitis C in adults` |
+| `record_name_and_identifier` | `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}` |
 
 ### `record_product_details` (1 row inserted)
 
@@ -143,6 +153,8 @@ select * from ukps.record_names_and_identifiers
 where record_product_detail_id =
   (select id from ukps.record_product_details where revision_id = :revision_id)
 order by name_type, display_order;
+select field_path, new_value from ukps.record_field_audit
+where revision_id = :revision_id order by id;
 -- Expect no rows:
 select * from ukps.medicines_indication_details where revision_id = :revision_id;
 ```
@@ -286,7 +298,7 @@ After step 6, for record `5`:
 | `medicines_indication_details` | 1 (created in step 1), with `indication`, `bnf_chapter_id = 40`, `indication_is_paediatric = 2`, `indication_is_cancer = 1`, `indication_is_rare_disease = 1` |
 | `medicines_indication_detail_therapeutic_areas` | 1 (`51`) |
 | `record_events` | 1, the `event_type = 0` creation event |
-| `record_field_audit` | 6, one per page, in page order |
+| `record_field_audit` | 10: 4 from record creation, then 6, one per page, in page order |
 
 The record stays `Unpublished` and the revision stays `Draft`; answering the pages does not
 submit anything.
@@ -316,7 +328,8 @@ where revision_id = :revision_id
 order by id;
 ```
 
-The audit query should return six rows, one per page in order.
+The audit query should return ten rows: the four from record creation, then one per page in
+order.
 
 ## Coming back through Update record
 

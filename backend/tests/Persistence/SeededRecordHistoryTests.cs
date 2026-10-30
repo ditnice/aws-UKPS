@@ -261,7 +261,7 @@ public sealed class SeededRecordHistoryTests
             foreach (RecordFieldAudit audit in seeded.FieldAudits)
             {
                 activeMembers[seeded.Record.Organisation!].ShouldContain(audit.ChangedByUser!);
-                audit.ChangedAt.ShouldBeGreaterThan(audit.Revision!.CreatedAt);
+                audit.ChangedAt.ShouldBeGreaterThanOrEqualTo(audit.Revision!.CreatedAt);
                 audit.ChangedAt.ShouldBeLessThan(SubmittedAt(audit.Revision) ?? DateTime.MaxValue);
             }
         }
@@ -281,6 +281,46 @@ public sealed class SeededRecordHistoryTests
                     audits[revision].ShouldNotBeEmpty();
                 }
             }
+        }
+    }
+
+    [Fact]
+    public void FieldAudits_ShouldRecordTheCreationPageWhenTheRecordIsCreated()
+    {
+        ILookup<RecordRevision, RecordFieldAudit> audits = AuditsByRevision();
+        foreach (Record record in Payload.Records)
+        {
+            RecordRevision first = record.Revisions.First();
+            RecordProductDetail productDetail = Payload
+                .SeededRecords.Single(r => r.Record == record)
+                .RevisionContent.OfType<RecordProductDetail>()
+                .First(d => d.Revision == first);
+            string[] NamesOfType(NameAndIdentifierType type) =>
+                [
+                    .. productDetail
+                        .NamesAndIdentifiers.Where(n => n.NameType == type)
+                        .OrderBy(n => n.DisplayOrder)
+                        .Select(n => n.Name),
+                ];
+
+            Dictionary<string, string?> expected = new(StringComparer.Ordinal)
+            {
+                ["record_product_detail.company_code"] = productDetail.CompanyCode,
+                ["record_product_detail.record_title"] = productDetail.RecordTitle,
+                ["record_name_and_identifier"] = RecordNameAndIdentifier.AuditText(
+                    NamesOfType(NameAndIdentifierType.GenericName),
+                    NamesOfType(NameAndIdentifierType.OtherIdentifier)
+                ),
+            };
+            if (productDetail.BrandedName is not null)
+            {
+                expected["record_product_detail.branded_name"] = productDetail.BrandedName;
+            }
+
+            audits[first]
+                .Where(a => a.ChangedAt == record.CreatedAt)
+                .ToDictionary(a => a.FieldPath, a => a.NewValue, StringComparer.Ordinal)
+                .ShouldBe(expected, ignoreOrder: true);
         }
     }
 

@@ -1,4 +1,5 @@
 using System.Globalization;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using static UKPS.Api.Persistence.Data.Seeding.SyntheticData.SyntheticRecord;
 
@@ -125,7 +126,8 @@ internal static class RecordContentHistory
         SyntheticRegulatoryAccessAndLaunch regulatory = record.RegulatoryAccessAndLaunchInformation;
         return new[]
         {
-            ProductAndIndicationFields(record),
+            CreationPageFields(record.ProductRecordDetails.NamesAndIdentifiers),
+            IndicationFields(record),
             MhraFields(regulatory.MhraProcedureAndDates),
             HtaAndDesignationFields(regulatory),
             ServiceReadinessFields(record.ServiceReadinessInformation),
@@ -134,17 +136,27 @@ internal static class RecordContentHistory
             .ToDictionary(field => field.Path, field => field.Value, StringComparer.Ordinal);
     }
 
-    private static (string Path, string? Value)[] ProductAndIndicationFields(SyntheticRecord record)
+    /// <summary>The fields answered on the page that creates the record, saved with the record.</summary>
+    public static IReadOnlyList<(string Path, string? Value)> CreationPageFields(
+        SyntheticNamesAndIdentifiers names
+    ) =>
+        [
+            ("record_product_detail.company_code", names.CompanyCode),
+            ("record_product_detail.branded_name", names.BrandedName),
+            ("record_product_detail.record_title", names.RecordTitle),
+            (
+                "record_name_and_identifier",
+                RecordNameAndIdentifier.AuditText(names.GenericNames, names.OtherIdentifiers)
+            ),
+        ];
+
+    private static (string Path, string? Value)[] IndicationFields(SyntheticRecord record)
     {
-        SyntheticNamesAndIdentifiers names = record.ProductRecordDetails.NamesAndIdentifiers;
         SyntheticIndicationDetails indication = record
             .IndicationAndDevelopmentInformation
             .IndicationDetails;
         return
         [
-            ("record_product_detail.record_title", names.RecordTitle),
-            ("record_product_detail.company_code", names.CompanyCode),
-            ("record_product_detail.branded_name", names.BrandedName),
             ("medicines_indication_detail.indication", indication.Indication),
             ("medicines_indication_detail.bnf_chapter", indication.BnfChapter?.Label),
             (
