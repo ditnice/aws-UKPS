@@ -442,7 +442,7 @@ sequenceDiagram
     B->>P: INSERT record, revision 1 (Draft), product detail row, RecordCreated event
     P-->>B: OK
     B-->>F: 200 { recordId, canEditContent }
-    F->>F: router.push(/portal/records/{recordId}/tasks)
+    F->>F: router.push(/portal/records/{recordId}/task-list)
 ```
 
 The record details page (`/portal/organisations/{id}/records/{recordId}`) links its **Update
@@ -524,7 +524,7 @@ sequenceDiagram
 |---|---|---|
 | GET | `/records/{recordId}/pages/{pageId}` | Page structure, rules, options and current answers |
 | PUT | `/records/{recordId}/pages/{pageId}` | Validate and save every answer on the page |
-| GET | `/records/{recordId}/tasks` | Sections and tasks with titles, answer status and each task's first-page ID |
+| GET | `/records/{recordId}/task-list` | Sections and tasks with titles, answer status and each task's first-page ID |
 
 The task-list endpoint returns sections in form order and tasks in section order. Each task has a
 `firstPageId` for its link and a status computed from saved answers on the record's latest
@@ -539,7 +539,7 @@ revision:
 The endpoint is read-only. Missing and inaccessible records both return `404`, so record access
 is not disclosed.
 
-Example `GET /records/5/tasks` response:
+Example `GET /records/5/task-list` response:
 
 ```json
 {

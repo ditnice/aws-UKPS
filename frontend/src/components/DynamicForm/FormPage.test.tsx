@@ -115,7 +115,7 @@ describe('FormPage', () => {
 
       expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
         'href',
-        '/portal/records/5/tasks',
+        '/portal/records/5/task-list',
       )
     })
 
@@ -203,7 +203,7 @@ describe('FormPage', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
 
       await waitFor(() => {
-        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/tasks')
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
       })
     })
 

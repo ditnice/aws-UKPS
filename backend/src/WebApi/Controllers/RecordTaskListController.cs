@@ -10,7 +10,7 @@ namespace UKPS.Api.WebApi.Controllers;
 /// <summary>Provides the section and task list for a record.</summary>
 [Authorize]
 [ApiController]
-[Route("records/{recordId:int}/tasks")]
+[Route("records/{recordId:int}/task-list")]
 public sealed class RecordTaskListController(IRecordTaskListQueryService queryService)
     : ControllerBase
 {

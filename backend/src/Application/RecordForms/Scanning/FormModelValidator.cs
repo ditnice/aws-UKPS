@@ -20,7 +20,7 @@ internal static partial class FormModelValidator
 
     // Page IDs are the last segment of /portal/records/{recordId}/{pageId}, so a page cannot take
     // the ID of a fixed route beside them.
-    private const string TaskListRoute = "tasks";
+    private const string TaskListRoute = "task-list";
 
     public static IReadOnlyList<string> Validate(
         IReadOnlyList<EntityDeclaration> entities,

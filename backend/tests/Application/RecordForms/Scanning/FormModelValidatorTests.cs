@@ -68,7 +68,7 @@ public class FormModelValidatorTests
         "BrokenEntity.BadTask declares task 'Bad Task' with a badly formed ID or a blank title."
     )]
     [InlineData(
-        "BrokenEntity.ReservedPage declares page 'tasks', which is reserved for the task list."
+        "BrokenEntity.ReservedPage declares page 'task-list', which is reserved for the task list."
     )]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {

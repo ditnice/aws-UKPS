@@ -2861,7 +2861,7 @@ export type GetRecordTaskListData = {
         recordId: number;
     };
     query?: never;
-    url: '/records/{recordId}/tasks';
+    url: '/records/{recordId}/task-list';
 };
 
 export type GetRecordTaskListErrors = {

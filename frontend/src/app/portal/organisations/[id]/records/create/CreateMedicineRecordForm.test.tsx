@@ -409,7 +409,7 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/tasks')
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
       })
     })
 

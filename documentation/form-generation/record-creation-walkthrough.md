@@ -10,7 +10,7 @@ with SQL to check them. Use it to confirm the flow behaves as intended.
 
 For the design behind it, see the [high-level design](high-level-design.md).
 
-The record task list is available at `GET /records/{recordId}/tasks`. It reads the latest revision
+The record task list is available at `GET /records/{recordId}/task-list`. It reads the latest revision
 and returns the form's sections and tasks, including each task's first page and a status derived
 from saved answers. This read does not write to the database. A task is `Completed` when all its
 required questions have answers, `InProgress` when it has at least one answer but required
@@ -59,7 +59,7 @@ answers remain, and `NotStarted` when it has no saved answers.
 **Request:** `POST /records` from `/portal/organisations/3/records/create`.
 
 **Response:** `200 { "recordId": 5, "canEditContent": true }`, then the
-browser goes to the task list at `/portal/records/5/tasks`. Selecting the **Indication
+browser goes to the task list at `/portal/records/5/task-list`. Selecting the **Indication
 details** task opens `/portal/records/5/indication`. (`canEditContent` is `false` for a record type
 with no form, or for a user who cannot edit record content, and the browser then goes to the
 records list.)
@@ -272,7 +272,7 @@ The content table stores the enum's integer; the audit stores its name.
 `{ "medicines_indication_detail.indication_is_rare_disease": "No" }`.
 
 **Response:** `{ "nextPageId": null }`. This is the last page of the task, so its button reads
-**Save and return to task list**, and the browser goes back to `/portal/records/5/tasks`.
+**Save and return to task list**, and the browser goes back to `/portal/records/5/task-list`.
 
 | Table | Change |
 |---|---|

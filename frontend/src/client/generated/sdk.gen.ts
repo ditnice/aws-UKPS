@@ -226,7 +226,7 @@ export const saveRecordFormPage = <ThrowOnError extends boolean = false>(options
 /**
  * Retrieves the record's sections, task titles, statuses and first-page links.
  */
-export const getRecordTaskList = <ThrowOnError extends boolean = false>(options: Options<GetRecordTaskListData, ThrowOnError>): RequestResult<GetRecordTaskListResponses, GetRecordTaskListErrors, ThrowOnError> => (options.client ?? client).get<GetRecordTaskListResponses, GetRecordTaskListErrors, ThrowOnError>({ url: '/records/{recordId}/tasks', ...options });
+export const getRecordTaskList = <ThrowOnError extends boolean = false>(options: Options<GetRecordTaskListData, ThrowOnError>): RequestResult<GetRecordTaskListResponses, GetRecordTaskListErrors, ThrowOnError> => (options.client ?? client).get<GetRecordTaskListResponses, GetRecordTaskListErrors, ThrowOnError>({ url: '/records/{recordId}/task-list', ...options });
 
 /**
  * Gets the information for the currently authenticated user.

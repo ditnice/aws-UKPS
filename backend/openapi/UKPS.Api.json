@@ -2736,7 +2736,7 @@
         }
       }
     },
-    "/records/{recordId}/tasks": {
+    "/records/{recordId}/task-list": {
       "get": {
         "tags": [
           "RecordTaskList"

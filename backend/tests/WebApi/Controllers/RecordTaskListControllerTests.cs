@@ -20,7 +20,7 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private const string TaskListUrl = "/records/5/tasks";
+    private const string TaskListUrl = "/records/5/task-list";
 
     private readonly IRecordTaskListQueryService _mockQueryService =
         Substitute.For<IRecordTaskListQueryService>();
@@ -83,7 +83,7 @@ public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory
             .Returns(GetRecordTaskListResult.Err(new GetRecordTaskListError.NotFound()));
 
         HttpResponseMessage inaccessible = await _client.GetAsync(Url(TaskListUrl), Ct);
-        HttpResponseMessage missing = await _client.GetAsync(Url("/records/6/tasks"), Ct);
+        HttpResponseMessage missing = await _client.GetAsync(Url("/records/6/task-list"), Ct);
 
         inaccessible.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);

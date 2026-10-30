@@ -472,7 +472,7 @@ reports every problem in one exception.
 |---|---|
 | Coverage | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation |
 | Pairing | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]` |
-| IDs | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `tasks` |
+| IDs | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list` |
 | Agreement | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title or order. A page spans tasks |
 | Order | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order` |
 | Structure | A section has no pages, or a page has no questions |
