@@ -13,6 +13,11 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 internal static class RecordContentHistory
 {
     /// <summary>Phrases that introduce the population an indication applies to.</summary>
+    private static readonly JsonSerializerOptions _dateAuditJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
     private static readonly string[] _populationPhrases =
     [
         " in adult",
@@ -507,13 +512,27 @@ internal static class RecordContentHistory
         return result;
     }
 
+    /// <summary>
+    /// A date's audit value: its contents as a JSON object, never its <c>regulatory_dates</c> ID,
+    /// which changes on every copy-forward.
+    /// </summary>
     private static string? Format(SyntheticRegulatoryDate? date) =>
         date is null
             ? null
-            : string.Create(
-                CultureInfo.InvariantCulture,
-                $"{date.DateValue:yyyy-MM-dd} ({date.DatePrecision})"
+            : JsonSerializer.Serialize(
+                new DateAuditValue(
+                    date.DatePrecision.ToString(),
+                    date.DateValue.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    date.IsConfidential
+                ),
+                _dateAuditJsonOptions
             );
+
+    private sealed record DateAuditValue(
+        string DatePrecision,
+        string DateValue,
+        bool IsConfidential
+    );
 
     private sealed class Disclosure(IReadOnlySet<string> unknownFields)
     {
