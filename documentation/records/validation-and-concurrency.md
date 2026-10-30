@@ -34,12 +34,12 @@ Every page save goes through one service, in one transaction. It starts by locki
 flowchart TD
     S([Save and continue]) --> BV{Page rules pass<br/>in browser?}
     BV -- No --> E1[Error summary. Nothing sent.]
-    BV -- Yes --> AV{Page rules pass<br/>in API?}
-    AV -- No --> E2[400 with field errors]
-    AV -- Yes --> L[Lock record row]
+    BV -- Yes --> L[Lock record row]
     L --> ED{Record in an <br/>editable state?}
     ED -- No --> E3[409 record_not_editable]
-    ED -- Yes --> T["Target revision:<br/>the draft, or the latest<br/>published or rejected revision"]
+    ED -- Yes --> AV{Page rules pass<br/>in API?}
+    AV -- No --> E2[400 with field errors]
+    AV -- Yes --> T["Target revision:<br/>the draft, or the latest<br/>published or rejected revision"]
     T --> H{pageHash matches<br/>the target?}
     H -- No --> E4[409 page_changed]
     H -- Yes --> DR{Draft exists?}
@@ -59,7 +59,7 @@ The flow is the same. On a page with several questions:
 
 - page rules include the rules between fields on that page
 - answers to questions that are now hidden are set to null, and each cleared answer gets its own audit row
-- child rows, such as multi-select answers, are deleted and inserted again
+- child rows, such as multi-select answers, are saved by set difference: rows for added values are inserted and rows for removed values are deleted
 - a change to *any* field on the page blocks the save, even one this user didn't edit, because they are confirming the whole page
 
 <br>
@@ -78,12 +78,18 @@ Cross-page rules are checked on the check your answers page and prevent submissi
 
 ## Check your answers and submit
 
-Loading check your answers reads the whole draft, runs every check and calculates the cyaHash. Submitting repeats the checks under the lock:
+Anyone in the organisation can edit the draft at any time, so a colleague may save a change after check your answers loaded. Without a check, Submit would send QA answers the submitter never saw, or for a vaccine, publish them.
+
+The record submitted must be exactly the record the user reviewed. This is done with the cyaHash: a fingerprint of the whole revision, taken when check your answers loads. Submit sends it back and the API recalculates it under the lock. If anything in the revision has changed, the submission is blocked with `409 record_changed`, and the user reloads check your answers to see the change before submitting again.
+
+Loading check your answers also runs every check, and submitting runs them again under the lock:
 
 ```mermaid
 flowchart TD
     S([Submit with cyaHash]) --> L[Lock record row and draft]
-    L --> D{Still a draft, and<br/>cyaHash matches?}
+    L --> ST{Record in a<br/>submittable state?}
+    ST -- No --> E0[409 record_not_editable]
+    ST -- Yes --> D{cyaHash matches?}
     D -- No --> E1[409 record_changed.<br/>Reload check your answers]
     D -- Yes --> C{All checks pass?}
     C -- No --> E2[422. Back to check your<br/>answers with the errors]
@@ -94,6 +100,7 @@ flowchart TD
     V --> OK
 ```
 
+- **Submittable** means [status management](status-management.md) permits Submit: the latest revision is a draft and the record is unpublished or published. A draft on an on-hold or archived record can't be submitted.
 - **Checks run again even if the hash matches.** Date-based rules can change overnight when the data hasn't.
 - **The revision ID is part of the cyaHash.** If a colleague submitted the draft, QA rejected it and a new draft ended up with the same answers, the user hasn't seen the rejection, so their submission is blocked.
 - **Vaccines skip QA review.** The status changes on publication follow the [lifecycle](lifecycle.md#stage-8-qa-approves), including a status history row the first time the record is published.

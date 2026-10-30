@@ -110,7 +110,29 @@ Each table shows one row per database row written, with every column.
 - **Inserted** rows show the values written.
 - **Updated** rows show the whole existing row, with each changed value as ~~old~~ new. Only those columns are written, and the rest of the row is untouched.
 
-Enum columns store integers, but the tables show the member name in snake_case (for example `record_status` `unpublished` = 0).
+Enum columns store integers, but the tables show the member name in snake_case (for example `record_status` `unpublished` = 0). Audit values are text, so `record_field_audit` rows show them exactly as stored (see [Audit field paths and values](#audit-field-paths-and-values)).
+
+<br>
+
+### Audit field paths and values
+
+`field_path` is the question's `FormField` ID, which is also its payload and validation error key. It is a public contract, so a released ID never changes.
+
+- **A column** is `<entity>.<column>`, with the entity's class name in snake_case (singular, unlike the table name), for example `medicines_indication_detail.bnf_chapter_id`.
+- **A collection** of child or junction rows is the child entity's name alone, for example `medicines_indication_detail_therapeutic_area` or `record_name_and_identifier`.
+
+`old_value` and `new_value` hold the answer as the form API sends it:
+
+| Answer | Audit value | Example |
+| --- | --- | --- |
+| Not answered, including an empty multi-select | NULL | |
+| Text | The trimmed text | `Chronic hepatitis C virus infection in adults` |
+| Enum | The C# member name | `ExclusivelyAdults`, `Unknown` |
+| Reference data | The ID in invariant digits | `5` |
+| Multi-select (flags enum or junction) | A JSON array of member names or IDs as strings, sorted ordinally | `["Nice","Smc"]`, `["14","22"]` |
+| Collection or date | A compact JSON object with snake_case field names, in a fixed key order, using the rules above for values | `{"date_precision":"EstimatedQuarter","date_value":"2026-07-01","is_confidential":false}` |
+
+Names and identifiers are keyed by `NameAndIdentifierType` member name, with each type's names in `display_order`, because their order is part of the answer.
 
 <br>
 
@@ -118,7 +140,7 @@ Enum columns store integers, but the tables show the member name in snake_case (
 
 - Every save inserts one audit row per field whose value changed. Unchanged fields get no row, a save that changes nothing writes no rows, and rows are never updated.
 - `old_value` is the value in the database at save time, not the value the client loaded.
-- `NULL` means "not answered" and `unknown` is an answer, so `NULL → unknown` is a change and gets a row.
+- `NULL` means "not answered" and `Unknown` is an answer, so `NULL → Unknown` is a change and gets a row.
 - A copy-forward writes **no** audit rows. Every audit row on a revision is therefore an edit made on that revision.
 
 <br>
@@ -181,7 +203,7 @@ A pharma user (7) opens the "Add new record" form, completes the first page (pro
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 1 | 1 | `record_product_detail.company_code` | NULL | `ACM-0042` | 7 | 2026-01-10T09:00:00Z |
 | 2 | 1 | 1 | `record_product_detail.record_title` | NULL | `Chronic hepatitis C in adults` | 7 | 2026-01-10T09:00:00Z |
-| 3 | 1 | 1 | `record_names_and_identifiers` | NULL | `{"generic_name": ["ledipasvir", "sofosbuvir"], "other_identifier": ["PF-04965842"]}` | 7 | 2026-01-10T09:00:00Z |
+| 3 | 1 | 1 | `record_name_and_identifier` | NULL | `{"GenericName":["ledipasvir","sofosbuvir"],"OtherIdentifier":["PF-04965842"]}` | 7 | 2026-01-10T09:00:00Z |
 
 > [!NOTE]
 > Only fields that changed are audited. `branded_name` went from NULL to NULL, so it has no row. When a page holds several questions, only the ones that changed get rows.
@@ -236,13 +258,13 @@ Everything stays on revision 1. Each section table has a unique index on `revisi
 | --- | --- | --- | --- |
 | 4 | `medicines_indication_detail.indication` | NULL | `Chronic hepatitis C virus infection in adults` |
 | 5 | `medicines_indication_detail.bnf_chapter_id` | NULL | `5` |
-| 6 | `medicines_indication_detail.indication_is_paediatric` | NULL | `exclusively_adults` |
-| 7 | `medicines_indication_detail.indication_is_cancer` | NULL | `no` |
-| 8 | `medicines_indication_detail.indication_is_rare_disease` | NULL | `no` |
+| 6 | `medicines_indication_detail.indication_is_paediatric` | NULL | `ExclusivelyAdults` |
+| 7 | `medicines_indication_detail.indication_is_cancer` | NULL | `No` |
+| 8 | `medicines_indication_detail.indication_is_rare_disease` | NULL | `No` |
 | 9 | `medicines_indication_detail.formulation_type_id` | NULL | `3` |
 | 10 | `medicines_indication_detail.presentation` | NULL | `90 mg / 400 mg flim-coated tablet` |
-| 11 | `medicines_indication_detail.medicine_technology_status` | NULL | `["new_chemical_or_biological_entity"]` |
-| 12 | `medicines_indication_detail_therapeutic_areas` | NULL | `{"therapeutic_area_id": [14]}` |
+| 11 | `medicines_indication_detail.medicine_technology_status` | NULL | `["NewChemicalOrBiologicalEntity"]` |
+| 12 | `medicines_indication_detail_therapeutic_area` | NULL | `["14"]` |
 
 <br>
 
@@ -276,12 +298,12 @@ Everything stays on revision 1. Each section table has a unique index on `revisi
 
 | id | field_path | old_value | new_value |
 | --- | --- | --- | --- |
-| 13 | `record_mhra_date.uk_submission_date` | NULL | `{"date_precision": "estimated_quarter", "date_value": "2026-07-01", "is_confidential": false}` |
-| 14 | `record_mhra_date.uk_conditional_approval_anticipated` | NULL | `unknown` |
-| 15 | `record_hta.medicine_hta_submission_intended` | NULL | `yes` |
-| 16 | `record_hta.medicine_hta_bodies` | NULL | `["nice", "smc"]` |
-| 17 | `record_hta.hta_nice_aligned_pathway` | NULL | `unknown` |
-| 18 | `record_hta.uk_launch_date` | NULL | `{"date_precision": "estimated_month", "date_value": "2027-04-01", "is_confidential": true}` |
+| 13 | `record_mhra_date.uk_submission_date` | NULL | `{"date_precision":"EstimatedQuarter","date_value":"2026-07-01","is_confidential":false}` |
+| 14 | `record_mhra_date.uk_conditional_approval_anticipated` | NULL | `Unknown` |
+| 15 | `record_hta.medicine_hta_submission_intended` | NULL | `Yes` |
+| 16 | `record_hta.medicine_hta_bodies` | NULL | `["Nice","Smc"]` |
+| 17 | `record_hta.hta_nice_aligned_pathway` | NULL | `Unknown` |
+| 18 | `record_hta.uk_launch_date` | NULL | `{"date_precision":"EstimatedMonth","date_value":"2027-04-01","is_confidential":true}` |
 
 > [!NOTE]
 > Date audit values hold the date's contents, never its `regulatory_dates.id`, because that ID changes on every copy-forward.
@@ -337,8 +359,8 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 
 | id | field_path | old_value | new_value |
 | --- | --- | --- | --- |
-| 20 | `record_hta.medicine_hta_bodies` | `["nice", "smc"]` | `["nice", "smc", "awmsg"]` |
-| 21 | `record_hta.uk_launch_date` | `{"date_precision": "estimated_month", "date_value": "2027-04-01", "is_confidential": true}` | `{"date_precision": "estimated_month", "date_value": "2027-05-01", "is_confidential": true}` |
+| 20 | `record_hta.medicine_hta_bodies` | `["Nice","Smc"]` | `["Awmsg","Nice","Smc"]` |
+| 21 | `record_hta.uk_launch_date` | `{"date_precision":"EstimatedMonth","date_value":"2027-04-01","is_confidential":true}` | `{"date_precision":"EstimatedMonth","date_value":"2027-05-01","is_confidential":true}` |
 
 > [!WARNING]
 > - **`old_value` comes from the database.** It is user 7's persisted value, so compute it on the server inside the save transaction.
@@ -372,8 +394,8 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 
 | id | field_path | old_value | new_value |
 | --- | --- | --- | --- |
-| 22 | `record_clinical_trial_information.recruiting_in_uk` | NULL | `yes` |
-| 23 | `record_clinical_trials` | NULL | `{"NCT06123456": {"study_name": "ION-UK", "trial_phase": "phase_iii", "brief_description": "Open-label study of 12 weeks' treatment in treatment-naive adults", "other_registry_numbers": ["2025-001234-56", "ISRCTN12345678"]}}` |
+| 22 | `record_clinical_trial_information.recruiting_in_uk` | NULL | `Yes` |
+| 23 | `record_clinical_trial` | NULL | `{"NCT06123456":{"study_name":"ION-UK","trial_phase":"PhaseIII","brief_description":"Open-label study of 12 weeks' treatment in treatment-naive adults","other_registry_numbers":["2025-001234-56","ISRCTN12345678"]}}` |
 
 > [!NOTE]
 > The trials collection, with the grandchild registry numbers nested inside it, is one JSON object keyed by NCT number, so the diff can match trials across revisions even though their PKs change. If a user edits the NCT number itself, the diff shows one trial removed and one added.
@@ -521,7 +543,7 @@ Then the page is written. **`regulatory_dates`** is updated in place, on the cop
 
 | id | record_id | revision_id | field_path | old_value | new_value | changed_by | changed_at |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 24 | 1 | **2** | `record_mhra_date.uk_submission_date` | `{"date_precision": "estimated_quarter", "date_value": "2026-07-01", "is_confidential": false}` | `{"date_precision": "estimated_quarter", "date_value": "2026-04-01", "is_confidential": false}` | 7 | 2026-01-16T08:45:00Z |
+| 24 | 1 | **2** | `record_mhra_date.uk_submission_date` | `{"date_precision":"EstimatedQuarter","date_value":"2026-07-01","is_confidential":false}` | `{"date_precision":"EstimatedQuarter","date_value":"2026-04-01","is_confidential":false}` | 7 | 2026-01-16T08:45:00Z |
 
 <br>
 
@@ -539,7 +561,7 @@ Revision 2 is now the draft, so the save writes to it directly.
 
 | id | record_id | revision_id | field_path | old_value | new_value | changed_by | changed_at |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 25 | 1 | 2 | `medicines_indication_detail_therapeutic_areas` | `{"therapeutic_area_id": [14]}` | `{"therapeutic_area_id": [14, 22]}` | 7 | 2026-01-16T08:58:00Z |
+| 25 | 1 | 2 | `medicines_indication_detail_therapeutic_area` | `["14"]` | `["14","22"]` | 7 | 2026-01-16T08:58:00Z |
 
 <br>
 
@@ -657,8 +679,8 @@ The UK submission has now happened, so user 9 updates the record. Their first sa
 
 | id | field_path | old_value | new_value |
 | --- | --- | --- | --- |
-| 26 | `record_mhra_date.uk_submission_date` | `{"date_precision": "estimated_quarter", "date_value": "2026-04-01", "is_confidential": false}` | `{"date_precision": "actual_date", "date_value": "2026-06-23", "is_confidential": false}` |
-| 27 | `record_mhra_date.uk_conditional_approval_anticipated` | `unknown` | `no` |
+| 26 | `record_mhra_date.uk_submission_date` | `{"date_precision":"EstimatedQuarter","date_value":"2026-04-01","is_confidential":false}` | `{"date_precision":"ActualDate","date_value":"2026-06-23","is_confidential":false}` |
+| 27 | `record_mhra_date.uk_conditional_approval_anticipated` | `Unknown` | `No` |
 
 **Submission and approval** write the same rows as stages [7](#stage-7-resubmit-to-qa) and [8](#stage-8-qa-approves), on revision 3: `qa_reviews` 3, `record_events` 9 (`submitted_to_qa`, 2026-06-29T09:20:00Z) and `record_events` 10 (`record_published`, 2026-06-30T13:00:00Z). The differences from the first publication:
 
