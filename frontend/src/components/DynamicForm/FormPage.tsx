@@ -92,7 +92,7 @@ export function FormPage({ page }: FormPageProps) {
 
   return (
     <>
-      <PageHeader backLink={backLink} heading={heading} preheading={page.section.title} />
+      <PageHeader backLink={backLink} heading={heading} preheading={page.task.title} />
 
       {saveState.kind === 'conflict' && (
         <Alert type="caution">
@@ -149,7 +149,7 @@ export function FormPage({ page }: FormPageProps) {
               </Button>
             )}
           </form.Subscribe>
-          <Link href={tasksHref}>Return to tasklist</Link>
+          <Link href={tasksHref}>Return to task list</Link>
         </div>
       </form>
     </>

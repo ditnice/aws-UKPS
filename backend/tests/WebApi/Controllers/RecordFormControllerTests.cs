@@ -85,6 +85,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         JsonObject body = (await response.Content.ReadFromJsonAsync<JsonObject>(Ct))!;
         body["formVersion"]!.GetValue<string>().ShouldBe(page.FormVersion);
+        body["task"]!["title"]!.GetValue<string>().ShouldBe("Indication details");
         body["questions"]![0]!["type"]!.GetValue<string>().ShouldBe("Textarea");
         body["questions"]![0]!["rules"]![0]!["kind"]!.GetValue<string>().ShouldBe("Required");
         body["answers"]![Indication]!.GetValue<string>().ShouldBe("Hepatitis C");
@@ -260,6 +261,11 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             RevisionVersion = 42,
             RecordId = 5,
             Section = new RecordPageSectionDto
+            {
+                Id = "indication-details",
+                Title = "Indication details",
+            },
+            Task = new RecordPageTaskDto
             {
                 Id = "indication-details",
                 Title = "Indication details",

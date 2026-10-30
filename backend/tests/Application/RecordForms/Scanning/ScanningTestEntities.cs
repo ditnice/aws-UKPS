@@ -126,6 +126,11 @@ internal sealed class BrokenEntity
     [FormField("broken_entity.bad_task", "Bad task", FormControl.Text)]
     public string? BadTask { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("tasks", "Tasks", Order = 40)]
+    [FormField("broken_entity.reserved_page", "Reserved page", FormControl.Text)]
+    public string? ReservedPage { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 

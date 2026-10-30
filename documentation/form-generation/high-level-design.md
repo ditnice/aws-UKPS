@@ -572,7 +572,7 @@ examples below use record 5, revision 7.
 |---|---|
 | `formVersion`, `revisionVersion` | Echo both back on save |
 | `recordId` | Used to build page URLs |
-| `section`, `page` | IDs and titles; the section title is the page caption |
+| `section`, `task`, `page` | IDs and titles; the task title is the page caption |
 | `previousPageId` | Target of Back, or `null` on the task's first page, where Back goes to the task list |
 | `nextPageId` | The next page in the task, or `null` on the task's last page, where the button reads **Save and return to task list** |
 | `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
@@ -585,6 +585,7 @@ examples below use record 5, revision 7.
   "formVersion": "2026.10.1",
   "revisionVersion": 4711,
   "section": { "id": "indication-details", "title": "Indication details" },
+  "task": { "id": "indication-details", "title": "Indication details" },
   "page": { "id": "therapeutic-area", "title": "Therapeutic area" },
   "previousPageId": "bnf-chapter",
   "nextPageId": "paediatric",

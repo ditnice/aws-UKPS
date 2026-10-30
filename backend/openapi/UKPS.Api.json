@@ -6167,6 +6167,7 @@
           "revisionVersion",
           "recordId",
           "section",
+          "task",
           "page",
           "previousPageId",
           "nextPageId",
@@ -6192,6 +6193,10 @@
           "section": {
             "description": "The section the page belongs to.",
             "$ref": "#/components/schemas/RecordPageSectionDto"
+          },
+          "task": {
+            "description": "The task the page belongs to. Its title is the page caption.",
+            "$ref": "#/components/schemas/RecordPageTaskDto"
           },
           "page": {
             "description": "The page's ID and title.",
@@ -6407,10 +6412,28 @@
           },
           "title": {
             "type": "string",
-            "description": "The section title, shown as the page caption."
+            "description": "The section title."
           }
         },
-        "description": "The section a page belongs to. Its title is the page caption."
+        "description": "The section a page belongs to."
+      },
+      "RecordPageTaskDto": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title, shown as the page caption."
+          }
+        },
+        "description": "The task a page belongs to. Its title is the page caption."
       },
       "RecordProductDetailDto": {
         "required": [

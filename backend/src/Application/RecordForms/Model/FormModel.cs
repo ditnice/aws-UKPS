@@ -11,11 +11,8 @@ internal sealed class FormModel
     public string Version { get; }
     public IReadOnlyList<FormSection> Sections { get; }
 
-    /// <summary>Every page in form order: section order, then page order.</summary>
+    /// <summary>Every page in form order: section order, then task order, then page order.</summary>
     public IReadOnlyList<FormPage> Pages { get; }
-
-    /// <summary>Every task in form order: section order, then task order.</summary>
-    public IReadOnlyList<FormTask> Tasks => Sections.SelectMany(static s => s.Tasks).ToArray();
 
     public FormModel(RecordType recordType, string version, IReadOnlyList<FormSection> sections)
     {

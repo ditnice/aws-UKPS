@@ -1080,6 +1080,10 @@ export type RecordPageDto = {
      */
     section: RecordPageSectionDto;
     /**
+     * The task the page belongs to. Its title is the page caption.
+     */
+    task: RecordPageTaskDto;
+    /**
      * The page's ID and title.
      */
     page: RecordPagePageDto;
@@ -1210,7 +1214,7 @@ export type RecordPageRuleDto = {
 };
 
 /**
- * The section a page belongs to. Its title is the page caption.
+ * The section a page belongs to.
  */
 export type RecordPageSectionDto = {
     /**
@@ -1218,7 +1222,21 @@ export type RecordPageSectionDto = {
      */
     id: string;
     /**
-     * The section title, shown as the page caption.
+     * The section title.
+     */
+    title: string;
+};
+
+/**
+ * The task a page belongs to. Its title is the page caption.
+ */
+export type RecordPageTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title, shown as the page caption.
      */
     title: string;
 };

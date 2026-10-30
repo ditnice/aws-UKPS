@@ -26,6 +26,8 @@ vi.mock('next/navigation', () => ({
 
 type GetRecordTaskListResult = Awaited<ReturnType<typeof getRecordTaskList>>
 
+// The Medicine form has one task today. The second section is illustrative, to show that every
+// section and task is rendered.
 const taskList = {
   data: {
     recordId: 42,
@@ -41,11 +43,17 @@ const taskList = {
             status: 'InProgress',
             firstPageId: 'indication',
           },
+        ],
+      },
+      {
+        id: 'treatment-details',
+        title: 'Treatment details',
+        tasks: [
           {
-            id: 'bnf-chapter',
-            title: 'BNF chapter',
+            id: 'formulation',
+            title: 'Formulation',
             status: 'NotStarted',
-            firstPageId: 'bnf-chapter',
+            firstPageId: 'formulation-type',
           },
         ],
       },
@@ -81,6 +89,7 @@ describe('RecordTaskListPage', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Indication details' }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Treatment details' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
       '/portal/organisations/7/records/42',
@@ -89,9 +98,9 @@ describe('RecordTaskListPage', () => {
       'href',
       '/portal/records/42/indication',
     )
-    expect(screen.getByRole('link', { name: 'BNF chapter' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Formulation' })).toHaveAttribute(
       'href',
-      '/portal/records/42/bnf-chapter',
+      '/portal/records/42/formulation-type',
     )
     expect(screen.getByText('In progress')).toBeInTheDocument()
     expect(screen.getByText('Not yet started')).toBeInTheDocument()
@@ -99,5 +108,31 @@ describe('RecordTaskListPage', () => {
 
   it('returns not found for an invalid record ID', async () => {
     await expect(renderPage('abc')).rejects.toThrow('NEXT_NOT_FOUND')
+    expect(getRecordTaskList).not.toHaveBeenCalled()
+  })
+
+  it('returns not found when the API says so', async () => {
+    vi.mocked(getRecordTaskList).mockResolvedValue({
+      data: undefined,
+      response: { status: 404 },
+    } as never)
+
+    await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND')
+  })
+
+  it('shows an error when the task list cannot be loaded', async () => {
+    vi.mocked(getRecordTaskList).mockResolvedValue({
+      data: undefined,
+      response: { status: 500 },
+    } as never)
+
+    await renderPage()
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Unable to load task list' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('There was a problem retrieving this task list. Please try again later.'),
+    ).toBeInTheDocument()
   })
 })

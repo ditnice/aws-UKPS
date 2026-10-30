@@ -6,8 +6,9 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// </summary>
 /// <param name="id">
 /// The page's ID: a lowercase slug such as <c>bnf-chapter</c> (<c>^[a-z0-9]+(-[a-z0-9]+)*$</c>).
-/// It is the last segment of the page URL, so do not change a released ID. Questions on several
-/// entities may share a page only if the entities are in the same section and task.
+/// It is the last segment of the page URL, so do not change a released ID, and do not use
+/// <c>tasks</c>, which is the task list's URL. Questions on several entities may share a page
+/// only if the entities are in the same section and task.
 /// </param>
 /// <param name="title">
 /// The page title, shown as the heading when the page has more than one question (a page with

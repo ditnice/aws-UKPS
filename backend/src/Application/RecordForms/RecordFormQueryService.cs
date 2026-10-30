@@ -49,6 +49,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                     Id = page.SectionId,
                     Title = page.SectionTitle,
                 },
+                Task = new RecordPageTaskDto { Id = page.TaskId, Title = page.TaskTitle },
                 Page = new RecordPagePageDto { Id = page.Id, Title = page.Title },
                 PreviousPageId = loaded.Model.PreviousPage(page)?.Id,
                 NextPageId = loaded.Model.NextPage(page)?.Id,

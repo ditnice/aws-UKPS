@@ -1,24 +1,21 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Persistence;
-using UKPS.Api.Persistence.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Application.RecordForms;
 
 internal sealed class RecordTaskListQueryService(
     AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser,
-    FormModelRegistry formModels
+    RecordFormPageLoader loader
 ) : IRecordTaskListQueryService
 {
-    private static readonly MethodInfo _readFactsMethod =
+    private static readonly MethodInfo _readAnsweredMethod =
         typeof(RecordTaskListQueryService).GetMethod(
-            nameof(ReadFactsAsync),
+            nameof(ReadAnsweredAsync),
             BindingFlags.Static | BindingFlags.NonPublic
         )!;
 
@@ -27,128 +24,54 @@ internal sealed class RecordTaskListQueryService(
         CancellationToken cancellationToken
     )
     {
-        RecordRevision? revision = await dbContext
-            .RecordRevisions.AsNoTracking()
-            .Include(static r => r.Record)
-            .Where(r => r.RecordId == recordId)
-            .OrderByDescending(static r => r.CreatedAt)
-            .ThenByDescending(static r => r.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (revision?.Record is not { } record)
+        var (form, failure) = await loader.LoadFormAsync(recordId, track: false, cancellationToken);
+        if (form is null)
         {
-            return GetRecordTaskListResult.Err(new GetRecordTaskListError.NotFound());
+            return GetRecordTaskListResult.Err(
+                failure == PageLookupFailure.NotAllowed
+                    ? new GetRecordTaskListError.NotAllowed()
+                    : new GetRecordTaskListError.NotFound()
+            );
         }
 
-        if (
-            !organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.Read,
-                record.OrganisationId
-            )
-        )
-        {
-            return GetRecordTaskListResult.Err(new GetRecordTaskListError.NotAllowed());
-        }
-
-        FormModel? model = formModels.Find(record.RecordType);
-        if (model is null)
-        {
-            return GetRecordTaskListResult.Err(new GetRecordTaskListError.NotFound());
-        }
-
-        List<RecordTaskListSectionDto> sections = await BuildSectionsAsync(
-            dbContext,
-            model,
-            revision.Id,
+        HashSet<string> answered = await ReadAnsweredQuestionIdsAsync(
+            form.Model,
+            form.Revision.Id,
             cancellationToken
         );
         return GetRecordTaskListResult.Ok(
             new RecordTaskListDto
             {
-                RecordId = record.Id,
-                OrganisationId = record.OrganisationId,
-                Sections = sections,
+                RecordId = form.Record.Id,
+                OrganisationId = form.Record.OrganisationId,
+                Sections = form
+                    .Model.Sections.Select(section => new RecordTaskListSectionDto
+                    {
+                        Id = section.Id,
+                        Title = section.Title,
+                        Tasks = section
+                            .Tasks.Select(task => new RecordTaskListTaskDto
+                            {
+                                Id = task.Id,
+                                Title = task.Title,
+                                Status = GetStatus(task, answered),
+                                FirstPageId = task.FirstPage.Id,
+                            })
+                            .ToArray(),
+                    })
+                    .ToArray(),
             }
         );
     }
 
-    private static async Task<List<RecordTaskListSectionDto>> BuildSectionsAsync(
-        AppDbContext dbContext,
-        FormModel model,
-        int revisionId,
-        CancellationToken cancellationToken
-    )
+    private static RecordTaskStatus GetStatus(FormTask task, HashSet<string> answered)
     {
-        List<RecordTaskListSectionDto> sections = [];
-        foreach (FormSection section in model.Sections)
-        {
-            List<RecordTaskListTaskDto> tasks = [];
-            foreach (FormTask task in section.Tasks)
-            {
-                RecordTaskStatus status = await GetStatusAsync(
-                    dbContext,
-                    task,
-                    revisionId,
-                    cancellationToken
-                );
-                tasks.Add(
-                    new RecordTaskListTaskDto
-                    {
-                        Id = task.Id,
-                        Title = task.Title,
-                        Status = status,
-                        FirstPageId = task.FirstPage.Id,
-                    }
-                );
-            }
+        FormQuestion[] questions = [.. task.Questions];
+        bool hasAnyAnswer = questions.Any(question => answered.Contains(question.Id));
+        FormQuestion[] required = questions.Where(static q => q.IsRequired).ToArray();
+        bool requiredAnswersComplete = required.All(question => answered.Contains(question.Id));
 
-            sections.Add(
-                new RecordTaskListSectionDto
-                {
-                    Id = section.Id,
-                    Title = section.Title,
-                    Tasks = tasks,
-                }
-            );
-        }
-
-        return sections;
-    }
-
-    private static async Task<RecordTaskStatus> GetStatusAsync(
-        AppDbContext dbContext,
-        FormTask task,
-        int revisionId,
-        CancellationToken cancellationToken
-    )
-    {
-        bool hasAnyAnswer = false;
-        bool requiredAnswersComplete = true;
-        bool hasRequiredQuestions = task.Questions.Any(static question => question.IsRequired);
-        foreach (
-            IGrouping<FormEntity, FormQuestion> group in task.Questions.GroupBy(static question =>
-                question.Entity
-            )
-        )
-        {
-            FormQuestion[] questions = group.ToArray();
-            bool entityHasRequiredQuestions = questions.Any(static question => question.IsRequired);
-            TaskAnswerFacts? facts = await ReadFactsForEntityAsync(
-                dbContext,
-                group.Key,
-                questions,
-                revisionId,
-                cancellationToken
-            );
-
-            hasAnyAnswer |= facts?.HasAnyAnswer == true;
-            if (entityHasRequiredQuestions && facts?.RequiredAnswersComplete != true)
-            {
-                requiredAnswersComplete = false;
-            }
-        }
-
-        if (requiredAnswersComplete && (hasRequiredQuestions || hasAnyAnswer))
+        if (requiredAnswersComplete && (required.Length > 0 || hasAnyAnswer))
         {
             return RecordTaskStatus.Completed;
         }
@@ -156,46 +79,60 @@ internal sealed class RecordTaskListQueryService(
         return hasAnyAnswer ? RecordTaskStatus.InProgress : RecordTaskStatus.NotStarted;
     }
 
-    private static Task<TaskAnswerFacts?> ReadFactsForEntityAsync(
-        AppDbContext dbContext,
-        FormEntity entity,
-        IReadOnlyList<FormQuestion> questions,
+    /// <summary>
+    /// Reads which of the form's questions have a saved answer on the revision, with one query
+    /// per content entity.
+    /// </summary>
+    private async Task<HashSet<string>> ReadAnsweredQuestionIdsAsync(
+        FormModel model,
         int revisionId,
         CancellationToken cancellationToken
-    ) =>
-        (Task<TaskAnswerFacts?>)
-            _readFactsMethod
-                .MakeGenericMethod(entity.ClrType)
-                .Invoke(null, [questions, revisionId, dbContext, cancellationToken])!;
+    )
+    {
+        HashSet<string> answered = new(StringComparer.Ordinal);
+        foreach (
+            IGrouping<FormEntity, FormQuestion> group in model
+                .Pages.SelectMany(static page => page.Questions)
+                .GroupBy(static question => question.Entity)
+        )
+        {
+            FormQuestion[] questions = [.. group];
+            bool[]? flags = await (Task<bool[]?>)
+                _readAnsweredMethod
+                    .MakeGenericMethod(group.Key.ClrType)
+                    .Invoke(null, [dbContext, questions, revisionId, cancellationToken])!;
+            for (int i = 0; i < questions.Length; i++)
+            {
+                if (flags?[i] == true)
+                {
+                    answered.Add(questions[i].Id);
+                }
+            }
+        }
 
-    private static Task<TaskAnswerFacts?> ReadFactsAsync<TEntity>(
+        return answered;
+    }
+
+    /// <summary>
+    /// Projects the revision's row to one flag per question, in the order given, computed in the
+    /// database. Returns null when the revision has no row.
+    /// </summary>
+    private static Task<bool[]?> ReadAnsweredAsync<TEntity>(
+        AppDbContext dbContext,
         IReadOnlyList<FormQuestion> questions,
         int revisionId,
-        AppDbContext dbContext,
         CancellationToken cancellationToken
     )
         where TEntity : class
     {
         ParameterExpression row = Expression.Parameter(typeof(TEntity), "row");
-        Expression[] answers = questions
-            .Select(question => question.Binding.HasAnswerExpression(row))
-            .ToArray();
-        Expression hasAnyAnswer = answers.Aggregate(Expression.OrElse);
-
-        Expression[] requiredAnswers = questions
-            .Where(static question => question.IsRequired)
-            .Select(question => question.Binding.HasAnswerExpression(row))
-            .ToArray();
-        Expression requiredAnswersComplete =
-            requiredAnswers.Length == 0
-                ? Expression.Constant(true)
-                : requiredAnswers.Aggregate(Expression.AndAlso);
-
-        ConstructorInfo constructor = typeof(TaskAnswerFacts).GetConstructors().Single();
-        Expression body = Expression.New(constructor, hasAnyAnswer, requiredAnswersComplete);
-        Expression<Func<TEntity, TaskAnswerFacts>> selector = Expression.Lambda<
-            Func<TEntity, TaskAnswerFacts>
-        >(body, row);
+        Expression<Func<TEntity, bool[]?>> selector = Expression.Lambda<Func<TEntity, bool[]?>>(
+            Expression.NewArrayInit(
+                typeof(bool),
+                questions.Select(question => question.Binding.HasAnswerExpression(row))
+            ),
+            row
+        );
 
         return dbContext
             .Set<TEntity>()
@@ -204,6 +141,4 @@ internal sealed class RecordTaskListQueryService(
             .Select(selector)
             .SingleOrDefaultAsync(cancellationToken);
     }
-
-    private sealed record TaskAnswerFacts(bool HasAnyAnswer, bool RequiredAnswersComplete);
 }

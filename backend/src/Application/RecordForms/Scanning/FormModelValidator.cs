@@ -18,6 +18,10 @@ internal static partial class FormModelValidator
 {
     private const string RevisionIdProperty = "RevisionId";
 
+    // Page IDs are the last segment of /portal/records/{recordId}/{pageId}, so a page cannot take
+    // the ID of a fixed route beside them.
+    private const string TaskListRoute = "tasks";
+
     public static IReadOnlyList<string> Validate(
         IReadOnlyList<EntityDeclaration> entities,
         OptionProviderRegistry options
@@ -145,6 +149,13 @@ internal static partial class FormModelValidator
         {
             problems.Add(
                 $"{where} declares page '{question.Page.Id}' with a badly formed ID or a blank title."
+            );
+        }
+
+        if (string.Equals(question.Page.Id, TaskListRoute, StringComparison.Ordinal))
+        {
+            problems.Add(
+                $"{where} declares page '{TaskListRoute}', which is reserved for the task list."
             );
         }
 

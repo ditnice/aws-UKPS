@@ -51,7 +51,8 @@ const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
   revisionVersion: 4711,
   recordId: 5,
-  section: { id: 'indication-details', title: 'Indication details' },
+  section: { id: 'product-indication', title: 'Product indication' },
+  task: { id: 'indication-details', title: 'Indication details' },
   page: { id: 'indication', title: 'Indication' },
   previousPageId: null,
   nextPageId: 'bnf-chapter',
@@ -93,14 +94,20 @@ describe('FormPage', () => {
       render(<FormPage page={page()} />)
 
       expect(
-        // The NDS page header puts the section caption inside the h1.
+        // The NDS page header puts the task caption inside the h1.
         screen.getByRole('heading', {
           level: 1,
           name: /What is the indication this product is seeking a licence for\?$/,
         }),
       ).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Return to task list' })).toBeInTheDocument()
+    })
+
+    it('captions the page with the task title, not the section title', () => {
+      render(<FormPage page={page()} />)
+
       expect(screen.getByText('Indication details')).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Return to tasklist' })).toBeInTheDocument()
+      expect(screen.queryByText('Product indication')).toBeNull()
     })
 
     it('goes back to the task list from the first page of a task', () => {

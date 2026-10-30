@@ -20,6 +20,9 @@ public sealed record RecordPageDto
     /// <summary>The section the page belongs to.</summary>
     public required RecordPageSectionDto Section { get; init; }
 
+    /// <summary>The task the page belongs to. Its title is the page caption.</summary>
+    public required RecordPageTaskDto Task { get; init; }
+
     /// <summary>The page's ID and title.</summary>
     public required RecordPagePageDto Page { get; init; }
 

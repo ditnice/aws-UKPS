@@ -133,6 +133,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         page.FormVersion.ShouldBe(FormVersions.Medicine);
         page.RevisionVersion.ShouldBe(await RevisionVersion());
         page.Section.Title.ShouldBe("Indication details");
+        (page.Task.Id, page.Task.Title).ShouldBe(("indication-details", "Indication details"));
         page.PreviousPageId.ShouldBeNull();
         page.NextPageId.ShouldBe("bnf-chapter");
         page.Questions.Single().Id.ShouldBe(Indication);
