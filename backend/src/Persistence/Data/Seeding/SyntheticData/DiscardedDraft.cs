@@ -46,7 +46,7 @@ internal sealed class DiscardedDraft(Faker faker, RecordRevision revision, User 
         Audit("record_product_detail.branded_name", productDetail.BrandedName, savedAt);
         Audit("record_product_detail.record_title", productDetail.RecordTitle, savedAt);
         Audit(
-            "record_names_and_identifiers",
+            "record_name_and_identifier",
             RecordNameAndIdentifier.AuditText([genericName], []),
             savedAt
         );

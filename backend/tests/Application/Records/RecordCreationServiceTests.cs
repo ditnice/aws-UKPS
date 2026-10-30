@@ -193,9 +193,9 @@ public class RecordCreationServiceTests : DatabaseTestBase
                 ("record_product_detail.branded_name", null, "Harvoni"),
                 ("record_product_detail.record_title", null, "Chronic hepatitis C in adults"),
                 (
-                    "record_names_and_identifiers",
+                    "record_name_and_identifier",
                     null,
-                    """{"generic_name":["sofosbuvir","ledipasvir"],"other_identifier":["PF-04965842"]}"""
+                    """{"GenericName":["sofosbuvir","ledipasvir"],"OtherIdentifier":["PF-04965842"]}"""
                 ),
             ]);
         audits.ShouldAllBe(x =>
@@ -224,8 +224,8 @@ public class RecordCreationServiceTests : DatabaseTestBase
             .ToDictionaryAsync(static x => x.FieldPath, static x => x.NewValue, Ct);
 
         audits.Keys.ShouldNotContain("record_product_detail.branded_name");
-        audits["record_names_and_identifiers"]
-            .ShouldBe("""{"generic_name":["sofosbuvir"],"other_identifier":[]}""");
+        audits["record_name_and_identifier"]
+            .ShouldBe("""{"GenericName":["sofosbuvir"],"OtherIdentifier":[]}""");
     }
 
     [Fact]

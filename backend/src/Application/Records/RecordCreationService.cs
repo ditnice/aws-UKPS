@@ -142,7 +142,7 @@ internal class RecordCreationService : IRecordCreationService
             ("record_product_detail.branded_name", command.BrandedName),
             ("record_product_detail.record_title", command.RecordTitle),
             (
-                "record_names_and_identifiers",
+                "record_name_and_identifier",
                 RecordNameAndIdentifier.AuditText(command.GenericNames, command.OtherIdentifiers)
             ),
         ];

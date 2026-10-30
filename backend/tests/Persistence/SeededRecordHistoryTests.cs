@@ -307,7 +307,7 @@ public sealed class SeededRecordHistoryTests
             {
                 ["record_product_detail.company_code"] = productDetail.CompanyCode,
                 ["record_product_detail.record_title"] = productDetail.RecordTitle,
-                ["record_names_and_identifiers"] = RecordNameAndIdentifier.AuditText(
+                ["record_name_and_identifier"] = RecordNameAndIdentifier.AuditText(
                     NamesOfType(NameAndIdentifierType.GenericName),
                     NamesOfType(NameAndIdentifierType.OtherIdentifier)
                 ),

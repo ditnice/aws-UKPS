@@ -145,7 +145,7 @@ internal static class RecordContentHistory
             ("record_product_detail.branded_name", names.BrandedName),
             ("record_product_detail.record_title", names.RecordTitle),
             (
-                "record_names_and_identifiers",
+                "record_name_and_identifier",
                 RecordNameAndIdentifier.AuditText(names.GenericNames, names.OtherIdentifiers)
             ),
         ];
