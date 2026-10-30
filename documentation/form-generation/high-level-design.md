@@ -700,6 +700,9 @@ Values are stored as text:
 - Single values are stored raw (`Unknown`, `12`, the indication text), so they can be queried
   directly, for example to report on fields moving away from `Unknown`.
 - Multi-select values (junction and flags) are stored as JSON (`["2","3"]`).
+- A collection whose grouping or order is part of the answer is stored as a JSON object instead,
+  for example names and identifiers, saved by record creation:
+  `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}`.
 - No answer is stored as `null`.
 
 ## Persistence changes
