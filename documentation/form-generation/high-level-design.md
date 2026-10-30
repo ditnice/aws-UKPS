@@ -530,9 +530,9 @@ revision:
 
 | Status | Meaning |
 |---|---|
-| `not-started` | No answer has been saved for the task |
-| `in-progress` | At least one answer is saved, but one or more required questions are unanswered |
-| `completed` | Every required question has a saved answer; unanswered optional questions do not prevent completion |
+| `NotStarted` | No answer has been saved for the task |
+| `InProgress` | At least one answer is saved, but one or more required questions are unanswered |
+| `Completed` | Every required question has a saved answer; unanswered optional questions do not prevent completion |
 
 The endpoint is read-only. Missing and inaccessible records both return `404`, so record access
 is not disclosed.
@@ -542,6 +542,7 @@ Example `GET /records/5/tasks` response:
 ```json
 {
   "recordId": 5,
+  "organisationId": 3,
   "sections": [
     {
       "id": "indication-details",
@@ -550,7 +551,7 @@ Example `GET /records/5/tasks` response:
         {
           "id": "indication-details",
           "title": "Indication details",
-          "status": "in-progress",
+          "status": "InProgress",
           "firstPageId": "indication"
         }
       ]

@@ -1311,14 +1311,30 @@ export type RecordTaskListTaskDto = {
      */
     title: string;
     /**
-     * The persisted-answer status: `not-started`, `in-progress` or `completed`.
+     * The task's status, derived from the saved answers.
      */
-    status: string;
+    status: RecordTaskStatus;
     /**
      * The ID of this task's first page.
      */
     firstPageId: string;
 };
+
+/**
+ * Represents the status of a task in a record's task list, derived from the answers saved on the
+ * record's latest revision.
+ */
+export const RecordTaskStatus = {
+    NOT_STARTED: 'NotStarted',
+    IN_PROGRESS: 'InProgress',
+    COMPLETED: 'Completed'
+} as const;
+
+/**
+ * Represents the status of a task in a record's task list, derived from the answers saved on the
+ * record's latest revision.
+ */
+export type RecordTaskStatus = typeof RecordTaskStatus[keyof typeof RecordTaskStatus];
 
 /**
  * Represents the type of a record, such as Medicine or Vaccine.

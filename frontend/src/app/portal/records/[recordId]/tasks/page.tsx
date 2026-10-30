@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getRecordTaskList } from '@/client/generated'
+import { getRecordTaskList, type RecordTaskStatus } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -13,10 +13,11 @@ import {
 } from '@/components/TaskList/TaskList'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
-const taskStatusValues = new Set<TaskStatus>(['not-started', 'in-progress', 'completed'])
-
-const parseTaskStatus = (status: string): TaskStatus =>
-  taskStatusValues.has(status as TaskStatus) ? (status as TaskStatus) : 'not-started'
+const taskStatuses: Record<RecordTaskStatus, TaskStatus> = {
+  NotStarted: 'not-started',
+  InProgress: 'in-progress',
+  Completed: 'completed',
+}
 
 type RecordTaskListPageProps = {
   params: Promise<{ recordId: string }>
@@ -74,7 +75,7 @@ const RecordTaskListPage = async ({ params }: RecordTaskListPageProps) => {
                 id={task.id}
                 title={task.title}
                 href={`/portal/records/${recordId}/${task.firstPageId}`}
-                status={parseTaskStatus(task.status)}
+                status={taskStatuses[task.status]}
               />
             ))}
           </TaskListSection>

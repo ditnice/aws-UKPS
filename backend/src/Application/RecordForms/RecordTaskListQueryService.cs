@@ -85,7 +85,7 @@ internal sealed class RecordTaskListQueryService(
             List<RecordTaskListTaskDto> tasks = [];
             foreach (FormTask task in section.Tasks)
             {
-                string status = await GetStatusAsync(
+                RecordTaskStatus status = await GetStatusAsync(
                     dbContext,
                     task,
                     revisionId,
@@ -115,7 +115,7 @@ internal sealed class RecordTaskListQueryService(
         return sections;
     }
 
-    private static async Task<string> GetStatusAsync(
+    private static async Task<RecordTaskStatus> GetStatusAsync(
         AppDbContext dbContext,
         FormTask task,
         int revisionId,
@@ -150,10 +150,10 @@ internal sealed class RecordTaskListQueryService(
 
         if (requiredAnswersComplete && (hasRequiredQuestions || hasAnyAnswer))
         {
-            return "completed";
+            return RecordTaskStatus.Completed;
         }
 
-        return hasAnyAnswer ? "in-progress" : "not-started";
+        return hasAnyAnswer ? RecordTaskStatus.InProgress : RecordTaskStatus.NotStarted;
     }
 
     private static Task<TaskAnswerFacts?> ReadFactsForEntityAsync(

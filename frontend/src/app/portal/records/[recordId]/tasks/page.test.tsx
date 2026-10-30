@@ -38,13 +38,13 @@ const taskList = {
           {
             id: 'indication-details',
             title: 'Indication details',
-            status: 'in-progress',
+            status: 'InProgress',
             firstPageId: 'indication',
           },
           {
             id: 'bnf-chapter',
             title: 'BNF chapter',
-            status: 'not-started',
+            status: 'NotStarted',
             firstPageId: 'bnf-chapter',
           },
         ],
@@ -93,6 +93,8 @@ describe('RecordTaskListPage', () => {
       'href',
       '/portal/records/42/bnf-chapter',
     )
+    expect(screen.getByText('In progress')).toBeInTheDocument()
+    expect(screen.getByText('Not yet started')).toBeInTheDocument()
   })
 
   it('returns not found for an invalid record ID', async () => {

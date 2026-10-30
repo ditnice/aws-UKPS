@@ -12,9 +12,9 @@ For the design behind it, see the [high-level design](high-level-design.md).
 
 The record task list is available at `GET /records/{recordId}/tasks`. It reads the latest revision
 and returns the form's sections and tasks, including each task's first page and a status derived
-from saved answers. This read does not write to the database. A task is `completed` when all its
-required questions have answers, `in-progress` when it has at least one answer but required
-answers remain, and `not-started` when it has no saved answers.
+from saved answers. This read does not write to the database. A task is `Completed` when all its
+required questions have answers, `InProgress` when it has at least one answer but required
+answers remain, and `NotStarted` when it has no saved answers.
 
 ## Conventions
 

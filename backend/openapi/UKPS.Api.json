@@ -6535,8 +6535,8 @@
             "description": "The task title."
           },
           "status": {
-            "type": "string",
-            "description": "The persisted-answer status: `not-started`, `in-progress` or `completed`."
+            "description": "The task's status, derived from the saved answers.",
+            "$ref": "#/components/schemas/RecordTaskStatus"
           },
           "firstPageId": {
             "type": "string",
@@ -6544,6 +6544,15 @@
           }
         },
         "description": "A task and its current status."
+      },
+      "RecordTaskStatus": {
+        "enum": [
+          "NotStarted",
+          "InProgress",
+          "Completed"
+        ],
+        "type": "string",
+        "description": "Represents the status of a task in a record's task list, derived from the answers saved on the\nrecord's latest revision."
       },
       "RecordType": {
         "enum": [
