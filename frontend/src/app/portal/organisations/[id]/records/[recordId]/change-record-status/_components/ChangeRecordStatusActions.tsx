@@ -27,24 +27,28 @@ const actionOptions: {
   label: string
   hint: string
   path: string
+  isAvailable: (status: RecordStatus) => boolean
 }[] = [
   {
     action: 'Archive',
     label: 'Archive the record',
     hint: 'Development has ended and will not restart. The record cannot be updated once it has been archived.',
     path: 'archive',
+    isAvailable: () => true,
   },
   {
     action: 'PlaceOnHold',
     label: 'Place the record on hold',
     hint: 'Development has paused and may restart in the future. Update requests for this record will be temporarily paused.',
     path: 'place-on-hold',
+    isAvailable: (status) => status === 'Published',
   },
   {
     action: 'RemoveHold',
     label: 'Remove the record hold',
     hint: 'Development has restarted and future updates will be required.',
     path: 'remove-hold',
+    isAvailable: (status) => status === 'OnHold',
   },
 ]
 
@@ -57,16 +61,7 @@ export const ChangeRecordStatusActions = ({
   const router = useRouter()
   const [selectedAction, setSelectedAction] = useState<RecordStatusAction>()
   const [radioError, setRadioError] = useState(false)
-  const availableActions = actionOptions.filter((option) => {
-    switch (option.action) {
-      case 'PlaceOnHold':
-        return recordStatus === 'Published'
-      case 'RemoveHold':
-        return recordStatus === 'OnHold'
-      default:
-        return true
-    }
-  })
+  const availableActions = actionOptions.filter((option) => option.isAvailable(recordStatus))
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -77,7 +72,7 @@ export const ChangeRecordStatusActions = ({
     }
 
     router.push(
-      `/portal/organisations/${organisationId}/records/${recordId}/change-record-status/${option.path}?recordType=${recordType}`,
+      buildRecordHref(organisationId, recordId, recordType, `change-record-status/${option.path}`),
     )
   }
 

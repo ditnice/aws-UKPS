@@ -94,8 +94,8 @@ const ChangeRecordStatus = async ({
       />
 
       <p>
-        If development has permanently discontinued or you no longer own the rights to the medicine
-        then you should archive the record.
+        If development has permanently discontinued or you no longer own the rights to the{' '}
+        {recordType === 'Vaccine' ? 'vaccine' : 'medicine'} then you should archive the record.
       </p>
 
       <p>

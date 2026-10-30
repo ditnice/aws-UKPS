@@ -93,10 +93,10 @@ const recordId = String(medicineRecord.recordId)
 const mockRecord = (result: Partial<GetRecordResult>) =>
   vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
 
-const renderPage = async () => {
+const renderPage = async (recordType: string = medicineRecord.recordType) => {
   const page = await ChangeRecordStatusPage({
     params: Promise.resolve({ id: organisationId, recordId }),
-    searchParams: Promise.resolve({ recordType: medicineRecord.recordType }),
+    searchParams: Promise.resolve({ recordType }),
   })
   const view = page.props.children({ id: medicineRecord.organisationId }) as ReactElement<unknown>
   const viewComponent = view.type as (props: unknown) => Promise<ReactElement>
@@ -152,6 +152,25 @@ describe('ChangeRecordStatusPage', () => {
     await renderPage()
 
     expect(screen.getByText(text)).toBeInTheDocument()
+  })
+
+  it.each([
+    ['Medicine', 'medicine'],
+    ['Vaccine', 'vaccine'],
+  ] as const)('names the %s in the archive guidance', async (recordType, noun) => {
+    mockRecord({
+      data: { ...medicineRecord, recordType },
+      error: undefined,
+      response: new Response(),
+    })
+
+    await renderPage(recordType)
+
+    expect(
+      screen.getByText(
+        `If development has permanently discontinued or you no longer own the rights to the ${noun} then you should archive the record.`,
+      ),
+    ).toBeInTheDocument()
   })
 
   it('links back to the record', async () => {
