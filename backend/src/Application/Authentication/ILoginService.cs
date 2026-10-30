@@ -1,3 +1,4 @@
+global using InitiateForgottenPasswordProcedureResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.InitiateForgottenPasswordProcedureError>;
 using UKPS.Api.Application.Authentication.Dtos;
 using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
@@ -83,4 +84,26 @@ public interface ILoginService
     /// The token used to cancel the operation.
     /// </param>
     Task SignOut(string refreshToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Initiates the forgotten password flow for the user associated with the
+    /// specified email address, typically by sending a password reset code or
+    /// link to that address.
+    /// </summary>
+    /// <param name="command">
+    /// The command containing the email address of the user who has forgotten
+    /// their password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A result indicating whether the forgotten password flow was successfully
+    /// initiated, or an error describing why it could not be started, such as
+    /// the number of permitted attempts having been exceeded.
+    /// </returns>
+    Task<InitiateForgottenPasswordProcedureResult> InitiateForgottenPasswordProcedure(
+        InitiateForgottenPasswordProcedureCommand command,
+        CancellationToken cancellationToken
+    );
 }

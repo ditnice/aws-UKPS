@@ -34,6 +34,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserInfoService, WebApiCurrentUserInfoService>();
 builder.Services.AddScoped<ISetupLinkCreator, SetupLinkCreator>();
+builder.Services.AddScoped<IPasswordResetLinkCreator, PasswordResetLinkCreator>();
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();
 builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();
@@ -54,8 +55,20 @@ builder
     .ValidateOnStart();
 
 builder
+    .Services.AddOptions<AuthenticationOptions>()
+    .Bind(builder.Configuration.GetSection(AuthenticationOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder
     .Services.AddOptions<UserOnboardingOptions>()
     .Bind(builder.Configuration.GetSection(UserOnboardingOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder
+    .Services.AddOptions<WebHostingOptions>()
+    .Bind(builder.Configuration.GetSection(WebHostingOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
 

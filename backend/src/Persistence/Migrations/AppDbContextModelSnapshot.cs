@@ -19,7 +19,7 @@ namespace UKPS.Api.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("ukps")
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -504,6 +504,34 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasDatabaseName("ix_user_org_membership_user_org_entity");
 
                     b.ToTable("user_org_memberships", "ukps");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserPasswordResetRequest", b =>
+                {
+                    b.Property<byte[]>("TokenHash")
+                        .HasColumnType("bytea")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("TargetEmailAddress")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("target_email_address");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.HasKey("TokenHash")
+                        .HasName("pk_user_password_reset_requests");
+
+                    b.HasIndex("TargetEmailAddress", "CreatedAt")
+                        .HasDatabaseName("ix_user_password_reset_requests_target_email_address_created_at");
+
+                    b.ToTable("user_password_reset_requests", "ukps");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserRegistrationRequest", b =>

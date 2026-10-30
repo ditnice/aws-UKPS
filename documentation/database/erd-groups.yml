@@ -21,6 +21,7 @@ groups:
       - user_onboarding_records
       - user_org_memberships
       - user_registration_requests
+      - user_password_reset_requests
 
   record_workflow:
     title: Record Workflow

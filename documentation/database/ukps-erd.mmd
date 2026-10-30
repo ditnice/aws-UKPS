@@ -98,6 +98,12 @@ erDiagram
             integer user_id FK
             integer user_role
         }
+        user_password_reset_requests:::identity {
+            bytea token_hash PK
+            timestamptz created_at
+            text target_email_address
+            timestamptz used_at "nullable"
+        }
         user_registration_requests:::identity {
             integer id PK
             timestamptz approved_at "nullable"

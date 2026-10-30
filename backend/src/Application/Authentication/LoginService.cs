@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication.Dtos;
+using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.InternalServices.Communication;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
@@ -14,11 +19,26 @@ internal class LoginService : ILoginService
 {
     private readonly IIdentityService _identityService;
     private readonly AppDbContext _appDbContext;
+    private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly IPasswordResetLinkCreator _passwordResetLinkCreator;
+    private readonly IEmailService _emailService;
+    private readonly AuthenticationOptions _authenticationOptions;
 
-    public LoginService(IIdentityService identityService, AppDbContext appDbContext)
+    public LoginService(
+        IIdentityService identityService,
+        AppDbContext appDbContext,
+        IDateTimeProvider dateTimeProvider,
+        IPasswordResetLinkCreator passwordRestLinkCreator,
+        IEmailService emailService,
+        IOptions<AuthenticationOptions> authenticationOptions
+    )
     {
         _identityService = identityService;
         _appDbContext = appDbContext;
+        _dateTimeProvider = dateTimeProvider;
+        _passwordResetLinkCreator = passwordRestLinkCreator;
+        _emailService = emailService;
+        _authenticationOptions = authenticationOptions.Value;
     }
 
     public async Task<InitiateAuthenticationResult> Login(
@@ -72,6 +92,68 @@ internal class LoginService : ILoginService
     )
     {
         return _identityService.RefreshAuthenticationToken(command.RefreshToken, cancellationToken);
+    }
+
+    public async Task<InitiateForgottenPasswordProcedureResult> InitiateForgottenPasswordProcedure(
+        InitiateForgottenPasswordProcedureCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        DateTime dateTime24HoursAgo = _dateTimeProvider.GetUtcNow().AddHours(-24);
+        var normalisedEmail = command.Email.Trim().ToUpperInvariant();
+        int numberOfPreviousRequestsInTheLast24Hours =
+            await _appDbContext.UserPasswordResetRequests.CountAsync(
+                x =>
+                    EF.Functions.ILike(x.TargetEmailAddress, normalisedEmail)
+                    && x.CreatedAt > dateTime24HoursAgo,
+                cancellationToken
+            );
+
+        if (
+            numberOfPreviousRequestsInTheLast24Hours
+            >= _authenticationOptions.MaxNumberOfChangePasswordAttempts
+        )
+        {
+            return InitiateForgottenPasswordProcedureResult.Err(
+                new InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded()
+            );
+        }
+        var (userPasswordResetRequest, token) = UserPasswordResetRequest.Create(
+            command.Email,
+            _dateTimeProvider.GetUtcNow()
+        );
+
+        _appDbContext.Add(userPasswordResetRequest);
+        await _appDbContext.SaveChangesAsync(cancellationToken);
+
+        var user = await _appDbContext.Users.GetByEmailOrDefault(command.Email, cancellationToken);
+        if (user is not null)
+        {
+            await SendPasswordResetEmail(token, user, cancellationToken);
+        }
+
+        return InitiateForgottenPasswordProcedureResult.Ok(); // Return Ok even if the account does not exist to avoid  account enumeration.
+    }
+
+    private async Task SendPasswordResetEmail(
+        string token,
+        User user,
+        CancellationToken cancellationToken
+    )
+    {
+        var passwordResetEmail = new PasswordResetEmail()
+        {
+            Link = _passwordResetLinkCreator.GetPasswordResetLink(token),
+        };
+        await _emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                RecipientAddress = user.WorkEmail,
+                Email = passwordResetEmail,
+                PersonIdentifier = user.CognitoUsername,
+            },
+            cancellationToken
+        );
     }
 
     public Task SignOut(string refreshToken, CancellationToken cancellationToken)

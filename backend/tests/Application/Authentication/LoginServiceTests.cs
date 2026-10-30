@@ -1,4 +1,5 @@
 using Amazon.CognitoIdentityProvider.Model;
+using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -7,6 +8,8 @@ using NSubstitute.ExceptionExtensions;
 using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
+using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -25,12 +28,18 @@ namespace UKPS.Api.Tests.Application.Authentication;
 [Collection(DatabaseCollection.Name)]
 public class LoginServiceTests : DatabaseTestBase
 {
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     private readonly IServiceTestHarness<ILoginService> _harness;
 
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private LoginRequest _defaultLoginRequest = null!;
     private RespondToMultiFactorAuthenticationChallengeCommand _defaultResponseToMfaCommand = null!;
     private User _user = null!;
+    private readonly int _maxNumberOfChangePasswordAttemptedInA24HourWindow = 3;
+    private readonly Faker _faker = new Faker();
+    private readonly IPasswordResetLinkCreator _passwordResetLinkCreator =
+        Substitute.For<IPasswordResetLinkCreator>();
 
     public LoginServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -39,6 +48,7 @@ public class LoginServiceTests : DatabaseTestBase
             .UpdateCurrentTime(_testTime)
             .ConfigureServices(services =>
             {
+                services.AddSingleton(_ => _passwordResetLinkCreator);
                 services.AddSingleton(
                     Options.Create(
                         new CognitoOptions
@@ -48,6 +58,15 @@ public class LoginServiceTests : DatabaseTestBase
                             ServiceUrlOverride = new Uri("https://cognito.example.com"),
                             ClientSecret = "client-secret",
                             UserPoolId = "user-pool-id",
+                        }
+                    )
+                );
+                services.AddSingleton(
+                    Options.Create(
+                        new AuthenticationOptions
+                        {
+                            MaxNumberOfChangePasswordAttempts =
+                                _maxNumberOfChangePasswordAttemptedInA24HourWindow,
                         }
                     )
                 );
@@ -263,6 +282,126 @@ public class LoginServiceTests : DatabaseTestBase
 
         result.ShouldBeSuccess();
         (await GetSelectedOrganisationIds()).ShouldBe([memberships[1].OrganisationId]);
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_ShouldReturnSuccessResult()
+    {
+        await PerformForBothRealAndNonRealUser(
+            async (workEmail) =>
+            {
+                var result = await _harness.Service.InitiateForgottenPasswordProcedure(
+                    new() { Email = workEmail },
+                    Ct
+                );
+
+                result.ShouldBeSuccess();
+            }
+        );
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenNumberOfAttemptsExceedsLimit_ShouldReturnError()
+    {
+        await PerformForBothRealAndNonRealUser(
+            async (workEmail) =>
+            {
+                await InitiateMultiplePasswordRequestAcrossTimeSpan(
+                    workEmail,
+                    _maxNumberOfChangePasswordAttemptedInA24HourWindow,
+                    (_testTime.AddHours(-24), _testTime)
+                );
+                var resultAtLimit = await _harness
+                    .UpdateCurrentTime(_testTime)
+                    .Service.InitiateForgottenPasswordProcedure(new() { Email = workEmail }, Ct);
+                resultAtLimit
+                    .ShouldBeError()
+                    .ShouldBeOfType<InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded>();
+            }
+        );
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenNumberOfAttemptsOutsideOfTimeFrame_ShouldBeSuccess()
+    {
+        await PerformForBothRealAndNonRealUser(
+            async (workEmail) =>
+            {
+                await InitiateMultiplePasswordRequestAcrossTimeSpan(
+                    workEmail,
+                    _maxNumberOfChangePasswordAttemptedInA24HourWindow - 1,
+                    (_testTime.AddHours(-24), _testTime)
+                );
+                await InitiateMultiplePasswordRequestAcrossTimeSpan(
+                    workEmail,
+                    1,
+                    (_testTime.AddHours(-25), _testTime.AddHours(-24))
+                );
+
+                var result = await _harness
+                    .UpdateCurrentTime(_testTime)
+                    .Service.InitiateForgottenPasswordProcedure(new() { Email = workEmail }, Ct);
+                result.ShouldBeSuccess();
+            }
+        );
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenUserExists_ShouldSendEmailWithLink()
+    {
+        var exampleUri = new Uri($"https://example.com");
+        _passwordResetLinkCreator.GetPasswordResetLink(Arg.Any<string>()).Returns(exampleUri);
+
+        _ = await _harness.Service.InitiateForgottenPasswordProcedure(
+            new() { Email = _user.WorkEmail },
+            Ct
+        );
+
+        _harness
+            .Emails.Sent.ShouldHaveSingleItem()
+            .ShouldBeOfType<PasswordResetEmail>()
+            .Link.ShouldBe(exampleUri);
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenUserDoesNotExist_ShouldNotSendEmailWithLink()
+    {
+        _ = await _harness.Service.InitiateForgottenPasswordProcedure(
+            new() { Email = "non-existent-user@email.com" },
+            Ct
+        );
+
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    private async Task InitiateMultiplePasswordRequestAcrossTimeSpan(
+        string workEmail,
+        int numberOfAttempts,
+        (DateTime from, DateTime to) timeRange
+    )
+    {
+        var sampleTimes = Enumerable
+            .Range(0, numberOfAttempts)
+            .Select(_ => _faker.Date.Between(timeRange.from, timeRange.to))
+            .Order()
+            .ToArray();
+        foreach (var sampleTime in sampleTimes)
+        {
+            var resultBeforeLimit = await _harness
+                .UpdateCurrentTime(sampleTime)
+                .Service.InitiateForgottenPasswordProcedure(new() { Email = workEmail }, Ct);
+            resultBeforeLimit.ShouldBeSuccess();
+        }
+    }
+
+    private async Task PerformForBothRealAndNonRealUser(Func<string, Task> task)
+    {
+        string[] cases = [_user.WorkEmail, "non-existent-user@email.com"];
+
+        foreach (var workEmail in cases)
+        {
+            await task(workEmail);
+        }
     }
 
     private async Task<UserOrgMembership[]> AddMemberships(
