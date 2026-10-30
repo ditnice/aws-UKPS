@@ -15,6 +15,11 @@ public sealed class AuthenticationProblemDetails : ProblemDetails
     public AuthenticationFailCode? Code { get; init; }
 
     /// <summary>
+    /// Gets the organisation the request was for, when it is not the user's selected organisation.
+    /// </summary>
+    public int? OrganisationId { get; init; }
+
+    /// <summary>
     /// Gets the type of authentication challenge required to complete authentication.
     /// </summary>
     public UkpsChallengeType? ChallengeType { get; init; }

@@ -27,7 +27,8 @@ public interface IRecordService
     );
 
     /// <summary>
-    /// Discards a draft record identified by its unique ID.
+    /// Discards a record that has never been submitted, setting the record and its draft
+    /// revision to discarded.
     /// </summary>
     /// <param name="recordId">
     /// The unique identifier of the draft record to discard.
@@ -36,7 +37,8 @@ public interface IRecordService
     /// A token used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
-    /// An <see cref="DiscardRecordError"/> indicating the outcome of the operation.
+    /// A successful <see cref="Result{TError}"/>, or a <see cref="DiscardRecordError"/>
+    /// describing why the record could not be discarded.
     /// </returns>
     Task<Result<DiscardRecordError>> DiscardDraftRecord(
         int recordId,

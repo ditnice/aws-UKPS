@@ -18,6 +18,7 @@ internal class RecordCreationService : IRecordCreationService
     private readonly CurrentDbUserEntityService _currentDbUserEntityService;
     private readonly AppDbContext _dbContext;
     private readonly IOrganisationAuthoriser _organisationAuthoriser;
+    private readonly ICurrentUserInfoService _currentUserInfoService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly FormModelRegistry _formModels;
 
@@ -25,6 +26,7 @@ internal class RecordCreationService : IRecordCreationService
         CurrentDbUserEntityService currentDbUserEntityService,
         AppDbContext dbContext,
         IOrganisationAuthoriser organisationAuthoriser,
+        ICurrentUserInfoService currentUserInfoService,
         IDateTimeProvider dateTimeProvider,
         FormModelRegistry formModels
     )
@@ -33,6 +35,7 @@ internal class RecordCreationService : IRecordCreationService
         _currentDbUserEntityService = currentDbUserEntityService;
         _dbContext = dbContext;
         _organisationAuthoriser = organisationAuthoriser;
+        _currentUserInfoService = currentUserInfoService;
         _dateTimeProvider = dateTimeProvider;
     }
 
@@ -41,6 +44,8 @@ internal class RecordCreationService : IRecordCreationService
         CancellationToken cancellationToken
     )
     {
+        _currentUserInfoService.ThrowIfOrganisationNotSelected(command.OrganisationId);
+
         bool isAuthorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
             Operation.Create,
             command.OrganisationId

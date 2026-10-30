@@ -38,6 +38,7 @@ const user: UserInformationDto = {
   organisationName: 'Example Pharma',
   userRole: 'Standard',
   status: 'Active',
+  hasMultipleOrganisations: false,
 }
 
 function mockResponse() {

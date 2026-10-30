@@ -43,4 +43,10 @@ public abstract record RecordDto
     /// latest revision.
     /// </summary>
     public required string? FirstPageId { get; init; }
+
+    /// <summary>
+    /// Gets the actions the user can take on the record, given its status and the workflow status
+    /// of its latest revision.
+    /// </summary>
+    public required IReadOnlyCollection<RecordAction> Actions { get; init; }
 }

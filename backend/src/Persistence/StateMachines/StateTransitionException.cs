@@ -1,4 +1,4 @@
-namespace UKPS.Api.Persistence.Entities.Identity;
+namespace UKPS.Api.Persistence.StateMachines;
 
 internal class StateTransitionException : InvalidOperationException
 {

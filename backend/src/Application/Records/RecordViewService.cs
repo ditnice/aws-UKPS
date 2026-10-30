@@ -2,11 +2,13 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
@@ -19,34 +21,40 @@ using GetRecordResult = Result<RecordDto, GetRecordError>;
 internal sealed class RecordViewService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
+    ICurrentUserInfoService currentUserInfoService,
     FormModelRegistry formModels
 ) : IRecordViewService
 {
     public async Task<GetRecordResult> GetRecord(
         int recordId,
         RecordType recordType,
+        int organisationId,
         CancellationToken cancellationToken
     )
     {
-        RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
+        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId);
 
-        if (record is null || record.RecordStatus == RecordStatus.Discarded)
-        {
-            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
-        }
-
+        // Authorise against the requested organisation before looking the record up, so an
+        // unauthorised caller gets the same response whether or not the record exists.
         if (
             !organisationAuthoriser.CanPerformOperationOnOrganisation(
                 Operation.Read,
-                record.OrganisationId
+                organisationId
             )
         )
         {
             return GetRecordResult.Err(new GetRecordError.NotAllowed(recordId));
         }
 
+        RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
+
+        if (record is null || record.OrganisationId != organisationId)
+        {
+            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
+        }
+
         // Every record is created with a revision, so this only guards against bad data.
-        if (record.LatestRevisionId is null)
+        if (record.LatestRevisionId is null || record.LatestRevisionStatus is null)
         {
             return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
         }
@@ -59,6 +67,10 @@ internal sealed class RecordViewService(
         }
 
         int revisionId = record.LatestRevisionId.Value;
+        IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
+            new(record.RecordStatus, record.LatestRevisionStatus.Value),
+            record.HasSingleRevision
+        );
 
         return GetRecordResult.Ok(
             recordType switch
@@ -67,9 +79,10 @@ internal sealed class RecordViewService(
                     recordId,
                     record,
                     revisionId,
+                    actions,
                     cancellationToken
                 ),
-                RecordType.Vaccine => GetVaccineRecord(recordId, record),
+                RecordType.Vaccine => GetVaccineRecord(recordId, record, actions),
                 _ => throw new UnreachableException($"Unhandled record type {recordType}."),
             }
         );
@@ -89,7 +102,9 @@ internal sealed class RecordViewService(
                 x.Record.RecordStatus,
                 x.Record.ReviewedAt,
                 x.LatestRevisionId,
-                x.DisplayStatus
+                x.DisplayStatus,
+                x.LatestRevisionStatus,
+                x.HasSingleRevision
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -109,6 +124,7 @@ internal sealed class RecordViewService(
         int recordId,
         RecordHeader record,
         int revisionId,
+        IReadOnlyCollection<RecordAction> actions,
         CancellationToken cancellationToken
     )
     {
@@ -120,6 +136,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             FirstPageId = FirstPageId(record),
+            Actions = actions,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,
@@ -165,7 +182,11 @@ internal sealed class RecordViewService(
     }
 
     // TODO: Populate the vaccine record sections.
-    private VaccineRecordDto GetVaccineRecord(int recordId, RecordHeader record)
+    private VaccineRecordDto GetVaccineRecord(
+        int recordId,
+        RecordHeader record,
+        IReadOnlyCollection<RecordAction> actions
+    )
     {
         return new VaccineRecordDto
         {
@@ -175,6 +196,7 @@ internal sealed class RecordViewService(
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
             FirstPageId = FirstPageId(record),
+            Actions = actions,
         };
     }
 
@@ -530,6 +552,8 @@ internal sealed class RecordViewService(
         RecordStatus RecordStatus,
         DateTime? ReviewedAt,
         int? LatestRevisionId,
-        RecordDisplayStatus DisplayStatus
+        RecordDisplayStatus DisplayStatus,
+        WorkflowStatus? LatestRevisionStatus,
+        bool HasSingleRevision
     );
 }

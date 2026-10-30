@@ -14,6 +14,10 @@ internal sealed class RecordRevisionConfiguration : IEntityTypeConfiguration<Rec
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz").IsRequired();
         builder.Property(x => x.Version).IsRowVersion();
 
+        // Maps to PostgreSQL's xmin, so an update fails if the revision changed since it was read,
+        // for example by being submitted while it is being discarded.
+        builder.Property(x => x.Version).IsRowVersion();
+
         builder
             .HasOne(x => x.Record)
             .WithMany(x => x.Revisions)

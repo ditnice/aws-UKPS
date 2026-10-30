@@ -1,12 +1,14 @@
 minimumReleaseAge: 10080 # 7 days
 
 # Force patched versions of transitive deps flagged by `trivy fs` for known
-# vulns, until the packages pulling them in (payload, monaco-editor, drizzle-kit)
-# release versions that bump them on their own.
+# vulns, until the packages pulling them in (payload, monaco-editor, drizzle-kit,
+# lexical) release versions that bump them on their own.
 overrides:
   '@esbuild-kit/core-utils>esbuild': ^0.25.0 # GHSA-67mh-4wv8-2f99, via drizzle-kit (pins ~0.18.20)
-  dompurify: ^3.4.16 # CVE-2026-65898, CVE-2026-65899, CVE-2026-66010, GHSA-55q2-fjhq-7xh7, GHSA-6688-9rhm-gjv2, via monaco-editor (pins 3.4.8)
-  undici: ^7.29.1 # CVE-2026-19534, CVE-2026-84961, via payload (pins 7.29.0)
+  dompurify: ^3.4.17 # GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr, GHSA-6688-9rhm-gjv2, GHSA-c6gr-qvv4-5v3f, GHSA-p98j-92pf-mc4p, via monaco-editor (pins 3.4.15)
+  graphql-scalars: ^2.0.1 # CVE-2026-115887, via @payloadcms/graphql (pins 1.22.2)
+  happy-dom: ^21.0.4 # CVE-2026-115895, CVE-2026-118660, via @lexical/headless (^20.9.0) and vitest
+  undici: ^7.30.1 # CVE-2026-109383, CVE-2026-109829, CVE-2026-109869, CVE-2026-87018, CVE-2026-109841, CVE-2026-109924, CVE-2026-109932, CVE-2026-87029, via payload (pins 7.29.1)
 
 allowBuilds:
   '@parcel/watcher': true
@@ -23,6 +25,11 @@ patchedDependencies:
 # These scoped exceptions allow installation; they do not assert runtime compatibility.
 peerDependencyRules:
   allowedVersions:
+    # These plugins (bundled by eslint-config-next) don't list ESLint 10 in their peer ranges yet,
+    # but eslint-config-next >=16.4.0 shims the removed rule-context APIs for them.
+    'eslint-plugin-import@2.32.0>eslint': '10'
+    'eslint-plugin-jsx-a11y@6.10.2>eslint': '10'
+    'eslint-plugin-react@7.37.5>eslint': '10'
     '@headlessui/react@1.7.19>react': '19'
     '@headlessui/react@1.7.19>react-dom': '19'
     '@nice-digital/design-system@5.6.1>react': '19'

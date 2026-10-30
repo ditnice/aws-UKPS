@@ -364,14 +364,15 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             RecordStatus = RecordStatus.Published,
             DisplayStatus = RecordDisplayStatus.Draft,
             FirstPageId = "indication",
+            Actions = [RecordAction.Update, RecordAction.ViewTimeline],
             RecordClinicalTrials = [],
         };
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Ok(expected));
 
         var response = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -385,17 +386,18 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         record.OrganisationId.ShouldBe(expected.OrganisationId);
         record.RecordStatus.ShouldBe(expected.RecordStatus);
         record.DisplayStatus.ShouldBe(expected.DisplayStatus);
+        record.Actions.ShouldBe(expected.Actions);
     }
 
     [Fact]
     public async Task GetRecord_ReturnsNotFound_WhenRecordNotFound()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotFound(1)));
 
         var response = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -406,7 +408,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecord_ReturnsNotFound_WhenRecordTypeDoesNotMatch()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(
                 Result<RecordDto, GetRecordError>.Err(
                     new GetRecordError.RecordTypeMismatch(
@@ -418,7 +420,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             );
 
         var response = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -429,11 +431,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecord_ReturnsNotFound_WhenNotAllowed()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
 
         var response = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -444,18 +446,18 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     public async Task GetRecord_InaccessibleAndMissingRecords_ReturnIdenticalResponses()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
         _mockRecordViewService
-            .GetRecord(2, RecordType.Medicine, Arg.Any<CancellationToken>())
+            .GetRecord(2, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotFound(2)));
 
         var inaccessibleResponse = await _client.GetAsync(
-            new Uri("/records/1?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
         var missingResponse = await _client.GetAsync(
-            new Uri("/records/2?recordType=Medicine", UriKind.Relative),
+            new Uri("/records/2?recordType=Medicine&organisationId=4", UriKind.Relative),
             TestContext.Current.CancellationToken
         );
 
@@ -480,7 +482,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
-    public async Task DiscardDraftRecord_WhenSuccessful_ShouldReturnOk()
+    public async Task DiscardRecord_WhenSuccessful_ReturnsOk()
     {
         var recordId = 1;
 
@@ -488,70 +490,100 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
             .Returns(Result<DiscardRecordError>.Ok());
 
-        using var request = new HttpRequestMessage(
-            HttpMethod.Patch,
-            new Uri($"records/{recordId}/discard", UriKind.Relative)
-        );
+        var response = await SendDiscardRequest(recordId);
 
-        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         await _mockRecordService
             .Received(1)
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    [Fact]
-    public async Task DiscardDraftRecord_WhenRecordNotFound_ShouldReturnNotFound()
+    public static TheoryData<DiscardRecordError, HttpStatusCode> DiscardRecordErrors =>
+        new()
+        {
+            { new DiscardRecordError.RecordNotFound(), HttpStatusCode.NotFound },
+            { new DiscardRecordError.NotAllowed(), HttpStatusCode.NotFound },
+            { new DiscardRecordError.InvalidDiscard(), HttpStatusCode.BadRequest },
+            { new DiscardRecordError.ConcurrencyError(), HttpStatusCode.Conflict },
+        };
+
+    [Theory]
+    [MemberData(nameof(DiscardRecordErrors))]
+    public async Task DiscardRecord_WhenServiceReturnsError_ReturnsProblem(
+        DiscardRecordError error,
+        HttpStatusCode expectedStatusCode
+    )
     {
         var recordId = 1;
 
         _mockRecordService
             .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
-            .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound()));
+            .Returns(Result<DiscardRecordError>.Err(error));
 
-        using var request = new HttpRequestMessage(
-            HttpMethod.Patch,
-            new Uri($"records/{recordId}/discard", UriKind.Relative)
+        var response = await SendDiscardRequest(recordId);
+
+        response.StatusCode.ShouldBe(expectedStatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(
+            TestContext.Current.CancellationToken
         );
-
-        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
-
-        await _mockRecordService
-            .Received(1)
-            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
-
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        problem.ShouldNotBeNull();
+        problem.Status.ShouldBe((int)expectedStatusCode);
     }
 
     [Fact]
-    public async Task DiscardDraftRecord_WhenInvalidDiscard_ShouldReturnBadRequest()
+    public async Task DiscardRecord_InaccessibleRecord_ReturnsSameResponseAsMissingRecord()
     {
-        var recordId = 1;
-
         _mockRecordService
-            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>())
-            .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.InvalidDiscard()));
+            .DiscardDraftRecord(1, Arg.Any<CancellationToken>())
+            .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.NotAllowed()));
+        _mockRecordService
+            .DiscardDraftRecord(2, Arg.Any<CancellationToken>())
+            .Returns(Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound()));
 
+        var inaccessibleResponse = await SendDiscardRequest(1);
+        var missingResponse = await SendDiscardRequest(2);
+
+        inaccessibleResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        missingResponse.StatusCode.ShouldBe(inaccessibleResponse.StatusCode);
+
+        var inaccessibleBody = (
+            await inaccessibleResponse.Content.ReadFromJsonAsync<JsonObject>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldNotBeNull();
+        var missingBody = (
+            await missingResponse.Content.ReadFromJsonAsync<JsonObject>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldNotBeNull();
+
+        inaccessibleBody.Remove("traceId");
+        missingBody.Remove("traceId");
+        JsonNode.DeepEquals(inaccessibleBody, missingBody).ShouldBeTrue();
+    }
+
+    private async Task<HttpResponseMessage> SendDiscardRequest(int recordId)
+    {
         using var request = new HttpRequestMessage(
             HttpMethod.Patch,
             new Uri($"records/{recordId}/discard", UriKind.Relative)
         );
 
-        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
-
-        await _mockRecordService
-            .Received(1)
-            .DiscardDraftRecord(recordId, Arg.Any<CancellationToken>());
-
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
     [Theory]
     [InlineData("")]
-    [InlineData("?recordType=")]
-    [InlineData("?recordType=Banana")]
-    [InlineData("?recordType=5")]
-    public async Task GetRecord_ReturnsBadRequest_WhenRecordTypeMissingOrInvalid(string query)
+    [InlineData("?organisationId=4")]
+    [InlineData("?organisationId=4&recordType=")]
+    [InlineData("?organisationId=4&recordType=Banana")]
+    [InlineData("?organisationId=4&recordType=5")]
+    [InlineData("?recordType=Medicine")]
+    [InlineData("?recordType=Medicine&organisationId=")]
+    [InlineData("?recordType=Medicine&organisationId=abc")]
+    public async Task GetRecord_ReturnsBadRequest_WhenRecordTypeOrOrganisationMissingOrInvalid(
+        string query
+    )
     {
         var response = await _client.GetAsync(
             new Uri($"/records/1{query}", UriKind.Relative),
@@ -561,7 +593,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         await _mockRecordViewService
             .DidNotReceiveWithAnyArgs()
-            .GetRecord(default, default, TestContext.Current.CancellationToken);
+            .GetRecord(default, default, default, TestContext.Current.CancellationToken);
     }
 
     private static Uri AppendQueryParams(string url, GetRecordsQueryDto query)

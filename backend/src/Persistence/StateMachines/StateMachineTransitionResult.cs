@@ -1,4 +1,4 @@
-namespace UKPS.Api.Persistence.Entities.Identity;
+namespace UKPS.Api.Persistence.StateMachines;
 
 /// <summary>
 /// Represents the result of attempting to transition a state machine to a new state.

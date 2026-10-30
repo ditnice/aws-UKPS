@@ -13,8 +13,8 @@ using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
-using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.StateMachines;
 using UKPS.Api.Tests.Application.Users;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
@@ -831,6 +831,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
+            RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
             RuleFor(
                 x => x.Status,
                 f =>

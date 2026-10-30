@@ -9,7 +9,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../../_components/OrganisationPageWrapper'
-import { canDiscardRecord } from '../_lib/recordActions'
+import { buildRecordHref } from '../_lib/recordLinks'
 
 import { DiscardRecordControls } from './_components/DiscardRecordControls'
 
@@ -55,22 +55,18 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
   } = await getRecord({
     client: await createServerApiClient(),
     path: { id: recordId },
-    query: { recordType },
+    query: { recordType, organisationId },
   })
 
   if (
     response?.status === 404 ||
-    (record && (record.organisationId !== organisationId || !canDiscardRecord(record)))
+    (record && (record.organisationId !== organisationId || !record.actions.includes('Discard')))
   ) {
     notFound()
   }
 
   const backLink = (
-    <BackLink
-      href={`/portal/organisations/${organisationId}/records/${recordId}?recordType=${recordType}`}
-    >
-      Back
-    </BackLink>
+    <BackLink href={buildRecordHref(organisationId, recordId, recordType)}>Back</BackLink>
   )
 
   if (error || !record) {
@@ -98,11 +94,7 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
       <PageHeader
         backLink={backLink}
         heading="Confirm decision to discard record"
-        lead={
-          <>
-            <strong>Record title:</strong> {productDetail?.recordTitle}
-          </>
-        }
+        preheading={productDetail?.recordTitle}
       />
 
       <p>What happens when this record is discarded:</p>

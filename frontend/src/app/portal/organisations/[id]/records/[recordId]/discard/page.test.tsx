@@ -42,17 +42,17 @@ vi.mock('../../../_components/OrganisationPageWrapper', () => ({
 vi.mock('@nice-digital/nds-page-header', () => ({
   PageHeader: ({
     heading,
-    lead,
+    preheading,
     breadcrumbs,
   }: {
     heading: string
-    lead: ReactNode
+    preheading: ReactNode
     breadcrumbs: ReactNode
   }) => (
     <>
       {breadcrumbs}
+      <p data-testid="preheading">{preheading}</p>
       <h1>{heading}</h1>
-      <p data-testid="lead">{lead}</p>
     </>
   ),
 }))
@@ -80,6 +80,7 @@ const medicineRecord = {
   recordType: 'Medicine',
   recordStatus: 'Unpublished',
   displayStatus: 'Draft',
+  actions: ['Update', 'Discard', 'ViewTimeline'],
   recordProductDetail: fakeRecordProductDetailDto(),
 } satisfies RecordDto
 
@@ -118,7 +119,10 @@ describe('DiscardRecordPage', () => {
     expect(getRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { id: medicineRecord.recordId },
-        query: { recordType: medicineRecord.recordType },
+        query: {
+          recordType: medicineRecord.recordType,
+          organisationId: medicineRecord.organisationId,
+        },
       }),
     )
     expect(
@@ -127,8 +131,8 @@ describe('DiscardRecordPage', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'Confirm decision to discard record',
     )
-    expect(screen.getByTestId('lead').textContent).toBe(
-      `Record title: ${medicineRecord.recordProductDetail.recordTitle}`,
+    expect(screen.getByTestId('preheading').textContent).toBe(
+      medicineRecord.recordProductDetail.recordTitle,
     )
     const controls = screen.getByTestId('discard-record-controls')
     expect(controls.getAttribute('data-organisation-id')).toBe(organisationId)
@@ -174,15 +178,9 @@ describe('DiscardRecordPage', () => {
     await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND')
   })
 
-  it.each([
-    ['a draft of a published record', 'Draft', 'Published'],
-    ['published', 'Published', 'Published'],
-    ['in QA review', 'QAReview', 'Unpublished'],
-    ['on hold', 'OnHold', 'OnHold'],
-    ['archived', 'Archived', 'Archived'],
-  ] as const)('returns not found when the record is %s', async (_, displayStatus, recordStatus) => {
+  it('returns not found when the record cannot be discarded', async () => {
     mockRecord({
-      data: { ...medicineRecord, displayStatus, recordStatus },
+      data: { ...medicineRecord, actions: ['Update', 'ViewTimeline'] },
       error: undefined,
       response: new Response(),
     })

@@ -6,48 +6,30 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
     class="_task-list__summary_b29161"
   >
     <p
-      class="_task-list__summary-text_b29161"
+      class="lead"
     >
-      You have completed 1 of 3 sections
+      You have completed 1 of 3 mandatory tasks
     </p>
     <a
-      class="_task-list__summary-link_b29161"
-      href="#task-2"
+      href="/task-2"
     >
-      Skip to first incomplete section
+      Skip to first incomplete task
     </a>
   </div>
   <div
-    class="_task-list_b29161 additional-class"
+    class="additional-class"
     data-component="task-list"
   >
-    <section
-      class="_task-list__section_b29161"
-    >
-      <h2
+    <section>
+      <h3
         class="_task-list__section-title_b29161"
       >
         Section 1
-      </h2>
+      </h3>
       <div
         class="_task-list__section-summary_b29161"
       >
-        <div
-          class="_task-list__section-description_b29161"
-        >
-          Complete these first
-        </div>
-        <span
-          class="_task-list__status_b29161"
-        >
-          <span
-            class="tag"
-            data-component="tag"
-            style="background-color: rgb(255, 238, 128); color: rgb(122, 60, 28);"
-          >
-            In progress
-          </span>
-        </span>
+        Complete these first
       </div>
       <ul
         class="_task-list__tasks_b29161"
@@ -56,14 +38,9 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           class="_task-list__task_b29161"
           id="task-1"
         >
-          <div
-            class="_task-list__task-content_b29161"
-          >
-            <div
-              class="_task-list__task-title_b29161"
-            >
+          <div>
+            <div>
               <a
-                class="_task-list__task-link_b29161"
                 href="/task-1"
               >
                 Task 1
@@ -73,20 +50,26 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           <span
             class="_task-list__status_b29161"
           >
-            Completed
+            <span
+              class="tag"
+              data-component="tag"
+              style="background-color: rgb(207, 228, 220); color: rgb(8, 61, 41);"
+            >
+              Completed
+            </span>
           </span>
         </li>
         <li
           class="_task-list__task_b29161"
           id="task-2"
         >
-          <div
-            class="_task-list__task-content_b29161"
-          >
-            <div
-              class="_task-list__task-title_b29161"
-            >
-              Task 2
+          <div>
+            <div>
+              <a
+                href="/task-2"
+              >
+                Task 2
+              </a>
             </div>
           </div>
           <span
@@ -103,14 +86,12 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
         </li>
       </ul>
     </section>
-    <section
-      class="_task-list__section_b29161"
-    >
-      <h2
+    <section>
+      <h3
         class="_task-list__section-title_b29161"
       >
         Section 2
-      </h2>
+      </h3>
       <ul
         class="_task-list__tasks_b29161"
       >
@@ -118,12 +99,8 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           class="_task-list__task_b29161"
           id="task-3"
         >
-          <div
-            class="_task-list__task-content_b29161"
-          >
-            <div
-              class="_task-list__task-title_b29161"
-            >
+          <div>
+            <div>
               Task 3
             </div>
           </div>
@@ -135,7 +112,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
               data-component="tag"
               style="background-color: rgb(210, 226, 241); color: rgb(15, 56, 92);"
             >
-              Not started
+              Not yet started
             </span>
           </span>
         </li>
@@ -145,26 +122,16 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
 </DocumentFragment>
 `;
 
-exports[`TaskListTask > renders a task link, status and field progress summary 1`] = `
+exports[`TaskListTask > renders a task link and status 1`] = `
 <DocumentFragment>
   <ul>
     <li
       class="_task-list__task_b29161"
       id="task-3"
     >
-      <div
-        class="_task-list__task-content_b29161"
-      >
-        <div
-          class="_task-list__task-title_b29161"
-        >
-          <p
-            class="_task-list__task-field-summary_b29161"
-          >
-            You have completed 1 of 3 fields
-          </p>
+      <div>
+        <div>
           <a
-            class="_task-list__task-link_b29161"
             href="/review"
           >
             Review evidence
@@ -181,6 +148,48 @@ exports[`TaskListTask > renders a task link, status and field progress summary 1
         >
           In progress
         </span>
+      </span>
+    </li>
+  </ul>
+</DocumentFragment>
+`;
+
+exports[`TaskListTask > renders the cannot-start status as plain text 1`] = `
+<DocumentFragment>
+  <ul>
+    <li
+      class="_task-list__task_b29161"
+    >
+      <div>
+        <div>
+          Special designation
+        </div>
+      </div>
+      <span
+        class="_task-list__status_b29161"
+      >
+        Cannot start yet
+      </span>
+    </li>
+  </ul>
+</DocumentFragment>
+`;
+
+exports[`TaskListTask > renders the not-applicable status as plain text 1`] = `
+<DocumentFragment>
+  <ul>
+    <li
+      class="_task-list__task_b29161"
+    >
+      <div>
+        <div>
+          Special designation
+        </div>
+      </div>
+      <span
+        class="_task-list__status_b29161"
+      >
+        Not applicable
       </span>
     </li>
   </ul>
