@@ -112,9 +112,9 @@ public class RecordFormController(
                         title: "Forbidden",
                         detail: "You are not authorised to edit this record."
                     ),
-                    SaveRecordPageError.NotDraft => Conflict(
-                        "revision_not_draft",
-                        "This record can no longer be edited because it has been submitted."
+                    SaveRecordPageError.NotEditable => Conflict(
+                        "record_not_editable",
+                        "This record can't be edited in its current status."
                     ),
                     SaveRecordPageError.RevisionChanged => Conflict(
                         "revision_changed",

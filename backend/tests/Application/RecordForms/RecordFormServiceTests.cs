@@ -453,7 +453,32 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         (await Save("indication", Answer(Indication, "Text")))
             .ShouldBeError()
-            .ShouldBeOfType<SaveRecordPageError.NotDraft>();
+            .ShouldBeOfType<SaveRecordPageError.NotEditable>();
+    }
+
+    [Theory]
+    [InlineData(RecordStatus.OnHold)]
+    [InlineData(RecordStatus.Archived)]
+    public async Task SavePage_DraftOfALockedRecord_IsAConflictAndWritesNothing(
+        RecordStatus recordStatus
+    )
+    {
+        await SetRecordStatus(recordStatus);
+
+        (await Save("indication", Answer(Indication, "Text")))
+            .ShouldBeError()
+            .ShouldBeOfType<SaveRecordPageError.NotEditable>();
+        (await FieldAudits().AnyAsync(Ct)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task SavePage_DraftOfAPublishedRecord_Saves()
+    {
+        await SetRecordStatus(RecordStatus.Published);
+
+        await SaveOk("indication", Answer(Indication, "Text"));
+
+        (await IndicationRow()).Indication.ShouldBe("Text");
     }
 
     [Fact]
@@ -554,6 +579,12 @@ public class RecordFormServiceTests : DatabaseTestBase
                 .Generate(),
             Ct
         );
+
+    private async Task SetRecordStatus(RecordStatus status)
+    {
+        Context.Entry(_record).Property(static x => x.RecordStatus).CurrentValue = status;
+        await Context.SaveChangesAsync(Ct);
+    }
 
     private async Task<RecordRevision> AddEarlierPublishedRevision() =>
         await AddEntity(
