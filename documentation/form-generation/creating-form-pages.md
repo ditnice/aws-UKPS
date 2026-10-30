@@ -62,7 +62,8 @@ section and task.
 
 This is the whole of `MedicinesIndicationDetail` as it would be annotated for the first
 delivery. Every mapped scalar property has either `[FormField]` or `[FormIgnore]`; that is the
-[coverage rule](#step-1-account-for-every-property).
+[coverage rule](#step-1-account-for-every-property). The task's ID, title and order come from
+`MedicineFormTasks`, because every question in the task repeats them.
 
 ```csharp
 using UKPS.Api.Persistence.Enums;
@@ -79,7 +80,11 @@ internal sealed class MedicinesIndicationDetail
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormTask("indication-details", "Indication details", Order = 10)]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
     [FormPage("indication", "Indication", Order = 10)]
     [FormField(
         "medicines_indication_detail.indication",
@@ -91,7 +96,11 @@ internal sealed class MedicinesIndicationDetail
     public string? Indication { get; set; }
 
     // The most specific BNF entry chosen: a subchapter, or the chapter if none is picked.
-    [FormTask("indication-details", "Indication details", Order = 10)]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
     [FormPage("bnf-chapter", "BNF chapter", Order = 20)]
     [FormField(
         "medicines_indication_detail.bnf_chapter_id",
@@ -103,7 +112,11 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
-    [FormTask("indication-details", "Indication details", Order = 10)]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
     [FormPage("paediatric", "Treating children", Order = 40)]
     [FormField(
         "medicines_indication_detail.indication_is_paediatric",
@@ -112,7 +125,11 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
-    [FormTask("indication-details", "Indication details", Order = 10)]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
     [FormPage("cancer", "Treating cancer", Order = 50)]
     [FormField(
         "medicines_indication_detail.indication_is_cancer",
@@ -121,7 +138,11 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat cancer")]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
-    [FormTask("indication-details", "Indication details", Order = 10)]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
     [FormPage("rare-disease", "Treating a rare disease", Order = 60)]
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
@@ -155,7 +176,11 @@ internal sealed class MedicinesIndicationDetail
     public ReferenceData.FormulationType? FormulationType { get; set; }
 
     // Junction navigation backing a multi-select question.
-    [FormTask("indication-details", "Indication details", Order = 10)]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
     [FormPage("therapeutic-area", "Therapeutic area", Order = 30)]
     [FormField(
         "medicines_indication_detail_therapeutic_area",
@@ -251,7 +276,11 @@ once it has been released.**
 ## Step 4: Add the page and the field
 
 ```csharp
-[FormTask("indication-details", "Indication details", Order = 10)]
+[FormTask(
+    MedicineFormTasks.IndicationDetails,
+    MedicineFormTasks.IndicationDetailsTitle,
+    Order = MedicineFormTasks.IndicationDetailsOrder
+)]
 [FormPage("bnf-chapter", "BNF chapter", Order = 20)]
 [FormField(
     "medicines_indication_detail.bnf_chapter_id",
@@ -445,7 +474,9 @@ The `names` page shows both questions, ordered by `FormField.Order`. One save wr
 tables, with a field audit row for each changed question.
 
 Keep task and page metadata in one place to avoid mismatches: declare their IDs, titles and orders
-as constants and use the constants in every `[FormTask]` and `[FormPage]`.
+as constants and use the constants in every `[FormTask]` and `[FormPage]`. The Medicine form's
+tasks are in `MedicineFormTasks`, next to the Medicine content entities; add a task there before
+using it.
 
 ## Step 7: Bump the form version
 

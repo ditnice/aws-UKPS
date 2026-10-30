@@ -5,6 +5,7 @@ internal sealed record FormTask(string Id, string Title, int Order, IReadOnlyLis
 {
     public FormPage FirstPage => Pages[0];
 
-    public IReadOnlyList<FormQuestion> Questions =>
+    /// <summary>Every question in the task, in page order.</summary>
+    public IReadOnlyList<FormQuestion> Questions { get; } =
         Pages.SelectMany(static page => page.Questions).ToArray();
 }

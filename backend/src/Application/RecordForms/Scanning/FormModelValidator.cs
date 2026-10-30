@@ -498,6 +498,8 @@ internal static partial class FormModelValidator
             );
         }
 
+        // Grouping by task ID alone is safe: ValidateTaskMetadata reports a task ID declared in more
+        // than one section, so within a valid form each task ID names exactly one task.
         foreach (
             var task in pages
                 .Select(static p => p.First())

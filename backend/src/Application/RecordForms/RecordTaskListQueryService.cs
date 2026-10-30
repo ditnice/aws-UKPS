@@ -66,9 +66,8 @@ internal sealed class RecordTaskListQueryService(
 
     private static RecordTaskStatus GetStatus(FormTask task, HashSet<string> answered)
     {
-        FormQuestion[] questions = [.. task.Questions];
-        bool hasAnyAnswer = questions.Any(question => answered.Contains(question.Id));
-        FormQuestion[] required = questions.Where(static q => q.IsRequired).ToArray();
+        bool hasAnyAnswer = task.Questions.Any(question => answered.Contains(question.Id));
+        FormQuestion[] required = task.Questions.Where(static q => q.IsRequired).ToArray();
         bool requiredAnswersComplete = required.All(question => answered.Contains(question.Id));
 
         if (requiredAnswersComplete && (required.Length > 0 || hasAnyAnswer))
