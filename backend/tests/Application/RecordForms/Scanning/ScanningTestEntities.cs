@@ -117,6 +117,15 @@ internal sealed class BrokenEntity
     [FormOptions("no-such-provider")]
     public YesNoUnknown? UnknownKey { get; set; }
 
+    [FormPage("no-task", "No task", Order = 20)]
+    [FormField("broken_entity.no_task", "No task", FormControl.Text)]
+    public string? NoTask { get; set; }
+
+    [FormTask("Bad Task", " ", Order = 20)]
+    [FormPage("bad-task", "Bad task", Order = 30)]
+    [FormField("broken_entity.bad_task", "Bad task", FormControl.Text)]
+    public string? BadTask { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 
@@ -148,6 +157,32 @@ internal sealed class DisagreeingEntity
     [FormPage("text", "Different page title", Order = 10)]
     [FormField("valid_entity.text", "Duplicate ID", FormControl.Text, Order = 30)]
     public string? Text { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+}
+
+/// <summary>
+/// Disagrees with <see cref="ValidEntity"/> about task metadata, and puts one of its pages in
+/// another task with the same order.
+/// </summary>
+[FormSection(RecordType.Vaccine, "valid", "Valid", Order = 10)]
+internal sealed class TaskConflictEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("valid-task", "Different task title", Order = 10)]
+    [FormPage("extra", "Extra", Order = 40)]
+    [FormField("task_conflict_entity.extra", "Extra", FormControl.Text)]
+    public string? Extra { get; set; }
+
+    [FormTask("other-task", "Other task", Order = 10)]
+    [FormPage("text", "Text", Order = 10)]
+    [FormField("task_conflict_entity.moved", "Moved", FormControl.Text, Order = 30)]
+    public string? Moved { get; set; }
 
     public RecordRevision? Revision { get; set; }
 }

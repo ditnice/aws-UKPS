@@ -26,6 +26,9 @@ public class FormModelValidatorTests
         FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
 
         form.Pages.Select(static p => p.Id).ShouldBe(["text", "chapter", "areas"]);
+        FormTask task = form.Sections.Single().Tasks.Single();
+        (task.Id, task.Title, task.FirstPage.Id).ShouldBe(("valid-task", "Valid task", "text"));
+        task.Pages.ShouldBe(form.Pages);
         form.FindPage("text")!
             .Questions.Select(static q => (q.Id, q.Control))
             .ShouldBe([
@@ -60,6 +63,10 @@ public class FormModelValidatorTests
         "BrokenEntity.WrongEnum has [FormMaxLength], which needs a Text or Textarea control and a positive maximum."
     )]
     [InlineData("BrokenEntity.UnknownKey uses unknown option provider 'no-such-provider'.")]
+    [InlineData("BrokenEntity.NoTask has [FormField] but no [FormTask].")]
+    [InlineData(
+        "BrokenEntity.BadTask declares task 'Bad Task' with a badly formed ID or a blank title."
+    )]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenEntity)).ShouldContain(expected);
@@ -104,6 +111,20 @@ public class FormModelValidatorTests
         );
         problems.ShouldContain(
             "The Vaccine form uses question ID 'valid_entity.text' more than once."
+        );
+    }
+
+    [Fact]
+    public void Validate_TaskConflicts_AreReported()
+    {
+        IReadOnlyList<string> problems = Problems(typeof(ValidEntity), typeof(TaskConflictEntity));
+
+        problems.ShouldContain(
+            "The Vaccine form declares task 'valid-task' with different titles, orders or sections."
+        );
+        problems.ShouldContain("The Vaccine form has page 'text' in more than one task.");
+        problems.ShouldContain(
+            "The Vaccine form, section 'valid', has task 'valid-task' and task 'other-task' with the same Order 10."
         );
     }
 
