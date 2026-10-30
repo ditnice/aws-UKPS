@@ -1,7 +1,8 @@
 namespace UKPS.Api.Persistence.Entities.ReferenceData;
 
 /// <summary>
-/// Therapeutic area hierarchy — medicines only.
+/// Therapeutic area hierarchy — medicines only. Top-level areas (for example "Addiction") with
+/// child diseases or conditions (for example "Opioid use disorder").
 /// 20 top-level areas, 172 total nodes including sub-areas.
 /// </summary>
 internal sealed class TherapeuticArea
@@ -10,6 +11,9 @@ internal sealed class TherapeuticArea
 
     /// <summary>Null for top-level areas.</summary>
     public int? ParentId { get; set; }
+
+    /// <summary>Display code, for example "1" for a top-level area or "1.3" for a child.</summary>
+    public required string Code { get; set; }
 
     public required string Label { get; set; }
     public int? DisplayOrder { get; set; }

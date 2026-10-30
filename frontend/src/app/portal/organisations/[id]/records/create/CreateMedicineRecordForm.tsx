@@ -64,9 +64,14 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       setError(false)
       setIsSubmitting(true)
       const data = createRecordCommandSchema.parse(value)
-      const { error, response } = await createRecord({ body: data })
+      const { data: created, error, response } = await createRecord({ body: data })
       if (response?.ok) {
-        router.push(`/portal/organisations/${organisationId}/records`)
+        // Go straight into the record's content form, when its type has one.
+        router.push(
+          created?.firstPageId
+            ? `/portal/records/${created.recordId}/${created.firstPageId}`
+            : `/portal/organisations/${organisationId}/records`,
+        )
         return
       }
 
