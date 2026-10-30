@@ -162,6 +162,73 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task CreateRecord_OnValidCommand_ShouldAuditEachAnsweredField()
+    {
+        CreateRecordCommand command = _validCommand with
+        {
+            CompanyCode = "ACM-0042",
+            BrandedName = "Harvoni",
+            RecordTitle = "Chronic hepatitis C in adults",
+            GenericNames = ["sofosbuvir", "ledipasvir"],
+            OtherIdentifiers = ["PF-04965842"],
+        };
+        int recordId = (await _harness.Service.CreateRecord(command, Ct))
+            .ShouldBeSuccess()
+            .RecordId;
+
+        var context = _harness.GetClearedContext();
+        int revisionId = await context
+            .RecordRevisions.Where(x => x.RecordId == recordId)
+            .Select(static x => x.Id)
+            .SingleAsync(Ct);
+        var audits = await context
+            .RecordFieldAudits.Where(x => x.RecordId == recordId)
+            .OrderBy(static x => x.Id)
+            .ToArrayAsync(Ct);
+
+        audits
+            .Select(static x => (x.FieldPath, x.OldValue, x.NewValue))
+            .ShouldBe([
+                ("record_product_detail.company_code", null, "ACM-0042"),
+                ("record_product_detail.branded_name", null, "Harvoni"),
+                ("record_product_detail.record_title", null, "Chronic hepatitis C in adults"),
+                (
+                    "record_names_and_identifiers",
+                    null,
+                    """{"generic_name":["sofosbuvir","ledipasvir"],"other_identifier":["PF-04965842"]}"""
+                ),
+            ]);
+        audits.ShouldAllBe(x =>
+            x.RevisionId == revisionId
+            && x.ChangedBy == _currentUser.Id
+            && x.ChangedAt == _currentDateTime
+        );
+    }
+
+    [Fact]
+    public async Task CreateRecord_WithoutBrandedNameOrOtherIdentifiers_ShouldNotAuditBrandedName()
+    {
+        CreateRecordCommand command = _validCommand with
+        {
+            BrandedName = null,
+            GenericNames = ["sofosbuvir"],
+            OtherIdentifiers = [],
+        };
+        int recordId = (await _harness.Service.CreateRecord(command, Ct))
+            .ShouldBeSuccess()
+            .RecordId;
+
+        var context = _harness.GetClearedContext();
+        var audits = await context
+            .RecordFieldAudits.Where(x => x.RecordId == recordId)
+            .ToDictionaryAsync(static x => x.FieldPath, static x => x.NewValue, Ct);
+
+        audits.Keys.ShouldNotContain("record_product_detail.branded_name");
+        audits["record_names_and_identifiers"]
+            .ShouldBe("""{"generic_name":["sofosbuvir"],"other_identifier":[]}""");
+    }
+
+    [Fact]
     public async Task CreateRecord_WhenSpecifiedOrganisationDoesNotExist_ShouldReturnInvalidOrganisationError()
     {
         var nonExistentOrganisationCommand = _validCommand with { OrganisationId = 999 };

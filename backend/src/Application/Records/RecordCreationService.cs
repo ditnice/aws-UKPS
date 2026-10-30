@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -15,6 +16,11 @@ namespace UKPS.Api.Application.Records;
 
 internal class RecordCreationService : IRecordCreationService
 {
+    private static readonly JsonSerializerOptions _auditJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
     private readonly CurrentDbUserEntityService _currentDbUserEntityService;
     private readonly AppDbContext _dbContext;
     private readonly IOrganisationAuthoriser _organisationAuthoriser;
@@ -81,6 +87,9 @@ internal class RecordCreationService : IRecordCreationService
         };
 
         await _dbContext.AddAsync(recordProductDetail, cancellationToken);
+        _dbContext.RecordFieldAudits.AddRange(
+            CreateFieldAudits(recordProductDetail, record, revision, time, currentUser)
+        );
         await _dbContext.SaveChangesAsync(cancellationToken);
         return CreateRecordResult.Ok(
             new CreateRecordDto()
@@ -120,4 +129,70 @@ internal class RecordCreationService : IRecordCreationService
         );
         return genericNames.Concat(otherIdentifiers).ToArray();
     }
+
+    /// <summary>
+    /// Audits each field answered on the creation page as a change from null. Unanswered fields
+    /// are not audited.
+    /// </summary>
+    private static RecordFieldAudit[] CreateFieldAudits(
+        RecordProductDetail productDetail,
+        Record record,
+        RecordRevision revision,
+        DateTime time,
+        User currentUser
+    )
+    {
+        (string FieldPath, string? Value)[] fields =
+        [
+            ("record_product_detail.company_code", productDetail.CompanyCode),
+            ("record_product_detail.branded_name", productDetail.BrandedName),
+            ("record_product_detail.record_title", productDetail.RecordTitle),
+            (
+                "record_names_and_identifiers",
+                NamesAndIdentifiersAuditText(productDetail.NamesAndIdentifiers)
+            ),
+        ];
+        return fields
+            .Where(static field => field.Value is not null)
+            .Select(field => new RecordFieldAudit
+            {
+                Record = record,
+                Revision = revision,
+                FieldPath = field.FieldPath,
+                OldValue = null,
+                NewValue = field.Value,
+                ChangedByUser = currentUser,
+                ChangedAt = time,
+            })
+            .ToArray();
+    }
+
+    /// <summary>
+    /// The names and identifiers as one JSON object, keyed by type in a fixed order with each
+    /// type's names in display order, so the same collection always serialises the same way.
+    /// </summary>
+    private static string NamesAndIdentifiersAuditText(
+        IEnumerable<RecordNameAndIdentifier> namesAndIdentifiers
+    )
+    {
+        string[] NamesOfType(NameAndIdentifierType type) =>
+            namesAndIdentifiers
+                .Where(x => x.NameType == type)
+                .OrderBy(static x => x.DisplayOrder)
+                .Select(static x => x.Name)
+                .ToArray();
+
+        return JsonSerializer.Serialize(
+            new NamesAndIdentifiersAuditValue(
+                NamesOfType(NameAndIdentifierType.GenericName),
+                NamesOfType(NameAndIdentifierType.OtherIdentifier)
+            ),
+            _auditJsonOptions
+        );
+    }
+
+    private sealed record NamesAndIdentifiersAuditValue(
+        string[] GenericName,
+        string[] OtherIdentifier
+    );
 }
