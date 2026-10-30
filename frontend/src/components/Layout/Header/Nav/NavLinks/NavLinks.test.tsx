@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { navigationState } from '@/test-utils/nextNavigation'
 
-import { NavLinks } from './NavLinks'
+import { NavLinks, type NavLinkItem } from './NavLinks'
 
 vi.mock('next/link', async () => ({
   default: (await import('@/test-utils/nextMocks')).NextLinkMock,
@@ -11,141 +11,111 @@ vi.mock('next/link', async () => ({
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
+type StringLabelledNavLinkItem = NavLinkItem & { stringLabel: string }
+
+const links: StringLabelledNavLinkItem[] = [
+  { href: '/', label: <>Home</>, stringLabel: 'Home' },
+  { href: '/about-us', label: 'About', stringLabel: 'About' },
+  { href: '/portal', label: 'Dashboard', stringLabel: 'Dashboard' },
+  { href: '/portal/components', label: 'Components', stringLabel: 'Components' },
+]
+
+const getLinkByLabel = (label: string) => screen.getByRole('link', { name: label })
+const assertLinkIsActive = (label: string) =>
+  expect(getLinkByLabel(label)).toHaveAttribute('aria-current', 'page')
+const assertLinkIsNotActive = (label: string) =>
+  expect(getLinkByLabel(label)).not.toHaveAttribute('aria-current')
+const assertOnlySpecifiedLinkIsActive = (expectedActiveLink: string) => {
+  assertLinkIsActive(expectedActiveLink)
+  links
+    .filter((x) => x.stringLabel != expectedActiveLink)
+    .forEach((x) => assertLinkIsNotActive(x.stringLabel))
+}
+const assertAllLinksAreNotActive = () => {
+  links.map((x) => x.stringLabel).forEach(assertLinkIsNotActive)
+}
+
 describe('NavLinks', () => {
-  it('renders root links for the root path', () => {
+  it('renders a list item and link for each provided link', () => {
     navigationState.pathname = '/'
 
-    render(<NavLinks />)
+    render(<NavLinks links={links} />)
 
-    expect(screen.getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBe('page')
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about-us')
-    expect(screen.getByRole('link', { name: 'About' })).not.toHaveAttribute('aria-current')
-    expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('listitem')).toHaveLength(links.length)
+
+    links.forEach(({ href, stringLabel }) => {
+      const link = getLinkByLabel(stringLabel)
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute('href', href)
+    })
   })
 
-  it('renders portal links for the portal path', () => {
+  it('renders nothing but an empty list when no links are provided', () => {
+    navigationState.pathname = '/'
+
+    render(<NavLinks links={[]} />)
+
+    expect(screen.getByRole('list')).toBeEmptyDOMElement()
+    expect(screen.queryAllByRole('link')).toHaveLength(0)
+  })
+
+  it('links the list to the header menu button', () => {
+    navigationState.pathname = '/'
+
+    render(<NavLinks links={links} />)
+
+    expect(screen.getByRole('list')).toHaveAttribute('aria-labelledby', 'header-menu-button')
+  })
+
+  it('marks the root link as active only on the root path', () => {
+    navigationState.pathname = '/'
+
+    render(<NavLinks links={links} />)
+
+    assertOnlySpecifiedLinkIsActive('Home')
+  })
+
+  it('marks only the exact matching link as active', () => {
     navigationState.pathname = '/portal'
 
-    render(<NavLinks />)
+    render(<NavLinks links={links} />)
 
-    expect(screen.getByRole('link', { name: 'Dashboard' }).getAttribute('aria-current')).toBe(
-      'page',
-    )
-    expect(screen.getByRole('link', { name: 'Components' }).hasAttribute('aria-current')).toBe(
-      false,
-    )
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/portal')
-    expect(screen.getByRole('link', { name: 'Components' })).toHaveAttribute(
-      'href',
-      '/portal/components',
-    )
-    expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument()
+    assertOnlySpecifiedLinkIsActive('Dashboard')
   })
 
-  it('marks nested portal links as active', () => {
-    navigationState.pathname = '/portal/components/examples'
+  it('has no active link when the path matches none of the links', () => {
+    navigationState.pathname = '/somewhere-else'
 
-    render(<NavLinks />)
+    render(<NavLinks links={links} />)
 
-    expect(screen.getByRole('link', { name: 'Components' }).getAttribute('aria-current')).toBe(
-      'page',
-    )
+    assertAllLinksAreNotActive()
   })
 
-  it('renders the default portal links', () => {
-    navigationState.pathname = '/portal'
+  it('ignores query strings in pathname when determining the active link', () => {
+    navigationState.pathname = '/portal/user/me?tab=details'
 
-    render(<NavLinks organisationId={12} />)
+    const link = { href: '/portal/user/me', label: 'Manage my details' }
+    render(<NavLinks links={[{ href: '/portal/user/me', label: 'Manage my details' }]} />)
 
-    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
-      'Dashboard',
-      'Components',
-      'View and manage records',
-      'Manage my organisation',
-      'Manage my details',
-    ])
-    expect(screen.getByRole('link', { name: 'Manage my details' })).toHaveAttribute(
-      'href',
-      '/portal/user/me',
-    )
+    const linkElement = getLinkByLabel(link.label)
+    expect(linkElement).toHaveAttribute('href', link.href)
+    assertLinkIsActive(link.label)
   })
 
-  it.each([
-    ['/portal', 'Dashboard'],
-    ['/portal/components/examples', 'Components'],
-    ['/portal/organisations/12', 'Manage my organisation'],
-    ['/portal/organisations/12/users/3/deactivate', 'Manage my organisation'],
-    ['/portal/organisations/12/records', 'View and manage records'],
-    ['/portal/organisations/12/records/7', 'View and manage records'],
-    ['/portal/user/me/edit-details', 'Manage my details'],
-  ])('marks only the most specific link as active for %s', (pathname, activeLabel) => {
-    navigationState.pathname = pathname
-
-    render(<NavLinks organisationId={12} />)
-
-    expect(getActiveLinkLabels()).toEqual([activeLabel])
-  })
-
-  it.each([
-    ['a page without a link', '/portal/organisations/switch', 12],
-    ['another organisation', '/portal/organisations/13/records', 12],
-  ])('marks no link as active on %s', (_, pathname, organisationId) => {
-    navigationState.pathname = pathname
-
-    render(<NavLinks organisationId={organisationId} />)
-
-    expect(getActiveLinkLabels()).toEqual([])
-  })
-
-  it("links organisation pages to the user's current organisation", () => {
-    navigationState.pathname = '/portal/user/me'
-
-    render(<NavLinks organisationId={12} />)
-
-    expect(screen.getByRole('link', { name: 'View and manage records' })).toHaveAttribute(
-      'href',
-      '/portal/organisations/12/records',
-    )
-    expect(screen.getByRole('link', { name: 'Manage my organisation' })).toHaveAttribute(
-      'href',
-      '/portal/organisations/12',
-    )
-  })
-
-  it('omits links that need a selected organisation when the user has none', () => {
-    navigationState.pathname = '/portal/organisations/select'
-
-    render(<NavLinks />)
-
-    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
-      'Dashboard',
-      'Components',
-    ])
-  })
-
-  it('renders custom root links', () => {
-    render(<NavLinks rootLinks={[{ href: '/guidance', label: 'Guidance' }]} />)
-
-    expect(screen.getByRole('link', { name: 'Guidance' })).toHaveAttribute('href', '/guidance')
-  })
-
-  it('renders custom portal links', () => {
+  it('renders custom links and marks the current one as active', () => {
     navigationState.pathname = '/portal/settings'
 
-    render(<NavLinks portalLinks={[{ href: '/portal/settings', label: 'Settings' }]} />)
-
-    expect(screen.getByRole('link', { name: 'Settings' }).getAttribute('aria-current')).toBe('page')
-    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
-      'href',
-      '/portal/settings',
+    render(
+      <NavLinks
+        links={[
+          { href: '/portal/settings', label: 'Settings' },
+          { href: '/portal/profile', label: 'Profile' },
+        ]}
+      />,
     )
+
+    expect(getLinkByLabel('Settings')).toHaveAttribute('aria-current', 'page')
+    expect(getLinkByLabel('Settings')).toHaveAttribute('href', '/portal/settings')
+    expect(getLinkByLabel('Profile')).not.toHaveAttribute('aria-current')
   })
 })
-
-function getActiveLinkLabels() {
-  return screen
-    .getAllByRole('link')
-    .filter((link) => link.getAttribute('aria-current') === 'page')
-    .map((link) => link.textContent)
-}

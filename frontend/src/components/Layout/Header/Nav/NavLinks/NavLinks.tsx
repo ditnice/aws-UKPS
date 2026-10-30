@@ -2,59 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import React from 'react'
 
 import styles from './NavLinks.module.scss'
 
-type NavLinkItem = {
+export type NavLinkItem = {
   href: string
-  label: string
+  label: string | React.ReactElement
 }
 
 export type NavLinksProps = {
-  rootLinks?: NavLinkItem[]
-  portalLinks?: NavLinkItem[]
-  organisationId?: number
+  links: NavLinkItem[]
 }
-
-const defaultRootLinks: NavLinkItem[] = [
-  { href: '/', label: 'Home' },
-  { href: '/about-us', label: 'About' },
-]
-
-// Links to pages that need a selected organisation are only shown once the user has one.
-function getDefaultPortalLinks(organisationId: number | undefined): NavLinkItem[] {
-  const linksRequiringOrganisation: NavLinkItem[] =
-    organisationId === undefined
-      ? []
-      : [
-          {
-            href: `/portal/organisations/${organisationId}/records`,
-            label: 'View and manage records',
-          },
-          { href: `/portal/organisations/${organisationId}`, label: 'Manage my organisation' },
-          { href: '/portal/user/me', label: 'Manage my details' },
-        ]
-
-  return [
-    { href: '/portal', label: 'Dashboard' },
-    { href: '/portal/components', label: 'Components' },
-    ...linksRequiringOrganisation,
-  ]
-}
-
-function isPortalPath(pathname: string) {
-  return pathname === '/portal' || pathname.startsWith('/portal/')
-}
-
-// Section roots would otherwise match every page within them.
-const exactMatchHrefs = new Set(['/', '/portal'])
 
 function matchesPath(pathname: string, href: string) {
-  if (exactMatchHrefs.has(href)) {
+  if (href === '/') {
     return pathname === href
   }
-
-  return pathname === href || pathname.startsWith(`${href}/`)
+  return pathname === href || pathname.startsWith(href)
 }
 
 // Only the most specific matching link is active.
@@ -65,17 +30,9 @@ function getActiveHref(pathname: string, links: NavLinkItem[]): string | undefin
     .sort((a, b) => b.length - a.length)[0]
 }
 
-export function NavLinks({
-  rootLinks = defaultRootLinks,
-  portalLinks,
-  organisationId,
-}: NavLinksProps) {
+export function NavLinks({ links }: NavLinksProps) {
   const pathname = usePathname()
-  const links = isPortalPath(pathname)
-    ? (portalLinks ?? getDefaultPortalLinks(organisationId))
-    : rootLinks
   const activeHref = getActiveHref(pathname, links)
-
   return (
     <ul className={styles.menuList} aria-labelledby="header-menu-button">
       {links.map(({ href, label }) => (
