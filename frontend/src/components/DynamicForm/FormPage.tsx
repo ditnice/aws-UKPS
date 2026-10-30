@@ -26,7 +26,7 @@ import { questionRegistry } from './questionRegistry'
 export const pageHref = (page: Pick<RecordPageDto, 'recordId'>, pageId: string) =>
   `/portal/records/${page.recordId}/${pageId}`
 
-export const conflictCodes = ['revision_not_draft', 'revision_changed', 'form_version_changed']
+export const conflictCodes = ['record_not_editable', 'revision_changed', 'form_version_changed']
 
 type SaveState = { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kind: 'failed' }
 

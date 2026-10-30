@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Json;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Enums;
 using static UKPS.Api.Persistence.Data.Seeding.SyntheticData.SyntheticReferenceData;
@@ -95,6 +97,68 @@ internal sealed class SeedReferenceData
             .Concat(AtmpClassifications.Values)
             .Concat(PatientPathwayPoints.Values)
             .Concat(UkPatientPopulationRanges.Values);
+
+    /// <summary>
+    /// Swaps the synthetic code or label in a reference data answer's audit value for the ID, as
+    /// the form stores it: the ID in invariant digits, or a JSON array of IDs sorted ordinally for
+    /// therapeutic areas. Other values are returned unchanged. IDs are only assigned when the
+    /// reference data is saved, so call this after saving it.
+    /// </summary>
+    public string? ResolveAuditValue(string fieldPath, string? value) =>
+        value is null
+            ? null
+            : fieldPath switch
+            {
+                "medicines_indication_detail.bnf_chapter_id" => IdOf(BnfChapters, value, x => x.Id),
+                "medicines_indication_detail_therapeutic_area" => JsonSerializer.Serialize(
+                    JsonSerializer
+                        .Deserialize<string[]>(value)!
+                        .Select(code => IdOf(TherapeuticAreas, code, x => x.Id))
+                        .Order(StringComparer.Ordinal)
+                ),
+                "medicines_indication_detail.formulation_type_id" => IdOf(
+                    FormulationTypes,
+                    value,
+                    x => x.Id
+                ),
+                "record_mhra_procedure.mhra_procedure_type_id" => IdOf(
+                    MhraProcedureTypes,
+                    value,
+                    x => x.Id
+                ),
+                "record_mhra_procedure.irp_reference_regulator_id" => IdOf(
+                    IrpReferenceRegulators,
+                    value,
+                    x => x.Id
+                ),
+                "medicines_intl_recognition.irp_route_id" => IdOf(IrpRoutes, value, x => x.Id),
+                "medicines_eu_status.atmp_classification_id" => IdOf(
+                    AtmpClassifications,
+                    value,
+                    x => x.Id
+                ),
+                "medicines_service_impact.uk_patient_population_range_id" => IdOf(
+                    UkPatientPopulationRanges,
+                    value,
+                    x => x.Id
+                ),
+                _ => value,
+            };
+
+    private static string IdOf<T>(
+        IReadOnlyDictionary<string, T> entries,
+        string key,
+        Func<T, int> id
+    )
+        where T : class
+    {
+        int value = id(Find(entries, key)!);
+        return value == 0
+            ? throw new InvalidOperationException(
+                $"Reference data '{key}' has no ID yet; save the reference data first."
+            )
+            : value.ToString(CultureInfo.InvariantCulture);
+    }
 
     /// <summary>Finds a reference data entry, failing loudly if the synthetic data refers to one that does not exist.</summary>
     public static T? Find<T>(IReadOnlyDictionary<string, T> entries, string? key)

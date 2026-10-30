@@ -1,4 +1,7 @@
 using Shouldly;
+using UKPS.Api.Application.RecordForms.Model;
+using UKPS.Api.Application.RecordForms.Options;
+using UKPS.Api.Application.RecordForms.Scanning;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -322,6 +325,19 @@ public sealed class SeededRecordHistoryTests
                 .ToDictionary(a => a.FieldPath, a => a.NewValue, StringComparer.Ordinal)
                 .ShouldBe(expected, ignoreOrder: true);
         }
+    }
+
+    [Fact]
+    public void AuditedFields_ShouldIncludeTheIdOfEveryMedicineFormQuestion()
+    {
+        FormModel model = FormModelFactory
+            .Create(OptionProviderRegistry.CreateDefault())
+            .Find(RecordType.Medicine)!;
+        IReadOnlyDictionary<string, string?> audited = RecordContentHistory.AuditedFields(
+            SyntheticDataLoader.DataSet.Records[0]
+        );
+
+        model.Pages.SelectMany(p => p.Questions).Select(q => q.Id).ShouldBeSubsetOf(audited.Keys);
     }
 
     [Fact]

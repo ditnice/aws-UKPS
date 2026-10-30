@@ -12,8 +12,11 @@ public abstract record SaveRecordPageError
     /// <summary>The caller can read the record but not edit its content.</summary>
     public sealed record CannotEdit : SaveRecordPageError;
 
-    /// <summary>The revision is no longer a draft.</summary>
-    public sealed record NotDraft : SaveRecordPageError;
+    /// <summary>
+    /// The latest revision is not a draft that can be edited: it has been submitted, or the record
+    /// is on hold or archived.
+    /// </summary>
+    public sealed record NotEditable : SaveRecordPageError;
 
     /// <summary>The form has changed since the page was loaded.</summary>
     public sealed record FormVersionChanged : SaveRecordPageError;

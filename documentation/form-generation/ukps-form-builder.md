@@ -277,7 +277,7 @@ C# body type: `Dictionary<string, JsonElement>` for `answers` (one generic OpenA
 | 400 | Rule failures, unknown/missing question IDs, wrong value shape | `ValidationProblemDetails`, `errors` keyed by question ID (indexed for group children) |
 | 403 | Caller can read the record (same organisation) but lacks `EditRecordContent` | `ProblemDetails` |
 | 404 | Record/revision/page not found, record in another organisation (concealed per ADR-004), or page does not currently apply | `ProblemDetails`, neutral text |
-| 409 | Not Draft / `revisionVersion` stale or concurrent change / definitions changed | `ProblemDetails` with `code`: `revision_not_draft`, `revision_changed`, `form_version_changed` |
+| 409 | Not editable / `revisionVersion` stale or concurrent change / definitions changed | `ProblemDetails` with `code`: `record_not_editable`, `revision_changed`, `form_version_changed` |
 
 ## 7. Save pipeline (`RecordPageSaveService`)
 
