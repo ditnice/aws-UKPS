@@ -63,7 +63,7 @@ const RecordTaskListPage = async ({ params }: RecordTaskListPageProps) => {
 
       <TaskList>
         {taskList.sections.map((section) => (
-          <TaskListSection key={section.id} title={section.title}>
+          <TaskListSection key={section.id} title={section.title} titleHeadingLevel={2}>
             {section.tasks.map((task) => (
               <TaskListTask
                 key={task.id}
