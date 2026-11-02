@@ -359,6 +359,21 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         }
     }
 
+    public async Task SendForgottenPasswordCommand(
+        CognitoUsername username,
+        CancellationToken cancellationToken
+    )
+    {
+        await _cognito.ForgotPasswordAsync(
+            new ForgotPasswordRequest()
+            {
+                ClientId = _options.Value.ClientId,
+                Username = username.Value,
+            },
+            cancellationToken
+        );
+    }
+
     private async Task<InitiatedAuthenticationResult> SendCognitoAuthRequest(
         Func<Task<AuthResponse?>> func
     )

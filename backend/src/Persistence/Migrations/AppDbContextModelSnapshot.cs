@@ -508,9 +508,12 @@ namespace UKPS.Api.Persistence.Migrations
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserPasswordResetRequest", b =>
                 {
-                    b.Property<byte[]>("TokenHash")
-                        .HasColumnType("bytea")
-                        .HasColumnName("token_hash");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -525,7 +528,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("used_at");
 
-                    b.HasKey("TokenHash")
+                    b.HasKey("Id")
                         .HasName("pk_user_password_reset_requests");
 
                     b.HasIndex("TargetEmailAddress", "CreatedAt")

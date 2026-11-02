@@ -378,7 +378,7 @@ public class LoginServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task InitiateForgottenPasswordFlow_WhenUserExists_ShouldSendEmailWithLink()
+    public async Task InitiateForgottenPasswordFlow_WhenUserExists_ShouldSendForgotPasswordCommandToCognito()
     {
         var exampleUri = new Uri($"https://example.com");
         _passwordResetLinkCreator.GetPasswordResetLink(Arg.Any<string>()).Returns(exampleUri);
@@ -389,20 +389,33 @@ public class LoginServiceTests : DatabaseTestBase
         );
 
         _harness
-            .Emails.Sent.ShouldHaveSingleItem()
-            .ShouldBeOfType<PasswordResetEmail>()
-            .Link.ShouldBe(exampleUri);
+            .Cognito.ResetPasswordCommands.ShouldHaveSingleItem()
+            .Username.ShouldBe(_user.CognitoUsername.Value);
     }
 
     [Fact]
-    public async Task InitiateForgottenPasswordFlow_WhenUserDoesNotExist_ShouldNotSendEmailWithLink()
+    public async Task InitiateForgottenPasswordFlow_WhenUserDoesNotExist_ShouldNotSendForgotPasswordCommandToCognito()
     {
         _ = await _harness.Service.InitiateForgottenPasswordProcedure(
             new() { Email = "non-existent-user@email.com" },
             Ct
         );
 
-        _harness.Emails.Sent.ShouldBeEmpty();
+        _harness.Cognito.ResetPasswordCommands.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Test()
+    {
+        _ = await _harness.Service.ConfirmNewPassword(
+            new()
+            {
+                Email = _user.WorkEmail,
+                ConfirmationCode = "confirmation-code",
+                NewPassword = "new-password",
+            },
+            Ct
+        );
     }
 
     private async Task InitiateMultiplePasswordRequestAcrossTimeSpan(

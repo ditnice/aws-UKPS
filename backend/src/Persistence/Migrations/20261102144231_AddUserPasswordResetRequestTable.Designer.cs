@@ -13,8 +13,8 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261030115428_AddUserPasswordResetRequestsTable")]
-    partial class AddUserPasswordResetRequestsTable
+    [Migration("20261102144231_AddUserPasswordResetRequestTable")]
+    partial class AddUserPasswordResetRequestTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -511,9 +511,12 @@ namespace UKPS.Api.Persistence.Migrations
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserPasswordResetRequest", b =>
                 {
-                    b.Property<byte[]>("TokenHash")
-                        .HasColumnType("bytea")
-                        .HasColumnName("token_hash");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -528,7 +531,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("used_at");
 
-                    b.HasKey("TokenHash")
+                    b.HasKey("Id")
                         .HasName("pk_user_password_reset_requests");
 
                     b.HasIndex("TargetEmailAddress", "CreatedAt")
@@ -1723,6 +1726,11 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("code");
 
                     b.Property<int?>("DisplayOrder")
                         .HasColumnType("integer")

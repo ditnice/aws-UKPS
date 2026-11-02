@@ -1,12 +1,10 @@
-using System.Security.Cryptography;
-using Microsoft.AspNetCore.WebUtilities;
 using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal sealed class UserPasswordResetRequest
 {
-    public required byte[] TokenHash { get; init; }
+    public int Id { get; set; }
     public required string TargetEmailAddress
     {
         get => field;
@@ -44,19 +42,14 @@ internal sealed class UserPasswordResetRequest
         return State.Valid;
     }
 
-    public static (UserPasswordResetRequest Request, string Token) Create(
-        string targetEmailAddress,
-        DateTime currentTime
-    )
+    public static UserPasswordResetRequest Create(string targetEmailAddress, DateTime currentTime)
     {
-        var tokenBytes = RandomNumberGenerator.GetBytes(32);
         var request = new UserPasswordResetRequest()
         {
-            TokenHash = SHA256.HashData(tokenBytes),
             TargetEmailAddress = targetEmailAddress,
             CreatedAt = currentTime,
         };
-        return (request, WebEncoders.Base64UrlEncode(tokenBytes));
+        return request;
     }
 
     public enum State

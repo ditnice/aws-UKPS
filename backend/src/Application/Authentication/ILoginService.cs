@@ -1,3 +1,4 @@
+global using ConfirmNewPasswordResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.ConfirmNewPasswordError>;
 global using InitiateForgottenPasswordProcedureResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.InitiateForgottenPasswordProcedureError>;
 using UKPS.Api.Application.Authentication.Dtos;
 using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
@@ -106,4 +107,18 @@ public interface ILoginService
         InitiateForgottenPasswordProcedureCommand command,
         CancellationToken cancellationToken
     );
+
+    Task<ConfirmNewPasswordResult> ConfirmNewPassword(
+        ConfirmNewPasswordCommand value,
+        CancellationToken ct
+    );
 }
+
+public record ConfirmNewPasswordCommand
+{
+    public required string Email { get; init; }
+    public required string ConfirmationCode { get; init; }
+    public required string NewPassword { get; init; }
+}
+
+public abstract record ConfirmNewPasswordError { }

@@ -118,42 +118,38 @@ internal class LoginService : ILoginService
                 new InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded()
             );
         }
-        var (userPasswordResetRequest, token) = UserPasswordResetRequest.Create(
+        var userPasswordResetRequest = UserPasswordResetRequest.Create(
             command.Email,
             _dateTimeProvider.GetUtcNow()
         );
-
         _appDbContext.Add(userPasswordResetRequest);
         await _appDbContext.SaveChangesAsync(cancellationToken);
 
         var user = await _appDbContext.Users.GetByEmailOrDefault(command.Email, cancellationToken);
         if (user is not null)
         {
-            await SendPasswordResetEmail(token, user, cancellationToken);
+            await _identityService.SendForgottenPasswordCommand(
+                user.CognitoUsername,
+                cancellationToken
+            );
         }
 
         return InitiateForgottenPasswordProcedureResult.Ok(); // Return Ok even if the account does not exist to avoid  account enumeration.
     }
 
-    private async Task SendPasswordResetEmail(
-        string token,
-        User user,
-        CancellationToken cancellationToken
+    public Task<ConfirmNewPasswordResult> ConfirmNewPassword(
+        ConfirmNewPasswordCommand value,
+        CancellationToken ct
     )
     {
-        var passwordResetEmail = new PasswordResetEmail()
-        {
-            Link = _passwordResetLinkCreator.GetPasswordResetLink(token),
-        };
-        await _emailService.SendEmail(
-            new SendEmailCommand()
-            {
-                RecipientAddress = user.WorkEmail,
-                Email = passwordResetEmail,
-                PersonIdentifier = user.CognitoUsername,
-            },
-            cancellationToken
-        );
+        throw new NotImplementedException();
+        // var user = await _appDbContext.Users.GetByEmailOrDefault(command.Email, cancellationToken);
+        // await _identityService.ConfirmNewPassword(
+        //     value.Email,
+        //     value.ConfirmationCode,
+        //     value.NewPassword,
+        //     ct
+        // );
     }
 
     public Task SignOut(string refreshToken, CancellationToken cancellationToken)

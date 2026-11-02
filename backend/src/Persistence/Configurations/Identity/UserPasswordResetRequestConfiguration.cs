@@ -10,8 +10,6 @@ internal sealed class UserPasswordResetRequestConfiguration
     public void Configure(EntityTypeBuilder<UserPasswordResetRequest> builder)
     {
         builder.ToTable("user_password_reset_requests");
-        builder.HasKey(x => x.TokenHash);
-        builder.Property(x => x.TokenHash).ValueGeneratedNever();
         builder.HasIndex(x => new { x.TargetEmailAddress, x.CreatedAt });
     }
 }

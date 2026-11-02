@@ -12,6 +12,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
     public string ValidMfaCode { get; } = "123456";
     public string ValidAuthenticationSession { get; } = "valid-auth-session";
     public string InvalidPassword { get; } = "invalid-password";
+    public string ValidForgotPasswordCode { get; } = "123456";
     public MockUser TestUser { get; } =
         new MockUser()
         {
@@ -25,8 +26,10 @@ internal sealed class MockAmazonCognitoIdentityProvider
 
     public IAmazonCognitoIdentityProvider Mock { get; init; } =
         Substitute.For<IAmazonCognitoIdentityProvider>();
+    public IReadOnlyList<ResetPasswordCommand> ResetPasswordCommands => _resetPasswordCommands;
 
     private List<MockUser> _users;
+    private readonly List<ResetPasswordCommand> _resetPasswordCommands = new();
 
     private readonly HashSet<string> _mfaSessions = new(StringComparer.Ordinal);
     private readonly HashSet<string> _revokedRefreshTokens = new(StringComparer.Ordinal);
@@ -314,6 +317,61 @@ internal sealed class MockAmazonCognitoIdentityProvider
                     }
                 );
             });
+
+        Mock.ForgotPasswordAsync(Arg.Any<ForgotPasswordRequest>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<ForgotPasswordRequest>();
+
+                var user = _users.SingleOrDefault(x =>
+                    string.Equals(x.Username, request.Username, StringComparison.Ordinal)
+                );
+
+                if (user is null)
+                {
+                    throw new UserNotFoundException($"User '{request.Username}' not found.");
+                }
+
+                _resetPasswordCommands.Add(new ResetPasswordCommand(request.Username));
+
+                return Task.FromResult(new ForgotPasswordResponse());
+            });
+
+        Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<ConfirmForgotPasswordRequest>();
+
+                var user = _users.SingleOrDefault(x =>
+                    string.Equals(x.Username, request.Username, StringComparison.Ordinal)
+                );
+
+                if (user is null)
+                {
+                    throw new UserNotFoundException($"User '{request.Username}' not found.");
+                }
+
+                if (
+                    !string.Equals(
+                        request.ConfirmationCode,
+                        ValidForgotPasswordCode,
+                        StringComparison.Ordinal
+                    )
+                )
+                {
+                    throw new CodeMismatchException("Invalid confirmation code.");
+                }
+
+                if (string.Equals(request.Password, InvalidPassword, StringComparison.Ordinal))
+                {
+                    throw new InvalidPasswordException();
+                }
+
+                return Task.FromResult(new ConfirmForgotPasswordResponse());
+            });
     }
 
     private bool IsValidRefreshToken(string refreshToken)
@@ -358,4 +416,6 @@ internal sealed class MockAmazonCognitoIdentityProvider
             RuleFor(x => x.SubjectId, f => f.Random.Guid().ToString());
         }
     }
+
+    public record ResetPasswordCommand(string Username);
 }

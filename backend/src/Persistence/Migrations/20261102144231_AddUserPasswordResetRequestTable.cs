@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace UKPS.Api.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddUserPasswordResetRequestsTable : Migration
+    public partial class AddUserPasswordResetRequestTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,14 +17,15 @@ namespace UKPS.Api.Persistence.Migrations
                 schema: "ukps",
                 columns: table => new
                 {
-                    token_hash = table.Column<byte[]>(type: "bytea", nullable: false),
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     target_email_address = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     used_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user_password_reset_requests", x => x.token_hash);
+                    table.PrimaryKey("pk_user_password_reset_requests", x => x.id);
                 });
 
             migrationBuilder.CreateIndex(

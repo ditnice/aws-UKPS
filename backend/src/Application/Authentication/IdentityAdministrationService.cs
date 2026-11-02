@@ -42,6 +42,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     private readonly ISetupLinkCreator _setupLinkCreator;
     private readonly IEmailService _emailService;
     private readonly EmailOptions _configuration;
+    private readonly AuthenticationOptions _authenticationOptions;
 
     public IdentityAdministrationService(
         AppDbContext appDbContext,
@@ -50,7 +51,8 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         IDateTimeProvider dateTimeProvider,
         ISetupLinkCreator setupLinkCreator,
         IEmailService emailService,
-        IOptions<EmailOptions> configuration
+        IOptions<EmailOptions> configuration,
+        IOptions<AuthenticationOptions> authenticationOptions
     )
     {
         _appDbContext = appDbContext;
@@ -60,6 +62,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         _setupLinkCreator = setupLinkCreator;
         _emailService = emailService;
         _configuration = configuration.Value;
+        _authenticationOptions = authenticationOptions.Value;
     }
 
     public async Task<SetupUserResult> SetupUser(
@@ -304,6 +307,48 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
                     "ReplaceOnboardingRecord always assigns a CorrelationId to the new record."
                 )
         );
+    }
+
+    public async Task<InitiateForgottenPasswordProcedureResult> InitiateForgottenPasswordProcedure(
+        InitiateForgottenPasswordProcedureCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        DateTime dateTime24HoursAgo = _dateTimeProvider.GetUtcNow().AddHours(-24);
+        int numberOfPreviousRequestsInTheLast24Hours =
+            await _appDbContext.UserPasswordResetRequests.CountAsync(
+                x =>
+                    x.TargetEmailAddress == EmailHelpers.Normalise(command.Email)
+                    && x.CreatedAt > dateTime24HoursAgo,
+                cancellationToken
+            );
+
+        if (
+            numberOfPreviousRequestsInTheLast24Hours
+            >= _authenticationOptions.MaxNumberOfChangePasswordAttempts
+        )
+        {
+            return InitiateForgottenPasswordProcedureResult.Err(
+                new InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded()
+            );
+        }
+        var userPasswordResetRequest = UserPasswordResetRequest.Create(
+            command.Email,
+            _dateTimeProvider.GetUtcNow()
+        );
+        _appDbContext.Add(userPasswordResetRequest);
+        await _appDbContext.SaveChangesAsync(cancellationToken);
+
+        var user = await _appDbContext.Users.GetByEmailOrDefault(command.Email, cancellationToken);
+        if (user is not null)
+        {
+            await _identityService.SendForgottenPasswordCommand(
+                user.CognitoUsername,
+                cancellationToken
+            );
+        }
+
+        return InitiateForgottenPasswordProcedureResult.Ok(); // Return Ok even if the account does not exist to avoid  account enumeration.
     }
 
     private async Task<UserOnboardingRecord> ReplaceOnboardingRecord(
