@@ -100,7 +100,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
     {
         var context = _harness.GetClearedContext();
         var revision = await context.RecordRevisions.FirstOrDefaultAsync(
-            x => x.Id == _validResponse.RevisionId,
+            x => x.RecordId == _validResponse.RecordId,
             Ct
         );
 
@@ -117,7 +117,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
     {
         var context = _harness.GetClearedContext();
         var recordEvent = await context.RecordEvents.FirstOrDefaultAsync(
-            x => x.RevisionId == _validResponse.RevisionId,
+            x => x.RecordId == _validResponse.RecordId,
             Ct
         );
 
@@ -135,7 +135,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
         var context = _harness.GetClearedContext();
         var recordProductDetail = await context
             .RecordProductDetails.Include(x => x.NamesAndIdentifiers)
-            .FirstOrDefaultAsync(x => x.RevisionId == _validResponse.RevisionId, Ct);
+            .FirstOrDefaultAsync(x => x.Revision!.RecordId == _validResponse.RecordId, Ct);
 
         recordProductDetail.ShouldNotBeNull();
         recordProductDetail.RecordTitle.ShouldBe(_validCommand.RecordTitle);
@@ -182,6 +182,26 @@ public class RecordCreationServiceTests : DatabaseTestBase
         _harness.UpdateCurrentUser(x => x with { UserRole = userRole });
         CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
         result.ShouldBeSuccess();
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard, "indication")]
+    [InlineData(UserRole.Champion, "indication")]
+    [InlineData(UserRole.Super, null)]
+    public async Task CreateRecord_FirstPageId_IsOnlyGivenToUsersWhoCanEditContent(
+        UserRole userRole,
+        string? expectedFirstPageId
+    )
+    {
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = userRole,
+                OrganisationId = _organisation.Id,
+            }
+        );
+        CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
+        result.ShouldBeSuccess().FirstPageId.ShouldBe(expectedFirstPageId);
     }
 
     [Theory]

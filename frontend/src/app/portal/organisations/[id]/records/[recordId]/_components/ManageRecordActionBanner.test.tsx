@@ -5,7 +5,9 @@ import type { RecordAction } from '@/client/generated'
 
 import { ManageRecordActionBanner } from './ManageRecordActionBanner'
 
-const renderBanner = (actions: RecordAction[]) =>
+const updateRecordHref = '/portal/records/42/indication'
+
+const renderBanner = (actions: RecordAction[], href: string | null = updateRecordHref) =>
   render(
     <ManageRecordActionBanner
       record={{
@@ -14,6 +16,7 @@ const renderBanner = (actions: RecordAction[]) =>
         recordType: 'Medicine',
         actions,
       }}
+      updateRecordHref={href ?? undefined}
     />,
   )
 
@@ -53,11 +56,34 @@ describe('ManageRecordActionBanner', () => {
     expect(getActionLabels()).toEqual(expected)
   })
 
+  it('links Update record to the record content form', () => {
+    renderBanner(['Update', 'ViewTimeline'])
+
+    expect(screen.getByRole('link', { name: 'Update record' }).getAttribute('href')).toBe(
+      updateRecordHref,
+    )
+  })
+
+  it('hides Update record when there is no form the user can edit', () => {
+    renderBanner(['Update', 'Discard', 'ViewTimeline'], null)
+
+    expect(screen.queryByText('Update record')).toBeNull()
+    expect(getActionLabels()).toEqual(['Discard record', 'View record timeline'])
+  })
+
   it('links discard to the discard confirmation page', () => {
     renderBanner(['Update', 'Discard', 'ViewTimeline'])
 
     expect(screen.getByRole('link', { name: 'Discard record' }).getAttribute('href')).toBe(
       '/portal/organisations/7/records/42/discard?recordType=Medicine',
+    )
+  })
+
+  it('links change record status to the change record status page', () => {
+    renderBanner(['Update', 'ChangeStatus', 'ViewTimeline'])
+
+    expect(screen.getByRole('link', { name: 'Change record status' }).getAttribute('href')).toBe(
+      '/portal/organisations/7/records/42/change-record-status?recordType=Medicine',
     )
   })
 })

@@ -397,6 +397,22 @@ describe('CreateMedicineRecordForm', () => {
       })
     })
 
+    it('goes to the first page of the record content form when there is one', async () => {
+      mocks.createRecord.mockResolvedValue({
+        data: { recordId: 5, firstPageId: 'indication' },
+        error: undefined,
+        response: { ok: true },
+      })
+      renderComponent(123)
+
+      fillInForm(validFormValues)
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/indication')
+      })
+    })
+
     it('does not show an error after successful submission', async () => {
       renderComponent(123)
 

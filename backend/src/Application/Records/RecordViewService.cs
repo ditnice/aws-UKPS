@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
@@ -20,7 +21,8 @@ using GetRecordResult = Result<RecordDto, GetRecordError>;
 internal sealed class RecordViewService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
-    ICurrentUserInfoService currentUserInfoService
+    ICurrentUserInfoService currentUserInfoService,
+    FormModelRegistry formModels
 ) : IRecordViewService
 {
     public async Task<GetRecordResult> GetRecord(
@@ -80,7 +82,7 @@ internal sealed class RecordViewService(
                     actions,
                     cancellationToken
                 ),
-                RecordType.Vaccine => GetVaccineRecord(recordId, record, revisionId, actions),
+                RecordType.Vaccine => GetVaccineRecord(recordId, record, actions),
                 _ => throw new UnreachableException($"Unhandled record type {recordType}."),
             }
         );
@@ -106,6 +108,18 @@ internal sealed class RecordViewService(
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
+    /// <summary>
+    /// The first page of the record type's content form, or null when the type has no form or
+    /// the caller cannot edit the record's content.
+    /// </summary>
+    private string? FirstPageId(RecordHeader record) =>
+        organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.EditRecordContent,
+            record.OrganisationId
+        )
+            ? formModels.Find(record.RecordType)?.FirstPage.Id
+            : null;
+
     private async Task<MedicineRecordDto> GetMedicineRecord(
         int recordId,
         RecordHeader record,
@@ -121,7 +135,7 @@ internal sealed class RecordViewService(
             RecordStatus = record.RecordStatus,
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
-            RevisionId = revisionId,
+            FirstPageId = FirstPageId(record),
             Actions = actions,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
@@ -168,10 +182,9 @@ internal sealed class RecordViewService(
     }
 
     // TODO: Populate the vaccine record sections.
-    private static VaccineRecordDto GetVaccineRecord(
+    private VaccineRecordDto GetVaccineRecord(
         int recordId,
         RecordHeader record,
-        int revisionId,
         IReadOnlyCollection<RecordAction> actions
     )
     {
@@ -182,7 +195,7 @@ internal sealed class RecordViewService(
             RecordStatus = record.RecordStatus,
             DisplayStatus = record.DisplayStatus,
             ReviewedAt = record.ReviewedAt,
-            RevisionId = revisionId,
+            FirstPageId = FirstPageId(record),
             Actions = actions,
         };
     }
