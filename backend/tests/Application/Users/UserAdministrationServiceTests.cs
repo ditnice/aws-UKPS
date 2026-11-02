@@ -223,6 +223,148 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<OnboardUserError.UsernameAlreadyExists>();
     }
 
+    [Fact]
+    public async Task OnboardUser_WhenExistingUserIsMidSetup_ShouldAddAwaitingSetupMembership()
+    {
+        OnboardUserCommandDto existing = await OnboardExistingUser();
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
+        {
+            NewUserEmail = existing.NewUserEmail,
+        };
+
+        OnboardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+        User? foundUser = await _harness
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
+            .SingleOrDefaultAsync(
+                x => x.WorkEmail == command.NewUserEmail,
+                TestContext.Current.CancellationToken
+            );
+
+        foundUser.ShouldNotBeNull();
+        ICollection<UserOrgMembership> memberships = foundUser.UserOrgMemberships.ShouldNotBeNull();
+        memberships.Count.ShouldBe(2);
+        memberships
+            .Single(x => x.OrganisationId == existing.OrganisationId)
+            .Status.ShouldBe(UserOrgMembershipStatus.AwaitingSetup);
+        memberships
+            .Single(x => x.OrganisationId == command.OrganisationId)
+            .Status.ShouldBe(UserOrgMembershipStatus.AwaitingSetup);
+    }
+
+    [Fact]
+    public async Task OnboardUser_WhenExistingUserHasCompletedSetup_ShouldAddActiveMembership()
+    {
+        OnboardUserCommandDto existing = await OnboardExistingUser();
+
+        User existingUser = await Context
+            .Users.Include(x => x.UserOrgMemberships)
+            .SingleAsync(
+                x => x.WorkEmail == existing.NewUserEmail,
+                TestContext.Current.CancellationToken
+            );
+        existingUser.FinaliseSetup();
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
+        {
+            NewUserEmail = existing.NewUserEmail,
+        };
+
+        OnboardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+        User? foundUser = await _harness
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
+            .SingleOrDefaultAsync(
+                x => x.WorkEmail == command.NewUserEmail,
+                TestContext.Current.CancellationToken
+            );
+
+        foundUser.ShouldNotBeNull();
+        ICollection<UserOrgMembership> memberships = foundUser.UserOrgMemberships.ShouldNotBeNull();
+        memberships.Count.ShouldBe(2);
+        memberships
+            .Single(x => x.OrganisationId == existing.OrganisationId)
+            .Status.ShouldBe(UserOrgMembershipStatus.Active);
+        memberships
+            .Single(x => x.OrganisationId == command.OrganisationId)
+            .Status.ShouldBe(UserOrgMembershipStatus.Active);
+    }
+
+    [Fact]
+    public async Task OnboardUser_WhenExistingUser_ShouldSendAddedToOrganisationEmail()
+    {
+        OnboardUserCommandDto existing = await OnboardExistingUser();
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
+        {
+            NewUserEmail = existing.NewUserEmail,
+        };
+
+        OnboardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        UserAddedToOrganisationEmail email = _harness
+            .Emails.Sent.ShouldHaveSingleItem()
+            .ShouldBeOfType<UserAddedToOrganisationEmail>();
+
+        string expectedName = await Context
+            .Organisations.Where(o => o.Id == command.OrganisationId)
+            .Select(o => o.OrganisationName)
+            .SingleAsync(TestContext.Current.CancellationToken);
+
+        email.OrganisationName.ShouldBe(expectedName);
+
+        _harness.Cognito.Users.ShouldNotContain(x => x.Email == command.NewUserEmail);
+    }
+
+    [Fact]
+    public async Task OnboardUser_WhenExistingUser_ShouldNotCreateNewCognitoAccount()
+    {
+        OnboardUserCommandDto existing = await OnboardExistingUser();
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
+        {
+            NewUserEmail = existing.NewUserEmail,
+        };
+
+        OnboardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Cognito.Users.ShouldNotContain(x => x.Email == command.NewUserEmail);
+    }
+
+    [Fact]
+    public async Task OnboardUser_WhenExistingUserInTargetOrganisation_ShouldReturnUserEmailAlreadyExists()
+    {
+        OnboardUserCommandDto existing = await OnboardExistingUser();
+
+        OnboardUserResult result = await _harness.Service.OnboardUser(
+            existing,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<OnboardUserError.UserEmailAlreadyExists>();
+
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
         var harness = new ServiceTestHarness<IUserAdministrationService>(Context)
@@ -266,5 +408,14 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             RuleFor(x => x.ContactNumber, _ => new TelephoneNumberFaker().Generate());
             RuleFor(x => x.NewUserEmail, f => f.Internet.Email());
         }
+    }
+
+    private async Task<OnboardUserCommandDto> OnboardExistingUser()
+    {
+        OnboardUserCommandDto firstCommand = await GenerateValidOnboardingCommand();
+        OnboardUserResult setupResult = await GetTestHarness()
+            .Service.OnboardUser(firstCommand, TestContext.Current.CancellationToken);
+        setupResult.ShouldBeSuccess();
+        return firstCommand;
     }
 }
