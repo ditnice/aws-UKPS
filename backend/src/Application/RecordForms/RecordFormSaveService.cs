@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Storage;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.RecordForms.Dtos;
@@ -29,9 +28,6 @@ internal sealed class RecordFormSaveService(
         CancellationToken cancellationToken
     )
     {
-        await using IDbContextTransaction tx = await dbContext.Database.BeginTransactionAsync(
-            cancellationToken
-        );
         (LoadedPage? currentPage, SaveRecordPageError? loadError) = await LoadPage(
             recordId,
             pageId,
@@ -62,7 +58,6 @@ internal sealed class RecordFormSaveService(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
         }
         catch (DbUpdateConcurrencyException)
         {
