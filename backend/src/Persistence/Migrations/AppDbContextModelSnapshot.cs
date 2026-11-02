@@ -506,37 +506,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.ToTable("user_org_memberships", "ukps");
                 });
 
-            modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserPasswordResetRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("TargetEmailAddress")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("target_email_address");
-
-                    b.Property<DateTime?>("UsedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("used_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_user_password_reset_requests");
-
-                    b.HasIndex("TargetEmailAddress", "CreatedAt")
-                        .HasDatabaseName("ix_user_password_reset_requests_target_email_address_created_at");
-
-                    b.ToTable("user_password_reset_requests", "ukps");
-                });
-
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.Identity.UserRegistrationRequest", b =>
                 {
                     b.Property<int>("Id")

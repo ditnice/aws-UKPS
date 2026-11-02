@@ -1,8 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication.Dtos;
-using UKPS.Api.Application.Authentication.Errors;
-using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -23,15 +20,13 @@ internal class LoginService : ILoginService
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IPasswordResetLinkCreator _passwordResetLinkCreator;
     private readonly IEmailService _emailService;
-    private readonly AuthenticationOptions _authenticationOptions;
 
     public LoginService(
         IIdentityService identityService,
         AppDbContext appDbContext,
         IDateTimeProvider dateTimeProvider,
         IPasswordResetLinkCreator passwordRestLinkCreator,
-        IEmailService emailService,
-        IOptions<AuthenticationOptions> authenticationOptions
+        IEmailService emailService
     )
     {
         _identityService = identityService;
@@ -39,7 +34,6 @@ internal class LoginService : ILoginService
         _dateTimeProvider = dateTimeProvider;
         _passwordResetLinkCreator = passwordRestLinkCreator;
         _emailService = emailService;
-        _authenticationOptions = authenticationOptions.Value;
     }
 
     public async Task<InitiateAuthenticationResult> Login(
@@ -100,31 +94,6 @@ internal class LoginService : ILoginService
         CancellationToken cancellationToken
     )
     {
-        DateTime dateTime24HoursAgo = _dateTimeProvider.GetUtcNow().AddHours(-24);
-        int numberOfPreviousRequestsInTheLast24Hours =
-            await _appDbContext.UserPasswordResetRequests.CountAsync(
-                x =>
-                    x.TargetEmailAddress == EmailHelpers.Normalise(command.Email)
-                    && x.CreatedAt > dateTime24HoursAgo,
-                cancellationToken
-            );
-
-        if (
-            numberOfPreviousRequestsInTheLast24Hours
-            >= _authenticationOptions.MaxNumberOfChangePasswordAttempts
-        )
-        {
-            return InitiateForgottenPasswordProcedureResult.Err(
-                new InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded()
-            );
-        }
-        var userPasswordResetRequest = UserPasswordResetRequest.Create(
-            command.Email,
-            _dateTimeProvider.GetUtcNow()
-        );
-        _appDbContext.Add(userPasswordResetRequest);
-        await _appDbContext.SaveChangesAsync(cancellationToken);
-
         var user = await _appDbContext.Users.GetByEmailOrDefault(command.Email, cancellationToken);
         if (user is not null)
         {

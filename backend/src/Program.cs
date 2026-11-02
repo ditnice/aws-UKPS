@@ -55,12 +55,6 @@ builder
     .ValidateOnStart();
 
 builder
-    .Services.AddOptions<AuthenticationOptions>()
-    .Bind(builder.Configuration.GetSection(AuthenticationOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder
     .Services.AddOptions<UserOnboardingOptions>()
     .Bind(builder.Configuration.GetSection(UserOnboardingOptions.SectionName))
     .ValidateDataAnnotations()

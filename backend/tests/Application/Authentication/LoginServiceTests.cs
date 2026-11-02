@@ -62,15 +62,6 @@ public class LoginServiceTests : DatabaseTestBase
                         }
                     )
                 );
-                services.AddSingleton(
-                    Options.Create(
-                        new AuthenticationOptions
-                        {
-                            MaxNumberOfChangePasswordAttempts =
-                                _maxNumberOfChangePasswordAttemptedInA24HourWindow,
-                        }
-                    )
-                );
                 return services;
             });
     }
