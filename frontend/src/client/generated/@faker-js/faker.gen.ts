@@ -339,6 +339,7 @@ export const fakeRecordPageOptionDto = (options: Options = {}, _callDepth = 0): 
     return {
         value: f.string.sample(),
         label: f.string.sample(),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { hint: f.datatype.boolean() ? f.string.sample() : null },
         children: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordPageOptionDto(options, _callDepth + 1)) : null
     };
 };

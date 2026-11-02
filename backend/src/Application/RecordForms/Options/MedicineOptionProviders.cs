@@ -55,27 +55,50 @@ internal static class MedicineOptionProviders
 
     private static void RegisterLaboratoryTestingProviders(OptionProviderRegistry registry)
     {
+        RegisterBiomarkerProviders(registry);
+        RegisterTestingRequirementProviders(registry);
+    }
+
+    private static void RegisterBiomarkerProviders(OptionProviderRegistry registry)
+    {
         registry.AddEnum(
             OptionKeys.BiomarkerType,
-            (BiomarkerType.GenomicBiomarker, "Genomic biomarker"),
-            (BiomarkerType.NonGenomicBiomarker, "Non-genomic biomarker"),
-            (BiomarkerType.Unknown, "Unknown at this stage")
+            (
+                BiomarkerType.GenomicBiomarker,
+                "Genomic biomarker",
+                "For example, a gene mutation, chromosomal alteration"
+            ),
+            (
+                BiomarkerType.NonGenomicBiomarker,
+                "Non-genomic biomarker",
+                "For example, a protein expression, hormone level, or cell count"
+            ),
+            (BiomarkerType.Unknown, "Unknown at this stage", null)
         );
 
         registry.AddEnum(
             OptionKeys.GenomicTestNgtdRelationship,
-            (GenomicTestNgtdRelationship.NewTest, "New test, target not currently in the NGTD"),
+            (
+                GenomicTestNgtdRelationship.NewTest,
+                "New test, target not currently in the NGTD",
+                "For example, if the target is not currently tested for"
+            ),
             (
                 GenomicTestNgtdRelationship.ExistingTestNewIndication,
-                "Existing test, new or expanded indication"
+                "Existing test, new or expanded indication",
+                "The test already exists but is not currently used for this disease or patient population. For example, the test already appears in the NGTD for a different use"
             ),
             (
                 GenomicTestNgtdRelationship.ExistingTestSameIndication,
-                "Existing test, same indication"
+                "Existing test, same indication",
+                "The test is already routinely used for this indication. For example, a new medicine targets the same biomarker as an existing one"
             ),
-            (GenomicTestNgtdRelationship.Unknown, "Unknown at this stage")
+            (GenomicTestNgtdRelationship.Unknown, "Unknown at this stage", null)
         );
+    }
 
+    private static void RegisterTestingRequirementProviders(OptionProviderRegistry registry)
+    {
         registry.AddEnum(
             OptionKeys.GenomicTestMandatoryStatus,
             (

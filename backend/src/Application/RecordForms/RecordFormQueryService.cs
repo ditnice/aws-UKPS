@@ -97,6 +97,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
         {
             Value = option.Value,
             Label = option.Label,
+            Hint = option.Hint,
             Children = option.Children.Count == 0 ? null : option.Children.Select(ToDto).ToArray(),
         };
 }

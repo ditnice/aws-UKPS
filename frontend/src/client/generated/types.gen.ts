@@ -1122,6 +1122,10 @@ export type RecordPageOptionDto = {
      */
     label: string;
     /**
+     * Help text shown under the option, or null when it has none.
+     */
+    hint?: null | string;
+    /**
      * The child options of a hierarchical option, or null.
      */
     children: null | Array<RecordPageOptionDto>;

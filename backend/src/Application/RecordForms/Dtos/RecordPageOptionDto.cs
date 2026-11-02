@@ -9,6 +9,9 @@ public sealed record RecordPageOptionDto
     /// <summary>The text shown for the option.</summary>
     public required string Label { get; init; }
 
+    /// <summary>Help text shown under the option, or null when it has none.</summary>
+    public string? Hint { get; init; }
+
     /// <summary>The child options of a hierarchical option, or null.</summary>
     public required IReadOnlyList<RecordPageOptionDto>? Children { get; init; }
 }

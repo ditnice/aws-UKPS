@@ -11,9 +11,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.1";
+    private const string ExpectedVersion = "2026.11.2";
     private const string ExpectedFingerprint =
-        "b02e9a05cdbc811f265100cdbead801f6608ef7cb80a22dafeb9df205f63834b";
+        "186abcd21d235e1e3b5b66e898b22e3f95f832064ab177c1afc324cc5f995950";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();

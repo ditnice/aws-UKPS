@@ -17,6 +17,7 @@ export function RadioQuestion({
         <Radio
           checked={value === option.value}
           error={Boolean(error)}
+          hint={option.hint ?? undefined}
           key={option.value}
           label={option.label}
           name={name}

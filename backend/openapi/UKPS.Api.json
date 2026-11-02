@@ -6246,6 +6246,13 @@
             "type": "string",
             "description": "The text shown for the option."
           },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Help text shown under the option, or null when it has none."
+          },
           "children": {
             "type": [
               "null",

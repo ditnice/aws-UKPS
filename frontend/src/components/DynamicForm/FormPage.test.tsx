@@ -308,6 +308,39 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ cancer: 'No' })
     })
 
+    it('shows the hint under a radio option that has one', () => {
+      render(
+        <FormPage
+          page={page({
+            page: { id: 'biomarker-type', title: 'Biomarker type' },
+            questions: [
+              question({
+                id: 'biomarker-type',
+                type: 'Radio',
+                label: 'What type of biomarker is required for this test?',
+                hint: null,
+                rules: [],
+                options: [
+                  {
+                    value: 'GenomicBiomarker',
+                    label: 'Genomic biomarker',
+                    hint: 'For example, a gene mutation, chromosomal alteration',
+                    children: null,
+                  },
+                  { value: 'Unknown', label: 'Unknown at this stage', hint: null, children: null },
+                ],
+              }),
+            ],
+            answers: { 'biomarker-type': null },
+          })}
+        />,
+      )
+
+      expect(
+        screen.getByText('For example, a gene mutation, chromosomal alteration'),
+      ).toBeInTheDocument()
+    })
+
     it('saves ticked checkboxes', async () => {
       render(
         <FormPage
