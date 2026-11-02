@@ -1292,6 +1292,18 @@ export type RecordTaskListDto = {
      */
     organisationId: number;
     /**
+     * The status shown to users for the record.
+     */
+    displayStatus: RecordDisplayStatus;
+    /**
+     * The latest revision's company code; null when it has no product details.
+     */
+    companyCode: null | string;
+    /**
+     * The latest revision's record title; null when it has no product details.
+     */
+    recordTitle: null | string;
+    /**
      * Sections and their ordered tasks.
      */
     sections: Array<RecordTaskListSectionDto>;

@@ -1,10 +1,15 @@
 import { notFound } from 'next/navigation'
 
+import {
+  recordStatusLabels,
+  recordStatusTagColours,
+} from '@/app/portal/organisations/[id]/records/labels'
 import { getRecordTaskList, type RecordTaskStatus } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { Tag } from '@/components/Tag/Tag'
 import {
   TaskList,
   TaskListSection,
@@ -63,7 +68,17 @@ const RecordTaskListPage = async ({ params }: RecordTaskListPageProps) => {
             Back
           </BackLink>
         }
-        heading="Task list"
+        heading={`Record ${recordId}${taskList.companyCode ? `: ${taskList.companyCode}` : ''}`}
+        lead={
+          <>
+            <strong>Record title:</strong> {taskList.recordTitle}
+          </>
+        }
+        metadata={[
+          <Tag key="status" colour={recordStatusTagColours[taskList.displayStatus]}>
+            {recordStatusLabels[taskList.displayStatus]}
+          </Tag>,
+        ]}
       />
 
       <TaskList>

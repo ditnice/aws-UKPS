@@ -6483,6 +6483,9 @@
         "required": [
           "recordId",
           "organisationId",
+          "displayStatus",
+          "companyCode",
+          "recordTitle",
           "sections"
         ],
         "type": "object",
@@ -6496,6 +6499,24 @@
             "type": "integer",
             "description": "The organisation that owns the record; used for links back to the record.",
             "format": "int32"
+          },
+          "displayStatus": {
+            "description": "The status shown to users for the record.",
+            "$ref": "#/components/schemas/RecordDisplayStatus"
+          },
+          "companyCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The latest revision's company code; null when it has no product details."
+          },
+          "recordTitle": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The latest revision's record title; null when it has no product details."
           },
           "sections": {
             "type": "array",

@@ -32,6 +32,9 @@ const taskList = {
   data: {
     recordId: 42,
     organisationId: 7,
+    displayStatus: 'Draft',
+    companyCode: 'GC123',
+    recordTitle: 'COVID-19, 18+ who do not require supplemental oxygen',
     sections: [
       {
         id: 'indication-details',
@@ -85,7 +88,16 @@ describe('RecordTaskListPage', () => {
     expect(getRecordTaskList).toHaveBeenCalledWith(
       expect.objectContaining({ path: { recordId: 42 } }),
     )
-    expect(screen.getByRole('heading', { level: 1, name: 'Task list' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Record 42: GC123' })).toBeInTheDocument()
+    expect(
+      screen.getByText('COVID-19, 18+ who do not require supplemental oxygen'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Draft')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 0 of 2 mandatory tasks')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Skip to first incomplete task' })).toHaveAttribute(
+      'href',
+      '/portal/records/42/indication',
+    )
     expect(
       screen.getByRole('heading', { level: 2, name: 'Indication details' }),
     ).toBeInTheDocument()

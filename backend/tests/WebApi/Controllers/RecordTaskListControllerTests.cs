@@ -9,6 +9,7 @@ using Shouldly;
 using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
+using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 using GetRecordTaskListResult = UKPS.Api.Application.Common.Result<
@@ -106,6 +107,9 @@ public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory
         {
             RecordId = 5,
             OrganisationId = 1,
+            DisplayStatus = RecordDisplayStatus.Draft,
+            CompanyCode = "GC123",
+            RecordTitle = "COVID-19, adults 18+",
             Sections =
             [
                 new RecordTaskListSectionDto

@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
+using UKPS.Api.Application.Records;
+using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence;
 
 namespace UKPS.Api.Application.RecordForms;
@@ -34,6 +36,17 @@ internal sealed class RecordTaskListQueryService(
             );
         }
 
+        RecordDisplayStatus displayStatus = await dbContext
+            .Records.AsNoTracking()
+            .Where(r => r.Id == form.Record.Id)
+            .SelectLatestRevision()
+            .Select(static x => x.DisplayStatus)
+            .SingleAsync(cancellationToken);
+        var productDetail = await dbContext
+            .RecordProductDetails.AsNoTracking()
+            .Where(x => x.RevisionId == form.Revision.Id)
+            .Select(static x => new { x.CompanyCode, x.RecordTitle })
+            .SingleOrDefaultAsync(cancellationToken);
         HashSet<string> answered = await ReadAnsweredQuestionIdsAsync(
             form.Model,
             form.Revision.Id,
@@ -44,6 +57,9 @@ internal sealed class RecordTaskListQueryService(
             {
                 RecordId = form.Record.Id,
                 OrganisationId = form.Record.OrganisationId,
+                DisplayStatus = displayStatus,
+                CompanyCode = productDetail?.CompanyCode,
+                RecordTitle = productDetail?.RecordTitle,
                 Sections = form
                     .Model.Sections.Select(section => new RecordTaskListSectionDto
                     {

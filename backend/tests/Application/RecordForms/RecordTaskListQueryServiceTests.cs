@@ -1,13 +1,16 @@
 using Bogus;
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
+using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.ReferenceData;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -76,6 +79,9 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
 
         taskList.RecordId.ShouldBe(_record.Id);
         taskList.OrganisationId.ShouldBe(_organisation.Id);
+        taskList.DisplayStatus.ShouldBe(RecordDisplayStatus.Draft);
+        taskList.CompanyCode.ShouldBeNull();
+        taskList.RecordTitle.ShouldBeNull();
         RecordTaskListSectionDto section = taskList.Sections.ShouldHaveSingleItem();
         (section.Id, section.Title).ShouldBe(("indication-details", "Indication details"));
         RecordTaskListTaskDto task = section.Tasks.ShouldHaveSingleItem();
@@ -143,6 +149,41 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         await AddEntity(row, Ct);
 
         (await GetStatus()).ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
+    [Fact]
+    public async Task GetTaskList_ProductDetails_AreReadFromTheLatestRevision()
+    {
+        RecordRevision earlier = await AddRevision(
+            WorkflowStatus.Published,
+            _revision.CreatedAt.AddDays(-1)
+        );
+        RecordProductDetail earlierDetail = await AddEntity(
+            new RecordProductDetailFaker(RecordType.Medicine, earlier.Id).Generate(),
+            Ct
+        );
+        RecordProductDetail latestDetail = await AddEntity(
+            new RecordProductDetailFaker(RecordType.Medicine, _revision.Id)
+                .RuleFor(x => x.CompanyCode, earlierDetail.CompanyCode + "-latest")
+                .Generate(),
+            Ct
+        );
+
+        RecordTaskListDto taskList = await GetTaskList();
+
+        (taskList.CompanyCode, taskList.RecordTitle).ShouldBe(
+            (latestDetail.CompanyCode, latestDetail.RecordTitle)
+        );
+    }
+
+    [Fact]
+    public async Task GetTaskList_RecordOnHold_ShowsTheRecordStatus()
+    {
+        await Context
+            .Records.Where(r => r.Id == _record.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.RecordStatus, RecordStatus.OnHold), Ct);
+
+        (await GetTaskList()).DisplayStatus.ShouldBe(RecordDisplayStatus.OnHold);
     }
 
     [Fact]

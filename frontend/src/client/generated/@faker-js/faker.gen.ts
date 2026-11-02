@@ -435,6 +435,9 @@ export const fakeRecordTaskListDto = (options?: Options): RecordTaskListDto => {
     return {
         recordId: f.number.int(),
         organisationId: f.number.int(),
+        displayStatus: fakeRecordDisplayStatus(options),
+        companyCode: f.datatype.boolean() ? f.string.sample() : null,
+        recordTitle: f.datatype.boolean() ? f.string.sample() : null,
         sections: f.helpers.multiple(() => fakeRecordTaskListSectionDto(options))
     };
 };
