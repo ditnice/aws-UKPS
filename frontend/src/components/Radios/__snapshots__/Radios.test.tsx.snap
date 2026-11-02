@@ -1,0 +1,234 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Radios > renders a legend, hint and options sharing the group name 1`] = `
+<DocumentFragment>
+  <div
+    data-component="radios"
+  >
+    <fieldset
+      class="form-group"
+      data-component="form-group"
+    >
+      <legend
+        class="form-group__legend"
+      >
+        How would you like to be contacted?
+      </legend>
+      <p
+        class="form-group__hint"
+      >
+        Select one option
+      </p>
+      <div
+        class="radio"
+        data-component="radio"
+      >
+        <input
+          aria-controls="conditional-contact_email"
+          aria-expanded="false"
+          class="radio__input"
+          id="contact_email"
+          name="contact"
+          type="radio"
+          value="email"
+        />
+        <label
+          class="radio__label"
+          for="contact_email"
+        >
+          Email
+        </label>
+      </div>
+      <div
+        class="_conditional_3637ee _conditionalHidden_3637ee"
+        data-component="radios-conditional"
+        id="conditional-contact_email"
+      >
+        <label
+          for="contact-email"
+        >
+          Email address
+        </label>
+        <input
+          id="contact-email"
+          name="contactEmail"
+        />
+      </div>
+      <div
+        class="radio"
+        data-component="radio"
+      >
+        <input
+          aria-controls="conditional-contact_phone"
+          aria-expanded="false"
+          class="radio__input"
+          id="contact_phone"
+          name="contact"
+          type="radio"
+          value="phone"
+        />
+        <label
+          class="radio__label"
+          for="contact_phone"
+        >
+          Phone
+        </label>
+      </div>
+      <div
+        class="_conditional_3637ee _conditionalHidden_3637ee"
+        data-component="radios-conditional"
+        id="conditional-contact_phone"
+      >
+        <label
+          for="contact-phone"
+        >
+          Phone number
+        </label>
+        <input
+          id="contact-phone"
+          name="contactPhone"
+        />
+      </div>
+      <div
+        class="radio"
+        data-component="radio"
+      >
+        <input
+          class="radio__input"
+          id="contact_post"
+          name="contact"
+          type="radio"
+          value="post"
+        />
+        <label
+          class="radio__label"
+          for="contact_post"
+        >
+          Post
+        </label>
+      </div>
+    </fieldset>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Radios > renders the error message and styles every option as invalid 1`] = `
+<DocumentFragment>
+  <div
+    data-component="radios"
+  >
+    <fieldset
+      class="form-group"
+      data-component="form-group"
+    >
+      <legend
+        class="form-group__legend"
+      >
+        How would you like to be contacted?
+      </legend>
+      <p
+        class="form-group__error-message"
+      >
+        Select how you would like to be contacted
+      </p>
+      <p
+        class="radio__error-message"
+      />
+      <div
+        class="radio radio--error"
+        data-component="radio"
+      >
+        <input
+          aria-controls="conditional-contact_email"
+          aria-expanded="false"
+          class="radio__input"
+          id="contact_email"
+          name="contact"
+          type="radio"
+          value="email"
+        />
+        <label
+          class="radio__label"
+          for="contact_email"
+        >
+          Email
+        </label>
+      </div>
+      <div
+        class="_conditional_3637ee _conditionalHidden_3637ee"
+        data-component="radios-conditional"
+        id="conditional-contact_email"
+      >
+        <label
+          for="contact-email"
+        >
+          Email address
+        </label>
+        <input
+          id="contact-email"
+          name="contactEmail"
+        />
+      </div>
+      <p
+        class="radio__error-message"
+      />
+      <div
+        class="radio radio--error"
+        data-component="radio"
+      >
+        <input
+          aria-controls="conditional-contact_phone"
+          aria-expanded="false"
+          class="radio__input"
+          id="contact_phone"
+          name="contact"
+          type="radio"
+          value="phone"
+        />
+        <label
+          class="radio__label"
+          for="contact_phone"
+        >
+          Phone
+        </label>
+      </div>
+      <div
+        class="_conditional_3637ee _conditionalHidden_3637ee"
+        data-component="radios-conditional"
+        id="conditional-contact_phone"
+      >
+        <label
+          for="contact-phone"
+        >
+          Phone number
+        </label>
+        <input
+          id="contact-phone"
+          name="contactPhone"
+        />
+      </div>
+      <p
+        class="radio__error-message"
+      />
+      <div
+        class="radio radio--error"
+        data-component="radio"
+      >
+        <input
+          class="radio__input"
+          id="contact_post"
+          name="contact"
+          type="radio"
+          value="post"
+        />
+        <label
+          class="radio__label"
+          for="contact_post"
+        >
+          Post
+        </label>
+      </div>
+    </fieldset>
+  </div>
+</DocumentFragment>
+`;

@@ -1,7 +1,7 @@
 'use client'
 
-import { FormGroup } from '@nice-digital/nds-form-group'
-import { Radio } from '@nice-digital/nds-radio'
+import { Input } from '@/components/Input/Input'
+import { Radio, Radios } from '@/components/Radios/Radios'
 
 import { Example } from '../../_components/Example'
 
@@ -9,60 +9,81 @@ export function Examples() {
   return (
     <>
       <Example title="Overview">
-        <FormGroup
+        <Radios
           legend="Are you happy for us to contact you in the future?"
           name="contact-preference-default"
         >
           <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
-      </Example>
-      <Example title="Default radios">
-        <FormGroup
-          legend="Are you happy for us to contact you in the future?"
-          name="contact-preference-default-example"
-        >
-          <Radio label="Yes" value="yes" />
-          <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
       </Example>
       <Example title="Inline radios">
-        <FormGroup
+        <Radios
+          inline
           legend="Are you happy for us to contact you in the future?"
           name="contact-preference-inline"
-          inline
         >
           <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
       </Example>
       <Example title="Individual radio hint text">
-        <FormGroup
+        <Radios
           legend="Are you happy for us to contact you in the future?"
           name="contact-preference-hint"
         >
-          <Radio label="Yes" value="yes" hint="Some helpful hint text" />
+          <Radio hint="Some helpful hint text" label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
       </Example>
       <Example title="Group hint text">
-        <FormGroup
-          legend="Are you happy for us to contact you in the future?"
+        <Radios
           hint="Some helpful hint text"
+          legend="Are you happy for us to contact you in the future?"
           name="contact-preference-grouphint"
         >
           <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
+      </Example>
+      <Example title="Conditionally revealing a related question">
+        <Radios
+          hint="Select one option"
+          legend="How would you like to be contacted?"
+          name="contact-method"
+        >
+          <Radio
+            conditional={
+              <Input label="Email address" name="contact-method-email" type="email" width={20} />
+            }
+            label="Email"
+            value="email"
+          />
+          <Radio
+            conditional={
+              <Input label="Phone number" name="contact-method-phone" type="tel" width={20} />
+            }
+            label="Phone"
+            value="phone"
+          />
+          <Radio
+            conditional={
+              <Input label="Mobile phone number" name="contact-method-text" type="tel" width={20} />
+            }
+            label="Text message"
+            value="text"
+          />
+        </Radios>
       </Example>
       <Example title="Errors">
-        <FormGroup
+        <Radios
+          error="Select whether you are happy for us to contact you"
           legend="Are you happy for us to contact you in the future?"
-          name="contact-preference-errorhint"
+          name="contact-preference-error"
         >
-          <Radio label="Yes" value="yes" error="Error message" />
+          <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
       </Example>
     </>
   )

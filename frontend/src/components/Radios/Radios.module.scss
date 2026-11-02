@@ -1,0 +1,27 @@
+@use 'sass:math';
+@use '@/styles/colours';
+@use '@/styles/spacing';
+@use '@/styles/utils';
+
+// Matches the NDS radio: a `spacing.$large` circle with the label offset by `spacing.$medium`.
+$radio-size: spacing.$large;
+$label-offset: $radio-size + spacing.$medium;
+$border-width: spacing.$x-small;
+// Centre the border under the radio circle, then line the content up with the radio labels.
+$conditional-margin-left: math.div($radio-size, 2) - math.div($border-width, 2);
+$conditional-padding-left: $label-offset - $conditional-margin-left - $border-width;
+
+.conditional {
+  border-left: utils.rem($border-width) solid colours.$border;
+  margin-bottom: utils.rem(spacing.$medium);
+  margin-left: utils.rem($conditional-margin-left);
+  padding-left: utils.rem($conditional-padding-left);
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+.conditionalHidden {
+  display: none;
+}
