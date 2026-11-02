@@ -19,19 +19,18 @@ exports[`Nav > renders collapsed 1`] = `
         >
           <li>
             <a
-              aria-current="page"
               class="_link_12dd76"
-              href="/"
+              href="/test1"
             >
-              Home
+              Test link 1
             </a>
           </li>
           <li>
             <a
               class="_link_12dd76"
-              href="/about-us"
+              href="/test2"
             >
-              About
+              Test link 2
             </a>
           </li>
         </ul>
@@ -60,19 +59,18 @@ exports[`Nav > renders expanded 1`] = `
         >
           <li>
             <a
-              aria-current="page"
               class="_link_12dd76"
-              href="/"
+              href="/test1"
             >
-              Home
+              Test link 1
             </a>
           </li>
           <li>
             <a
               class="_link_12dd76"
-              href="/about-us"
+              href="/test2"
             >
-              About
+              Test link 2
             </a>
           </li>
         </ul>
