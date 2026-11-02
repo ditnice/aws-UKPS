@@ -66,7 +66,8 @@ UK PharmaScan is a database of information on new medicines, indications, and fo
 
 Early engagement and NHS planning have been shown to improve the speed of medicines uptake. By regularly entering comprehensive information on pipeline medicines into UK PharmaScan, product developers ensure the NHS horizon scanning organisations have the information they need.
 
-There is no charge for pharmaceutical companies to use UK PharmaScan.`,
+There is no charge for pharmaceutical companies to use UK PharmaScan.
+`,
         heading: 'What is UK PharmaScan?',
         variant: 'homeStandard',
       },
