@@ -9,10 +9,6 @@ How a record is validated, saved and submitted, and how two people editing the s
 - [Cross-page rules](#cross-page-rules)
 - [Check your answers and submit](#check-your-answers-and-submit)
 - [Hashing](#hashing)
-- [Two people at once](#two-people-at-once)
-- [Errors](#errors)
-- [Approaches we rejected](#approaches-we-rejected)
-- [Open questions](#open-questions)
 
 ## Summary
 
@@ -37,12 +33,12 @@ flowchart TD
     BV -- Yes --> L[Lock record row]
     L --> ED{Record in an <br/>editable state?}
     ED -- No --> E3[409 record_not_editable]
-    ED -- Yes --> AV{Page rules pass<br/>in API?}
-    AV -- No --> E2[400 with field errors]
-    AV -- Yes --> T["Target revision:<br/>the draft, or the latest<br/>published or rejected revision"]
+    ED -- Yes --> T["Target revision:<br/>the draft, or the latest<br/>published or rejected revision"]
     T --> H{pageHash matches<br/>the target?}
     H -- No --> E4[409 page_changed]
-    H -- Yes --> DR{Draft exists?}
+    H -- Yes --> AV{Page rules pass<br/>in API?}
+    AV -- No --> E2[400 with field errors]
+    AV -- Yes --> DR{Draft exists?}
     DR -- No --> CF[Create draft by copy-forward]
     DR -- Yes --> W[Write whole page<br/>and audit rows]
     CF --> W
@@ -52,6 +48,7 @@ flowchart TD
 - **Editable** means [status management](status-management.md) permits editing or creating a revision. A record isn't editable while its latest revision is in QA review, or while it is on hold, archived or discarded.
 - **The API picks the target revision** from the database under the lock, not from the revision the page was loaded from. The first save after a publication or rejection creates the draft.
 - **One page, one hash.** A change on another page never blocks this save.
+- **The pageHash is checked before the page rules.** A user with a stale page reloads straight away, rather than fixing field errors only to be told to reload.
 
 ### Single-question and multi-question pages
 
