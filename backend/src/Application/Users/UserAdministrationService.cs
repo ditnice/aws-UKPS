@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
@@ -6,6 +7,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.UserOnboarding;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -17,6 +19,7 @@ using OnboardingUserResult = UKPS.Api.Application.Common.Result<
 namespace UKPS.Api.Application.Users;
 
 internal sealed partial class UserAdministrationService(
+    AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
     ICurrentUserInfoService currentUserInfoService,
     IEmailService emailService,
@@ -49,14 +52,43 @@ internal sealed partial class UserAdministrationService(
         return await onboardingResult.Match(
             onOk: async outcome =>
             {
-                // TODO: notify existing users once "added to organisation" email is designed.
                 if (outcome.IsNewUser)
                 {
                     await SendUserSignUpRequestedEmail(outcome.User, cancellationToken);
                 }
+                else
+                {
+                    await SendUserAddedToOrganisationEmail(
+                        outcome.User,
+                        command.OrganisationId,
+                        cancellationToken
+                    );
+                }
                 return OnboardingUserResult.Ok(outcome.User.Id);
             },
             onErr: err => Task.FromResult(OnboardingUserResult.Err(err))
+        );
+    }
+
+    private async Task SendUserAddedToOrganisationEmail(
+        User user,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        string organisationName = await dbContext
+            .Organisations.Where(o => o.Id == organisationId)
+            .Select(o => o.OrganisationName)
+            .SingleAsync(cancellationToken);
+
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                PersonIdentifier = user.CognitoUsername,
+                RecipientAddress = user.WorkEmail,
+                Email = new UserAddedToOrganisationEmail() { OrganisationName = organisationName },
+            },
+            cancellationToken
         );
     }
 

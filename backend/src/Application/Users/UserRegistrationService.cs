@@ -280,7 +280,6 @@ internal class UserRegistrationService : IUserRegistrationService
         registrationRequest.ResultingUser = outcome.User;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // TODO: email approved existing users once that email is designed.
         if (outcome.IsNewUser)
         {
             // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
@@ -291,6 +290,26 @@ internal class UserRegistrationService : IUserRegistrationService
                     RecipientAddress = outcome.User.WorkEmail,
                     PersonIdentifier = outcome.User.CognitoUsername,
                     Email = new UserMembershipRequestApprovedNotificationEmail() { Link = link },
+                },
+                cancellationToken
+            );
+        }
+        else
+        {
+            string organisationName = await _dbContext
+                .Organisations.Where(o => o.Id == registrationRequest.OrganisationId)
+                .Select(o => o.OrganisationName)
+                .SingleAsync(cancellationToken);
+
+            await _emailService.SendEmail(
+                new()
+                {
+                    RecipientAddress = outcome.User.WorkEmail,
+                    PersonIdentifier = outcome.User.CognitoUsername,
+                    Email = new UserMembershipRequestApprovedExistingUserEmail()
+                    {
+                        OrganisationName = organisationName,
+                    },
                 },
                 cancellationToken
             );
