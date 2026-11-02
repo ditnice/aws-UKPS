@@ -32,6 +32,7 @@ internal sealed class SeedReferenceData
             data.TherapeuticAreas,
             entry => new TherapeuticArea
             {
+                Code = entry.Code,
                 Label = entry.Label,
                 DisplayOrder = entry.DisplayOrder,
                 IsArchived = entry.IsArchived,

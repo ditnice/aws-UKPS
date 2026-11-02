@@ -2453,6 +2453,289 @@
         }
       }
     },
+    "/records/{recordId}/pages/{pageId}": {
+      "get": {
+        "tags": [
+          "RecordForm"
+        ],
+        "summary": "Retrieves a page of a record's content form: its questions, rules, options and the current\nanswers on the record's latest revision.",
+        "operationId": "GetRecordFormPage",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to read.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageId",
+            "in": "path",
+            "description": "The page to read.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the page.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordPageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordPageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record or page was not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "RecordForm"
+        ],
+        "summary": "Validates and saves every answer on a page of a record's content form, to the record's\nlatest revision, which must be a draft.",
+        "operationId": "SaveRecordFormPage",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to write.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageId",
+            "in": "path",
+            "description": "The page to save.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecordPageCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecordPageCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecordPageCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Saved, or nothing changed. Returns the next page.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveRecordPageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveRecordPageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveRecordPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more answers are missing, malformed or invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but not edit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record or page was not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The revision is not a draft, or the form or revision changed since the page was loaded.\nThe `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -3915,7 +4198,7 @@
       "CreateRecordDto": {
         "required": [
           "recordId",
-          "revisionId"
+          "firstPageId"
         ],
         "type": "object",
         "properties": {
@@ -3924,10 +4207,12 @@
             "description": "Gets the identifier of the newly created record.",
             "format": "int32"
           },
-          "revisionId": {
-            "type": "integer",
-            "description": "Gets the identifier of the initial revision created for the record.",
-            "format": "int32"
+          "firstPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the first page of the record's content form, where the user goes next, or null when\nthe record type has no form yet or the caller cannot edit record content."
           }
         },
         "description": "Represents the result of creating a record."
@@ -3959,6 +4244,18 @@
           null
         ],
         "type": "string"
+      },
+      "FormControl": {
+        "enum": [
+          "Text",
+          "Textarea",
+          "Radio",
+          "Select",
+          "Checkbox",
+          "HierarchicalSelect"
+        ],
+        "type": "string",
+        "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
       },
       "GenomicTestMandatoryStatus": {
         "enum": [
@@ -5152,6 +5449,18 @@
           }
         }
       },
+      "RecordAction": {
+        "enum": [
+          "Update",
+          "ChangeStatus",
+          "ConfirmCurrent",
+          "ConfirmOnHold",
+          "Discard",
+          "ViewTimeline"
+        ],
+        "type": "string",
+        "description": "Defines the actions a user can take on a record."
+      },
       "RecordClinicalTrialDto": {
         "required": [
           "studyName",
@@ -5253,8 +5562,8 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "revisionId",
-          "canDiscard"
+          "firstPageId",
+          "actions"
         ],
         "properties": {
           "recordType": {
@@ -5472,14 +5781,19 @@
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
           },
-          "revisionId": {
-            "type": "integer",
-            "description": "Gets the identifier of the latest revision.",
-            "format": "int32"
+          "firstPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet or the caller cannot edit record content. Links to it open the form for the\nlatest revision."
           },
-          "canDiscard": {
-            "type": "boolean",
-            "description": "Gets a value indicating whether the record can be discarded, because it has never been\nsubmitted."
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAction"
+            },
+            "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
           }
         },
         "description": "Represents the data held on the latest revision of a medicine record."
@@ -5490,8 +5804,8 @@
           "organisationId",
           "recordStatus",
           "displayStatus",
-          "revisionId",
-          "canDiscard"
+          "firstPageId",
+          "actions"
         ],
         "properties": {
           "recordType": {
@@ -5526,14 +5840,19 @@
             "description": "Gets the date the record was last reviewed, when available.",
             "format": "date-time"
           },
-          "revisionId": {
-            "type": "integer",
-            "description": "Gets the identifier of the latest revision.",
-            "format": "int32"
+          "firstPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the first page of the record type's content form, or null when the record type has\nno form yet or the caller cannot edit record content. Links to it open the form for the\nlatest revision."
           },
-          "canDiscard": {
-            "type": "boolean",
-            "description": "Gets a value indicating whether the record can be discarded, because it has never been\nsubmitted."
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAction"
+            },
+            "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
           }
         },
         "description": "Represents the data held on the latest revision of a vaccine record."
@@ -5747,6 +6066,255 @@
           }
         },
         "description": "Represents a name or identifier for a product."
+      },
+      "RecordPageDto": {
+        "required": [
+          "formVersion",
+          "revisionVersion",
+          "organisationId",
+          "recordId",
+          "section",
+          "page",
+          "previousPageId",
+          "questions",
+          "answers"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The form's version. Echo it back on save."
+          },
+          "revisionVersion": {
+            "type": "integer",
+            "description": "The concurrency token of the record's latest revision, which the page reads and writes.\nEcho it back on save.",
+            "format": "uint32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used for links back to its records list.",
+            "format": "int32"
+          },
+          "recordId": {
+            "type": "integer",
+            "description": "The record the page belongs to.",
+            "format": "int32"
+          },
+          "section": {
+            "description": "The section the page belongs to.",
+            "$ref": "#/components/schemas/RecordPageSectionDto"
+          },
+          "page": {
+            "description": "The page's ID and title.",
+            "$ref": "#/components/schemas/RecordPagePageDto"
+          },
+          "previousPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The target of Back, or null on the first page."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordPageQuestionDto"
+            },
+            "description": "The questions on the page, in order."
+          },
+          "answers": {
+            "type": "object",
+            "description": "Every question on the page, keyed by question ID: a string or null, or an array of strings\nfor multi-value questions."
+          }
+        },
+        "description": "One page of a record content form: its questions, options and current answers."
+      },
+      "RecordPageOptionDto": {
+        "required": [
+          "value",
+          "label",
+          "children"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The answer value: an enum member name or a reference ID."
+          },
+          "label": {
+            "type": "string",
+            "description": "The text shown for the option."
+          },
+          "children": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordPageOptionDto"
+            },
+            "description": "The child options of a hierarchical option, or null."
+          }
+        },
+        "description": "An option of a choice question. Only hierarchical options have children."
+      },
+      "RecordPagePageDto": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The page ID, used in the URL."
+          },
+          "title": {
+            "type": "string",
+            "description": "A short name for the page."
+          }
+        },
+        "description": "A page's ID and title."
+      },
+      "RecordPageQuestionDto": {
+        "required": [
+          "id",
+          "type",
+          "multiple",
+          "label",
+          "hint",
+          "display",
+          "placeholder",
+          "childLabel",
+          "childPlaceholder",
+          "addAnotherLabel",
+          "rules",
+          "options"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The question ID: the answer key, the error key and the form field name."
+          },
+          "type": {
+            "description": "The control to render.",
+            "$ref": "#/components/schemas/FormControl"
+          },
+          "multiple": {
+            "type": "boolean",
+            "description": "True when the answer is an array of strings rather than a string or null."
+          },
+          "label": {
+            "type": "string",
+            "description": "The question text. On a single-question page it is the page heading."
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Hint text shown above the input; a blank line starts a new paragraph."
+          },
+          "display": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A rendering hint, for example `combobox`."
+          },
+          "placeholder": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The empty option text of a dropdown."
+          },
+          "childLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The heading of the child dropdown of a hierarchical select."
+          },
+          "childPlaceholder": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The empty option text of the child dropdown of a hierarchical select."
+          },
+          "addAnotherLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The button text that adds another entry to a multi-value hierarchical select."
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordPageRuleDto"
+            },
+            "description": "The rules, in evaluation order."
+          },
+          "options": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordPageOptionDto"
+            },
+            "description": "The options of a choice question, or null for a text question."
+          }
+        },
+        "description": "A question on a page, with everything needed to render and validate it."
+      },
+      "RecordPageRuleDto": {
+        "required": [
+          "kind",
+          "value",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "The kind of rule.",
+            "$ref": "#/components/schemas/RuleKind"
+          },
+          "value": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The rule's limit, for example the maximum length; null for Required.",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string",
+            "description": "The message shown when the rule fails."
+          }
+        },
+        "description": "A validation rule, with the message to show when it fails."
+      },
+      "RecordPageSectionDto": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The section ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The section title, shown as the page caption."
+          }
+        },
+        "description": "The section a page belongs to. Its title is the page caption."
       },
       "RecordProductDetailDto": {
         "required": [
@@ -5994,6 +6562,55 @@
           }
         },
         "description": "Represents the information required to respond to a multi-factor\nauthentication challenge."
+      },
+      "RuleKind": {
+        "enum": [
+          "Required",
+          "MaxLength",
+          "MaxItems"
+        ],
+        "type": "string",
+        "description": "A validation rule kind. Rules are evaluated in the order of these values, never in attribute\norder. Part of the HTTP API contract: the member names are sent to the frontend, so never\nrename or remove one."
+      },
+      "SaveRecordPageCommand": {
+        "required": [
+          "formVersion",
+          "revisionVersion",
+          "answers"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The string RecordPageDto.FormVersion the page was loaded with."
+          },
+          "revisionVersion": {
+            "type": "integer",
+            "description": "The uint RecordPageDto.RevisionVersion the page was loaded with.",
+            "format": "uint32"
+          },
+          "answers": {
+            "type": "object",
+            "description": "Every question on the page, keyed by question ID: null for an unanswered single-value\nquestion and an empty array for an unanswered multi-value question."
+          }
+        },
+        "description": "Every answer on a page, with the versions the page was loaded at."
+      },
+      "SaveRecordPageDto": {
+        "required": [
+          "nextPageId"
+        ],
+        "type": "object",
+        "properties": {
+          "nextPageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The next page, or null after the last page."
+          }
+        },
+        "description": "Where to go after saving a page."
       },
       "SetupUserCommand": {
         "required": [
@@ -6441,6 +7058,9 @@
     },
     {
       "name": "Record"
+    },
+    {
+      "name": "RecordForm"
     },
     {
       "name": "User"

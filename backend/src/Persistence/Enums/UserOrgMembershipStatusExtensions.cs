@@ -1,4 +1,4 @@
-using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.StateMachines;
 
 namespace UKPS.Api.Persistence.Enums;
 

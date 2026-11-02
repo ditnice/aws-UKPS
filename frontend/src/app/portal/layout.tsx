@@ -1,8 +1,10 @@
 import { ApplicationLayout } from '@/components/Layout/ApplicationLayout'
+import { OrganisationSwitcher } from '@/components/Layout/Header/OrganisationSwitcher/OrganisationSwitcher'
 import { inter, lora } from '@/styles/fonts'
 import '@/styles/global.scss'
 
 import { getUserOrganisationContext } from './_lib/userOrganisationContext'
+import { createLinks } from './linkCreation'
 
 import type { ReactNode } from 'react'
 
@@ -12,12 +14,18 @@ export const metadata = {
 }
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
-  const organisationContext = await getUserOrganisationContext()
+  const me = await getUserOrganisationContext()
+  const links = createLinks(me)
+  const headerExtension = me?.hasMultipleOrganisations ? (
+    <OrganisationSwitcher organisationName={me.organisationName} />
+  ) : undefined
 
   return (
     <html className={`${inter.variable} ${lora.variable}`} lang="en">
       <body>
-        <ApplicationLayout organisationContext={organisationContext}>{children}</ApplicationLayout>
+        <ApplicationLayout links={links} headerExtension={headerExtension}>
+          {children}
+        </ApplicationLayout>
       </body>
     </html>
   )

@@ -73,7 +73,22 @@ describe('Select', () => {
     expect(screen.getByText('Select a location')).toBeInTheDocument()
     expect(select.getAttribute('aria-describedby')).toBe('location-error')
     expect(select.className).toMatch(/fieldError/)
+    expect(select.getAttribute('aria-invalid')).toBe('true')
     expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('styles the select as invalid without a message when only error is set', () => {
+    render(
+      <Select error label="Choose location" name="location">
+        <SelectOption value="choose">Choose location</SelectOption>
+      </Select>,
+    )
+
+    const select = screen.getByLabelText('Choose location')
+    expect(select.className).toMatch(/fieldError/)
+    expect(select.getAttribute('aria-invalid')).toBe('true')
+    expect(select.getAttribute('aria-describedby')).toBeNull()
+    expect(screen.queryByText('Error:')).toBeNull()
   })
 
   it('merges existing describedby with hint and error ids', () => {

@@ -1,5 +1,5 @@
-using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.StateMachines;
 
 namespace UKPS.Api.Application.Organisations.Errors;
 

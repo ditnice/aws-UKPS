@@ -25,7 +25,10 @@ updates:
       - frontend
 
   - package-ecosystem: nuget
-    directory: /backend
+    directories:
+      - /backend
+      - /backend/migration
+      - /backend/migration-tests
     schedule:
       interval: daily
       time: "07:00"

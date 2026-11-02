@@ -1,25 +1,22 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import type { RecordDisplayStatus, RecordStatus } from '@/client/generated'
+import type { RecordAction } from '@/client/generated'
 
 import { ManageRecordActionBanner } from './ManageRecordActionBanner'
 
-const renderBanner = (
-  displayStatus: RecordDisplayStatus,
-  recordStatus: RecordStatus,
-  canDiscard = false,
-) =>
+const updateRecordHref = '/portal/records/42/indication'
+
+const renderBanner = (actions: RecordAction[], href: string | null = updateRecordHref) =>
   render(
     <ManageRecordActionBanner
       record={{
         organisationId: 7,
         recordId: 42,
         recordType: 'Medicine',
-        displayStatus,
-        recordStatus,
-        canDiscard,
+        actions,
       }}
+      updateRecordHref={href ?? undefined}
     />,
   )
 
@@ -31,12 +28,10 @@ const getActionLabels = () =>
 afterEach(cleanup)
 
 describe('ManageRecordActionBanner', () => {
-  it.each<[string, RecordDisplayStatus, RecordStatus, boolean, string[]]>([
+  it.each<[string, RecordAction[], string[]]>([
     [
       'published',
-      'Published',
-      'Published',
-      false,
+      ['Update', 'ChangeStatus', 'ConfirmCurrent', 'ViewTimeline'],
       [
         'Update record',
         'Change record status',
@@ -46,53 +41,49 @@ describe('ManageRecordActionBanner', () => {
     ],
     [
       'a discardable draft',
-      'Draft',
-      'Unpublished',
-      true,
+      ['Update', 'Discard', 'ViewTimeline'],
       ['Update record', 'Discard record', 'View record timeline'],
     ],
     [
-      'a draft that has been submitted',
-      'Draft',
-      'Unpublished',
-      false,
-      ['Update record', 'View record timeline'],
-    ],
-    [
-      'a draft of a published record',
-      'Draft',
-      'Published',
-      false,
-      [
-        'Update record',
-        'Change record status',
-        'Confirm information as current',
-        'View record timeline',
-      ],
-    ],
-    ['in QA review', 'QAReview', 'Unpublished', false, ['View record timeline']],
-    [
       'on hold',
-      'OnHold',
-      'OnHold',
-      false,
+      ['ChangeStatus', 'ConfirmOnHold', 'ViewTimeline'],
       ['Change record status', 'Confirm status as current', 'View record timeline'],
     ],
-    ['archived', 'Archived', 'Archived', false, ['View record timeline']],
-  ])(
-    'shows the permitted actions for a record that is %s',
-    (_, displayStatus, recordStatus, canDiscard, expected) => {
-      renderBanner(displayStatus, recordStatus, canDiscard)
+    ['in QA review', ['ViewTimeline'], ['View record timeline']],
+  ])('shows the permitted actions for a record that is %s', (_, actions, expected) => {
+    renderBanner(actions)
 
-      expect(getActionLabels()).toEqual(expected)
-    },
-  )
+    expect(getActionLabels()).toEqual(expected)
+  })
+
+  it('links Update record to the record content form', () => {
+    renderBanner(['Update', 'ViewTimeline'])
+
+    expect(screen.getByRole('link', { name: 'Update record' }).getAttribute('href')).toBe(
+      updateRecordHref,
+    )
+  })
+
+  it('hides Update record when there is no form the user can edit', () => {
+    renderBanner(['Update', 'Discard', 'ViewTimeline'], null)
+
+    expect(screen.queryByText('Update record')).toBeNull()
+    expect(getActionLabels()).toEqual(['Discard record', 'View record timeline'])
+  })
 
   it('links discard to the discard confirmation page', () => {
-    renderBanner('Draft', 'Unpublished', true)
+    renderBanner(['Update', 'Discard', 'ViewTimeline'])
 
     expect(screen.getByRole('link', { name: 'Discard record' }).getAttribute('href')).toBe(
       '/portal/organisations/7/records/42/discard?recordType=Medicine',
+    )
+  })
+
+  it('links change record status to the change record status page', () => {
+    renderBanner(['Update', 'ChangeStatus', 'ViewTimeline'])
+
+    expect(screen.getByRole('link', { name: 'Change record status' }).getAttribute('href')).toBe(
+      '/portal/organisations/7/records/42/change-record-status?recordType=Medicine',
     )
   })
 })

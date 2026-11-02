@@ -16,6 +16,10 @@ internal sealed class RecordRevision
     public int CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>
+    /// Concurrency token, mapped to the Postgres <c>xmin</c> system column. Moves on every update,
+    /// so record content saves can detect a stale page.
+    /// </summary>
     public uint Version { get; set; }
 
     // Navigation

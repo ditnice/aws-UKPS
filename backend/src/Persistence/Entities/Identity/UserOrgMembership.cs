@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.StateMachines;
 
 namespace UKPS.Api.Persistence.Entities.Identity;
 

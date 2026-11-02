@@ -8,6 +8,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.InternalServices.UserOnboarding;
 using UKPS.Api.Application.Organisations;
+using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Users;
 
@@ -39,6 +40,7 @@ internal static class DependencyInjectionManager
         services.TryAddScoped<IRecordCreationService, RecordCreationService>();
         services.AddAuthenticationServices();
         services.AddEmailServices();
+        services.AddRecordFormServices();
         services.TryAddScoped<IUserAdministrationService, UserAdministrationService>();
         services.TryAddScoped<IIdentityAdministrationService, IdentityAdministrationService>();
 
