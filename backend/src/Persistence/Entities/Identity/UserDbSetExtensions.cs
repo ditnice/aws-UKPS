@@ -15,7 +15,7 @@ internal static class UserDbSetExtensions
 #pragma warning disable CA1304 // Specify CultureInfo
 #pragma warning disable MA0011 // IFormatProvider is missing
 #pragma warning disable CA1311 // Specify a culture or use an invariant version
-        var normalised = email.Trim().ToUpper();
+        var normalised = email.Trim().ToUpperInvariant();
         return usersSet.FirstOrDefaultAsync(
             x => x.WorkEmail.ToUpper() == normalised,
             cancellationToken
