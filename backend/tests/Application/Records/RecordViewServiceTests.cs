@@ -85,12 +85,12 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(UserRole.Standard, "indication")]
-    [InlineData(UserRole.Champion, "indication")]
-    [InlineData(UserRole.Super, null)]
-    public async Task GetRecord_FirstPageId_IsOnlyGivenToUsersWhoCanEditContent(
+    [InlineData(UserRole.Standard, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Super, false)]
+    public async Task GetRecord_CanEditContent_IsOnlyTrueForUsersWhoCanEditContent(
         UserRole role,
-        string? expectedFirstPageId
+        bool expected
     )
     {
         Record record = await AddRecord(RecordStatus.Unpublished);
@@ -107,7 +107,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         result
             .ShouldBeSuccess()
             .ShouldBeOfType<MedicineRecordDto>()
-            .FirstPageId.ShouldBe(expectedFirstPageId);
+            .CanEditContent.ShouldBe(expected);
     }
 
     [Fact]

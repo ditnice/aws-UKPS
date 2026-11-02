@@ -13,7 +13,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.1";
     private const string ExpectedFingerprint =
-        "46f441e2e4fcdbdd49755d02b6a05d0622ec6b1483080513ded81920bb0c2f8c";
+        "b02e9a05cdbc811f265100cdbead801f6608ef7cb80a22dafeb9df205f63834b";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -182,13 +182,12 @@ public class MedicineFormModelTests
     {
         FormModel model = Model;
 
-        model.PreviousPage(model.FirstPage).ShouldBeNull();
+        model.PreviousPage(model.Pages[0]).ShouldBeNull();
         model.NextPage(model.FindPage("indication")!)!.Id.ShouldBe("bnf-chapter");
         model.PreviousPage(model.FindPage("bnf-chapter")!)!.Id.ShouldBe("indication");
-        model.NextPage(model.FindPage("rare-disease")!)!.Id.ShouldBe("diagnostic-test-required");
-        model
-            .PreviousPage(model.FindPage("diagnostic-test-required")!)!
-            .Id.ShouldBe("rare-disease");
+        model.NextPage(model.FindPage("rare-disease")!).ShouldBeNull();
+        model.PreviousPage(model.FindPage("diagnostic-test-required")!).ShouldBeNull();
+        model.NextPage(model.FindPage("diagnostic-test-required")!)!.Id.ShouldBe("biomarker-type");
         model.NextPage(model.FindPage("safety-tests")!).ShouldBeNull();
         model.FindPage("unknown").ShouldBeNull();
     }

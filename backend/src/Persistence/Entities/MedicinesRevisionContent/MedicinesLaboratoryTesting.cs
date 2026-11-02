@@ -12,6 +12,11 @@ internal sealed class MedicinesLaboratoryTesting
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("diagnostic-test-required", "Diagnostic test", Order = 10)]
     [FormField(
         "medicines_laboratory_testing.diagnostic_test_required",
@@ -27,6 +32,11 @@ internal sealed class MedicinesLaboratoryTesting
     /// <summary>
     /// Determines the biomarker type. Conditional on DiagnosticTestRequired = Yes.
     /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("biomarker-type", "Biomarker type", Order = 20)]
     [FormField(
         "medicines_laboratory_testing.biomarker_type",
@@ -41,6 +51,11 @@ internal sealed class MedicinesLaboratoryTesting
     /// Conditional on BiomarkerType = NonGenomicBiomarker.
     /// Describes the non-genomic biomarker and how it is measured.
     /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("non-genomic-biomarker", "Non-genomic biomarker", Order = 30)]
     [FormField(
         "medicines_laboratory_testing.non_genomic_biomarker_description",
@@ -55,6 +70,11 @@ internal sealed class MedicinesLaboratoryTesting
     /// The specific gene or genomic target the test detects.
     /// Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("genomic-target", "Genomic target", Order = 40)]
     [FormField(
         "medicines_laboratory_testing.genomic_target",
@@ -69,6 +89,11 @@ internal sealed class MedicinesLaboratoryTesting
     /// How the test relates to what is currently in the National Genomic Test Directory.
     /// Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("ngtd-relationship", "NGTD", Order = 50)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_ngtd_relationship",
@@ -82,6 +107,11 @@ internal sealed class MedicinesLaboratoryTesting
     public GenomicTestNgtdRelationship? GenomicTestNgtdRelationship { get; set; }
 
     /// <summary>Free text. Conditional on BiomarkerType = GenomicBiomarker.</summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("sample-type", "Sample type", Order = 60)]
     [FormField(
         "medicines_laboratory_testing.genomic_sample_type",
@@ -96,6 +126,11 @@ internal sealed class MedicinesLaboratoryTesting
     /// Describes turnaround time requirements differing from the current commissioned pathway.
     /// Optional. Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("turnaround-time", "Turnaround time", Order = 70)]
     [FormField(
         "medicines_laboratory_testing.genomic_turnaround_time_details",
@@ -105,6 +140,11 @@ internal sealed class MedicinesLaboratoryTesting
     )]
     public string? GenomicTurnaroundTimeDetails { get; set; }
 
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("pathway-point", "Patient pathway", Order = 80)]
     [FormField(
         "medicines_laboratory_testing.patient_pathway_point_id",
@@ -119,6 +159,11 @@ internal sealed class MedicinesLaboratoryTesting
     public string? GenomicTestPathwayPointOther { get; set; }
 
     /// <summary>What genomic alterations determine patient eligibility?</summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("genomic-alterations", "Genomic alterations", Order = 90)]
     [FormField(
         "medicines_laboratory_testing.genomic_alterations",
@@ -134,6 +179,11 @@ internal sealed class MedicinesLaboratoryTesting
     /// beyond the primary eligibility alteration.
     /// Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("additional-genomic-factors", "Additional genomic factors", Order = 100)]
     [FormField(
         "medicines_laboratory_testing.additional_genomic_factors",
@@ -144,6 +194,11 @@ internal sealed class MedicinesLaboratoryTesting
     [FormRequired("Enter details of genomic factors that affect treatment selection or sequencing")]
     public string? AdditionalGenomicFactors { get; set; }
 
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("test-used-in-trials", "Test used in trials", Order = 110)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_used_in_trials",
@@ -154,6 +209,11 @@ internal sealed class MedicinesLaboratoryTesting
     [FormRequired("Enter details of the test used in trials")]
     public string? GenomicTestUsedInTrials { get; set; }
 
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("specificity-sensitivity", "Specificity and sensitivity", Order = 120)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_specificity_sensitivity",
@@ -165,6 +225,11 @@ internal sealed class MedicinesLaboratoryTesting
     public string? GenomicTestSpecificitySensitivity { get; set; }
 
     /// <summary>Conditional on DiagnosticTestRequired = Yes.</summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("test-mandatory", "Mandatory testing", Order = 130)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_mandatory_status",
@@ -181,6 +246,11 @@ internal sealed class MedicinesLaboratoryTesting
     /// Tests needed to monitor response to treatment beyond current NHS practice.
     /// Optional. Not conditional — shown regardless of biomarker type. CiC.
     /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("monitoring-tests", "Monitoring tests", Order = 140)]
     [FormField(
         "medicines_laboratory_testing.monitoring_tests_details",
@@ -197,6 +267,11 @@ internal sealed class MedicinesLaboratoryTesting
     /// Tests needed to assess safety of treatment beyond current NHS practice.
     /// Optional. Not conditional — shown regardless of biomarker type. CiC.
     /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
     [FormPage("safety-tests", "Safety tests", Order = 150)]
     [FormField(
         "medicines_laboratory_testing.safety_tests_details",

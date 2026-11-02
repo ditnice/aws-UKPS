@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Persistence;
 
@@ -19,4 +20,7 @@ internal interface IFormBinding
 
     /// <summary>Writes a validated answer to the row.</summary>
     void Write(AppDbContext dbContext, object row, FormAnswer answer);
+
+    /// <summary>Builds a database-translatable expression that checks whether the row has an answer.</summary>
+    Expression HasAnswerExpression(ParameterExpression row);
 }

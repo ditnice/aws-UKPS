@@ -132,11 +132,21 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         page.FormVersion.ShouldBe(FormVersions.Medicine);
         page.RevisionVersion.ShouldBe(await RevisionVersion());
-        page.OrganisationId.ShouldBe(_organisation.Id);
         page.Section.Title.ShouldBe("Indication details");
+        (page.Task.Id, page.Task.Title).ShouldBe(("indication-details", "Indication details"));
         page.PreviousPageId.ShouldBeNull();
+        page.NextPageId.ShouldBe("bnf-chapter");
         page.Questions.Single().Id.ShouldBe(Indication);
         page.Answers[Indication].ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task GetPage_LastPageOfTheTask_HasNoNextPage()
+    {
+        RecordPageDto page = await GetPage("rare-disease");
+
+        page.PreviousPageId.ShouldBe("cancer");
+        page.NextPageId.ShouldBeNull();
     }
 
     [Fact]
@@ -261,7 +271,7 @@ public class RecordFormServiceTests : DatabaseTestBase
                 "rare-disease",
                 Answer("medicines_indication_detail.indication_is_rare_disease", "No")
             )
-        ).NextPageId.ShouldBe("diagnostic-test-required");
+        ).NextPageId.ShouldBeNull();
 
         MedicinesIndicationDetail row = await IndicationRow();
         row.BnfChapterId.ShouldBe(_bnfSection.Id);
