@@ -14,20 +14,26 @@ public sealed record RecordPageDto
     /// </summary>
     public required uint RevisionVersion { get; init; }
 
-    /// <summary>The organisation that owns the record; used for links back to its records list.</summary>
-    public required int OrganisationId { get; init; }
-
     /// <summary>The record the page belongs to.</summary>
     public required int RecordId { get; init; }
 
     /// <summary>The section the page belongs to.</summary>
     public required RecordPageSectionDto Section { get; init; }
 
+    /// <summary>The task the page belongs to. Its title is the page caption.</summary>
+    public required RecordPageTaskDto Task { get; init; }
+
     /// <summary>The page's ID and title.</summary>
     public required RecordPagePageDto Page { get; init; }
 
-    /// <summary>The target of Back, or null on the first page.</summary>
+    /// <summary>The target of Back, or null on the first page of the task.</summary>
     public required string? PreviousPageId { get; init; }
+
+    /// <summary>
+    /// The page after this one in its task, or null on the task's last page, where saving returns
+    /// to the task list.
+    /// </summary>
+    public required string? NextPageId { get; init; }
 
     /// <summary>The questions on the page, in order.</summary>
     public required IReadOnlyList<RecordPageQuestionDto> Questions { get; init; }

@@ -1,14 +1,14 @@
 import clsx from 'clsx'
 
 import styles from './Nav.module.scss'
-import { NavLinks } from './NavLinks/NavLinks'
+import { NavLinkItem, NavLinks } from './NavLinks/NavLinks'
 
 export type NavProps = {
   isExpanded: boolean
-  organisationId?: number
+  links: NavLinkItem[]
 }
 
-export function Nav({ isExpanded, organisationId }: NavProps) {
+export function Nav({ isExpanded, links }: NavProps) {
   return (
     <>
       <div
@@ -19,7 +19,7 @@ export function Nav({ isExpanded, organisationId }: NavProps) {
       >
         <nav className={styles.nav} aria-label="primary navigation">
           <div className={styles.menuWrapper}>
-            <NavLinks organisationId={organisationId} />
+            <NavLinks links={links} />
           </div>
         </nav>
       </div>

@@ -7,6 +7,8 @@ internal sealed record FormPage(
     int Order,
     string SectionId,
     string SectionTitle,
+    string TaskId,
+    string TaskTitle,
     IReadOnlyList<FormQuestion> Questions
 )
 {

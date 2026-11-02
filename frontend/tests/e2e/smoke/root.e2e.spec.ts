@@ -9,6 +9,9 @@ test.describe('public root', () => {
     await expect(page).toHaveTitle('UK PharmaScan')
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
     await expect(page.getByRole('heading', { level: 1, name: 'UK PharmaScan' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'What is UK PharmaScan?' }),
+    ).toBeVisible()
     await expect(page.getByRole('banner', { name: 'Site header' })).toBeVisible()
     await expect(page.getByRole('main')).toBeVisible()
     await expect(page.getByRole('contentinfo')).toBeVisible()

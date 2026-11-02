@@ -2,26 +2,30 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, type ReactElement } from 'react'
+
+import { UserRole } from '@/client/generated'
 
 import { Account } from './Account/Account'
 import styles from './Header.module.scss'
 import { Nav } from './Nav/Nav'
-import { OrganisationSwitcher } from './OrganisationSwitcher/OrganisationSwitcher'
+import { NavLinkItem } from './Nav/NavLinks/NavLinks'
 import { SkipLink } from './SkipLink/SkipLink'
 
 export type UserOrganisationContext = {
   organisationId: number
   organisationName: string
   hasMultipleOrganisations: boolean
+  userRole: UserRole
 }
 
 export type HeaderProps = {
   skipLinkId: string
-  organisationContext?: UserOrganisationContext
+  links: NavLinkItem[]
+  headerExtension?: ReactElement
 }
 
-export function Header({ skipLinkId, organisationContext }: HeaderProps) {
+export function Header({ skipLinkId, links, headerExtension }: HeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const handleMobileMenuBtnClick = () => {
@@ -73,12 +77,10 @@ export function Header({ skipLinkId, organisationContext }: HeaderProps) {
               </div>
             </div>
           </div>
-          <Nav isExpanded={isExpanded} organisationId={organisationContext?.organisationId} />
+          <Nav isExpanded={isExpanded} links={links} />
         </header>
       </div>
-      {organisationContext?.hasMultipleOrganisations && (
-        <OrganisationSwitcher organisationName={organisationContext.organisationName} />
-      )}
+      {headerExtension}
     </>
   )
 }
