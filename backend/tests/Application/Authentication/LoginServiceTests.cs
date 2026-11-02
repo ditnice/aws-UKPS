@@ -14,6 +14,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -319,6 +320,36 @@ public class LoginServiceTests : DatabaseTestBase
                     .ShouldBeOfType<InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded>();
             }
         );
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_ShouldTreatEquivalentEmailsAsTheSame()
+    {
+        string Mutate(string email)
+        {
+            var updated = _faker.GetRandomlyCapitalisedString(email);
+            var whitespace = " ";
+            return _faker.Random.Double(0, 1) switch
+            {
+                < 0.25 => whitespace + updated,
+                < 0.5 => updated + whitespace,
+                < 0.75 => whitespace + updated + whitespace,
+                _ => updated,
+            };
+        }
+
+        var workEmail = _user.WorkEmail;
+        await InitiateMultiplePasswordRequestAcrossTimeSpan(
+            Mutate(workEmail),
+            _maxNumberOfChangePasswordAttemptedInA24HourWindow,
+            (_testTime.AddHours(-24), _testTime)
+        );
+        var resultAtLimit = await _harness
+            .UpdateCurrentTime(_testTime)
+            .Service.InitiateForgottenPasswordProcedure(new() { Email = Mutate(workEmail) }, Ct);
+        resultAtLimit
+            .ShouldBeError()
+            .ShouldBeOfType<InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded>();
     }
 
     [Fact]

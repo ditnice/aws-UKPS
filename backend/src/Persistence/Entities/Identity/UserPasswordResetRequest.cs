@@ -1,12 +1,17 @@
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.WebUtilities;
+using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal sealed class UserPasswordResetRequest
 {
     public required byte[] TokenHash { get; init; }
-    public required string TargetEmailAddress { get; init; }
+    public required string TargetEmailAddress
+    {
+        get => field;
+        init => field = EmailHelpers.Normalise(value);
+    }
     public required DateTime CreatedAt { get; init; }
     public DateTime? UsedAt { get; private set; }
 

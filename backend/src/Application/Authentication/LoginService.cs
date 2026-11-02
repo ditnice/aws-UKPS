@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -100,11 +101,10 @@ internal class LoginService : ILoginService
     )
     {
         DateTime dateTime24HoursAgo = _dateTimeProvider.GetUtcNow().AddHours(-24);
-        var normalisedEmail = command.Email.Trim().ToUpperInvariant();
         int numberOfPreviousRequestsInTheLast24Hours =
             await _appDbContext.UserPasswordResetRequests.CountAsync(
                 x =>
-                    EF.Functions.ILike(x.TargetEmailAddress, normalisedEmail)
+                    x.TargetEmailAddress == EmailHelpers.Normalise(command.Email)
                     && x.CreatedAt > dateTime24HoursAgo,
                 cancellationToken
             );
