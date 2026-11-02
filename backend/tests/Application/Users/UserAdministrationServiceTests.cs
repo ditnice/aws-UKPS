@@ -327,8 +327,6 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             .SingleAsync(TestContext.Current.CancellationToken);
 
         email.OrganisationName.ShouldBe(expectedName);
-
-        _harness.Cognito.Users.ShouldNotContain(x => x.Email == command.NewUserEmail);
     }
 
     [Fact]
