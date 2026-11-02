@@ -26,15 +26,22 @@ internal static class FormModelFingerprint
                 CultureInfo.InvariantCulture,
                 $"section {section.Id} | {section.Title} | {section.Order}"
             );
-            foreach (FormPage page in section.Pages)
+            foreach (FormTask task in section.Tasks)
             {
                 text.AppendLine(
                     CultureInfo.InvariantCulture,
-                    $"  page {page.Id} | {page.Title} | {page.Order}"
+                    $"  task {task.Id} | {task.Title} | {task.Order}"
                 );
-                foreach (FormQuestion question in page.Questions)
+                foreach (FormPage page in task.Pages)
                 {
-                    AppendQuestion(text, question, options);
+                    text.AppendLine(
+                        CultureInfo.InvariantCulture,
+                        $"    page {page.Id} | {page.Title} | {page.Order}"
+                    );
+                    foreach (FormQuestion question in page.Questions)
+                    {
+                        AppendQuestion(text, question, options);
+                    }
                 }
             }
         }

@@ -1,10 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { navigationState } from '@/test-utils/nextNavigation'
-
-import { Header } from './Header'
+import { Header, type HeaderProps } from './Header'
 
 vi.mock('next/link', async () => ({
   default: (await import('@/test-utils/nextMocks')).NextLinkMock,
@@ -15,80 +13,114 @@ vi.mock('next/image', async () => ({
 }))
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
+
+// Account is a child component with its own dependencies (session, etc.),
+// so stub it out to keep these tests focused on Header.
+vi.mock('./Account/Account', () => ({
+  Account: () => <div data-testid="account" />,
+}))
+
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
   user = userEvent.setup()
 })
 
+const defaultLinks: HeaderProps['links'] = [
+  { href: '/test1', label: 'Test link 1' },
+  { href: '/test2', label: 'Test link 2' },
+]
+
+const renderHeader = (props: Partial<HeaderProps> = {}) =>
+  render(<Header skipLinkId="content-start" links={defaultLinks} {...props} />)
+
 describe('Header', () => {
   it('renders collapsed by default', () => {
-    render(<Header skipLinkId="content-start" />)
+    renderHeader()
 
     const toggle = screen.getByRole('button', { name: 'Expand site menu' })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(toggle).toHaveAttribute('aria-controls', 'header-menu')
+    expect(toggle).toHaveAttribute('aria-haspopup', 'menu')
+    expect(toggle).toHaveTextContent('Menu')
     expect(document.getElementById('header-menu')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Skip to content' }).getAttribute('href')).toBe(
-      '#content-start',
-    )
   })
 
   it('renders expanded after the mobile menu button is clicked', async () => {
-    render(<Header skipLinkId="content-start" />)
+    renderHeader()
 
     await user.click(screen.getByRole('button', { name: 'Expand site menu' }))
 
-    expect(screen.getByRole('button', { name: 'Close site menu' })).toHaveAttribute(
+    const toggle = screen.getByRole('button', { name: 'Close site menu' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(toggle).toHaveTextContent('Close')
+  })
+
+  it('collapses again when the mobile menu button is clicked a second time', async () => {
+    renderHeader()
+
+    await user.click(screen.getByRole('button', { name: 'Expand site menu' }))
+    await user.click(screen.getByRole('button', { name: 'Close site menu' }))
+
+    expect(screen.getByRole('button', { name: 'Expand site menu' })).toHaveAttribute(
       'aria-expanded',
-      'true',
+      'false',
     )
   })
 
-  it('shows the organisation switcher when the user has multiple organisations', () => {
-    navigationState.pathname = '/portal'
+  it('renders the accessibility links', () => {
+    renderHeader()
 
-    render(
-      <Header
-        skipLinkId="content-start"
-        organisationContext={{
-          organisationId: 12,
-          organisationName: 'Example Pharma',
-          hasMultipleOrganisations: true,
-        }}
-      />,
-    )
-
-    const switcher = screen.getByRole('navigation', { name: 'Organisation switcher' })
-    expect(switcher).toHaveTextContent('Example Pharma')
-    expect(screen.getByRole('link', { name: 'Manage my organisation' })).toHaveAttribute(
+    const a11yList = screen.getByRole('list', { name: 'Accessibility links' })
+    expect(within(a11yList).getByRole('link', { name: 'Skip to content' })).toHaveAttribute(
       'href',
-      '/portal/organisations/12',
+      '#content-start',
+    )
+    expect(within(a11yList).getByRole('link', { name: 'Accessibility help' })).toHaveAttribute(
+      'href',
+      '/accessibility',
     )
   })
 
-  it('hides the organisation switcher when the user has one organisation', () => {
-    render(
-      <Header
-        skipLinkId="content-start"
-        organisationContext={{
-          organisationId: 12,
-          organisationName: 'Example Pharma',
-          hasMultipleOrganisations: false,
-        }}
-      />,
-    )
+  it('renders the homepage link with an accessible name', () => {
+    renderHeader()
 
     expect(
-      screen.queryByRole('navigation', { name: 'Organisation switcher' }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('link', {
+        name: 'NICE: National Institute for Health and Care Excellence homepage',
+      }),
+    ).toHaveAttribute('href', '/')
   })
 
-  it('hides the organisation switcher when no organisation is selected', () => {
-    render(<Header skipLinkId="content-start" />)
+  it('renders the account component', () => {
+    renderHeader()
 
-    expect(
-      screen.queryByRole('navigation', { name: 'Organisation switcher' }),
-    ).not.toBeInTheDocument()
+    expect(screen.getByTestId('account')).toBeInTheDocument()
+  })
+
+  it('renders the navigation links', () => {
+    renderHeader()
+
+    expect(screen.getByRole('link', { name: 'Test link 1' })).toHaveAttribute('href', '/test1')
+    expect(screen.getByRole('link', { name: 'Test link 2' })).toHaveAttribute('href', '/test2')
+  })
+
+  it('renders the header extension when provided', () => {
+    renderHeader({ headerExtension: <div data-testid="header-extension">Extension</div> })
+
+    expect(screen.getByTestId('header-extension')).toHaveTextContent('Extension')
+  })
+
+  it('renders the header extension outside the header landmark', () => {
+    renderHeader({ headerExtension: <div data-testid="header-extension">Extension</div> })
+
+    const header = screen.getByRole('banner')
+    expect(within(header).queryByTestId('header-extension')).not.toBeInTheDocument()
+  })
+
+  it('does not render a header extension when none is provided', () => {
+    renderHeader()
+
+    expect(screen.queryByTestId('header-extension')).not.toBeInTheDocument()
   })
 })

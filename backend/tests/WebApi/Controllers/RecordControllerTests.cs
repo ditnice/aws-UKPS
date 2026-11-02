@@ -76,7 +76,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     private readonly CreateRecordDto _defaultCreateRecordDto = new CreateRecordDto
     {
         RecordId = 1,
-        FirstPageId = "indication",
+        CanEditContent = true,
     };
 
     public RecordControllerTests(WebApplicationFactory<Program> factory)
@@ -363,7 +363,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             OrganisationId = OrganisationId,
             RecordStatus = RecordStatus.Published,
             DisplayStatus = RecordDisplayStatus.Draft,
-            FirstPageId = "indication",
+            CanEditContent = true,
             Actions = [RecordAction.Update, RecordAction.ViewTimeline],
             RecordClinicalTrials = [],
         };

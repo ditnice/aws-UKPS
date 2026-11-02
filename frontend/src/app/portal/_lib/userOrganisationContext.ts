@@ -19,6 +19,7 @@ export async function getUserOrganisationContext(): Promise<UserOrganisationCont
           organisationId: data.organisationId,
           organisationName: data.organisationName,
           hasMultipleOrganisations: data.hasMultipleOrganisations,
+          userRole: data.userRole,
         }
       : undefined
   } catch (error) {

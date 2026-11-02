@@ -117,7 +117,7 @@ public class RecordFormController(
                         "This record can no longer be edited because it has been submitted."
                     ),
                     SaveRecordPageError.ConcurrentUpdate => Conflict(
-                        "revision_changed",
+                        "concurrent_update",
                         "This record was modified concurrently."
                     ),
                     SaveRecordPageError.FormVersionChanged => Conflict(

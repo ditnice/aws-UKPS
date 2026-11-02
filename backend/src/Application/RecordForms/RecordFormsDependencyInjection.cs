@@ -16,6 +16,7 @@ internal static class RecordFormsDependencyInjection
         services.TryAddScoped<RecordFormPageLoader>();
         services.TryAddScoped<IRecordFormQueryService, RecordFormQueryService>();
         services.TryAddScoped<IRecordFormSaveService, RecordFormSaveService>();
+        services.TryAddScoped<IRecordTaskListQueryService, RecordTaskListQueryService>();
         return services;
     }
 }
