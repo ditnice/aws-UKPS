@@ -50,6 +50,7 @@ const tree = [
 const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
   revisionVersion: 4711,
+  pageHash: 'page-hash',
   organisationId: 3,
   recordId: 5,
   section: { id: 'indication-details', title: 'Indication details' },
@@ -154,7 +155,7 @@ describe('FormPage', () => {
         path: { recordId: 5, pageId: 'indication' },
         body: {
           formVersion: '2026.10.1',
-          revisionVersion: 4711,
+          pageHash: 'page-hash',
           answers: { 'medicines_indication_detail.indication': 'Hepatitis C' },
         },
       })

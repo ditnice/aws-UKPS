@@ -53,7 +53,7 @@ export function FormPage({ page }: FormPageProps) {
         path: { recordId: page.recordId, pageId: page.page.id },
         body: {
           formVersion: page.formVersion,
-          revisionVersion: page.revisionVersion,
+          pageHash: page.pageHash,
           answers: buildPayload(questions, value),
         },
       })

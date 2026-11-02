@@ -434,6 +434,14 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetPage_EarlierRevisions_ReadsTheLatestRevision()
+    {
+        await AddEarlierPublishedRevision();
+
+        (await GetPage("indication")).RevisionVersion.ShouldBe(await RevisionVersion());
+    }
+
+    [Fact]
     public async Task SavePage_EarlierRevisions_WritesTheLatestRevision()
     {
         RecordRevision earlier = await AddEarlierPublishedRevision();
@@ -483,6 +491,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     [Fact]
     public async Task SavePage_SuperUser_CannotEditAndWritesNothing()
     {
+        uint versionBefore = await RevisionVersion();
         _saveHarness = CreateHarness<IRecordFormSaveService>(UserRole.Super, _organisation.Id);
 
         (await Save("indication", Answer(Indication, "Text")))
@@ -493,6 +502,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             await Context.MedicinesIndicationDetails.AnyAsync(x => x.RevisionId == _revision.Id, Ct)
         ).ShouldBeFalse();
         (await FieldAudits().AnyAsync(Ct)).ShouldBeFalse();
+        (await RevisionVersion()).ShouldBe(versionBefore);
     }
 
     [Fact]

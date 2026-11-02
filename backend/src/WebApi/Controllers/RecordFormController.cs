@@ -118,7 +118,7 @@ public class RecordFormController(
                     ),
                     SaveRecordPageError.ConcurrentUpdate => Conflict(
                         "revision_changed",
-                        "This record has changed since the page was loaded."
+                        "This record was modified concurrently."
                     ),
                     SaveRecordPageError.FormVersionChanged => Conflict(
                         "form_version_changed",

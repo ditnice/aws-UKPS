@@ -8,6 +8,9 @@ public sealed record RecordPageDto
     /// <summary>The form's version. Echo it back on save.</summary>
     public required string FormVersion { get; init; }
 
+    /// <summary>The token representing the associated revision version.</summary>
+    public required uint RevisionVersion { get; init; }
+
     /// <summary>The organisation that owns the record; used for links back to its records list.</summary>
     public required int OrganisationId { get; init; }
 

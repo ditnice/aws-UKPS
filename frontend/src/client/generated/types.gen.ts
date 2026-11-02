@@ -1069,6 +1069,10 @@ export type RecordPageDto = {
      */
     formVersion: string;
     /**
+     * The token representing the associated revision version.
+     */
+    revisionVersion: number;
+    /**
      * The organisation that owns the record; used for links back to its records list.
      */
     organisationId: number;

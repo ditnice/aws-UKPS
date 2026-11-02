@@ -42,6 +42,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             new RecordPageDto
             {
                 FormVersion = loaded.Model.Version,
+                RevisionVersion = loaded.Revision.Version,
                 OrganisationId = loaded.Record.OrganisationId,
                 RecordId = recordId,
                 Section = new RecordPageSectionDto
