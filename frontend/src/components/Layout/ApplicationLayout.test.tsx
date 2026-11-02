@@ -18,9 +18,11 @@ vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 vi.mock('@nice-digital/nds-container', () => ({
   Container: ({ children }: MockComponentProps) => <div data-testid="container">{children}</div>,
 }))
+
 describe('ApplicationLayout', () => {
   it('renders the application chrome around children', () => {
-    render(<ApplicationLayout>Page content</ApplicationLayout>)
+    const links = [{ href: '/test', label: 'Test link' }]
+    render(<ApplicationLayout links={links}>Page content</ApplicationLayout>)
 
     const main = screen.getByRole('main')
     expect(within(main).getByText('Page content')).toBeInTheDocument()

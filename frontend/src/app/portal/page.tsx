@@ -1,27 +1,17 @@
-import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
-import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { getUsersMe } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 
-export default function PortalDashboard() {
-  return (
-    <>
-      <PageHeader heading="Your dashboard" />
+export const dynamic = 'force-dynamic'
 
-      <p>Development quick reference links:</p>
-      <ul>
-        <li>
-          <Link href="/portal/notfound">Not found example</Link>
-        </li>
-        <li>
-          <Link href="/portal/components">Components</Link>
-        </li>
-        <li>
-          <Link href="/portal/organisations/2">Organisation 2 manage org</Link>
-        </li>
-        <li>
-          <Link href="/portal/organisations/2/records">Organisation 2 records dashboard</Link>
-        </li>
-      </ul>
-    </>
-  )
+export default async function PortalDashboard() {
+  const { data: me, error } = await getUsersMe({ client: await createServerApiClient() })
+
+  if (!me || error) {
+    return <ErrorState>Unable to load the data for the current user.</ErrorState>
+  }
+
+  return redirect(`/portal/organisations/${me.organisationId}/records`)
 }
