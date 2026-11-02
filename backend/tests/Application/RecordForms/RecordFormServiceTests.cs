@@ -261,7 +261,7 @@ public class RecordFormServiceTests : DatabaseTestBase
                 "rare-disease",
                 Answer("medicines_indication_detail.indication_is_rare_disease", "No")
             )
-        ).NextPageId.ShouldBeNull();
+        ).NextPageId.ShouldBe("diagnostic-test-required");
 
         MedicinesIndicationDetail row = await IndicationRow();
         row.BnfChapterId.ShouldBe(_bnfSection.Id);

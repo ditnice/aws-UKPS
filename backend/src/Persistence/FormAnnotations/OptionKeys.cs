@@ -44,4 +44,34 @@ internal static class OptionKeys
     /// ID or junction. Archived options are hidden unless already saved.
     /// </summary>
     public const string TherapeuticAreas = "therapeutic-areas";
+
+    /// <summary>
+    /// The <c>BiomarkerType</c> enum: genomic biomarker, non-genomic biomarker and unknown at this
+    /// stage. For a <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>BiomarkerType?</c> property.
+    /// </summary>
+    public const string BiomarkerType = "biomarker-type";
+
+    /// <summary>
+    /// The <c>GenomicTestNgtdRelationship</c> enum: how a test relates to the National Genomic Test
+    /// Directory (new test, existing test with a new or the same indication, or unknown at this
+    /// stage). For a <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>GenomicTestNgtdRelationship?</c> property.
+    /// </summary>
+    public const string GenomicTestNgtdRelationship = "genomic-test-ngtd-relationship";
+
+    /// <summary>
+    /// The <c>GenomicTestMandatoryStatus</c> enum: whether testing is mandatory before treatment
+    /// can start (mandatory with or without alternatives, recommended only, or unknown at this
+    /// stage). For a <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>GenomicTestMandatoryStatus?</c> property.
+    /// </summary>
+    public const string GenomicTestMandatoryStatus = "genomic-test-mandatory-status";
+
+    /// <summary>
+    /// The <c>PatientPathwayPoint</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>PatientPathwayPointId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string PatientPathwayPoints = "patient-pathway-points";
 }
