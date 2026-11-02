@@ -35,14 +35,13 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             track: false,
             cancellationToken
         );
-        Dictionary<string, FormAnswer> answers = RecordFormPageLoader.ReadAnswers(page, rows);
+        PageAnswers answers = RecordFormPageLoader.ReadAnswers(page, rows);
         var options = await loader.LoadOptionsAsync(page, answers, cancellationToken);
 
         return GetRecordPageResult.Ok(
             new RecordPageDto
             {
                 FormVersion = loaded.Model.Version,
-                RevisionVersion = loaded.Revision.Version,
                 OrganisationId = loaded.Record.OrganisationId,
                 RecordId = recordId,
                 Section = new RecordPageSectionDto
@@ -60,6 +59,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                     static a => a.Value.ToJson(),
                     StringComparer.Ordinal
                 ),
+                PageHash = answers.ComputeStableHash(),
             }
         );
     }

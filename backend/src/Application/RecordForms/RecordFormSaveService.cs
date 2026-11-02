@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.RecordForms.Dtos;
@@ -28,61 +29,139 @@ internal sealed class RecordFormSaveService(
         CancellationToken cancellationToken
     )
     {
-        var (loaded, failure) = await loader.LoadPageAsync(
+        await using IDbContextTransaction tx = await dbContext.Database.BeginTransactionAsync(
+            cancellationToken
+        );
+        (LoadedPage? currentPage, SaveRecordPageError? loadError) = await LoadPage(
+            recordId,
+            pageId,
+            command,
+            cancellationToken
+        );
+        if (loadError is not null)
+        {
+            return SaveRecordPageResult.Err(loadError);
+        }
+        (ModelledPageUpdated? modelledPageUpdate, SaveRecordPageError? updateModelError) =
+            await ValidateCommandAndModelUpdate(currentPage!, command, cancellationToken);
+        if (updateModelError is not null)
+        {
+            return SaveRecordPageResult.Err(updateModelError);
+        }
+
+        (bool updateRequired, SaveRecordPageResult result) = await ApplyUpdates(
+            modelledPageUpdate!,
+            currentPage!,
+            cancellationToken
+        );
+        if (!updateRequired)
+        {
+            return result;
+        }
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return SaveRecordPageResult.Err(new SaveRecordPageError.ConcurrentUpdate());
+        }
+
+        return result;
+    }
+
+    private async Task<(LoadedPage? currentPage, SaveRecordPageError? error)> LoadPage(
+        int recordId,
+        string pageId,
+        SaveRecordPageCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        (LoadedPage? loaded, PageLookupFailure failure) = await loader.LoadPageAsync(
             recordId,
             pageId,
             track: true,
             cancellationToken
         );
         SaveRecordPageError? error = CheckCanSave(loaded, failure, command);
-        if (error is not null)
-        {
-            return SaveRecordPageResult.Err(error);
-        }
+        return (loaded, error);
+    }
 
-        FormPage page = loaded!.Page;
-        var rows = await loader.LoadRowsAsync(
+    async Task<(
+        ModelledPageUpdated? updatedPage,
+        SaveRecordPageError? error
+    )> ValidateCommandAndModelUpdate(
+        LoadedPage currentPage,
+        SaveRecordPageCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        FormPage page = currentPage.Page;
+        Dictionary<FormEntity, object?> rows = await loader.LoadRowsAsync(
             page,
-            loaded.Revision.Id,
+            currentPage.Revision.Id,
             track: true,
             cancellationToken
         );
-        Dictionary<string, FormAnswer> before = RecordFormPageLoader.ReadAnswers(page, rows);
-        var options = await loader.LoadOptionsAsync(page, before, cancellationToken);
+        PageAnswers before = RecordFormPageLoader.ReadAnswers(page, rows);
 
-        var (after, errors) = PageAnswerValidator.Validate(page, command.Answers, options);
-        if (errors.Count > 0)
+        if (!before.PageHashIsEqual(command.PageHash))
         {
-            return SaveRecordPageResult.Err(new SaveRecordPageError.Invalid(errors));
+            return (null, new SaveRecordPageError.PageAnswersChanged());
         }
 
-        SaveRecordPageDto result = new() { NextPageId = loaded.Model.NextPage(page)?.Id };
-        FormQuestion[] changed = page
-            .Questions.Where(q => !after[q.Id].Equals(before[q.Id]))
+        var options = await loader.LoadOptionsAsync(page, before, cancellationToken);
+
+        (Dictionary<string, FormAnswer>? after, Dictionary<string, string>? errors) =
+            PageAnswerValidator.Validate(page, command.Answers, options);
+        if (errors.Count > 0)
+        {
+            return (null, new SaveRecordPageError.Invalid(errors));
+        }
+
+        return (new(before, after, rows), null);
+    }
+
+    private async Task<(bool updateRequired, SaveRecordPageResult)> ApplyUpdates(
+        ModelledPageUpdated modelledPageUpdate,
+        LoadedPage currentPage,
+        CancellationToken cancellationToken
+    )
+    {
+        SaveRecordPageDto result = new()
+        {
+            NextPageId = currentPage.Model.NextPage(currentPage.Page)?.Id,
+        };
+        FormQuestion[] changed = currentPage
+            .Page.Questions.Where(q =>
+                !modelledPageUpdate.After[q.Id].Equals(modelledPageUpdate.Before[q.Id])
+            )
             .ToArray();
         if (changed.Length == 0)
         {
-            return SaveRecordPageResult.Ok(result);
+            return (false, SaveRecordPageResult.Ok(result));
         }
 
         foreach (FormQuestion question in changed)
         {
-            object row = rows[question.Entity] ??= AddRow(question.Entity, loaded.Revision.Id);
-            question.Binding.Write(dbContext, row, after[question.Id]);
+            object row = modelledPageUpdate.Rows[question.Entity] ??= AddRow(
+                question.Entity,
+                currentPage.Revision.Id
+            );
+            question.Binding.Write(dbContext, row, modelledPageUpdate.After[question.Id]);
         }
 
-        await RecordChangeAsync(loaded, command, changed, before, after, cancellationToken);
+        await RecordChangeAsync(
+            currentPage,
+            changed,
+            modelledPageUpdate.Before,
+            modelledPageUpdate.After,
+            cancellationToken
+        );
 
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return SaveRecordPageResult.Err(new SaveRecordPageError.RevisionChanged());
-        }
-
-        return SaveRecordPageResult.Ok(result);
+        return (true, SaveRecordPageResult.Ok(result));
     }
 
     private static SaveRecordPageError? CheckCanSave(
@@ -113,9 +192,7 @@ internal sealed class RecordFormSaveService(
             return new SaveRecordPageError.FormVersionChanged();
         }
 
-        return command.RevisionVersion != loaded.Revision.Version
-            ? new SaveRecordPageError.RevisionChanged()
-            : null;
+        return null;
     }
 
     private object AddRow(FormEntity entity, int revisionId)
@@ -136,9 +213,8 @@ internal sealed class RecordFormSaveService(
     /// </summary>
     private async Task RecordChangeAsync(
         LoadedPage loaded,
-        SaveRecordPageCommand command,
         FormQuestion[] changed,
-        Dictionary<string, FormAnswer> before,
+        PageAnswers before,
         Dictionary<string, FormAnswer> after,
         CancellationToken cancellationToken
     )
@@ -152,7 +228,6 @@ internal sealed class RecordFormSaveService(
         // a content save, so an unchanged column is marked modified to force the UPDATE, which
         // moves xmin on.
         EntityEntry<RecordRevision> entry = dbContext.Entry(revision);
-        entry.Property(static r => r.Version).OriginalValue = command.RevisionVersion;
         entry.Property(static r => r.WorkflowStatus).IsModified = true;
 
         dbContext.RecordFieldAudits.AddRange(
@@ -168,4 +243,10 @@ internal sealed class RecordFormSaveService(
             })
         );
     }
+
+    private sealed record ModelledPageUpdated(
+        PageAnswers Before,
+        Dictionary<string, FormAnswer> After,
+        Dictionary<FormEntity, object?> Rows
+    );
 }

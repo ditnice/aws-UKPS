@@ -36,7 +36,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     )
     {
         ["revision_not_draft"] = new SaveRecordPageError.NotDraft(),
-        ["revision_changed"] = new SaveRecordPageError.RevisionChanged(),
+        ["revision_changed"] = new SaveRecordPageError.ConcurrentUpdate(),
         ["form_version_changed"] = new SaveRecordPageError.FormVersionChanged(),
     };
 
@@ -131,7 +131,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 "indication",
                 Arg.Is<SaveRecordPageCommand>(c =>
                     c.FormVersion == "2026.10.3"
-                    && c.RevisionVersion == 42
                     && c.Answers[Indication].GetString() == "Hepatitis C"
                 ),
                 Arg.Any<CancellationToken>()
@@ -220,11 +219,11 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             new SaveRecordPageCommand
             {
                 FormVersion = "2026.10.3",
-                RevisionVersion = 42,
                 Answers = new Dictionary<string, JsonElement>(StringComparer.Ordinal)
                 {
                     [Indication] = JsonSerializer.SerializeToElement("Hepatitis C"),
                 },
+                PageHash = "0987345987345987",
             },
             Ct
         );
@@ -257,7 +256,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         new()
         {
             FormVersion = "2026.10.3",
-            RevisionVersion = 42,
             OrganisationId = 1,
             RecordId = 5,
             Section = new RecordPageSectionDto
@@ -297,5 +295,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             {
                 [Indication] = JsonSerializer.SerializeToElement("Hepatitis C"),
             },
+            PageHash = "27897348658",
         };
 }

@@ -116,7 +116,7 @@ public class RecordFormController(
                         "revision_not_draft",
                         "This record can no longer be edited because it has been submitted."
                     ),
-                    SaveRecordPageError.RevisionChanged => Conflict(
+                    SaveRecordPageError.ConcurrentUpdate => Conflict(
                         "revision_changed",
                         "This record has changed since the page was loaded."
                     ),

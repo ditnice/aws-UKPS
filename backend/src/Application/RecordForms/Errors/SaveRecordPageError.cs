@@ -18,8 +18,13 @@ public abstract record SaveRecordPageError
     /// <summary>The form has changed since the page was loaded.</summary>
     public sealed record FormVersionChanged : SaveRecordPageError;
 
-    /// <summary>The revision has changed since the page was loaded.</summary>
-    public sealed record RevisionChanged : SaveRecordPageError;
+    /// <summary>
+    /// Another save to the same record revision was committed at the same moment as this one.
+    /// </summary>
+    public sealed record ConcurrentUpdate : SaveRecordPageError;
+
+    /// <summary>The answers on this page have changed since the page was loaded.</summary>
+    public sealed record PageAnswersChanged : SaveRecordPageError;
 
     /// <summary>One or more answers are invalid. Messages are keyed by question ID.</summary>
     public sealed record Invalid(IReadOnlyDictionary<string, string> Errors) : SaveRecordPageError;

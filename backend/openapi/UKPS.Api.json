@@ -6070,25 +6070,20 @@
       "RecordPageDto": {
         "required": [
           "formVersion",
-          "revisionVersion",
           "organisationId",
           "recordId",
           "section",
           "page",
           "previousPageId",
           "questions",
-          "answers"
+          "answers",
+          "pageHash"
         ],
         "type": "object",
         "properties": {
           "formVersion": {
             "type": "string",
             "description": "The form's version. Echo it back on save."
-          },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The concurrency token of the record's latest revision, which the page reads and writes.\nEcho it back on save.",
-            "format": "uint32"
           },
           "organisationId": {
             "type": "integer",
@@ -6125,6 +6120,10 @@
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: a string or null, or an array of strings\nfor multi-value questions."
+          },
+          "pageHash": {
+            "type": "string",
+            "description": "A hash of the answers of the page that must be provided when saving updates.\nIf the hash has changed, answers will be rejected."
           }
         },
         "description": "One page of a record content form: its questions, options and current answers."
@@ -6575,8 +6574,8 @@
       "SaveRecordPageCommand": {
         "required": [
           "formVersion",
-          "revisionVersion",
-          "answers"
+          "answers",
+          "pageHash"
         ],
         "type": "object",
         "properties": {
@@ -6584,14 +6583,13 @@
             "type": "string",
             "description": "The string RecordPageDto.FormVersion the page was loaded with."
           },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The uint RecordPageDto.RevisionVersion the page was loaded with.",
-            "format": "uint32"
-          },
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: null for an unanswered single-value\nquestion and an empty array for an unanswered multi-value question."
+          },
+          "pageHash": {
+            "type": "string",
+            "description": "The page hash value returned from the query."
           }
         },
         "description": "Every answer on a page, with the versions the page was loaded at."
