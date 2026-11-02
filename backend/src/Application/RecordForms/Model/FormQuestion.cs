@@ -24,6 +24,8 @@ internal sealed record FormQuestion
     public required FormEntity Entity { get; init; }
     public required IFormBinding Binding { get; init; }
 
+    public bool IsRequired => Rules.Any(static rule => rule.Kind == RuleKind.Required);
+
     public AnswerShape Shape => Binding.Shape;
 
     public bool HasOptions => OptionKey is not null;
