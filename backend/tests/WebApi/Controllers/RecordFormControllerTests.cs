@@ -38,6 +38,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         ["revision_not_draft"] = new SaveRecordPageError.NotDraft(),
         ["concurrent_update"] = new SaveRecordPageError.ConcurrentUpdate(),
         ["form_version_changed"] = new SaveRecordPageError.FormVersionChanged(),
+        ["page_answers_changed"] = new SaveRecordPageError.PageAnswersChanged(),
     };
 
     private readonly IRecordFormQueryService _mockQueryService =
@@ -200,6 +201,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     [InlineData("revision_not_draft")]
     [InlineData("concurrent_update")]
     [InlineData("form_version_changed")]
+    [InlineData("page_answers_changed")]
     public async Task SaveRecordFormPage_Conflict_ReturnsConflictWithCode(string code)
     {
         SetSaveResult(_conflicts[code]);

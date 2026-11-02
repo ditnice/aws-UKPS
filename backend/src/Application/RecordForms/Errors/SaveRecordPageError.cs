@@ -3,6 +3,35 @@ namespace UKPS.Api.Application.RecordForms.Errors;
 /// <summary>Represents an error that can occur when saving a record content page.</summary>
 public abstract record SaveRecordPageError
 {
+    private SaveRecordPageError() { }
+
+    internal TResult Match<TResult>(
+        Func<NotFound, TResult> notFound,
+        Func<NotAllowed, TResult> notAllowed,
+        Func<CannotEdit, TResult> cannotEdit,
+        Func<NotDraft, TResult> notDraft,
+        Func<FormVersionChanged, TResult> formVersionChanged,
+        Func<ConcurrentUpdate, TResult> concurrentUpdate,
+        Func<PageAnswersChanged, TResult> pageAnswersChanged,
+        Func<Invalid, TResult> invalid
+    )
+    {
+        return this switch
+        {
+            NotFound e => notFound(e),
+            NotAllowed e => notAllowed(e),
+            CannotEdit e => cannotEdit(e),
+            NotDraft e => notDraft(e),
+            FormVersionChanged e => formVersionChanged(e),
+            ConcurrentUpdate e => concurrentUpdate(e),
+            PageAnswersChanged e => pageAnswersChanged(e),
+            Invalid e => invalid(e),
+            _ => throw new InvalidOperationException(
+                $"Unexpected {nameof(SaveRecordPageError)} case: {GetType().Name}"
+            ),
+        };
+    }
+
     /// <summary>The record, revision or page does not exist.</summary>
     public sealed record NotFound : SaveRecordPageError;
 

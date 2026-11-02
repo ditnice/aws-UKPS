@@ -100,33 +100,35 @@ public class RecordFormController(
             cancellationToken
         );
 
-        return result.Match<ActionResult<SaveRecordPageDto>>(
-            saved => Ok(saved),
-            error =>
-                error switch
-                {
-                    SaveRecordPageError.NotFound or SaveRecordPageError.NotAllowed =>
-                        PageNotFound(),
-                    SaveRecordPageError.CannotEdit => Problem(
-                        statusCode: StatusCodes.Status403Forbidden,
-                        title: "Forbidden",
-                        detail: "You are not authorised to edit this record."
-                    ),
-                    SaveRecordPageError.NotDraft => Conflict(
-                        "revision_not_draft",
-                        "This record can no longer be edited because it has been submitted."
-                    ),
-                    SaveRecordPageError.ConcurrentUpdate => Conflict(
-                        "concurrent_update",
-                        "This record was modified concurrently."
-                    ),
-                    SaveRecordPageError.FormVersionChanged => Conflict(
-                        "form_version_changed",
-                        "This form has changed since the page was loaded."
-                    ),
-                    SaveRecordPageError.Invalid invalid => InvalidAnswers(invalid),
-                    _ => throw new UnreachableException("Unhandled SaveRecordPageError variant."),
-                }
+        return result.Match(saved => Ok(saved), HandleError);
+    }
+
+    private ActionResult<SaveRecordPageDto> HandleError(SaveRecordPageError error)
+    {
+        return error.Match(
+            notFound: _ => PageNotFound(),
+            notAllowed: _ => PageNotFound(),
+            cannotEdit: _ =>
+                Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Forbidden",
+                    detail: "You are not authorised to edit this record."
+                ),
+            notDraft: _ =>
+                Conflict(
+                    "revision_not_draft",
+                    "This record can no longer be edited because it has been submitted."
+                ),
+            formVersionChanged: _ =>
+                Conflict(
+                    "form_version_changed",
+                    "This form has changed since the page was loaded."
+                ),
+            concurrentUpdate: _ =>
+                Conflict("concurrent_update", "This record was modified concurrently."),
+            pageAnswersChanged: _ =>
+                Conflict("page_answers_changed", "This page has changed since it was loaded."),
+            invalid: InvalidAnswers
         );
     }
 
