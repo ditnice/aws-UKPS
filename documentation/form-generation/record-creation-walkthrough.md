@@ -120,7 +120,7 @@ Each row has `record_id = 5`, `revision_id = 7`, `old_value = null`, `changed_by
 | `record_product_detail.company_code` | `GS-7977` |
 | `record_product_detail.branded_name` | `Sovaldi` |
 | `record_product_detail.record_title` | `Chronic hepatitis C in adults` |
-| `record_name_and_identifier` | `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}` |
+| `record_product_detail.names_and_identifiers` | `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}` |
 
 ### `record_product_details` (1 row inserted)
 

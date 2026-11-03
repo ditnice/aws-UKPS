@@ -1,5 +1,5 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
@@ -23,7 +23,7 @@ internal sealed class RecordNameAndIdentifier
     public static string AuditText(
         IEnumerable<string> genericNames,
         IEnumerable<string> otherIdentifiers
-    ) => JsonSerializer.Serialize(new AuditValue([.. genericNames], [.. otherIdentifiers]));
+    ) => FieldAuditJson.Serialize(new AuditValue([.. genericNames], [.. otherIdentifiers]));
 
     private sealed record AuditValue(
         [property: JsonPropertyName(nameof(NameAndIdentifierType.GenericName))]

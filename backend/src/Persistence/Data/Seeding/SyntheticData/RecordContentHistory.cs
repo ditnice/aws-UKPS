@@ -1,4 +1,5 @@
 using System.Globalization;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using static UKPS.Api.Persistence.Data.Seeding.SyntheticData.SyntheticRecord;
@@ -141,11 +142,11 @@ internal static class RecordContentHistory
         SyntheticNamesAndIdentifiers names
     ) =>
         [
-            ("record_product_detail.company_code", names.CompanyCode),
-            ("record_product_detail.branded_name", names.BrandedName),
-            ("record_product_detail.record_title", names.RecordTitle),
+            (CreationPageFieldPaths.CompanyCode, names.CompanyCode),
+            (CreationPageFieldPaths.BrandedName, names.BrandedName),
+            (CreationPageFieldPaths.RecordTitle, names.RecordTitle),
             (
-                "record_name_and_identifier",
+                CreationPageFieldPaths.NamesAndIdentifiers,
                 RecordNameAndIdentifier.AuditText(names.GenericNames, names.OtherIdentifiers)
             ),
         ];

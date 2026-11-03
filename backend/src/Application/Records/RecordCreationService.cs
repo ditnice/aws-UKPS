@@ -138,11 +138,11 @@ internal class RecordCreationService : IRecordCreationService
     {
         (string FieldPath, string? Value)[] fields =
         [
-            ("record_product_detail.company_code", command.CompanyCode),
-            ("record_product_detail.branded_name", command.BrandedName),
-            ("record_product_detail.record_title", command.RecordTitle),
+            (CreationPageFieldPaths.CompanyCode, command.CompanyCode),
+            (CreationPageFieldPaths.BrandedName, command.BrandedName),
+            (CreationPageFieldPaths.RecordTitle, command.RecordTitle),
             (
-                "record_name_and_identifier",
+                CreationPageFieldPaths.NamesAndIdentifiers,
                 RecordNameAndIdentifier.AuditText(command.GenericNames, command.OtherIdentifiers)
             ),
         ];

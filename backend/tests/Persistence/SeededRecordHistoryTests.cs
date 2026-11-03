@@ -305,16 +305,16 @@ public sealed class SeededRecordHistoryTests
 
             Dictionary<string, string?> expected = new(StringComparer.Ordinal)
             {
-                ["record_product_detail.company_code"] = productDetail.CompanyCode,
-                ["record_product_detail.record_title"] = productDetail.RecordTitle,
-                ["record_name_and_identifier"] = RecordNameAndIdentifier.AuditText(
+                [CreationPageFieldPaths.CompanyCode] = productDetail.CompanyCode,
+                [CreationPageFieldPaths.RecordTitle] = productDetail.RecordTitle,
+                [CreationPageFieldPaths.NamesAndIdentifiers] = RecordNameAndIdentifier.AuditText(
                     NamesOfType(NameAndIdentifierType.GenericName),
                     NamesOfType(NameAndIdentifierType.OtherIdentifier)
                 ),
             };
             if (productDetail.BrandedName is not null)
             {
-                expected["record_product_detail.branded_name"] = productDetail.BrandedName;
+                expected[CreationPageFieldPaths.BrandedName] = productDetail.BrandedName;
             }
 
             audits[first]

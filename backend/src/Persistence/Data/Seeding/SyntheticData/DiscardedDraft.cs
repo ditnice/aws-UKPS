@@ -42,11 +42,11 @@ internal sealed class DiscardedDraft(Faker faker, RecordRevision revision, User 
 
         // The creation page is saved with the record.
         DateTime savedAt = revision.CreatedAt;
-        Audit("record_product_detail.company_code", productDetail.CompanyCode, savedAt);
-        Audit("record_product_detail.branded_name", productDetail.BrandedName, savedAt);
-        Audit("record_product_detail.record_title", productDetail.RecordTitle, savedAt);
+        Audit(CreationPageFieldPaths.CompanyCode, productDetail.CompanyCode, savedAt);
+        Audit(CreationPageFieldPaths.BrandedName, productDetail.BrandedName, savedAt);
+        Audit(CreationPageFieldPaths.RecordTitle, productDetail.RecordTitle, savedAt);
         Audit(
-            "record_name_and_identifier",
+            CreationPageFieldPaths.NamesAndIdentifiers,
             RecordNameAndIdentifier.AuditText([genericName], []),
             savedAt
         );
