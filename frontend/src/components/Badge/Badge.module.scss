@@ -1,0 +1,60 @@
+@use '@/styles/media-queries';
+@use '@/styles/utils';
+
+// Based on the MoJ Design System badge component:
+// https://design-patterns.service.justice.gov.uk/components/badge/
+// Colours are taken directly from the MoJ / GOV.UK Frontend (v6) palette.
+
+.badge {
+  --badge-colour: #1d70b8;
+  border: 2px solid var(--badge-colour);
+  color: var(--badge-colour);
+  display: inline-block;
+  font-size: utils.rem(12);
+  font-weight: bold;
+  line-height: utils.rem(15);
+  // Keeps the badge outline visible in forced colours / high contrast mode
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  padding: 0 utils.rem(5);
+  text-transform: uppercase;
+  vertical-align: middle;
+
+  @include media-queries.mq($from: sm) {
+    font-size: utils.rem(14);
+    line-height: utils.rem(20);
+  }
+}
+
+.blue {
+  --badge-colour: #1d70b8;
+}
+
+.purple {
+  --badge-colour: #54319f;
+}
+
+.bright-purple {
+  --badge-colour: #98285d;
+}
+
+.red {
+  --badge-colour: #ca3535;
+}
+
+.green {
+  --badge-colour: #0f7a52;
+}
+
+.black {
+  --badge-colour: #0b0c0c;
+}
+
+.grey {
+  --badge-colour: #484949;
+}
+
+.badge.large {
+  font-size: utils.rem(16);
+  line-height: utils.rem(20);
+}
