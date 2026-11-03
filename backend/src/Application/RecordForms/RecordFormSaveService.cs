@@ -9,7 +9,6 @@ using UKPS.Api.Application.RecordForms.Rules;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
-using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms;
@@ -103,9 +102,9 @@ internal sealed class RecordFormSaveService(
             return new SaveRecordPageError.CannotEdit();
         }
 
-        if (loaded.Revision.WorkflowStatus != WorkflowStatus.Draft)
+        if (!loaded.Record.CanEditDraft(loaded.Revision))
         {
-            return new SaveRecordPageError.NotDraft();
+            return new SaveRecordPageError.NotEditable();
         }
 
         if (!string.Equals(command.FormVersion, loaded.Model.Version, StringComparison.Ordinal))

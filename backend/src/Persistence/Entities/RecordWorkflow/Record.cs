@@ -61,6 +61,16 @@ internal sealed class Record
             .ToArray();
     }
 
+    /// <summary>
+    /// Whether the content of the latest revision can be edited in place. Only a draft can be,
+    /// and not while the record is on hold or archived.
+    /// </summary>
+    /// <param name="latestRevision">The record's latest revision.</param>
+    internal bool CanEditDraft(RecordRevision latestRevision) =>
+        new RecordLifecycleStateMachine(new(RecordStatus, latestRevision.WorkflowStatus))
+            .GetPermittedCommands()
+            .Contains(RecordLifecycleStateMachine.Command.EditDraft);
+
     private static RecordAction? ConvertCommandToAction(
         RecordLifecycleStateMachine.Command command,
         RecordStatus recordStatus
