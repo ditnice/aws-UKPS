@@ -178,7 +178,7 @@ internal class UserRegistrationService : IUserRegistrationService
             return Result<ApproveRequestError>.Err(new ApproveRequestError.ConcurrencyError());
         }
 
-        var result = await _userOnboardingService.InitialiseNewUserSetup(
+        var result = await _userOnboardingService.OnboardUserToOrganisation(
             MapToOnboardUserCommandDto(registrationRequest),
             OnboardingFlow.SelfSignUp,
             cancellationToken

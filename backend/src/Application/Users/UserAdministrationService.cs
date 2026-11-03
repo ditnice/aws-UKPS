@@ -44,7 +44,7 @@ internal sealed partial class UserAdministrationService(
             return OnboardingUserResult.Err(new OnboardUserError.NotAllowed());
         }
         Result<UserOnboardingOutcome, OnboardUserError> onboardingResult =
-            await userOnboardingService.InitialiseNewUserSetup(
+            await userOnboardingService.OnboardUserToOrganisation(
                 command,
                 OnboardingFlow.Invite,
                 cancellationToken

@@ -35,7 +35,7 @@ internal sealed partial class UserOnboardingService
         _logger = logger;
     }
 
-    public async Task<Result<UserOnboardingOutcome, OnboardUserError>> InitialiseNewUserSetup(
+    public async Task<Result<UserOnboardingOutcome, OnboardUserError>> OnboardUserToOrganisation(
         OnboardUserCommandDto command,
         OnboardingFlow onboardingFlow,
         CancellationToken cancellationToken

@@ -436,7 +436,6 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task ApproveRequest_WhenUserExists_ShouldAddMembershipToExistingUser()
     {
-        // Arrange
         var request = await CreateRegistrationRequest();
         // The requester already has an account, but is not in this organisation
         await AddEntity(
@@ -444,14 +443,12 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        // Act
         var result = await _harness.Service.ApproveRequest(
             _organisation.Id,
             request.Id,
             TestContext.Current.CancellationToken
         );
 
-        // Assert
         result.ShouldBeSuccess();
 
         var user = await _harness
@@ -489,7 +486,6 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     [Fact]
     public async Task ApproveRequest_WhenUserExists_ShouldSendExistingUserApprovalEmail()
     {
-        // Arrange
         var request = await CreateRegistrationRequest();
         // The requester already has an account, but is not in this organisation
         await AddEntity(
@@ -497,14 +493,12 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        // Act
         var result = await _harness.Service.ApproveRequest(
             _organisation.Id,
             request.Id,
             TestContext.Current.CancellationToken
         );
 
-        // Assert
         result.ShouldBeSuccess();
 
         _harness.Emails.Sent.Count.ShouldBe(2);
