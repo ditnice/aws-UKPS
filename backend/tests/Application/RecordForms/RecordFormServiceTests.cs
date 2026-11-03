@@ -131,7 +131,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         RecordPageDto page = await GetPage("indication");
 
         page.FormVersion.ShouldBe(FormVersions.Medicine);
-        page.RevisionVersion.ShouldBe(await RevisionVersion());
         page.Section.Title.ShouldBe("Indication details");
         (page.Task.Id, page.Task.Title).ShouldBe(("indication-details", "Indication details"));
         page.PreviousPageId.ShouldBeNull();
@@ -442,14 +441,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await Save("indication", Answer(Indication, "Text")))
             .ShouldBeError()
             .ShouldBeOfType<SaveRecordPageError.NotDraft>();
-    }
-
-    [Fact]
-    public async Task GetPage_EarlierRevisions_ReadsTheLatestRevision()
-    {
-        await AddEarlierPublishedRevision();
-
-        (await GetPage("indication")).RevisionVersion.ShouldBe(await RevisionVersion());
     }
 
     [Fact]

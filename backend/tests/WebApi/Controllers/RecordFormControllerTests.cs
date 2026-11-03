@@ -259,7 +259,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         new()
         {
             FormVersion = "2026.10.4",
-            RevisionVersion = 42,
             RecordId = 5,
             Section = new RecordPageSectionDto
             {

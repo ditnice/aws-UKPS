@@ -6164,7 +6164,6 @@
       "RecordPageDto": {
         "required": [
           "formVersion",
-          "revisionVersion",
           "recordId",
           "section",
           "task",
@@ -6180,11 +6179,6 @@
           "formVersion": {
             "type": "string",
             "description": "The form's version. Echo it back on save."
-          },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The token representing the associated revision version.",
-            "format": "uint32"
           },
           "recordId": {
             "type": "integer",
