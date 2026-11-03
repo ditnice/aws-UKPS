@@ -85,9 +85,9 @@ internal sealed class MedicinesIndicationDetail
     [FormPage("rare-disease", "Treating a rare disease", Order = 60)]
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
-        "Is this product intended to treat a rare disease?",
+        "Is this a product intended to treat a rare disease?",
         FormControl.Radio,
-        Hint = "A disease is rare if fewer than 5 in 10,000 people have it."
+        Hint = "A disease is considered rare if fewer than 5 in 10,000 people have it. Select yes if this medicine is intended to treat a rare disease, even if you have not applied for orphan status."
     )]
     [FormRequired("Select whether this product treats a rare disease")]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
@@ -129,10 +129,10 @@ internal sealed class MedicinesIndicationDetail
     [FormPage("therapeutic-area", "Therapeutic area", Order = 30)]
     [FormField(
         "medicines_indication_detail_therapeutic_area",
-        "Select the most appropriate therapeutic area for this product (optional)",
+        "Select the most appropriate therapeutic area(s) for this product (optional)",
         FormControl.HierarchicalSelect,
         Display = "combobox",
-        Hint = "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.",
+        Hint = "You can select up to 3 therapeutic areas if this product is cross-cutting. If this product genuinely spans more than 3 therapeutic areas, select the 3 most clinically relevant. If you are unsure, you can move on and answer this question later.",
         Placeholder = "Choose a therapeutic area",
         ChildLabel = "Select the disease or condition (optional)",
         ChildPlaceholder = "Choose a disease or condition",

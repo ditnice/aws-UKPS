@@ -82,13 +82,29 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         taskList.DisplayStatus.ShouldBe(RecordDisplayStatus.Draft);
         taskList.CompanyCode.ShouldBeNull();
         taskList.RecordTitle.ShouldBeNull();
-        RecordTaskListSectionDto section = taskList.Sections.ShouldHaveSingleItem();
-        (section.Id, section.Title).ShouldBe(("indication-details", "Indication details"));
-        RecordTaskListTaskDto task = section.Tasks.ShouldHaveSingleItem();
-        (task.Id, task.Title, task.FirstPageId).ShouldBe(
-            ("indication-details", "Indication details", "indication")
-        );
-        task.Status.ShouldBe(RecordTaskStatus.NotStarted);
+        taskList
+            .Sections.Select(static s => (s.Id, s.Title))
+            .ShouldBe([
+                ("indication-details", "Indication details"),
+                ("development-background", "Development background"),
+            ]);
+        taskList
+            .Sections.SelectMany(static s => s.Tasks)
+            .Select(static t => (t.Id, t.Title, t.FirstPageId, t.Status))
+            .ShouldBe([
+                (
+                    "indication-details",
+                    "Indication details",
+                    "indication",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "development-background",
+                    "Development background",
+                    "repurposed-medicine",
+                    RecordTaskStatus.NotStarted
+                ),
+            ]);
     }
 
     [Fact]
@@ -235,7 +251,10 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         ).ShouldBeSuccess();
 
     private async Task<RecordTaskStatus> GetStatus() =>
-        (await GetTaskList()).Sections.Single().Tasks.Single().Status;
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "indication-details", StringComparison.Ordinal))
+            .Status;
 
     private ServiceTestHarness<IRecordTaskListQueryService> CreateHarness(int organisationId)
     {
