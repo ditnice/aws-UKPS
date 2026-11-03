@@ -331,8 +331,8 @@ internal class UserRegistrationService : IUserRegistrationService
             invalidOrganisation: x =>
                 Result<ApproveRequestError>.Err(new ApproveRequestError.InvalidOrganisation()),
             notAllowed: x => Result<ApproveRequestError>.Err(new ApproveRequestError.NotAllowed()),
-            userAlreadyExists: _ =>
-                Result<ApproveRequestError>.Err(new ApproveRequestError.UserAlreadyExists())
+            userAlreadyInOrganisation: _ =>
+                Result<ApproveRequestError>.Err(new ApproveRequestError.UserAlreadyInOrganisation())
         );
     }
 

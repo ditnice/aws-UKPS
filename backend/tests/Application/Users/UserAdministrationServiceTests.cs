@@ -349,7 +349,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task OnboardUser_WhenExistingUserInTargetOrganisation_ShouldReturnUserEmailAlreadyExists()
+    public async Task OnboardUser_WhenExistingUserInTargetOrganisation_ShouldReturnUserAlreadyInOrganisation()
     {
         OnboardUserCommandDto existing = await OnboardExistingUser();
 
@@ -358,7 +358,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        result.ShouldBeError().ShouldBeOfType<OnboardUserError.UserEmailAlreadyExists>();
+        result.ShouldBeError().ShouldBeOfType<OnboardUserError.UserAlreadyInOrganisation>();
 
         _harness.Emails.Sent.ShouldBeEmpty();
     }

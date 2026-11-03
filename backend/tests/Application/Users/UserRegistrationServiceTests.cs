@@ -419,7 +419,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             request.Id,
             TestContext.Current.CancellationToken
         );
-        result.ShouldBeError().ShouldBeOfType<ApproveRequestError.UserAlreadyExists>();
+        result.ShouldBeError().ShouldBeOfType<ApproveRequestError.UserAlreadyInOrganisation>();
 
         var foundValue = await _harness
             .GetClearedContext()

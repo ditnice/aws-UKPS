@@ -3177,8 +3177,8 @@ export type PostUsersOnboardErrors = {
      */
     403: ProblemDetails;
     /**
-     * A user with the supplied username already exists, or the user is already a
-     * member of the specified organisation.
+     * A user with the supplied username already exists, or the email address
+     * already belongs to a user in the specified organisation.
      */
     409: AuthenticationProblemDetails;
 };

@@ -42,8 +42,8 @@ public class UserCreationController(IUserAdministrationService userAdministratio
     /// The current user does not have permission to onboard users.
     /// </response>
     /// <response code="409">
-    /// A user with the supplied username already exists, or the user is already a
-    /// member of the specified organisation.
+    /// A user with the supplied username already exists, or the email address
+    /// already belongs to a user in the specified organisation.
     /// </response>
     [Authorize]
     [HttpPost("onboard")]
@@ -78,10 +78,10 @@ public class UserCreationController(IUserAdministrationService userAdministratio
                             detail: "You do not have permission to perform this action.",
                             statusCode: StatusCodes.Status403Forbidden
                         ),
-                    userAlreadyExists: _ =>
+                    userAlreadyInOrganisation: _ =>
                         Problem(
-                            title: "User already exists",
-                            detail: "A user with the specified email address already exists.",
+                            title: "User already in organisation",
+                            detail: "This email address already belongs to a user in your organisation.",
                             statusCode: StatusCodes.Status409Conflict
                         )
                 )

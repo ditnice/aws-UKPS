@@ -134,7 +134,7 @@ internal sealed partial class UserOnboardingService
             )
         {
             return Result<UserOnboardingOutcome, OnboardUserError>.Err(
-                new OnboardUserError.UserEmailAlreadyExists()
+                new OnboardUserError.UserAlreadyInOrganisation()
             );
         }
 
@@ -163,7 +163,7 @@ internal sealed partial class UserOnboardingService
         if (!added)
         {
             return Result<UserOnboardingOutcome, OnboardUserError>.Err(
-                new OnboardUserError.UserEmailAlreadyExists()
+                new OnboardUserError.UserAlreadyInOrganisation()
             );
         }
 
@@ -194,7 +194,7 @@ internal sealed partial class UserOnboardingService
             )
         {
             return Result<UserOnboardingOutcome, OnboardUserError>.Err(
-                new OnboardUserError.UserEmailAlreadyExists()
+                new OnboardUserError.UserAlreadyInOrganisation()
             );
         }
 

@@ -263,7 +263,7 @@ describe('OrganisationOnboardUserForm', () => {
     await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     expect(
-      await screen.findByText('A user with this email address already exists.'),
+      await screen.findByText('This email address already belongs to a user in your organisation.'),
     ).toBeInTheDocument()
     expect(screen.queryByRole('alert')).toBeNull()
   })
@@ -276,13 +276,15 @@ describe('OrganisationOnboardUserForm', () => {
     await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     expect(
-      await screen.findByText('A user with this email address already exists.'),
+      await screen.findByText('This email address already belongs to a user in your organisation.'),
     ).toBeInTheDocument()
 
     await fillInput(user, screen.getByLabelText('Work email address'), 'different@test.com')
 
     await waitFor(() => {
-      expect(screen.queryByText('A user with this email address already exists.')).toBeNull()
+      expect(
+        screen.queryByText('This email address already belongs to a user in your organisation.'),
+      ).toBeNull()
     })
   })
 })
