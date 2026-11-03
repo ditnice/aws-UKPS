@@ -23,28 +23,24 @@ type RecordStatusAction = 'Archive' | 'PlaceOnHold' | 'RemoveHold'
 const actionOptions: {
   action: RecordStatusAction
   label: string
-  hint: string
   path: string
   isAvailable: (status: RecordStatus) => boolean
 }[] = [
   {
     action: 'Archive',
     label: 'Archive the record',
-    hint: 'Development has ended and will not restart. The record cannot be updated once it has been archived.',
     path: 'archive',
     isAvailable: () => true,
   },
   {
     action: 'PlaceOnHold',
     label: 'Place the record on hold',
-    hint: 'Development has paused and may restart in the future. Update requests for this record will be temporarily paused.',
     path: 'place-on-hold',
     isAvailable: (status) => status === 'Published',
   },
   {
     action: 'RemoveHold',
     label: 'Remove the record hold',
-    hint: 'Development has restarted and future updates will be required.',
     path: 'remove-hold',
     isAvailable: (status) => status === 'OnHold',
   },
@@ -77,7 +73,8 @@ export const ChangeRecordStatusActions = ({
   return (
     <form onSubmit={handleSubmit}>
       <Radios
-        legend="How would you like to change the record status?"
+        headingLevel={2}
+        legend="What would you like to do with this record?"
         name="action"
         error={radioError ? 'Select an option' : undefined}
         value={selectedAction ?? null}
@@ -90,12 +87,7 @@ export const ChangeRecordStatusActions = ({
         }}
       >
         {availableActions.map((option) => (
-          <Radio
-            key={option.action}
-            label={option.label}
-            value={option.action}
-            hint={option.hint}
-          />
+          <Radio key={option.action} label={option.label} value={option.action} />
         ))}
       </Radios>
 

@@ -39,6 +39,12 @@ describe('ManageUserAccessActions', () => {
       screen.getByRole('group', { name: "What would you like to do with this user's access?" }),
     ).toBeInTheDocument()
     expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: "What would you like to do with this user's access?",
+      }),
+    ).toBeInTheDocument()
+    expect(
       screen.getByRole('radio', { name: 'Change user permissions' }),
     ).toHaveAccessibleDescription('Change the user role to either champion user or standard user')
 

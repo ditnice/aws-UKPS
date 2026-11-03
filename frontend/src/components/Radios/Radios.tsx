@@ -220,7 +220,7 @@ export function Radio({
           type="radio"
           value={value}
         />
-        <label className="radio__label" htmlFor={inputId}>
+        <label className={clsx('radio__label', !hint && styles.labelPlain)} htmlFor={inputId}>
           {label}
         </label>
         {hintId && (

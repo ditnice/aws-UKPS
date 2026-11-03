@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Radio, Radios } from './Radios'
+import styles from './Radios.module.scss'
 
 let user: ReturnType<typeof userEvent.setup>
 
@@ -63,6 +64,7 @@ describe('Radios', () => {
       'aria-describedby',
       'outside contact-hint contact_email-hint',
     )
+    expect(screen.getByText('Email')).not.toHaveClass(styles.labelPlain)
     expect(screen.getByRole('group')).toHaveAttribute('aria-describedby', 'outside contact-hint')
   })
 
@@ -74,6 +76,7 @@ describe('Radios', () => {
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio.getAttribute('name')).toBe('contact')
     }
+    expect(screen.getByText('Post')).toHaveClass(styles.labelPlain)
     expect(asFragment()).toMatchSnapshot()
   })
 

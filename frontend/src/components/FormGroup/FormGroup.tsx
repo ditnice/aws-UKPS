@@ -5,6 +5,8 @@ import { createContext, useContext, useId } from 'react'
 
 import '@nice-digital/nds-form-group/scss/form-group.scss'
 
+import styles from './FormGroup.module.scss'
+
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
 
 type GroupMetadata = { describedBy?: string; error: boolean; inline: boolean }
@@ -69,7 +71,11 @@ export function FormGroup({
               Heading !== 'span' && 'form-group__legend--with-heading',
             )}
           >
-            {Heading === 'span' ? legend : <Heading>{legend}</Heading>}
+            {Heading === 'span' ? (
+              legend
+            ) : (
+              <Heading className={styles.legendHeading}>{legend}</Heading>
+            )}
           </legend>
         )}
         {errorId && (

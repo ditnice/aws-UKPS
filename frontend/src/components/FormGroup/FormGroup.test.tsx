@@ -5,6 +5,7 @@ import { renderToString } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 
 import { FormGroup } from './FormGroup'
+import styles from './FormGroup.module.scss'
 
 describe('FormGroup', () => {
   it('preserves generated description IDs across server rendering and hydration', async () => {
@@ -72,6 +73,7 @@ describe('FormGroup', () => {
       'Additional context Choose all that apply Error: Choose something',
     )
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Contact')
+    expect(screen.getByRole('heading', { level: 2 })).toHaveClass(styles.legendHeading)
     const child = screen.getByRole('textbox')
     expect(child).toBeDisabled()
     expect(child).not.toHaveAttribute('aria-describedby')

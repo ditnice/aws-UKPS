@@ -101,6 +101,7 @@ export default function ManageUserAccessActions({
   return (
     <form onSubmit={handleSubmit}>
       <Radios
+        headingLevel={2}
         legend="What would you like to do with this user's access?"
         name="action"
         error={radioError ? 'Select an option - No answer provided' : undefined}
