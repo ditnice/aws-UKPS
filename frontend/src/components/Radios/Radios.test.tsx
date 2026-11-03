@@ -43,6 +43,29 @@ const conditionalFor = (container: HTMLElement, value: string) =>
   container.querySelector(`#conditional-contact_${value}`)
 
 describe('Radios', () => {
+  it('composes shared and option descriptions without duplicate ID references', () => {
+    render(
+      <Radios
+        aria-describedby="outside contact-hint"
+        hint="Group hint"
+        legend="Contact"
+        name="contact"
+      >
+        <Radio
+          aria-describedby="outside contact-hint"
+          hint="Option hint"
+          label="Email"
+          value="email"
+        />
+      </Radios>,
+    )
+    expect(screen.getByRole('radio')).toHaveAttribute(
+      'aria-describedby',
+      'outside contact-hint contact_email-hint',
+    )
+    expect(screen.getByRole('group')).toHaveAttribute('aria-describedby', 'outside contact-hint')
+  })
+
   it('renders a legend, hint and options sharing the group name', () => {
     const { asFragment } = render(<ContactRadios hint="Select one option" />)
 

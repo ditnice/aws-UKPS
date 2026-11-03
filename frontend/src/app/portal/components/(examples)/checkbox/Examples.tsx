@@ -1,7 +1,7 @@
 'use client'
 
-import { Checkbox } from '@nice-digital/nds-checkbox'
-import { FormGroup } from '@nice-digital/nds-form-group'
+import { Button } from '@/components/Button/Button'
+import { Checkbox, Checkboxes } from '@/components/Checkboxes/Checkboxes'
 
 import { Example } from '../../_components/Example'
 
@@ -9,50 +9,47 @@ export function Examples() {
   return (
     <>
       <Example title="Overview">
-        <FormGroup
-          legend="How would you like us to contact you?"
-          hint="Please select all that apply."
-        >
-          <Checkbox name="contact-example" value="email" label="Email" />
-          <Checkbox name="contact-example" value="telephone" label="Telephone" />
-          <Checkbox name="contact-example" value="sms" label="Text message" />
-        </FormGroup>
+        <form aria-label="Contact preferences">
+          <Checkboxes
+            legend="How would you like us to contact you?"
+            name="contact-example"
+            hint="Please select all that apply."
+            defaultValue={['email']}
+          >
+            <Checkbox id="preferred-email" value="email" label="Email" />
+            <Checkbox value="telephone" label="Telephone" />
+            <Checkbox value="sms" label="Text message" />
+            <Checkbox value="post" label="Post" disabled />
+          </Checkboxes>
+          <Button type="reset" variant="secondary">
+            Reset contact preferences
+          </Button>
+        </form>
       </Example>
       <Example title="Single checkboxes">
         <Checkbox
+          id="accept-terms"
           name="terms-and-conditions"
           value="agree"
           label="I agree to the terms and conditions"
         />
       </Example>
-      <Example title="Grouped checkboxes">
-        <FormGroup
-          legend="How would you like us to contact you?"
-          hint="Please select all that apply."
+      <Example title="An ordinary none option (not exclusive)">
+        <Checkboxes
+          legend="Which previous contact methods apply?"
+          name="previous-contact"
+          hint="None is an ordinary option, not an exclusive selection."
         >
-          <Checkbox name="contact-grouped" value="email" label="Email" />
-          <Checkbox name="contact-grouped" value="telephone" label="Telephone" />
-          <Checkbox name="contact-grouped" value="sms" label="Text message" />
-        </FormGroup>
-      </Example>
-      <Example title='Add an option for "none"'>
-        <FormGroup legend="How would you like us to contact you?">
-          <Checkbox name="contact-grouped-none" value="email" label="Email" />
-          <Checkbox name="contact-grouped-none" value="telephone" label="Telephone" />
-          <Checkbox name="contact-grouped-none" value="sms" label="Text message" />
-          <Checkbox
-            name="contact-grouped-none"
-            value="none"
-            label="I do not wish to be contacted"
-          />
-        </FormGroup>
+          <Checkbox value="email" label="Email" />
+          <Checkbox value="telephone" label="Telephone" />
+          <Checkbox value="none" label="None" />
+        </Checkboxes>
       </Example>
       <Example title="Inline checkboxes">
-        <FormGroup inline legend="How would you like us to contact you?">
-          <Checkbox name="contact-grouped-inline" value="email" label="Email" />
-          <Checkbox name="contact-grouped-inline" value="telephone" label="Telephone" />
-          <Checkbox name="contact-grouped-inline" value="sms" label="Text message" />
-        </FormGroup>
+        <Checkboxes inline legend="Which updates interest you?" name="updates">
+          <Checkbox value="news" label="News" />
+          <Checkbox value="events" label="Events" />
+        </Checkboxes>
       </Example>
       <Example title="Individual checkbox hint text">
         <Checkbox
@@ -62,23 +59,22 @@ export function Examples() {
           hint="You can unsubscribe at any time."
         />
       </Example>
-      <Example title="Grouped checkboxes hint text">
-        <FormGroup
-          legend="How would you like us to contact you?"
-          hint="Please select all that apply."
-        >
-          <Checkbox name="contact-grouped-hint" value="email" label="Email" />
-          <Checkbox name="contact-grouped-hint" value="telephone" label="Telephone" />
-          <Checkbox name="contact-grouped-hint" value="sms" label="Text message" />
-        </FormGroup>
-      </Example>
       <Example title="Errors">
         <Checkbox
           name="terms-and-conditions-error-demo"
           value="agree"
-          label="I agree to the terms and conditions"
-          error="You must agree to the terms and conditions."
+          label="I accept the terms"
+          error
+          errorMessage="You must agree to the terms and conditions."
         />
+        <Checkboxes
+          legend="Choose contact methods"
+          name="contact-error"
+          error="Please choose at least one contact method."
+        >
+          <Checkbox value="email" label="Email" />
+          <Checkbox value="telephone" label="Telephone" />
+        </Checkboxes>
       </Example>
     </>
   )

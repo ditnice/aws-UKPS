@@ -3,17 +3,15 @@
 import clsx from 'clsx'
 import { createContext, useContext, useEffect, useEffectEvent, useRef, useState } from 'react'
 
-import '@nice-digital/nds-form-group/scss/form-group.scss'
 import '@nice-digital/nds-radio/scss/radio.scss'
+
+import { composeDescriptions, FormGroup, useFormGroup } from '@/components/FormGroup/FormGroup'
 
 import styles from './Radios.module.scss'
 
-import type { ComponentPropsWithoutRef, ElementType, FocusEventHandler, ReactNode } from 'react'
+import type { ComponentPropsWithoutRef, FocusEventHandler, ReactNode } from 'react'
 
 type RadiosContextValue = {
-  error: boolean
-  describedBy?: string
-  inline: boolean
   name: string
   onBlur?: FocusEventHandler<HTMLInputElement>
   select: (value: string) => void
@@ -78,14 +76,6 @@ export function Radios({
   const isControlled = value !== undefined
   const selectedValue = isControlled ? value : uncontrolledValue
   const fieldsetRef = useRef<HTMLFieldSetElement>(null)
-  const hintId = hint ? `${name}-hint` : undefined
-  const errorId = error ? `${name}-error` : undefined
-  const descriptions = [describedBy, hintId, errorId].filter(Boolean).join(' ') || undefined
-  const Heading = (
-    headingLevel && Number.isInteger(headingLevel) && headingLevel >= 1 && headingLevel <= 6
-      ? `h${headingLevel}`
-      : 'span'
-  ) as ElementType
 
   const restoreAfterReset = useEffectEvent((event: Event) => {
     const fieldset = fieldsetRef.current
@@ -136,42 +126,24 @@ export function Radios({
     <div className={className} data-component="radios">
       <RadiosContext.Provider
         value={{
-          describedBy: descriptions,
-          error: Boolean(error),
-          inline,
           name,
           onBlur,
           select,
           selectedValue,
         }}
       >
-        <fieldset
-          aria-describedby={descriptions}
-          aria-invalid={error ? true : undefined}
-          className="form-group"
-          data-component={`form-group${inline ? '--inline' : ''}`}
+        <FormGroup
+          aria-describedby={describedBy}
+          error={error}
+          headingLevel={headingLevel}
+          hint={hint}
+          identifier={name}
+          inline={inline}
+          legend={legend}
           ref={fieldsetRef}
         >
-          <legend
-            className={clsx(
-              'form-group__legend',
-              Heading !== 'span' && 'form-group__legend--with-heading',
-            )}
-          >
-            {Heading === 'span' ? legend : <Heading>{legend}</Heading>}
-          </legend>
-          {errorId && (
-            <p className="form-group__error-message" id={errorId}>
-              <span className="visually-hidden">Error:</span> {error}
-            </p>
-          )}
-          {hintId && (
-            <p className="form-group__hint" id={hintId}>
-              {hint}
-            </p>
-          )}
           {children}
-        </fieldset>
+        </FormGroup>
       </RadiosContext.Provider>
     </div>
   )
@@ -210,21 +182,13 @@ export function Radio({
   value,
   ...inputProps
 }: RadioProps) {
-  const {
-    describedBy: groupDescriptions,
-    error: groupError,
-    inline,
-    name,
-    onBlur,
-    select,
-    selectedValue,
-  } = useRadiosContext()
+  const { name, onBlur, select, selectedValue } = useRadiosContext()
+  const { describedBy: groupDescriptions, error: groupError, inline } = useFormGroup()
   const error = groupError || optionError
   const inputId = id ?? `${name}_${value}`
   const hintId = hint ? `${inputId}-hint` : undefined
   const errorId = optionError && errorMessage ? `${inputId}-error` : undefined
-  const descriptions =
-    [describedBy, groupDescriptions, hintId, errorId].filter(Boolean).join(' ') || undefined
+  const descriptions = composeDescriptions(describedBy, groupDescriptions, hintId, errorId)
   const checked = selectedValue === value
   const hasConditional = conditional !== undefined && conditional !== null && !inline
   const conditionalId = `conditional-${inputId}`

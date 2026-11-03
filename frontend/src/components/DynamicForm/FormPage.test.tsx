@@ -355,7 +355,54 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ cancer: 'No' })
     })
 
-    it('saves ticked checkboxes', async () => {
+    it('associates checkbox hints and errors and revalidates on selection and blur', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'ticks',
+                type: 'Checkbox',
+                multiple: true,
+                label: 'Choose contact methods',
+                hint: 'Select all that apply',
+                rules: [{ kind: 'Required', value: null, message: 'Choose at least one method' }],
+                options: tree,
+              }),
+            ],
+            answers: { ticks: [] },
+          })}
+        />,
+      )
+      const first = screen.getByRole('checkbox', { name: '1: Addiction' })
+      expect(first).toHaveAccessibleDescription('Select all that apply')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      expect(await screen.findByText('Choose at least one method')).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Choose contact methods' })).toHaveAttribute(
+        'aria-invalid',
+        'true',
+      )
+      for (const input of screen.getAllByRole('checkbox')) {
+        expect(input).toHaveAttribute('aria-invalid', 'true')
+        expect(input).toHaveAccessibleDescription(
+          /Select all that apply.*Choose at least one method/,
+        )
+      }
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      await user.click(first)
+      await user.tab()
+      await waitFor(() =>
+        expect(screen.queryByText('Choose at least one method')).not.toBeInTheDocument(),
+      )
+      expect(first).not.toHaveAttribute('aria-invalid')
+      expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+    })
+
+    it('saves ticked checkboxes in selection insertion order', async () => {
+      const user = userEvent.setup()
       render(
         <FormPage
           page={page({
@@ -368,12 +415,13 @@ describe('FormPage', () => {
       )
 
       expect(screen.getByLabelText('1: Addiction')).toBeChecked()
-      fireEvent.click(screen.getByLabelText('1: Addiction'))
-      fireEvent.click(screen.getByLabelText('2: Allergy'))
-      save()
+      await user.click(screen.getByLabelText('1: Addiction'))
+      await user.click(screen.getByLabelText('2: Allergy'))
+      await user.click(screen.getByLabelText('1: Addiction'))
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
 
       await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalled())
-      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ ticks: ['2'] })
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ ticks: ['2', '1'] })
     })
 
     it('saves a plain select and a text input', async () => {
