@@ -16,12 +16,15 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { buildPayload, fieldName, toFormValues } from '@/lib/dynamic-form/answers'
 import { applyServerErrors } from '@/lib/dynamic-form/applyServerErrors'
 import { buildZodSchema } from '@/lib/dynamic-form/buildZodSchema'
+import { pageLayout, shownQuestionIds } from '@/lib/dynamic-form/conditions'
 import type { FormValue } from '@/lib/dynamic-form/types'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
 import styles from './DynamicForm.module.scss'
 import { questionRegistry } from './questionRegistry'
+
+import type { ReactNode } from 'react'
 
 export const pageHref = (page: Pick<RecordPageDto, 'recordId'>, pageId: string) =>
   `/portal/records/${page.recordId}/${pageId}`
@@ -44,7 +47,10 @@ export function FormPage({ page }: FormPageProps) {
   const [otherErrors, setOtherErrors] = useState<string[]>([])
   const schema = useMemo(() => buildZodSchema(questions), [questions])
   const tasksHref = taskListHref(page.recordId)
-  const singleQuestion = questions.length === 1
+  const layout = useMemo(() => pageLayout(questions), [questions])
+  // A page whose other questions are all revealed beneath one question reads as a
+  // single-question page.
+  const singleQuestion = layout.topLevel.length === 1
 
   const form = useForm({
     defaultValues: toFormValues(questions, page.answers),
@@ -56,7 +62,7 @@ export function FormPage({ page }: FormPageProps) {
         body: {
           formVersion: page.formVersion,
           revisionVersion: page.revisionVersion,
-          answers: buildPayload(questions, value),
+          answers: buildPayload(questions, value, shownQuestionIds(questions, value)),
         },
       })
 
@@ -83,7 +89,7 @@ export function FormPage({ page }: FormPageProps) {
     validators: { onDynamic: schema },
   })
 
-  const heading = singleQuestion ? questions[0].label : page.page.title
+  const heading = singleQuestion ? questions[layout.topLevel[0]].label : page.page.title
   const backLink = (
     <BackLink href={page.previousPageId ? pageHref(page, page.previousPageId) : tasksHref}>
       Back
@@ -117,29 +123,52 @@ export function FormPage({ page }: FormPageProps) {
           void form.handleSubmit()
         }}
       >
-        {questions.map((question, index) => {
-          const Component = questionRegistry[question.type]
-          return (
-            <form.Field key={question.id} name={fieldName(index)}>
-              {(field) => (
-                <div
-                  className={clsx(styles.question, singleQuestion && styles.labelAsHeading)}
-                  data-question-id={question.id}
-                >
-                  <Component
-                    error={getFieldErrorMessage(field.state.meta.errors)}
-                    labelAsHeading={singleQuestion}
-                    name={field.name}
-                    onBlur={field.handleBlur}
-                    onChange={(next: FormValue) => field.handleChange(next)}
-                    question={question}
-                    value={field.state.value}
-                  />
-                </div>
-              )}
-            </form.Field>
-          )
-        })}
+        {/* Re-render only when which questions are shown changes, not on every keystroke. */}
+        <form.Subscribe
+          selector={(state) => [...shownQuestionIds(questions, state.values)].join('\n')}
+        >
+          {(shownIds) => {
+            const shown = new Set(shownIds.split('\n'))
+            const renderQuestion = (index: number, labelAsHeading: boolean): ReactNode => {
+              const question = questions[index]
+              if (!shown.has(question.id)) {
+                return null
+              }
+              const Component = questionRegistry[question.type]
+              const revealed = layout.nested.get(index)
+              return (
+                <form.Field key={question.id} name={fieldName(index)}>
+                  {(field) => (
+                    <div
+                      className={clsx(styles.question, labelAsHeading && styles.labelAsHeading)}
+                      data-question-id={question.id}
+                    >
+                      <Component
+                        error={getFieldErrorMessage(field.state.meta.errors)}
+                        labelAsHeading={labelAsHeading}
+                        name={field.name}
+                        onBlur={field.handleBlur}
+                        onChange={(next: FormValue) => field.handleChange(next)}
+                        question={question}
+                        revealed={
+                          revealed &&
+                          Object.fromEntries(
+                            [...revealed].map(([value, indexes]) => [
+                              value,
+                              indexes.map((i) => renderQuestion(i, false)),
+                            ]),
+                          )
+                        }
+                        value={field.state.value}
+                      />
+                    </div>
+                  )}
+                </form.Field>
+              )
+            }
+            return layout.topLevel.map((index) => renderQuestion(index, singleQuestion))
+          }}
+        </form.Subscribe>
 
         <div className={styles.actions}>
           <form.Subscribe selector={(state) => state.isSubmitting}>

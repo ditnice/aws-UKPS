@@ -9,6 +9,7 @@ export function RadioQuestion({
   onChange,
   onBlur,
   error,
+  revealed,
 }: QuestionProps<string>) {
   return (
     <Radios
@@ -21,7 +22,12 @@ export function RadioQuestion({
       value={value ?? null}
     >
       {question.options?.map((option) => (
-        <Radio key={option.value} label={option.label} value={option.value} />
+        <Radio
+          conditional={revealed?.[option.value]}
+          key={option.value}
+          label={option.label}
+          value={option.value}
+        />
       ))}
     </Radios>
   )

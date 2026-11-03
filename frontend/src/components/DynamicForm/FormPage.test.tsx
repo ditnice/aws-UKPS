@@ -31,6 +31,7 @@ const question = (overrides: Partial<RecordPageQuestionDto>): RecordPageQuestion
   childLabel: null,
   childPlaceholder: null,
   addAnotherLabel: null,
+  showWhen: null,
   rules: [{ kind: 'Required', value: null, message: 'Enter the indication' }],
   options: null,
   ...overrides,
@@ -88,6 +89,36 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
 })
+
+const yesNo = [
+  { value: 'Yes', label: 'Yes', children: null },
+  { value: 'No', label: 'No', children: null },
+  { value: 'Unknown', label: 'Unknown at this stage', children: null },
+]
+
+const coMarketingPage = (revealedBy: string[] = ['Yes'], answers: Record<string, unknown> = {}) =>
+  page({
+    page: { id: 'co-marketing', title: 'Co-marketing' },
+    questions: [
+      question({
+        id: 'co',
+        type: 'Radio',
+        label: 'Is this product co-marketed?',
+        hint: null,
+        rules: [{ kind: 'Required', value: null, message: 'Select whether it is co-marketed' }],
+        options: yesNo,
+      }),
+      question({
+        id: 'co_name',
+        type: 'Text',
+        label: 'Co-marketing company name',
+        hint: null,
+        showWhen: { kind: 'AnswerIn', questionId: 'co', values: revealedBy },
+        rules: [{ kind: 'Required', value: null, message: 'Enter the company name' }],
+      }),
+    ],
+    answers: { co: null, co_name: null, ...answers },
+  })
 
 describe('FormPage', () => {
   describe('rendering', () => {
@@ -275,6 +306,65 @@ describe('FormPage', () => {
       expect(
         await screen.findByText('There was a problem saving your answers. Please try again later.'),
       ).toBeInTheDocument()
+    })
+  })
+
+  describe('conditional questions', () => {
+    it('reveals a question beneath the option that triggers it', () => {
+      render(<FormPage page={coMarketingPage()} />)
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: /Is this product co-marketed\?$/ }),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('textbox')).toBeNull()
+
+      fireEvent.click(screen.getByLabelText('Yes'))
+
+      const revealed = document.getElementById(
+        screen.getByLabelText('Yes').getAttribute('aria-controls') ?? '',
+      )
+      expect(revealed).toContainElement(screen.getByLabelText('Co-marketing company name'))
+      expect(revealed).toBeVisible()
+
+      fireEvent.click(screen.getByLabelText('No'))
+
+      expect(screen.queryByRole('textbox')).toBeNull()
+    })
+
+    it('validates a revealed question', async () => {
+      render(<FormPage page={coMarketingPage()} />)
+
+      fireEvent.click(screen.getByLabelText('Yes'))
+      save()
+
+      expect(await screen.findByText('Enter the company name')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('does not validate a hidden question, and sends it unanswered', async () => {
+      render(<FormPage page={coMarketingPage(['Yes'], { co: 'Yes', co_name: 'Acme' })} />)
+
+      expect(screen.getByRole('textbox')).toHaveValue('Acme')
+      fireEvent.click(screen.getByLabelText('No'))
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalled())
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({
+        co: 'No',
+        co_name: null,
+      })
+    })
+
+    it('shows a question revealed by several options after its trigger', () => {
+      render(<FormPage page={coMarketingPage(['Yes', 'Unknown'])} />)
+
+      expect(screen.getByRole('heading', { level: 1, name: /Co-marketing$/ })).toBeInTheDocument()
+      expect(screen.queryByRole('textbox')).toBeNull()
+
+      fireEvent.click(screen.getByLabelText('Unknown at this stage'))
+
+      expect(screen.getByLabelText('Co-marketing company name')).toBeVisible()
+      expect(screen.getByLabelText('Yes').getAttribute('aria-controls')).toBeNull()
     })
   })
 
