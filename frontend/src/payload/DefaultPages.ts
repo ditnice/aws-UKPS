@@ -46,9 +46,16 @@ export type MediaAsset = {
 export type SitePageBlock =
   TextSectionLayoutBlock | TabsLayoutBlock | AccordionLayoutBlock | ListLayoutBlock
 
+export type SitePageHeader = {
+  preheading?: string
+  lead?: string
+  description?: string
+}
+
 export type SitePage = {
   id?: number
   layout: SitePageBlock[]
+  pageHeader?: SitePageHeader
   path: string
   slug: string
   title: string

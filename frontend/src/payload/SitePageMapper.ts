@@ -108,9 +108,18 @@ export function mapPage(doc: Page, path: string): SitePage | null {
     return null
   }
 
+  const header = doc.pageHeader
+
   return {
     id: doc.id,
     layout,
+    pageHeader: header
+      ? {
+          preheading: header.preheading ?? undefined,
+          lead: header.lead ?? undefined,
+          description: header.description ?? undefined,
+        }
+      : undefined,
     path,
     slug: doc.slug,
     title: doc.title,

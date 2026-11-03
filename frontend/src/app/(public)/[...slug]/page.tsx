@@ -15,5 +15,5 @@ export default async function CmsPage({ params }: Props) {
 
   if (!page) notFound()
 
-  return <RenderPageLayout blocks={page.layout} title={page.title} />
+  return <RenderPageLayout blocks={page.layout} pageHeader={page.pageHeader} title={page.title} />
 }
