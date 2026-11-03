@@ -48,6 +48,8 @@ describes. You only touch the frontend to add a new control.
 | `[FormMaxItems(max, message)]` | property | | `Checkbox` |
 | `[FormOptions(key)]` | property | | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type |
 | `[FormIgnore(reason)]` | property | | Not a question. The reason is required |
+| `[FormShowWhen(questionId, values...)]` | property | | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages) |
+| `[FormPageShowWhen(pageId, questionId, values...)]` | class | | The page applies only when a question on an earlier page has one of the values. One per page |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
@@ -146,9 +148,9 @@ internal sealed class MedicinesIndicationDetail
     [FormPage("rare-disease", "Treating a rare disease", Order = 60)]
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
-        "Is this product intended to treat a rare disease?",
+        "Is this a product intended to treat a rare disease?",
         FormControl.Radio,
-        Hint = "A disease is rare if fewer than 5 in 10,000 people have it.")]
+        Hint = "A disease is considered rare if fewer than 5 in 10,000 people have it. Select yes if this medicine is intended to treat a rare disease, even if you have not applied for orphan status.")]
     [FormRequired("Select whether this product treats a rare disease")]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
 
@@ -184,10 +186,10 @@ internal sealed class MedicinesIndicationDetail
     [FormPage("therapeutic-area", "Therapeutic area", Order = 30)]
     [FormField(
         "medicines_indication_detail_therapeutic_area",
-        "Select the most appropriate therapeutic area for this product (optional)",
+        "Select the most appropriate therapeutic area(s) for this product (optional)",
         FormControl.HierarchicalSelect,
         Display = "combobox",
-        Hint = "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.",
+        Hint = "You can select up to 3 therapeutic areas if this product is cross-cutting. If this product genuinely spans more than 3 therapeutic areas, select the 3 most clinically relevant. If you are unsure, you can move on and answer this question later.",
         Placeholder = "Choose a therapeutic area",
         ChildLabel = "Select the disease or condition (optional)",
         ChildPlaceholder = "Choose a disease or condition",
@@ -290,7 +292,9 @@ once it has been released.**
 
 - **Page title**: a short name for the page.
 - **Single-question page**: the question's label becomes the `<h1>`, and the task title is shown
-  as the caption above it.
+  as the caption above it. A page whose other questions are all revealed beneath options of one
+  question (see [Conditional questions and pages](#conditional-questions-and-pages)) counts as a
+  single-question page.
 - **Page with several questions**: the page title is the `<h1>`, each question shows its own
   label, and `FormField.Order` sets their order.
 - **Gaps in `Order`**: leave gaps (10, 20, 30) so that pages can be inserted later without
@@ -478,6 +482,82 @@ as constants and use the constants in every `[FormTask]` and `[FormPage]`. The M
 tasks are in `MedicineFormTasks`, next to the Medicine content entities; add a task there before
 using it.
 
+## Conditional questions and pages
+
+The worked example is `MedicinesDevelopmentBackground`. Each of its pages asks a Yes/No question
+and reveals a follow-up question beneath one option.
+
+### A question revealed on the same page
+
+Put both questions on the same page, with the trigger first, and add `[FormShowWhen]` to the
+follow-up:
+
+```csharp
+[FormPage("co-marketing", "Co-marketing", Order = 30)]
+[FormField(
+    "medicines_development_background.is_co_marketed",
+    "Is this product co-marketed?",
+    FormControl.Radio,
+    Order = 10
+)]
+[FormRequired("Select whether this product is co-marketed")]
+public YesNoUnknown? IsCoMarketed { get; set; }
+
+[FormPage("co-marketing", "Co-marketing", Order = 30)]
+[FormField(
+    "medicines_development_background.co_marketing_company_name",
+    "Co-marketing company name",
+    FormControl.Text,
+    Order = 20
+)]
+[FormShowWhen("medicines_development_background.is_co_marketed", YesNoUnknown.Yes)]
+[FormRequired("Enter the co-marketing company name")]
+[FormMaxLength(200, "Co-marketing company name must be 200 characters or fewer")]
+public string? CoMarketingCompanyName { get; set; }
+```
+
+- **Where it is shown.** When the trigger is a `Radio` and the condition has one value, the
+  follow-up is shown beneath that option while it is chosen, using the `Radios` component's
+  conditional reveal. Otherwise the follow-up is shown as the next question on the page while the
+  condition is met.
+- **Rules only apply while it is shown.** A `[FormRequired]` follow-up is only required when it
+  applies. For an optional follow-up, leave out `[FormRequired]`. It then shows as "Not yet
+  provided" when it applies but is unanswered.
+- **Several values** mean "any of": `[FormShowWhen(id, NhsServiceChangesRequired.CompleteTransformation, NhsServiceChangesRequired.SomeChange)]`.
+
+### A page shown by an earlier page
+
+Put `[FormPageShowWhen]` on the entity that declares the page. It covers the page and every
+question on it:
+
+```csharp
+[FormSection(RecordType.Medicine, "development-background", "Development background", Order = 30)]
+[FormPageShowWhen("originator-details", "medicines_development_background.is_originator_company", YesNoUnknown.No)]
+internal sealed class MedicinesDevelopmentBackground { ... }
+```
+
+(Illustrative; the current design reveals the originator name on the same page.)
+
+### What happens to answers
+
+- An answer that no longer applies is **cleared when the trigger's page is saved**, including
+  answers on later pages and in other tables. Each cleared answer gets a field audit row.
+- A conditional question must therefore be on a **nullable column** (or a junction or flags
+  enum), so that it can be cleared.
+- A page that does not apply is skipped by Back and Save and continue within its task. Opening it
+  by URL returns 404.
+
+### Rules for conditions
+
+- The trigger is a `Radio`, `Select` or `Checkbox` on an enum or flags enum property. Reference
+  data triggers are not supported yet.
+- The values are members of the trigger's enum: at least one, with no duplicates.
+- A `[FormShowWhen]` trigger is an earlier question on the **same page** (a lower
+  `FormField.Order`).
+- A `[FormPageShowWhen]` trigger is on an **earlier page** in form order (section, task, then
+  page). The first page of a task can never be conditional, because the task list links to it.
+- Conditions may chain: a question revealed by a question that is itself hidden is also hidden.
+
 ## Step 7: Bump the form version
 
 Any change to a form entity's attributes needs a version bump: pages, IDs, labels, hints,
@@ -512,6 +592,7 @@ reports every problem in one exception.
 | Options | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId` |
 | Rules | A rule is on a control it does not apply to, or a rule kind appears twice |
 | Rows | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns |
+| Conditions | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum. A value is not a member of the trigger's enum, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormSection]` |
 
 ## Step 8: Test
 
@@ -523,6 +604,8 @@ reports every problem in one exception.
     model when it fails.
 - **`FormModelValidatorTests`**: if you add a startup check. It scans small test-only entities
   (`Scanning/ScanningTestEntities.cs`) against a test EF model.
+- **`FormApplicabilityTests`** and **`ConditionCasesTests`**: if you change how conditions are
+  evaluated or add a condition kind (add cases to `condition-cases.json` too).
 - **`RecordFormServiceTests`**: database tests of the page query and save services, following
   the [walkthrough](record-creation-walkthrough.md).
 - **`MedicineOptionProviderTests`**: if you added a provider.
@@ -577,6 +660,7 @@ touches both backend and frontend.
 - [ ] `Order` values leave gaps and don't clash
 - [ ] Control suits the property type; choice controls have a provider registered for their type (or `[FormOptions]` naming one)
 - [ ] Rules added, with user-facing messages
+- [ ] Follow-up questions have `[FormShowWhen]`, and conditional pages have `[FormPageShowWhen]`
 - [ ] Hint added if the design has one
 - [ ] `FormVersions.Medicine` bumped; `ExpectedVersion` and `ExpectedFingerprint` updated
 - [ ] Form model and provider tests updated; `dotnet test` passes
