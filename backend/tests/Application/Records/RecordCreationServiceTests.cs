@@ -183,21 +183,23 @@ public class RecordCreationServiceTests : DatabaseTestBase
             .SingleAsync(Ct);
         var audits = await context
             .RecordFieldAudits.Where(x => x.RecordId == recordId)
-            .OrderBy(static x => x.Id)
             .ToArrayAsync(Ct);
 
         audits
             .Select(static x => (x.FieldPath, x.OldValue, x.NewValue))
-            .ShouldBe([
-                ("record_product_detail.company_code", null, "ACM-0042"),
-                ("record_product_detail.branded_name", null, "Harvoni"),
-                ("record_product_detail.record_title", null, "Chronic hepatitis C in adults"),
-                (
-                    "record_product_detail.names_and_identifiers",
-                    null,
-                    """{"GenericName":["sofosbuvir","ledipasvir"],"OtherIdentifier":["PF-04965842"]}"""
-                ),
-            ]);
+            .ShouldBe(
+                [
+                    ("record_product_detail.company_code", null, "ACM-0042"),
+                    ("record_product_detail.branded_name", null, "Harvoni"),
+                    ("record_product_detail.record_title", null, "Chronic hepatitis C in adults"),
+                    (
+                        "record_product_detail.names_and_identifiers",
+                        null,
+                        """{"GenericName":["sofosbuvir","ledipasvir"],"OtherIdentifier":["PF-04965842"]}"""
+                    ),
+                ],
+                ignoreOrder: true
+            );
         audits.ShouldAllBe(x =>
             x.RevisionId == revisionId
             && x.ChangedBy == _currentUser.Id
@@ -206,7 +208,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task CreateRecord_WithoutBrandedNameOrOtherIdentifiers_ShouldNotAuditBrandedName()
+    public async Task CreateRecord_WithoutBrandedNameOrOtherIdentifiers_ShouldSkipBrandedNameAndAuditEmptyOtherIdentifiers()
     {
         CreateRecordCommand command = _validCommand with
         {

@@ -47,7 +47,7 @@ internal sealed class DiscardedDraft(Faker faker, RecordRevision revision, User 
         Audit(CreationPageFieldPaths.RecordTitle, productDetail.RecordTitle, savedAt);
         Audit(
             CreationPageFieldPaths.NamesAndIdentifiers,
-            RecordNameAndIdentifier.AuditText([genericName], []),
+            FieldAuditJson.NamesAndIdentifiers([genericName], []),
             savedAt
         );
         return productDetail;

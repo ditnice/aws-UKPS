@@ -307,7 +307,7 @@ public sealed class SeededRecordHistoryTests
             {
                 [CreationPageFieldPaths.CompanyCode] = productDetail.CompanyCode,
                 [CreationPageFieldPaths.RecordTitle] = productDetail.RecordTitle,
-                [CreationPageFieldPaths.NamesAndIdentifiers] = RecordNameAndIdentifier.AuditText(
+                [CreationPageFieldPaths.NamesAndIdentifiers] = FieldAuditJson.NamesAndIdentifiers(
                     NamesOfType(NameAndIdentifierType.GenericName),
                     NamesOfType(NameAndIdentifierType.OtherIdentifier)
                 ),

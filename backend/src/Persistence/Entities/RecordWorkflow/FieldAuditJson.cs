@@ -1,5 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Persistence.Entities.RecordWorkflow;
 
@@ -18,4 +20,21 @@ internal static class FieldAuditJson
     };
 
     public static string Serialize<T>(T value) => JsonSerializer.Serialize(value, _options);
+
+    /// <summary>
+    /// The audit value of a revision's names and identifiers: one JSON object keyed by
+    /// <see cref="NameAndIdentifierType"/> member name in a fixed order, each type's names in
+    /// display order, so the same collection always serialises the same way.
+    /// </summary>
+    public static string NamesAndIdentifiers(
+        IEnumerable<string> genericNames,
+        IEnumerable<string> otherIdentifiers
+    ) => Serialize(new NamesAndIdentifiersValue([.. genericNames], [.. otherIdentifiers]));
+
+    private sealed record NamesAndIdentifiersValue(
+        [property: JsonPropertyName(nameof(NameAndIdentifierType.GenericName))]
+            string[] GenericName,
+        [property: JsonPropertyName(nameof(NameAndIdentifierType.OtherIdentifier))]
+            string[] OtherIdentifier
+    );
 }

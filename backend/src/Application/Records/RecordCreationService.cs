@@ -143,7 +143,7 @@ internal class RecordCreationService : IRecordCreationService
             (CreationPageFieldPaths.RecordTitle, command.RecordTitle),
             (
                 CreationPageFieldPaths.NamesAndIdentifiers,
-                RecordNameAndIdentifier.AuditText(command.GenericNames, command.OtherIdentifiers)
+                FieldAuditJson.NamesAndIdentifiers(command.GenericNames, command.OtherIdentifiers)
             ),
         ];
         return fields

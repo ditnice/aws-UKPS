@@ -1,6 +1,5 @@
 using System.Globalization;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
-using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using static UKPS.Api.Persistence.Data.Seeding.SyntheticData.SyntheticRecord;
 
@@ -147,7 +146,7 @@ internal static class RecordContentHistory
             (CreationPageFieldPaths.RecordTitle, names.RecordTitle),
             (
                 CreationPageFieldPaths.NamesAndIdentifiers,
-                RecordNameAndIdentifier.AuditText(names.GenericNames, names.OtherIdentifiers)
+                FieldAuditJson.NamesAndIdentifiers(names.GenericNames, names.OtherIdentifiers)
             ),
         ];
 
