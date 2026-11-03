@@ -86,12 +86,12 @@ internal class RecordCreationService : IRecordCreationService
             new CreateRecordDto()
             {
                 RecordId = record.Id,
-                FirstPageId = _organisationAuthoriser.CanPerformOperationOnOrganisation(
-                    Operation.EditRecordContent,
-                    command.OrganisationId
-                )
-                    ? _formModels.Find(record.RecordType)?.FirstPage.Id
-                    : null,
+                CanEditContent =
+                    _formModels.Find(record.RecordType) is not null
+                    && _organisationAuthoriser.CanPerformOperationOnOrganisation(
+                        Operation.EditRecordContent,
+                        command.OrganisationId
+                    ),
             }
         );
     }

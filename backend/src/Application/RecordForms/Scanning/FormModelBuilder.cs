@@ -158,20 +158,40 @@ internal static class FormModelBuilder
             .Select(group =>
             {
                 FormSectionAttribute section = group.First().Section;
-                FormPage[] pages = group
+                FormTask[] tasks = group
                     .SelectMany(static x => x.Questions)
-                    .GroupBy(static x => x.First.Page.Id, StringComparer.Ordinal)
-                    .Select(page => new FormPage(
-                        page.Key,
-                        page.First().First.Page.Title,
-                        page.First().First.Page.Order,
-                        section.Id,
-                        section.Title,
-                        page.Select(static x => x.Second).OrderBy(static q => q.Order).ToArray()
-                    ))
-                    .OrderBy(static p => p.Order)
+                    .GroupBy(static x => x.First.Task.Id, StringComparer.Ordinal)
+                    .Select(task =>
+                    {
+                        FormTaskAttribute taskAttribute = task.First().First.Task;
+                        FormPage[] pages = task.GroupBy(
+                                static x => x.First.Page.Id,
+                                StringComparer.Ordinal
+                            )
+                            .Select(page => new FormPage(
+                                page.Key,
+                                page.First().First.Page.Title,
+                                page.First().First.Page.Order,
+                                section.Id,
+                                section.Title,
+                                taskAttribute.Id,
+                                taskAttribute.Title,
+                                page.Select(static x => x.Second)
+                                    .OrderBy(static q => q.Order)
+                                    .ToArray()
+                            ))
+                            .OrderBy(static p => p.Order)
+                            .ToArray();
+                        return new FormTask(
+                            taskAttribute.Id,
+                            taskAttribute.Title,
+                            taskAttribute.Order,
+                            pages
+                        );
+                    })
+                    .OrderBy(static t => t.Order)
                     .ToArray();
-                return new FormSection(section.Id, section.Title, section.Order, pages);
+                return new FormSection(section.Id, section.Title, section.Order, tasks);
             })
             .OrderBy(static s => s.Order)
             .ToArray();

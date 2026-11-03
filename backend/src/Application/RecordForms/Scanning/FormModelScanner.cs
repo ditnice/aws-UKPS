@@ -80,6 +80,7 @@ internal static class FormModelScanner
     {
         string where = $"{type.Name}.{property.Name}";
         FormFieldAttribute? field = property.GetCustomAttribute<FormFieldAttribute>();
+        FormTaskAttribute? task = property.GetCustomAttribute<FormTaskAttribute>();
         FormPageAttribute? page = property.GetCustomAttribute<FormPageAttribute>();
         IProperty? column = entityType.FindProperty(property.Name);
         INavigation? navigation = entityType.FindNavigation(property.Name);
@@ -89,9 +90,18 @@ internal static class FormModelScanner
             return null;
         }
 
-        if (page is null)
+        if (task is null || page is null)
         {
-            problems.Add($"{where} has [FormField] but no [FormPage].");
+            if (task is null)
+            {
+                problems.Add($"{where} has [FormField] but no [FormTask].");
+            }
+
+            if (page is null)
+            {
+                problems.Add($"{where} has [FormField] but no [FormPage].");
+            }
+
             return null;
         }
 
@@ -105,6 +115,7 @@ internal static class FormModelScanner
             {
                 EntityType = type,
                 Property = property,
+                Task = task,
                 Page = page,
                 Field = field!,
                 Required = property.GetCustomAttribute<FormRequiredAttribute>(),
@@ -206,6 +217,7 @@ internal static class FormModelScanner
 
     private static bool HasQuestionDetail(PropertyInfo property) =>
         property.IsDefined(typeof(FormPageAttribute), false)
+        || property.IsDefined(typeof(FormTaskAttribute), false)
         || property.IsDefined(typeof(FormRequiredAttribute), false)
         || property.IsDefined(typeof(FormMaxLengthAttribute), false)
         || property.IsDefined(typeof(FormMaxItemsAttribute), false)
