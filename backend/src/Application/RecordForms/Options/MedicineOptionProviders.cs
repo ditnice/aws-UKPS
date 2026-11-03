@@ -51,6 +51,34 @@ internal static class MedicineOptionProviders
             q => q.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id),
             x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived, x.ParentId)
         );
+
+        RegisterProductProviders(registry);
+    }
+
+    private static void RegisterProductProviders(OptionProviderRegistry registry)
+    {
+        registry.AddReference<FormulationType>(
+            OptionKeys.FormulationTypes,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+
+        registry.AddEnum(
+            OptionKeys.MedicineTechnologyStatus,
+            (MedicineTechnologyStatus.Biosimilar, "Biosimilar"),
+            (
+                MedicineTechnologyStatus.NewChemicalOrBiologicalEntity,
+                "New chemical/biological entity"
+            ),
+            (MedicineTechnologyStatus.NewDosingRegimen, "New dosing regimen"),
+            (MedicineTechnologyStatus.NewFormulation, "New formulation"),
+            (MedicineTechnologyStatus.NewIndication, "New indication"),
+            (MedicineTechnologyStatus.NewPresentation, "New presentation"),
+            (
+                MedicineTechnologyStatus.SpcAmendmentWithoutIndicationChange,
+                "SPC amendment without indication change"
+            )
+        );
     }
 
     private static void RegisterLaboratoryTestingProviders(OptionProviderRegistry registry)

@@ -11,9 +11,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.2";
+    private const string ExpectedVersion = "2026.11.3";
     private const string ExpectedFingerprint =
-        "186abcd21d235e1e3b5b66e898b22e3f95f832064ab177c1afc324cc5f995950";
+        "894bdcdf5cd41b247b7a1f320eba09dd0f91ca39d1523647190d71671552eadb";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -42,6 +42,12 @@ public class MedicineFormModelTests
                 "paediatric",
                 "cancer",
                 "rare-disease",
+                "formulation",
+                "presentation",
+                "mode-of-action",
+                "dose-regimen",
+                "personalised-medicine",
+                "technology-status",
             ]);
     }
 
@@ -106,6 +112,32 @@ public class MedicineFormModelTests
                 "medicines_indication_detail.indication_is_rare_disease",
                 FormControl.Radio,
                 AnswerShape.Single
+            ),
+            (
+                "medicines_indication_detail.formulation_type_id",
+                FormControl.Select,
+                AnswerShape.Single
+            ),
+            ("medicines_indication_detail.presentation", FormControl.Textarea, AnswerShape.Single),
+            (
+                "medicines_indication_detail.mode_of_action",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_indication_detail.proposed_dose_regimen",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_indication_detail.is_personalised_medicine",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_indication_detail.medicine_technology_status",
+                FormControl.Checkbox,
+                AnswerShape.Multi
             ),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
@@ -185,7 +217,8 @@ public class MedicineFormModelTests
         model.PreviousPage(model.Pages[0]).ShouldBeNull();
         model.NextPage(model.FindPage("indication")!)!.Id.ShouldBe("bnf-chapter");
         model.PreviousPage(model.FindPage("bnf-chapter")!)!.Id.ShouldBe("indication");
-        model.NextPage(model.FindPage("rare-disease")!).ShouldBeNull();
+        model.NextPage(model.FindPage("rare-disease")!)!.Id.ShouldBe("formulation");
+        model.NextPage(model.FindPage("technology-status")!).ShouldBeNull();
         model.PreviousPage(model.FindPage("diagnostic-test-required")!).ShouldBeNull();
         model.NextPage(model.FindPage("diagnostic-test-required")!)!.Id.ShouldBe("biomarker-type");
         model.NextPage(model.FindPage("safety-tests")!).ShouldBeNull();

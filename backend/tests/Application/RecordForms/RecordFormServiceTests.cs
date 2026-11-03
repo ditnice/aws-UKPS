@@ -34,8 +34,13 @@ public class RecordFormServiceTests : DatabaseTestBase
     private const string BnfChapter = "medicines_indication_detail.bnf_chapter_id";
     private const string TherapeuticAreas = "medicines_indication_detail_therapeutic_area";
     private const string Paediatric = "medicines_indication_detail.indication_is_paediatric";
+    private const string Formulation = "medicines_indication_detail.formulation_type_id";
+    private const string TechnologyStatus =
+        "medicines_indication_detail.medicine_technology_status";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
+
+    private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
 
     private Organisation _organisation = null!;
     private User _user = null!;
@@ -46,6 +51,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     private TherapeuticArea _area = null!;
     private TherapeuticArea _condition = null!;
     private TherapeuticArea _otherCondition = null!;
+    private FormulationType _formulation = null!;
     private ServiceTestHarness<IRecordFormQueryService> _queryHarness = null!;
     private ServiceTestHarness<IRecordFormSaveService> _saveHarness = null!;
 
@@ -120,6 +126,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             },
             Ct
         );
+        _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
 
         _queryHarness = CreateHarness<IRecordFormQueryService>(UserRole.Standard, _organisation.Id);
         _saveHarness = CreateHarness<IRecordFormSaveService>(UserRole.Standard, _organisation.Id);
@@ -143,9 +150,9 @@ public class RecordFormServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetPage_LastPageOfTheTask_HasNoNextPage()
     {
-        RecordPageDto page = await GetPage("rare-disease");
+        RecordPageDto page = await GetPage("technology-status");
 
-        page.PreviousPageId.ShouldBe("cancer");
+        page.PreviousPageId.ShouldBe("personalised-medicine");
         page.NextPageId.ShouldBeNull();
     }
 
@@ -271,6 +278,25 @@ public class RecordFormServiceTests : DatabaseTestBase
                 "rare-disease",
                 Answer("medicines_indication_detail.indication_is_rare_disease", "No")
             )
+        ).NextPageId.ShouldBe("formulation");
+        (
+            await SaveOk("formulation", Answer(Formulation, $"{_formulation.Id}"))
+        ).NextPageId.ShouldBe("presentation");
+        await SaveOk("presentation", Answer("medicines_indication_detail.presentation", "10mg"));
+        await SaveOk(
+            "mode-of-action",
+            Answer("medicines_indication_detail.mode_of_action", "Mode")
+        );
+        await SaveOk(
+            "dose-regimen",
+            Answer("medicines_indication_detail.proposed_dose_regimen", "Dose")
+        );
+        await SaveOk(
+            "personalised-medicine",
+            Answer("medicines_indication_detail.is_personalised_medicine", "Yes")
+        );
+        (
+            await SaveOk("technology-status", Answer(TechnologyStatus, _biosimilarAndNewIndication))
         ).NextPageId.ShouldBeNull();
 
         MedicinesIndicationDetail row = await IndicationRow();
@@ -278,6 +304,14 @@ public class RecordFormServiceTests : DatabaseTestBase
         row.IndicationIsPaediatric.ShouldBe(IndicationPaediatricStatus.ExclusivelyAdults);
         row.IndicationIsCancer.ShouldBe(YesNoUnknown.No);
         row.IndicationIsRareDisease.ShouldBe(YesNoUnknown.No);
+        row.FormulationTypeId.ShouldBe(_formulation.Id);
+        row.Presentation.ShouldBe("10mg");
+        row.ModeOfAction.ShouldBe("Mode");
+        row.ProposedDoseRegimen.ShouldBe("Dose");
+        row.IsPersonalisedMedicine.ShouldBe(YesNoUnknown.Yes);
+        row.MedicineTechnologyStatus.ShouldBe(
+            MedicineTechnologyStatus.Biosimilar | MedicineTechnologyStatus.NewIndication
+        );
         row.TherapeuticAreas.Select(static t => t.TherapeuticAreaId)
             .Order()
             .ShouldBe(new[] { _area.Id, _condition.Id }.Order());
@@ -294,6 +328,12 @@ public class RecordFormServiceTests : DatabaseTestBase
                 Paediatric,
                 "medicines_indication_detail.indication_is_cancer",
                 "medicines_indication_detail.indication_is_rare_disease",
+                Formulation,
+                "medicines_indication_detail.presentation",
+                "medicines_indication_detail.mode_of_action",
+                "medicines_indication_detail.proposed_dose_regimen",
+                "medicines_indication_detail.is_personalised_medicine",
+                TechnologyStatus,
             ]);
         changes[1].NewValue.ShouldBe($"{_bnfSection.Id}");
         changes[2]

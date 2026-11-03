@@ -29,6 +29,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     private RecordRevision _revision = null!;
     private BnfChapter _bnfChapter = null!;
     private TherapeuticArea _area = null!;
+    private FormulationType _formulation = null!;
 
     public RecordTaskListQueryServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -70,6 +71,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             },
             Ct
         );
+        _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
     }
 
     [Fact]
@@ -213,6 +215,9 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             IndicationIsPaediatric = IndicationPaediatricStatus.ExclusivelyAdults,
             IndicationIsCancer = YesNoUnknown.No,
             IndicationIsRareDisease = YesNoUnknown.Unknown,
+            FormulationTypeId = _formulation.Id,
+            IsPersonalisedMedicine = YesNoUnknown.No,
+            MedicineTechnologyStatus = MedicineTechnologyStatus.Biosimilar,
         };
 
     private async Task AddIndicationRow(MedicinesIndicationDetail row)

@@ -74,4 +74,19 @@ internal static class OptionKeys
     /// <c>PatientPathwayPointId</c> property. Archived options are hidden unless already saved.
     /// </summary>
     public const string PatientPathwayPoints = "patient-pathway-points";
+
+    /// <summary>
+    /// The <c>FormulationType</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>FormulationTypeId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string FormulationTypes = "formulation-types";
+
+    /// <summary>
+    /// The <c>MedicineTechnologyStatus</c> flags enum: biosimilar, new chemical or biological
+    /// entity, new dosing regimen, new formulation, new indication, new presentation, and SPC
+    /// amendment without indication change. For a <see cref="FormControl.Checkbox"/> on a
+    /// <c>MedicineTechnologyStatus?</c> property.
+    /// </summary>
+    public const string MedicineTechnologyStatus = "medicine-technology-status";
 }
