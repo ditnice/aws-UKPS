@@ -2,6 +2,7 @@ using Shouldly;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.Tests.Persistence;
 
@@ -23,8 +24,28 @@ public sealed class DataSeederInMemoryTests
 
         payload.Organisations.Count.ShouldBe(50);
         payload.Users.Count.ShouldBe(800);
-        payload.Memberships.Count.ShouldBe(801); //Additional membership for dev user
+        payload.Memberships.Count.ShouldBe(803); // Additional memberships for the three dev users
         payload.Records.Count.ShouldBe(572); // 500 synthetic records and 72 discarded ones
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super)]
+    [InlineData(UserRole.Champion)]
+    [InlineData(UserRole.Standard)]
+    public void BuildPayload_ShouldSeedAnActiveDevUserForEachRoleInTheFirstOrganisation(
+        UserRole role
+    )
+    {
+        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
+        DevAuthenticationUser devUser = DevAuthenticationClaims.RoleUsers[role];
+
+        UserOrgMembership membership = payload
+            .Memberships.Where(m => m.User?.CognitoUsername == devUser.CognitoUsername)
+            .ShouldHaveSingleItem();
+        membership.User.ShouldNotBeNull().WorkEmail.ShouldBe(devUser.Email);
+        membership.UserRole.ShouldBe(role);
+        membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+        membership.Organisation.ShouldBeSameAs(payload.Organisations.First());
     }
 
     [Fact]

@@ -4,6 +4,7 @@ import {
   lastActivePresets,
 } from '../../../../src/app/portal/organisations/[id]/_lib/userLabels'
 import { expect, test } from '../../fixtures/test'
+import { forRoles } from '../../helpers/roles'
 import { testEmailPrefix } from '../../helpers/test-data'
 import { requireEnvironmentVariable, visualTag } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
@@ -15,7 +16,7 @@ function isActiveSince(date: string, cutoff: Date): boolean {
   return Boolean(day) && new Date(Number(year), Number(month) - 1, Number(day)) >= cutoff
 }
 
-test.describe('Searching and filtering users', () => {
+test.describe('Searching and filtering users', { tag: forRoles(['Super']) }, () => {
   test('shows the filter panel', { tag: visualTag }, async ({ page }) => {
     const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
     const usersPage = new OrganisationUsersPage(page)

@@ -1,6 +1,7 @@
 import { type Page } from '@playwright/test'
 
 import { expect, test } from '../fixtures/test'
+import { forRoles } from '../helpers/roles'
 import { mutatesDataTag, requireEnvironmentVariable, visualTag } from '../helpers/test-environment'
 
 type Field = {
@@ -50,17 +51,21 @@ async function gotoEditPage(page: Page, organisationId: string) {
 // no stale form overwrites another test's change, as each submit saves the whole form.
 test.describe.configure({ mode: 'default' })
 
-test('shows the edit organisation page', { tag: visualTag }, async ({ page }) => {
-  const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-  await gotoEditPage(page, organisationId)
-  // The values depend on which tests in this file have run.
-  await expect(page).toHaveScreenshot('edit-organisation.png', {
-    fullPage: true,
-    mask: [page.getByRole('textbox')],
-  })
-})
+test(
+  'shows the edit organisation page',
+  { tag: forRoles(['Super'], visualTag) },
+  async ({ page }) => {
+    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+    await gotoEditPage(page, organisationId)
+    // The values depend on which tests in this file have run.
+    await expect(page).toHaveScreenshot('edit-organisation.png', {
+      fullPage: true,
+      mask: [page.getByRole('textbox')],
+    })
+  },
+)
 
-test.describe('Editing organisation details', { tag: mutatesDataTag }, () => {
+test.describe('Editing organisation details', { tag: forRoles(['Super'], mutatesDataTag) }, () => {
   for (const { label, value } of fields) {
     test(`edits the ${label.toLowerCase()}`, async ({ page }) => {
       const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
@@ -80,7 +85,7 @@ test.describe('Editing organisation details', { tag: mutatesDataTag }, () => {
   }
 })
 
-test.describe('Editing organisation details without saving', () => {
+test.describe('Editing organisation details without saving', { tag: forRoles(['Super']) }, () => {
   test.use({ readOnly: true })
 
   test('edits the details and cancels', async ({ page }) => {

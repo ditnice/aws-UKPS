@@ -78,8 +78,12 @@ Set `PLAYWRIGHT_BASE_URL` to target another deployed environment:
 PLAYWRIGHT_BASE_URL=https://example.test pnpm test:e2e
 ```
 
-Authenticated tests run when `E2E_USER_EMAIL`, `E2E_USER_PASSWORD`, `E2E_TOTP_SECRET`,
-and `E2E_ORGANISATION_ID` are set. Credentials are only submitted to trusted origins.
+Authenticated tests (`*.authenticated.e2e.spec.ts`) run as a Super, Champion or Standard
+user. Each role signs in with its own `E2E_<ROLE>_EMAIL`, `E2E_<ROLE>_PASSWORD` and
+`E2E_<ROLE>_TOTP_SECRET` (for example `E2E_CHAMPION_EMAIL`). Super falls back to
+`E2E_USER_EMAIL`, `E2E_USER_PASSWORD` and `E2E_TOTP_SECRET`. `E2E_ORGANISATION_ID` must also be
+set, and the Champion and Standard users must belong to that organisation. A role's tests are
+skipped when its credentials aren't set. Credentials are only submitted to trusted origins.
 The dev environment is trusted by default; set a comma-separated allowlist to trust additional
 environments explicitly:
 
@@ -90,6 +94,25 @@ pnpm test:e2e
 ```
 
 Only add environments controlled by the project to `PLAYWRIGHT_AUTHENTICATED_ORIGINS`.
+
+##### User roles
+
+Every authenticated test or `describe` declares the roles it runs as, using `forRoles` from
+`tests/e2e/helpers/roles.ts`. It then runs once in each role's project (`authenticated-super`,
+`authenticated-champion`, `authenticated-standard`):
+
+```ts
+test.describe('Promoting a user', { tag: forRoles(['Super', 'Champion'], mutatesDataTag) }, () => {
+  test('…', async ({ page, userRole }) => {
+    // userRole is the role this run is signed in as, for content that differs by role.
+  })
+})
+```
+
+An authenticated test without a role tag fails in the `authenticated-untagged` project. Run one
+role with `--project=authenticated-champion`. With dev authentication (`just e2e`), nobody
+signs in: each project sets a `ukps_dev_role` cookie, and the backend then acts as that role's
+seeded user in organisation 1 (`DevAuthenticationClaims.RoleUsers`).
 Local development normally uses `AUTHENTICATION_MODE=DEV`, so authentication redirects and
 authenticated flows run against deployed environments rather than the local server.
 

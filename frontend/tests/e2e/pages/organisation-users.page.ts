@@ -4,8 +4,17 @@ import {
   organisationUserTableHeaders,
   type OrganisationUserTableHeaderKey,
 } from '../../../src/app/portal/organisations/[id]/_lib/userLabels'
+import { devRoleEmails, userRoles } from '../helpers/roles'
+import { signedInEmail } from '../helpers/test-environment'
 
 import type { SortDirection } from '../../../src/client/generated/types.gen'
+
+/* The users the role projects sign in as. Tests never pick them as the user to change, as
+ * deactivating, demoting or removing one would break every later test that runs as that role. */
+const signedInUserEmails = new Set([
+  ...Object.values(devRoleEmails),
+  ...userRoles.flatMap((role) => signedInEmail(role) ?? []),
+])
 
 // ARIA has no way to select a column, so column cells are the one CSS selector.
 function columnCell(key: OrganisationUserTableHeaderKey): string {
@@ -84,7 +93,8 @@ export class OrganisationUsersPage {
     await this.row(email).getByRole('link', { name: action, exact: true }).click()
   }
 
-  /** Opens the first listed user with the `action` link, or returns undefined if no user has it. */
+  /** Opens the first listed user with the `action` link, or returns undefined if no user has it.
+   * Skips the users the role projects sign in as. */
   async openUser(
     organisationId: string,
     query: Record<string, string>,
@@ -94,7 +104,11 @@ export class OrganisationUsersPage {
     await expect(this.noUsersMessage.or(this.cells('email').first())).toBeVisible()
 
     const actionLink = this.page.getByRole('link', { name: action, exact: true })
-    const row = this.table.getByRole('row').filter({ has: actionLink }).first()
+    let rows = this.table.getByRole('row').filter({ has: actionLink })
+    for (const email of signedInUserEmails) {
+      rows = rows.filter({ hasNot: this.page.getByRole('cell', { name: email, exact: true }) })
+    }
+    const row = rows.first()
     if ((await row.count()) === 0) {
       return undefined
     }

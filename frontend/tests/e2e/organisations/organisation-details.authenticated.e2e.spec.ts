@@ -1,7 +1,8 @@
 import { expect, test } from '../fixtures/test'
+import { forRoles } from '../helpers/roles'
 import { requireEnvironmentVariable } from '../helpers/test-environment'
 
-test('shows organisation details and users', async ({ page }) => {
+test('shows organisation details and users', { tag: forRoles(['Super']) }, async ({ page }) => {
   const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
   await page.goto(`/portal/organisations/${organisationId}`)
 
@@ -11,14 +12,18 @@ test('shows organisation details and users', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'Filter results' })).toBeVisible()
 })
 
-test('updates the URL when filtering users by email', async ({ page }) => {
-  const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
-  await page.goto(`/portal/organisations/${organisationId}?page=3`)
+test(
+  'updates the URL when filtering users by email',
+  { tag: forRoles(['Super']) },
+  async ({ page }) => {
+    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+    await page.goto(`/portal/organisations/${organisationId}?page=3`)
 
-  await page.getByLabel('Filter users').fill('example')
-  await page.getByRole('button', { name: 'Apply filter' }).click()
+    await page.getByLabel('Filter users').fill('example')
+    await page.getByRole('button', { name: 'Apply filter' }).click()
 
-  await expect(page).toHaveURL((url) => {
-    return url.searchParams.get('email') === 'example' && url.searchParams.get('page') === '1'
-  })
-})
+    await expect(page).toHaveURL((url) => {
+      return url.searchParams.get('email') === 'example' && url.searchParams.get('page') === '1'
+    })
+  },
+)

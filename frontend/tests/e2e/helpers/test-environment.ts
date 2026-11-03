@@ -1,4 +1,63 @@
-export const authStatePath = 'tests/e2e/.auth/authenticated-dev.json'
+import { devRoleEmails, type UserRole } from './roles'
+
+/** Where auth-setup saves each role's signed-in browser state. */
+export function authStatePath(role: UserRole): string {
+  return `tests/e2e/.auth/${role.toLowerCase()}.json`
+}
+
+export type RoleCredentials = {
+  email: string
+  password: string
+  totpSecret: string
+}
+
+type CredentialVariables = Record<keyof RoleCredentials, string>
+
+function roleCredentialVariables(prefix: string): CredentialVariables {
+  return {
+    email: `${prefix}_EMAIL`,
+    password: `${prefix}_PASSWORD`,
+    totpSecret: `${prefix}_TOTP_SECRET`,
+  }
+}
+
+// The variables the one authenticated user had before each role had its own.
+const legacySuperVariables: CredentialVariables = {
+  email: 'E2E_USER_EMAIL',
+  password: 'E2E_USER_PASSWORD',
+  totpSecret: 'E2E_TOTP_SECRET',
+}
+
+function readVariable(name: string): string | undefined {
+  return process.env[name]?.trim() || undefined
+}
+
+/* Each role signs in with E2E_<ROLE>_EMAIL, _PASSWORD and _TOTP_SECRET. Super falls back to
+ * E2E_USER_EMAIL, E2E_USER_PASSWORD and E2E_TOTP_SECRET. A role is only configured when all
+ * three of one set are set. */
+export function roleCredentials(role: UserRole): RoleCredentials | undefined {
+  const variableSets = [roleCredentialVariables(`E2E_${role.toUpperCase()}`)]
+  if (role === 'Super') variableSets.push(legacySuperVariables)
+
+  for (const variables of variableSets) {
+    const email = readVariable(variables.email)
+    const password = readVariable(variables.password)
+    const totpSecret = readVariable(variables.totpSecret)
+    if (email && password && totpSecret) {
+      return { email, password, totpSecret }
+    }
+  }
+  return undefined
+}
+
+export function hasRoleCredentials(role: UserRole): boolean {
+  return roleCredentials(role) !== undefined
+}
+
+/** The email of the user a role's tests are signed in as, so tests can avoid changing them. */
+export function signedInEmail(role: UserRole): string | undefined {
+  return isDevAuthMode() ? devRoleEmails[role] : roleCredentials(role)?.email
+}
 
 const defaultAuthenticatedOrigins = ['https://dev.ukps.nice.org.uk']
 

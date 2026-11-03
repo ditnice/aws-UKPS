@@ -159,27 +159,39 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
             }
         }
 
-        // This membership is added to enable mock auth access.
-        User devUser = new UserFaker()
-            .RuleFor(
-                x => x.CognitoUsername,
-                _ => DevAuthenticationClaims.DefaultUserCognitoUsername
-            )
-            .RuleFor(x => x.WorkEmail, _ => DevAuthenticationClaims.DefaultUserEmail)
-            .RuleFor(x => x.UserType, _ => UserType.ItAdmin)
-            .Generate();
-        memberships.Add(
-            new UserOrgMembership
+        memberships.AddRange(DevUserMemberships(organisations[0]));
+        return [.. memberships];
+    }
+
+    /// <summary>
+    /// A user for each role that dev authentication can act as: the configured role's user by
+    /// default, or the role named by its role cookie.
+    /// </summary>
+    private static IEnumerable<UserOrgMembership> DevUserMemberships(Organisation organisation)
+    {
+        foreach (
+            (UserRole role, DevAuthenticationUser devUser) in DevAuthenticationClaims.RoleUsers
+        )
+        {
+            UserType userType =
+                role == UserRole.Super
+                    ? UserType.ItAdmin
+                    : _userTypes[organisation.OrganisationType];
+            User user = new UserFaker()
+                .RuleFor(x => x.CognitoUsername, _ => devUser.CognitoUsername)
+                .RuleFor(x => x.WorkEmail, _ => devUser.Email)
+                .RuleFor(x => x.UserType, _ => userType)
+                .Generate();
+            yield return new UserOrgMembership
             {
-                User = devUser,
-                Organisation = organisations[0],
-                UserRole = UserRole.Super,
+                User = user,
+                Organisation = organisation,
+                UserRole = role,
                 Status = UserOrgMembershipStatus.Active,
                 AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
-                CreatedAt = organisations[0].CreatedAt,
-            }
-        );
-        return [.. memberships];
+                CreatedAt = organisation.CreatedAt,
+            };
+        }
     }
 
     /// <summary>Internal QA organisations have one super user; other organisations have a champion.</summary>

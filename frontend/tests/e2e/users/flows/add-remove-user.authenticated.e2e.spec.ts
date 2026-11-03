@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test'
+import { forRoles } from '../../helpers/roles'
 import { uniqueEmail } from '../../helpers/test-data'
 import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
@@ -13,7 +14,7 @@ const testUser = {
 // In file order on one worker, so the read-only tests never open a user while it's being changed.
 test.describe.configure({ mode: 'default' })
 
-test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
+test.describe('Adding and removing a user', { tag: forRoles(['Super'], mutatesDataTag) }, () => {
   // 'removes the invited user' removes the user that 'invites a new user' invites.
   test.describe.configure({ mode: 'serial' })
 
@@ -53,7 +54,7 @@ test.describe('Adding and removing a user', { tag: mutatesDataTag }, () => {
   })
 })
 
-test.describe('Adding and removing a user without saving', () => {
+test.describe('Adding and removing a user without saving', { tag: forRoles(['Super']) }, () => {
   test.use({ readOnly: true })
 
   test('checks the invite form and cancels', async ({ page }) => {

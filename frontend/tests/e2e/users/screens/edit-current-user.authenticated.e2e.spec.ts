@@ -1,7 +1,8 @@
 import { expect, test } from '../../fixtures/test'
+import { forRoles } from '../../helpers/roles'
 import { mutatesDataTag, visualTag } from '../../helpers/test-environment'
 
-test.describe('User details screen', () => {
+test.describe('User details screen', { tag: forRoles(['Super']) }, () => {
   test('shows the user details page', { tag: visualTag }, async ({ page }) => {
     await page.goto('/portal/user/me/edit-details')
     await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()

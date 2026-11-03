@@ -5,7 +5,8 @@
 #   just stack-up     # run the stack only, on http://localhost:3000
 #
 # Authentication uses the dev bypass (frontend AUTHENTICATION_MODE=DEV and backend
-# DevAuthentication): every request acts as the seeded Super user in organisation 1.
+# DevAuthentication): every request acts as the seeded Super user in organisation 1, unless a
+# ukps_dev_role cookie names another role (Champion or Standard), as the E2E role projects set.
 # The backend's Cognito and SQS calls go to Floci, a local AWS emulator, so no AWS access is
 # needed and none of this configuration is secret.
 

@@ -2,13 +2,24 @@ import { defineConfig, devices } from '@playwright/test'
 import 'dotenv/config'
 
 import {
+  anyRoleTagPattern,
+  devRoleCookieName,
+  roleTagPattern,
+  userRoles,
+  type UserRole,
+} from './tests/e2e/helpers/roles'
+import {
+  authStatePath,
   ephemeralStackOnlyTags,
+  hasRoleCredentials,
   isAuthenticatedTargetAllowed,
   isDevAuthMode,
   isEphemeralStack,
   isFlagSet,
   isLocalBaseURL,
 } from './tests/e2e/helpers/test-environment'
+
+import type { TestOptions } from './tests/e2e/fixtures/test'
 
 const localBaseURL = 'https://localhost:3000'
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? localBaseURL
@@ -41,50 +52,84 @@ const publicTestIgnore = [
   /\.authenticated\.e2e\.spec\.ts/,
   /accessibility\/.*\.e2e\.spec\.ts/,
 ]
-const hasAuthenticatedCredentials = [
-  'E2E_USER_EMAIL',
-  'E2E_USER_PASSWORD',
-  'E2E_TOTP_SECRET',
-  'E2E_ORGANISATION_ID',
-].every((name) => Boolean(process.env[name]?.trim()))
-const canRunAuthenticatedTests =
-  isDevAuth || (hasAuthenticatedCredentials && isAuthenticatedTargetAllowed(baseURL))
-const authenticatedChromiumProject = {
-  name: 'authenticated-chromium',
-  ...ephemeralStackFilter,
-  testMatch: /.*\.authenticated\.e2e\.spec\.ts/,
-  use: {
-    ...devices['Desktop Chrome'],
-    ...localChromiumOptions,
-  },
+/* Each authenticated spec runs once in the project of every role it's tagged with (see
+ * tests/e2e/helpers/roles.ts). A role's projects only exist when it can sign in: always with dev
+ * authentication, otherwise when the role's credentials are set and the target is trusted. */
+const authenticatedTestMatch = /.*\.authenticated\.e2e\.spec\.ts/
+const hasOrganisationId = Boolean(process.env.E2E_ORGANISATION_ID?.trim())
+const runnableRoles = userRoles.filter(
+  (role) =>
+    isDevAuth ||
+    (hasOrganisationId && hasRoleCredentials(role) && isAuthenticatedTargetAllowed(baseURL)),
+)
+const skippedRoles = userRoles.filter((role) => !runnableRoles.includes(role))
+if (skippedRoles.length > 0 && runnableRoles.length > 0) {
+  console.info(
+    `Skipping authenticated tests for ${skippedRoles.join(', ')}: set E2E_<ROLE>_EMAIL, _PASSWORD and _TOTP_SECRET to run them.`,
+  )
 }
-const authenticatedProjects = isDevAuth
-  ? [authenticatedChromiumProject]
-  : [
+
+/* With dev authentication nobody signs in: this cookie tells the backend which seeded user
+ * each request acts as. */
+function devRoleStorageState(role: UserRole) {
+  return {
+    cookies: [
       {
-        name: 'auth-setup',
-        ...ephemeralStackFilter,
-        testMatch: /auth\.setup\.ts/,
-        use: {
-          ...devices['Desktop Chrome'],
-          ...localChromiumOptions,
-        },
+        name: devRoleCookieName,
+        value: role,
+        domain: new URL(baseURL).hostname,
+        path: '/',
+        expires: -1,
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax' as const,
       },
+    ],
+    origins: [],
+  }
+}
+
+function authenticatedProjects(role: UserRole) {
+  const name = `authenticated-${role.toLowerCase()}`
+  const use = { ...devices['Desktop Chrome'], ...localChromiumOptions, userRole: role }
+
+  if (isDevAuth) {
+    return [
       {
-        ...authenticatedChromiumProject,
-        dependencies: ['auth-setup'],
-        use: {
-          ...authenticatedChromiumProject.use,
-          storageState: 'tests/e2e/.auth/authenticated-dev.json',
-        },
+        name,
+        ...ephemeralStackFilter,
+        testMatch: authenticatedTestMatch,
+        grep: roleTagPattern(role),
+        use: { ...use, storageState: devRoleStorageState(role) },
       },
     ]
+  }
+
+  const setupName = `auth-setup-${role.toLowerCase()}`
+  return [
+    {
+      name: setupName,
+      testMatch: /auth\.setup\.ts/,
+      grep: new RegExp(`authenticate the ${role.toLowerCase()} user`),
+      use: { ...devices['Desktop Chrome'], ...localChromiumOptions },
+    },
+    {
+      name,
+      ...ephemeralStackFilter,
+      testMatch: authenticatedTestMatch,
+      grep: roleTagPattern(role),
+      dependencies: [setupName],
+      use: { ...use, storageState: authStatePath(role) },
+    },
+  ]
+}
+
 const skipWebServer = isFlagSet('PLAYWRIGHT_SKIP_WEB_SERVER')
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
-export default defineConfig({
+export default defineConfig<TestOptions>({
   testDir: './tests/e2e',
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -154,7 +199,15 @@ export default defineConfig({
         ...localChromiumOptions,
       },
     },
-    ...(canRunAuthenticatedTests ? authenticatedProjects : []),
+    ...runnableRoles.flatMap(authenticatedProjects),
+    /* Every authenticated test without a role tag fails here, so none silently runs nowhere. It
+     * fails before signing in, so it needs no credentials. */
+    {
+      name: 'authenticated-untagged',
+      testMatch: authenticatedTestMatch,
+      grepInvert: anyRoleTagPattern,
+      use: { ...devices['Desktop Chrome'], requireRoleTag: true },
+    },
   ],
   webServer:
     isLocal && !skipWebServer

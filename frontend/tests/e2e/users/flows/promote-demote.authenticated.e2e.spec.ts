@@ -1,11 +1,12 @@
 import { expect, test } from '../../fixtures/test'
+import { forRoles } from '../../helpers/roles'
 import { mutatesDataTag, requireEnvironmentVariable } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
 // In file order on one worker, so the read-only tests never open a user while it's being changed.
 test.describe.configure({ mode: 'default' })
 
-test.describe('Promoting and demoting a user', { tag: mutatesDataTag }, () => {
+test.describe('Promoting and demoting a user', { tag: forRoles(['Super'], mutatesDataTag) }, () => {
   // 'demotes the champion user' demotes the user that 'promotes a standard user' promotes.
   test.describe.configure({ mode: 'serial' })
   let promotedUserEmail: string | undefined
@@ -50,7 +51,7 @@ test.describe('Promoting and demoting a user', { tag: mutatesDataTag }, () => {
   })
 })
 
-test.describe('Promoting and demoting a user without saving', () => {
+test.describe('Promoting and demoting a user without saving', { tag: forRoles(['Super']) }, () => {
   test.use({ readOnly: true })
 
   test('opens change permissions for a standard user and cancels', async ({ page }) => {
