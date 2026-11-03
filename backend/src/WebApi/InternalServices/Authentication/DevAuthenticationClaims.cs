@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
@@ -19,6 +20,16 @@ internal class DevAuthenticationClaims
     };
     public const string DefaultUserEmail = "example.user@email.com";
 
+    /// <summary>The internal organisation the Super user belongs to.</summary>
+    public const int DefaultOrganisationId = 1;
+
+    /// <summary>
+    /// The pharma company organisation the Champion and Standard users belong to. They're kept out
+    /// of the Super user's organisation so E2E tests acting as different roles change different
+    /// data.
+    /// </summary>
+    public const int RoleOrganisationId = 2;
+
     /// <summary>
     /// The seeded user each role acts as. The frontend E2E tests rely on these emails
     /// (frontend/tests/e2e/helpers/roles.ts).
@@ -26,21 +37,27 @@ internal class DevAuthenticationClaims
     public static IReadOnlyDictionary<UserRole, DevAuthenticationUser> RoleUsers { get; } =
         new Dictionary<UserRole, DevAuthenticationUser>
         {
-            [UserRole.Super] = new(DefaultUserCognitoUsername, DefaultUserEmail),
+            [UserRole.Super] = new(
+                DefaultUserCognitoUsername,
+                DefaultUserEmail,
+                DefaultOrganisationId
+            ),
             [UserRole.Champion] = new(
                 new CognitoUsername() { Value = "5b0c7a3e-2f4d-4c1a-9e8b-6d2f1a0c3b71" },
-                "dev.champion@email.com"
+                "dev.champion@email.com",
+                RoleOrganisationId
             ),
             [UserRole.Standard] = new(
                 new CognitoUsername() { Value = "8e4d2b6f-7a1c-4f3e-b5d9-0c6a2e8f1d42" },
-                "dev.standard@email.com"
+                "dev.standard@email.com",
+                RoleOrganisationId
             ),
         };
 
     public static IReadOnlyCollection<Claim> DefaultClaims { get; } =
     [
         new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
-        new Claim(UkpsClaimTypes.OrganisationId, $"{1}"),
+        new Claim(UkpsClaimTypes.OrganisationId, $"{DefaultOrganisationId}"),
         new Claim(UkpsClaimTypes.Email, DefaultUserEmail),
         new Claim(UkpsClaimTypes.Username, DefaultUserCognitoUsername.Value),
     ];
@@ -72,6 +89,7 @@ internal class DevAuthenticationClaims
             UkpsClaimTypes.UserRole,
             UkpsClaimTypes.Email,
             UkpsClaimTypes.Username,
+            UkpsClaimTypes.OrganisationId,
         ];
 
         return
@@ -80,6 +98,10 @@ internal class DevAuthenticationClaims
             new Claim(UkpsClaimTypes.UserRole, role.ToString()),
             new Claim(UkpsClaimTypes.Email, user.Email),
             new Claim(UkpsClaimTypes.Username, user.CognitoUsername.Value),
+            new Claim(
+                UkpsClaimTypes.OrganisationId,
+                user.OrganisationId.ToString(CultureInfo.InvariantCulture)
+            ),
         ];
     }
 }

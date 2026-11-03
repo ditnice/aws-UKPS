@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
@@ -50,7 +51,10 @@ public sealed class DevAuthHandlerTests
         principal
             .FindFirstValue(UkpsClaimTypes.Username)
             .ShouldBe(expectedUser.CognitoUsername.Value);
-        principal.FindFirstValue(UkpsClaimTypes.OrganisationId).ShouldBe("1");
+        principal
+            .FindFirstValue(UkpsClaimTypes.OrganisationId)
+            .ShouldBe(expectedUser.OrganisationId.ToString(CultureInfo.InvariantCulture));
+        principal.FindAll(UkpsClaimTypes.OrganisationId).Count().ShouldBe(1);
         principal.FindAll(UkpsClaimTypes.UserRole).Count().ShouldBe(1);
     }
 

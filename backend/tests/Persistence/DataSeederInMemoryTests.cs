@@ -24,7 +24,7 @@ public sealed class DataSeederInMemoryTests
 
         payload.Organisations.Count.ShouldBe(50);
         payload.Users.Count.ShouldBe(800);
-        payload.Memberships.Count.ShouldBe(803); // Additional memberships for the three dev users
+        payload.Memberships.Count.ShouldBe(808); // Plus the three dev users and five E2E subjects
         payload.Records.Count.ShouldBe(572); // 500 synthetic records and 72 discarded ones
     }
 
@@ -45,7 +45,31 @@ public sealed class DataSeederInMemoryTests
         membership.User.ShouldNotBeNull().WorkEmail.ShouldBe(devUser.Email);
         membership.UserRole.ShouldBe(role);
         membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
-        membership.Organisation.ShouldBeSameAs(payload.Organisations.First());
+        membership.Organisation.ShouldBeSameAs(
+            payload.Organisations.ElementAt(devUser.OrganisationId - 1)
+        );
+    }
+
+    [Fact]
+    public void BuildPayload_ShouldSeedTheE2eSubjectsInTheDevChampionsOrganisation()
+    {
+        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
+        Organisation championOrganisation = payload.Organisations.ElementAt(
+            DevAuthenticationClaims.RoleUsers[UserRole.Champion].OrganisationId - 1
+        );
+
+        championOrganisation.OrganisationType.ShouldBe(OrganisationType.PharmaCompany);
+        foreach (E2eSubjectUsers.Subject subject in E2eSubjectUsers.All)
+        {
+            UserOrgMembership membership = payload
+                .Memberships.Where(m =>
+                    string.Equals(m.User?.WorkEmail, subject.Email, StringComparison.Ordinal)
+                )
+                .ShouldHaveSingleItem();
+            membership.Organisation.ShouldBeSameAs(championOrganisation);
+            membership.UserRole.ShouldBe(subject.Role);
+            membership.Status.ShouldBe(subject.Status);
+        }
     }
 
     [Fact]

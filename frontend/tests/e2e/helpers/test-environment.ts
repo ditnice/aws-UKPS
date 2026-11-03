@@ -1,4 +1,4 @@
-import { devRoleEmails, type UserRole } from './roles'
+import { devRoleEmails, devRoleOrganisationIds, type UserRole } from './roles'
 
 /** Where auth-setup saves each role's signed-in browser state. */
 export function authStatePath(role: UserRole): string {
@@ -52,6 +52,17 @@ export function roleCredentials(role: UserRole): RoleCredentials | undefined {
 
 export function hasRoleCredentials(role: UserRole): boolean {
   return roleCredentials(role) !== undefined
+}
+
+/** The organisation a role's tests act on: E2E_<ROLE>_ORGANISATION_ID if set; otherwise, with dev
+ * authentication, the organisation the backend seeds that role's user in; otherwise
+ * E2E_ORGANISATION_ID. */
+export function organisationIdFor(role: UserRole): string | undefined {
+  return (
+    readVariable(`E2E_${role.toUpperCase()}_ORGANISATION_ID`) ??
+    (isDevAuthMode() ? devRoleOrganisationIds[role] : undefined) ??
+    readVariable('E2E_ORGANISATION_ID')
+  )
 }
 
 /** The email of the user a role's tests are signed in as, so tests can avoid changing them. */

@@ -3,11 +3,7 @@ import { type Browser, type Page } from '@playwright/test'
 import { expect, test } from '../fixtures/test'
 import { forRoles } from '../helpers/roles'
 import { uniqueEmail } from '../helpers/test-data'
-import {
-  isEphemeralStack,
-  mutatesDataTag,
-  requireEnvironmentVariable,
-} from '../helpers/test-environment'
+import { isEphemeralStack, mutatesDataTag } from '../helpers/test-environment'
 import { OrganisationUsersPage } from '../pages/organisation-users.page'
 
 // Nothing seeds registration requests, so each test submits its own through the public form.
@@ -35,9 +31,8 @@ async function openRequest(page: Page, organisationId: string, workEmail: string
 
 test(
   'approves a registration request',
-  { tag: forRoles(['Super'], mutatesDataTag) },
-  async ({ page }) => {
-    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+  { tag: forRoles(['Super', 'Champion'], mutatesDataTag) },
+  async ({ page, organisationId }) => {
     const workEmail = await requestAccess(page, organisationId)
     const usersPage = await openRequest(page, organisationId, workEmail)
 
@@ -55,9 +50,8 @@ test(
 
 test(
   'rejects a registration request',
-  { tag: forRoles(['Super'], mutatesDataTag) },
-  async ({ page }) => {
-    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+  { tag: forRoles(['Super', 'Champion'], mutatesDataTag) },
+  async ({ page, organisationId }) => {
     const workEmail = await requestAccess(page, organisationId)
     const usersPage = await openRequest(page, organisationId, workEmail)
 
@@ -109,7 +103,7 @@ async function openAnyRequest(
 
 test.describe(
   'Reviewing a registration request without saving',
-  { tag: forRoles(['Super']) },
+  { tag: forRoles(['Super', 'Champion']) },
   () => {
     test.use({ readOnly: true })
 
@@ -117,8 +111,7 @@ test.describe(
       { action: 'Approve', verb: 'approve' },
       { action: 'Reject', verb: 'reject' },
     ]) {
-      test(`opens ${verb} and cancels`, async ({ baseURL, browser, page }) => {
-        const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+      test(`opens ${verb} and cancels`, async ({ baseURL, browser, page, organisationId }) => {
         const workEmail = await openAnyRequest(browser, baseURL, page, organisationId, action)
         if (!workEmail) {
           test.skip(true, `Organisation ${organisationId} has no registration request to ${verb}`)

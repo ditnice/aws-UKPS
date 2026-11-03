@@ -4,7 +4,8 @@ import {
   organisationUserTableHeaders,
   type OrganisationUserTableHeaderKey,
 } from '../../../src/app/portal/organisations/[id]/_lib/userLabels'
-import { devRoleEmails, userRoles } from '../helpers/roles'
+import { devRoleEmails, type UserRole, userRoles } from '../helpers/roles'
+import { championSubjects, type ChampionSubject, hasSeededSubjects } from '../helpers/subjects'
 import { signedInEmail } from '../helpers/test-environment'
 
 import type { SortDirection } from '../../../src/client/generated/types.gen'
@@ -135,6 +136,29 @@ export class OrganisationUsersPage {
 
     await expect(this.page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
     return email
+  }
+
+  /** Opens a known user's `action` link from the organisation's user list. */
+  async openUserByEmail(organisationId: string, email: string, action: string): Promise<string> {
+    await this.goto(organisationId)
+    await this.openUserAction(email, action)
+    return email
+  }
+
+  /* A test running as a Champion opens its own seeded subject (helpers/subjects.ts), so it never
+   * picks a user that a test running as another role is changing. Otherwise, or where nothing is
+   * seeded, `claim` picks a seeded user as before. Returns undefined if there is none. */
+  async claimUser(
+    userRole: UserRole | undefined,
+    organisationId: string,
+    subject: ChampionSubject,
+    action: string,
+    claim: () => Promise<string | undefined>,
+  ): Promise<string | undefined> {
+    if (userRole === 'Champion' && hasSeededSubjects()) {
+      return this.openUserByEmail(organisationId, championSubjects[subject], action)
+    }
+    return claim()
   }
 
   /** Chooses an action on the manage user's access page and continues. The NDS radio's label

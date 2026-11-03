@@ -6,7 +6,7 @@ import {
 import { expect, test } from '../../fixtures/test'
 import { forRoles } from '../../helpers/roles'
 import { testEmailPrefix } from '../../helpers/test-data'
-import { requireEnvironmentVariable, visualTag } from '../../helpers/test-environment'
+import { visualTag } from '../../helpers/test-environment'
 import { OrganisationUsersPage } from '../../pages/organisation-users.page'
 
 /** Whether a dd/mm/yyyy date from the table is on or after `cutoff`. Anything else, such as the
@@ -16,16 +16,19 @@ function isActiveSince(date: string, cutoff: Date): boolean {
   return Boolean(day) && new Date(Number(year), Number(month) - 1, Number(day)) >= cutoff
 }
 
-test.describe('Searching and filtering users', { tag: forRoles(['Super']) }, () => {
-  test('shows the filter panel', { tag: visualTag }, async ({ page }) => {
-    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+// Baselines are only kept for the Super user's organisation.
+test(
+  'shows the filter panel',
+  { tag: forRoles(['Super'], visualTag) },
+  async ({ page, organisationId }) => {
     const usersPage = new OrganisationUsersPage(page)
     await usersPage.goto(organisationId)
     await expect(usersPage.filterPanel).toHaveScreenshot('filter-panel.png')
-  })
+  },
+)
 
-  test('searches for a user by email', async ({ page }) => {
-    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+test.describe('Searching and filtering users', { tag: forRoles(['Super', 'Champion']) }, () => {
+  test('searches for a user by email', async ({ page, organisationId }) => {
     const usersPage = new OrganisationUsersPage(page)
     await usersPage.goto(organisationId)
     const emails = usersPage.cells('email')
@@ -40,8 +43,7 @@ test.describe('Searching and filtering users', { tag: forRoles(['Super']) }, () 
     await expect(emails).toHaveText([userEmail])
   })
 
-  test('filters to standard users', async ({ page }) => {
-    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+  test('filters to standard users', async ({ page, organisationId }) => {
     const usersPage = new OrganisationUsersPage(page)
     await usersPage.goto(organisationId)
 
@@ -55,8 +57,7 @@ test.describe('Searching and filtering users', { tag: forRoles(['Super']) }, () 
 
   for (const preset of lastActivePresets) {
     const label = lastActiveLabels[preset]
-    test(`filters to users active ${label.toLowerCase()}`, async ({ page }) => {
-      const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+    test(`filters to users active ${label.toLowerCase()}`, async ({ page, organisationId }) => {
       const usersPage = new OrganisationUsersPage(page)
       await usersPage.goto(organisationId)
 
@@ -94,8 +95,7 @@ test.describe('Searching and filtering users', { tag: forRoles(['Super']) }, () 
     })
   }
 
-  test('filters to active and pending users', async ({ page }) => {
-    const organisationId = requireEnvironmentVariable('E2E_ORGANISATION_ID')
+  test('filters to active and pending users', async ({ page, organisationId }) => {
     const usersPage = new OrganisationUsersPage(page)
     await usersPage.goto(organisationId)
 

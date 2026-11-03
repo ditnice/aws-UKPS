@@ -17,6 +17,7 @@ import {
   isEphemeralStack,
   isFlagSet,
   isLocalBaseURL,
+  organisationIdFor,
 } from './tests/e2e/helpers/test-environment'
 
 import type { TestOptions } from './tests/e2e/fixtures/test'
@@ -56,16 +57,17 @@ const publicTestIgnore = [
  * tests/e2e/helpers/roles.ts). A role's projects only exist when it can sign in: always with dev
  * authentication, otherwise when the role's credentials are set and the target is trusted. */
 const authenticatedTestMatch = /.*\.authenticated\.e2e\.spec\.ts/
-const hasOrganisationId = Boolean(process.env.E2E_ORGANISATION_ID?.trim())
 const runnableRoles = userRoles.filter(
   (role) =>
     isDevAuth ||
-    (hasOrganisationId && hasRoleCredentials(role) && isAuthenticatedTargetAllowed(baseURL)),
+    (organisationIdFor(role) !== undefined &&
+      hasRoleCredentials(role) &&
+      isAuthenticatedTargetAllowed(baseURL)),
 )
 const skippedRoles = userRoles.filter((role) => !runnableRoles.includes(role))
 if (skippedRoles.length > 0 && runnableRoles.length > 0) {
   console.info(
-    `Skipping authenticated tests for ${skippedRoles.join(', ')}: set E2E_<ROLE>_EMAIL, _PASSWORD and _TOTP_SECRET to run them.`,
+    `Skipping authenticated tests for ${skippedRoles.join(', ')}: set E2E_<ROLE>_EMAIL, _PASSWORD, _TOTP_SECRET and an organisation ID to run them.`,
   )
 }
 

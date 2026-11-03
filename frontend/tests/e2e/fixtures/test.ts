@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test as base } from '@playwright/test'
 
 import { roleTag, type UserRole } from '../helpers/roles'
+import { organisationIdFor } from '../helpers/test-environment'
 
 type AccessibilityOptions = {
   exclude?: string[]
@@ -25,6 +26,8 @@ type Fixtures = {
   checkAccessibility: (options?: AccessibilityOptions) => Promise<void>
   readOnlyGuard: void
   roleAnnotation: void
+  /** The organisation this run's role acts on (see organisationIdFor). */
+  organisationId: string
 }
 
 const readMethods = new Set(['GET', 'HEAD', 'OPTIONS'])
@@ -91,6 +94,18 @@ export const test = base.extend<TestOptions & Fixtures>({
     },
     { auto: true },
   ],
+
+  organisationId: async ({ userRole }, fixtureUse) => {
+    const organisationId = userRole
+      ? organisationIdFor(userRole)
+      : process.env.E2E_ORGANISATION_ID?.trim()
+    if (!organisationId) {
+      throw new Error(
+        `E2E_${userRole?.toUpperCase() ?? 'ROLE'}_ORGANISATION_ID or E2E_ORGANISATION_ID must be set to run authenticated Playwright tests.`,
+      )
+    }
+    await fixtureUse(organisationId)
+  },
 
   checkAccessibility: async ({ page }, fixtureUse, testInfo) => {
     await fixtureUse(async ({ exclude = [], include } = {}) => {

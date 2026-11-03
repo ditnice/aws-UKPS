@@ -14,6 +14,15 @@ export const devRoleEmails: Record<UserRole, string> = {
   Standard: 'dev.standard@email.com',
 }
 
+/* The organisations those users belong to. They must match DevAuthenticationClaims.RoleUsers:
+ * Champion and Standard are kept out of the Super user's organisation, so tests running as
+ * different roles never change the same data. */
+export const devRoleOrganisationIds: Record<UserRole, string> = {
+  Super: '1',
+  Champion: '2',
+  Standard: '2',
+}
+
 export function roleTag(role: UserRole): string {
   return `@role-${role.toLowerCase()}`
 }

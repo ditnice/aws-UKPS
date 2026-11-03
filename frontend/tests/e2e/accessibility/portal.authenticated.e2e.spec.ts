@@ -1,12 +1,12 @@
 import { expect, test } from '../fixtures/test'
-import { forRoles } from '../helpers/roles'
+import { allRoles, forRoles } from '../helpers/roles'
 
 test(
   'portal dashboard has no automatically detectable violations',
-  { tag: forRoles(['Super']) },
-  async ({ checkAccessibility, page }) => {
+  { tag: forRoles(allRoles) },
+  async ({ checkAccessibility, page, organisationId }) => {
     await page.goto('/portal')
-    await expect(page).toHaveURL(/\/portal\/organisations\/1\/records$/)
+    await expect(page).toHaveURL(`/portal/organisations/${organisationId}/records`)
 
     await checkAccessibility()
   },

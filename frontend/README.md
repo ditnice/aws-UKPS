@@ -112,9 +112,31 @@ test.describe('Promoting a user', { tag: forRoles(['Super', 'Champion'], mutates
 An authenticated test without a role tag fails in the `authenticated-untagged` project. Run one
 role with `--project=authenticated-champion`. With dev authentication (`just e2e`), nobody
 signs in: each project sets a `ukps_dev_role` cookie, and the backend then acts as that role's
-seeded user in organisation 1 (`DevAuthenticationClaims.RoleUsers`).
-Local development normally uses `AUTHENTICATION_MODE=DEV`, so authentication redirects and
-authenticated flows run against deployed environments rather than the local server.
+seeded user (`DevAuthenticationClaims.RoleUsers`).
+
+Each role acts on its own organisation, from the `organisationId` fixture, so tests running as
+different roles never change the same data. With dev authentication, Super uses organisation 1,
+and Champion and Standard use organisation 2. Otherwise each role reads
+`E2E_<ROLE>_ORGANISATION_ID`, falling back to `E2E_ORGANISATION_ID`. In organisation 2, tests
+running as a Champion change fixed seeded users (`tests/e2e/helpers/subjects.ts`) rather than
+whichever user a search finds first.
+
+What each role can do, and so which roles a spec should run as:
+
+| Capability                                                                                 | Super   | Champion                  | Standard           |
+| ------------------------------------------------------------------------------------------ | ------- | ------------------------- | ------------------ |
+| Own organisation's records                                                                 | ✓       | ✓                         | ✓                  |
+| "Manage my organisation" link                                                              | ✓       | ✓                         | hidden             |
+| Organisation details and users                                                             | any org | own org                   | not permitted      |
+| Edit organisation details                                                                  | any org | own org                   | not permitted      |
+| Invite a user                                                                              | ✓       | own org                   | refused by the API |
+| Approve or reject a registration                                                           | ✓       | own org                   | ✗                  |
+| Change a user's role                                                                       | ✓       | own org, not a super user | ✗                  |
+| Deactivate or reactivate a user                                                            | ✓       | own org                   | ✗                  |
+| Remove a user (all organisations)                                                          | ✓       | ✗                         | ✗                  |
+| Actions on your own row                                                                    | none    | none                      | none               |
+| Local development normally uses `AUTHENTICATION_MODE=DEV`, so authentication redirects and |
+| authenticated flows run against deployed environments rather than the local server.        |
 
 #### Docker (Optional)
 
