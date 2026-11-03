@@ -43,7 +43,7 @@ internal sealed partial class UserOnboardingService
     {
         User? existingUser = await _dbContext
             .Users.Include(x => x.UserOrgMemberships)
-            .FirstOrDefaultAsync(x => x.WorkEmail == command.NewUserEmail, cancellationToken);
+            .GetByEmailOrDefault(command.NewUserEmail, cancellationToken);
         if (existingUser is not null)
         {
             return await AddMembershipToExistingUser(existingUser, command, cancellationToken);
@@ -151,13 +151,8 @@ internal sealed partial class UserOnboardingService
         CancellationToken cancellationToken
     )
     {
-        UserOrgMembershipStatus status = existingUser.IsSetupPending()
-            ? UserOrgMembershipStatus.AwaitingSetup
-            : UserOrgMembershipStatus.Active;
-
         bool added = existingUser.TryAddMembership(
             command.OrganisationId,
-            status,
             _dateTimeProvider.GetUtcNow()
         );
         if (!added)

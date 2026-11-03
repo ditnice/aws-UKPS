@@ -59,18 +59,6 @@ internal sealed class User
         }
     }
 
-    /// <summary>
-    /// Whether the user has not yet finished account setup. A user mid-setup has only
-    /// <see cref="UserOrgMembershipStatus.AwaitingSetup"/> memberships: setup finalises every
-    /// membership together.
-    /// </summary>
-    internal bool IsSetupPending()
-    {
-        GuardAgainstUserMembershipsNotLoaded();
-
-        return UserOrgMemberships.Any(x => x.Status == UserOrgMembershipStatus.AwaitingSetup);
-    }
-
     internal bool TryUpdateCurrentOrganisation(int organisationId)
     {
         GuardAgainstUserMembershipsNotLoaded();
@@ -107,6 +95,18 @@ internal sealed class User
     }
 
     internal bool HasMultipleSelectableOrganisations() => SelectableOrganisationIds().Length > 1;
+
+    /// <summary>
+    /// Whether the user has not yet finished account setup. A user mid-setup has only
+    /// <see cref="UserOrgMembershipStatus.AwaitingSetup"/> memberships: setup finalises every
+    /// membership together.
+    /// </summary>
+    private bool IsSetupPending()
+    {
+        GuardAgainstUserMembershipsNotLoaded();
+
+        return UserOrgMemberships.Any(x => x.Status == UserOrgMembershipStatus.AwaitingSetup);
+    }
 
     private int[] SelectableOrganisationIds()
     {
@@ -176,14 +176,11 @@ internal sealed class User
             CreatedByUserId = command.CurrentUserId,
             CreatedAt = command.Now,
         };
-        var membership = new UserOrgMembership()
-        {
-            Status = UserOrgMembershipStatus.AwaitingSetup,
-            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both, // URP 435 - Decide what initial value should be set.
-            UserRole = UserRole.Standard,
-            CreatedAt = command.Now,
-            OrganisationId = command.OrganisationId,
-        };
+        var membership = CreateInitialMembership(
+            command.OrganisationId,
+            UserOrgMembershipStatus.AwaitingSetup,
+            command.Now
+        );
         return new User()
         {
             CognitoUsername = command.CognitoUsername,
@@ -197,7 +194,21 @@ internal sealed class User
         };
     }
 
-    internal bool TryAddMembership(int organisationId, UserOrgMembershipStatus status, DateTime now)
+    private static UserOrgMembership CreateInitialMembership(
+        int organisationId,
+        UserOrgMembershipStatus status,
+        DateTime now
+    ) =>
+        new()
+        {
+            Status = status,
+            AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both, // URP 435 - Decide what initial value should be set.
+            UserRole = UserRole.Standard,
+            CreatedAt = now,
+            OrganisationId = organisationId,
+        };
+
+    internal bool TryAddMembership(int organisationId, DateTime now)
     {
         GuardAgainstUserMembershipsNotLoaded();
 
@@ -206,16 +217,12 @@ internal sealed class User
             return false;
         }
 
-        UserOrgMemberships.Add(
-            new UserOrgMembership()
-            {
-                Status = status,
-                AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
-                UserRole = UserRole.Standard,
-                CreatedAt = now,
-                OrganisationId = organisationId,
-            }
-        );
+        // Setup finalises every membership together, so a user mid-setup gets a new membership that waits with the others.
+        UserOrgMembershipStatus status = IsSetupPending()
+            ? UserOrgMembershipStatus.AwaitingSetup
+            : UserOrgMembershipStatus.Active;
+
+        UserOrgMemberships.Add(CreateInitialMembership(organisationId, status, now));
         return true;
     }
 
