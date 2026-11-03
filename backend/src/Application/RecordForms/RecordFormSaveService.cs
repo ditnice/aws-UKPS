@@ -5,6 +5,7 @@ using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
+using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Rules;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -43,6 +44,10 @@ internal sealed class RecordFormSaveService(
         if (updateModelError is not null)
         {
             return SaveRecordPageResult.Err(updateModelError);
+        }
+        if (modelledPageUpdate is null)
+        {
+            return CreateSuccessResult(currentPage!);
         }
 
         (bool updateRequired, SaveRecordPageResult result) = await ApplyUpdates(
@@ -101,16 +106,27 @@ internal sealed class RecordFormSaveService(
             cancellationToken
         );
         PageAnswers before = RecordFormPageLoader.ReadAnswers(page, rows);
+        Dictionary<string, IReadOnlyList<FormOption>> options = await loader.LoadOptionsAsync(
+            page,
+            before,
+            cancellationToken
+        );
+        (PageAnswers after, Dictionary<string, string>? errors) = PageAnswerValidator.Validate(
+            page,
+            command.Answers,
+            options
+        );
+
+        if (before.PageHashIsEqual(after))
+        {
+            return (null, null); // No changes were made, so no error is returned.
+        }
 
         if (!before.PageHashIsEqual(command.PageHash))
         {
             return (null, new SaveRecordPageError.PageAnswersChanged());
         }
 
-        var options = await loader.LoadOptionsAsync(page, before, cancellationToken);
-
-        (Dictionary<string, FormAnswer>? after, Dictionary<string, string>? errors) =
-            PageAnswerValidator.Validate(page, command.Answers, options);
         if (errors.Count > 0)
         {
             return (null, new SaveRecordPageError.Invalid(errors));
@@ -125,10 +141,6 @@ internal sealed class RecordFormSaveService(
         CancellationToken cancellationToken
     )
     {
-        SaveRecordPageDto result = new()
-        {
-            NextPageId = currentPage.Model.NextPage(currentPage.Page)?.Id,
-        };
         FormQuestion[] changed = currentPage
             .Page.Questions.Where(q =>
                 !modelledPageUpdate.After[q.Id].Equals(modelledPageUpdate.Before[q.Id])
@@ -136,7 +148,7 @@ internal sealed class RecordFormSaveService(
             .ToArray();
         if (changed.Length == 0)
         {
-            return (false, SaveRecordPageResult.Ok(result));
+            return (false, CreateSuccessResult(currentPage));
         }
 
         foreach (FormQuestion question in changed)
@@ -156,7 +168,14 @@ internal sealed class RecordFormSaveService(
             cancellationToken
         );
 
-        return (true, SaveRecordPageResult.Ok(result));
+        return (true, CreateSuccessResult(currentPage));
+    }
+
+    private static SaveRecordPageResult CreateSuccessResult(LoadedPage currentPage)
+    {
+        return SaveRecordPageResult.Ok(
+            new SaveRecordPageDto { NextPageId = currentPage.Model.NextPage(currentPage.Page)?.Id }
+        );
     }
 
     private static SaveRecordPageError? CheckCanSave(
@@ -210,7 +229,7 @@ internal sealed class RecordFormSaveService(
         LoadedPage loaded,
         FormQuestion[] changed,
         PageAnswers before,
-        Dictionary<string, FormAnswer> after,
+        PageAnswers after,
         CancellationToken cancellationToken
     )
     {
@@ -241,7 +260,7 @@ internal sealed class RecordFormSaveService(
 
     private sealed record ModelledPageUpdated(
         PageAnswers Before,
-        Dictionary<string, FormAnswer> After,
+        PageAnswers After,
         Dictionary<FormEntity, object?> Rows
     );
 }

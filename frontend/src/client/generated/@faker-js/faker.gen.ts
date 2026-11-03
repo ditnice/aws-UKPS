@@ -617,7 +617,6 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
     const f = options?.faker ?? faker;
     return {
         formVersion: f.string.sample(),
-        revisionVersion: f.number.int(),
         recordId: f.number.int(),
         section: fakeRecordPageSectionDto(options),
         task: fakeRecordPageTaskDto(options),

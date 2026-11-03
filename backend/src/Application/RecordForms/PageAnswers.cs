@@ -49,6 +49,11 @@ internal sealed class PageAnswers : IEnumerable<KeyValuePair<string, FormAnswer>
         return Convert.ToHexString(SHA256.HashData(stream.ToArray()));
     }
 
+    internal bool PageHashIsEqual(PageAnswers other)
+    {
+        return PageHashIsEqual(other.ComputeStableHash());
+    }
+
     internal bool PageHashIsEqual(string pageHash)
     {
         var hash = ComputeStableHash();

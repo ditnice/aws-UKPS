@@ -529,7 +529,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_WhenAnswerIsUnchangedExceptForWhitespace_ShouldSucceed()
+    public async Task SavePage_WhenAnswerIsUnchangedExceptForWhitespace_ShouldBeSuccess()
     {
         RecordPageDto page = await GetPage("indication");
 
@@ -544,9 +544,9 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_WhenTheAnswerIsEmptyAndUnchanged_ShouldSucceed()
+    public async Task SavePage_WhenTheAnswerIsEmptyAndUnchanged_ShouldBeSuccess()
     {
-        var answer = "";
+        var answer = "Test";
         RecordPageDto page = await GetPage("indication");
 
         SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, answer));
