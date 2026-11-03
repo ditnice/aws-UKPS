@@ -13,7 +13,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.5";
     private const string ExpectedFingerprint =
-        "7f975edbdd1963aec3ccdd7015bd9a39c9f8ec9ffc3b4f0c6a951d8abdc3b5f4";
+        "10b2779e08ae56da7bbc3e8e2033e5fba3b6dc127d4bc72f7d4e18f01f3f5ec4";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -75,6 +75,29 @@ public class MedicineFormModelTests
                 "test-mandatory",
                 "monitoring-tests",
                 "safety-tests",
+            ]);
+    }
+
+    [Fact]
+    public void Model_HasThePatientAndClinicalRequirementsPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(
+                    p.SectionId,
+                    "patient-and-clinical-requirements",
+                    StringComparison.Ordinal
+                )
+            )
+            .Select(static p => p.Id)
+            .ShouldBe([
+                "urgent-identification",
+                "screening-programme",
+                "nhs-service-changes",
+                "handling-storage",
+                "population-range",
+                "eligible-population",
+                "early-access",
             ]);
     }
 
@@ -206,6 +229,47 @@ public class MedicineFormModelTests
                 FormControl.Textarea,
                 AnswerShape.Single
             ),
+            (
+                "medicines_patient_identification.urgent_identification_required",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_patient_identification.screening_required",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.nhs_service_changes_required",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.handling_storage_requirements",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.uk_patient_population_range_id",
+                FormControl.Select,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.uk_patient_population_notes",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.estimated_eligible_patient_population",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            ("medicines_budget_impact.estimated_uptake", FormControl.Textarea, AnswerShape.Single),
+            (
+                "medicines_budget_impact.compassionate_access_available",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
         ]);
     }
 
@@ -222,6 +286,11 @@ public class MedicineFormModelTests
         model.PreviousPage(model.FindPage("diagnostic-test-required")!).ShouldBeNull();
         model.NextPage(model.FindPage("diagnostic-test-required")!)!.Id.ShouldBe("biomarker-type");
         model.NextPage(model.FindPage("safety-tests")!).ShouldBeNull();
+        model.PreviousPage(model.FindPage("urgent-identification")!).ShouldBeNull();
+        model
+            .NextPage(model.FindPage("urgent-identification")!)!
+            .Id.ShouldBe("screening-programme");
+        model.NextPage(model.FindPage("early-access")!).ShouldBeNull();
         model.FindPage("unknown").ShouldBeNull();
     }
 

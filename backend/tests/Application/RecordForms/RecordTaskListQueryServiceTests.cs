@@ -86,7 +86,11 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         taskList.RecordTitle.ShouldBeNull();
         taskList
             .Sections.Select(static s => s.Id)
-            .ShouldBe(["indication-details", "laboratory-testing"]);
+            .ShouldBe([
+                "indication-details",
+                "laboratory-testing",
+                "patient-and-clinical-requirements",
+            ]);
         RecordTaskListSectionDto section = taskList.Sections[0];
         (section.Id, section.Title).ShouldBe(("indication-details", "Indication details"));
         RecordTaskListTaskDto task = section.Tasks.ShouldHaveSingleItem();
