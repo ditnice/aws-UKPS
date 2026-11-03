@@ -491,7 +491,7 @@ sequenceDiagram
             B-->>F: 404
         else Cannot edit
             B-->>F: 403
-        else Not draft, form changed, or revisionVersion stale
+        else Not editable, form changed, or revisionVersion stale
             B-->>F: 409 { code }
             F-->>U: "This page has changed", reload link
         else Can save

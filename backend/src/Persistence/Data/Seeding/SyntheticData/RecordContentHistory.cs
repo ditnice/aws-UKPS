@@ -12,12 +12,12 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 /// </summary>
 internal static class RecordContentHistory
 {
-    /// <summary>Phrases that introduce the population an indication applies to.</summary>
     private static readonly JsonSerializerOptions _dateAuditJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
     };
 
+    /// <summary>Phrases that introduce the population an indication applies to.</summary>
     private static readonly string[] _populationPhrases =
     [
         " in adult",

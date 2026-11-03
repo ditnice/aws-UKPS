@@ -52,7 +52,7 @@ Record content pages (medicines and vaccines revisions) are described by **C# fo
 | 7 | Conditionals | Cross-page branching |
 | 8 | Navigation | Backend computes next page and returns it in the save response |
 | 9 | Stale answers | Cleared on save when branching makes them no longer applicable |
-| 10 | Revision state | Saves allowed on `WorkflowStatus.Draft` only |
+| 10 | Revision state | Saves allowed on a `WorkflowStatus.Draft` revision only, and not while the record is on hold or archived |
 | 11 | Audit | Every save writes one `RecordEvent` + a `RecordEventFieldChange` per changed question |
 | 12 | Repeating data | Add-another groups on the same page |
 | 13 | Options | Reference data inline in the page schema; archived items excluded unless already selected |
@@ -187,7 +187,7 @@ Form.For(RecordType.Medicine, version: "2026.10.1")
 | Single-field | `required`, `minLength`, `maxLength`, `pattern`, `min`, `max`, `integer`, `minItems`, `maxItems`, `dateRange` | ✅ | ✅ |
 | Conditional required | `requiredWhen(condition)` (this or earlier page) | ✅ | ✅ |
 | Cross-field | `compare(otherId, op)` with `< <= > >= == !=` for numbers and precision dates | ✅ | ✅ |
-| Server-only | reference exists and not archived (unless already saved), revision is Draft, uniqueness, every submitted `itemId` belongs to this revision's collection (and to the right parent item when nested) | ❌ never serialised | ✅ |
+| Server-only | reference exists and not archived (unless already saved), revision is an editable draft (record not on hold or archived), uniqueness, every submitted `itemId` belongs to this revision's collection (and to the right parent item when nested) | ❌ never serialised | ✅ |
 
 - `dateRange(min?, max?)` applies to `precisionDate`: the period start must be on or after `min` and on or before `max`, each given as an ISO date. (Proposed definition: confirm before implementing.)
 - Every rule carries its own message, defined in C#; the client shows the same text.
@@ -283,7 +283,7 @@ C# body type: `Dictionary<string, JsonElement>` for `answers` (one generic OpenA
 
 One DB transaction. Returns `Result<SavePageDto, SavePageError>`.
 
-1. **Authorise and load** revision: `Read` on the organisation (else 404, ADR-004), then `EditRecordContent` (else 403); 409 unless Draft; 409 `revision_changed` if the submitted `revisionVersion` ≠ current; resolve page (404 if unknown).
+1. **Authorise and load** revision: `Read` on the organisation (else 404, ADR-004), then `EditRecordContent` (else 403); 409 `record_not_editable` unless the revision is a draft and the record is not on hold or archived; 409 `revision_changed` if the submitted `revisionVersion` ≠ current; resolve page (404 if unknown).
 2. **Snapshot**: read every bound value for the revision into an `AnswerSet` keyed by question ID (one query per entity type). This is "before".
 3. **Applicability**: evaluate page `ShowWhen` against snapshot; 404 if it does not apply.
 4. **Shape check**: every page question present, no unknown keys, values match type shape, option values exist, every `itemId` exists in this revision's collection (under the right parent item for nested groups). Fail → 400 before rules.
