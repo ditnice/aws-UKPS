@@ -41,6 +41,13 @@ describe('ChangeRecordStatusActions', () => {
   it('does not select an action by default', () => {
     renderActions()
 
+    expect(
+      screen.getByRole('group', { name: 'How would you like to change the record status?' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Archive the record' })).toHaveAccessibleDescription(
+      'Development has ended and will not restart. The record cannot be updated once it has been archived.',
+    )
+
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio).not.toBeChecked()
     }
@@ -52,6 +59,14 @@ describe('ChangeRecordStatusActions', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(screen.getByText('Select an option')).toBeInTheDocument()
+    expect(
+      screen.getByRole('group', { name: 'How would you like to change the record status?' }),
+    ).toHaveAttribute('aria-invalid', 'true')
+    for (const radio of screen.getAllByRole('radio')) {
+      expect(radio).not.toHaveAttribute('aria-invalid')
+      expect(radio).not.toHaveAttribute('aria-expanded')
+      expect(radio).toHaveAccessibleDescription(/Select an option/)
+    }
     expect(router.push).not.toHaveBeenCalled()
   })
 
@@ -62,6 +77,13 @@ describe('ChangeRecordStatusActions', () => {
     await user.click(screen.getByRole('radio', { name: 'Archive the record' }))
 
     expect(screen.queryByText('Select an option')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('group', { name: 'How would you like to change the record status?' }),
+    ).not.toHaveAttribute('aria-invalid')
+    expect(screen.getByRole('radio', { name: 'Archive the record' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Archive the record' })).not.toHaveAttribute(
+      'aria-invalid',
+    )
     expect(router.push).not.toHaveBeenCalled()
   })
 

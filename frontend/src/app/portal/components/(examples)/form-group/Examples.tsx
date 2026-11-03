@@ -2,9 +2,9 @@
 
 import { Checkbox } from '@nice-digital/nds-checkbox'
 import { FormGroup } from '@nice-digital/nds-form-group'
-import { Radio } from '@nice-digital/nds-radio'
 
 import { Input } from '@/components/Input/Input'
+import { Radio, Radios } from '@/components/Radios/Radios'
 
 import { Example } from '../../_components/Example'
 
@@ -18,23 +18,23 @@ export function Examples() {
         </FormGroup>
       </Example>
       <Example title="Default form group">
-        <FormGroup
+        <Radios
           legend="Are you happy for us to contact you in the future?"
           name="contact-preference"
         >
           <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
       </Example>
       <Example title="Inline radios">
-        <FormGroup
+        <Radios
           legend="Are you happy for us to contact you in the future?"
           name="contact-preference-inline"
           inline
         >
           <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
       </Example>
       <Example title="Form group with hints">
         <FormGroup

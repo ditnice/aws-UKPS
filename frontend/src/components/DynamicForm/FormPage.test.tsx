@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RecordPageDto, RecordPageQuestionDto } from '@/client/generated'
@@ -278,6 +279,52 @@ describe('FormPage', () => {
   })
 
   describe('controls', () => {
+    it('associates radio hints and errors and revalidates after selection and blur', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'choice',
+                type: 'Radio',
+                label: 'Choose an answer',
+                hint: 'Select one answer',
+                rules: [{ kind: 'Required', value: null, message: 'Choose yes or no' }],
+                options: [
+                  { value: 'Yes', label: 'Yes', children: null },
+                  { value: 'No', label: 'No', children: null },
+                ],
+              }),
+            ],
+            answers: { choice: null },
+          })}
+        />,
+      )
+      const yes = screen.getByRole('radio', { name: 'Yes' })
+      expect(yes).toHaveAccessibleDescription('Select one answer')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      expect(await screen.findByText('Choose yes or no')).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Choose an answer' })).toHaveAttribute(
+        'aria-invalid',
+        'true',
+      )
+      for (const radio of screen.getAllByRole('radio')) {
+        expect(radio).not.toHaveAttribute('aria-invalid')
+        expect(radio).not.toHaveAttribute('aria-expanded')
+        expect(radio).toHaveAccessibleDescription(/Select one answer.*Choose yes or no/)
+      }
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      await user.click(yes)
+      await user.tab()
+      await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
+      expect(yes).toBeChecked()
+      expect(yes).not.toHaveAttribute('aria-invalid')
+      expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+    })
+
     it('saves the chosen radio option', async () => {
       render(
         <FormPage

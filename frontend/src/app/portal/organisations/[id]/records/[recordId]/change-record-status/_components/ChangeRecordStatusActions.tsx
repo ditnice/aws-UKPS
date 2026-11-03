@@ -4,11 +4,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { FormGroup } from '@nice-digital/nds-form-group'
-import { Radio } from '@nice-digital/nds-radio'
-
 import type { RecordStatus, RecordType } from '@/client/generated'
 import { Button, ButtonGroup } from '@/components/Button/Button'
+import { Radio, Radios } from '@/components/Radios/Radios'
 
 import { buildRecordHref } from '../../_lib/recordLinks'
 
@@ -78,20 +76,28 @@ export const ChangeRecordStatusActions = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <FormGroup name="action" groupError={radioError ? 'Select an option' : undefined}>
+      <Radios
+        legend="How would you like to change the record status?"
+        name="action"
+        error={radioError ? 'Select an option' : undefined}
+        value={selectedAction ?? null}
+        onChange={(value) => {
+          const option = availableActions.find((option) => option.action === value)
+          if (option) {
+            setSelectedAction(option.action)
+            setRadioError(false)
+          }
+        }}
+      >
         {availableActions.map((option) => (
           <Radio
             key={option.action}
             label={option.label}
             value={option.action}
             hint={option.hint}
-            onChange={() => {
-              setSelectedAction(option.action)
-              setRadioError(false)
-            }}
           />
         ))}
-      </FormGroup>
+      </Radios>
 
       <ButtonGroup>
         <Button type="submit" variant="cta">

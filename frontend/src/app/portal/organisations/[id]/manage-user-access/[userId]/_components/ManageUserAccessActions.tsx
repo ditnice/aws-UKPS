@@ -3,11 +3,9 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { FormGroup } from '@nice-digital/nds-form-group'
-import { Radio } from '@nice-digital/nds-radio'
-
 import type { UserMembershipAction, UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
+import { Radio, Radios } from '@/components/Radios/Radios'
 
 interface Props {
   organisationId: number
@@ -102,9 +100,18 @@ export default function ManageUserAccessActions({
 
   return (
     <form onSubmit={handleSubmit}>
-      <FormGroup
-        name="manage user's access"
-        groupError={radioError ? 'Select an option - No answer provided' : undefined}
+      <Radios
+        legend="What would you like to do with this user's access?"
+        name="action"
+        error={radioError ? 'Select an option - No answer provided' : undefined}
+        value={selectedAction ?? null}
+        onChange={(value) => {
+          const option = availableActions.find((option) => option.action === value)
+          if (option) {
+            setSelectedAction(option.action)
+            setRadioError(false)
+          }
+        }}
       >
         {availableActions.map((option) => (
           <Radio
@@ -112,14 +119,9 @@ export default function ManageUserAccessActions({
             label={option.label}
             value={option.action}
             hint={option.hint}
-            name="action"
-            onChange={() => {
-              setSelectedAction(option.action)
-              setRadioError(false)
-            }}
           />
         ))}
-      </FormGroup>
+      </Radios>
       <Button type="submit" variant="cta">
         Continue
       </Button>

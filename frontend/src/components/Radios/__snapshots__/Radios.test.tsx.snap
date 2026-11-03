@@ -6,6 +6,7 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
     data-component="radios"
   >
     <fieldset
+      aria-describedby="contact-hint"
       class="form-group"
       data-component="form-group"
     >
@@ -16,6 +17,7 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
       </legend>
       <p
         class="form-group__hint"
+        id="contact-hint"
       >
         Select one option
       </p>
@@ -25,7 +27,7 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
       >
         <input
           aria-controls="conditional-contact_email"
-          aria-expanded="false"
+          aria-describedby="contact-hint"
           class="radio__input"
           id="contact_email"
           name="contact"
@@ -39,9 +41,11 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
           Email
         </label>
       </div>
-      <div
-        class="_conditional_3637ee _conditionalHidden_3637ee"
+      <fieldset
+        class="_conditional_3637ee"
         data-component="radios-conditional"
+        disabled=""
+        hidden=""
         id="conditional-contact_email"
       >
         <label
@@ -52,15 +56,16 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
         <input
           id="contact-email"
           name="contactEmail"
+          required=""
         />
-      </div>
+      </fieldset>
       <div
         class="radio"
         data-component="radio"
       >
         <input
           aria-controls="conditional-contact_phone"
-          aria-expanded="false"
+          aria-describedby="contact-hint"
           class="radio__input"
           id="contact_phone"
           name="contact"
@@ -74,9 +79,11 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
           Phone
         </label>
       </div>
-      <div
-        class="_conditional_3637ee _conditionalHidden_3637ee"
+      <fieldset
+        class="_conditional_3637ee"
         data-component="radios-conditional"
+        disabled=""
+        hidden=""
         id="conditional-contact_phone"
       >
         <label
@@ -88,12 +95,13 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
           id="contact-phone"
           name="contactPhone"
         />
-      </div>
+      </fieldset>
       <div
         class="radio"
         data-component="radio"
       >
         <input
+          aria-describedby="contact-hint"
           class="radio__input"
           id="contact_post"
           name="contact"
@@ -118,6 +126,8 @@ exports[`Radios > renders the error message and styles every option as invalid 1
     data-component="radios"
   >
     <fieldset
+      aria-describedby="contact-error"
+      aria-invalid="true"
       class="form-group"
       data-component="form-group"
     >
@@ -128,19 +138,22 @@ exports[`Radios > renders the error message and styles every option as invalid 1
       </legend>
       <p
         class="form-group__error-message"
+        id="contact-error"
       >
-        Select how you would like to be contacted
+        <span
+          class="visually-hidden"
+        >
+          Error:
+        </span>
+         Select how you would like to be contacted
       </p>
-      <p
-        class="radio__error-message"
-      />
       <div
         class="radio radio--error"
         data-component="radio"
       >
         <input
           aria-controls="conditional-contact_email"
-          aria-expanded="false"
+          aria-describedby="contact-error"
           class="radio__input"
           id="contact_email"
           name="contact"
@@ -154,9 +167,11 @@ exports[`Radios > renders the error message and styles every option as invalid 1
           Email
         </label>
       </div>
-      <div
-        class="_conditional_3637ee _conditionalHidden_3637ee"
+      <fieldset
+        class="_conditional_3637ee"
         data-component="radios-conditional"
+        disabled=""
+        hidden=""
         id="conditional-contact_email"
       >
         <label
@@ -167,18 +182,16 @@ exports[`Radios > renders the error message and styles every option as invalid 1
         <input
           id="contact-email"
           name="contactEmail"
+          required=""
         />
-      </div>
-      <p
-        class="radio__error-message"
-      />
+      </fieldset>
       <div
         class="radio radio--error"
         data-component="radio"
       >
         <input
           aria-controls="conditional-contact_phone"
-          aria-expanded="false"
+          aria-describedby="contact-error"
           class="radio__input"
           id="contact_phone"
           name="contact"
@@ -192,9 +205,11 @@ exports[`Radios > renders the error message and styles every option as invalid 1
           Phone
         </label>
       </div>
-      <div
-        class="_conditional_3637ee _conditionalHidden_3637ee"
+      <fieldset
+        class="_conditional_3637ee"
         data-component="radios-conditional"
+        disabled=""
+        hidden=""
         id="conditional-contact_phone"
       >
         <label
@@ -206,15 +221,13 @@ exports[`Radios > renders the error message and styles every option as invalid 1
           id="contact-phone"
           name="contactPhone"
         />
-      </div>
-      <p
-        class="radio__error-message"
-      />
+      </fieldset>
       <div
         class="radio radio--error"
         data-component="radio"
       >
         <input
+          aria-describedby="contact-error"
           class="radio__input"
           id="contact_post"
           name="contact"
