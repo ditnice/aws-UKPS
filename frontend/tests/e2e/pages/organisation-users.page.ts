@@ -145,6 +145,45 @@ export class OrganisationUsersPage {
     return email
   }
 
+  /** Opens a known user's manage user's access page. A Champion's row for a deactivated user only
+   * links to Reactivate, not Edit, so this reads the user's id from either link and goes there. */
+  async openManageUserAccess(organisationId: string, email: string) {
+    await this.goto(organisationId)
+    await this.filterByEmail(email)
+    const link = this.row(email)
+      .getByRole('link', { name: 'Edit', exact: true })
+      .or(this.row(email).getByRole('link', { name: 'Reactivate', exact: true }))
+      .first()
+    const href = await link.getAttribute('href')
+    const userId = href?.match(/\/(?:manage-user-access|users)\/(\d+)/)?.[1]
+    if (!userId) throw new Error(`No manage link found for ${email}`)
+
+    await this.page.goto(`/portal/organisations/${organisationId}/manage-user-access/${userId}`)
+    await expect(this.page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+  }
+
+  /** Filters to the user and checks their row links to exactly these actions. */
+  async expectRowLinks(email: string, labels: readonly string[]) {
+    await this.filterByEmail(email)
+    const row = this.row(email)
+    await expect(row).toBeVisible()
+    await expect(row.getByRole('link')).toHaveCount(labels.length)
+    for (const name of labels) {
+      await expect(row.getByRole('link', { name, exact: true })).toBeVisible()
+    }
+  }
+
+  /** Checks the manage user's access page offers exactly these actions, none chosen yet. */
+  async expectAccessActions(labels: readonly string[]) {
+    await expect(this.page.getByRole('radio')).toHaveCount(labels.length)
+    for (const name of labels) {
+      const radio = this.page.getByRole('radio', { name, exact: true })
+      await expect(radio).toBeVisible()
+      await expect(radio).not.toBeChecked()
+    }
+    await expect(this.page.getByRole('button', { name: 'Continue' })).toBeVisible()
+  }
+
   /* A test running as a Champion opens its own seeded subject (helpers/subjects.ts), so it never
    * picks a user that a test running as another role is changing. Otherwise, or where nothing is
    * seeded, `claim` picks a seeded user as before. Returns undefined if there is none. */

@@ -123,20 +123,21 @@ whichever user a search finds first.
 
 What each role can do, and so which roles a spec should run as:
 
-| Capability                                                                                 | Super   | Champion                  | Standard           |
-| ------------------------------------------------------------------------------------------ | ------- | ------------------------- | ------------------ |
-| Own organisation's records                                                                 | ✓       | ✓                         | ✓                  |
-| "Manage my organisation" link                                                              | ✓       | ✓                         | hidden             |
-| Organisation details and users                                                             | any org | own org                   | not permitted      |
-| Edit organisation details                                                                  | any org | own org                   | not permitted      |
-| Invite a user                                                                              | ✓       | own org                   | refused by the API |
-| Approve or reject a registration                                                           | ✓       | own org                   | ✗                  |
-| Change a user's role                                                                       | ✓       | own org, not a super user | ✗                  |
-| Deactivate or reactivate a user                                                            | ✓       | own org                   | ✗                  |
-| Remove a user (all organisations)                                                          | ✓       | ✗                         | ✗                  |
-| Actions on your own row                                                                    | none    | none                      | none               |
-| Local development normally uses `AUTHENTICATION_MODE=DEV`, so authentication redirects and |
-| authenticated flows run against deployed environments rather than the local server.        |
+| Capability                        | Super   | Champion                  | Standard      |
+| --------------------------------- | ------- | ------------------------- | ------------- |
+| Own organisation's records        | ✓       | ✓                         | ✓             |
+| "Manage my organisation" link     | ✓       | ✓                         | hidden        |
+| Organisation details and users    | any org | own org                   | not permitted |
+| Edit organisation details         | any org | own org                   | not permitted |
+| Invite a user                     | ✓       | own org                   | not permitted |
+| Approve or reject a registration  | ✓       | own org                   | ✗             |
+| Change a user's role              | ✓       | own org, not a super user | ✗             |
+| Deactivate or reactivate a user   | ✓       | own org                   | ✗             |
+| Remove a user (all organisations) | ✓       | ✗                         | ✗             |
+| Actions on your own row           | none    | none                      | none          |
+
+Local development normally uses `AUTHENTICATION_MODE=DEV`, so authentication redirects and
+authenticated flows run against deployed environments rather than the local server.
 
 #### Docker (Optional)
 

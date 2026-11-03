@@ -1,10 +1,6 @@
-import { type Page } from '@playwright/test'
-
 import { expect, test } from '../fixtures/test'
+import { currentUserId, mainText, missingId } from '../helpers/pages'
 import { forRoles } from '../helpers/roles'
-
-// No user has this id, so a page for it shows what a page for a user the caller can't see should.
-const missingUserId = 2_147_483_647
 
 /* The pages a champion or super user manages another user from, by their path after
  * /portal/organisations/<id>/, and a control that only shows when the page loads the user. */
@@ -20,15 +16,14 @@ const userManagementPages = [
   { path: 'users/{userId}/reactivate', control: 'button', name: 'Reactivate user' },
 ] as const
 
-async function currentUserId(page: Page): Promise<number> {
-  const response = await page.request.get('/backend-api/users/me')
-  expect(response.ok(), 'Loading the current user').toBe(true)
-  return ((await response.json()) as { userId: number }).userId
-}
-
-async function mainText(page: Page): Promise<string> {
-  return (await page.getByRole('main').innerText()).trim()
-}
+/* The pages a champion or super user reviews a registration request from. Nothing seeds
+ * registration requests, so request 1 may or may not exist: either way, the page must look the
+ * same as one for a request that doesn't. */
+const registrationRequestPages = [
+  { action: 'approve', button: 'Approve' },
+  { action: 'reject', button: 'Reject' },
+] as const
+const someRequestId = 1
 
 test.describe('Managing users as a standard user', { tag: forRoles(['Standard']) }, () => {
   test.use({ readOnly: true })
@@ -47,10 +42,39 @@ test.describe('Managing users as a standard user', { tag: forRoles(['Standard'])
       await expect(page.getByRole(control, { name })).toHaveCount(0)
       const existingUserPage = await mainText(page)
 
-      await page.goto(url(missingUserId))
+      await page.goto(url(missingId))
       await expect(page.getByRole(control, { name })).toHaveCount(0)
       // ADR-004: a user the caller can't see looks the same as one that doesn't exist.
       expect(await mainText(page)).toBe(existingUserPage)
     })
   }
+
+  for (const { action, button } of registrationRequestPages) {
+    test(`can't ${action} a registration request, and can't tell whether it exists`, async ({
+      page,
+      organisationId,
+    }) => {
+      const url = (requestId: number) =>
+        `/portal/organisations/${organisationId}/registration-requests/${requestId}/${action}`
+
+      await page.goto(url(someRequestId))
+      await expect(page.getByText(`You are about to ${action}`)).toHaveCount(0)
+      await expect(page.getByRole('button', { name: button, exact: true })).toHaveCount(0)
+      const somePage = await mainText(page)
+
+      await page.goto(url(missingId))
+      await expect(page.getByRole('button', { name: button, exact: true })).toHaveCount(0)
+      expect(await mainText(page)).toBe(somePage)
+    })
+  }
+
+  test("isn't offered the invite form", async ({ page, organisationId }) => {
+    await page.goto(`/portal/organisations/${organisationId}/onboard-user`)
+
+    await expect(
+      page.getByRole('heading', { name: 'User is not permitted to view this page' }),
+    ).toBeVisible()
+    await expect(page.getByLabel('Full name')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Send invite' })).toHaveCount(0)
+  })
 })
