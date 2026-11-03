@@ -59,6 +59,11 @@ internal sealed class User
         }
     }
 
+    /// <summary>
+    /// Whether the user has not yet finished account setup. A user mid-setup has only
+    /// <see cref="UserOrgMembershipStatus.AwaitingSetup"/> memberships: setup finalises every
+    /// membership together.
+    /// </summary>
     internal bool IsSetupPending()
     {
         GuardAgainstUserMembershipsNotLoaded();

@@ -184,6 +184,19 @@ internal sealed partial class UserOnboardingService
                 new OnboardUserError.InvalidOrganisation()
             );
         }
+        catch (DbUpdateException updateException)
+            when (updateException.InnerException is PostgresException postgresException
+                && string.Equals(
+                    postgresException.ConstraintName,
+                    ConstraintNames.UserMembershipUniqueUserAndOrgId,
+                    StringComparison.Ordinal
+                )
+            )
+        {
+            return Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                new OnboardUserError.UserEmailAlreadyExists()
+            );
+        }
 
         return Result<UserOnboardingOutcome, OnboardUserError>.Ok(
             new UserOnboardingOutcome(existingUser, false)
