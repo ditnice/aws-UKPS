@@ -7,10 +7,10 @@ internal sealed record UserOnboardingOptions
     public const string SectionName = "UserOnboarding";
 
     /// <summary>
-    /// The amount of time it takes before the setup token expires. Defaults to 15 minutes.
+    /// The amount of time it takes before the setup token expires. Defaults to 30 minutes.
     /// </summary>
     [Range(60, int.MaxValue)]
-    public int SetupTokenExpiryTimeSeconds { get; set; } = 15 * 60;
+    public int SetupTokenExpiryTimeSeconds { get; set; } = 30 * 60;
 
     [Required]
     public required Uri SetupLink { get; init; }
