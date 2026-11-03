@@ -287,6 +287,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                     ChildLabel = null,
                     ChildPlaceholder = null,
                     AddAnotherLabel = null,
+                    ShowWhen = null,
                     Rules =
                     [
                         new RecordPageRuleDto

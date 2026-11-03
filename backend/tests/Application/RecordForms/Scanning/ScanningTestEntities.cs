@@ -191,3 +191,164 @@ internal sealed class TaskConflictEntity
 
     public RecordRevision? Revision { get; set; }
 }
+
+/// <summary>
+/// Valid conditions: a reveal on the same page, a page shown by an earlier answer, and a reveal
+/// on that page, which chains.
+/// </summary>
+[FormSection(RecordType.Vaccine, "conditional", "Conditional", Order = 10)]
+[FormPageShowWhen("follow-up", "conditional_entity.gate", YesNoUnknown.Yes, YesNoUnknown.Unknown)]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class ConditionalEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("conditional-task", "Conditional task", Order = 10)]
+    [FormPage("gate", "Gate", Order = 10)]
+    [FormField("conditional_entity.gate", "Gate", FormControl.Radio, Order = 10)]
+    public YesNoUnknown? Gate { get; set; }
+
+    [FormTask("conditional-task", "Conditional task", Order = 10)]
+    [FormPage("gate", "Gate", Order = 10)]
+    [FormField("conditional_entity.reason", "Reason", FormControl.Text, Order = 20)]
+    [FormShowWhen("conditional_entity.gate", YesNoUnknown.No)]
+    public string? Reason { get; set; }
+
+    [FormTask("conditional-task", "Conditional task", Order = 10)]
+    [FormPage("follow-up", "Follow up", Order = 20)]
+    [FormField("conditional_entity.detail", "Detail", FormControl.Radio, Order = 10)]
+    public YesNoUnknown? Detail { get; set; }
+
+    [FormTask("conditional-task", "Conditional task", Order = 10)]
+    [FormPage("follow-up", "Follow up", Order = 20)]
+    [FormField("conditional_entity.notes", "Notes", FormControl.Text, Order = 20)]
+    [FormShowWhen("conditional_entity.detail", YesNoUnknown.Yes)]
+    public string? Notes { get; set; }
+
+    [FormTask("conditional-task", "Conditional task", Order = 10)]
+    [FormPage("end", "End", Order = 30)]
+    [FormField("conditional_entity.end", "End", FormControl.Text)]
+    public string? End { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+}
+
+/// <summary>Breaks each condition check.</summary>
+[FormSection(
+    RecordType.Vaccine,
+    "broken-conditions",
+    "Broken conditions",
+    Order = 10,
+    RowSource = FormRowSource.RecordCreation
+)]
+[FormPageShowWhen("first", "broken_condition_entity.later", YesNoUnknown.Yes)]
+[FormPageShowWhen("undeclared", "broken_condition_entity.trigger", YesNoUnknown.Yes)]
+[FormPageShowWhen("second", "broken_condition_entity.trigger", YesNoUnknown.Yes)]
+[FormPageShowWhen("second", "broken_condition_entity.trigger", YesNoUnknown.No)]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenConditionEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.trigger", "Trigger", FormControl.Radio, Order = 10)]
+    public YesNoUnknown? Trigger { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.unknown_trigger", "Unknown", FormControl.Text, Order = 20)]
+    [FormShowWhen("no_such.question", YesNoUnknown.Yes)]
+    public string? UnknownTrigger { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.before_trigger", "Before", FormControl.Text, Order = 30)]
+    [FormShowWhen("broken_condition_entity.after", YesNoUnknown.Yes)]
+    public string? BeforeTrigger { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.after", "After", FormControl.Radio, Order = 40)]
+    public YesNoUnknown? After { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.text_trigger", "Text", FormControl.Text, Order = 50)]
+    [FormShowWhen("broken_condition_entity.before_trigger", YesNoUnknown.Yes)]
+    public string? TextTrigger { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.wrong_value", "Wrong", FormControl.Text, Order = 60)]
+    [FormShowWhen("broken_condition_entity.trigger", IndicationPaediatricStatus.Unknown)]
+    public string? WrongValue { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.no_values", "None", FormControl.Text, Order = 70)]
+    [FormShowWhen("broken_condition_entity.trigger")]
+    public string? NoValues { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.repeated", "Repeated", FormControl.Text, Order = 80)]
+    [FormShowWhen("broken_condition_entity.trigger", YesNoUnknown.Yes, YesNoUnknown.Yes)]
+    public string? Repeated { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("first", "First", Order = 10)]
+    [FormField("broken_condition_entity.non_nullable", "Name", FormControl.Text, Order = 90)]
+    [FormShowWhen("broken_condition_entity.trigger", YesNoUnknown.Yes)]
+    [FormRequired("Enter a name")]
+    public required string NonNullable { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("second", "Second", Order = 20)]
+    [FormField("broken_condition_entity.later", "Later", FormControl.Radio, Order = 10)]
+    public YesNoUnknown? Later { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("second", "Second", Order = 20)]
+    [FormField("broken_condition_entity.other_page", "Other page", FormControl.Text, Order = 20)]
+    [FormShowWhen("broken_condition_entity.trigger", YesNoUnknown.Yes)]
+    public string? OtherPage { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+}
+
+/// <summary>
+/// A second entity in <see cref="ConditionalEntity"/>'s section: a page shown by its gate, and a
+/// page that depends on nothing.
+/// </summary>
+[FormSection(RecordType.Vaccine, "conditional", "Conditional", Order = 10)]
+[FormPageShowWhen("extra", "conditional_entity.gate", YesNoUnknown.Yes)]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class ConditionalExtraEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("conditional-task", "Conditional task", Order = 10)]
+    [FormPage("extra", "Extra", Order = 40)]
+    [FormField("conditional_extra_entity.extra", "Extra", FormControl.Text)]
+    public string? Extra { get; set; }
+
+    [FormTask("conditional-task", "Conditional task", Order = 10)]
+    [FormPage("other", "Other", Order = 50)]
+    [FormField("conditional_extra_entity.other", "Other", FormControl.Text)]
+    public string? Other { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+}

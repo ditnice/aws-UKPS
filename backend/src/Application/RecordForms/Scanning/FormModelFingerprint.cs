@@ -38,6 +38,14 @@ internal static class FormModelFingerprint
                         CultureInfo.InvariantCulture,
                         $"    page {page.Id} | {page.Title} | {page.Order}"
                     );
+                    if (page.ShowWhen is not null)
+                    {
+                        text.AppendLine(
+                            CultureInfo.InvariantCulture,
+                            $"      when {page.ShowWhen.Description}"
+                        );
+                    }
+
                     foreach (FormQuestion question in page.Questions)
                     {
                         AppendQuestion(text, question, options);
@@ -67,6 +75,14 @@ internal static class FormModelFingerprint
             CultureInfo.InvariantCulture,
             $"      binding {question.Binding.Description} | {question.Entity.RowSource}"
         );
+        if (question.ShowWhen is not null)
+        {
+            text.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"      when {question.ShowWhen.Description}"
+            );
+        }
+
         foreach (FormRule rule in question.Rules)
         {
             text.AppendLine(

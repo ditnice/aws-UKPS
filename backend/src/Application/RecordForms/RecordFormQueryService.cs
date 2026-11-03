@@ -1,3 +1,4 @@
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
@@ -28,20 +29,25 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             );
         }
 
-        FormPage page = loaded.Page;
-        var rows = await loader.LoadRowsAsync(
-            page,
-            loaded.Revision.Id,
-            track: false,
+        PageAnswers? saved = await loader.LoadAnswersAsync(
+            loaded,
+            forSave: false,
             cancellationToken
         );
-        Dictionary<string, FormAnswer> answers = RecordFormPageLoader.ReadAnswers(page, rows);
+        if (saved is null)
+        {
+            return GetRecordPageResult.Err(new GetRecordPageError.NotFound());
+        }
+
+        FormModel model = loaded.Model;
+        FormPage page = loaded.Page;
+        Dictionary<string, FormAnswer> answers = saved.Answers;
         var options = await loader.LoadOptionsAsync(page, answers, cancellationToken);
 
         return GetRecordPageResult.Ok(
             new RecordPageDto
             {
-                FormVersion = loaded.Model.Version,
+                FormVersion = model.Version,
                 RevisionVersion = loaded.Revision.Version,
                 RecordId = recordId,
                 Section = new RecordPageSectionDto
@@ -51,14 +57,14 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                 },
                 Task = new RecordPageTaskDto { Id = page.TaskId, Title = page.TaskTitle },
                 Page = new RecordPagePageDto { Id = page.Id, Title = page.Title },
-                PreviousPageId = loaded.Model.PreviousPage(page)?.Id,
-                NextPageId = loaded.Model.NextPage(page)?.Id,
+                PreviousPageId = model.PreviousPage(page, saved.Applicability)?.Id,
+                NextPageId = model.NextPage(page, saved.Applicability)?.Id,
                 Questions = page
                     .Questions.Select(q => ToDto(q, options.GetValueOrDefault(q.Id)))
                     .ToArray(),
-                Answers = answers.ToDictionary(
-                    static a => a.Key,
-                    static a => a.Value.ToJson(),
+                Answers = page.Questions.ToDictionary(
+                    static q => q.Id,
+                    q => answers[q.Id].ToJson(),
                     StringComparer.Ordinal
                 ),
             }
@@ -81,6 +87,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             ChildLabel = question.ChildLabel,
             ChildPlaceholder = question.ChildPlaceholder,
             AddAnotherLabel = question.AddAnotherLabel,
+            ShowWhen = question.ShowWhen is null ? null : ToDto(question.ShowWhen),
             Rules = question
                 .Rules.Select(static r => new RecordPageRuleDto
                 {
@@ -90,6 +97,20 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                 })
                 .ToArray(),
             Options = options?.Select(ToDto).ToArray(),
+        };
+
+    private static RecordPageConditionDto ToDto(FormCondition condition) =>
+        condition switch
+        {
+            AnswerInCondition answerIn => new RecordPageConditionDto
+            {
+                Kind = answerIn.Kind,
+                QuestionId = answerIn.QuestionId,
+                Values = answerIn.Values,
+            },
+            _ => throw new InvalidOperationException(
+                $"Unsupported condition kind {condition.Kind}."
+            ),
         };
 
     private static RecordPageOptionDto ToDto(FormOption option) =>

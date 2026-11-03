@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Persistence;
@@ -93,34 +94,43 @@ internal sealed class RecordFormPageLoader(
     }
 
     /// <summary>
-    /// Loads the revision's row of every entity on the page, tracked when
-    /// <paramref name="track"/> is set, for a save.
+    /// Loads the rows and answers the page needs and works out what applies, or returns null when
+    /// the page does not apply, which callers treat as not found. A save loads, and tracks, the
+    /// rows of every answer it may clear as well.
     /// </summary>
-    public async Task<Dictionary<FormEntity, object?>> LoadRowsAsync(
-        FormPage page,
-        int revisionId,
-        bool track,
+    public async Task<PageAnswers?> LoadAnswersAsync(
+        LoadedPage loaded,
+        bool forSave,
         CancellationToken cancellationToken
     )
     {
+        FormModel model = loaded.Model;
+        FormPage page = loaded.Page;
+        IReadOnlyList<FormEntity> entities = forSave
+            ? model.EntitiesToSave(page)
+            : model.EntitiesToRead(page);
+
         Dictionary<FormEntity, object?> rows = [];
-        foreach (FormEntity entity in page.Entities)
+        foreach (FormEntity entity in entities)
         {
-            rows[entity] = await entity.LoadAsync(dbContext, revisionId, track, cancellationToken);
+            rows[entity] = await entity.LoadAsync(
+                dbContext,
+                loaded.Revision.Id,
+                track: forSave,
+                cancellationToken
+            );
         }
 
-        return rows;
+        Dictionary<string, FormAnswer> answers = model
+            .Questions.Where(q => rows.ContainsKey(q.Entity))
+            .ToDictionary(
+                static q => q.Id,
+                q => q.Binding.Read(rows[q.Entity]),
+                StringComparer.Ordinal
+            );
+        Applicability applicability = FormApplicability.Evaluate(model, answers);
+        return applicability.Applies(page) ? new PageAnswers(rows, answers, applicability) : null;
     }
-
-    public static Dictionary<string, FormAnswer> ReadAnswers(
-        FormPage page,
-        Dictionary<FormEntity, object?> rows
-    ) =>
-        page.Questions.ToDictionary(
-            static q => q.Id,
-            q => q.Binding.Read(rows[q.Entity]),
-            StringComparer.Ordinal
-        );
 
     /// <summary>
     /// Loads the options of every choice question. Saved answers are passed in so archived items

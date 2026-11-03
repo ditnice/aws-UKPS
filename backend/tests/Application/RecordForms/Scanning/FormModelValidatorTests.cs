@@ -76,6 +76,63 @@ public class FormModelValidatorTests
     }
 
     [Fact]
+    public void Validate_ConditionalEntity_HasNoConditionProblems()
+    {
+        Problems(typeof(ConditionalEntity), typeof(ConditionalExtraEntity))
+            .ShouldBe(["The Vaccine form has no entry in FormVersions."]);
+    }
+
+    [Theory]
+    [InlineData(
+        "BrokenConditionEntity.UnknownTrigger [FormShowWhen] names unknown question 'no_such.question'."
+    )]
+    [InlineData(
+        "BrokenConditionEntity.BeforeTrigger [FormShowWhen] names 'broken_condition_entity.after', which must be an earlier question on the same page."
+    )]
+    [InlineData(
+        "BrokenConditionEntity.OtherPage [FormShowWhen] names 'broken_condition_entity.trigger', which must be an earlier question on the same page."
+    )]
+    [InlineData(
+        "BrokenConditionEntity.TextTrigger [FormShowWhen] names 'broken_condition_entity.before_trigger', which must be a Radio, Select or Checkbox on an enum."
+    )]
+    [InlineData(
+        "BrokenConditionEntity.WrongValue [FormShowWhen] has value 'Unknown', which is not a YesNoUnknown member."
+    )]
+    [InlineData("BrokenConditionEntity.NoValues [FormShowWhen] needs at least one value.")]
+    [InlineData("BrokenConditionEntity.Repeated [FormShowWhen] repeats a value.")]
+    [InlineData(
+        "BrokenConditionEntity.NonNullable [FormShowWhen] is on a non-nullable column, which cannot be cleared when the question does not apply."
+    )]
+    [InlineData(
+        "BrokenConditionEntity [FormPageShowWhen] for page 'first' names 'broken_condition_entity.later', which must be on an earlier page."
+    )]
+    [InlineData(
+        "BrokenConditionEntity [FormPageShowWhen] for page 'undeclared' names a page that BrokenConditionEntity does not declare."
+    )]
+    [InlineData(
+        "BrokenConditionEntity [FormPageShowWhen] for page 'first' is on the first page of task 'broken-task', which must always apply."
+    )]
+    [InlineData("The Vaccine form has more than one [FormPageShowWhen] for page 'second'.")]
+    public void Validate_BrokenConditions_ReportsTheProblem(string expected)
+    {
+        Problems(typeof(BrokenConditionEntity)).ShouldContain(expected);
+    }
+
+    [Fact]
+    public void Scan_ConditionalEntity_BuildsPageAndQuestionConditions()
+    {
+        var (entities, _) = FormModelScanner.Scan(_model, [typeof(ConditionalEntity)]);
+        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
+
+        form.FindPage("gate")!.ShowWhen.ShouldBeNull();
+        form.FindPage("follow-up")!
+            .ShowWhen!.Description.ShouldBe("AnswerIn conditional_entity.gate [Yes, Unknown]");
+        form.FindQuestion("conditional_entity.reason")!
+            .ShowWhen!.Description.ShouldBe("AnswerIn conditional_entity.gate [No]");
+        form.FindQuestion("conditional_entity.gate")!.ShowWhen.ShouldBeNull();
+    }
+
+    [Fact]
     public void Validate_SeveralProvidersOfOneType_AsksForFormOptions()
     {
         OptionProviderRegistry options = OptionProviderRegistry.CreateDefault();

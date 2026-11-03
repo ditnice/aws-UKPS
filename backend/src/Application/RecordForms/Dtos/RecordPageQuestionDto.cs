@@ -35,6 +35,12 @@ public sealed record RecordPageQuestionDto
     /// <summary>The button text that adds another entry to a multi-value hierarchical select.</summary>
     public required string? AddAnotherLabel { get; init; }
 
+    /// <summary>
+    /// When set, the question applies only while the condition is met; otherwise it is hidden,
+    /// not validated, and should be sent as null (or an empty array).
+    /// </summary>
+    public required RecordPageConditionDto? ShowWhen { get; init; }
+
     /// <summary>The rules, in evaluation order.</summary>
     public required IReadOnlyList<RecordPageRuleDto> Rules { get; init; }
 

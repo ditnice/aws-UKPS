@@ -1,5 +1,6 @@
 using Shouldly;
 using UKPS.Api.Application.RecordForms;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
@@ -85,11 +86,25 @@ public class MedicineFormModelTests
     public void NextAndPreviousPage_FollowFormOrder()
     {
         FormModel model = Model;
+        Applicability applicability = FormApplicability.Evaluate(
+            model,
+            model.Questions.ToDictionary(
+                static q => q.Id,
+                static q => FormAnswer.Empty(q.Shape),
+                StringComparer.Ordinal
+            )
+        );
 
-        model.PreviousPage(model.Pages[0]).ShouldBeNull();
-        model.NextPage(model.FindPage("indication")!)!.Id.ShouldBe("bnf-chapter");
-        model.PreviousPage(model.FindPage("bnf-chapter")!)!.Id.ShouldBe("indication");
-        model.NextPage(model.FindPage("rare-disease")!).ShouldBeNull();
+        model.PreviousPage(model.Pages[0], applicability).ShouldBeNull();
+        model
+            .NextPage(model.FindPage("indication")!, applicability)
+            .ShouldNotBeNull()
+            .Id.ShouldBe("bnf-chapter");
+        model
+            .PreviousPage(model.FindPage("bnf-chapter")!, applicability)
+            .ShouldNotBeNull()
+            .Id.ShouldBe("indication");
+        model.NextPage(model.FindPage("rare-disease")!, applicability).ShouldBeNull();
         model.FindPage("unknown").ShouldBeNull();
     }
 

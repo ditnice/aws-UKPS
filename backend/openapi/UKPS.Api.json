@@ -4214,6 +4214,13 @@
         ],
         "type": "string"
       },
+      "ConditionKind": {
+        "enum": [
+          "AnswerIn"
+        ],
+        "type": "string",
+        "description": "The kind of a condition that decides whether a question applies. Part of the HTTP API\ncontract: the member names are sent to the frontend, so never rename or remove one."
+      },
       "CreateOrganisationDto": {
         "required": [
           "organisationName",
@@ -6161,6 +6168,32 @@
         },
         "description": "Represents a name or identifier for a product."
       },
+      "RecordPageConditionDto": {
+        "required": [
+          "kind",
+          "questionId",
+          "values"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "How the condition is evaluated.",
+            "$ref": "#/components/schemas/ConditionKind"
+          },
+          "questionId": {
+            "type": "string",
+            "description": "The ID of the trigger question, an earlier question on the same page."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For ConditionKind.AnswerIn: the condition is met when the trigger's answer\nincludes any of these option values."
+          }
+        },
+        "description": "A condition that decides whether a question applies, from another question's answer."
+      },
       "RecordPageDto": {
         "required": [
           "formVersion",
@@ -6289,6 +6322,7 @@
           "childLabel",
           "childPlaceholder",
           "addAnotherLabel",
+          "showWhen",
           "rules",
           "options"
         ],
@@ -6351,6 +6385,17 @@
               "string"
             ],
             "description": "The button text that adds another entry to a multi-value hierarchical select."
+          },
+          "showWhen": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "When set, the question applies only while the condition is met; otherwise it is hidden,\nnot validated, and should be sent as null (or an empty array).",
+                "$ref": "#/components/schemas/RecordPageConditionDto"
+              }
+            ]
           },
           "rules": {
             "type": "array",
