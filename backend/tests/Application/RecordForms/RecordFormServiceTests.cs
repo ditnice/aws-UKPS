@@ -529,6 +529,34 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_WhenAnswerIsUnchangedExceptForWhitespace_ShouldSucceed()
+    {
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, "Answer"));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(
+            page,
+            Answer(Indication, "   Answer   ")
+        );
+        secondSaveResult.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task SavePage_WhenTheAnswerIsEmptyAndUnchanged_ShouldSucceed()
+    {
+        var answer = "";
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, answer));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(page, Answer(Indication, answer));
+        secondSaveResult.ShouldBeSuccess();
+    }
+
+    [Fact]
     public async Task SavePage_ShouldBeAbleToEditTwoDifferentPagesInParallel()
     {
         RecordPageDto indicationPage = await GetPage("indication");
