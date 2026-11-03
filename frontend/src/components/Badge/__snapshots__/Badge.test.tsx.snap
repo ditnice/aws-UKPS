@@ -1,0 +1,100 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Badge > applies the large modifier 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _red_86b2aa _large_86b2aa"
+    data-component="badge"
+  >
+    Urgent
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders the black colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _black_86b2aa"
+    data-component="badge"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders the blue colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _blue_86b2aa"
+    data-component="badge"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders the bright-purple colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _bright-purple_86b2aa"
+    data-component="badge"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders the green colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _green_86b2aa"
+    data-component="badge"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders the grey colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _grey_86b2aa"
+    data-component="badge"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders the purple colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _purple_86b2aa"
+    data-component="badge"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders the red colour variant 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _red_86b2aa"
+    data-component="badge"
+  >
+    Status
+  </span>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders the text in a span with the default blue colour 1`] = `
+<DocumentFragment>
+  <span
+    class="_badge_86b2aa _blue_86b2aa"
+    data-component="badge"
+  >
+    Recently added
+  </span>
+</DocumentFragment>
+`;
