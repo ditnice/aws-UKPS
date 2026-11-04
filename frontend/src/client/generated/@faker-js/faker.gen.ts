@@ -348,7 +348,8 @@ export const fakeRecordPagePageDto = (options?: Options): RecordPagePageDto => {
     const f = options?.faker ?? faker;
     return {
         id: f.string.uuid(),
-        title: f.lorem.words()
+        title: f.lorem.words(),
+        commercialInConfidence: f.datatype.boolean()
     };
 };
 

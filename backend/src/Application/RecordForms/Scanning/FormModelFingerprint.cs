@@ -36,7 +36,7 @@ internal static class FormModelFingerprint
                 {
                     text.AppendLine(
                         CultureInfo.InvariantCulture,
-                        $"    page {page.Id} | {page.Title} | {page.Order}"
+                        $"    page {page.Id} | {page.Title} | {page.Order} | {page.CommercialInConfidence}"
                     );
                     foreach (FormQuestion question in page.Questions)
                     {

@@ -1132,7 +1132,7 @@ export type RecordPageOptionDto = {
 };
 
 /**
- * A page's ID and title.
+ * A page's ID, title and "Commercial in confidence" flag.
  */
 export type RecordPagePageDto = {
     /**
@@ -1143,6 +1143,10 @@ export type RecordPagePageDto = {
      * A short name for the page.
      */
     title: string;
+    /**
+     * Whether the page shows the "Commercial in confidence" badge.
+     */
+    commercialInConfidence: boolean;
 };
 
 /**

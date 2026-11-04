@@ -110,7 +110,7 @@ public class FormModelValidatorTests
             "The Vaccine form declares section 'valid' with different titles or orders."
         );
         problems.ShouldContain(
-            "The Vaccine form declares page 'text' with different titles or orders."
+            "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
         );
         problems.ShouldContain(
             "The Vaccine form uses question ID 'valid_entity.text' more than once."

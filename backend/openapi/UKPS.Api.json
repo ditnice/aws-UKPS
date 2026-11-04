@@ -6269,7 +6269,8 @@
       "RecordPagePageDto": {
         "required": [
           "id",
-          "title"
+          "title",
+          "commercialInConfidence"
         ],
         "type": "object",
         "properties": {
@@ -6280,9 +6281,13 @@
           "title": {
             "type": "string",
             "description": "A short name for the page."
+          },
+          "commercialInConfidence": {
+            "type": "boolean",
+            "description": "Whether the page shows the \"Commercial in confidence\" badge."
           }
         },
-        "description": "A page's ID and title."
+        "description": "A page's ID, title and \"Commercial in confidence\" flag."
       },
       "RecordPageQuestionDto": {
         "required": [
