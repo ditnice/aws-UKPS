@@ -91,12 +91,10 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
         </p>
       </Alert>
 
-      <PageHeader
-        backLink={backLink}
-        heading="Confirm decision to discard record"
-        preheading={productDetail?.recordTitle}
-      />
-
+      <PageHeader backLink={backLink} heading="Confirm decision to discard record" />
+      <h2 style={{ fontWeight: 'normal' }}>
+        <b>Record title:</b> {productDetail?.recordTitle}
+      </h2>
       <p>What happens when this record is discarded:</p>
       <ul>
         <li>
