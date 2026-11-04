@@ -119,7 +119,9 @@ export class OrganisationUsersPage {
       return undefined
     }
 
-    await expect(this.page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+    await expect(
+      this.page.getByRole('heading', { name: 'Manage users in your organisation' }),
+    ).toBeVisible()
     return email
   }
 
