@@ -141,6 +141,7 @@ internal static class RecordContentHistory
             LaboratoryTestingFields(record.ServiceReadinessInformation.LaboratoryTestingDetails),
             MhraFields(regulatory.MhraProcedureAndDates),
             HtaAndDesignationFields(regulatory),
+            PatientAndClinicalRequirementsFields(record.ServiceReadinessInformation),
             ServiceReadinessFields(record.ServiceReadinessInformation),
         }
             .SelectMany(fields => fields)
@@ -332,6 +333,46 @@ internal static class RecordContentHistory
             ("medicines_laboratory_testing.monitoring_tests_details", lab.MonitoringTestsDetails),
             ("medicines_laboratory_testing.safety_tests_details", lab.SafetyTestsDetails),
         ];
+
+    private static (string Path, string? Value)[] PatientAndClinicalRequirementsFields(
+        SyntheticServiceReadiness readiness
+    )
+    {
+        SyntheticPatientAndClinicalRequirements patient = readiness.PatientAndClinicalRequirements;
+        SyntheticPricingAndBudgetImpact budget = readiness.PricingAndBudgetImpact;
+        return
+        [
+            (
+                "medicines_patient_identification.urgent_identification_required",
+                patient.UrgentIdentificationRequired?.ToString()
+            ),
+            (
+                "medicines_patient_identification.screening_required",
+                patient.ScreeningRequired?.ToString()
+            ),
+            (
+                "medicines_service_impact.nhs_service_changes_required",
+                patient.NhsServiceChangesRequired?.ToString()
+            ),
+            (
+                "medicines_service_impact.handling_storage_requirements",
+                patient.HandlingStorageRequirements?.ToString()
+            ),
+            (
+                "medicines_service_impact.uk_patient_population_notes",
+                patient.UkPatientPopulationNotes
+            ),
+            (
+                "medicines_service_impact.estimated_eligible_patient_population",
+                patient.EstimatedEligiblePatientPopulation
+            ),
+            ("medicines_budget_impact.estimated_uptake", budget.EstimatedUptake),
+            (
+                "medicines_budget_impact.compassionate_access_available",
+                budget.CompassionateAccessAvailable?.ToString()
+            ),
+        ];
+    }
 
     private static (string Path, string? Value)[] ServiceReadinessFields(
         SyntheticServiceReadiness readiness
