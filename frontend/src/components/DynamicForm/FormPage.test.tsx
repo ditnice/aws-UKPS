@@ -305,9 +305,8 @@ describe('FormPage', () => {
       expect(yes).toHaveAccessibleDescription('Select one answer')
       await user.click(screen.getByRole('button', { name: 'Save and continue' }))
       expect(await screen.findByText('Choose yes or no')).toBeInTheDocument()
-      expect(screen.getByRole('group', { name: 'Choose an answer' })).toHaveAttribute(
+      expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
         'aria-invalid',
-        'true',
       )
       for (const radio of screen.getAllByRole('radio')) {
         expect(radio).not.toHaveAttribute('aria-invalid')
@@ -379,12 +378,11 @@ describe('FormPage', () => {
       expect(first).toHaveAccessibleDescription('Select all that apply')
       await user.click(screen.getByRole('button', { name: 'Save and continue' }))
       expect(await screen.findByText('Choose at least one method')).toBeInTheDocument()
-      expect(screen.getByRole('group', { name: 'Choose contact methods' })).toHaveAttribute(
+      expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
         'aria-invalid',
-        'true',
       )
       for (const input of screen.getAllByRole('checkbox')) {
-        expect(input).toHaveAttribute('aria-invalid', 'true')
+        expect(input).not.toHaveAttribute('aria-invalid')
         expect(input).toHaveAccessibleDescription(
           /Select all that apply.*Choose at least one method/,
         )

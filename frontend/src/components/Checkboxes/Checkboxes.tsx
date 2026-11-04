@@ -53,9 +53,7 @@ export function Checkboxes({
   }
   return (
     <CheckboxSelection.Provider value={{ name, values, toggle, onBlur }}>
-      <FormGroup {...groupProps} identifier={groupProps.identifier ?? name}>
-        {children}
-      </FormGroup>
+      <FormGroup {...groupProps}>{children}</FormGroup>
     </CheckboxSelection.Provider>
   )
 }
@@ -90,7 +88,7 @@ export function Checkbox({
   const selection = useCheckboxSelection()
   const group = useFormGroup()
   const generatedId = useId()
-  const inputId = id ?? (selection ? `${selection.name}_${value}` : generatedId)
+  const inputId = id ?? generatedId
   const hintId = hint ? `${inputId}-hint` : undefined
   const errorId = error && errorMessage ? `${inputId}-error` : undefined
   const isInvalid = error || group.error
@@ -112,7 +110,7 @@ export function Checkbox({
         <input
           {...rest}
           aria-describedby={composeDescriptions(describedBy, group.describedBy, hintId, errorId)}
-          aria-invalid={isInvalid ? true : invalid}
+          aria-invalid={error ? true : invalid}
           checked={selection ? selection.values.includes(value) : checked}
           defaultChecked={selection ? undefined : defaultChecked}
           className={clsx('checkbox__input', className)}

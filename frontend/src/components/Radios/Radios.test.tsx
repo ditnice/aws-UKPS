@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Radio, Radios } from './Radios'
-import styles from './Radios.module.scss'
 
 let user: ReturnType<typeof userEvent.setup>
 
@@ -13,8 +12,14 @@ beforeEach(() => {
 
 function ContactRadios(props: Partial<Parameters<typeof Radios>[0]>) {
   return (
-    <Radios legend="How would you like to be contacted?" name="contact" {...props}>
+    <Radios
+      identifier="contact"
+      legend="How would you like to be contacted?"
+      name="contact"
+      {...props}
+    >
       <Radio
+        id="contact_email"
         conditional={
           <>
             <label htmlFor="contact-email">Email address</label>
@@ -25,6 +30,7 @@ function ContactRadios(props: Partial<Parameters<typeof Radios>[0]>) {
         value="email"
       />
       <Radio
+        id="contact_phone"
         conditional={
           <>
             <label htmlFor="contact-phone">Phone number</label>
@@ -34,7 +40,7 @@ function ContactRadios(props: Partial<Parameters<typeof Radios>[0]>) {
         label="Phone"
         value="phone"
       />
-      <Radio label="Post" value="post" />
+      <Radio id="contact_post" label="Post" value="post" />
     </Radios>
   )
 }
@@ -43,17 +49,58 @@ const conditionalFor = (container: HTMLElement, value: string) =>
   container.querySelector(`#conditional-contact_${value}`)
 
 describe('Radios', () => {
+  it('generates distinct IDs for groups that share a name', async () => {
+    render(
+      <>
+        <Radios error="First error" hint="First hint" legend="First" name="action">
+          <Radio
+            conditional={<input aria-label="First detail" />}
+            hint="First option hint"
+            label="First option"
+            value="same"
+          />
+        </Radios>
+        <Radios error="Second error" hint="Second hint" legend="Second" name="action">
+          <Radio
+            conditional={<input aria-label="Second detail" />}
+            hint="Second option hint"
+            label="Second option"
+            value="same"
+          />
+        </Radios>
+      </>,
+    )
+    const first = screen.getByRole('radio', { name: 'First option' })
+    const second = screen.getByRole('radio', { name: 'Second option' })
+
+    expect(first.id).not.toBe(second.id)
+    expect(first.getAttribute('aria-controls')).not.toBe(second.getAttribute('aria-controls'))
+    expect(screen.getByRole('group', { name: 'First' })).toHaveAccessibleDescription(
+      'First hint Error: First error',
+    )
+    expect(screen.getByRole('group', { name: 'Second' })).toHaveAccessibleDescription(
+      'Second hint Error: Second error',
+    )
+    expect(first).toHaveAccessibleDescription('First hint Error: First error First option hint')
+    expect(second).toHaveAccessibleDescription('Second hint Error: Second error Second option hint')
+    await user.click(second)
+    expect(screen.getByLabelText('Second detail')).toBeVisible()
+    expect(screen.getByLabelText('First detail')).not.toBeVisible()
+  })
+
   it('composes shared and option descriptions without duplicate ID references', () => {
     render(
       <Radios
         aria-describedby="outside contact-hint"
         hint="Group hint"
+        identifier="contact"
         legend="Contact"
         name="contact"
       >
         <Radio
           aria-describedby="outside contact-hint"
           hint="Option hint"
+          id="contact_email"
           label="Email"
           value="email"
         />
@@ -63,7 +110,6 @@ describe('Radios', () => {
       'aria-describedby',
       'outside contact-hint contact_email-hint',
     )
-    expect(screen.getByText('Email')).not.toHaveClass(styles.labelPlain)
     expect(screen.getByRole('group')).toHaveAttribute('aria-describedby', 'outside contact-hint')
   })
 
@@ -75,7 +121,6 @@ describe('Radios', () => {
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio.getAttribute('name')).toBe('contact')
     }
-    expect(screen.getByText('Post')).toHaveClass(styles.labelPlain)
     expect(asFragment()).toMatchSnapshot()
   })
 
@@ -247,7 +292,7 @@ describe('Radios', () => {
     expect(screen.getByRole('group', { name: 'Choose' })).toHaveAccessibleDescription(
       /Consumer description.*Group hint.*Group error/,
     )
-    expect(screen.getByRole('group', { name: 'Choose' })).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('group', { name: 'Choose' })).not.toHaveAttribute('aria-invalid')
     for (const option of screen.getAllByRole('radio')) {
       expect(option).not.toHaveAttribute('aria-invalid')
       expect(option).not.toHaveAttribute('aria-expanded')

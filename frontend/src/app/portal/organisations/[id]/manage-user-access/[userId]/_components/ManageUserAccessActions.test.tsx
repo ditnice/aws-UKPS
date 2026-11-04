@@ -99,7 +99,7 @@ describe('ManageUserAccessActions', () => {
     expect(screen.getByText('Select an option - No answer provided')).toBeInTheDocument()
     expect(
       screen.getByRole('group', { name: "What would you like to do with this user's access?" }),
-    ).toHaveAttribute('aria-invalid', 'true')
+    ).not.toHaveAttribute('aria-invalid')
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio).not.toHaveAttribute('aria-invalid')
       expect(radio).not.toHaveAttribute('aria-expanded')

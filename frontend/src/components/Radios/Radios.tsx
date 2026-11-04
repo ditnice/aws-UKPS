@@ -1,11 +1,12 @@
 'use client'
 
 import clsx from 'clsx'
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useId, useState } from 'react'
 
 import '@nice-digital/nds-radio/scss/radio.scss'
 
 import { composeDescriptions, FormGroup, useFormGroup } from '@/components/FormGroup/FormGroup'
+import type { FormGroupProps } from '@/components/FormGroup/FormGroup'
 
 import styles from './Radios.module.scss'
 
@@ -37,8 +38,10 @@ export type RadiosProps = {
   /** Error message shown above the options; also styles every option as invalid. */
   error?: string
   /** Renders the legend inside a heading of this level, e.g. on a single-question page. */
-  headingLevel?: number
+  headingLevel?: FormGroupProps['headingLevel']
   hint?: ReactNode
+  /** Stable prefix for the group's hint and error IDs; otherwise React generates one. */
+  identifier?: string
   /**
    * Lays the options out side by side. Conditional content is not revealed for inline radios,
    * following the GOV.UK Design System guidance.
@@ -65,6 +68,7 @@ export function Radios({
   error,
   headingLevel,
   hint,
+  identifier,
   inline = false,
   legend,
   name,
@@ -98,7 +102,7 @@ export function Radios({
           error={error}
           headingLevel={headingLevel}
           hint={hint}
-          identifier={name}
+          identifier={identifier}
           inline={inline}
           legend={legend}
         >
@@ -145,7 +149,8 @@ export function Radio({
   const { name, onBlur, select, selectedValue } = useRadiosContext()
   const { describedBy: groupDescriptions, error: groupError, inline } = useFormGroup()
   const error = groupError || optionError
-  const inputId = id ?? `${name}_${value}`
+  const generatedId = useId()
+  const inputId = id ?? generatedId
   const hintId = hint ? `${inputId}-hint` : undefined
   const errorId = optionError && errorMessage ? `${inputId}-error` : undefined
   const descriptions = composeDescriptions(describedBy, groupDescriptions, hintId, errorId)

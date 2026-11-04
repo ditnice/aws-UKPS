@@ -54,7 +54,7 @@ describe('RemoveHoldReasons', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(screen.getByText('Select a reason for removing the hold')).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: legend })).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('group', { name: legend })).not.toHaveAttribute('aria-invalid')
     expect(router.push).not.toHaveBeenCalled()
   })
 

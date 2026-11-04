@@ -127,7 +127,6 @@ exports[`Radios > renders the error message and styles every option as invalid 1
   >
     <fieldset
       aria-describedby="contact-error"
-      aria-invalid="true"
       class="form-group"
       data-component="form-group"
     >

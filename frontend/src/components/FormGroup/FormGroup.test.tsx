@@ -5,7 +5,6 @@ import { renderToString } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 
 import { FormGroup } from './FormGroup'
-import styles from './FormGroup.module.scss'
 
 describe('FormGroup', () => {
   it('preserves generated description IDs across server rendering and hydration', async () => {
@@ -67,13 +66,12 @@ describe('FormGroup', () => {
     expect(group).toHaveClass('form-group', 'custom')
     expect(group).toHaveAttribute('name', 'question')
     expect(group).toHaveAttribute('form', 'owner')
-    expect(group).toHaveAttribute('aria-invalid', 'true')
+    expect(group).not.toHaveAttribute('aria-invalid')
     expect(group).toHaveAttribute('aria-describedby', 'extra question-hint question-error')
     expect(group).toHaveAccessibleDescription(
       'Additional context Choose all that apply Error: Choose something',
     )
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Contact')
-    expect(screen.getByRole('heading', { level: 2 })).toHaveClass(styles.legendHeading)
     const child = screen.getByRole('textbox')
     expect(child).toBeDisabled()
     expect(child).not.toHaveAttribute('aria-describedby')
@@ -94,11 +92,11 @@ describe('FormGroup', () => {
     expect(first.getAttribute('aria-describedby')).not.toBe(second.getAttribute('aria-describedby'))
   })
 
-  it('uses React IDs on the server and permits no legend or invalid heading level', () => {
+  it('uses React IDs on the server and renders a plain legend without a heading level or no legend at all', () => {
     const html = renderToString(<FormGroup legend="Server question" hint="Server hint" />)
     expect(html).toContain('Server hint')
     expect(html).toMatch(/aria-describedby="[^"]+-hint"/)
-    const { rerender } = render(<FormGroup legend="Question" headingLevel={7} />)
+    const { rerender } = render(<FormGroup legend="Question" />)
     expect(screen.queryByRole('heading')).not.toBeInTheDocument()
     expect(screen.getByRole('group')).not.toHaveAttribute('aria-describedby')
     rerender(

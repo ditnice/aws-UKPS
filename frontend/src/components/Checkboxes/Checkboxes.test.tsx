@@ -19,6 +19,25 @@ function Options(props: Partial<CheckboxesProps>) {
 }
 
 describe('Checkboxes', () => {
+  it('generates distinct IDs for groups that share a name', () => {
+    render(
+      <>
+        <Checkboxes error="First error" hint="First hint" legend="First" name="contact">
+          <Checkbox hint="First option hint" label="First option" value="same" />
+        </Checkboxes>
+        <Checkboxes error="Second error" hint="Second hint" legend="Second" name="contact">
+          <Checkbox hint="Second option hint" label="Second option" value="same" />
+        </Checkboxes>
+      </>,
+    )
+    const first = screen.getByRole('checkbox', { name: 'First option' })
+    const second = screen.getByRole('checkbox', { name: 'Second option' })
+
+    expect(first.id).not.toBe(second.id)
+    expect(first).toHaveAccessibleDescription('First hint Error: First error First option hint')
+    expect(second).toHaveAccessibleDescription('Second hint Error: Second error Second option hint')
+  })
+
   it('owns option names and checked state rather than leaking standalone defaults', () => {
     render(
       <Checkboxes legend="Contact" name="contact" value={['email']}>
@@ -75,7 +94,7 @@ describe('Checkboxes', () => {
     for (const checkbox of screen.getAllByRole('checkbox')) {
       expect(checkbox).toHaveAttribute('name', 'contact')
       expect(checkbox).toHaveAccessibleDescription('Select all Error: Select an option')
-      expect(checkbox).toHaveAttribute('aria-invalid', 'true')
+      expect(checkbox).not.toHaveAttribute('aria-invalid')
       expect(checkbox).not.toBeRequired()
       expect(checkbox.parentElement).toHaveClass('checkbox--inline', 'checkbox--error')
     }

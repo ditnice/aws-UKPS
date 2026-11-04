@@ -7,7 +7,7 @@ import '@nice-digital/nds-form-group/scss/form-group.scss'
 
 import styles from './FormGroup.module.scss'
 
-import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
+import type { ComponentPropsWithRef, ReactNode } from 'react'
 
 type GroupMetadata = { describedBy?: string; error: boolean; inline: boolean }
 const FormGroupContext = createContext<GroupMetadata>({ error: false, inline: false })
@@ -25,7 +25,7 @@ export type FormGroupProps = ComponentPropsWithRef<'fieldset'> & {
   legend?: ReactNode
   hint?: ReactNode
   error?: string
-  headingLevel?: number
+  headingLevel?: 1 | 2 | 3 | 4 | 5 | 6
   inline?: boolean
   /** Stable prefix for hint/error IDs; otherwise React generates a hydration-safe ID. */
   identifier?: string
@@ -34,7 +34,6 @@ export type FormGroupProps = ComponentPropsWithRef<'fieldset'> & {
 /** Presentational grouping only: children opt into metadata, and are never cloned. */
 export function FormGroup({
   'aria-describedby': describedBy,
-  'aria-invalid': invalid,
   children,
   className,
   legend,
@@ -50,17 +49,12 @@ export function FormGroup({
   const hintId = hint ? `${prefix}-hint` : undefined
   const errorId = error ? `${prefix}-error` : undefined
   const descriptions = composeDescriptions(describedBy, hintId, errorId)
-  const Heading = (
-    headingLevel && Number.isInteger(headingLevel) && headingLevel >= 1 && headingLevel <= 6
-      ? `h${headingLevel}`
-      : 'span'
-  ) as ElementType
+  const Heading = headingLevel ? (`h${headingLevel}` as const) : 'span'
   return (
     <FormGroupContext.Provider value={{ describedBy: descriptions, error: Boolean(error), inline }}>
       <fieldset
         {...rest}
         aria-describedby={descriptions}
-        aria-invalid={error ? true : invalid}
         className={clsx('form-group', className)}
         data-component={`form-group${inline ? '--inline' : ''}`}
       >
