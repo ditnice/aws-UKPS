@@ -53,7 +53,7 @@ const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   recordId: 5,
   section: { id: 'product-indication', title: 'Product indication' },
   task: { id: 'indication-details', title: 'Indication details' },
-  page: { id: 'indication', title: 'Indication' },
+  page: { id: 'indication', title: 'Indication', commercialInConfidence: false },
   previousPageId: null,
   nextPageId: 'bnf-chapter',
   questions: [question({})],
@@ -108,6 +108,24 @@ describe('FormPage', () => {
 
       expect(screen.getByText('Indication details')).toBeInTheDocument()
       expect(screen.queryByText('Product indication')).toBeNull()
+    })
+
+    it('shows the Commercial in confidence badge when the page is flagged', () => {
+      render(
+        <FormPage
+          page={page({
+            page: { id: 'indication', title: 'Indication', commercialInConfidence: true },
+          })}
+        />,
+      )
+
+      expect(screen.getByText('Commercial in confidence')).toBeInTheDocument()
+    })
+
+    it('does not show the badge by default', () => {
+      render(<FormPage page={page()} />)
+
+      expect(screen.queryByText('Commercial in confidence')).toBeNull()
     })
 
     it('goes back to the task list from the first page of a task', () => {
@@ -282,7 +300,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'cancer', title: 'Treating cancer' },
+            page: { id: 'cancer', title: 'Treating cancer', commercialInConfidence: false },
             questions: [
               question({
                 id: 'cancer',
@@ -312,7 +330,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'biomarker-type', title: 'Biomarker type' },
+            page: { id: 'biomarker-type', title: 'Biomarker type', commercialInConfidence: false },
             questions: [
               question({
                 id: 'biomarker-type',
@@ -396,7 +414,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'bnf-chapter', title: 'BNF chapter' },
+            page: { id: 'bnf-chapter', title: 'BNF chapter', commercialInConfidence: false },
             questions: [
               question({
                 id: 'bnf',
@@ -432,7 +450,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'bnf-chapter', title: 'BNF chapter' },
+            page: { id: 'bnf-chapter', title: 'BNF chapter', commercialInConfidence: false },
             questions: [
               question({
                 id: 'bnf',

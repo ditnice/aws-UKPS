@@ -10,6 +10,7 @@ import { saveRecordFormPage } from '@/client/generated'
 import type { RecordPageDto } from '@/client/generated'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
+import { Badge } from '@/components/Badge/Badge'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -84,6 +85,16 @@ export function FormPage({ page }: FormPageProps) {
   })
 
   const heading = singleQuestion ? questions[0].label : page.page.title
+  const preheading = page.page.commercialInConfidence ? (
+    <>
+      {page.task.title}
+      <Badge className={styles.commercialBadge} colour="purple">
+        Commercial in confidence
+      </Badge>
+    </>
+  ) : (
+    page.task.title
+  )
   const backLink = (
     <BackLink href={page.previousPageId ? pageHref(page, page.previousPageId) : tasksHref}>
       Back
@@ -92,7 +103,7 @@ export function FormPage({ page }: FormPageProps) {
 
   return (
     <>
-      <PageHeader backLink={backLink} heading={heading} preheading={page.task.title} />
+      <PageHeader backLink={backLink} heading={heading} preheading={preheading} />
 
       {saveState.kind === 'conflict' && (
         <Alert type="caution">
