@@ -1,7 +1,7 @@
 'use client'
 
 import clsx from 'clsx'
-import { createContext, useContext, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 
 import '@nice-digital/nds-radio/scss/radio.scss'
 
@@ -75,45 +75,6 @@ export function Radios({
   const [uncontrolledValue, setUncontrolledValue] = useState<string | null>(defaultValue ?? null)
   const isControlled = value !== undefined
   const selectedValue = isControlled ? value : uncontrolledValue
-  const fieldsetRef = useRef<HTMLFieldSetElement>(null)
-
-  const restoreAfterReset = useEffectEvent((event: Event) => {
-    const fieldset = fieldsetRef.current
-    if (event.defaultPrevented || !fieldset?.isConnected) return
-    const resetValue = isControlled ? value : (defaultValue ?? null)
-    if (!isControlled) setUncontrolledValue(resetValue ?? null)
-    for (const input of fieldset.querySelectorAll<HTMLInputElement>('input[type="radio"]')) {
-      if (input.name === name && input.form === event.target) {
-        input.checked = input.value === resetValue
-      }
-    }
-  })
-
-  // Options can arrive or change form ownership without changing the group name.
-  // Refresh after every render, cleaning up the previous owning-form subscriptions.
-  useEffect(() => {
-    const fieldset = fieldsetRef.current
-    const inputs = () =>
-      Array.from(fieldset?.querySelectorAll<HTMLInputElement>('input[type="radio"]') ?? []).filter(
-        (input) => input.name === name,
-      )
-    const forms = new Set(
-      inputs()
-        .map((input) => input.form)
-        .filter((form) => form !== null),
-    )
-    function reset(event: Event) {
-      // Native reset runs after the event. Respect cancellation and restore React's ownership
-      // afterwards, even when the selected value did not change (and React would bail out).
-      queueMicrotask(() => {
-        restoreAfterReset(event)
-      })
-    }
-    for (const form of forms) form.addEventListener('reset', reset)
-    return () => {
-      for (const form of forms) form.removeEventListener('reset', reset)
-    }
-  })
 
   function select(next: string) {
     if (!isControlled) {
@@ -140,7 +101,6 @@ export function Radios({
           identifier={name}
           inline={inline}
           legend={legend}
-          ref={fieldsetRef}
         >
           {children}
         </FormGroup>

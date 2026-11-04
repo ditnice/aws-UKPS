@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/Button/Button'
 import { Checkbox, Checkboxes } from '@/components/Checkboxes/Checkboxes'
 
 import { Example } from '../../_components/Example'
@@ -9,22 +8,17 @@ export function Examples() {
   return (
     <>
       <Example title="Overview">
-        <form aria-label="Contact preferences">
-          <Checkboxes
-            legend="How would you like us to contact you?"
-            name="contact-example"
-            hint="Please select all that apply."
-            defaultValue={['email']}
-          >
-            <Checkbox id="preferred-email" value="email" label="Email" />
-            <Checkbox value="telephone" label="Telephone" />
-            <Checkbox value="sms" label="Text message" />
-            <Checkbox value="post" label="Post" disabled />
-          </Checkboxes>
-          <Button type="reset" variant="secondary">
-            Reset contact preferences
-          </Button>
-        </form>
+        <Checkboxes
+          legend="How would you like us to contact you?"
+          name="contact-example"
+          hint="Please select all that apply."
+          defaultValue={['email']}
+        >
+          <Checkbox id="preferred-email" value="email" label="Email" />
+          <Checkbox value="telephone" label="Telephone" />
+          <Checkbox value="sms" label="Text message" />
+          <Checkbox value="post" label="Post" disabled />
+        </Checkboxes>
       </Example>
       <Example title="Single checkboxes">
         <Checkbox

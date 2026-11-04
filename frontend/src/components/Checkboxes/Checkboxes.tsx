@@ -1,15 +1,7 @@
 'use client'
 
 import clsx from 'clsx'
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useEffectEvent,
-  useId,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, useContext, useId, useState } from 'react'
 
 import '@nice-digital/nds-checkbox/scss/checkbox.scss'
 
@@ -52,33 +44,6 @@ export function Checkboxes({
   const [uncontrolledValue, setUncontrolledValue] = useState(() => [...new Set(defaultValue ?? [])])
   const controlled = value !== undefined
   const values = controlled ? value : uncontrolledValue
-  const fieldsetRef = useRef<HTMLFieldSetElement>(null)
-  const restore = useEffectEvent((event: Event) => {
-    const fieldset = fieldsetRef.current
-    if (event.defaultPrevented || !fieldset?.isConnected) return
-    const next = [...new Set(controlled ? value : (defaultValue ?? []))]
-    if (!controlled) setUncontrolledValue(next)
-    for (const input of fieldset.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) {
-      if (input.name === name && input.form === event.target)
-        input.checked = next.includes(input.value)
-    }
-  })
-  // Refresh ownership subscriptions for late options and changed native form attributes.
-  useEffect(() => {
-    const forms = new Set(
-      Array.from(
-        fieldsetRef.current?.querySelectorAll<HTMLInputElement>('input[type="checkbox"]') ?? [],
-      )
-        .filter((input) => input.name === name)
-        .map((input) => input.form)
-        .filter((form) => form !== null),
-    )
-    const reset = (event: Event) => queueMicrotask(() => restore(event))
-    for (const form of forms) form.addEventListener('reset', reset)
-    return () => {
-      for (const form of forms) form.removeEventListener('reset', reset)
-    }
-  })
   function toggle(option: string, checked: boolean) {
     const next = checked
       ? [...new Set([...values, option])]
@@ -88,7 +53,7 @@ export function Checkboxes({
   }
   return (
     <CheckboxSelection.Provider value={{ name, values, toggle, onBlur }}>
-      <FormGroup {...groupProps} identifier={groupProps.identifier ?? name} ref={fieldsetRef}>
+      <FormGroup {...groupProps} identifier={groupProps.identifier ?? name}>
         {children}
       </FormGroup>
     </CheckboxSelection.Provider>

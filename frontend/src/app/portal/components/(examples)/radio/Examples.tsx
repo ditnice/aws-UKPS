@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { Radio, Radios } from '@/components/Radios/Radios'
 
@@ -48,52 +47,42 @@ export function Examples() {
         </Radios>
       </Example>
       <Example title="Conditionally revealing a related question">
-        <form aria-label="Contact method example" onSubmit={(event) => event.preventDefault()}>
-          <Radios
-            defaultValue="post"
-            hint="Select one option"
-            legend="How would you like to be contacted?"
-            name="contact-method"
-          >
-            <Radio
-              conditional={
-                <Input
-                  label="Email address"
-                  name="contact-method-email"
-                  required
-                  type="email"
-                  width={20}
-                />
-              }
-              id="contact-email-option"
-              label="Email"
-              value="email"
-            />
-            <Radio
-              conditional={
-                <Input label="Phone number" name="contact-method-phone" type="tel" width={20} />
-              }
-              label="Phone"
-              value="phone"
-            />
-            <Radio
-              conditional={
-                <Input
-                  label="Mobile phone number"
-                  name="contact-method-text"
-                  type="tel"
-                  width={20}
-                />
-              }
-              label="Text message"
-              value="text"
-            />
-            <Radio label="Post" value="post" />
-          </Radios>
-          <Button type="reset" variant="secondary">
-            Reset contact method
-          </Button>
-        </form>
+        <Radios
+          defaultValue="post"
+          hint="Select one option"
+          legend="How would you like to be contacted?"
+          name="contact-method"
+        >
+          <Radio
+            conditional={
+              <Input
+                label="Email address"
+                name="contact-method-email"
+                required
+                type="email"
+                width={20}
+              />
+            }
+            id="contact-email-option"
+            label="Email"
+            value="email"
+          />
+          <Radio
+            conditional={
+              <Input label="Phone number" name="contact-method-phone" type="tel" width={20} />
+            }
+            label="Phone"
+            value="phone"
+          />
+          <Radio
+            conditional={
+              <Input label="Mobile phone number" name="contact-method-text" type="tel" width={20} />
+            }
+            label="Text message"
+            value="text"
+          />
+          <Radio label="Post" value="post" />
+        </Radios>
       </Example>
       <Example title="Errors">
         <Radios

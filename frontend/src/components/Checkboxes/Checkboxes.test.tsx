@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -103,81 +103,5 @@ describe('Checkboxes', () => {
     await userEvent.setup().click(screen.getByLabelText('Phone'))
     expect(change).toHaveBeenCalledWith(['phone'])
     expect(screen.getByLabelText('Phone')).not.toBeChecked()
-  })
-
-  it('resets uncontrolled state and repeated resets without notifying changes', async () => {
-    const user = userEvent.setup()
-    const change = vi.fn()
-    render(
-      <form>
-        <Options defaultValue={['phone']} onChange={change} />
-        <button type="reset">Reset</button>
-      </form>,
-    )
-    await user.click(screen.getByLabelText('Email'))
-    await user.click(screen.getByRole('button'))
-    await waitFor(() => expect(screen.getByLabelText('Email')).not.toBeChecked())
-    expect(screen.getByLabelText('Phone')).toBeChecked()
-    await user.click(screen.getByRole('button'))
-    expect(screen.getByLabelText('Phone')).toBeChecked()
-    await user.click(screen.getByLabelText('None'))
-    expect(change).toHaveBeenLastCalledWith(['phone', 'none'])
-    expect(change).toHaveBeenCalledTimes(2)
-  })
-
-  it('restores controlled ownership after native reset even without a state update', async () => {
-    render(
-      <form>
-        <Options value={['email']} defaultValue={['phone']} />
-        <button type="reset">Reset</button>
-      </form>,
-    )
-    await userEvent.setup().click(screen.getByRole('button'))
-    await waitFor(() => expect(screen.getByLabelText('Email')).toBeChecked())
-    expect(screen.getByLabelText('Phone')).not.toBeChecked()
-  })
-
-  it('respects cancelled resets', async () => {
-    render(
-      <form onReset={(event) => event.preventDefault()}>
-        <Options defaultValue={['phone']} />
-        <button type="reset">Reset</button>
-      </form>,
-    )
-    const user = userEvent.setup()
-    await user.click(screen.getByLabelText('Email'))
-    await user.click(screen.getByRole('button'))
-    expect(screen.getByLabelText('Email')).toBeChecked()
-    expect(screen.getByLabelText('Phone')).toBeChecked()
-  })
-
-  it('subscribes to late options and changes of native form ownership', async () => {
-    function Example({ owner, show }: { owner: string; show: boolean }) {
-      return (
-        <>
-          <form id="first" aria-label="First">
-            <button type="reset">Reset first</button>
-          </form>
-          <form id="second" aria-label="Second">
-            <button type="reset">Reset second</button>
-          </form>
-          <Checkboxes name="contact" legend="Contact" defaultValue={['email']}>
-            {show && <Checkbox form={owner} label="Email" value="email" />}
-          </Checkboxes>
-        </>
-      )
-    }
-    const { rerender } = render(<Example owner="first" show={false} />)
-    rerender(<Example owner="first" show />)
-    const user = userEvent.setup()
-    await user.click(screen.getByLabelText('Email'))
-    await user.click(screen.getByRole('button', { name: 'Reset first' }))
-    await waitFor(() => expect(screen.getByLabelText('Email')).toBeChecked())
-    rerender(<Example owner="second" show />)
-    await user.click(screen.getByLabelText('Email'))
-    await user.click(screen.getByRole('button', { name: 'Reset first' }))
-    expect(screen.getByLabelText('Email')).not.toBeChecked()
-    await user.click(screen.getByRole('button', { name: 'Reset second' }))
-    await waitFor(() => expect(screen.getByLabelText('Email')).toBeChecked())
   })
 })
