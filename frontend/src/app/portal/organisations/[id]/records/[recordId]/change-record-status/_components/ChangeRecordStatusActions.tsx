@@ -10,6 +10,8 @@ import { Radio, Radios } from '@/components/Radios/Radios'
 
 import { buildRecordHref } from '../../_lib/recordLinks'
 
+import type { SubmitEvent } from 'react'
+
 type ChangeRecordStatusProps = {
   organisationId: number
   recordId: number
@@ -57,7 +59,7 @@ export const ChangeRecordStatusActions = ({
   const [radioError, setRadioError] = useState(false)
   const availableActions = actionOptions.filter((option) => option.isAvailable(recordStatus))
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
     const option = availableActions.find((option) => option.action === selectedAction)
     if (!option) {
