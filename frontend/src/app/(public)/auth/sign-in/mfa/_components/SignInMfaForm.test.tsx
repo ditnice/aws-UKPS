@@ -4,14 +4,9 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthMfa } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { SignInMfaForm } from './SignInMfaForm'
-
-const { push: mockPush } = router
-
-vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
   postAuthMfa: vi.fn(),
@@ -19,9 +14,11 @@ vi.mock('@/client/generated', () => ({
 
 const exampleUserEmail = 'user@email.com'
 const exampleSession = 'session'
+const assign = vi.fn()
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 type FormValues = { securityCode: string }
@@ -40,6 +37,8 @@ let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
   vi.mocked(postAuthMfa).mockResolvedValue({ error: undefined, data: undefined })
+  vi.stubGlobal('location', { ...globalThis.location, assign })
+  assign.mockReset()
   user = userEvent.setup()
 })
 
@@ -68,7 +67,7 @@ describe('SignInMfaForm', () => {
         },
         credentials: 'include',
       })
-      expect(mockPush).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(assign).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
   it('redirects to the organisation selection page with the returnTo path on successful authentication', async () => {
@@ -82,7 +81,7 @@ describe('SignInMfaForm', () => {
     await updateForm(validFormValues)
     await submitForm()
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(
+      expect(assign).toHaveBeenCalledWith(
         '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })
