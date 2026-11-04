@@ -62,7 +62,7 @@ export type CheckboxProps = Omit<ComponentPropsWithRef<'input'>, 'type' | 'value
   label: ReactNode
   /** Required option value; the enclosing Checkboxes owns the name and selection. */
   value: string
-  hint?: ReactNode
+  hint?: string
   error?: boolean
   errorMessage?: string
 }
@@ -70,7 +70,6 @@ export type CheckboxProps = Omit<ComponentPropsWithRef<'input'>, 'type' | 'value
 /** A native standalone checkbox, or an option controlled by its enclosing Checkboxes. */
 export function Checkbox({
   'aria-describedby': describedBy,
-  'aria-invalid': invalid,
   label,
   value,
   name,
@@ -110,7 +109,6 @@ export function Checkbox({
         <input
           {...rest}
           aria-describedby={composeDescriptions(describedBy, group.describedBy, hintId, errorId)}
-          aria-invalid={error ? true : invalid}
           checked={selection ? selection.values.includes(value) : checked}
           defaultChecked={selection ? undefined : defaultChecked}
           className={clsx('checkbox__input', className)}
