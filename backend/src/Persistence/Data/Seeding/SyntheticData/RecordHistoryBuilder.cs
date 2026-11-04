@@ -68,6 +68,13 @@ internal sealed class RecordHistoryBuilder
             }
         );
         RecordRevision first = CreateRevision(_record.CreatedAt, basedOn: null);
+        Save(
+            first,
+            _record.CreatedAt,
+            RecordContentHistory.CreationPageFields(
+                _source.ProductRecordDetails.NamesAndIdentifiers
+            )
+        );
 
         if (_source.RecordStatus == RecordStatus.Unpublished)
         {
@@ -337,7 +344,7 @@ internal sealed class RecordHistoryBuilder
 
         // A new record is filled in from scratch a section at a time, so it takes more saves
         // than a later revision that only changes a few fields.
-        bool isNewRecord = _saved.Count == 0;
+        bool isNewRecord = revision.BasedOnRevision is null;
         int plannedSaves = isNewRecord ? _random.Number(2, 4) : _random.Number(1, 3);
         DateTime[] times = SaveTimes(revision.CreatedAt, lastSave, plannedSaves);
         int saves = Math.Min(times.Length, changed.Length);

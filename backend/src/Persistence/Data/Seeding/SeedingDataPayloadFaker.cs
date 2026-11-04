@@ -55,7 +55,7 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         _dataSet = dataSet;
         _referenceData = SeedReferenceData.Create(dataSet.ReferenceData);
 
-        RuleFor(x => x.ReferenceData, _ => [.. _referenceData.GetAllEntities()]);
+        RuleFor(x => x.ReferenceData, _ => _referenceData);
         RuleFor(x => x.Organisations, _ => CreateOrganisations());
         RuleFor(x => x.Users, (f, o) => FakeUsers(f, o));
         RuleFor(x => x.Memberships, (f, o) => FakeMemberships(f, o));

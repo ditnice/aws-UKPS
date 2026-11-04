@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using static UKPS.Api.Persistence.Data.Seeding.SyntheticData.SyntheticRecord;
 
@@ -10,6 +12,11 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 /// </summary>
 internal static class RecordContentHistory
 {
+    private static readonly JsonSerializerOptions _dateAuditJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
     /// <summary>Phrases that introduce the population an indication applies to.</summary>
     private static readonly string[] _populationPhrases =
     [
@@ -119,13 +126,18 @@ internal static class RecordContentHistory
         };
     }
 
-    /// <summary>The fields whose changes are recorded in the field audit, in form order.</summary>
+    /// <summary>
+    /// The fields whose changes are recorded in the field audit, in form order. Reference data
+    /// answers hold the synthetic code or label until <see cref="SeedReferenceData.ResolveAuditValue"/>
+    /// swaps it for the ID, once the reference data is saved.
+    /// </summary>
     public static IReadOnlyDictionary<string, string?> AuditedFields(SyntheticRecord record)
     {
         SyntheticRegulatoryAccessAndLaunch regulatory = record.RegulatoryAccessAndLaunchInformation;
         return new[]
         {
-            ProductAndIndicationFields(record),
+            CreationPageFields(record.ProductRecordDetails.NamesAndIdentifiers),
+            IndicationFields(record),
             MhraFields(regulatory.MhraProcedureAndDates),
             HtaAndDesignationFields(regulatory),
             ServiceReadinessFields(record.ServiceReadinessInformation),
@@ -134,19 +146,39 @@ internal static class RecordContentHistory
             .ToDictionary(field => field.Path, field => field.Value, StringComparer.Ordinal);
     }
 
-    private static (string Path, string? Value)[] ProductAndIndicationFields(SyntheticRecord record)
+    /// <summary>The fields answered on the page that creates the record, saved with the record.</summary>
+    public static IReadOnlyList<(string Path, string? Value)> CreationPageFields(
+        SyntheticNamesAndIdentifiers names
+    ) =>
+        [
+            (CreationPageFieldPaths.CompanyCode, names.CompanyCode),
+            (CreationPageFieldPaths.BrandedName, names.BrandedName),
+            (CreationPageFieldPaths.RecordTitle, names.RecordTitle),
+            (
+                CreationPageFieldPaths.NamesAndIdentifiers,
+                FieldAuditJson.NamesAndIdentifiers(names.GenericNames, names.OtherIdentifiers)
+            ),
+        ];
+
+    private static (string Path, string? Value)[] IndicationFields(SyntheticRecord record)
     {
-        SyntheticNamesAndIdentifiers names = record.ProductRecordDetails.NamesAndIdentifiers;
         SyntheticIndicationDetails indication = record
             .IndicationAndDevelopmentInformation
             .IndicationDetails;
         return
         [
-            ("record_product_detail.record_title", names.RecordTitle),
-            ("record_product_detail.company_code", names.CompanyCode),
-            ("record_product_detail.branded_name", names.BrandedName),
             ("medicines_indication_detail.indication", indication.Indication),
-            ("medicines_indication_detail.bnf_chapter", indication.BnfChapter?.Label),
+            ("medicines_indication_detail.bnf_chapter_id", indication.BnfChapter?.Code),
+            (
+                "medicines_indication_detail_therapeutic_area",
+                indication.TherapeuticAreas.Count == 0
+                    ? null
+                    : JsonSerializer.Serialize(
+                        indication
+                            .TherapeuticAreas.Select(area => area.Code)
+                            .Order(StringComparer.Ordinal)
+                    )
+            ),
             (
                 "medicines_indication_detail.indication_is_paediatric",
                 indication.IndicationIsPaediatric?.ToString()
@@ -159,7 +191,7 @@ internal static class RecordContentHistory
                 "medicines_indication_detail.indication_is_rare_disease",
                 indication.IndicationIsRareDisease?.ToString()
             ),
-            ("medicines_indication_detail.formulation_type", indication.FormulationType),
+            ("medicines_indication_detail.formulation_type_id", indication.FormulationType),
             ("medicines_indication_detail.presentation", indication.Presentation),
             ("medicines_indication_detail.mode_of_action", indication.ModeOfAction),
             ("medicines_indication_detail.proposed_dose_regimen", indication.ProposedDoseRegimen),
@@ -176,8 +208,8 @@ internal static class RecordContentHistory
 
     private static (string Path, string? Value)[] MhraFields(SyntheticMhraProcedureAndDates mhra) =>
         [
-            ("record_mhra_procedure.mhra_procedure_type", mhra.MhraProcedureType),
-            ("record_mhra_procedure.irp_reference_regulator", mhra.IrpReferenceRegulator),
+            ("record_mhra_procedure.mhra_procedure_type_id", mhra.MhraProcedureType),
+            ("record_mhra_procedure.irp_reference_regulator_id", mhra.IrpReferenceRegulator),
             ("record_mhra_date.uk_submission_date", Format(mhra.UkSubmissionDate)),
             ("record_mhra_date.uk_licence_date", Format(mhra.UkLicenceDate)),
             (
@@ -192,7 +224,7 @@ internal static class RecordContentHistory
                 "medicines_global_submission.global_submission_actual_date",
                 Format(mhra.GlobalSubmissionActualDate)
             ),
-            ("medicines_intl_recognition.irp_route", mhra.IrpRoute),
+            ("medicines_intl_recognition.irp_route_id", mhra.IrpRoute),
             ("medicines_intl_recognition.intl_submission_date", Format(mhra.IntlSubmissionDate)),
             ("medicines_intl_recognition.intl_licence_date", Format(mhra.IntlLicenceDate)),
             (
@@ -230,7 +262,7 @@ internal static class RecordContentHistory
                 "medicines_eu_status.atmp_recommendation_date",
                 Format(designations.AtmpRecommendationDate)
             ),
-            ("medicines_eu_status.atmp_classification", designations.AtmpClassification),
+            ("medicines_eu_status.atmp_classification_id", designations.AtmpClassification),
             (
                 "medicines_eams_pim.pim_designation_status",
                 designations.PimDesignationStatus?.ToString()
@@ -258,7 +290,7 @@ internal static class RecordContentHistory
                 readiness.PatientAndClinicalRequirements.ProposedPlaceInTherapy
             ),
             (
-                "medicines_service_impact.uk_patient_population_range",
+                "medicines_service_impact.uk_patient_population_range_id",
                 readiness.PatientAndClinicalRequirements.UkPatientPopulationRange
             ),
             (
@@ -480,13 +512,27 @@ internal static class RecordContentHistory
         return result;
     }
 
+    /// <summary>
+    /// A date's audit value: its contents as a JSON object, never its <c>regulatory_dates</c> ID,
+    /// which changes on every copy-forward.
+    /// </summary>
     private static string? Format(SyntheticRegulatoryDate? date) =>
         date is null
             ? null
-            : string.Create(
-                CultureInfo.InvariantCulture,
-                $"{date.DateValue:yyyy-MM-dd} ({date.DatePrecision})"
+            : JsonSerializer.Serialize(
+                new DateAuditValue(
+                    date.DatePrecision.ToString(),
+                    date.DateValue.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    date.IsConfidential
+                ),
+                _dateAuditJsonOptions
             );
+
+    private sealed record DateAuditValue(
+        string DatePrecision,
+        string DateValue,
+        bool IsConfidential
+    );
 
     private sealed class Disclosure(IReadOnlySet<string> unknownFields)
     {

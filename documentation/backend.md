@@ -95,7 +95,7 @@ against a disposable database.
 | `DevAuthentication` | `IsEnabled`, `UserRole` | Disabled by default. When enabled, requests are authenticated using `UserRole`, which defaults to `Super`. |
 | `Email` | `MaxResendSignUpLinkAttempts`, `ListenerEnabled`, `TestingEmailAddress`, `FromAddress`, `QueueUrl`, `QueueMaxNumberOfMessages`, `QueueWaitTimeInSeconds` | Resend limit defaults to `3` in the code and both appsettings files; dev/test ECS overrides it with `"3"`. `TestingEmailAddress` defaults to `null`; when set, it **adds** a recipient, rather than replacing the intended recipient. `ListenerEnabled` defaults to `true`; set it to `false` to stop the SQS email queue listener polling (used by the Docker Compose E2E stack, which has no AWS access). Sender and queue URL are required. Queue batch size defaults to `1` (range `1–10`); wait time defaults to `20` seconds (range `0–20`). |
 | `Seeding` | `ReseedOnStartup`, `SeedUsersJson` | Reseeding defaults to `false`; the configured user list defaults to `[]`. The example enables reseeding and includes a synthetic super user. |
-| `UserOnboarding` | `SetupLink`, `SetupTokenExpiryTimeSeconds` | Replace the link placeholder with the frontend base URL. Token expiry defaults to `900` seconds and must be at least `60`. |
+| `UserOnboarding` | `SetupLink`, `SetupTokenExpiryTimeSeconds` | Replace the link placeholder with the frontend base URL. Token expiry defaults to `1800` seconds and must be at least `60`. |
 
 ### Database connection modes and secrets
 

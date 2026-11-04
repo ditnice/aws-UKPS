@@ -135,7 +135,7 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
     {
         _mockService
             .OnboardUser(Arg.Any<OnboardUserCommandDto>(), Arg.Any<CancellationToken>())
-            .Returns(UserOnboardingResult.Err(new OnboardUserError.UserEmailAlreadyExists()));
+            .Returns(UserOnboardingResult.Err(new OnboardUserError.UserAlreadyInOrganisation()));
         OnboardUserCommandDto command = _onboardUserCommandDtoFaker.Generate();
         var response = await _client.PostAsJsonAsync(
             OnboardEndpoint,
