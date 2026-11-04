@@ -3,7 +3,7 @@
 exports[`Select > merges existing describedby with hint and error ids 1`] = `
 <DocumentFragment>
   <div
-    class="_select_09c1ee"
+    class="_select_09c1ee _errorGroup_09c1ee"
     data-component="select"
   >
     <label
@@ -121,7 +121,7 @@ exports[`Select > renders a label and option children 1`] = `
 exports[`Select > renders an error and describes the select with it 1`] = `
 <DocumentFragment>
   <div
-    class="_select_09c1ee"
+    class="_select_09c1ee _errorGroup_09c1ee"
     data-component="select"
   >
     <label
