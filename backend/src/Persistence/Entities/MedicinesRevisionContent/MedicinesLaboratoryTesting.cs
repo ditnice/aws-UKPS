@@ -56,7 +56,12 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("non-genomic-biomarker", "Non-genomic biomarker", Order = 30)]
+    [FormPage(
+        "non-genomic-biomarker",
+        "Non-genomic biomarker",
+        Order = 30,
+        CommercialInConfidence = true
+    )]
     [FormField(
         "medicines_laboratory_testing.non_genomic_biomarker_description",
         "Describe the non-genomic biomarker",
@@ -75,7 +80,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("genomic-target", "Genomic target", Order = 40)]
+    [FormPage("genomic-target", "Genomic target", Order = 40, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.genomic_target",
         "What is the genomic target for this test?",
@@ -94,7 +99,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("ngtd-relationship", "NGTD", Order = 50)]
+    [FormPage("ngtd-relationship", "NGTD", Order = 50, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_ngtd_relationship",
         "How does this test relate to what's currently in the National Genomic Test Directory (NGTD)?",
@@ -112,7 +117,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("sample-type", "Sample type", Order = 60)]
+    [FormPage("sample-type", "Sample type", Order = 60, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.genomic_sample_type",
         "What sample type is needed?",
@@ -131,7 +136,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("turnaround-time", "Turnaround time", Order = 70)]
+    [FormPage("turnaround-time", "Turnaround time", Order = 70, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.genomic_turnaround_time_details",
         "Describe any turnaround time requirements for this test that differ from the current routinely commissioned testing pathway (optional)",
@@ -145,7 +150,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("pathway-point", "Patient pathway", Order = 80)]
+    [FormPage("pathway-point", "Patient pathway", Order = 80, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.patient_pathway_point_id",
         "At which point of the patient pathway should the test be conducted?",
@@ -164,7 +169,12 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("genomic-alterations", "Genomic alterations", Order = 90)]
+    [FormPage(
+        "genomic-alterations",
+        "Genomic alterations",
+        Order = 90,
+        CommercialInConfidence = true
+    )]
     [FormField(
         "medicines_laboratory_testing.genomic_alterations",
         "What genomic alterations determine patient eligibility?",
@@ -184,7 +194,12 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("additional-genomic-factors", "Additional genomic factors", Order = 100)]
+    [FormPage(
+        "additional-genomic-factors",
+        "Additional genomic factors",
+        Order = 100,
+        CommercialInConfidence = true
+    )]
     [FormField(
         "medicines_laboratory_testing.additional_genomic_factors",
         "Are there additional genomic factors that affect treatment selection or sequencing?",
@@ -199,7 +214,12 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("test-used-in-trials", "Test used in trials", Order = 110)]
+    [FormPage(
+        "test-used-in-trials",
+        "Test used in trials",
+        Order = 110,
+        CommercialInConfidence = true
+    )]
     [FormField(
         "medicines_laboratory_testing.genomic_test_used_in_trials",
         "What test was used in trials?",
@@ -214,7 +234,12 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("specificity-sensitivity", "Specificity and sensitivity", Order = 120)]
+    [FormPage(
+        "specificity-sensitivity",
+        "Specificity and sensitivity",
+        Order = 120,
+        CommercialInConfidence = true
+    )]
     [FormField(
         "medicines_laboratory_testing.genomic_test_specificity_sensitivity",
         "Enter the minimum specificity and sensitivity used",
@@ -230,7 +255,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("test-mandatory", "Mandatory testing", Order = 130)]
+    [FormPage("test-mandatory", "Mandatory testing", Order = 130, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_mandatory_status",
         "Is this test mandatory before treatment can start?",
@@ -251,7 +276,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("monitoring-tests", "Monitoring tests", Order = 140)]
+    [FormPage("monitoring-tests", "Monitoring tests", Order = 140, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.monitoring_tests_details",
         "Describe any tests (genomic tests or otherwise) needed to monitor response to treatment beyond what is currently offered in NHS practice",
@@ -272,7 +297,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("safety-tests", "Safety tests", Order = 150)]
+    [FormPage("safety-tests", "Safety tests", Order = 150, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.safety_tests_details",
         "Describe any tests needed to assess safety of the treatment that are additional to what is currently used in routine clinical practice",

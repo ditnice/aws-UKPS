@@ -25,6 +25,7 @@
 // The NDS page header renders the caption as an inline page, so put the badge on its own line.
 .commercialBadge {
   display: block;
+  font-family: var(--sans-font-family);
   margin-top: utils.rem(spacing.$small);
   width: fit-content;
 }
