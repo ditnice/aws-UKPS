@@ -26,15 +26,15 @@ public abstract record OnboardUserError
     public sealed record NotAllowed : OnboardUserError;
 
     /// <summary>
-    /// Indicates that a user with the specified email address already exists.
+    /// Indicates that a user is already a member of the target organisation.
     /// </summary>
-    public sealed record UserEmailAlreadyExists : OnboardUserError;
+    public sealed record UserAlreadyInOrganisation : OnboardUserError;
 
     internal TResult Match<TResult>(
         Func<UsernameAlreadyExists, TResult> usernameAlreadyExists,
         Func<InvalidOrganisation, TResult> invalidOrganisation,
         Func<NotAllowed, TResult> notAllowed,
-        Func<UserEmailAlreadyExists, TResult> userAlreadyExists
+        Func<UserAlreadyInOrganisation, TResult> userAlreadyInOrganisation
     )
     {
         return this switch
@@ -42,7 +42,7 @@ public abstract record OnboardUserError
             UsernameAlreadyExists x => usernameAlreadyExists(x),
             InvalidOrganisation x => invalidOrganisation(x),
             NotAllowed x => notAllowed(x),
-            UserEmailAlreadyExists x => userAlreadyExists(x),
+            UserAlreadyInOrganisation x => userAlreadyInOrganisation(x),
             _ => throw new InvalidOperationException("Unknown onboarding user error."),
         };
     }

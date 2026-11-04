@@ -10,7 +10,8 @@ namespace UKPS.Api.Application.RecordForms;
 public interface IRecordFormSaveService
 {
     /// <summary>
-    /// Validates every answer on the page and writes the changed ones, with one audit event.
+    /// Validates every answer on the page and writes the changed ones, with an audit row per
+    /// changed answer.
     /// </summary>
     Task<SaveRecordPageResult> SavePage(
         int recordId,

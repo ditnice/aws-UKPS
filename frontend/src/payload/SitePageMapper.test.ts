@@ -39,6 +39,25 @@ describe('mapPage', () => {
     })
   })
 
+  it('maps the page header, converting empty fields to undefined', () => {
+    const page = mapPage(
+      makePage([textSection], {
+        pageHeader: {
+          preheading: null,
+          lead: 'Who we are',
+          description: null,
+        },
+      }),
+      '/about-us',
+    )
+
+    expect(page?.pageHeader).toEqual({
+      preheading: undefined,
+      lead: 'Who we are',
+      description: undefined,
+    })
+  })
+
   it.each([
     ['title', { title: '' }],
     ['slug', { slug: '' }],

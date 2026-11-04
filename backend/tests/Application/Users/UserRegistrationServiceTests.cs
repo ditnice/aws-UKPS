@@ -11,6 +11,7 @@ using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
+using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
 using GetUserDetails = UKPS.Api.Application.Common.Result<
@@ -394,11 +395,22 @@ public class UserRegistrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task ApproveRequest_WhenUserAlreadyExists_ShouldRollBackRequestApproval()
+    public async Task ApproveRequest_WhenUserAlreadyInOrganisation_ShouldRollBackRequestApproval()
     {
         var request = await CreateRegistrationRequest();
+
+        User existingUser = new UserFaker()
+            .RuleFor(x => x.WorkEmail, _ => request.Command.WorkEmail)
+            .Generate();
         await AddEntity(
-            new UserFaker().RuleFor(x => x.WorkEmail, _ => request.Command.WorkEmail).Generate(),
+            new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .Generate()
+                .Update(x =>
+                {
+                    x.User = existingUser;
+                    x.OrganisationId = _organisation.Id;
+                }),
             TestContext.Current.CancellationToken
         );
 
@@ -407,7 +419,7 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             request.Id,
             TestContext.Current.CancellationToken
         );
-        result.ShouldBeError().ShouldBeOfType<ApproveRequestError.UserAlreadyExists>();
+        result.ShouldBeError().ShouldBeOfType<ApproveRequestError.UserAlreadyInOrganisation>();
 
         var foundValue = await _harness
             .GetClearedContext()
@@ -419,6 +431,38 @@ public class UserRegistrationServiceTests : DatabaseTestBase
         foundValue.ApprovedAt.ShouldBeNull();
         foundValue.ApprovedByUserId.ShouldBeNull();
         foundValue.ResultingUserId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task ApproveRequest_WhenUserExists_ShouldAddMembershipToExistingUser()
+    {
+        var request = await CreateRegistrationRequest();
+        // The requester already has an account, but is not in this organisation
+        await AddEntity(
+            new UserFaker().RuleFor(x => x.WorkEmail, _ => request.Command.WorkEmail).Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        var result = await _harness.Service.ApproveRequest(
+            _organisation.Id,
+            request.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var user = await _harness
+            .GetClearedContext()
+            .Users.Include(x => x.UserOrgMemberships)
+            .FirstOrDefaultAsync(
+                x => x.WorkEmail == request.Command.WorkEmail,
+                TestContext.Current.CancellationToken
+            );
+
+        user.ShouldNotBeNull();
+        var membership = user.UserOrgMemberships.ShouldHaveSingleItem();
+        membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+        membership.OrganisationId.ShouldBe(_organisation.Id);
     }
 
     [Fact]
@@ -437,6 +481,33 @@ public class UserRegistrationServiceTests : DatabaseTestBase
             .Emails.Sent.Skip(1)
             .First()
             .ShouldBeOfType<UserMembershipRequestApprovedNotificationEmail>();
+    }
+
+    [Fact]
+    public async Task ApproveRequest_WhenUserExists_ShouldSendExistingUserApprovalEmail()
+    {
+        var request = await CreateRegistrationRequest();
+        // The requester already has an account, but is not in this organisation
+        await AddEntity(
+            new UserFaker().RuleFor(x => x.WorkEmail, _ => request.Command.WorkEmail).Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        var result = await _harness.Service.ApproveRequest(
+            _organisation.Id,
+            request.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        _harness.Emails.Sent.Count.ShouldBe(2);
+        _harness.Emails.Sent.First().ShouldBeOfType<UserRegisterEmail>();
+        UserMembershipRequestApprovedExistingUserEmail email = _harness
+            .Emails.Sent.Skip(1)
+            .First()
+            .ShouldBeOfType<UserMembershipRequestApprovedExistingUserEmail>();
+        email.OrganisationName.ShouldBe(_organisation.OrganisationName);
     }
 
     [Fact]
