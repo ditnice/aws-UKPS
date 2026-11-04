@@ -2,7 +2,6 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 
 import { postAuthMfa } from '@/client/generated'
@@ -39,7 +38,6 @@ type SignInFormProps = {
   session: string
 }
 export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) {
-  const router = useRouter()
   const form = useForm({
     defaultValues: {
       securityCode: '',
@@ -62,7 +60,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         credentials: 'include',
       })
       if (!response.error) {
-        router.push(buildSelectOrganisationHref(returnTo))
+        globalThis.location.assign(buildSelectOrganisationHref(returnTo))
       }
       if (response.error?.status === 401) {
         formApi.setErrorMap({
