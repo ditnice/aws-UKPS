@@ -10,6 +10,12 @@ with SQL to check them. Use it to confirm the flow behaves as intended.
 
 For the design behind it, see the [high-level design](high-level-design.md).
 
+The record task list is available at `GET /records/{recordId}/task-list`. It reads the latest revision
+and returns the form's sections and tasks, including each task's first page and a status derived
+from saved answers. This read does not write to the database. A task is `Completed` when all its
+required questions have answers, `InProgress` when it has at least one answer but required
+answers remain, and `NotStarted` when it has no saved answers.
+
 ## Conventions
 
 - All tables are in the `ukps` schema.
@@ -52,10 +58,11 @@ For the design behind it, see the [high-level design](high-level-design.md).
 
 **Request:** `POST /records` from `/portal/organisations/3/records/create`.
 
-**Response:** `200 { "recordId": 5, "firstPageId": "indication" }`, then the
-browser goes to `/portal/records/5/indication`. (`firstPageId` is `null` for a record
-type with no form, or for a user who cannot edit record content, and the browser then goes to
-the records list.)
+**Response:** `200 { "recordId": 5, "canEditContent": true }`, then the
+browser goes to the task list at `/portal/records/5/task-list`. Selecting the **Indication
+details** task opens `/portal/records/5/indication`. (`canEditContent` is `false` for a record type
+with no form, or for a user who cannot edit record content, and the browser then goes to the
+records list.)
 
 All of the following are written in one transaction at `T0`.
 
@@ -103,7 +110,17 @@ All of the following are written in one transaction at `T0`.
 | `performed_by` / `performed_at` | `12` / `T0` |
 | `note` | `null` |
 
-No `record_field_audit` rows are written for record creation.
+### `record_field_audit` (1 row per answered field inserted)
+
+Each row has `record_id = 5`, `revision_id = 7`, `old_value = null`, `changed_by = 12` and
+`changed_at = T0`. A blank branded name is not audited.
+
+| `field_path` | `new_value` |
+|---|---|
+| `record_product_detail.company_code` | `GS-7977` |
+| `record_product_detail.branded_name` | `Sovaldi` |
+| `record_product_detail.record_title` | `Chronic hepatitis C in adults` |
+| `record_product_detail.names_and_identifiers` | `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}` |
 
 ### `record_product_details` (1 row inserted)
 
@@ -143,6 +160,8 @@ select * from ukps.record_names_and_identifiers
 where record_product_detail_id =
   (select id from ukps.record_product_details where revision_id = :revision_id)
 order by name_type, display_order;
+select field_path, new_value from ukps.record_field_audit
+where revision_id = :revision_id order by id;
 -- Expect no rows:
 select * from ukps.medicines_indication_details where revision_id = :revision_id;
 ```
@@ -264,7 +283,8 @@ The content table stores the enum's integer; the audit stores its name.
 **Request:** `PUT /records/5/pages/rare-disease`, with answers
 `{ "medicines_indication_detail.indication_is_rare_disease": "No" }`.
 
-**Response:** `{ "nextPageId": null }`, and the browser goes to `/portal/organisations/3/records`.
+**Response:** `{ "nextPageId": null }`. This is the last page of the task, so its button reads
+**Save and return to task list**, and the browser goes back to `/portal/records/5/task-list`.
 
 | Table | Change |
 |---|---|
@@ -286,7 +306,7 @@ After step 6, for record `5`:
 | `medicines_indication_details` | 1 (created in step 1), with `indication`, `bnf_chapter_id = 40`, `indication_is_paediatric = 2`, `indication_is_cancer = 1`, `indication_is_rare_disease = 1` |
 | `medicines_indication_detail_therapeutic_areas` | 1 (`51`) |
 | `record_events` | 1, the `event_type = 0` creation event |
-| `record_field_audit` | 6, one per page, in page order |
+| `record_field_audit` | 10: 4 from record creation, then 6, one per page, in page order |
 
 The record stays `Unpublished` and the revision stays `Draft`; answering the pages does not
 submit anything.
@@ -316,12 +336,13 @@ where revision_id = :revision_id
 order by id;
 ```
 
-The audit query should return six rows, one per page in order.
+The audit query should return ten rows: the four from record creation, then one per page in
+order.
 
 ## Coming back through Update record
 
-Open the record from **View** in the organisation records table, select **Update record**, and
-step through the pages:
+Open the record from **View** in the organisation records table, select **Update record** to open the
+task list, then choose the task and step through its pages:
 
 - **Saving a page without changing it** writes nothing at all: no answer update, no audit rows,
   and `record_revisions.xmin` stays the same.

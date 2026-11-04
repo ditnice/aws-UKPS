@@ -12,10 +12,10 @@ public abstract record ApproveRequestError
     public sealed record RegistrationRejected : ApproveRequestError;
 
     /// <summary>
-    /// Represents an error indicating that a user with the specified details
-    /// already exists.
+    /// Represents an error indicating that the requester is already a member
+    /// of the organisation.
     /// </summary>
-    public sealed record UserAlreadyExists : ApproveRequestError;
+    public sealed record UserAlreadyInOrganisation : ApproveRequestError;
 
     /// <summary>
     /// Represents an error indicating that the specified organisation is invalid
@@ -45,7 +45,7 @@ public abstract record ApproveRequestError
         Func<NotAllowed, TResult> notAllowed,
         Func<RequestNotFound, TResult> requestNotFound,
         Func<RegistrationRejected, TResult> registrationRejected,
-        Func<UserAlreadyExists, TResult> userAlreadyExists,
+        Func<UserAlreadyInOrganisation, TResult> userAlreadyInOrganisation,
         Func<InvalidOrganisation, TResult> invalidOrganisation,
         Func<ConcurrencyError, TResult> concurrencyError
     )
@@ -55,7 +55,7 @@ public abstract record ApproveRequestError
             NotAllowed e => notAllowed(e),
             RequestNotFound e => requestNotFound(e),
             RegistrationRejected e => registrationRejected(e),
-            UserAlreadyExists e => userAlreadyExists(e),
+            UserAlreadyInOrganisation e => userAlreadyInOrganisation(e),
             InvalidOrganisation e => invalidOrganisation(e),
             ConcurrencyError e => concurrencyError(e),
             _ => throw new InvalidOperationException(

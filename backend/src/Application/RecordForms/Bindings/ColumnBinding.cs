@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Reflection;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Persistence;
@@ -47,5 +48,25 @@ internal sealed class ColumnBinding(PropertyInfo property, ColumnValueKind kind)
                 _ => throw new InvalidOperationException($"Unsupported column kind {kind}."),
             };
         property.SetValue(row, converted);
+    }
+
+    public Expression HasAnswerExpression(ParameterExpression row)
+    {
+        Expression value = Expression.Property(row, property);
+        if (_valueType == typeof(string))
+        {
+            Expression trimmed = Expression.Call(value, nameof(string.Trim), Type.EmptyTypes);
+            return Expression.AndAlso(
+                Expression.NotEqual(value, Expression.Constant(null, typeof(string))),
+                Expression.NotEqual(trimmed, Expression.Constant(string.Empty))
+            );
+        }
+
+        if (Nullable.GetUnderlyingType(property.PropertyType) is not null)
+        {
+            return Expression.Property(value, nameof(Nullable<int>.HasValue));
+        }
+
+        return Expression.Constant(true);
     }
 }

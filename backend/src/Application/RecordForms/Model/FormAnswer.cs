@@ -1,4 +1,5 @@
 using System.Text.Json;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Application.RecordForms.Model;
 
@@ -48,7 +49,7 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
             return null;
         }
 
-        return Shape == AnswerShape.Single ? Value : JsonSerializer.Serialize(Values);
+        return Shape == AnswerShape.Single ? Value : FieldAuditJson.Serialize(Values);
     }
 
     public JsonElement ToJson() =>

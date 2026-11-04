@@ -132,11 +132,21 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         page.FormVersion.ShouldBe(FormVersions.Medicine);
         page.RevisionVersion.ShouldBe(await RevisionVersion());
-        page.OrganisationId.ShouldBe(_organisation.Id);
         page.Section.Title.ShouldBe("Indication details");
+        (page.Task.Id, page.Task.Title).ShouldBe(("indication-details", "Indication details"));
         page.PreviousPageId.ShouldBeNull();
+        page.NextPageId.ShouldBe("bnf-chapter");
         page.Questions.Single().Id.ShouldBe(Indication);
         page.Answers[Indication].ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task GetPage_LastPageOfTheTask_HasNoNextPage()
+    {
+        RecordPageDto page = await GetPage("rare-disease");
+
+        page.PreviousPageId.ShouldBe("cancer");
+        page.NextPageId.ShouldBeNull();
     }
 
     [Fact]
@@ -453,7 +463,32 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         (await Save("indication", Answer(Indication, "Text")))
             .ShouldBeError()
-            .ShouldBeOfType<SaveRecordPageError.NotDraft>();
+            .ShouldBeOfType<SaveRecordPageError.NotEditable>();
+    }
+
+    [Theory]
+    [InlineData(RecordStatus.OnHold)]
+    [InlineData(RecordStatus.Archived)]
+    public async Task SavePage_DraftOfALockedRecord_IsAConflictAndWritesNothing(
+        RecordStatus recordStatus
+    )
+    {
+        await SetRecordStatus(recordStatus);
+
+        (await Save("indication", Answer(Indication, "Text")))
+            .ShouldBeError()
+            .ShouldBeOfType<SaveRecordPageError.NotEditable>();
+        (await FieldAudits().AnyAsync(Ct)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task SavePage_DraftOfAPublishedRecord_Saves()
+    {
+        await SetRecordStatus(RecordStatus.Published);
+
+        await SaveOk("indication", Answer(Indication, "Text"));
+
+        (await IndicationRow()).Indication.ShouldBe("Text");
     }
 
     [Fact]
@@ -554,6 +589,12 @@ public class RecordFormServiceTests : DatabaseTestBase
                 .Generate(),
             Ct
         );
+
+    private async Task SetRecordStatus(RecordStatus status)
+    {
+        Context.Entry(_record).Property(static x => x.RecordStatus).CurrentValue = status;
+        await Context.SaveChangesAsync(Ct);
+    }
 
     private async Task<RecordRevision> AddEarlierPublishedRevision() =>
         await AddEntity(
