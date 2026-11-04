@@ -92,7 +92,12 @@ export function FormPage({ page }: FormPageProps) {
 
   return (
     <>
-      <PageHeader backLink={backLink} heading={heading} preheading={page.task.title} />
+      <PageHeader
+        backLink={backLink}
+        className={singleQuestion ? styles.singleQuestionPageHeader : undefined}
+        heading={heading}
+        preheading={page.task.title}
+      />
 
       {saveState.kind === 'conflict' && (
         <Alert type="caution">

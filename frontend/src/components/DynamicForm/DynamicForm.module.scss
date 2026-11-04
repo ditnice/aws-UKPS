@@ -22,11 +22,17 @@
   }
 }
 
+.singleQuestionPageHeader :global(.page-header) {
+  margin-bottom: 0;
+}
+
+.singleQuestionPageHeader :global(.page-header__heading) {
+  margin-bottom: utils.rem(spacing.$medium);
+}
+
 .childLabel {
-  @include typography.font-size(h3);
+  @include typography.h2;
   display: block;
-  font-family: inherit;
-  font-weight: bold;
   margin-bottom: utils.rem(spacing.$small);
   margin-top: utils.rem(spacing.$large);
 }

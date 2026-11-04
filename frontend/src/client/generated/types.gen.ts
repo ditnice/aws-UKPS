@@ -1170,6 +1170,10 @@ export type RecordPageQuestionDto = {
      */
     display: null | string;
     /**
+     * An optional heading shown above the validation message when the question has an error.
+     */
+    errorHeading?: null | string;
+    /**
      * The empty option text of a dropdown.
      */
     placeholder: null | string;

@@ -11,6 +11,7 @@ internal sealed record FormQuestion
     public required string Label { get; init; }
     public string? Hint { get; init; }
     public string? Display { get; init; }
+    public string? ErrorHeading { get; init; }
     public int Order { get; init; }
     public string? Placeholder { get; init; }
     public string? ChildLabel { get; init; }
