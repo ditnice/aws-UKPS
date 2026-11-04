@@ -1,0 +1,11 @@
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+// A legend shown as a sub-heading uses the body font rather than the serif NDS heading styles.
+.legendHeading {
+  @include typography.font-size(h4);
+  font-family: inherit;
+  font-weight: bold;
+  margin: 0 0 utils.rem(spacing.$medium);
+}

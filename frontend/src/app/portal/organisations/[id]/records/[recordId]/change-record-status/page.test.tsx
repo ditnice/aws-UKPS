@@ -127,9 +127,7 @@ describe('ChangeRecordStatusPage', () => {
         },
       }),
     )
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
-      'What would you like to do with this record?',
-    )
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Change record status')
     expect(screen.getByTestId('preheading').textContent).toBe(
       medicineRecord.recordProductDetail.recordTitle,
     )
@@ -140,7 +138,11 @@ describe('ChangeRecordStatusPage', () => {
   })
 
   it.each([
-    ['Published', 'Published', 'If development has paused, you should place the record on hold.'],
+    [
+      'Published',
+      'Published',
+      'If development has paused and may restart in the future, you should place the record on hold. Update requests for records on hold will be reduced to every 6 months.',
+    ],
     ['OnHold', 'OnHold', 'If development has restarted, you should remove the record hold.'],
   ] as const)('explains the options for a %s record', async (displayStatus, recordStatus, text) => {
     mockRecord({
@@ -168,7 +170,7 @@ describe('ChangeRecordStatusPage', () => {
 
     expect(
       screen.getByText(
-        `If development has permanently discontinued or you no longer own the rights to the ${noun} then you should archive the record.`,
+        `If development has ended and will not restart or you no longer own the rights to the ${noun} then you should archive the record. The record cannot be updated once it has been archived.`,
       ),
     ).toBeInTheDocument()
   })
