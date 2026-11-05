@@ -13,9 +13,4 @@
       font-weight: 600;
     }
   }
-
-  :global(.page-header__pre-heading) {
-    @include typography.lead;
-    margin: 0;
-  }
 }
