@@ -38,6 +38,8 @@ public class RecordFormServiceTests : DatabaseTestBase
     private const string TechnologyStatus =
         "medicines_indication_detail.medicine_technology_status";
 
+    private const string LabPrefix = "medicines_laboratory_testing.";
+
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
     private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
@@ -52,6 +54,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     private TherapeuticArea _condition = null!;
     private TherapeuticArea _otherCondition = null!;
     private FormulationType _formulation = null!;
+    private PatientPathwayPoint _pathwayPoint = null!;
     private ServiceTestHarness<IRecordFormQueryService> _queryHarness = null!;
     private ServiceTestHarness<IRecordFormSaveService> _saveHarness = null!;
 
@@ -127,6 +130,10 @@ public class RecordFormServiceTests : DatabaseTestBase
             Ct
         );
         _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
+        _pathwayPoint = await AddEntity(
+            new PatientPathwayPoint { Label = "Initial presentation" },
+            Ct
+        );
 
         _queryHarness = CreateHarness<IRecordFormQueryService>(UserRole.Standard, _organisation.Id);
         _saveHarness = CreateHarness<IRecordFormSaveService>(UserRole.Standard, _organisation.Id);
@@ -624,6 +631,118 @@ public class RecordFormServiceTests : DatabaseTestBase
         option.Hint.ShouldBe("For example, a gene mutation, chromosomal alteration");
     }
 
+    [Fact]
+    public async Task GetPage_PathwayPointPage_OffersTheReferenceData()
+    {
+        RecordPageDto page = await GetPage("pathway-point");
+
+        RecordPageOptionDto option = page.Questions.Single().Options!.ShouldHaveSingleItem();
+        (option.Value, option.Label).ShouldBe(($"{_pathwayPoint.Id}", "Initial presentation"));
+    }
+
+    [Fact]
+    public async Task SavePage_FirstLaboratoryTestingSave_CreatesTheRow()
+    {
+        (
+            await Context.MedicinesLaboratoryTestings.AnyAsync(
+                x => x.RevisionId == _revision.Id,
+                Ct
+            )
+        ).ShouldBeFalse();
+
+        await SaveOk(
+            "diagnostic-test-required",
+            Answer($"{LabPrefix}diagnostic_test_required", "Yes")
+        );
+
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.DiagnosticTestRequired.ShouldBe(YesNoUnknown.Yes);
+        row.BiomarkerType.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_StepsThroughEveryLaboratoryTestingPage_StoringAndAuditingEachAnswer()
+    {
+        (string PageId, string QuestionId, string Value)[] answers =
+        [
+            ("diagnostic-test-required", $"{LabPrefix}diagnostic_test_required", "Yes"),
+            ("biomarker-type", $"{LabPrefix}biomarker_type", "GenomicBiomarker"),
+            ("non-genomic-biomarker", $"{LabPrefix}non_genomic_biomarker_description", "Protein"),
+            ("genomic-target", $"{LabPrefix}genomic_target", "EGFR"),
+            ("ngtd-relationship", $"{LabPrefix}genomic_test_ngtd_relationship", "NewTest"),
+            ("sample-type", $"{LabPrefix}genomic_sample_type", "Tissue"),
+            ("turnaround-time", $"{LabPrefix}genomic_turnaround_time_details", "14 days"),
+            ("pathway-point", $"{LabPrefix}patient_pathway_point_id", $"{_pathwayPoint.Id}"),
+            ("genomic-alterations", $"{LabPrefix}genomic_alterations", "Exon 19 deletion"),
+            ("additional-genomic-factors", $"{LabPrefix}additional_genomic_factors", "T790M"),
+            ("test-used-in-trials", $"{LabPrefix}genomic_test_used_in_trials", "PCR assay"),
+            (
+                "specificity-sensitivity",
+                $"{LabPrefix}genomic_test_specificity_sensitivity",
+                "95% and 90%"
+            ),
+            (
+                "test-mandatory",
+                $"{LabPrefix}genomic_test_mandatory_status",
+                "MandatoryNoAlternatives"
+            ),
+            ("monitoring-tests", $"{LabPrefix}monitoring_tests_details", "Quarterly ctDNA"),
+            ("safety-tests", $"{LabPrefix}safety_tests_details", "Monthly liver function"),
+        ];
+
+        for (int i = 0; i < answers.Length; i++)
+        {
+            SaveRecordPageDto saved = await SaveOk(
+                answers[i].PageId,
+                Answer(answers[i].QuestionId, answers[i].Value)
+            );
+            saved.NextPageId.ShouldBe(i + 1 < answers.Length ? answers[i + 1].PageId : null);
+        }
+
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.DiagnosticTestRequired.ShouldBe(YesNoUnknown.Yes);
+        row.BiomarkerType.ShouldBe(BiomarkerType.GenomicBiomarker);
+        row.NonGenomicBiomarkerDescription.ShouldBe("Protein");
+        row.GenomicTarget.ShouldBe("EGFR");
+        row.GenomicTestNgtdRelationship.ShouldBe(GenomicTestNgtdRelationship.NewTest);
+        row.GenomicSampleType.ShouldBe("Tissue");
+        row.GenomicTurnaroundTimeDetails.ShouldBe("14 days");
+        row.PatientPathwayPointId.ShouldBe(_pathwayPoint.Id);
+        row.GenomicAlterations.ShouldBe("Exon 19 deletion");
+        row.AdditionalGenomicFactors.ShouldBe("T790M");
+        row.GenomicTestUsedInTrials.ShouldBe("PCR assay");
+        row.GenomicTestSpecificitySensitivity.ShouldBe("95% and 90%");
+        row.GenomicTestMandatoryStatus.ShouldBe(GenomicTestMandatoryStatus.MandatoryNoAlternatives);
+        row.MonitoringTestsDetails.ShouldBe("Quarterly ctDNA");
+        row.SafetyTestsDetails.ShouldBe("Monthly liver function");
+
+        List<RecordFieldAudit> changes = await FieldAudits()
+            .OrderBy(static a => a.Id)
+            .ToListAsync(Ct);
+        changes
+            .Select(static c => (c.FieldPath, c.NewValue))
+            .ShouldBe(answers.Select(static a => (a.QuestionId, (string?)a.Value)));
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointThatIsNotOffered_IsRejected()
+    {
+        string question = $"{LabPrefix}patient_pathway_point_id";
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "pathway-point",
+            Answer(question, $"{_pathwayPoint.Id + 100}")
+        );
+
+        errors.ShouldContainKey(question);
+        (
+            await Context.MedicinesLaboratoryTestings.AnyAsync(
+                x => x.RevisionId == _revision.Id,
+                Ct
+            )
+        ).ShouldBeFalse();
+    }
+
     private ServiceTestHarness<TService> CreateHarness<TService>(UserRole role, int organisationId)
         where TService : notnull
     {
@@ -714,6 +833,11 @@ public class RecordFormServiceTests : DatabaseTestBase
         await Context
             .MedicinesIndicationDetails.AsNoTracking()
             .Include(static x => x.TherapeuticAreas)
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    private async Task<MedicinesLaboratoryTesting> LaboratoryTestingRow() =>
+        await Context
+            .MedicinesLaboratoryTestings.AsNoTracking()
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private IQueryable<RecordFieldAudit> FieldAudits() =>

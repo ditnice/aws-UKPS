@@ -6234,6 +6234,7 @@
         "required": [
           "value",
           "label",
+          "hint",
           "children"
         ],
         "type": "object",

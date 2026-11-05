@@ -270,7 +270,12 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 Id = "indication-details",
                 Title = "Indication details",
             },
-            Page = new RecordPagePageDto { Id = "indication", Title = "Indication" },
+            Page = new RecordPagePageDto
+            {
+                Id = "indication",
+                Title = "Indication",
+                CommercialInConfidence = false,
+            },
             PreviousPageId = null,
             NextPageId = "bnf-chapter",
             Questions =

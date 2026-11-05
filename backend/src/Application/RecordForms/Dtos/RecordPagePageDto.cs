@@ -10,5 +10,5 @@ public sealed record RecordPagePageDto
     public required string Title { get; init; }
 
     /// <summary>Whether the page shows the "Commercial in confidence" badge.</summary>
-    public bool CommercialInConfidence { get; init; }
+    public required bool CommercialInConfidence { get; init; }
 }
