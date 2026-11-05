@@ -94,20 +94,20 @@ How the stack is set up:
 - **Auth:** the dev bypass. The frontend runs with `AUTHENTICATION_MODE=DEV` and the backend with
   `DevAuthentication`, so every request is the seeded Super user (`example.user@email.com`) in
   organisation 1. Playwright runs with `E2E_AUTH_MODE=dev`, which runs the
-  `*.authenticated.e2e.spec.ts` specs without the Cognito `auth-setup` project.
+  `*.authenticated.e2e.test.ts` tests without the Cognito `auth-setup` project.
 - **AWS:** [Floci](https://github.com/floci-io/floci) emulates Cognito and SQS, so inviting,
   removing, deactivating and reactivating users work. `scripts/floci/init-aws.sh` creates the
   `ukps-e2e-email` queue and the `eu-west-2_e2e` user pool when Floci starts; Floci keeps everything in
   memory, so every run starts empty.
 - **Not covered:** real Cognito sign-in, MFA and sign-up, and sending emails (they are queued on Floci,
-  but the SQS listener that sends them is off via `Email__ListenerEnabled=false`). `auth/redirects.e2e.spec.ts` skips because the dev bypass never
+  but the SQS listener that sends them is off via `Email__ListenerEnabled=false`). `auth/redirects.e2e.test.ts` skips because the dev bypass never
   redirects to sign-in. Run `pnpm test:e2e:authenticated-dev` against the dev environment for
   real-auth coverage.
 - **Test tags:** tests tagged `@mutates-data` (they create, change or delete data) or `@visual`
   (screenshot comparisons against Linux Chromium baselines) only run when `E2E_EPHEMERAL_STACK=true`,
   which only the Compose playwright service sets. Every Playwright project skips them otherwise, so
   deployed runs (`test:e2e:dev`, `test:e2e:authenticated-dev`) never change the environment's data.
-- **Read-only twins:** every `@mutates-data` test has an untagged twin in the same spec that goes
+- **Read-only twins:** every `@mutates-data` test has an untagged twin in the same file that goes
   through the same journey to the final confirm page, cancels, and checks nothing changed, so deployed
   runs still cover it. Twins use `test.use({ readOnly: true })`, which fails the test if the browser
   sends any write request to the app, and skip with a reason when the environment has no suitable
@@ -116,8 +116,8 @@ How the stack is set up:
   they still never approve or reject it.
   Tag new tests with `mutatesDataTag` or `visualTag` from `tests/e2e/helpers/test-environment.ts`.
 - **Test data:** give users a test creates an email from `uniqueEmail()` in
-  `tests/e2e/helpers/test-data.ts`. Its `playwright-` prefix lets specs that read the user list
-  avoid users that other specs create and remove.
+  `tests/e2e/helpers/test-data.ts`. Its `playwright-` prefix lets tests that read the user list
+  avoid users that other tests create and remove.
 - **Readiness:** the backend waits for Postgres and Floci healthchecks. The backend and frontend
   runtime images are distroless, so instead of Compose healthchecks for them the Playwright container
   runs `tests/e2e/scripts/wait-for-stack.mjs` first.

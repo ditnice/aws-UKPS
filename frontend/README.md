@@ -78,7 +78,7 @@ Set `PLAYWRIGHT_BASE_URL` to target another deployed environment:
 PLAYWRIGHT_BASE_URL=https://example.test pnpm test:e2e
 ```
 
-Authenticated tests (`*.authenticated.e2e.spec.ts`) run as a Super, Champion or Standard
+Authenticated tests (`*.authenticated.e2e.test.ts`) run as a Super, Champion or Standard
 user. Each role signs in with its own `E2E_<ROLE>_EMAIL`, `E2E_<ROLE>_PASSWORD` and
 `E2E_<ROLE>_TOTP_SECRET` (for example `E2E_CHAMPION_EMAIL`). Super falls back to
 `E2E_USER_EMAIL`, `E2E_USER_PASSWORD` and `E2E_TOTP_SECRET`. `E2E_ORGANISATION_ID` must also be
@@ -138,7 +138,7 @@ fails the test, as does a configured subject that cannot be verified. DEV-auth r
 seeded subjects instead. Subject IDs and missing comparison IDs are verified with read-only API
 calls.
 
-What each role can do, and so which roles a spec should run as:
+What each role can do, and so which roles a test should run as:
 
 | Capability                        | Super   | Champion                  | Standard      |
 | --------------------------------- | ------- | ------------------------- | ------------- |

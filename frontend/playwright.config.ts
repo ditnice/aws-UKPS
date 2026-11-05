@@ -26,7 +26,7 @@ const localBaseURL = 'https://localhost:3000'
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? localBaseURL
 const isLocal = isLocalBaseURL(baseURL)
 /* The Docker Compose stack runs with frontend AUTHENTICATION_MODE=DEV and backend
- * DevAuthentication, so authenticated specs run without signing in. That bypasses the
+ * DevAuthentication, so authenticated tests run without signing in. That bypasses the
  * credential and target checks below, so it's only allowed against a local target. */
 const isDevAuth = isDevAuthMode()
 if (isDevAuth && !isLocal) {
@@ -50,13 +50,13 @@ const localChromiumOptions = isLocal
   : {}
 const publicTestIgnore = [
   /auth\.setup\.ts/,
-  /\.authenticated\.e2e\.spec\.ts/,
-  /accessibility\/.*\.e2e\.spec\.ts/,
+  /\.authenticated\.e2e\.test\.ts/,
+  /accessibility\/.*\.e2e\.test\.ts/,
 ]
-/* Each authenticated spec runs once in the project of every role it's tagged with (see
+/* Each authenticated test runs once in the project of every role it's tagged with (see
  * tests/e2e/helpers/roles.ts). A role's projects only exist when it can sign in: always with dev
  * authentication, otherwise when the role's credentials are set and the target is trusted. */
-const authenticatedTestMatch = /.*\.authenticated\.e2e\.spec\.ts/
+const authenticatedTestMatch = /.*\.authenticated\.e2e\.test\.ts/
 const runnableRoles = userRoles.filter(
   (role) =>
     isDevAuth ||
@@ -199,8 +199,8 @@ export default defineConfig<TestOptions>({
     {
       name: 'accessibility',
       ...ephemeralStackFilter,
-      testIgnore: /\.authenticated\.e2e\.spec\.ts/,
-      testMatch: /accessibility\/.*\.e2e\.spec\.ts/,
+      testIgnore: /\.authenticated\.e2e\.test\.ts/,
+      testMatch: /accessibility\/.*\.e2e\.test\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         ...localChromiumOptions,
