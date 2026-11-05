@@ -5,14 +5,21 @@ import {
   type OrganisationUserTableHeaderKey,
 } from '../../../src/app/portal/organisations/[id]/_lib/userLabels'
 import { devRoleEmails, type UserRole, userRoles } from '../helpers/roles'
-import { championSubjects, type ChampionSubject, hasSeededSubjects } from '../helpers/subjects'
+import {
+  accessSubjects,
+  championSubjects,
+  type ChampionSubject,
+  hasSeededSubjects,
+} from '../helpers/subjects'
 import { signedInEmail } from '../helpers/test-environment'
 
 import type { SortDirection } from '../../../src/client/generated/types.gen'
 
-/* The users the role projects sign in as. Tests never pick them as the user to change, as
- * deactivating, demoting or removing one would break every later test that runs as that role. */
-const signedInUserEmails = new Set([
+/* Never select signed-in users or the read-only foreign user and registration request subjects.
+ * Changing them would invalidate other tests running in parallel. */
+const protectedEmails = new Set<string>([
+  accessSubjects.foreignUser,
+  accessSubjects.registrationRequest,
   ...Object.values(devRoleEmails),
   ...userRoles.flatMap((role) => signedInEmail(role) ?? []),
 ])
@@ -95,7 +102,7 @@ export class OrganisationUsersPage {
   }
 
   /** Opens the first listed user with the `action` link, or returns undefined if no user has it.
-   * Skips the users the role projects sign in as. */
+   * Skips signed-in users and the read-only foreign user and registration request subjects. */
   async openUser(
     organisationId: string,
     query: Record<string, string>,
@@ -106,7 +113,7 @@ export class OrganisationUsersPage {
 
     const actionLink = this.page.getByRole('link', { name: action, exact: true })
     let rows = this.table.getByRole('row').filter({ has: actionLink })
-    for (const email of signedInUserEmails) {
+    for (const email of protectedEmails) {
       rows = rows.filter({ hasNot: this.page.getByRole('cell', { name: email, exact: true }) })
     }
     const row = rows.first()

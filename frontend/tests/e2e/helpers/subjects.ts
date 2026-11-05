@@ -19,6 +19,13 @@ export const championSubjects = {
 
 export type ChampionSubject = keyof typeof championSubjects
 
+// Dedicated read-only access-control subjects, matching E2eSubjectUsers in the backend.
+export const accessSubjects = {
+  user: championSubjects.readonly,
+  foreignUser: 'e2e.subject.foreign@email.com',
+  registrationRequest: 'e2e.subject.request@email.com',
+} as const
+
 export function hasSeededSubjects(): boolean {
   return isDevAuthMode()
 }

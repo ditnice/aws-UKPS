@@ -106,14 +106,10 @@ public class UserRegistrationController : ControllerBase
     /// <response code="200">
     /// The membership request's details were successfully retrieved.
     /// </response>
-    /// <response code="403">
-    /// The current user is not allowed to view membership requests for the organisation.
-    /// </response>
     /// <response code="404">
-    /// No membership request was found with the supplied identifier.
+    /// The membership request does not exist or is not accessible to the caller (ADR-004).
     /// </response>
     [ProducesResponseType<RegisterUserDetailsDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [HttpGet("{id:int}", Name = nameof(GetUserRegistrationById))]
     public async Task<ActionResult<RegisterUserDetailsDto>> GetUserRegistrationById(
@@ -133,12 +129,8 @@ public class UserRegistrationController : ControllerBase
             error =>
                 error switch
                 {
-                    GetUserDetailsError.IdNotFound => NotFound(),
-                    GetUserDetailsError.UserNotAuthorised => Problem(
-                        statusCode: StatusCodes.Status403Forbidden,
-                        title: "Forbidden",
-                        detail: "You are not authorised to view membership requests for this organisation."
-                    ),
+                    GetUserDetailsError.IdNotFound or GetUserDetailsError.UserNotAuthorised =>
+                        NotFound(),
                     _ => throw new UnreachableException("Unhandled GetUserDetailsError"),
                 }
         );
@@ -162,15 +154,11 @@ public class UserRegistrationController : ControllerBase
     /// <response code="200">
     /// The membership request was successfully approved.
     /// </response>
-    /// <response code="403">
-    /// The current user is not allowed to approve the membership request.
-    /// </response>
     /// <response code="404">
-    /// The membership request could not be found.
+    /// The membership request does not exist or is not accessible to the caller (ADR-004).
     /// </response>
     [HttpPatch("{registrationRequestId}/approve", Name = nameof(Approve))]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Approve(
         int organisationId,
@@ -191,9 +179,9 @@ public class UserRegistrationController : ControllerBase
                 return err.Match(
                     notAllowed: _ =>
                         Problem(
-                            statusCode: StatusCodes.Status403Forbidden,
-                            title: "Membership request update not allowed",
-                            detail: "You are not allowed to approve this membership request."
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Membership request not found",
+                            detail: "The requested membership request could not be found."
                         ),
                     requestNotFound: _ =>
                         Problem(
@@ -248,15 +236,11 @@ public class UserRegistrationController : ControllerBase
     /// <response code="200">
     /// The membership request was successfully rejected.
     /// </response>
-    /// <response code="403">
-    /// The current user is not allowed to reject the membership request.
-    /// </response>
     /// <response code="404">
-    /// The membership request could not be found.
+    /// The membership request does not exist or is not accessible to the caller (ADR-004).
     /// </response>
     [HttpPatch("{registrationRequestId}/reject", Name = nameof(Reject))]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Reject(
         int organisationId,
@@ -277,9 +261,9 @@ public class UserRegistrationController : ControllerBase
                 return err.Match(
                     notAllowed: _ =>
                         Problem(
-                            statusCode: StatusCodes.Status403Forbidden,
-                            title: "Membership request update not allowed",
-                            detail: "You are not allowed to reject this membership request."
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "Membership request not found",
+                            detail: "The requested membership request could not be found."
                         ),
                     requestNotFound: _ =>
                         Problem(

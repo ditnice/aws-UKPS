@@ -10,6 +10,7 @@ internal sealed record SeedingDataPayload
     public IReadOnlyCollection<Organisation> Organisations { get; init; } = [];
     public IReadOnlyCollection<User> Users { get; init; } = [];
     public IReadOnlyCollection<UserOrgMembership> Memberships { get; init; } = [];
+    public IReadOnlyCollection<UserRegistrationRequest> RegistrationRequests { get; init; } = [];
     public IReadOnlyCollection<SeededRecord> SeededRecords { get; init; } = [];
 
     public IReadOnlyCollection<Record> Records => [.. SeededRecords.Select(x => x.Record)];
@@ -20,6 +21,7 @@ internal sealed record SeedingDataPayload
             .Concat(Organisations)
             .Concat(Users)
             .Concat(Memberships)
+            .Concat(RegistrationRequests)
             .Concat(Records)
             .Concat(SeededRecords.SelectMany(x => x.RevisionContent))
             .Concat(SeededRecords.SelectMany(x => x.FieldAudits))

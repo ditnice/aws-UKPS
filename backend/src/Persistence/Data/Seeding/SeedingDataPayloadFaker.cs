@@ -59,6 +59,27 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         RuleFor(x => x.Organisations, _ => CreateOrganisations());
         RuleFor(x => x.Users, (f, o) => FakeUsers(f, o));
         RuleFor(x => x.Memberships, (f, o) => FakeMemberships(f, o));
+        RuleFor(
+            x => x.RegistrationRequests,
+            (_, o) =>
+            {
+                Organisation organisation = o.Organisations.ElementAt(
+                    E2eSubjectUsers.OrganisationId - 1
+                );
+                return
+                [
+                    new UserRegistrationRequest
+                    {
+                        OrganisationId = E2eSubjectUsers.OrganisationId,
+                        Organisation = organisation,
+                        FullName = "E2E Read-only Request",
+                        WorkEmail = E2eSubjectUsers.RegistrationRequestEmail,
+                        PhoneNumber = "07123456789",
+                        CreatedAt = organisation.CreatedAt,
+                    },
+                ];
+            }
+        );
         RuleFor(x => x.SeededRecords, (f, o) => CreateRecords(f, o));
     }
 
@@ -205,6 +226,21 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
                 .Generate();
             yield return FixedMembership(user, organisation, subject.Role, subject.Status);
         }
+
+        Organisation foreignOrganisation = SeededOrganisation(
+            organisations,
+            DevAuthenticationClaims.DefaultOrganisationId
+        );
+        User foreignUser = new UserFaker()
+            .RuleFor(x => x.WorkEmail, _ => E2eSubjectUsers.ForeignUserEmail)
+            .RuleFor(x => x.UserType, _ => _userTypes[foreignOrganisation.OrganisationType])
+            .Generate();
+        yield return FixedMembership(
+            foreignUser,
+            foreignOrganisation,
+            UserRole.Standard,
+            UserOrgMembershipStatus.Active
+        );
     }
 
     /// <summary>Seeded organisation ids follow the seeding order, starting at 1.</summary>

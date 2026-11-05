@@ -18,8 +18,26 @@ export async function mainText(page: Page): Promise<string> {
  * that doesn't exist, so it can't tell whether it exists. */
 export async function expectSameAsMissing(page: Page, url: (id: number) => string, id: number) {
   await page.goto(url(id))
+  await expect(page.getByRole('heading', { name: 'Page not found', exact: true })).toBeVisible()
   const existingPage = await mainText(page)
 
   await page.goto(url(missingId))
+  await expect(page.getByRole('heading', { name: 'Page not found', exact: true })).toBeVisible()
   expect(await mainText(page)).toBe(existingPage)
+}
+
+/** Verify HTTP-boundary concealment as well as the page's neutral presentation. Trace IDs are
+ * request-specific diagnostics, not resource information. */
+export async function expectConcealedApiResource(
+  page: Page,
+  url: (id: number) => string,
+  existingId: number,
+) {
+  const existing = await page.request.get(url(existingId))
+  const missing = await page.request.get(url(missingId))
+  expect(existing.status()).toBe(404)
+  expect(missing.status()).toBe(404)
+  const { traceId: _existingTrace, ...existingBody } = await existing.json()
+  const { traceId: _missingTrace, ...missingBody } = await missing.json()
+  expect(existingBody).toEqual(missingBody)
 }

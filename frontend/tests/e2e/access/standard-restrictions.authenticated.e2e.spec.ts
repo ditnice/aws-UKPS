@@ -1,5 +1,5 @@
 import { expect, test } from '../fixtures/test'
-import { currentUserId, mainText, missingId } from '../helpers/pages'
+import { currentUserId, expectConcealedApiResource, expectSameAsMissing } from '../helpers/pages'
 import { forRoles } from '../helpers/roles'
 
 /* The pages a champion or super user manages another user from, by their path after
@@ -16,14 +16,11 @@ const userManagementPages = [
   { path: 'users/{userId}/reactivate', control: 'button', name: 'Reactivate user' },
 ] as const
 
-/* The pages a champion or super user reviews a registration request from. Nothing seeds
- * registration requests, so request 1 may or may not exist: either way, the page must look the
- * same as one for a request that doesn't. */
+/* Both pages use a pending request whose existence is verified by a separate Super session. */
 const registrationRequestPages = [
   { action: 'approve', button: 'Approve' },
   { action: 'reject', button: 'Reject' },
 ] as const
-const someRequestId = 1
 
 test.describe('Managing users as a standard user', { tag: forRoles(['Standard']) }, () => {
   test.use({ readOnly: true })
@@ -32,20 +29,23 @@ test.describe('Managing users as a standard user', { tag: forRoles(['Standard'])
     test(`can't use /${path}, and can't tell whether the user exists`, async ({
       page,
       organisationId,
+      protectedUser,
     }) => {
-      // The standard user's own id: a user that exists in their organisation.
-      const existingUserId = await currentUserId(page)
+      // A real subject in the addressed organisation, not the caller: self-protection must not
+      // accidentally satisfy the test in place of the role authorisation check.
+      const existingUserId = protectedUser.userId
+      expect(existingUserId).not.toBe(await currentUserId(page))
       const url = (userId: number) =>
         `/portal/organisations/${organisationId}/${path.replace('{userId}', String(userId))}`
 
-      await page.goto(url(existingUserId))
+      await expectConcealedApiResource(
+        page,
+        (id) => `/backend-api/users/${id}/organisations/${organisationId}`,
+        existingUserId,
+      )
+      await expectSameAsMissing(page, url, existingUserId)
       await expect(page.getByRole(control, { name })).toHaveCount(0)
-      const existingUserPage = await mainText(page)
-
-      await page.goto(url(missingId))
-      await expect(page.getByRole(control, { name })).toHaveCount(0)
-      // ADR-004: a user the caller can't see looks the same as one that doesn't exist.
-      expect(await mainText(page)).toBe(existingUserPage)
+      await expect(page.getByText(protectedUser.workEmail, { exact: false })).toHaveCount(0)
     })
   }
 
@@ -53,18 +53,20 @@ test.describe('Managing users as a standard user', { tag: forRoles(['Standard'])
     test(`can't ${action} a registration request, and can't tell whether it exists`, async ({
       page,
       organisationId,
+      protectedRequest,
     }) => {
       const url = (requestId: number) =>
         `/portal/organisations/${organisationId}/registration-requests/${requestId}/${action}`
 
-      await page.goto(url(someRequestId))
+      await expectConcealedApiResource(
+        page,
+        (id) => `/backend-api/organisations/${organisationId}/membership-requests/${id}`,
+        protectedRequest.id,
+      )
+      await expectSameAsMissing(page, url, protectedRequest.id)
       await expect(page.getByText(`You are about to ${action}`)).toHaveCount(0)
       await expect(page.getByRole('button', { name: button, exact: true })).toHaveCount(0)
-      const somePage = await mainText(page)
-
-      await page.goto(url(missingId))
-      await expect(page.getByRole('button', { name: button, exact: true })).toHaveCount(0)
-      expect(await mainText(page)).toBe(somePage)
+      await expect(page.getByText(protectedRequest.workEmail, { exact: false })).toHaveCount(0)
     })
   }
 

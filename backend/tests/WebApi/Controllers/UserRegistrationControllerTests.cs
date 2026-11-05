@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -164,7 +165,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     }
 
     [Fact]
-    public async Task GetUserRegistrationById_UserNotAuthorised_ReturnsForbidden()
+    public async Task GetUserRegistrationById_UserNotAuthorised_ReturnsNotFound()
     {
         _mock
             .GetUserRegistrationById(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -174,7 +175,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
                 )
             );
         HttpResponseMessage response = await SendGetUserMembershipRequestById(1, 1);
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -208,7 +209,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     }
 
     [Fact]
-    public async Task ApproveRequest_OnNotAllowed_ReturnsForbidden()
+    public async Task ApproveRequest_OnNotAllowed_ReturnsNotFound()
     {
         _mock
             .ApproveRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -217,7 +218,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
             ExistingOrganisationId,
             ExistingRegistrationRequestId
         );
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -273,7 +274,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
     }
 
     [Fact]
-    public async Task RejectRequest_OnNotAllowed_ReturnsForbidden()
+    public async Task RejectRequest_OnNotAllowed_ReturnsNotFound()
     {
         _mock
             .RejectRequest(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -282,7 +283,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
             ExistingOrganisationId,
             ExistingRegistrationRequestId
         );
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -296,6 +297,58 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
             ExistingRegistrationRequestId
         );
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData("read")]
+    [InlineData("approve")]
+    [InlineData("reject")]
+    public async Task MembershipRequest_ShouldConcealDeniedAndMissingResources(string operation)
+    {
+        _mock
+            .GetUserRegistrationById(2, 3, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RegisterUserDetailsDto, GetUserDetailsError>.Err(
+                    new GetUserDetailsError.UserNotAuthorised()
+                ),
+                Result<RegisterUserDetailsDto, GetUserDetailsError>.Err(
+                    new GetUserDetailsError.IdNotFound(3)
+                )
+            );
+        _mock
+            .ApproveRequest(2, 3, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<ApproveRequestError>.Err(new ApproveRequestError.NotAllowed()),
+                Result<ApproveRequestError>.Err(new ApproveRequestError.RequestNotFound())
+            );
+        _mock
+            .RejectRequest(2, 3, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<RejectRequestError>.Err(new RejectRequestError.NotAllowed()),
+                Result<RejectRequestError>.Err(new RejectRequestError.RequestNotFound())
+            );
+
+        async Task<HttpResponseMessage> Send() =>
+            operation switch
+            {
+                "read" => await SendGetUserMembershipRequestById(2, 3),
+                "approve" => await SendApproveRequest(2, 3),
+                _ => await SendRejectRequest(2, 3),
+            };
+        HttpResponseMessage denied = await Send();
+        HttpResponseMessage missing = await Send();
+
+        denied.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var deniedBody = JsonNode
+            .Parse(await denied.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!
+            .AsObject();
+        var missingBody = JsonNode
+            .Parse(await missing.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!
+            .AsObject();
+        deniedBody.Remove("traceId");
+        missingBody.Remove("traceId");
+        JsonNode.DeepEquals(deniedBody, missingBody).ShouldBeTrue();
     }
 
     private async Task<HttpResponseMessage> SendRegisterUserRequest(

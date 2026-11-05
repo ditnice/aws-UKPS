@@ -24,7 +24,7 @@ public sealed class DataSeederInMemoryTests
 
         payload.Organisations.Count.ShouldBe(50);
         payload.Users.Count.ShouldBe(800);
-        payload.Memberships.Count.ShouldBe(808); // Plus the three dev users and five E2E subjects
+        payload.Memberships.Count.ShouldBe(809); // Plus the three dev users and six E2E subjects
         payload.Records.Count.ShouldBe(572); // 500 synthetic records and 72 discarded ones
     }
 
@@ -48,6 +48,34 @@ public sealed class DataSeederInMemoryTests
         membership.Organisation.ShouldBeSameAs(
             payload.Organisations.ElementAt(devUser.OrganisationId - 1)
         );
+    }
+
+    [Fact]
+    public void BuildPayload_ShouldSeedReadOnlyAccessControlSubjects()
+    {
+        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
+        UserOrgMembership foreignUser = payload
+            .Memberships.Where(m =>
+                string.Equals(
+                    m.User?.WorkEmail,
+                    E2eSubjectUsers.ForeignUserEmail,
+                    StringComparison.Ordinal
+                )
+            )
+            .ShouldHaveSingleItem();
+        foreignUser.Organisation.ShouldBeSameAs(
+            payload.Organisations.ElementAt(DevAuthenticationClaims.DefaultOrganisationId - 1)
+        );
+        foreignUser.UserRole.ShouldBe(UserRole.Standard);
+        foreignUser.Status.ShouldBe(UserOrgMembershipStatus.Active);
+
+        UserRegistrationRequest request = payload.RegistrationRequests.ShouldHaveSingleItem();
+        request.WorkEmail.ShouldBe(E2eSubjectUsers.RegistrationRequestEmail);
+        request.Organisation.ShouldBeSameAs(
+            payload.Organisations.ElementAt(E2eSubjectUsers.OrganisationId - 1)
+        );
+        request.GetState().ShouldBe(UserRegistrationRequest.State.Pending);
+        payload.GetAllEntities().ShouldContain(request);
     }
 
     [Fact]

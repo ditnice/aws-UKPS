@@ -121,6 +121,22 @@ and Champion and Standard use organisation 2. Otherwise each role reads
 running as a Champion change fixed seeded users (`tests/e2e/helpers/subjects.ts`) rather than
 whichever user a search finds first.
 
+Access-control tests verify that protected subjects exist using a separate Super session, then
+check denial as Champion or Standard. With real authentication, configure the Super credentials
+and organisation ID too; its setup runs as a dependency of those role projects. Pre-provision
+the following subjects and set their emails (tests never create or change them on deployed
+environments):
+
+- `E2E_ACCESS_USER_EMAIL`: an active Standard user, distinct from the caller, in the Standard
+  test organisation.
+- `E2E_ACCESS_FOREIGN_USER_EMAIL`: an active Standard user in the Super test organisation,
+  which must differ from the Champion test organisation and be inaccessible to the Champion.
+- `E2E_ACCESS_REQUEST_EMAIL`: a pending registration request in the Standard test organisation.
+
+Missing account/subject configuration is reported as a skip; a configured subject that cannot
+be verified fails the test. DEV-auth runs use dedicated seeded subjects instead and must not
+skip these checks. Subject IDs and missing comparison IDs are verified with read-only API calls.
+
 What each role can do, and so which roles a spec should run as:
 
 | Capability                        | Super   | Champion                  | Standard      |

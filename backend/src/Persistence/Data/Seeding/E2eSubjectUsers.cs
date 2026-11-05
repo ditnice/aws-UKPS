@@ -4,15 +4,19 @@ using UKPS.Api.WebApi.InternalServices.Authentication;
 namespace UKPS.Api.Persistence.Data.Seeding;
 
 /// <summary>
-/// Fixed users in the dev Champion's organisation for the E2E tests that run as a Champion to act
-/// on, so they never pick the same user as a test running as another role. The frontend E2E tests
-/// rely on these emails (frontend/tests/e2e/helpers/subjects.ts).
+/// Fixed subjects for E2E mutation journeys in the dev Champion's organisation and read-only
+/// access-control checks across organisations. The frontend E2E tests rely on these emails
+/// (frontend/tests/e2e/helpers/subjects.ts).
 /// </summary>
 internal static class E2eSubjectUsers
 {
     internal sealed record Subject(string Email, UserRole Role, UserOrgMembershipStatus Status);
 
     public static int OrganisationId => DevAuthenticationClaims.RoleOrganisationId;
+
+    // Read-only access-control subjects; never selected by mutation flows.
+    public const string ForeignUserEmail = "e2e.subject.foreign@email.com";
+    public const string RegistrationRequestEmail = "e2e.subject.request@email.com";
 
     public static IReadOnlyList<Subject> All { get; } =
     [

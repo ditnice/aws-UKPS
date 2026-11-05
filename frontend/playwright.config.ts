@@ -120,7 +120,12 @@ function authenticatedProjects(role: UserRole) {
       ...ephemeralStackFilter,
       testMatch: authenticatedTestMatch,
       grep: roleTagPattern(role),
-      dependencies: [setupName],
+      // Restricted-role access tests verify subjects with a separate Super session. It must be
+      // freshly authenticated even when only the Champion or Standard project was selected.
+      dependencies: [
+        setupName,
+        ...(role !== 'Super' && runnableRoles.includes('Super') ? ['auth-setup-super'] : []),
+      ],
       use: { ...use, storageState: authStatePath(role) },
     },
   ]

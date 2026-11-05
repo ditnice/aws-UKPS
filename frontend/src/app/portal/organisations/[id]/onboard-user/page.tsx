@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 
-import { getUsersMe } from '@/client/generated/sdk.gen'
+import { getOrganisationById, getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import { NotPermitted } from '../_components/NotPermitted'
 
@@ -15,15 +17,14 @@ interface Props {
 
 export default async function OrganisationOnboardUserPage({ params }: Props) {
   const { id } = await params
-  const organisationId = Number(id)
+  const organisationId = parsePositiveInteger(id)
 
-  if (!Number.isInteger(organisationId)) {
+  if (!organisationId) {
     notFound()
   }
 
-  const { data: currentUser, error: currentUserError } = await getUsersMe({
-    client: await createServerApiClient(),
-  })
+  const client = await createServerApiClient()
+  const { data: currentUser, error: currentUserError } = await getUsersMe({ client })
 
   if (currentUserError || !currentUser) {
     return (
@@ -37,6 +38,23 @@ export default async function OrganisationOnboardUserPage({ params }: Props) {
   // Only champion and super users can invite users, so a standard user can't use the form.
   if (currentUser.userRole === 'Standard') {
     return <NotPermitted />
+  }
+
+  // Resolve access through the backend before offering a form for this organisation. The server
+  // client handles organisation-selection redirects centrally (ADR-002/003).
+  const { data: organisation, error } = await getOrganisationById({
+    client,
+    path: { id: organisationId },
+  })
+  if (error || !organisation) {
+    return (
+      <section>
+        <PageHeader heading="Unable to load organisation" />
+        <ErrorState>
+          There was a problem retrieving the organisation. Please try again later.
+        </ErrorState>
+      </section>
+    )
   }
 
   return (

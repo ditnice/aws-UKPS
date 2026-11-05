@@ -6,7 +6,7 @@ import { uniqueEmail } from '../helpers/test-data'
 import { isEphemeralStack, mutatesDataTag } from '../helpers/test-environment'
 import { OrganisationUsersPage } from '../pages/organisation-users.page'
 
-// Nothing seeds registration requests, so each test submits its own through the public form.
+// The seeded registration request is read-only, so each test submits its own through the form.
 async function requestAccess(page: Page, organisationId: string): Promise<string> {
   const workEmail = uniqueEmail('request')
   await page.goto('/register/provide-details')

@@ -1,8 +1,26 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test as base } from '@playwright/test'
+import { expect, test as base, type APIRequestContext } from '@playwright/test'
 
-import { roleTag, type UserRole } from '../helpers/roles'
-import { organisationIdFor } from '../helpers/test-environment'
+import {
+  accessSubjectEmail,
+  verifiedRegistrationRequest,
+  verifiedUser,
+} from '../helpers/access-subjects'
+import { devRoleCookieName, roleTag, type UserRole } from '../helpers/roles'
+import { accessSubjects } from '../helpers/subjects'
+import {
+  authStatePath,
+  hasRoleCredentials,
+  isDevAuthMode,
+  isLocalBaseURL,
+  organisationIdFor,
+  signedInEmail,
+} from '../helpers/test-environment'
+
+import type {
+  RegisterUserDetailsDto,
+  UserInformationDto,
+} from '../../../src/client/generated/types.gen'
 
 type AccessibilityOptions = {
   exclude?: string[]
@@ -28,6 +46,11 @@ type Fixtures = {
   roleAnnotation: void
   /** The organisation this run's role acts on (see organisationIdFor). */
   organisationId: string
+  /** Independent Super session used only for GETs to verify protected subjects exist. */
+  accessVerifier: APIRequestContext
+  protectedUser: UserInformationDto
+  foreignUser: UserInformationDto
+  protectedRequest: RegisterUserDetailsDto
 }
 
 const readMethods = new Set(['GET', 'HEAD', 'OPTIONS'])
@@ -105,6 +128,65 @@ export const test = base.extend<TestOptions & Fixtures>({
       )
     }
     await fixtureUse(organisationId)
+  },
+
+  accessVerifier: async ({ playwright, baseURL }, fixtureUse) => {
+    test.skip(
+      !isDevAuthMode() && (!hasRoleCredentials('Super') || !organisationIdFor('Super')),
+      'Access-control checks need a configured Super account to verify existing subjects',
+    )
+    const verifier = await playwright.request.newContext({
+      baseURL,
+      ignoreHTTPSErrors: isLocalBaseURL(baseURL),
+      storageState: isDevAuthMode()
+        ? {
+            cookies: [
+              {
+                name: devRoleCookieName,
+                value: 'Super',
+                domain: new URL(baseURL!).hostname,
+                path: '/',
+                expires: -1,
+                httpOnly: false,
+                secure: false,
+                sameSite: 'Lax',
+              },
+            ],
+            origins: [],
+          }
+        : authStatePath('Super'),
+    })
+    try {
+      const response = await verifier.get('/backend-api/users/me')
+      expect(response.ok(), 'The verifier has an authenticated Super session').toBe(true)
+      expect(await response.json()).toMatchObject({
+        userRole: 'Super',
+        workEmail: signedInEmail('Super'),
+      })
+      await fixtureUse(verifier)
+    } finally {
+      await verifier.dispose()
+    }
+  },
+
+  protectedUser: async ({ accessVerifier, organisationId }, fixtureUse) => {
+    const email = accessSubjectEmail('E2E_ACCESS_USER_EMAIL', accessSubjects.user)
+    await fixtureUse(await verifiedUser(accessVerifier, organisationId, email))
+  },
+
+  foreignUser: async ({ accessVerifier, organisationId }, fixtureUse) => {
+    const foreignOrganisationId = organisationIdFor('Super')
+    test.skip(
+      !foreignOrganisationId || foreignOrganisationId === organisationId,
+      'Needs a distinct Super organisation for cross-organisation access checks',
+    )
+    const email = accessSubjectEmail('E2E_ACCESS_FOREIGN_USER_EMAIL', accessSubjects.foreignUser)
+    await fixtureUse(await verifiedUser(accessVerifier, foreignOrganisationId!, email))
+  },
+
+  protectedRequest: async ({ accessVerifier, organisationId }, fixtureUse) => {
+    const email = accessSubjectEmail('E2E_ACCESS_REQUEST_EMAIL', accessSubjects.registrationRequest)
+    await fixtureUse(await verifiedRegistrationRequest(accessVerifier, organisationId, email))
   },
 
   checkAccessibility: async ({ page }, fixtureUse, testInfo) => {
