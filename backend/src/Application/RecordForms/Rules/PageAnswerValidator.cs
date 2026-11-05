@@ -10,10 +10,7 @@ namespace UKPS.Api.Application.RecordForms.Rules;
 /// </summary>
 internal static class PageAnswerValidator
 {
-    public static (
-        Dictionary<string, FormAnswer> Answers,
-        Dictionary<string, string> Errors
-    ) Validate(
+    public static (PageAnswers Answers, Dictionary<string, string> Errors) Validate(
         FormPage page,
         IReadOnlyDictionary<string, JsonElement> submitted,
         IReadOnlyDictionary<string, IReadOnlyList<FormOption>> options
@@ -52,7 +49,7 @@ internal static class PageAnswerValidator
             }
         }
 
-        return (answers, errors);
+        return (new PageAnswers(answers), errors);
     }
 
     private static string? CheckOptions(FormAnswer answer, IReadOnlyList<FormOption>? options)

@@ -51,7 +51,7 @@ const tree = [
 
 const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
-  revisionVersion: 4711,
+  pageHash: 'page-hash',
   recordId: 5,
   section: { id: 'product-indication', title: 'Product indication' },
   task: { id: 'indication-details', title: 'Indication details' },
@@ -209,7 +209,7 @@ describe('FormPage', () => {
         path: { recordId: 5, pageId: 'indication' },
         body: {
           formVersion: '2026.10.1',
-          revisionVersion: 4711,
+          pageHash: 'page-hash',
           answers: { 'medicines_indication_detail.indication': 'Hepatitis C' },
         },
       })
@@ -373,7 +373,7 @@ describe('FormPage', () => {
     it('offers a reload when the page has changed since it was loaded', async () => {
       mocks.saveRecordFormPage.mockResolvedValue({
         error: {
-          code: 'revision_changed',
+          code: 'page_answers_changed',
           detail: 'This record has changed since the page was loaded.',
         },
         response: { ok: false, status: 409 },
