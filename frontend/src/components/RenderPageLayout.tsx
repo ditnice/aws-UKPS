@@ -4,18 +4,27 @@ import { Accordion, AccordionGroup } from '@nice-digital/nds-accordion'
 import { ColumnList } from '@nice-digital/nds-column-list'
 import { Tab, Tabs } from '@nice-digital/nds-tabs'
 
+import { PageHeader } from '@/components/PageHeader/PageHeader'
 import PlainTextContent from '@/components/PlainText/PlainTextContent'
-import type { SitePageBlock } from '@/payload/DefaultPages'
+import type { SitePageBlock, SitePageHeader } from '@/payload/DefaultPages'
 
 type RenderPageLayoutProps = {
   blocks: SitePageBlock[]
+  pageHeader?: SitePageHeader
   title: string
 }
 
-export default function RenderPageLayout({ blocks, title }: RenderPageLayoutProps) {
+export default function RenderPageLayout({ blocks, pageHeader, title }: RenderPageLayoutProps) {
   return (
     <>
-      <h1>{title}</h1>
+      <PageHeader
+        heading={title}
+        preheading={pageHeader?.preheading}
+        lead={pageHeader?.lead}
+        description={
+          pageHeader?.description ? <PlainTextContent text={pageHeader.description} /> : undefined
+        }
+      />
       {blocks.map((block, index) => {
         const key = block.id ?? `${block.blockType}-${index}`
 

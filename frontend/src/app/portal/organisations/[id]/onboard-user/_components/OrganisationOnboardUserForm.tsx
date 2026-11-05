@@ -38,7 +38,8 @@ type OnboardUserFormValues = z.input<typeof onboardUserSchema>
 const genericInviteError = 'There was a problem sending the invite. Please try again later.'
 const forbiddenInviteError = 'You do not have permission to invite users to this organisation.'
 const invalidInviteError = 'The invite details are invalid. Check the information and try again.'
-const usernameConflictError = 'A user with this email address already exists.'
+const userAlreadyInOrganisationError =
+  'This email address already belongs to a user in your organisation.'
 
 interface OrganisationOnboardUserFormProps {
   organisationId: number
@@ -89,7 +90,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
             setFormError(forbiddenInviteError)
             return
           case 409:
-            setEmailApiError(usernameConflictError)
+            setEmailApiError(userAlreadyInOrganisationError)
             return
           default:
             setFormError(genericInviteError)

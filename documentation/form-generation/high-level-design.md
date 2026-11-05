@@ -477,8 +477,8 @@ broken build lists everything to fix at once. The full catalogue is in
   their saves are rejected with 403. `Operation.Update` is unchanged.
 - The record view and record creation return `canEditContent`, which is only true for users who
   can edit the record's content. It controls the links into the task list.
-- Only draft revisions can be edited: a save to any other revision is rejected with
-  `revision_not_draft`. The form pages are only for editing; viewing a record without editing
+- Only a draft revision can be edited, and not while the record is on hold or archived: any
+  other save is rejected with `record_not_editable`. The form pages are only for editing; viewing a record without editing
   it is a separate flow.
 - A missing record, revision or page, and a record the caller cannot read, all return the same
   neutral 404 ([ADR-004](../ADR/ADR-004-authorisation-failures-and-resource-concealment.md)).
@@ -566,7 +566,7 @@ sequenceDiagram
             B-->>F: 404
         else Cannot edit
             B-->>F: 403
-        else Not draft, form changed, or revisionVersion stale
+        else Not editable, form changed, or revisionVersion stale
             B-->>F: 409 { code }
             F-->>U: "This page has changed", reload link
         else Can save
@@ -736,7 +736,7 @@ Send `null` for an unanswered single-value question and `[]` for an unanswered c
 | 400 | Missing, unknown or malformed answers, invalid options, failed rules | `ValidationProblemDetails`, keyed by question ID |
 | 403 | Can read the record but not edit it | `ProblemDetails` |
 | 404 | Not found or not readable (concealed) | `ProblemDetails` |
-| 409 | `revision_not_draft`, `revision_changed` or `form_version_changed` | `ProblemDetails` with `code` |
+| 409 | `record_not_editable`, `revision_changed` or `form_version_changed` | `ProblemDetails` with `code` |
 
 #### Request
 
@@ -799,7 +799,7 @@ All three use `ProblemDetails`:
 |---|---|---|
 | 403 | `You are not authorised to edit this record.` | n/a |
 | 404 | `The specified page could not be found.` (identical for every not-found or concealed case, including a page that does not apply) | n/a |
-| 409 | `This record can no longer be edited because it has been submitted.` | `revision_not_draft` |
+| 409 | `This record can't be edited in its current status.` | `record_not_editable` |
 | 409 | `This record has changed since the page was loaded.` | `revision_changed` |
 | 409 | `This form has changed since the page was loaded.` | `form_version_changed` |
 
@@ -817,6 +817,9 @@ Values are stored as text:
 - Single values are stored raw (`Unknown`, `12`, the indication text), so they can be queried
   directly, for example to report on fields moving away from `Unknown`.
 - Multi-select values (junction and flags) are stored as JSON (`["2","3"]`).
+- A collection whose grouping or order is part of the answer is stored as a JSON object instead,
+  for example names and identifiers, saved by record creation:
+  `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}`.
 - No answer is stored as `null`.
 
 ## Persistence changes

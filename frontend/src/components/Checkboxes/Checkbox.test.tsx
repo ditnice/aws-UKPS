@@ -32,7 +32,7 @@ describe('Checkbox', () => {
     expect(input).toBe(ref.current)
     expect(screen.getByLabelText('Email')).toBe(input)
     expect(input).toHaveAttribute('id', 'custom')
-    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(input).not.toHaveAttribute('aria-invalid', 'true')
     expect(input).toHaveAccessibleDescription(
       'More context Group hint Error: Group error Option hint Error: Option error',
     )

@@ -42,11 +42,17 @@ describe('ChangeRecordStatusActions', () => {
     renderActions()
 
     expect(
-      screen.getByRole('group', { name: 'How would you like to change the record status?' }),
+      screen.getByRole('group', { name: 'What would you like to do with this record?' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: 'Archive the record' })).toHaveAccessibleDescription(
-      'Development has ended and will not restart. The record cannot be updated once it has been archived.',
-    )
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'What would you like to do with this record?',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('radio', { name: 'Archive the record' }),
+    ).not.toHaveAccessibleDescription()
 
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio).not.toBeChecked()
@@ -60,8 +66,8 @@ describe('ChangeRecordStatusActions', () => {
 
     expect(screen.getByText('Select an option')).toBeInTheDocument()
     expect(
-      screen.getByRole('group', { name: 'How would you like to change the record status?' }),
-    ).toHaveAttribute('aria-invalid', 'true')
+      screen.getByRole('group', { name: 'What would you like to do with this record?' }),
+    ).not.toHaveAttribute('aria-invalid')
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio).not.toHaveAttribute('aria-invalid')
       expect(radio).not.toHaveAttribute('aria-expanded')
@@ -78,7 +84,7 @@ describe('ChangeRecordStatusActions', () => {
 
     expect(screen.queryByText('Select an option')).not.toBeInTheDocument()
     expect(
-      screen.getByRole('group', { name: 'How would you like to change the record status?' }),
+      screen.getByRole('group', { name: 'What would you like to do with this record?' }),
     ).not.toHaveAttribute('aria-invalid')
     expect(screen.getByRole('radio', { name: 'Archive the record' })).toBeChecked()
     expect(screen.getByRole('radio', { name: 'Archive the record' })).not.toHaveAttribute(

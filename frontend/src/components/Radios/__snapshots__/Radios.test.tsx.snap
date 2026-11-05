@@ -35,7 +35,7 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
           value="email"
         />
         <label
-          class="radio__label"
+          class="radio__label _labelPlain_3637ee"
           for="contact_email"
         >
           Email
@@ -73,7 +73,7 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
           value="phone"
         />
         <label
-          class="radio__label"
+          class="radio__label _labelPlain_3637ee"
           for="contact_phone"
         >
           Phone
@@ -109,7 +109,7 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
           value="post"
         />
         <label
-          class="radio__label"
+          class="radio__label _labelPlain_3637ee"
           for="contact_post"
         >
           Post
@@ -127,7 +127,6 @@ exports[`Radios > renders the error message and styles every option as invalid 1
   >
     <fieldset
       aria-describedby="contact-error"
-      aria-invalid="true"
       class="form-group"
       data-component="form-group"
     >
@@ -161,7 +160,7 @@ exports[`Radios > renders the error message and styles every option as invalid 1
           value="email"
         />
         <label
-          class="radio__label"
+          class="radio__label _labelPlain_3637ee"
           for="contact_email"
         >
           Email
@@ -199,7 +198,7 @@ exports[`Radios > renders the error message and styles every option as invalid 1
           value="phone"
         />
         <label
-          class="radio__label"
+          class="radio__label _labelPlain_3637ee"
           for="contact_phone"
         >
           Phone
@@ -235,7 +234,7 @@ exports[`Radios > renders the error message and styles every option as invalid 1
           value="post"
         />
         <label
-          class="radio__label"
+          class="radio__label _labelPlain_3637ee"
           for="contact_post"
         >
           Post

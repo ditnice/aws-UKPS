@@ -7,6 +7,8 @@ import type { UserMembershipAction, UserOrgStatus, UserRole } from '@/client/gen
 import { Button } from '@/components/Button/Button'
 import { Radio, Radios } from '@/components/Radios/Radios'
 
+import type { SubmitEvent } from 'react'
+
 interface Props {
   organisationId: number
   selectedUserId: number
@@ -83,7 +85,7 @@ export default function ManageUserAccessActions({
     return <p>No actions are available for this user.</p>
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
     const option = availableActions.find((option) => option.action === selectedAction)
     if (!option) {
@@ -101,6 +103,7 @@ export default function ManageUserAccessActions({
   return (
     <form onSubmit={handleSubmit}>
       <Radios
+        headingLevel={2}
         legend="What would you like to do with this user's access?"
         name="action"
         error={radioError ? 'Select an option - No answer provided' : undefined}

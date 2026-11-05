@@ -31,7 +31,7 @@ export const pageHref = (page: Pick<RecordPageDto, 'recordId'>, pageId: string) 
 
 export const taskListHref = (recordId: number) => `/portal/records/${recordId}/task-list`
 
-export const conflictCodes = ['revision_not_draft', 'revision_changed', 'form_version_changed']
+export const conflictCodes = ['record_not_editable', 'revision_changed', 'form_version_changed']
 
 type SaveState = { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kind: 'failed' }
 

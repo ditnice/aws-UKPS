@@ -11,6 +11,11 @@ $border-width: spacing.$x-small;
 $conditional-margin-left: math.div($radio-size, 2) - math.div($border-width, 2);
 $conditional-padding-left: $label-offset - $conditional-margin-left - $border-width;
 
+// NDS labels are always bold; options without a hint use regular weight, as in the designs.
+.labelPlain {
+  font-weight: normal;
+}
+
 .conditional {
   border: 0;
   border-left: utils.rem($border-width) solid colours.$border;

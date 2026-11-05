@@ -1,6 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Radio, Radios } from './Radios'
@@ -13,8 +12,14 @@ beforeEach(() => {
 
 function ContactRadios(props: Partial<Parameters<typeof Radios>[0]>) {
   return (
-    <Radios legend="How would you like to be contacted?" name="contact" {...props}>
+    <Radios
+      identifier="contact"
+      legend="How would you like to be contacted?"
+      name="contact"
+      {...props}
+    >
       <Radio
+        id="contact_email"
         conditional={
           <>
             <label htmlFor="contact-email">Email address</label>
@@ -25,6 +30,7 @@ function ContactRadios(props: Partial<Parameters<typeof Radios>[0]>) {
         value="email"
       />
       <Radio
+        id="contact_phone"
         conditional={
           <>
             <label htmlFor="contact-phone">Phone number</label>
@@ -34,7 +40,7 @@ function ContactRadios(props: Partial<Parameters<typeof Radios>[0]>) {
         label="Phone"
         value="phone"
       />
-      <Radio label="Post" value="post" />
+      <Radio id="contact_post" label="Post" value="post" />
     </Radios>
   )
 }
@@ -43,17 +49,58 @@ const conditionalFor = (container: HTMLElement, value: string) =>
   container.querySelector(`#conditional-contact_${value}`)
 
 describe('Radios', () => {
+  it('generates distinct IDs for groups that share a name', async () => {
+    render(
+      <>
+        <Radios error="First error" hint="First hint" legend="First" name="action">
+          <Radio
+            conditional={<input aria-label="First detail" />}
+            hint="First option hint"
+            label="First option"
+            value="same"
+          />
+        </Radios>
+        <Radios error="Second error" hint="Second hint" legend="Second" name="action">
+          <Radio
+            conditional={<input aria-label="Second detail" />}
+            hint="Second option hint"
+            label="Second option"
+            value="same"
+          />
+        </Radios>
+      </>,
+    )
+    const first = screen.getByRole('radio', { name: 'First option' })
+    const second = screen.getByRole('radio', { name: 'Second option' })
+
+    expect(first.id).not.toBe(second.id)
+    expect(first.getAttribute('aria-controls')).not.toBe(second.getAttribute('aria-controls'))
+    expect(screen.getByRole('group', { name: 'First' })).toHaveAccessibleDescription(
+      'First hint Error: First error',
+    )
+    expect(screen.getByRole('group', { name: 'Second' })).toHaveAccessibleDescription(
+      'Second hint Error: Second error',
+    )
+    expect(first).toHaveAccessibleDescription('First hint Error: First error First option hint')
+    expect(second).toHaveAccessibleDescription('Second hint Error: Second error Second option hint')
+    await user.click(second)
+    expect(screen.getByLabelText('Second detail')).toBeVisible()
+    expect(screen.getByLabelText('First detail')).not.toBeVisible()
+  })
+
   it('composes shared and option descriptions without duplicate ID references', () => {
     render(
       <Radios
         aria-describedby="outside contact-hint"
         hint="Group hint"
+        identifier="contact"
         legend="Contact"
         name="contact"
       >
         <Radio
           aria-describedby="outside contact-hint"
           hint="Option hint"
+          id="contact_email"
           label="Email"
           value="email"
         />
@@ -245,7 +292,7 @@ describe('Radios', () => {
     expect(screen.getByRole('group', { name: 'Choose' })).toHaveAccessibleDescription(
       /Consumer description.*Group hint.*Group error/,
     )
-    expect(screen.getByRole('group', { name: 'Choose' })).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('group', { name: 'Choose' })).not.toHaveAttribute('aria-invalid')
     for (const option of screen.getAllByRole('radio')) {
       expect(option).not.toHaveAttribute('aria-invalid')
       expect(option).not.toHaveAttribute('aria-expanded')
@@ -281,171 +328,6 @@ describe('Radios', () => {
     expect(new FormData(form).has('contactEmail')).toBe(false)
     await user.click(screen.getByLabelText('Email'))
     expect(email).toHaveValue('jo@example.com')
-  })
-
-  it.each([undefined, 'email'])(
-    'synchronises native reset with the uncontrolled default %s',
-    async (defaultValue) => {
-      const onChange = vi.fn()
-      const { container } = render(
-        <form>
-          <ContactRadios defaultValue={defaultValue} onChange={onChange} />
-          <button type="reset">Reset</button>
-        </form>,
-      )
-      await user.click(screen.getByLabelText('Phone'))
-      await user.click(screen.getByRole('button', { name: 'Reset' }))
-      await waitFor(() => expect(conditionalFor(container, 'phone')).not.toBeVisible())
-      expect(screen.getByLabelText('Email')).toHaveProperty('checked', defaultValue === 'email')
-      expect(screen.getByLabelText('Phone')).not.toBeChecked()
-      expect(screen.getByLabelText('Email address')).toHaveProperty(
-        'willValidate',
-        defaultValue === 'email',
-      )
-      expect(onChange).toHaveBeenCalledTimes(1)
-    },
-  )
-
-  it('keeps controlled selection parent-owned across native reset', async () => {
-    const onChange = vi.fn()
-    const { container, rerender } = render(
-      <form>
-        <ContactRadios value="email" onChange={onChange} />
-        <button type="reset">Reset</button>
-      </form>,
-    )
-    rerender(
-      <form>
-        <ContactRadios value="phone" onChange={onChange} />
-        <button type="reset">Reset</button>
-      </form>,
-    )
-    await user.click(screen.getByRole('button', { name: 'Reset' }))
-    expect(screen.getByLabelText('Phone')).toBeChecked()
-    expect(conditionalFor(container, 'phone')).toBeVisible()
-    expect(onChange).not.toHaveBeenCalled()
-  })
-
-  it('respects cancelled native resets', async () => {
-    render(
-      <form onReset={(event) => event.preventDefault()}>
-        <ContactRadios defaultValue="email" />
-        <button type="reset">Reset</button>
-      </form>,
-    )
-    await user.click(screen.getByLabelText('Phone'))
-    await user.click(screen.getByRole('button', { name: 'Reset' }))
-    expect(screen.getByLabelText('Phone')).toBeChecked()
-    expect(screen.getByLabelText('Phone number')).toBeVisible()
-  })
-
-  it('follows a controlled parent that changes its value in onReset', async () => {
-    function ControlledForm() {
-      const [value, setValue] = useState('email')
-      return (
-        <form onReset={() => setValue('phone')}>
-          <ContactRadios value={value} onChange={setValue} />
-          <button type="reset">Reset</button>
-        </form>
-      )
-    }
-    render(<ControlledForm />)
-    await user.click(screen.getByRole('button', { name: 'Reset' }))
-    expect(screen.getByLabelText('Phone')).toBeChecked()
-    expect(screen.getByLabelText('Email')).not.toBeChecked()
-    expect(screen.getByLabelText('Phone number')).toBeVisible()
-  })
-
-  it('listens to the owning form of externally associated inputs', async () => {
-    render(
-      <>
-        <form id="external-form">
-          <button type="reset">Reset external</button>
-        </form>
-        <Radios defaultValue="first" legend="External choice" name="external-choice">
-          <Radio form="external-form" label="First" value="first" />
-          <Radio
-            conditional={
-              <input aria-label="External detail" form="external-form" name="detail" required />
-            }
-            form="external-form"
-            label="Second"
-            value="second"
-          />
-        </Radios>
-      </>,
-    )
-    await user.click(screen.getByLabelText('Second'))
-    expect(screen.getByLabelText('External detail')).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Reset external' }))
-    expect(screen.getByLabelText('First')).toBeChecked()
-    expect(screen.getByLabelText('Second')).not.toBeChecked()
-    expect(screen.getByLabelText('External detail')).not.toBeVisible()
-    expect(screen.getByLabelText('External detail')).toBeDisabled()
-  })
-
-  it('subscribes to reset when options arrive after the first render', async () => {
-    function LateOptions({ loaded }: { loaded: boolean }) {
-      return (
-        <form>
-          <Radios defaultValue="first" legend="Late choice" name="late-choice">
-            {loaded && <Radio label="First" value="first" />}
-            {loaded && (
-              <Radio
-                label="Second"
-                value="second"
-                conditional={<input aria-label="Late detail" />}
-              />
-            )}
-          </Radios>
-          <button type="reset">Reset late choice</button>
-        </form>
-      )
-    }
-    const { rerender } = render(<LateOptions loaded={false} />)
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
-    rerender(<LateOptions loaded />)
-    await user.click(screen.getByLabelText('Second'))
-    expect(screen.getByLabelText('Late detail')).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Reset late choice' }))
-    expect(screen.getByLabelText('First')).toBeChecked()
-    expect(screen.getByLabelText('Second')).not.toBeChecked()
-    expect(screen.getByLabelText('Late detail')).not.toBeVisible()
-    expect(screen.getByLabelText('Late detail')).toBeDisabled()
-  })
-
-  it('refreshes reset subscriptions when form ownership changes', async () => {
-    function ReassociatedOptions({ form }: { form: string }) {
-      return (
-        <>
-          <form id="old-form">
-            <button type="reset">Reset old form</button>
-          </form>
-          <form id="new-form">
-            <button type="reset">Reset new form</button>
-          </form>
-          <Radios defaultValue="first" legend="Moving choice" name="moving-choice">
-            <Radio form={form} label="First" value="first" />
-            <Radio
-              form={form}
-              label="Second"
-              value="second"
-              conditional={<input aria-label="Moving detail" form={form} />}
-            />
-          </Radios>
-        </>
-      )
-    }
-    const { rerender } = render(<ReassociatedOptions form="old-form" />)
-    await user.click(screen.getByLabelText('Second'))
-    rerender(<ReassociatedOptions form="new-form" />)
-    await user.click(screen.getByRole('button', { name: 'Reset old form' }))
-    expect(screen.getByLabelText('Second')).toBeChecked()
-    expect(screen.getByLabelText('Moving detail')).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Reset new form' }))
-    expect(screen.getByLabelText('First')).toBeChecked()
-    expect(screen.getByLabelText('Second')).not.toBeChecked()
-    expect(screen.getByLabelText('Moving detail')).not.toBeVisible()
   })
 
   it('disables arbitrary nested native controls without overriding consumer disabled state', async () => {

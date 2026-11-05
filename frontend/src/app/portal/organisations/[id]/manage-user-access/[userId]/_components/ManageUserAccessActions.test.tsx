@@ -39,6 +39,12 @@ describe('ManageUserAccessActions', () => {
       screen.getByRole('group', { name: "What would you like to do with this user's access?" }),
     ).toBeInTheDocument()
     expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: "What would you like to do with this user's access?",
+      }),
+    ).toBeInTheDocument()
+    expect(
       screen.getByRole('radio', { name: 'Change user permissions' }),
     ).toHaveAccessibleDescription('Change the user role to either champion user or standard user')
 
@@ -93,7 +99,7 @@ describe('ManageUserAccessActions', () => {
     expect(screen.getByText('Select an option - No answer provided')).toBeInTheDocument()
     expect(
       screen.getByRole('group', { name: "What would you like to do with this user's access?" }),
-    ).toHaveAttribute('aria-invalid', 'true')
+    ).not.toHaveAttribute('aria-invalid')
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio).not.toHaveAttribute('aria-invalid')
       expect(radio).not.toHaveAttribute('aria-expanded')
