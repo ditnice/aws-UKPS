@@ -7151,7 +7151,7 @@
           "ReactivateMembership",
           "EditUserRole",
           "RemoveUser",
-          "ManageUserAccess"
+          "ManageUserDetails"
         ],
         "type": "string",
         "description": "Defines the actions that can be performed on a user or their membership."

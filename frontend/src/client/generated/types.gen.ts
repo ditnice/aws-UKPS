@@ -1814,7 +1814,7 @@ export const UserMembershipAction = {
     REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
     EDIT_USER_ROLE: 'EditUserRole',
     REMOVE_USER: 'RemoveUser',
-    MANAGE_USER_ACCESS: 'ManageUserAccess'
+    MANAGE_USER_DETAILS: 'ManageUserDetails'
 } as const;
 
 /**

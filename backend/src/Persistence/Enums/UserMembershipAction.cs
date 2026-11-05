@@ -36,7 +36,7 @@ public enum UserMembershipAction
     RemoveUser = 5,
 
     /// <summary>
-    /// Manages the user's access and sign in methods
+    /// Manages the user's details and sign in methods
     /// </summary>
-    ManageUserAccess = 6,
+    ManageUserDetails = 6,
 }

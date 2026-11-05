@@ -742,7 +742,7 @@ export const fakeUserMembershipAction = (options?: Options): UserMembershipActio
         'ReactivateMembership',
         'EditUserRole',
         'RemoveUser',
-        'ManageUserAccess'
+        'ManageUserDetails'
     ]);
 };
 

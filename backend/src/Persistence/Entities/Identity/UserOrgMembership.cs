@@ -79,7 +79,7 @@ internal sealed class UserOrgMembership
     {
         UserMembershipAction[] nonCommandRelatedActions =
             status == UserOrgMembershipStatus.Active || status == UserOrgMembershipStatus.Inactive
-                ? [UserMembershipAction.EditUserRole, UserMembershipAction.ManageUserAccess]
+                ? [UserMembershipAction.EditUserRole, UserMembershipAction.ManageUserDetails]
                 : [];
         var statusManager = new UserOrgMembershipStateMachine(status);
         IEnumerable<UserOrgMembershipStateMachine.Command> permittedCommands =
