@@ -25,7 +25,7 @@ internal sealed class MedicinesServiceImpact
         MedicineFormTasks.PatientAndClinicalRequirementsTitle,
         Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
     )]
-    [FormPage("nhs-service-changes", "NHS service changes", Order = 30)]
+    [FormPage("nhs-service-changes", "NHS service changes", Order = 50)]
     [FormField(
         "medicines_service_impact.nhs_service_changes_required",
         "Are any changes to NHS services required for the delivery of this product?",
@@ -50,7 +50,7 @@ internal sealed class MedicinesServiceImpact
         MedicineFormTasks.PatientAndClinicalRequirementsTitle,
         Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
     )]
-    [FormPage("handling-storage", "Handling and storage", Order = 40)]
+    [FormPage("handling-storage", "Handling and storage", Order = 60)]
     [FormField(
         "medicines_service_impact.handling_storage_requirements",
         "Are there specific requirements for the handling or storage of this product that may cause service issues?",
@@ -71,15 +71,12 @@ internal sealed class MedicinesServiceImpact
         MedicineFormTasks.PatientAndClinicalRequirementsTitle,
         Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
     )]
-    [FormPage(
-        "population-range",
-        "Enter the UK patient population range for the condition",
-        Order = 50
-    )]
+    [FormPage("population-range", "UK patient population", Order = 70)]
     [FormField(
         "medicines_service_impact.uk_patient_population_range_id",
-        "Select the range estimate for the overall UK patient population for this condition",
+        "UK patient population range for this condition",
         FormControl.Select,
+        Hint = "Select the range estimate for the overall UK patient population for this condition.",
         Placeholder = "Choose population size",
         Order = 10
     )]
@@ -91,16 +88,12 @@ internal sealed class MedicinesServiceImpact
         MedicineFormTasks.PatientAndClinicalRequirementsTitle,
         Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
     )]
-    [FormPage(
-        "population-range",
-        "Enter the UK patient population range for the condition",
-        Order = 50
-    )]
+    [FormPage("population-range", "UK patient population", Order = 70)]
     [FormField(
         "medicines_service_impact.uk_patient_population_notes",
-        "UK patient population notes",
+        "Additional details about the UK patient population",
         FormControl.Textarea,
-        Hint = "Use UK data where possible. If UK data is not available, use reliable data from England, Scotland, or Wales and extrapolate to estimate the UK population.\n\nExamples of acceptable sources include guidance from the National Institute for Health and Care Excellence (NICE), epidemiology data from NHS National Services Scotland (NHS NSS) or Health Protection Scotland (HPS), or Welsh health statistics.\n\nIf epidemiology data about this condition is not available from these sources, data that has been obtained from a review of published literature may be used instead. Always provide references for the sources used.\n\nIf complex calculations or assumptions are used, explain them clearly.\n\nProvide references and calculations",
+        Hint = "Provide references and calculations and use UK data where possible. If UK data is not available, use reliable data from England, Scotland, or Wales and extrapolate to estimate the UK population.\n\nExamples of acceptable sources include guidance from the National Institute for Health and Care Excellence (NICE), epidemiology data from NHS National Services Scotland (NHS NSS) or Health Protection Scotland (HPS), or Welsh health statistics.\n\nIf epidemiology data about this condition is not available from these sources, data that has been obtained from a review of published literature may be used instead. Always provide references for the sources used.\n\nIf complex calculations or assumptions are used, explain them clearly.",
         Order = 20
     )]
     [FormRequired("Enter UK patient population notes")]
@@ -117,14 +110,13 @@ internal sealed class MedicinesServiceImpact
     [FormPage(
         "eligible-population",
         "Enter the estimated UK eligible population range",
-        Order = 60
+        Order = 80
     )]
     [FormField(
         "medicines_service_impact.estimated_eligible_patient_population",
-        "Estimated UK eligible population range",
+        "Enter the estimated UK eligible population range",
         FormControl.Textarea,
-        Hint = "Provide an estimate of patients likely to be eligible for treatment in the UK. Include references and outline the calculation approach.\n\nInclude any relevant references and calculations.",
-        Order = 10
+        Hint = "Provide an estimate of patients likely to be eligible for treatment in the UK. Include references and outline the calculation approach.\n\nInclude any relevant references and calculations."
     )]
     [FormRequired("Enter an estimated UK eligible population range")]
     public string? EstimatedEligiblePatientPopulation { get; set; }

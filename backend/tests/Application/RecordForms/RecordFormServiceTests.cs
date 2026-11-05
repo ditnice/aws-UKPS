@@ -355,14 +355,14 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         (
             await SaveOk(
-                "urgent-identification",
-                Answer("medicines_patient_identification.urgent_identification_required", "Yes")
-            )
-        ).NextPageId.ShouldBe("screening-programme");
-        (
-            await SaveOk(
                 "screening-programme",
                 Answer("medicines_patient_identification.screening_required", "No")
+            )
+        ).NextPageId.ShouldBe("urgent-identification");
+        (
+            await SaveOk(
+                "urgent-identification",
+                Answer("medicines_patient_identification.urgent_identification_required", "Yes")
             )
         ).NextPageId.ShouldBe("nhs-service-changes");
         (
@@ -397,14 +397,7 @@ public class RecordFormServiceTests : DatabaseTestBase
                     ["medicines_service_impact.estimated_eligible_patient_population"] = Json(
                         "1,000 to 2,000"
                     ),
-                    ["medicines_budget_impact.estimated_uptake"] = Json("Around 500"),
                 }
-            )
-        ).NextPageId.ShouldBe("early-access");
-        (
-            await SaveOk(
-                "early-access",
-                Answer("medicines_budget_impact.compassionate_access_available", "Yes")
             )
         ).NextPageId.ShouldBeNull();
 
@@ -423,13 +416,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         serviceImpact.UkPatientPopulationNotes.ShouldBe("Notes");
         serviceImpact.EstimatedEligiblePatientPopulation.ShouldBe("1,000 to 2,000");
 
-        MedicinesBudgetImpact budgetImpact = await Context
-            .MedicinesBudgetImpacts.AsNoTracking()
-            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
-        budgetImpact.EstimatedUptake.ShouldBe("Around 500");
-        budgetImpact.CompassionateAccessAvailable.ShouldBe(YesNoUnknown.Yes);
-
-        (await FieldAudits().CountAsync(Ct)).ShouldBe(9);
+        (await FieldAudits().CountAsync(Ct)).ShouldBe(7);
     }
 
     [Fact]

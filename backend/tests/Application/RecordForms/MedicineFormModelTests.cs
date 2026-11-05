@@ -91,13 +91,12 @@ public class MedicineFormModelTests
             )
             .Select(static p => p.Id)
             .ShouldBe([
-                "urgent-identification",
                 "screening-programme",
+                "urgent-identification",
                 "nhs-service-changes",
                 "handling-storage",
                 "population-range",
                 "eligible-population",
-                "early-access",
             ]);
     }
 
@@ -230,12 +229,12 @@ public class MedicineFormModelTests
                 AnswerShape.Single
             ),
             (
-                "medicines_patient_identification.urgent_identification_required",
+                "medicines_patient_identification.screening_required",
                 FormControl.Radio,
                 AnswerShape.Single
             ),
             (
-                "medicines_patient_identification.screening_required",
+                "medicines_patient_identification.urgent_identification_required",
                 FormControl.Radio,
                 AnswerShape.Single
             ),
@@ -264,12 +263,6 @@ public class MedicineFormModelTests
                 FormControl.Textarea,
                 AnswerShape.Single
             ),
-            ("medicines_budget_impact.estimated_uptake", FormControl.Textarea, AnswerShape.Single),
-            (
-                "medicines_budget_impact.compassionate_access_available",
-                FormControl.Radio,
-                AnswerShape.Single
-            ),
         ]);
     }
 
@@ -286,11 +279,11 @@ public class MedicineFormModelTests
         model.PreviousPage(model.FindPage("diagnostic-test-required")!).ShouldBeNull();
         model.NextPage(model.FindPage("diagnostic-test-required")!)!.Id.ShouldBe("biomarker-type");
         model.NextPage(model.FindPage("safety-tests")!).ShouldBeNull();
-        model.PreviousPage(model.FindPage("urgent-identification")!).ShouldBeNull();
+        model.PreviousPage(model.FindPage("screening-programme")!).ShouldBeNull();
         model
-            .NextPage(model.FindPage("urgent-identification")!)!
-            .Id.ShouldBe("screening-programme");
-        model.NextPage(model.FindPage("early-access")!).ShouldBeNull();
+            .NextPage(model.FindPage("screening-programme")!)!
+            .Id.ShouldBe("urgent-identification");
+        model.NextPage(model.FindPage("eligible-population")!).ShouldBeNull();
         model.FindPage("unknown").ShouldBeNull();
     }
 

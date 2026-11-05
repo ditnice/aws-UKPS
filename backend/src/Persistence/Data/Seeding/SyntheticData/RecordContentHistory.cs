@@ -366,7 +366,6 @@ internal static class RecordContentHistory
                 "medicines_service_impact.estimated_eligible_patient_population",
                 patient.EstimatedEligiblePatientPopulation
             ),
-            ("medicines_budget_impact.estimated_uptake", budget.EstimatedUptake),
             (
                 "medicines_budget_impact.compassionate_access_available",
                 budget.CompassionateAccessAvailable?.ToString()

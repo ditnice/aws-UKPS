@@ -22,7 +22,12 @@ internal sealed class MedicinesPatientIdentification
         MedicineFormTasks.PatientAndClinicalRequirementsTitle,
         Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
     )]
-    [FormPage("screening-programme", "Screening or surveillance", Order = 20)]
+    [FormPage(
+        "screening-programme",
+        "Screening or surveillance",
+        Order = 10,
+        CommercialInConfidence = true
+    )]
     [FormField(
         "medicines_patient_identification.screening_required",
         "Is a screening or surveillance programme required to identify eligible patients?",
@@ -43,7 +48,12 @@ internal sealed class MedicinesPatientIdentification
         MedicineFormTasks.PatientAndClinicalRequirementsTitle,
         Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
     )]
-    [FormPage("urgent-identification", "Urgent patient identification", Order = 10)]
+    [FormPage(
+        "urgent-identification",
+        "Urgent patient identification",
+        Order = 20,
+        CommercialInConfidence = true
+    )]
     [FormField(
         "medicines_patient_identification.urgent_identification_required",
         "Do patients need to be identified for treatment more quickly than standard practice?",
