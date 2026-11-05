@@ -58,6 +58,8 @@ public abstract record SaveRecordPageError
     /// <summary>The answers on this page have changed since the page was loaded.</summary>
     public sealed record PageAnswersChanged : SaveRecordPageError;
 
-    /// <summary>One or more answers are invalid. Messages are keyed by question ID.</summary>
+    /// <summary>
+    /// One or more answers are invalid. Messages are keyed by question ID.
+    /// </summary>
     public sealed record Invalid(IReadOnlyDictionary<string, string> Errors) : SaveRecordPageError;
 }
