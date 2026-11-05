@@ -603,6 +603,27 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await RevisionVersion()).ShouldBe(versionBefore);
     }
 
+    [Fact]
+    public async Task GetPage_FlaggedPage_ShowsTheCommercialInConfidenceBadge()
+    {
+        RecordPageDto page = await GetPage("diagnostic-test-required");
+
+        page.Page.CommercialInConfidence.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task GetPage_OptionWithAHint_ReturnsTheHint()
+    {
+        RecordPageDto page = await GetPage("biomarker-type");
+
+        RecordPageOptionDto option = page
+            .Questions.Single()
+            .Options!.Single(static o =>
+                string.Equals(o.Value, "GenomicBiomarker", StringComparison.Ordinal)
+            );
+        option.Hint.ShouldBe("For example, a gene mutation, chromosomal alteration");
+    }
+
     private ServiceTestHarness<TService> CreateHarness<TService>(UserRole role, int organisationId)
         where TService : notnull
     {

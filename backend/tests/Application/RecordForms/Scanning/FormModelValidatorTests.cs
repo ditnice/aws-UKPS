@@ -132,6 +132,19 @@ public class FormModelValidatorTests
     }
 
     [Fact]
+    public void Validate_PageFlagDisagreement_IsReported()
+    {
+        IReadOnlyList<string> problems = Problems(
+            typeof(ValidEntity),
+            typeof(FlagDisagreeingEntity)
+        );
+
+        problems.ShouldContain(
+            "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
+        );
+    }
+
+    [Fact]
     public void Create_InvalidModel_ThrowsWithEveryProblem()
     {
         FormModelException exception = Should.Throw<FormModelException>(() =>
