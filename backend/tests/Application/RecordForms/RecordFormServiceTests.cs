@@ -364,6 +364,18 @@ public class RecordFormServiceTests : DatabaseTestBase
                 "urgent-identification",
                 Answer("medicines_patient_identification.urgent_identification_required", "Yes")
             )
+        ).NextPageId.ShouldBe("place-in-therapy");
+        (
+            await SaveOk(
+                "place-in-therapy",
+                Answer("medicines_treatment_detail.proposed_place_in_therapy", "Second line")
+            )
+        ).NextPageId.ShouldBe("treatment-duration");
+        (
+            await SaveOk(
+                "treatment-duration",
+                Answer("medicines_treatment_detail.estimated_duration_of_treatment", "6 months")
+            )
         ).NextPageId.ShouldBe("nhs-service-changes");
         (
             await SaveOk(
@@ -407,6 +419,12 @@ public class RecordFormServiceTests : DatabaseTestBase
         identification.UrgentIdentificationRequired.ShouldBe(YesNoUnknown.Yes);
         identification.ScreeningRequired.ShouldBe(YesNoUnknown.No);
 
+        MedicinesTreatmentDetail treatmentDetail = await Context
+            .MedicinesTreatmentDetails.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+        treatmentDetail.ProposedPlaceInTherapy.ShouldBe("Second line");
+        treatmentDetail.EstimatedDurationOfTreatment.ShouldBe("6 months");
+
         MedicinesServiceImpact serviceImpact = await Context
             .MedicinesServiceImpacts.AsNoTracking()
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
@@ -416,7 +434,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         serviceImpact.UkPatientPopulationNotes.ShouldBe("Notes");
         serviceImpact.EstimatedEligiblePatientPopulation.ShouldBe("1,000 to 2,000");
 
-        (await FieldAudits().CountAsync(Ct)).ShouldBe(7);
+        (await FieldAudits().CountAsync(Ct)).ShouldBe(9);
     }
 
     [Fact]

@@ -367,6 +367,10 @@ internal static class RecordContentHistory
                 patient.EstimatedEligiblePatientPopulation
             ),
             (
+                "medicines_treatment_detail.estimated_duration_of_treatment",
+                patient.EstimatedDurationOfTreatment
+            ),
+            (
                 "medicines_budget_impact.compassionate_access_available",
                 budget.CompassionateAccessAvailable?.ToString()
             ),

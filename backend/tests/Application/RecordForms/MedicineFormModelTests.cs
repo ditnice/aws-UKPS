@@ -11,9 +11,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.7";
+    private const string ExpectedVersion = "2026.11.8";
     private const string ExpectedFingerprint =
-        "e045b27e23b4ed91eacbde06ac9f6e991ee612d4c472795b90a5efb072848306";
+        "e7be59a41364f0543fc95594a3bbd7bf96b74f62b99583b318f8ba52b5cf5c18";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -93,6 +93,8 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "screening-programme",
                 "urgent-identification",
+                "place-in-therapy",
+                "treatment-duration",
                 "nhs-service-changes",
                 "handling-storage",
                 "population-range",
@@ -236,6 +238,16 @@ public class MedicineFormModelTests
             (
                 "medicines_patient_identification.urgent_identification_required",
                 FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_treatment_detail.proposed_place_in_therapy",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_treatment_detail.estimated_duration_of_treatment",
+                FormControl.Textarea,
                 AnswerShape.Single
             ),
             (
