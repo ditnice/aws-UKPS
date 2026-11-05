@@ -29,7 +29,7 @@ export const pageHref = (page: Pick<RecordPageDto, 'recordId'>, pageId: string) 
 export const taskListHref = (recordId: number) => `/portal/records/${recordId}/task-list`
 
 export const conflictCodes = [
-  'revision_not_draft',
+  'record_not_editable',
   'concurrent_update',
   'form_version_changed',
   'page_answers_changed',

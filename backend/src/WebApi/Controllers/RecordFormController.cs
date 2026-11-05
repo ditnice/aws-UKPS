@@ -114,9 +114,9 @@ public class RecordFormController(
                     title: "Forbidden",
                     detail: "You are not authorised to edit this record."
                 ),
-            notDraft: _ =>
+            notEditable: _ =>
                 Conflict(
-                    "revision_not_draft",
+                    "record_not_editable",
                     "This record can no longer be edited because it has been submitted."
                 ),
             formVersionChanged: _ =>

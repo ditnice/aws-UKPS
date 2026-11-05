@@ -9,7 +9,7 @@ public abstract record SaveRecordPageError
         Func<NotFound, TResult> notFound,
         Func<NotAllowed, TResult> notAllowed,
         Func<CannotEdit, TResult> cannotEdit,
-        Func<NotDraft, TResult> notDraft,
+        Func<NotEditable, TResult> notEditable,
         Func<FormVersionChanged, TResult> formVersionChanged,
         Func<ConcurrentUpdate, TResult> concurrentUpdate,
         Func<PageAnswersChanged, TResult> pageAnswersChanged,
@@ -21,7 +21,7 @@ public abstract record SaveRecordPageError
             NotFound e => notFound(e),
             NotAllowed e => notAllowed(e),
             CannotEdit e => cannotEdit(e),
-            NotDraft e => notDraft(e),
+            NotEditable e => notEditable(e),
             FormVersionChanged e => formVersionChanged(e),
             ConcurrentUpdate e => concurrentUpdate(e),
             PageAnswersChanged e => pageAnswersChanged(e),
@@ -41,8 +41,11 @@ public abstract record SaveRecordPageError
     /// <summary>The caller can read the record but not edit its content.</summary>
     public sealed record CannotEdit : SaveRecordPageError;
 
-    /// <summary>The revision is no longer a draft.</summary>
-    public sealed record NotDraft : SaveRecordPageError;
+    /// <summary>
+    /// The latest revision is not a draft that can be edited: it has been submitted, or the record
+    /// is on hold or archived.
+    /// </summary>
+    public sealed record NotEditable : SaveRecordPageError;
 
     /// <summary>The form has changed since the page was loaded.</summary>
     public sealed record FormVersionChanged : SaveRecordPageError;

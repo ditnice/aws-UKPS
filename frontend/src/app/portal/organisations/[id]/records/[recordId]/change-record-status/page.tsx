@@ -89,19 +89,21 @@ const ChangeRecordStatus = async ({
     <>
       <PageHeader
         backLink={backLink}
-        heading="What would you like to do with this record?"
+        heading="Change record status"
         preheading={productDetail?.recordTitle}
       />
 
       <p>
-        If development has permanently discontinued or you no longer own the rights to the{' '}
-        {recordType === 'Vaccine' ? 'vaccine' : 'medicine'} then you should archive the record.
+        If development has ended and will not restart or you no longer own the rights to the{' '}
+        {recordType === 'Vaccine' ? 'vaccine' : 'medicine'} then you should archive the record. The
+        record cannot be updated once it has been archived.
       </p>
 
       <p>
+        {/* TODO: On hold wording is awaiting copy from the design team. */}
         {record.recordStatus === 'OnHold'
           ? 'If development has restarted, you should remove the record hold.'
-          : 'If development has paused, you should place the record on hold.'}
+          : 'If development has paused and may restart in the future, you should place the record on hold. Update requests for records on hold will be reduced to every 6 months.'}
       </p>
 
       <ChangeRecordStatusActions

@@ -35,8 +35,8 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         StringComparer.Ordinal
     )
     {
-        ["revision_not_draft"] = new SaveRecordPageError.NotDraft(),
         ["concurrent_update"] = new SaveRecordPageError.ConcurrentUpdate(),
+        ["record_not_editable"] = new SaveRecordPageError.NotEditable(),
         ["form_version_changed"] = new SaveRecordPageError.FormVersionChanged(),
         ["page_answers_changed"] = new SaveRecordPageError.PageAnswersChanged(),
     };
@@ -198,8 +198,8 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Theory]
-    [InlineData("revision_not_draft")]
     [InlineData("concurrent_update")]
+    [InlineData("record_not_editable")]
     [InlineData("form_version_changed")]
     [InlineData("page_answers_changed")]
     public async Task SaveRecordFormPage_Conflict_ReturnsConflictWithCode(string code)
