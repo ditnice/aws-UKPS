@@ -15,6 +15,7 @@ export function SelectOption({ children, ...rest }: SelectOptionProps) {
 
 export type SelectProps = Omit<ComponentPropsWithoutRef<'select'>, 'multiple'> & {
   error?: boolean
+  errorHeading?: string
   errorMessage?: string
   hint?: string
   label: string | null
@@ -33,6 +34,7 @@ export function Select({
   children,
   className,
   error,
+  errorHeading,
   errorMessage,
   hint,
   id,
@@ -45,14 +47,19 @@ export function Select({
 }: SelectProps) {
   const selectId = id ?? name
   const hintId = hint ? `${selectId}-hint` : undefined
+  const errorHeadingId = error && errorHeading ? `${selectId}-error-heading` : undefined
   // `error` alone styles the field; the message is shown only when one is given, so grouped
   // selects can share a single message.
   const errorId = error && errorMessage ? `${selectId}-error` : undefined
-  const ariaDescribedBy = [describedBy, hintId, errorId].filter(Boolean).join(' ') || undefined
+  const ariaDescribedBy =
+    [describedBy, hintId, errorHeadingId, errorId].filter(Boolean).join(' ') || undefined
   const selectStyle = width ? { ...style, ...inputWidthStyles[width] } : style
 
   return (
-    <div className={clsx(styles.select, className)} data-component="select">
+    <div
+      className={clsx(styles.select, error && styles.errorGroup, className)}
+      data-component="select"
+    >
       {label && (
         <label className={styles.label} htmlFor={selectId}>
           {label}
@@ -62,6 +69,11 @@ export function Select({
         <div className={styles.hint} id={hintId}>
           {hint}
         </div>
+      )}
+      {errorHeadingId && (
+        <p className={styles.errorHeading} id={errorHeadingId}>
+          {errorHeading}
+        </p>
       )}
       {errorId && (
         <p className={styles.error} id={errorId}>

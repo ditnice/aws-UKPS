@@ -23,6 +23,9 @@ public sealed record RecordPageQuestionDto
     /// <summary>A rendering hint, for example <c>combobox</c>.</summary>
     public required string? Display { get; init; }
 
+    /// <summary>An optional heading shown above the validation message when the question has an error.</summary>
+    public string? ErrorHeading { get; init; }
+
     /// <summary>The empty option text of a dropdown.</summary>
     public required string? Placeholder { get; init; }
 

@@ -84,6 +84,7 @@ internal static class FormModelBuilder
             Label = field.Label,
             Hint = field.Hint,
             Display = field.Display,
+            ErrorHeading = field.ErrorHeading,
             Order = field.Order,
             Placeholder = field.Placeholder,
             ChildLabel = field.ChildLabel,
