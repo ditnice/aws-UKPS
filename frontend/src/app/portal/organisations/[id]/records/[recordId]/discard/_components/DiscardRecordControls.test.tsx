@@ -33,7 +33,6 @@ const renderComponent = () => {
 }
 
 const getConfirmButton = () => screen.getByRole('button', { name: 'Confirm' })
-const getCancelButton = () => screen.getByRole('button', { name: 'Cancel' })
 const getActionError = () => screen.queryByRole('alert')
 
 describe('DiscardRecordControls', () => {
@@ -90,20 +89,10 @@ describe('DiscardRecordControls', () => {
     await user.click(getConfirmButton())
 
     expect(getConfirmButton()).toBeDisabled()
-    expect(getCancelButton()).toBeDisabled()
 
     resolveRequest({ error: {} })
     await waitFor(() => {
       expect(getConfirmButton()).not.toBeDisabled()
     })
-    expect(getCancelButton()).not.toBeDisabled()
-  })
-
-  it('calls the router back function on cancel', async () => {
-    renderComponent()
-    await user.click(getCancelButton())
-
-    expect(router.back).toHaveBeenCalledOnce()
-    expect(router.push).not.toHaveBeenCalled()
   })
 })
