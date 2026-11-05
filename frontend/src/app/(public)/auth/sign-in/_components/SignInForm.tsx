@@ -152,9 +152,14 @@ export function SignInForm({ returnTo }: SignInFormProps) {
       </form.Field>
 
       <Details summary="Forgotten your password?">
-        If you have forgotten your password visit the{' '}
+        If you have forgotten your password you can{' '}
         {/* TODO - Update this to point to the correct page once built */}
-        <a href="#" target="_blank">
+        <a href="#">reset your password</a>.
+      </Details>
+
+      <Details summary="I cannot access my account">
+        If you cannot access your account, visit the{' '}
+        <a href="/auth/account-recovery" target="_blank" rel="noopener noreferrer">
           account recovery (opens in a new tab)
         </a>{' '}
         page.
