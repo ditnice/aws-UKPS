@@ -339,7 +339,6 @@ internal static class RecordContentHistory
     )
     {
         SyntheticPatientAndClinicalRequirements patient = readiness.PatientAndClinicalRequirements;
-        SyntheticPricingAndBudgetImpact budget = readiness.PricingAndBudgetImpact;
         return
         [
             (
@@ -369,10 +368,6 @@ internal static class RecordContentHistory
             (
                 "medicines_treatment_detail.estimated_duration_of_treatment",
                 patient.EstimatedDurationOfTreatment
-            ),
-            (
-                "medicines_budget_impact.compassionate_access_available",
-                budget.CompassionateAccessAvailable?.ToString()
             ),
         ];
     }
