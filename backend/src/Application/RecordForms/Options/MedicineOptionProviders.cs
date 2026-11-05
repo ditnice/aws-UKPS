@@ -13,6 +13,7 @@ internal static class MedicineOptionProviders
         RegisterIndicationDetailsProviders(registry);
         RegisterLaboratoryTestingProviders(registry);
         RegisterPatientAndClinicalRequirementsProviders(registry);
+        RegisterProductProviders(registry);
     }
 
     private static void RegisterPatientAndClinicalRequirementsProviders(
@@ -83,8 +84,6 @@ internal static class MedicineOptionProviders
             q => q.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id),
             x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived, x.ParentId)
         );
-
-        RegisterProductProviders(registry);
     }
 
     private static void RegisterProductProviders(OptionProviderRegistry registry)

@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RecordPageDto, RecordPageQuestionDto } from '@/client/generated'
@@ -74,6 +75,21 @@ const areasQuestion = question({
   options: tree,
 })
 
+const radioPage = (options: RecordPageQuestionDto['options']) =>
+  page({
+    questions: [
+      question({
+        id: 'choice',
+        type: 'Radio',
+        label: 'Choose an answer',
+        hint: null,
+        rules: [],
+        options,
+      }),
+    ],
+    answers: { choice: null },
+  })
+
 const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
 
 beforeEach(() => {
@@ -143,6 +159,15 @@ describe('FormPage', () => {
 
       cleanup()
       render(<FormPage page={page({ nextPageId: null })} />)
+      expect(
+        screen.getByRole('button', { name: 'Save and return to task list' }),
+      ).toBeInTheDocument()
+    })
+
+    it('offers both save buttons while the task has another page', () => {
+      render(<FormPage page={page()} />)
+
+      expect(screen.getByRole('button', { name: 'Save and continue' })).toBeInTheDocument()
       expect(
         screen.getByRole('button', { name: 'Save and return to task list' }),
       ).toBeInTheDocument()
@@ -225,6 +250,19 @@ describe('FormPage', () => {
       })
     })
 
+    it('saves once and returns to the task list from the second button, even with a next page', async () => {
+      render(<FormPage page={page()} />)
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Hepatitis C' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
+      })
+      expect(mocks.push).not.toHaveBeenCalledWith('/portal/records/5/bnf-chapter')
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
+    })
+
     it('shows client validation errors against the field', async () => {
       render(<FormPage page={page()} />)
 
@@ -296,6 +334,51 @@ describe('FormPage', () => {
   })
 
   describe('controls', () => {
+    it('associates radio hints and errors and revalidates after selection and blur', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'choice',
+                type: 'Radio',
+                label: 'Choose an answer',
+                hint: 'Select one answer',
+                rules: [{ kind: 'Required', value: null, message: 'Choose yes or no' }],
+                options: [
+                  { value: 'Yes', label: 'Yes', children: null },
+                  { value: 'No', label: 'No', children: null },
+                ],
+              }),
+            ],
+            answers: { choice: null },
+          })}
+        />,
+      )
+      const yes = screen.getByRole('radio', { name: 'Yes' })
+      expect(yes).toHaveAccessibleDescription('Select one answer')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      expect(await screen.findByText('Choose yes or no')).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+      for (const radio of screen.getAllByRole('radio')) {
+        expect(radio).not.toHaveAttribute('aria-invalid')
+        expect(radio).not.toHaveAttribute('aria-expanded')
+        expect(radio).toHaveAccessibleDescription(/Select one answer.*Choose yes or no/)
+      }
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      await user.click(yes)
+      await user.tab()
+      await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
+      expect(yes).toBeChecked()
+      expect(yes).not.toHaveAttribute('aria-invalid')
+      expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+    })
+
     it('saves the chosen radio option', async () => {
       render(
         <FormPage
@@ -359,7 +442,86 @@ describe('FormPage', () => {
       ).toBeInTheDocument()
     })
 
-    it('saves ticked checkboxes', async () => {
+    it('makes every label in a radio group bold when any option has a hint', () => {
+      const { container } = render(
+        <FormPage
+          page={radioPage([
+            {
+              value: 'GenomicBiomarker',
+              label: 'Genomic biomarker',
+              hint: 'For example, a gene mutation, chromosomal alteration',
+              children: null,
+            },
+            { value: 'Unknown', label: 'Unknown at this stage', hint: null, children: null },
+          ])}
+        />,
+      )
+
+      expect(container.querySelector('[data-component="radios"]')?.className).toMatch(/boldLabels/)
+    })
+
+    it('keeps radio labels regular when no option has a hint', () => {
+      const { container } = render(
+        <FormPage
+          page={radioPage([
+            { value: 'Yes', label: 'Yes', hint: null, children: null },
+            { value: 'No', label: 'No', hint: null, children: null },
+          ])}
+        />,
+      )
+
+      expect(container.querySelector('[data-component="radios"]')?.className).not.toMatch(
+        /boldLabels/,
+      )
+    })
+
+    it('associates checkbox hints and errors and revalidates on selection and blur', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'ticks',
+                type: 'Checkbox',
+                multiple: true,
+                label: 'Choose contact methods',
+                hint: 'Select all that apply',
+                rules: [{ kind: 'Required', value: null, message: 'Choose at least one method' }],
+                options: tree,
+              }),
+            ],
+            answers: { ticks: [] },
+          })}
+        />,
+      )
+      const first = screen.getByRole('checkbox', { name: '1: Addiction' })
+      expect(first).toHaveAccessibleDescription('Select all that apply')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      expect(await screen.findByText('Choose at least one method')).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+      for (const input of screen.getAllByRole('checkbox')) {
+        expect(input).not.toHaveAttribute('aria-invalid')
+        expect(input).toHaveAccessibleDescription(
+          /Select all that apply.*Choose at least one method/,
+        )
+      }
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      await user.click(first)
+      await user.tab()
+      await waitFor(() =>
+        expect(screen.queryByText('Choose at least one method')).not.toBeInTheDocument(),
+      )
+      expect(first).not.toHaveAttribute('aria-invalid')
+      expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+    })
+
+    it('saves ticked checkboxes in selection insertion order', async () => {
+      const user = userEvent.setup()
       render(
         <FormPage
           page={page({
@@ -372,12 +534,13 @@ describe('FormPage', () => {
       )
 
       expect(screen.getByLabelText('1: Addiction')).toBeChecked()
-      fireEvent.click(screen.getByLabelText('1: Addiction'))
-      fireEvent.click(screen.getByLabelText('2: Allergy'))
-      save()
+      await user.click(screen.getByLabelText('1: Addiction'))
+      await user.click(screen.getByLabelText('2: Allergy'))
+      await user.click(screen.getByLabelText('1: Addiction'))
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
 
       await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalled())
-      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ ticks: ['2'] })
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ ticks: ['2', '1'] })
     })
 
     it('saves a plain select and a text input', async () => {

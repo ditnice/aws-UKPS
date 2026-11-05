@@ -41,6 +41,19 @@ describe('ChangeRecordStatusActions', () => {
   it('does not select an action by default', () => {
     renderActions()
 
+    expect(
+      screen.getByRole('group', { name: 'What would you like to do with this record?' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'What would you like to do with this record?',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('radio', { name: 'Archive the record' }),
+    ).not.toHaveAccessibleDescription()
+
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio).not.toBeChecked()
     }
@@ -52,6 +65,14 @@ describe('ChangeRecordStatusActions', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(screen.getByText('Select an option')).toBeInTheDocument()
+    expect(
+      screen.getByRole('group', { name: 'What would you like to do with this record?' }),
+    ).not.toHaveAttribute('aria-invalid')
+    for (const radio of screen.getAllByRole('radio')) {
+      expect(radio).not.toHaveAttribute('aria-invalid')
+      expect(radio).not.toHaveAttribute('aria-expanded')
+      expect(radio).toHaveAccessibleDescription(/Select an option/)
+    }
     expect(router.push).not.toHaveBeenCalled()
   })
 
@@ -62,6 +83,13 @@ describe('ChangeRecordStatusActions', () => {
     await user.click(screen.getByRole('radio', { name: 'Archive the record' }))
 
     expect(screen.queryByText('Select an option')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('group', { name: 'What would you like to do with this record?' }),
+    ).not.toHaveAttribute('aria-invalid')
+    expect(screen.getByRole('radio', { name: 'Archive the record' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Archive the record' })).not.toHaveAttribute(
+      'aria-invalid',
+    )
     expect(router.push).not.toHaveBeenCalled()
   })
 

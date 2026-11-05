@@ -41,7 +41,7 @@ describes. You only touch the frontend to add a new control.
 |---|---|---|---|
 | `[FormSection(recordType, id, title)]` | class | `Order`, `RowSource` | One per record type. Every entity declaring the same section ID must agree on title and `Order` |
 | `[FormTask(id, title)]` | property | `Order` | Required on every question. Every declaration of the same task ID must agree on title, `Order` and section |
-| `[FormPage(id, title)]` | property | `Order` | Order within the task. Every declaration of the same page ID must agree |
+| `[FormPage(id, title)]` | property | `Order`, `CommercialInConfidence` | `Order` is the position within the task. `CommercialInConfidence` shows the "Commercial in confidence" badge above the heading. Every declaration of the same page ID must agree |
 | `[FormField(id, label, control)]` | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` |
 | `[FormRequired(message)]` | property | | |
 | `[FormMaxLength(max, message)]` | property | | `Text`, `Textarea` |
@@ -321,6 +321,7 @@ ignored and the control renders as plain dropdowns or checkboxes.
 
 - Pass hint text with `Hint = "..."`. A blank line (`\n\n`) starts a new paragraph.
 - Hints are shown above the input and linked to it with `aria-describedby`.
+- A radio option can carry its own hint. Register the enum with the three-part overload of `AddEnum`, `(Value, Label, Hint)`; see the `BiomarkerType` provider in `MedicineOptionProviders`. The hint shows under that option, and it is part of the form fingerprint, so changing it needs a version bump.
 - On a single-question page, the label is visually hidden on the field because it is already
   the page heading. Screen readers still announce it.
 

@@ -17,7 +17,12 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("diagnostic-test-required", "Diagnostic test", Order = 10)]
+    [FormPage(
+        "diagnostic-test-required",
+        "Diagnostic test",
+        Order = 10,
+        CommercialInConfidence = true
+    )]
     [FormField(
         "medicines_laboratory_testing.diagnostic_test_required",
         "Does the product require a specific biomarker or diagnostic test result before prescribing?",
