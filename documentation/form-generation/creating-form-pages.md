@@ -374,7 +374,8 @@ registry.AddReferenceTree<BnfChapter>(OptionKeys.BnfChapters,
     x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived, x.ParentId));
 ```
 
-(`FormulationTypes` is illustrative; it is not registered yet.)
+`FormulationTypes` is registered in `MedicineOptionProviders`; the example above illustrates
+ordering by label rather than the registered provider's ID order.
 
 The query and projection are described for the form fingerprint by `ExpressionDescription`, so
 they must not capture variables: use literals in the lambdas. Startup fails on a captured
@@ -505,7 +506,7 @@ reports every problem in one exception.
 | Coverage | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation |
 | Pairing | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]` |
 | IDs | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list` |
-| Agreement | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title or order. A page spans tasks |
+| Agreement | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks |
 | Order | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order` |
 | Structure | A section has no pages, or a page has no questions |
 | Controls | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]` |
