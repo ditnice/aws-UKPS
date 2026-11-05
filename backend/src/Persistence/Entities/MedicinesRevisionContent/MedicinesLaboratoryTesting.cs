@@ -42,7 +42,7 @@ internal sealed class MedicinesLaboratoryTesting
         MedicineFormTasks.LaboratoryTestingTitle,
         Order = MedicineFormTasks.LaboratoryTestingOrder
     )]
-    [FormPage("biomarker-type", "Biomarker type", Order = 20)]
+    [FormPage("biomarker-type", "Biomarker type", Order = 20, CommercialInConfidence = true)]
     [FormField(
         "medicines_laboratory_testing.biomarker_type",
         "What type of biomarker is required for this test?",
