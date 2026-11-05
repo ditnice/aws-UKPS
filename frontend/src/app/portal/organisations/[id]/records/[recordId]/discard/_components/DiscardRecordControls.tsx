@@ -40,14 +40,9 @@ export const DiscardRecordControls = ({ organisationId, recordId }: DiscardRecor
       {hasError && (
         <ErrorState>There was a problem discarding this record. Please try again later.</ErrorState>
       )}
-      <ButtonGroup>
-        <Button variant="cta" disabled={loading} onClick={discardHandler}>
-          Confirm
-        </Button>
-        <Button variant="secondary" disabled={loading} onClick={() => router.back()}>
-          Cancel
-        </Button>
-      </ButtonGroup>
+      <Button variant="cta" disabled={loading} onClick={discardHandler}>
+        Confirm
+      </Button>
     </>
   )
 }
