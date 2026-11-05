@@ -40,17 +40,18 @@ const tree = [
   {
     value: '1',
     label: '1: Addiction',
+    hint: null,
     children: [
-      { value: '11', label: '1.1: Opioid use disorder', children: null },
-      { value: '13', label: '1.3: Smoking cessation', children: null },
+      { value: '11', label: '1.1: Opioid use disorder', hint: null, children: null },
+      { value: '13', label: '1.3: Smoking cessation', hint: null, children: null },
     ],
   },
-  { value: '2', label: '2: Allergy', children: null },
+  { value: '2', label: '2: Allergy', hint: null, children: null },
 ]
 
 const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
-  revisionVersion: 4711,
+  pageHash: 'page-hash',
   recordId: 5,
   section: { id: 'product-indication', title: 'Product indication' },
   task: { id: 'indication-details', title: 'Indication details' },
@@ -208,7 +209,7 @@ describe('FormPage', () => {
         path: { recordId: 5, pageId: 'indication' },
         body: {
           formVersion: '2026.10.1',
-          revisionVersion: 4711,
+          pageHash: 'page-hash',
           answers: { 'medicines_indication_detail.indication': 'Hepatitis C' },
         },
       })
@@ -305,11 +306,16 @@ describe('FormPage', () => {
 
     it('disables both save buttons while returning to the task list to prevent duplicate saves', async () => {
       const user = userEvent.setup()
-      const pending = Promise.withResolvers<{
+      type SaveResult = {
         data: { nextPageId: string }
         response: { ok: boolean; status: number }
-      }>()
-      mocks.saveRecordFormPage.mockReturnValueOnce(pending.promise)
+      }
+      let resolveSave!: (result: SaveResult) => void
+      mocks.saveRecordFormPage.mockReturnValueOnce(
+        new Promise<SaveResult>((resolve) => {
+          resolveSave = resolve
+        }),
+      )
       render(
         <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
       )
@@ -325,7 +331,7 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
       expect(mocks.push).not.toHaveBeenCalled()
 
-      pending.resolve({
+      resolveSave({
         data: { nextPageId: 'bnf-chapter' },
         response: { ok: true, status: 200 },
       })
@@ -367,7 +373,7 @@ describe('FormPage', () => {
     it('offers a reload when the page has changed since it was loaded', async () => {
       mocks.saveRecordFormPage.mockResolvedValue({
         error: {
-          code: 'revision_changed',
+          code: 'page_answers_changed',
           detail: 'This record has changed since the page was loaded.',
         },
         response: { ok: false, status: 409 },
@@ -418,8 +424,8 @@ describe('FormPage', () => {
                 hint: 'Select one answer',
                 rules: [{ kind: 'Required', value: null, message: 'Choose yes or no' }],
                 options: [
-                  { value: 'Yes', label: 'Yes', children: null },
-                  { value: 'No', label: 'No', children: null },
+                  { value: 'Yes', label: 'Yes', hint: null, children: null },
+                  { value: 'No', label: 'No', hint: null, children: null },
                 ],
               }),
             ],
@@ -463,8 +469,8 @@ describe('FormPage', () => {
                 hint: null,
                 rules: [],
                 options: [
-                  { value: 'Yes', label: 'Yes', children: null },
-                  { value: 'No', label: 'No', children: null },
+                  { value: 'Yes', label: 'Yes', hint: null, children: null },
+                  { value: 'No', label: 'No', hint: null, children: null },
                 ],
               }),
             ],

@@ -38,6 +38,8 @@ public class RecordFormServiceTests : DatabaseTestBase
     private const string TechnologyStatus =
         "medicines_indication_detail.medicine_technology_status";
 
+    private const string LabPrefix = "medicines_laboratory_testing.";
+
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
     private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
@@ -52,6 +54,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     private TherapeuticArea _condition = null!;
     private TherapeuticArea _otherCondition = null!;
     private FormulationType _formulation = null!;
+    private PatientPathwayPoint _pathwayPoint = null!;
     private ServiceTestHarness<IRecordFormQueryService> _queryHarness = null!;
     private ServiceTestHarness<IRecordFormSaveService> _saveHarness = null!;
 
@@ -127,6 +130,10 @@ public class RecordFormServiceTests : DatabaseTestBase
             Ct
         );
         _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
+        _pathwayPoint = await AddEntity(
+            new PatientPathwayPoint { Label = "Initial presentation" },
+            Ct
+        );
 
         _queryHarness = CreateHarness<IRecordFormQueryService>(UserRole.Standard, _organisation.Id);
         _saveHarness = CreateHarness<IRecordFormSaveService>(UserRole.Standard, _organisation.Id);
@@ -138,7 +145,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         RecordPageDto page = await GetPage("indication");
 
         page.FormVersion.ShouldBe(FormVersions.Medicine);
-        page.RevisionVersion.ShouldBe(await RevisionVersion());
         page.Section.Title.ShouldBe("Indication details");
         (page.Task.Id, page.Task.Title).ShouldBe(("indication-details", "Indication details"));
         page.PreviousPageId.ShouldBeNull();
@@ -238,14 +244,11 @@ public class RecordFormServiceTests : DatabaseTestBase
             Answer(Indication, "  Chronic hepatitis C  ")
         );
 
+        (await RevisionVersion()).ShouldNotBe(versionBefore);
+
         result.NextPageId.ShouldBe("bnf-chapter");
         MedicinesIndicationDetail row = await IndicationRow();
         row.Indication.ShouldBe("Chronic hepatitis C");
-
-        RecordRevision revision = await Context
-            .RecordRevisions.AsNoTracking()
-            .SingleAsync(r => r.Id == _revision.Id, Ct);
-        revision.Version.ShouldNotBe(versionBefore);
 
         RecordFieldAudit audit = await FieldAudits().SingleAsync(Ct);
         audit.RecordId.ShouldBe(_record.Id);
@@ -559,29 +562,10 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_StaleRevisionVersion_IsAConflict()
-    {
-        uint staleVersion = await RevisionVersion();
-        await SaveOk("indication", Answer(Indication, "First"));
-
-        SaveRecordPageError error = (
-            await Save("indication", Answer(Indication, "Second"), staleVersion)
-        ).ShouldBeError();
-
-        error.ShouldBeOfType<SaveRecordPageError.RevisionChanged>();
-        (await IndicationRow()).Indication.ShouldBe("First");
-    }
-
-    [Fact]
     public async Task SavePage_OldFormVersion_IsAConflict()
     {
         SaveRecordPageError error = (
-            await Save(
-                "indication",
-                Answer(Indication, "Text"),
-                await RevisionVersion(),
-                formVersion: "2000.1.1"
-            )
+            await Save("indication", Answer(Indication, "Text"), formVersion: "2000.1.1")
         ).ShouldBeError();
 
         error.ShouldBeOfType<SaveRecordPageError.FormVersionChanged>();
@@ -621,14 +605,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         await SaveOk("indication", Answer(Indication, "Text"));
 
         (await IndicationRow()).Indication.ShouldBe("Text");
-    }
-
-    [Fact]
-    public async Task GetPage_EarlierRevisions_ReadsTheLatestRevision()
-    {
-        await AddEarlierPublishedRevision();
-
-        (await GetPage("indication")).RevisionVersion.ShouldBe(await RevisionVersion());
     }
 
     [Fact]
@@ -716,6 +692,177 @@ public class RecordFormServiceTests : DatabaseTestBase
         option.Hint.ShouldBe("For example, a gene mutation, chromosomal alteration");
     }
 
+    [Fact]
+    public async Task GetPage_PathwayPointPage_OffersTheReferenceData()
+    {
+        RecordPageDto page = await GetPage("pathway-point");
+
+        RecordPageOptionDto option = page.Questions.Single().Options!.ShouldHaveSingleItem();
+        (option.Value, option.Label).ShouldBe(($"{_pathwayPoint.Id}", "Initial presentation"));
+    }
+
+    [Fact]
+    public async Task SavePage_FirstLaboratoryTestingSave_CreatesTheRow()
+    {
+        (
+            await Context.MedicinesLaboratoryTestings.AnyAsync(
+                x => x.RevisionId == _revision.Id,
+                Ct
+            )
+        ).ShouldBeFalse();
+
+        await SaveOk(
+            "diagnostic-test-required",
+            Answer($"{LabPrefix}diagnostic_test_required", "Yes")
+        );
+
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.DiagnosticTestRequired.ShouldBe(YesNoUnknown.Yes);
+        row.BiomarkerType.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_StepsThroughEveryLaboratoryTestingPage_StoringAndAuditingEachAnswer()
+    {
+        (string PageId, string QuestionId, string Value)[] answers =
+        [
+            ("diagnostic-test-required", $"{LabPrefix}diagnostic_test_required", "Yes"),
+            ("biomarker-type", $"{LabPrefix}biomarker_type", "GenomicBiomarker"),
+            ("non-genomic-biomarker", $"{LabPrefix}non_genomic_biomarker_description", "Protein"),
+            ("genomic-target", $"{LabPrefix}genomic_target", "EGFR"),
+            ("ngtd-relationship", $"{LabPrefix}genomic_test_ngtd_relationship", "NewTest"),
+            ("sample-type", $"{LabPrefix}genomic_sample_type", "Tissue"),
+            ("turnaround-time", $"{LabPrefix}genomic_turnaround_time_details", "14 days"),
+            ("pathway-point", $"{LabPrefix}patient_pathway_point_id", $"{_pathwayPoint.Id}"),
+            ("genomic-alterations", $"{LabPrefix}genomic_alterations", "Exon 19 deletion"),
+            ("additional-genomic-factors", $"{LabPrefix}additional_genomic_factors", "T790M"),
+            ("test-used-in-trials", $"{LabPrefix}genomic_test_used_in_trials", "PCR assay"),
+            (
+                "specificity-sensitivity",
+                $"{LabPrefix}genomic_test_specificity_sensitivity",
+                "95% and 90%"
+            ),
+            (
+                "test-mandatory",
+                $"{LabPrefix}genomic_test_mandatory_status",
+                "MandatoryNoAlternatives"
+            ),
+            ("monitoring-tests", $"{LabPrefix}monitoring_tests_details", "Quarterly ctDNA"),
+            ("safety-tests", $"{LabPrefix}safety_tests_details", "Monthly liver function"),
+        ];
+
+        for (int i = 0; i < answers.Length; i++)
+        {
+            SaveRecordPageDto saved = await SaveOk(
+                answers[i].PageId,
+                Answer(answers[i].QuestionId, answers[i].Value)
+            );
+            saved.NextPageId.ShouldBe(i + 1 < answers.Length ? answers[i + 1].PageId : null);
+        }
+
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.DiagnosticTestRequired.ShouldBe(YesNoUnknown.Yes);
+        row.BiomarkerType.ShouldBe(BiomarkerType.GenomicBiomarker);
+        row.NonGenomicBiomarkerDescription.ShouldBe("Protein");
+        row.GenomicTarget.ShouldBe("EGFR");
+        row.GenomicTestNgtdRelationship.ShouldBe(GenomicTestNgtdRelationship.NewTest);
+        row.GenomicSampleType.ShouldBe("Tissue");
+        row.GenomicTurnaroundTimeDetails.ShouldBe("14 days");
+        row.PatientPathwayPointId.ShouldBe(_pathwayPoint.Id);
+        row.GenomicAlterations.ShouldBe("Exon 19 deletion");
+        row.AdditionalGenomicFactors.ShouldBe("T790M");
+        row.GenomicTestUsedInTrials.ShouldBe("PCR assay");
+        row.GenomicTestSpecificitySensitivity.ShouldBe("95% and 90%");
+        row.GenomicTestMandatoryStatus.ShouldBe(GenomicTestMandatoryStatus.MandatoryNoAlternatives);
+        row.MonitoringTestsDetails.ShouldBe("Quarterly ctDNA");
+        row.SafetyTestsDetails.ShouldBe("Monthly liver function");
+
+        List<RecordFieldAudit> changes = await FieldAudits()
+            .OrderBy(static a => a.Id)
+            .ToListAsync(Ct);
+        changes
+            .Select(static c => (c.FieldPath, c.NewValue))
+            .ShouldBe(answers.Select(static a => (a.QuestionId, (string?)a.Value)));
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointThatIsNotOffered_IsRejected()
+    {
+        string question = $"{LabPrefix}patient_pathway_point_id";
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "pathway-point",
+            Answer(question, $"{_pathwayPoint.Id + 100}")
+        );
+
+        errors.ShouldContainKey(question);
+        (
+            await Context.MedicinesLaboratoryTestings.AnyAsync(
+                x => x.RevisionId == _revision.Id,
+                Ct
+            )
+        ).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task SavePage_WhenThePageHasBeenChangedAfterTheRead_ShouldReturnConcurrencyError()
+    {
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, "AnswerA"));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(page, Answer(Indication, "AnswerB"));
+        secondSaveResult.ShouldBeError().ShouldBeOfType<SaveRecordPageError.PageAnswersChanged>();
+    }
+
+    [Fact]
+    public async Task SavePage_WhenAnswerIsUnchangedExceptForWhitespace_ShouldBeSuccess()
+    {
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, "Answer"));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(
+            page,
+            Answer(Indication, "   Answer   ")
+        );
+        secondSaveResult.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task SavePage_WhenTheAnswerIsEmptyAndUnchanged_ShouldBeSuccess()
+    {
+        var answer = "Test";
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, answer));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(page, Answer(Indication, answer));
+        secondSaveResult.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task SavePage_ShouldBeAbleToEditTwoDifferentPagesInParallel()
+    {
+        RecordPageDto indicationPage = await GetPage("indication");
+
+        RecordPageDto bnfChapterPage = await GetPage("bnf-chapter");
+        SaveRecordPageResult bnfChapterUpdate = await Save(
+            bnfChapterPage,
+            Answer(BnfChapter, $"{_bnfSection.Id}")
+        );
+        bnfChapterUpdate.ShouldBeSuccess();
+
+        SaveRecordPageResult indicationSaveResult = await Save(
+            indicationPage,
+            Answer(Indication, "Update")
+        );
+        indicationSaveResult.ShouldBeSuccess();
+    }
+
     private ServiceTestHarness<TService> CreateHarness<TService>(UserRole role, int organisationId)
         where TService : notnull
     {
@@ -764,22 +911,42 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await _queryHarness.Service.GetPage(_record.Id, pageId, Ct)).ShouldBeSuccess();
 
     private async Task<SaveRecordPageResult> Save(
+        RecordPageDto page,
+        Dictionary<string, JsonElement> answers
+    )
+    {
+        return await _saveHarness.Service.SavePage(
+            _record.Id,
+            page.Page.Id,
+            new SaveRecordPageCommand
+            {
+                FormVersion = page.FormVersion,
+                Answers = answers,
+                PageHash = page.PageHash,
+            },
+            Ct
+        );
+    }
+
+    private async Task<SaveRecordPageResult> Save(
         string pageId,
         Dictionary<string, JsonElement> answers,
-        uint? revisionVersion = null,
         string formVersion = FormVersions.Medicine
-    ) =>
-        await _saveHarness.Service.SavePage(
+    )
+    {
+        var page = await GetPage(pageId);
+        return await _saveHarness.Service.SavePage(
             _record.Id,
             pageId,
             new SaveRecordPageCommand
             {
                 FormVersion = formVersion,
-                RevisionVersion = revisionVersion ?? await RevisionVersion(),
                 Answers = answers,
+                PageHash = page.PageHash,
             },
             Ct
         );
+    }
 
     private async Task<SaveRecordPageDto> SaveOk(
         string pageId,
@@ -806,6 +973,11 @@ public class RecordFormServiceTests : DatabaseTestBase
         await Context
             .MedicinesIndicationDetails.AsNoTracking()
             .Include(static x => x.TherapeuticAreas)
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    private async Task<MedicinesLaboratoryTesting> LaboratoryTestingRow() =>
+        await Context
+            .MedicinesLaboratoryTestings.AsNoTracking()
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private IQueryable<RecordFieldAudit> FieldAudits() =>

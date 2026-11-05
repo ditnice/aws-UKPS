@@ -339,7 +339,7 @@ export const fakeRecordPageOptionDto = (options: Options = {}, _callDepth = 0): 
     return {
         value: f.string.sample(),
         label: f.string.sample(),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { hint: f.datatype.boolean() ? f.string.sample() : null },
+        hint: f.datatype.boolean() ? f.string.sample() : null,
         children: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordPageOptionDto(options, _callDepth + 1)) : null
     };
 };
@@ -619,7 +619,6 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
     const f = options?.faker ?? faker;
     return {
         formVersion: f.string.sample(),
-        revisionVersion: f.number.int(),
         recordId: f.number.int(),
         section: fakeRecordPageSectionDto(options),
         task: fakeRecordPageTaskDto(options),
@@ -627,7 +626,8 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
         previousPageId: f.datatype.boolean() ? f.string.uuid() : null,
         nextPageId: f.datatype.boolean() ? f.string.uuid() : null,
         questions: f.helpers.multiple(() => fakeRecordPageQuestionDto(options)),
-        answers: {}
+        answers: {},
+        pageHash: f.string.sample()
     };
 };
 
@@ -635,8 +635,8 @@ export const fakeSaveRecordPageCommand = (options?: Options): SaveRecordPageComm
     const f = options?.faker ?? faker;
     return {
         formVersion: f.string.sample(),
-        revisionVersion: f.number.int(),
-        answers: {}
+        answers: {},
+        pageHash: f.string.sample()
     };
 };
 

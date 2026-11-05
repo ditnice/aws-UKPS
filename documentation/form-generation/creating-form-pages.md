@@ -220,6 +220,9 @@ choice. Use `[FormIgnore]` with a reason that a reviewer can understand:
 - `"Database identity"`, `"Revision ownership is supplied by the server"`: never on a form.
 - `"No page designed yet"`: intended for a form, but not designed. Search for this reason to
   find work still to do.
+- `"Conditional reveal not supported yet"`: intended for a form, but it only makes sense revealed
+  under another answer, which forms cannot do yet. Search for this reason too when adding
+  conditional support.
 - `"Set by record creation"`: collected elsewhere, for example by the create record form.
 
 Navigation properties are exempt, unless they back a junction question.
