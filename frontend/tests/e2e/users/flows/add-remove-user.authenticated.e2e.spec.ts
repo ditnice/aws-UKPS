@@ -40,7 +40,9 @@ test.describe('Adding and removing a user', { tag: forRoles(['Super'], mutatesDa
     await usersPage.goto(organisationId)
     await usersPage.openUserAction(testUser.workEmail, 'Edit')
 
-    await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Manage users in your organisation' }),
+    ).toBeVisible()
     await usersPage.chooseAction('Remove user')
 
     await expect(page.getByRole('heading', { name: 'Remove user' })).toBeVisible()
@@ -100,7 +102,9 @@ test.describe('Adding and removing a user without saving', () => {
         return
       }
 
-      await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+      await expect(
+        page.getByRole('heading', { name: 'Manage users in your organisation' }),
+      ).toBeVisible()
       await usersPage.chooseAction('Remove user')
 
       const heading = page.getByRole('heading', { name: 'Remove user' })
@@ -153,7 +157,9 @@ test.describe('Removing a user as a champion', { tag: forRoles(['Champion']) }, 
       return
     }
 
-    await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Manage users in your organisation' }),
+    ).toBeVisible()
     await expect(page.getByRole('radio', { name: 'Deactivate user', exact: true })).toBeVisible()
     await expect(page.getByRole('radio', { name: 'Remove user', exact: true })).toBeHidden()
 

@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.Common;
@@ -28,17 +30,19 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
         var ct = TestContext.Current.CancellationToken;
         SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
 
-        Context.AddRange(payload.GetAllEntities());
-        await Context.SaveChangesAsync(ct);
+        await payload.SaveAsync(Context, ct);
         Context.ChangeTracker.Clear();
 
         (
             await Context
                 .Records.IgnoreQueryFilters([RecordConfiguration.DiscardedFilter])
                 .CountAsync(ct)
-        ).ShouldBe(572);
+        ).ShouldBe(566);
         Organisation first = await Context.Organisations.SingleAsync(o => o.Id == 1, ct);
         first.OrganisationType.ShouldBe(OrganisationType.Internal);
+        (await Context.UserRegistrationRequests.SingleAsync(ct)).WorkEmail.ShouldBe(
+            E2eSubjectUsers.RegistrationRequestEmail
+        );
 
         foreach (
             IGrouping<int, Record> organisationRecords in payload.Records.GroupBy(r =>
@@ -65,6 +69,67 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
                 organisationRecords.Where(r => r.RecordStatus == RecordStatus.Discarded),
                 ct
             );
+        }
+
+        await ShouldAuditReferenceAnswersAsTheStoredIds(ct);
+    }
+
+    /// <summary>
+    /// The latest audit of each indication reference answer holds what the record's latest
+    /// revision stores, as the form would read it.
+    /// </summary>
+    private async Task ShouldAuditReferenceAnswersAsTheStoredIds(CancellationToken ct)
+    {
+        Dictionary<(int RecordId, string FieldPath), string?> latestAudits = (
+            await Context
+                .RecordFieldAudits.Where(a =>
+                    a.FieldPath == "medicines_indication_detail.bnf_chapter_id"
+                    || a.FieldPath == "medicines_indication_detail_therapeutic_area"
+                )
+                .ToArrayAsync(ct)
+        )
+            .GroupBy(a => (a.RecordId, a.FieldPath))
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(a => a.ChangedAt).ThenBy(a => a.Id).Last().NewValue
+            );
+        latestAudits.ShouldNotBeEmpty();
+
+        var latestRows = await Context
+            .MedicinesIndicationDetails.Where(d =>
+                d.RevisionId
+                == Context
+                    .RecordRevisions.Where(r => r.RecordId == d.Revision!.RecordId)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ThenByDescending(r => r.Id)
+                    .Select(r => r.Id)
+                    .First()
+            )
+            .Select(d => new
+            {
+                d.Revision!.RecordId,
+                d.BnfChapterId,
+                TherapeuticAreaIds = d.TherapeuticAreas.Select(t => t.TherapeuticAreaId).ToArray(),
+            })
+            .ToArrayAsync(ct);
+
+        foreach (var row in latestRows)
+        {
+            latestAudits
+                .GetValueOrDefault((row.RecordId, "medicines_indication_detail.bnf_chapter_id"))
+                .ShouldBe(row.BnfChapterId?.ToString(CultureInfo.InvariantCulture));
+            latestAudits
+                .GetValueOrDefault((row.RecordId, "medicines_indication_detail_therapeutic_area"))
+                .ShouldBe(
+                    row.TherapeuticAreaIds.Length == 0
+                        ? null
+                        : JsonSerializer.Serialize(
+                            row.TherapeuticAreaIds.Select(id =>
+                                    id.ToString(CultureInfo.InvariantCulture)
+                                )
+                                .Order(StringComparer.Ordinal)
+                        )
+                );
         }
     }
 

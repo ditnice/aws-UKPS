@@ -35,9 +35,10 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         StringComparer.Ordinal
     )
     {
-        ["revision_not_draft"] = new SaveRecordPageError.NotDraft(),
-        ["revision_changed"] = new SaveRecordPageError.RevisionChanged(),
+        ["concurrent_update"] = new SaveRecordPageError.ConcurrentUpdate(),
+        ["record_not_editable"] = new SaveRecordPageError.NotEditable(),
         ["form_version_changed"] = new SaveRecordPageError.FormVersionChanged(),
+        ["page_answers_changed"] = new SaveRecordPageError.PageAnswersChanged(),
     };
 
     private readonly IRecordFormQueryService _mockQueryService =
@@ -132,7 +133,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 "indication",
                 Arg.Is<SaveRecordPageCommand>(c =>
                     c.FormVersion == "2026.10.4"
-                    && c.RevisionVersion == 42
                     && c.Answers[Indication].GetString() == "Hepatitis C"
                 ),
                 Arg.Any<CancellationToken>()
@@ -198,9 +198,10 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Theory]
-    [InlineData("revision_not_draft")]
-    [InlineData("revision_changed")]
+    [InlineData("concurrent_update")]
+    [InlineData("record_not_editable")]
     [InlineData("form_version_changed")]
+    [InlineData("page_answers_changed")]
     public async Task SaveRecordFormPage_Conflict_ReturnsConflictWithCode(string code)
     {
         SetSaveResult(_conflicts[code]);
@@ -221,11 +222,11 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             new SaveRecordPageCommand
             {
                 FormVersion = "2026.10.4",
-                RevisionVersion = 42,
                 Answers = new Dictionary<string, JsonElement>(StringComparer.Ordinal)
                 {
                     [Indication] = JsonSerializer.SerializeToElement("Hepatitis C"),
                 },
+                PageHash = "0987345987345987",
             },
             Ct
         );
@@ -258,7 +259,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         new()
         {
             FormVersion = "2026.10.4",
-            RevisionVersion = 42,
             RecordId = 5,
             Section = new RecordPageSectionDto
             {
@@ -303,5 +303,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             {
                 [Indication] = JsonSerializer.SerializeToElement("Hepatitis C"),
             },
+            PageHash = "27897348658",
         };
 }

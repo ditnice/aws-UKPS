@@ -10,14 +10,16 @@ public sealed record SaveRecordPageCommand
     [Required]
     public required string FormVersion { get; init; }
 
-    /// <summary>The <see cref="RecordPageDto.RevisionVersion"/> the page was loaded with.</summary>
-    [Required]
-    public required uint RevisionVersion { get; init; }
-
     /// <summary>
     /// Every question on the page, keyed by question ID: null for an unanswered single-value
     /// question and an empty array for an unanswered multi-value question.
     /// </summary>
     [Required]
     public required IReadOnlyDictionary<string, JsonElement> Answers { get; init; }
+
+    /// <summary>
+    /// The page hash value returned from the query.
+    /// </summary>
+    [Required]
+    public required string PageHash { get; init; }
 }

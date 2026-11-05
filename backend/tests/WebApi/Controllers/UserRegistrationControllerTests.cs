@@ -227,7 +227,7 @@ public class UserRegistrationControllerTests : IClassFixture<WebApplicationFacto
         ApproveRequestError[] badRequestResults =
         [
             new ApproveRequestError.InvalidOrganisation(),
-            new ApproveRequestError.UserAlreadyExists(),
+            new ApproveRequestError.UserAlreadyInOrganisation(),
             new ApproveRequestError.RegistrationRejected(),
         ];
         foreach (var result in badRequestResults)

@@ -195,11 +195,11 @@ public class UserRegistrationController : ControllerBase
                             title: "Membership request has been rejected",
                             detail: "The requested membership request has already been rejected and cannot be approved."
                         ),
-                    userAlreadyExists: _ =>
+                    userAlreadyInOrganisation: _ =>
                         Problem(
                             statusCode: StatusCodes.Status400BadRequest,
-                            title: "User already exists",
-                            detail: "A user with the details associated with this membership request already exists."
+                            title: "User already in organisation",
+                            detail: "This email address already belongs to a user in your organisation."
                         ),
                     invalidOrganisation: _ =>
                         Problem(

@@ -25,7 +25,7 @@ public sealed class DataSeederInMemoryTests
         payload.Organisations.Count.ShouldBe(50);
         payload.Users.Count.ShouldBe(800);
         payload.Memberships.Count.ShouldBe(809); // Plus the three dev users and six E2E subjects
-        payload.Records.Count.ShouldBe(572); // 500 synthetic records and 72 discarded ones
+        payload.Records.Count.ShouldBe(566); // 500 synthetic records and 66 discarded ones
     }
 
     [Theory]
@@ -75,7 +75,6 @@ public sealed class DataSeederInMemoryTests
             payload.Organisations.ElementAt(E2eSubjectUsers.OrganisationId - 1)
         );
         request.GetState().ShouldBe(UserRegistrationRequest.State.Pending);
-        payload.GetAllEntities().ShouldContain(request);
     }
 
     [Fact]

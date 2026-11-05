@@ -1,4 +1,8 @@
+using System.Text.RegularExpressions;
 using Shouldly;
+using UKPS.Api.Application.RecordForms.Model;
+using UKPS.Api.Application.RecordForms.Options;
+using UKPS.Api.Application.RecordForms.Scanning;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -267,7 +271,7 @@ public sealed class SeededRecordHistoryTests
             foreach (RecordFieldAudit audit in seeded.FieldAudits)
             {
                 activeMembers[seeded.Record.Organisation!].ShouldContain(audit.ChangedByUser!);
-                audit.ChangedAt.ShouldBeGreaterThan(audit.Revision!.CreatedAt);
+                audit.ChangedAt.ShouldBeGreaterThanOrEqualTo(audit.Revision!.CreatedAt);
                 audit.ChangedAt.ShouldBeLessThan(SubmittedAt(audit.Revision) ?? DateTime.MaxValue);
             }
         }
@@ -288,6 +292,80 @@ public sealed class SeededRecordHistoryTests
                 }
             }
         }
+    }
+
+    [Fact]
+    public void FieldAudits_ShouldRecordTheCreationPageWhenTheRecordIsCreated()
+    {
+        ILookup<RecordRevision, RecordFieldAudit> audits = AuditsByRevision();
+        foreach (Record record in Payload.Records)
+        {
+            RecordRevision first = record.Revisions.First();
+            RecordProductDetail productDetail = Payload
+                .SeededRecords.Single(r => r.Record == record)
+                .RevisionContent.OfType<RecordProductDetail>()
+                .First(d => d.Revision == first);
+            string[] NamesOfType(NameAndIdentifierType type) =>
+                [
+                    .. productDetail
+                        .NamesAndIdentifiers.Where(n => n.NameType == type)
+                        .OrderBy(n => n.DisplayOrder)
+                        .Select(n => n.Name),
+                ];
+
+            Dictionary<string, string?> expected = new(StringComparer.Ordinal)
+            {
+                [CreationPageFieldPaths.CompanyCode] = productDetail.CompanyCode,
+                [CreationPageFieldPaths.RecordTitle] = productDetail.RecordTitle,
+                [CreationPageFieldPaths.NamesAndIdentifiers] = FieldAuditJson.NamesAndIdentifiers(
+                    NamesOfType(NameAndIdentifierType.GenericName),
+                    NamesOfType(NameAndIdentifierType.OtherIdentifier)
+                ),
+            };
+            if (productDetail.BrandedName is not null)
+            {
+                expected[CreationPageFieldPaths.BrandedName] = productDetail.BrandedName;
+            }
+
+            audits[first]
+                .Where(a => a.ChangedAt == record.CreatedAt)
+                .ToDictionary(a => a.FieldPath, a => a.NewValue, StringComparer.Ordinal)
+                .ShouldBe(expected, ignoreOrder: true);
+        }
+    }
+
+    [Fact]
+    public void AuditedFields_ShouldIncludeTheIdOfEveryMedicineFormQuestion()
+    {
+        FormModel model = FormModelFactory
+            .Create(OptionProviderRegistry.CreateDefault())
+            .Find(RecordType.Medicine)!;
+        IReadOnlyDictionary<string, string?> audited = RecordContentHistory.AuditedFields(
+            SyntheticDataLoader.DataSet.Records[0]
+        );
+
+        model.Pages.SelectMany(p => p.Questions).Select(q => q.Id).ShouldBeSubsetOf(audited.Keys);
+    }
+
+    [Fact]
+    public void FieldAudits_ForDates_ShouldHoldTheDatesContentsAsJson()
+    {
+        Regex format = new(
+            $$"""^\{"date_precision":"({{string.Join('|', Enum.GetNames<DatePrecision>())}})","date_value":"\d{4}-\d{2}-\d{2}","is_confidential":(true|false)\}$""",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(1)
+        );
+        string[] values =
+        [
+            .. Payload
+                .SeededRecords.SelectMany(r => r.FieldAudits)
+                .Where(a => a.FieldPath.EndsWith("_date", StringComparison.Ordinal))
+                .SelectMany(a => new[] { a.OldValue, a.NewValue })
+                .OfType<string>(),
+        ];
+
+        values.ShouldNotBeEmpty();
+        values.ShouldAllBe(v => format.IsMatch(v));
     }
 
     [Fact]

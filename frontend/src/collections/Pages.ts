@@ -41,6 +41,19 @@ export const Pages: CollectionConfig = {
       filterOptions: ({ id }) => (id ? { id: { not_equals: id } } : true),
     },
     {
+      name: 'pageHeader',
+      type: 'group',
+      label: 'Page header',
+      admin: {
+        description: 'Shown above the page content. The heading is the page title.',
+      },
+      fields: [
+        { name: 'preheading', type: 'text' },
+        { name: 'lead', type: 'text' },
+        { name: 'description', type: 'textarea' },
+      ],
+    },
+    {
       name: 'layout',
       type: 'blocks',
       required: true,

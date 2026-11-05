@@ -141,7 +141,9 @@ export class OrganisationUsersPage {
       return undefined
     }
 
-    await expect(this.page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+    await expect(
+      this.page.getByRole('heading', { name: 'Manage users in your organisation' }),
+    ).toBeVisible()
     return email
   }
 
@@ -166,7 +168,9 @@ export class OrganisationUsersPage {
     if (!userId) throw new Error(`No manage link found for ${email}`)
 
     await this.page.goto(`/portal/organisations/${organisationId}/manage-user-access/${userId}`)
-    await expect(this.page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+    await expect(
+      this.page.getByRole('heading', { name: 'Manage users in your organisation' }),
+    ).toBeVisible()
   }
 
   /** Filters to the user and checks their row links to exactly these actions. */

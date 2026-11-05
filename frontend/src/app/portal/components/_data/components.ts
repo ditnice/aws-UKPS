@@ -31,6 +31,11 @@ export const componentDefinitions = [
     slug: 'back-link',
   },
   {
+    description: 'Highlight small details like an urgent case.',
+    label: 'Badge',
+    slug: 'badge',
+  },
+  {
     description: 'Show a page location within a hierarchy.',
     label: 'Breadcrumbs',
     slug: 'breadcrumbs',

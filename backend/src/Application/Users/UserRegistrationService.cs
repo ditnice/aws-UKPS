@@ -178,17 +178,17 @@ internal class UserRegistrationService : IUserRegistrationService
             return Result<ApproveRequestError>.Err(new ApproveRequestError.ConcurrencyError());
         }
 
-        var result = await _userOnboardingService.InitialiseNewUserSetup(
+        var result = await _userOnboardingService.OnboardUserToOrganisation(
             MapToOnboardUserCommandDto(registrationRequest),
             OnboardingFlow.SelfSignUp,
             cancellationToken
         );
         return await result.Match(
-            targetUser =>
+            outcome =>
                 HandleOnboardingSuccess(
                     transaction,
                     registrationRequest,
-                    targetUser,
+                    outcome,
                     cancellationToken
                 ),
             err => HandleUserOnBoardingError(transaction, err, cancellationToken)
@@ -273,24 +273,47 @@ internal class UserRegistrationService : IUserRegistrationService
     private async Task<Result<ApproveRequestError>> HandleOnboardingSuccess(
         IDbContextTransaction transaction,
         UserRegistrationRequest registrationRequest,
-        User targetUser,
+        UserOnboardingOutcome outcome,
         CancellationToken cancellationToken
     )
     {
-        registrationRequest.ResultingUser = targetUser;
+        registrationRequest.ResultingUser = outcome.User;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
-        Uri link = _setupLinkCreator.GetSetupLink(targetUser.OnboardingRecord!.SetupToken);
-        await _emailService.SendEmail(
-            new()
-            {
-                RecipientAddress = targetUser.WorkEmail,
-                PersonIdentifier = targetUser.CognitoUsername,
-                Email = new UserMembershipRequestApprovedNotificationEmail() { Link = link },
-            },
-            cancellationToken
-        );
+        if (outcome.IsNewUser)
+        {
+            // TODO 536: Update AWS cognito approach so that it is more failure tolerant and ensure consistency
+            Uri link = _setupLinkCreator.GetSetupLink(outcome.User.OnboardingRecord!.SetupToken);
+            await _emailService.SendEmail(
+                new()
+                {
+                    RecipientAddress = outcome.User.WorkEmail,
+                    PersonIdentifier = outcome.User.CognitoUsername,
+                    Email = new UserMembershipRequestApprovedNotificationEmail() { Link = link },
+                },
+                cancellationToken
+            );
+        }
+        else
+        {
+            string organisationName = await _dbContext
+                .Organisations.Where(o => o.Id == registrationRequest.OrganisationId)
+                .Select(o => o.OrganisationName)
+                .SingleAsync(cancellationToken);
+
+            await _emailService.SendEmail(
+                new()
+                {
+                    RecipientAddress = outcome.User.WorkEmail,
+                    PersonIdentifier = outcome.User.CognitoUsername,
+                    Email = new UserMembershipRequestApprovedExistingUserEmail()
+                    {
+                        OrganisationName = organisationName,
+                    },
+                },
+                cancellationToken
+            );
+        }
         await transaction.CommitAsync(cancellationToken);
         return Result<ApproveRequestError>.Ok();
     }
@@ -308,8 +331,8 @@ internal class UserRegistrationService : IUserRegistrationService
             invalidOrganisation: x =>
                 Result<ApproveRequestError>.Err(new ApproveRequestError.InvalidOrganisation()),
             notAllowed: x => Result<ApproveRequestError>.Err(new ApproveRequestError.NotAllowed()),
-            userAlreadyExists: _ =>
-                Result<ApproveRequestError>.Err(new ApproveRequestError.UserAlreadyExists())
+            userAlreadyInOrganisation: _ =>
+                Result<ApproveRequestError>.Err(new ApproveRequestError.UserAlreadyInOrganisation())
         );
     }
 

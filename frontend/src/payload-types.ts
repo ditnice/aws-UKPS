@@ -184,6 +184,14 @@ export interface Page {
    * Optional — create hierarchical pages, e.g. about-us/history-of-nice. Leave blank for a top-level page.
    */
   parent?: (number | null) | Page;
+  /**
+   * Shown above the page content. The heading is the page title.
+   */
+  pageHeader?: {
+    preheading?: string | null;
+    lead?: string | null;
+    description?: string | null;
+  };
   layout: (
     | {
         heading: string;
@@ -357,6 +365,13 @@ export interface PagesSelect<T extends boolean = true> {
   generateSlug?: T;
   slug?: T;
   parent?: T;
+  pageHeader?:
+    | T
+    | {
+        preheading?: T;
+        lead?: T;
+        description?: T;
+      };
   layout?:
     | T
     | {

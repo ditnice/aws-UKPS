@@ -1,7 +1,6 @@
 'use client'
 
-import { FormGroup } from '@nice-digital/nds-form-group'
-
+import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { Textarea } from '@/components/Textarea/Textarea'
 
 import { Example } from '../../_components/Example'

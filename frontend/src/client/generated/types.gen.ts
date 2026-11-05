@@ -1067,11 +1067,6 @@ export type RecordPageDto = {
      */
     formVersion: string;
     /**
-     * The concurrency token of the record's latest revision, which the page reads and writes.
-     * Echo it back on save.
-     */
-    revisionVersion: number;
-    /**
      * The record the page belongs to.
      */
     recordId: number;
@@ -1107,6 +1102,11 @@ export type RecordPageDto = {
     answers: {
         [key: string]: unknown;
     };
+    /**
+     * A hash of the answers of the page that must be provided when saving updates.
+     * If the hash has changed, answers will be rejected.
+     */
+    pageHash: string;
 };
 
 /**
@@ -1559,16 +1559,16 @@ export type SaveRecordPageCommand = {
      */
     formVersion: string;
     /**
-     * The uint RecordPageDto.RevisionVersion the page was loaded with.
-     */
-    revisionVersion: number;
-    /**
      * Every question on the page, keyed by question ID: null for an unanswered single-value
      * question and an empty array for an unanswered multi-value question.
      */
     answers: {
         [key: string]: unknown;
     };
+    /**
+     * The page hash value returned from the query.
+     */
+    pageHash: string;
 };
 
 /**
@@ -3173,7 +3173,8 @@ export type PostUsersOnboardErrors = {
      */
     403: ProblemDetails;
     /**
-     * A user with the supplied username already exists.
+     * A user with the supplied username already exists, or the email address
+     * already belongs to a user in the specified organisation.
      */
     409: AuthenticationProblemDetails;
 };

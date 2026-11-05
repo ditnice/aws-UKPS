@@ -43,7 +43,9 @@ test.describe(
       await usersPage.goto(organisationId)
       await usersPage.openUserAction(userEmail, 'Edit')
 
-      await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+      await expect(
+        page.getByRole('heading', { name: 'Manage users in your organisation' }),
+      ).toBeVisible()
       await usersPage.chooseAction('Change user permissions')
 
       await expect(page.getByRole('heading', { name: 'Change user permissions' })).toBeVisible()
@@ -115,7 +117,9 @@ test.describe(
         return
       }
 
-      await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+      await expect(
+        page.getByRole('heading', { name: 'Manage users in your organisation' }),
+      ).toBeVisible()
       await usersPage.chooseAction('Change user permissions')
 
       const heading = page.getByRole('heading', { name: 'Change user permissions' })

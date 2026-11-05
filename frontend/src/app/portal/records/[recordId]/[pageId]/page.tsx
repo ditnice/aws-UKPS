@@ -40,8 +40,8 @@ const RecordFormRoute = async ({ params }: RecordFormRouteProps) => {
     )
   }
 
-  // Keyed by page and revision version so navigating between pages starts a fresh form.
-  return <FormPage key={`${page.page.id}-${page.revisionVersion}`} page={page} />
+  // Keyed by page so navigating between pages starts a fresh form.
+  return <FormPage key={page.page.id} page={page} />
 }
 
 export default RecordFormRoute

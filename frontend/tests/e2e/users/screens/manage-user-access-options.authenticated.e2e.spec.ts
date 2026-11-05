@@ -82,7 +82,9 @@ test.describe("Manage user's access options", { tag: forRoles(['Super', 'Champio
 
     await page.goto(`/portal/organisations/${organisationId}/manage-user-access/${userId}`)
 
-    await expect(page.getByRole('heading', { name: "Manage user's access" })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Manage users in your organisation' }),
+    ).toBeVisible()
     await expect(page.getByText('You cannot manage your own access from this page.')).toBeVisible()
     await expect(page.getByRole('radio')).toHaveCount(0)
   })
