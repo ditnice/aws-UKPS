@@ -133,9 +133,10 @@ environments):
   which must differ from the Champion test organisation and be inaccessible to the Champion.
 - `E2E_ACCESS_REQUEST_EMAIL`: a pending registration request in the Standard test organisation.
 
-Missing account/subject configuration is reported as a skip; a configured subject that cannot
-be verified fails the test. DEV-auth runs use dedicated seeded subjects instead and must not
-skip these checks. Subject IDs and missing comparison IDs are verified with read-only API calls.
+These checks never skip, so a green run means they ran: missing account or subject configuration
+fails the test, as does a configured subject that cannot be verified. DEV-auth runs use dedicated
+seeded subjects instead. Subject IDs and missing comparison IDs are verified with read-only API
+calls.
 
 What each role can do, and so which roles a spec should run as:
 

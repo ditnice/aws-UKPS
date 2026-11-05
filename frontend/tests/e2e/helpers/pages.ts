@@ -15,10 +15,17 @@ export async function mainText(page: Page): Promise<string> {
 }
 
 /* ADR-004: a page for something the caller can't see must look the same as one for something
- * that doesn't exist, so it can't tell whether it exists. */
-export async function expectSameAsMissing(page: Page, url: (id: number) => string, id: number) {
+ * that doesn't exist, so it can't tell whether it exists. expectNothingRevealed runs while the
+ * existing resource's page is open, as this helper finishes on the missing resource's page. */
+export async function expectSameAsMissing(
+  page: Page,
+  url: (id: number) => string,
+  id: number,
+  expectNothingRevealed: () => Promise<void>,
+) {
   await page.goto(url(id))
   await expect(page.getByRole('heading', { name: 'Page not found', exact: true })).toBeVisible()
+  await expectNothingRevealed()
   const existingPage = await mainText(page)
 
   await page.goto(url(missingId))

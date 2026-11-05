@@ -11,10 +11,9 @@ test.describe('Using another organisation as a champion', { tag: forRoles(['Cham
   let otherOrganisationId: string | undefined
   test.beforeEach(({ organisationId }) => {
     otherOrganisationId = organisationIdFor('Super')
-    test.skip(
-      !otherOrganisationId || otherOrganisationId === organisationId,
-      'Needs the Super organisation to differ from the Champion organisation',
-    )
+    if (!otherOrganisationId || otherOrganisationId === organisationId) {
+      throw new Error('Set a Super organisation ID that differs from the Champion organisation')
+    }
   })
 
   const otherPath = (path: string) => `/portal/organisations/${otherOrganisationId}/${path}`
@@ -42,9 +41,10 @@ test.describe('Using another organisation as a champion', { tag: forRoles(['Cham
       (id) => `/backend-api/users/${id}/organisations/${foreignUser.organisationId}`,
       userId,
     )
-    await expectSameAsMissing(page, url, userId)
-    await expect(page.getByRole('radio')).toHaveCount(0)
-    await expect(page.getByText(foreignUser.workEmail, { exact: false })).toHaveCount(0)
+    await expectSameAsMissing(page, url, userId, async () => {
+      await expect(page.getByRole('radio')).toHaveCount(0)
+      await expect(page.getByText(foreignUser.workEmail, { exact: false })).toHaveCount(0)
+    })
   })
 
   test("can't see its records", async ({ page }) => {

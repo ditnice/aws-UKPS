@@ -43,9 +43,10 @@ test.describe('Managing users as a standard user', { tag: forRoles(['Standard'])
         (id) => `/backend-api/users/${id}/organisations/${organisationId}`,
         existingUserId,
       )
-      await expectSameAsMissing(page, url, existingUserId)
-      await expect(page.getByRole(control, { name })).toHaveCount(0)
-      await expect(page.getByText(protectedUser.workEmail, { exact: false })).toHaveCount(0)
+      await expectSameAsMissing(page, url, existingUserId, async () => {
+        await expect(page.getByRole(control, { name })).toHaveCount(0)
+        await expect(page.getByText(protectedUser.workEmail, { exact: false })).toHaveCount(0)
+      })
     })
   }
 
@@ -63,10 +64,11 @@ test.describe('Managing users as a standard user', { tag: forRoles(['Standard'])
         (id) => `/backend-api/organisations/${organisationId}/membership-requests/${id}`,
         protectedRequest.id,
       )
-      await expectSameAsMissing(page, url, protectedRequest.id)
-      await expect(page.getByText(`You are about to ${action}`)).toHaveCount(0)
-      await expect(page.getByRole('button', { name: button, exact: true })).toHaveCount(0)
-      await expect(page.getByText(protectedRequest.workEmail, { exact: false })).toHaveCount(0)
+      await expectSameAsMissing(page, url, protectedRequest.id, async () => {
+        await expect(page.getByText(`You are about to ${action}`)).toHaveCount(0)
+        await expect(page.getByRole('button', { name: button, exact: true })).toHaveCount(0)
+        await expect(page.getByText(protectedRequest.workEmail, { exact: false })).toHaveCount(0)
+      })
     })
   }
 

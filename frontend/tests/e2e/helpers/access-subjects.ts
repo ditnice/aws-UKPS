@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext } from '@playwright/test'
+import { expect, type APIRequestContext } from '@playwright/test'
 
 import { missingId } from './pages'
 import { isDevAuthMode } from './test-environment'
@@ -11,8 +11,9 @@ import type {
 
 export function accessSubjectEmail(variable: string, seededEmail: string): string {
   const email = isDevAuthMode() ? seededEmail : process.env[variable]?.trim()
-  test.skip(!email, `Set ${variable} to a pre-provisioned, read-only access-control subject`)
-  if (!email) throw new Error(`Missing ${variable}`)
+  if (!email) {
+    throw new Error(`Set ${variable} to a pre-provisioned, read-only access-control subject`)
+  }
   return email
 }
 

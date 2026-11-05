@@ -131,10 +131,11 @@ export const test = base.extend<TestOptions & Fixtures>({
   },
 
   accessVerifier: async ({ playwright, baseURL }, fixtureUse) => {
-    test.skip(
-      !isDevAuthMode() && (!hasRoleCredentials('Super') || !organisationIdFor('Super')),
-      'Access-control checks need a configured Super account to verify existing subjects',
-    )
+    if (!isDevAuthMode() && (!hasRoleCredentials('Super') || !organisationIdFor('Super'))) {
+      throw new Error(
+        'Access-control checks need a configured Super account to verify existing subjects',
+      )
+    }
     const verifier = await playwright.request.newContext({
       baseURL,
       ignoreHTTPSErrors: isLocalBaseURL(baseURL),
@@ -176,12 +177,11 @@ export const test = base.extend<TestOptions & Fixtures>({
 
   foreignUser: async ({ accessVerifier, organisationId }, fixtureUse) => {
     const foreignOrganisationId = organisationIdFor('Super')
-    test.skip(
-      !foreignOrganisationId || foreignOrganisationId === organisationId,
-      'Needs a distinct Super organisation for cross-organisation access checks',
-    )
+    if (!foreignOrganisationId || foreignOrganisationId === organisationId) {
+      throw new Error('Cross-organisation access checks need a distinct Super organisation')
+    }
     const email = accessSubjectEmail('E2E_ACCESS_FOREIGN_USER_EMAIL', accessSubjects.foreignUser)
-    await fixtureUse(await verifiedUser(accessVerifier, foreignOrganisationId!, email))
+    await fixtureUse(await verifiedUser(accessVerifier, foreignOrganisationId, email))
   },
 
   protectedRequest: async ({ accessVerifier, organisationId }, fixtureUse) => {
