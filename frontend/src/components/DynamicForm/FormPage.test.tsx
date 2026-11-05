@@ -276,10 +276,13 @@ describe('FormPage', () => {
         message: 'Server says no',
       },
       {
-        outcome: 'the revision has changed',
+        outcome: 'the page has changed',
         status: 409,
-        error: { code: 'revision_changed', detail: 'This record has changed.' },
-        message: 'This record has changed.',
+        error: {
+          code: 'page_answers_changed',
+          detail: 'This page has changed since it was loaded.',
+        },
+        message: 'This page has changed since it was loaded.',
       },
       {
         outcome: 'the server fails',
