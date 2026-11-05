@@ -361,7 +361,7 @@ erDiagram
         medicines_treatment_details:::medicines_revision_content {
             integer id PK
             text estimated_duration_of_treatment "nullable"
-            text proposed_place_in_therapy
+            text proposed_place_in_therapy "nullable"
             integer revision_id FK, UK
         }
     end

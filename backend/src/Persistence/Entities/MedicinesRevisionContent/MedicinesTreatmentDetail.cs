@@ -6,7 +6,7 @@ internal sealed class MedicinesTreatmentDetail
     public int RevisionId { get; set; }
 
     /// <summary>Includes likely comparators.</summary>
-    public required string ProposedPlaceInTherapy { get; set; }
+    public required string? ProposedPlaceInTherapy { get; set; }
 
     /// <summary>CiC — Commercially in Confidence.</summary>
     public string? EstimatedDurationOfTreatment { get; set; }

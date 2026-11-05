@@ -5162,7 +5162,10 @@
         "type": "object",
         "properties": {
           "proposedPlaceInTherapy": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "description": "Gets the proposed place in therapy."
           },
           "estimatedDurationOfTreatment": {

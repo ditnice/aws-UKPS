@@ -493,7 +493,7 @@ export type MedicinesTreatmentDetailDto = {
     /**
      * Gets the proposed place in therapy.
      */
-    proposedPlaceInTherapy: string;
+    proposedPlaceInTherapy: null | string;
     /**
      * Gets the estimated duration of treatment.
      */
