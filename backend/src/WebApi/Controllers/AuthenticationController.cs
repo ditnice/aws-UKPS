@@ -493,6 +493,136 @@ public class AuthenticationController : ControllerBase
         );
     }
 
+    /// <summary>
+    /// Initiates the forgotten password procedure for a user.
+    /// </summary>
+    /// <remarks>
+    /// Starts the password recovery flow for the account identified in the command.
+    /// The number of attempts is limited; once the permitted limit has been exceeded,
+    /// further requests are rejected.
+    /// </remarks>
+    /// <param name="command">
+    /// The command containing the details required to initiate the forgotten password procedure.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult"/> indicating the outcome of the request.
+    /// </returns>
+    /// <response code="200">The forgotten password procedure was initiated successfully.</response>
+    /// <response code="429">The number of permitted attempts has been exceeded.</response>
+    [HttpPost("initiate-forgotten-password", Name = nameof(InitiateForgottenPasswordProcedure))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<ActionResult> InitiateForgottenPasswordProcedure(
+        InitiateForgottenPasswordProcedureCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        InitiateForgottenPasswordProcedureResult result =
+            await _loginService.InitiateForgottenPasswordProcedure(command, cancellationToken);
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(numberOfAttemptsExceeded: _ =>
+                    BadRequest(
+                        new ProblemDetails
+                        {
+                            Title = "Requests exceeded.",
+                            Detail = "The number of permitted attempts has been exceeded.",
+                            Status = StatusCodes.Status429TooManyRequests,
+                        }
+                    )
+                )
+        );
+    }
+
+    /// <summary>
+    /// Confirms a password reset by validating the confirmation code and setting a new password.
+    /// </summary>
+    /// <param name="value">
+    /// The command containing the confirmation code, the new password, and the details identifying the user.
+    /// </param>
+    /// <param name="ct">A token to cancel the operation.</param>
+    /// <returns>
+    /// An empty <c>200 OK</c> response when the password has been changed successfully.
+    /// Otherwise, a problem details response describing why the request failed.
+    /// </returns>
+    /// <response code="200">The password was changed successfully.</response>
+    /// <response code="400">
+    /// The request failed validation. This occurs when the confirmation code is incorrect or has expired,
+    /// or when the new password does not meet the password requirements.
+    /// The response body is a <see cref="ValidationProblemDetails"/> identifying the invalid field.
+    /// </response>
+    /// <response code="429">
+    /// Too many requests were made, or too many failed attempts have occurred.
+    /// The response body is a <see cref="ProblemDetails"/>. The client should wait before retrying.
+    /// </response>
+    [HttpPost("confirm-new-password", Name = nameof(ConfirmNewPassword))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    public async Task<ActionResult> ConfirmNewPassword(
+        ConfirmNewPasswordCommand value,
+        CancellationToken ct
+    )
+    {
+        ConfirmNewPasswordResult result = await _loginService.ConfirmNewPassword(value, ct);
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match(
+                    codeMismatch: _ =>
+                        ValidationProblem(
+                            new ValidationProblemDetails(
+                                new Dictionary<string, string[]>(StringComparer.Ordinal)
+                                {
+                                    [nameof(value.ConfirmationCode)] =
+                                    [
+                                        "The confirmation code is incorrect or has expired.",
+                                    ],
+                                }
+                            )
+                            {
+                                Title = "Invalid confirmation code",
+                                Status = StatusCodes.Status400BadRequest,
+                            }
+                        ),
+                    invalidPassword: _ =>
+                        ValidationProblem(
+                            new ValidationProblemDetails(
+                                new Dictionary<string, string[]>(StringComparer.Ordinal)
+                                {
+                                    [nameof(value.NewPassword)] =
+                                    [
+                                        "The new password does not meet the password requirements.",
+                                    ],
+                                }
+                            )
+                            {
+                                Title = "Invalid password",
+                                Status = StatusCodes.Status400BadRequest,
+                            }
+                        ),
+                    tooManyRequests: _ =>
+                        Problem(
+                            title: "Too many requests",
+                            detail: "Too many password reset requests have been made. Please try again later.",
+                            statusCode: StatusCodes.Status429TooManyRequests
+                        ),
+                    tooManyFailedAttempts: _ =>
+                        Problem(
+                            title: "Too many failed attempts",
+                            detail: "Too many failed attempts have been made. Please wait before trying again.",
+                            statusCode: StatusCodes.Status429TooManyRequests
+                        )
+                )
+        );
+    }
+
     private bool PassesCsrfValidation()
     {
         string? csrfCookie = Request.Cookies[CsrfCookieName];

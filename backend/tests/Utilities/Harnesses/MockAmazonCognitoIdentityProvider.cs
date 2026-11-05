@@ -29,7 +29,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
     public IReadOnlyList<ResetPasswordCommand> ResetPasswordCommands => _resetPasswordCommands;
 
     private List<MockUser> _users;
-    private readonly List<ResetPasswordCommand> _resetPasswordCommands = new();
+    private List<ResetPasswordCommand> _resetPasswordCommands = new();
 
     private readonly HashSet<string> _mfaSessions = new(StringComparer.Ordinal);
     private readonly HashSet<string> _revokedRefreshTokens = new(StringComparer.Ordinal);
@@ -323,16 +323,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
             {
                 var request = callInfo.Arg<ForgotPasswordRequest>();
 
-                var user = _users.SingleOrDefault(x =>
-                    string.Equals(x.Username, request.Username, StringComparison.Ordinal)
-                );
-
-                if (user is null)
-                {
-                    throw new UserNotFoundException($"User '{request.Username}' not found.");
-                }
-
-                _resetPasswordCommands.Add(new ResetPasswordCommand(request.Username));
+                _resetPasswordCommands.Add(new() { Username = request.Username });
 
                 return Task.FromResult(new ForgotPasswordResponse());
             });
@@ -345,14 +336,16 @@ internal sealed class MockAmazonCognitoIdentityProvider
             {
                 var request = callInfo.Arg<ConfirmForgotPasswordRequest>();
 
-                var user = _users.SingleOrDefault(x =>
-                    string.Equals(x.Username, request.Username, StringComparison.Ordinal)
-                );
-
-                if (user is null)
-                {
-                    throw new UserNotFoundException($"User '{request.Username}' not found.");
-                }
+                _resetPasswordCommands = _resetPasswordCommands
+                    .Select(x =>
+                        string.Equals(x.Username, request.Username, StringComparison.Ordinal)
+                            ? x with
+                            {
+                                UpdatedPassword = request.Password,
+                            }
+                            : x
+                    )
+                    .ToList();
 
                 if (
                     !string.Equals(
@@ -417,5 +410,9 @@ internal sealed class MockAmazonCognitoIdentityProvider
         }
     }
 
-    public record ResetPasswordCommand(string Username);
+    public record ResetPasswordCommand
+    {
+        public required string Username { get; init; }
+        public string? UpdatedPassword { get; init; }
+    };
 }

@@ -18,4 +18,15 @@ public abstract record InitiateForgottenPasswordProcedureError
     /// because the permitted number of attempts has been exceeded.
     /// </summary>
     internal sealed record NumberOfAttemptsExceeded : InitiateForgottenPasswordProcedureError;
+
+    internal TResult Match<TResult>(
+        Func<NumberOfAttemptsExceeded, TResult> numberOfAttemptsExceeded
+    ) =>
+        this switch
+        {
+            NumberOfAttemptsExceeded e => numberOfAttemptsExceeded(e),
+            _ => throw new InvalidOperationException(
+                $"Unknown error type: {this.GetType().FullName}"
+            ),
+        };
 }

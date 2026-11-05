@@ -34,7 +34,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserInfoService, WebApiCurrentUserInfoService>();
 builder.Services.AddScoped<ISetupLinkCreator, SetupLinkCreator>();
-builder.Services.AddScoped<IPasswordResetLinkCreator, PasswordResetLinkCreator>();
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();
 builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();

@@ -1,4 +1,4 @@
-global using ConfirmNewPasswordResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.ConfirmNewPasswordError>;
+global using ConfirmNewPasswordResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.InternalServices.Identity.ConfirmNewPasswordError>;
 global using InitiateForgottenPasswordProcedureResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.InitiateForgottenPasswordProcedureError>;
 using UKPS.Api.Application.Authentication.Dtos;
 using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
@@ -108,17 +108,24 @@ public interface ILoginService
         CancellationToken cancellationToken
     );
 
+    /// <summary>
+    /// Confirms a password reset by validating the confirmation code and setting a new password.
+    /// </summary>
+    /// <param name="command">
+    /// The command containing the confirmation code, the new password, and the details identifying the user.
+    /// </param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// A <see cref="ConfirmNewPasswordResult"/> that is either a success, or one of the following errors:
+    /// <list type="bullet">
+    /// <item><description>The confirmation code did not match or has expired.</description></item>
+    /// <item><description>The new password does not meet the password requirements.</description></item>
+    /// <item><description>Too many requests have been made.</description></item>
+    /// <item><description>Too many failed attempts have been made.</description></item>
+    /// </list>
+    /// </returns>
     Task<ConfirmNewPasswordResult> ConfirmNewPassword(
-        ConfirmNewPasswordCommand value,
-        CancellationToken ct
+        ConfirmNewPasswordCommand command,
+        CancellationToken cancellationToken
     );
 }
-
-public record ConfirmNewPasswordCommand
-{
-    public required string Email { get; init; }
-    public required string ConfirmationCode { get; init; }
-    public required string NewPassword { get; init; }
-}
-
-public abstract record ConfirmNewPasswordError { }

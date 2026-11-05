@@ -701,6 +701,137 @@
         }
       }
     },
+    "/auth/initiate-forgotten-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Initiates the forgotten password procedure for a user.",
+        "description": "Starts the password recovery flow for the account identified in the command.\nThe number of attempts is limited; once the permitted limit has been exceeded,\nfurther requests are rejected.",
+        "operationId": "InitiateForgottenPasswordProcedure",
+        "requestBody": {
+          "description": "A token that can be used to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The forgotten password procedure was initiated successfully."
+          },
+          "429": {
+            "description": "The number of permitted attempts has been exceeded.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/confirm-new-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Confirms a password reset by validating the confirmation code and setting a new password.",
+        "operationId": "ConfirmNewPassword",
+        "requestBody": {
+          "description": "A token to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The password was changed successfully."
+          },
+          "400": {
+            "description": "The request failed validation. This occurs when the confirmation code is incorrect or has expired,\nor when the new password does not meet the password requirements.\nThe response body is a ValidationProblemDetails identifying the invalid field.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests were made, or too many failed attempts have occurred.\nThe response body is a ProblemDetails. The client should wait before retrying.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me/organisations/current/champions": {
       "get": {
         "tags": [
@@ -4214,6 +4345,31 @@
         ],
         "type": "string"
       },
+      "ConfirmNewPasswordCommand": {
+        "required": [
+          "email",
+          "confirmationCode",
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Gets the account email address."
+          },
+          "confirmationCode": {
+            "type": "string",
+            "description": "Gets the password reset confirmation code."
+          },
+          "newPassword": {
+            "maxLength": 256,
+            "minLength": 8,
+            "type": "string",
+            "description": "Gets the new password."
+          }
+        },
+        "description": "Confirms a password reset and sets the new password."
+      },
       "CreateOrganisationDto": {
         "required": [
           "organisationName",
@@ -4407,6 +4563,19 @@
           null
         ],
         "type": "string"
+      },
+      "InitiateForgottenPasswordProcedureCommand": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Gets the email address of the user who has forgotten their password."
+          }
+        },
+        "description": "Represents a request to start the forgotten password flow for a user."
       },
       "LoginRequest": {
         "required": [
