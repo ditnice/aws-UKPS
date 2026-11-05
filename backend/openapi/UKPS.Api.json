@@ -5156,9 +5156,6 @@
         "description": "Represents the NHS service impact section of a medicine record."
       },
       "MedicinesTreatmentDetailDto": {
-        "required": [
-          "proposedPlaceInTherapy"
-        ],
         "type": "object",
         "properties": {
           "proposedPlaceInTherapy": {

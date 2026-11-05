@@ -187,7 +187,7 @@ export const fakeMedicineHtaAssessor = (options?: Options): MedicineHtaAssessor 
 export const fakeMedicinesTreatmentDetailDto = (options?: Options): MedicinesTreatmentDetailDto => {
     const f = options?.faker ?? faker;
     return {
-        proposedPlaceInTherapy: f.datatype.boolean() ? f.string.sample() : null,
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { proposedPlaceInTherapy: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { estimatedDurationOfTreatment: f.datatype.boolean() ? f.string.sample() : null }
     };
 };

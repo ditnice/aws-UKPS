@@ -8,7 +8,7 @@ public sealed record MedicinesTreatmentDetailDto
     /// <summary>
     /// Gets the proposed place in therapy.
     /// </summary>
-    public required string? ProposedPlaceInTherapy { get; init; }
+    public string? ProposedPlaceInTherapy { get; init; }
 
     /// <summary>
     /// Gets the estimated duration of treatment.
