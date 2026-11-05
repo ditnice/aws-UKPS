@@ -112,15 +112,15 @@ internal sealed class RecordFormPageLoader(
         return rows;
     }
 
-    public static Dictionary<string, FormAnswer> ReadAnswers(
-        FormPage page,
-        Dictionary<FormEntity, object?> rows
-    ) =>
-        page.Questions.ToDictionary(
+    public static PageAnswers ReadAnswers(FormPage page, Dictionary<FormEntity, object?> rows)
+    {
+        var lookup = page.Questions.ToDictionary(
             static q => q.Id,
             q => q.Binding.Read(rows[q.Entity]),
             StringComparer.Ordinal
         );
+        return new PageAnswers(lookup);
+    }
 
     /// <summary>
     /// Loads the options of every choice question. Saved answers are passed in so archived items
@@ -128,7 +128,7 @@ internal sealed class RecordFormPageLoader(
     /// </summary>
     public async Task<Dictionary<string, IReadOnlyList<FormOption>>> LoadOptionsAsync(
         FormPage page,
-        Dictionary<string, FormAnswer> savedAnswers,
+        PageAnswers savedAnswers,
         CancellationToken cancellationToken
     )
     {

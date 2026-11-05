@@ -131,7 +131,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         RecordPageDto page = await GetPage("indication");
 
         page.FormVersion.ShouldBe(FormVersions.Medicine);
-        page.RevisionVersion.ShouldBe(await RevisionVersion());
         page.Section.Title.ShouldBe("Indication details");
         (page.Task.Id, page.Task.Title).ShouldBe(("indication-details", "Indication details"));
         page.PreviousPageId.ShouldBeNull();
@@ -231,14 +230,11 @@ public class RecordFormServiceTests : DatabaseTestBase
             Answer(Indication, "  Chronic hepatitis C  ")
         );
 
+        (await RevisionVersion()).ShouldNotBe(versionBefore);
+
         result.NextPageId.ShouldBe("bnf-chapter");
         MedicinesIndicationDetail row = await IndicationRow();
         row.Indication.ShouldBe("Chronic hepatitis C");
-
-        RecordRevision revision = await Context
-            .RecordRevisions.AsNoTracking()
-            .SingleAsync(r => r.Id == _revision.Id, Ct);
-        revision.Version.ShouldNotBe(versionBefore);
 
         RecordFieldAudit audit = await FieldAudits().SingleAsync(Ct);
         audit.RecordId.ShouldBe(_record.Id);
@@ -427,29 +423,10 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_StaleRevisionVersion_IsAConflict()
-    {
-        uint staleVersion = await RevisionVersion();
-        await SaveOk("indication", Answer(Indication, "First"));
-
-        SaveRecordPageError error = (
-            await Save("indication", Answer(Indication, "Second"), staleVersion)
-        ).ShouldBeError();
-
-        error.ShouldBeOfType<SaveRecordPageError.RevisionChanged>();
-        (await IndicationRow()).Indication.ShouldBe("First");
-    }
-
-    [Fact]
     public async Task SavePage_OldFormVersion_IsAConflict()
     {
         SaveRecordPageError error = (
-            await Save(
-                "indication",
-                Answer(Indication, "Text"),
-                await RevisionVersion(),
-                formVersion: "2000.1.1"
-            )
+            await Save("indication", Answer(Indication, "Text"), formVersion: "2000.1.1")
         ).ShouldBeError();
 
         error.ShouldBeOfType<SaveRecordPageError.FormVersionChanged>();
@@ -489,14 +466,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         await SaveOk("indication", Answer(Indication, "Text"));
 
         (await IndicationRow()).Indication.ShouldBe("Text");
-    }
-
-    [Fact]
-    public async Task GetPage_EarlierRevisions_ReadsTheLatestRevision()
-    {
-        await AddEarlierPublishedRevision();
-
-        (await GetPage("indication")).RevisionVersion.ShouldBe(await RevisionVersion());
     }
 
     [Fact]
@@ -563,6 +532,65 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await RevisionVersion()).ShouldBe(versionBefore);
     }
 
+    [Fact]
+    public async Task SavePage_WhenThePageHasBeenChangedAfterTheRead_ShouldReturnConcurrencyError()
+    {
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, "AnswerA"));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(page, Answer(Indication, "AnswerB"));
+        secondSaveResult.ShouldBeError().ShouldBeOfType<SaveRecordPageError.PageAnswersChanged>();
+    }
+
+    [Fact]
+    public async Task SavePage_WhenAnswerIsUnchangedExceptForWhitespace_ShouldBeSuccess()
+    {
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, "Answer"));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(
+            page,
+            Answer(Indication, "   Answer   ")
+        );
+        secondSaveResult.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task SavePage_WhenTheAnswerIsEmptyAndUnchanged_ShouldBeSuccess()
+    {
+        var answer = "Test";
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, answer));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(page, Answer(Indication, answer));
+        secondSaveResult.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task SavePage_ShouldBeAbleToEditTwoDifferentPagesInParallel()
+    {
+        RecordPageDto indicationPage = await GetPage("indication");
+
+        RecordPageDto bnfChapterPage = await GetPage("bnf-chapter");
+        SaveRecordPageResult bnfChapterUpdate = await Save(
+            bnfChapterPage,
+            Answer(BnfChapter, $"{_bnfSection.Id}")
+        );
+        bnfChapterUpdate.ShouldBeSuccess();
+
+        SaveRecordPageResult indicationSaveResult = await Save(
+            indicationPage,
+            Answer(Indication, "Update")
+        );
+        indicationSaveResult.ShouldBeSuccess();
+    }
+
     private ServiceTestHarness<TService> CreateHarness<TService>(UserRole role, int organisationId)
         where TService : notnull
     {
@@ -611,22 +639,42 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await _queryHarness.Service.GetPage(_record.Id, pageId, Ct)).ShouldBeSuccess();
 
     private async Task<SaveRecordPageResult> Save(
+        RecordPageDto page,
+        Dictionary<string, JsonElement> answers
+    )
+    {
+        return await _saveHarness.Service.SavePage(
+            _record.Id,
+            page.Page.Id,
+            new SaveRecordPageCommand
+            {
+                FormVersion = page.FormVersion,
+                Answers = answers,
+                PageHash = page.PageHash,
+            },
+            Ct
+        );
+    }
+
+    private async Task<SaveRecordPageResult> Save(
         string pageId,
         Dictionary<string, JsonElement> answers,
-        uint? revisionVersion = null,
         string formVersion = FormVersions.Medicine
-    ) =>
-        await _saveHarness.Service.SavePage(
+    )
+    {
+        var page = await GetPage(pageId);
+        return await _saveHarness.Service.SavePage(
             _record.Id,
             pageId,
             new SaveRecordPageCommand
             {
                 FormVersion = formVersion,
-                RevisionVersion = revisionVersion ?? await RevisionVersion(),
                 Answers = answers,
+                PageHash = page.PageHash,
             },
             Ct
         );
+    }
 
     private async Task<SaveRecordPageDto> SaveOk(
         string pageId,

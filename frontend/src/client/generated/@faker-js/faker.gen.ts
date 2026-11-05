@@ -617,7 +617,6 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
     const f = options?.faker ?? faker;
     return {
         formVersion: f.string.sample(),
-        revisionVersion: f.number.int(),
         recordId: f.number.int(),
         section: fakeRecordPageSectionDto(options),
         task: fakeRecordPageTaskDto(options),
@@ -625,7 +624,8 @@ export const fakeRecordPageDto = (options?: Options): RecordPageDto => {
         previousPageId: f.datatype.boolean() ? f.string.uuid() : null,
         nextPageId: f.datatype.boolean() ? f.string.uuid() : null,
         questions: f.helpers.multiple(() => fakeRecordPageQuestionDto(options)),
-        answers: {}
+        answers: {},
+        pageHash: f.string.sample()
     };
 };
 
@@ -633,8 +633,8 @@ export const fakeSaveRecordPageCommand = (options?: Options): SaveRecordPageComm
     const f = options?.faker ?? faker;
     return {
         formVersion: f.string.sample(),
-        revisionVersion: f.number.int(),
-        answers: {}
+        answers: {},
+        pageHash: f.string.sample()
     };
 };
 
