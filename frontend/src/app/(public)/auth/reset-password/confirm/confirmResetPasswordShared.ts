@@ -5,7 +5,7 @@ import { ConfirmNewPasswordCommand } from '@/client/generated'
 
 export const formSchema = z.object({
   email: z.email(),
-  confirmationCode: z.string().min(6).max(6, 'Confirmation code must be 6 characters long'),
+  confirmationCode: z.string().length(6, 'Confirmation code must be 6 characters long'),
   newPassword: z.string().min(8, 'Password must be at least 8 characters long').max(256),
 })
 

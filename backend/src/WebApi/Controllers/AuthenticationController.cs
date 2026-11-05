@@ -527,13 +527,10 @@ public class AuthenticationController : ControllerBase
             Ok,
             err =>
                 err.Match<ActionResult>(numberOfAttemptsExceeded: _ =>
-                    BadRequest(
-                        new ProblemDetails
-                        {
-                            Title = "Requests exceeded.",
-                            Detail = "The number of permitted attempts has been exceeded.",
-                            Status = StatusCodes.Status429TooManyRequests,
-                        }
+                    Problem(
+                        title: "Requests exceeded.",
+                        detail: "The number of permitted attempts has been exceeded.",
+                        statusCode: StatusCodes.Status429TooManyRequests
                     )
                 )
         );

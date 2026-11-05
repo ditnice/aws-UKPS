@@ -7,6 +7,7 @@ public record ConfirmNewPasswordCommand
 {
     /// <summary>Gets the account email address.</summary>
     [Required]
+    [EmailAddress]
     public required string Email { get; init; }
 
     /// <summary>Gets the password reset confirmation code.</summary>

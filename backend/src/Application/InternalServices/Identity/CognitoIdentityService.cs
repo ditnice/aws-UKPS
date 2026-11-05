@@ -379,11 +379,6 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 },
                 cancellationToken
             );
-            return true;
-        }
-        catch (UserNotFoundException)
-        {
-            // Do not reveal whether the user exists or not.
         }
         catch (LimitExceededException)
         {
@@ -420,11 +415,6 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 },
                 cancellationToken
             );
-        }
-        catch (UserNotFoundException)
-        {
-            // Don't reveal that the user does not exist.
-            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeMismatch());
         }
         catch (CodeMismatchException)
         {

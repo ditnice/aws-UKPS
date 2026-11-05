@@ -28,7 +28,7 @@ export const resetPasswordAction = async (prev: unknown, formData: FormData) => 
       let message = undefined
       switch (response?.status) {
         case 429:
-          message = 'Number of request exceeded limit. Try again later.'
+          message = 'Number of requests exceeded limit. Try again later.'
           break
         default:
           message =

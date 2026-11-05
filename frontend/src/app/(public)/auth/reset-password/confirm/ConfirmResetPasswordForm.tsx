@@ -39,7 +39,7 @@ const ConfirmResetPasswordForm = ({ email }: ConfirmResetPasswordFormProps) => {
 
   return (
     <form action={action as never} onSubmit={() => form.handleSubmit()}>
-      {state.errors && (
+      {state.errors.length != 0 ? (
         <ErrorState>
           <div>
             {state.errors.map((e) => (
@@ -47,6 +47,8 @@ const ConfirmResetPasswordForm = ({ email }: ConfirmResetPasswordFormProps) => {
             ))}
           </div>
         </ErrorState>
+      ) : (
+        <></>
       )}
       <form.Field name="email">
         {(field) => <input type="hidden" name={field.name} value={field.state.value} />}
@@ -56,6 +58,8 @@ const ConfirmResetPasswordForm = ({ email }: ConfirmResetPasswordFormProps) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
             <Input
+              inputMode="numeric"
+              autoComplete="one-time-code"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
               label="Confirmation code"

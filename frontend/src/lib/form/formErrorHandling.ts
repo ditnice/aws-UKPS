@@ -15,7 +15,7 @@ export const lowerCamelCaseKeys = (errors: Errors): Errors => {
 export const getFormStateServerErrors = (errors: Errors) => {
   return {
     errorMap: { onServer: { fields: lowerCamelCaseKeys(errors) } },
-    errors: Object.values(errors),
+    errors: Object.values(errors).flat(),
   }
 }
 

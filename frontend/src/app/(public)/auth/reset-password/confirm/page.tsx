@@ -1,6 +1,6 @@
 'use server'
 
-import { cookies } from 'next/dist/server/request/cookies'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -17,6 +17,8 @@ const Page = async () => {
     // The email cookie should be set in the previous page.
     notFound()
   }
+
+  myCookies.delete(resetEmailCookieName)
 
   return (
     <>
