@@ -44,7 +44,7 @@ vi.mock('@/lib/form/formErrorHandling', () => ({
 
 const GENERIC_ERROR =
   'An unexpected error occurred while attempting to reset your password. Please try again.'
-const RATE_LIMIT_ERROR = 'Number of request2 exceeded limit. Try again later.'
+const RATE_LIMIT_ERROR = 'Number of requests exceeded limit. Try again later.'
 
 const values = { email: 'user@example.com' }
 const apiClient = { name: 'api-client' }

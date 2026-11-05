@@ -26,7 +26,7 @@ const ResetPasswordForm = () => {
   })
   return (
     <form action={action as never} onSubmit={() => form.handleSubmit()}>
-      {state.errors?.length != 0 ? (
+      {state.errors?.length ? (
         <ErrorState>
           <div>
             {state.errors.map((e) => (
