@@ -9,8 +9,9 @@ const Page = () => {
     <>
       <PageHeader heading="Reset your password" />
       <Alert title="Password changed successfully" type="success">
+        <h2>Password changed successfully</h2>
         <p>
-          User you new password to sign in. You will need access to your authenticator to sign in
+          Use your new password to sign in. You will need access to your authenticator to sign in
           with your new password.
         </p>
         <p>You can your password at any time from manage my details.</p>

@@ -963,6 +963,16 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task ConfirmNewPassword_WhenServiceReturnHistoryPolicyViolation_ShouldReturn400BadRequestAndAValidationProblemDetailsWithNewPasswordMarkedWithValidationError()
+    {
+        MockConfirmNewPasswordResponse(new ConfirmNewPasswordError.HistoryPolicyViolation());
+
+        var response = await SendConfirmPasswordRequest();
+
+        await AssertValidationProblem(response, nameof(ConfirmNewPasswordCommand.NewPassword));
+    }
+
+    [Fact]
     public async Task ConfirmNewPassword_WhenServiceReturnTooManyRequests_ShouldReturn429()
     {
         MockConfirmNewPasswordResponse(new ConfirmNewPasswordError.TooManyRequests());
@@ -987,7 +997,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         string expectedField
     )
     {
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
             TestContext.Current.CancellationToken

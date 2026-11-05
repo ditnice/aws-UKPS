@@ -22,6 +22,11 @@ public abstract record ConfirmNewPasswordError
     public sealed record CodeExpired : ConfirmNewPasswordError;
 
     /// <summary>
+    /// The provided password violates the history policy.
+    /// </summary>
+    public sealed record HistoryPolicyViolation : ConfirmNewPasswordError;
+
+    /// <summary>
     /// The new password does not satisfy the password policy
     /// (for example length or required character classes).
     /// </summary>
@@ -43,6 +48,7 @@ public abstract record ConfirmNewPasswordError
         Func<CodeMismatch, TResult> codeMismatch,
         Func<CodeExpired, TResult> codeExpired,
         Func<InvalidPassword, TResult> invalidPassword,
+        Func<HistoryPolicyViolation, TResult> historyPolicyViolation,
         Func<TooManyRequests, TResult> tooManyRequests,
         Func<TooManyFailedAttempts, TResult> tooManyFailedAttempts
     ) =>
@@ -51,6 +57,7 @@ public abstract record ConfirmNewPasswordError
             CodeMismatch e => codeMismatch(e),
             CodeExpired e => codeExpired(e),
             InvalidPassword e => invalidPassword(e),
+            HistoryPolicyViolation e => historyPolicyViolation(e),
             TooManyRequests e => tooManyRequests(e),
             TooManyFailedAttempts e => tooManyFailedAttempts(e),
             _ => throw new InvalidOperationException(

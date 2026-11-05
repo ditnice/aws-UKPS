@@ -18,8 +18,6 @@ const Page = async () => {
     notFound()
   }
 
-  myCookies.delete(resetEmailCookieName)
-
   return (
     <>
       <PageHeader heading="Reset your password" />

@@ -590,6 +590,12 @@ public class AuthenticationController : ControllerBase
                             nameof(value.NewPassword),
                             "The new password does not meet the password requirements."
                         ),
+                    historyPolicyViolation: _ =>
+                        CreateValidationProblem(
+                            "Invalid password",
+                            nameof(value.NewPassword),
+                            "The new password violates the history policy. Be sure to use a new password."
+                        ),
                     tooManyRequests: _ =>
                         Problem(
                             title: "Too many requests",

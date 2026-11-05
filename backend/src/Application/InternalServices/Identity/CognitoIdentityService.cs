@@ -438,6 +438,12 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 new ConfirmNewPasswordError.TooManyFailedAttempts()
             );
         }
+        catch (PasswordHistoryPolicyViolationException)
+        {
+            return ConfirmNewPasswordResult.Err(
+                new ConfirmNewPasswordError.HistoryPolicyViolation()
+            );
+        }
         return ConfirmNewPasswordResult.Ok();
     }
 

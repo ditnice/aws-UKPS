@@ -457,6 +457,20 @@ public class LoginServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.CodeExpired>();
     }
 
+    [Fact]
+    public async Task ConfirmNewPassword_WhenHistoryPolicyViolated_ShouldReturnHistoryPolicyViolationError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<PasswordHistoryPolicyViolationException>();
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest();
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.HistoryPolicyViolation>();
+    }
+
     private Task<Result<ConfirmNewPasswordError>> MakeValidConfirmPasswordRequest(
         Func<ConfirmNewPasswordCommand, ConfirmNewPasswordCommand>? overrides = null
     )
