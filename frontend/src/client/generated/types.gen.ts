@@ -1122,13 +1122,17 @@ export type RecordPageOptionDto = {
      */
     label: string;
     /**
+     * Help text shown under the option, or null when it has none.
+     */
+    hint: null | string;
+    /**
      * The child options of a hierarchical option, or null.
      */
     children: null | Array<RecordPageOptionDto>;
 };
 
 /**
- * A page's ID and title.
+ * A page's ID, title and "Commercial in confidence" flag.
  */
 export type RecordPagePageDto = {
     /**
@@ -1139,6 +1143,10 @@ export type RecordPagePageDto = {
      * A short name for the page.
      */
     title: string;
+    /**
+     * Whether the page shows the "Commercial in confidence" badge.
+     */
+    commercialInConfidence: boolean;
 };
 
 /**

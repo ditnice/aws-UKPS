@@ -29,6 +29,8 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     private RecordRevision _revision = null!;
     private BnfChapter _bnfChapter = null!;
     private TherapeuticArea _area = null!;
+    private FormulationType _formulation = null!;
+    private PatientPathwayPoint _pathwayPoint = null!;
 
     public RecordTaskListQueryServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -70,6 +72,11 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             },
             Ct
         );
+        _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
+        _pathwayPoint = await AddEntity(
+            new PatientPathwayPoint { Label = "Initial presentation" },
+            Ct
+        );
     }
 
     [Fact]
@@ -82,7 +89,10 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         taskList.DisplayStatus.ShouldBe(RecordDisplayStatus.Draft);
         taskList.CompanyCode.ShouldBeNull();
         taskList.RecordTitle.ShouldBeNull();
-        RecordTaskListSectionDto section = taskList.Sections.ShouldHaveSingleItem();
+        taskList
+            .Sections.Select(static s => s.Id)
+            .ShouldBe(["indication-details", "laboratory-testing"]);
+        RecordTaskListSectionDto section = taskList.Sections[0];
         (section.Id, section.Title).ShouldBe(("indication-details", "Indication details"));
         RecordTaskListTaskDto task = section.Tasks.ShouldHaveSingleItem();
         (task.Id, task.Title, task.FirstPageId).ShouldBe(
@@ -202,6 +212,71 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .ShouldBeOfType<GetRecordTaskListError.NotAllowed>();
     }
 
+    [Fact]
+    public async Task GetTaskList_NoLaboratoryTestingAnswers_IsNotStarted()
+    {
+        RecordTaskListTaskDto task = (await GetTaskList()).Sections[1].Tasks.ShouldHaveSingleItem();
+
+        (task.Id, task.Title, task.FirstPageId).ShouldBe(
+            ("laboratory-testing", "Laboratory testing", "diagnostic-test-required")
+        );
+        task.Status.ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
+    [Fact]
+    public async Task GetTaskList_SomeLaboratoryTestingAnswers_IsInProgress()
+    {
+        await AddLaboratoryTestingRow(
+            new MedicinesLaboratoryTesting { DiagnosticTestRequired = YesNoUnknown.Yes }
+        );
+
+        (await GetLaboratoryTestingStatus()).ShouldBe(RecordTaskStatus.InProgress);
+    }
+
+    [Fact]
+    public async Task GetTaskList_OnlyOptionalLaboratoryTestingAnswerMissing_IsCompleted()
+    {
+        await AddLaboratoryTestingRow(CompleteLaboratoryTestingRow());
+
+        (await GetLaboratoryTestingStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_LaboratoryTestingAnswers_DoNotAffectIndicationDetails()
+    {
+        await AddLaboratoryTestingRow(CompleteLaboratoryTestingRow());
+
+        (await GetStatus()).ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
+    private MedicinesLaboratoryTesting CompleteLaboratoryTestingRow() =>
+        new()
+        {
+            DiagnosticTestRequired = YesNoUnknown.Yes,
+            BiomarkerType = BiomarkerType.GenomicBiomarker,
+            NonGenomicBiomarkerDescription = "Protein",
+            GenomicTarget = "EGFR",
+            GenomicTestNgtdRelationship = GenomicTestNgtdRelationship.NewTest,
+            GenomicSampleType = "Tissue",
+            PatientPathwayPointId = _pathwayPoint.Id,
+            GenomicAlterations = "Exon 19 deletion",
+            AdditionalGenomicFactors = "T790M",
+            GenomicTestUsedInTrials = "PCR assay",
+            GenomicTestSpecificitySensitivity = "95% and 90%",
+            GenomicTestMandatoryStatus = GenomicTestMandatoryStatus.MandatoryNoAlternatives,
+            MonitoringTestsDetails = "Quarterly ctDNA",
+            SafetyTestsDetails = "Monthly liver function",
+        };
+
+    private async Task AddLaboratoryTestingRow(MedicinesLaboratoryTesting row)
+    {
+        row.RevisionId = _revision.Id;
+        await AddEntity(row, Ct);
+    }
+
+    private async Task<RecordTaskStatus> GetLaboratoryTestingStatus() =>
+        (await GetTaskList()).Sections[1].Tasks.Single().Status;
+
     private MedicinesIndicationDetail CompleteRow() =>
         new()
         {
@@ -210,6 +285,9 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             IndicationIsPaediatric = IndicationPaediatricStatus.ExclusivelyAdults,
             IndicationIsCancer = YesNoUnknown.No,
             IndicationIsRareDisease = YesNoUnknown.Unknown,
+            FormulationTypeId = _formulation.Id,
+            IsPersonalisedMedicine = YesNoUnknown.No,
+            MedicineTechnologyStatus = MedicineTechnologyStatus.Biosimilar,
         };
 
     private async Task AddIndicationRow(MedicinesIndicationDetail row)
@@ -235,7 +313,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         ).ShouldBeSuccess();
 
     private async Task<RecordTaskStatus> GetStatus() =>
-        (await GetTaskList()).Sections.Single().Tasks.Single().Status;
+        (await GetTaskList()).Sections[0].Tasks.Single().Status;
 
     private ServiceTestHarness<IRecordTaskListQueryService> CreateHarness(int organisationId)
     {

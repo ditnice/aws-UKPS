@@ -137,6 +137,11 @@ internal sealed class SeedReferenceData
                     value,
                     x => x.Id
                 ),
+                "medicines_laboratory_testing.patient_pathway_point_id" => IdOf(
+                    PatientPathwayPoints,
+                    value,
+                    x => x.Id
+                ),
                 "medicines_service_impact.uk_patient_population_range_id" => IdOf(
                     UkPatientPopulationRanges,
                     value,

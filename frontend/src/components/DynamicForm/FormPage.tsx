@@ -10,6 +10,7 @@ import { saveRecordFormPage } from '@/client/generated'
 import type { RecordPageDto } from '@/client/generated'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
+import { Badge } from '@/components/Badge/Badge'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -53,7 +54,8 @@ export function FormPage({ page }: FormPageProps) {
 
   const form = useForm({
     defaultValues: toFormValues(questions, page.answers),
-    onSubmit: async ({ value, formApi }) => {
+    onSubmitMeta: { returnToTaskList: false },
+    onSubmit: async ({ value, formApi, meta }) => {
       setSaveState({ kind: 'idle' })
       setOtherErrors([])
       const { data, error, response } = await saveRecordFormPage({
@@ -67,7 +69,8 @@ export function FormPage({ page }: FormPageProps) {
 
       if (response?.ok && data) {
         // The task list is the root of the journey: each task ends back on it.
-        router.push(data.nextPageId ? pageHref(page, data.nextPageId) : tasksHref)
+        const nextPageId = meta.returnToTaskList ? null : data.nextPageId
+        router.push(nextPageId ? pageHref(page, nextPageId) : tasksHref)
         return
       }
 
@@ -89,6 +92,16 @@ export function FormPage({ page }: FormPageProps) {
   })
 
   const heading = singleQuestion ? questions[0].label : page.page.title
+  const preheading = page.page.commercialInConfidence ? (
+    <>
+      {page.task.title}
+      <Badge className={styles.commercialBadge} colour="purple">
+        Commercial in confidence
+      </Badge>
+    </>
+  ) : (
+    page.task.title
+  )
   const backLink = (
     <BackLink href={page.previousPageId ? pageHref(page, page.previousPageId) : tasksHref}>
       Back
@@ -97,7 +110,7 @@ export function FormPage({ page }: FormPageProps) {
 
   return (
     <>
-      <PageHeader backLink={backLink} heading={heading} preheading={page.task.title} />
+      <PageHeader backLink={backLink} heading={heading} preheading={preheading} />
 
       {saveState.kind === 'conflict' && (
         <Alert type="caution">
@@ -149,9 +162,21 @@ export function FormPage({ page }: FormPageProps) {
         <div className={styles.actions}>
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-              <Button disabled={isSubmitting} buttonType="submit" variant="cta">
-                {page.nextPageId ? 'Save and continue' : 'Save and return to task list'}
-              </Button>
+              <>
+                <Button disabled={isSubmitting} buttonType="submit" variant="cta">
+                  {page.nextPageId ? 'Save and continue' : 'Save and return to task list'}
+                </Button>
+                {page.nextPageId && (
+                  <Button
+                    disabled={isSubmitting}
+                    buttonType="button"
+                    onClick={() => void form.handleSubmit({ returnToTaskList: true })}
+                    variant="primary"
+                  >
+                    Save and return to task list
+                  </Button>
+                )}
+              </>
             )}
           </form.Subscribe>
           <Link href={tasksHref}>Return to task list</Link>

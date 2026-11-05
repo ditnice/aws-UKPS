@@ -9,7 +9,8 @@ internal sealed record FormPage(
     string SectionTitle,
     string TaskId,
     string TaskTitle,
-    IReadOnlyList<FormQuestion> Questions
+    IReadOnlyList<FormQuestion> Questions,
+    bool CommercialInConfidence = false
 )
 {
     /// <summary>The content entities this page reads and writes.</summary>

@@ -1,8 +1,8 @@
 namespace UKPS.Api.Persistence.FormAnnotations;
 
 /// <summary>
-/// Places a question on a page. Every declaration of the same page ID must agree on title and
-/// order.
+/// Places a question on a page. Every declaration of the same page ID must agree on title,
+/// order and commercial in confidence flag.
 /// </summary>
 /// <param name="id">
 /// The page's ID: a lowercase slug such as <c>bnf-chapter</c> (<c>^[a-z0-9]+(-[a-z0-9]+)*$</c>).
@@ -27,4 +27,10 @@ internal sealed class FormPageAttribute(string id, string title) : Attribute
     /// Position of the page within its task. No two pages in a task may share an order.
     /// </summary>
     public int Order { get; set; }
+
+    /// <summary>
+    /// Whether the page shows the "Commercial in confidence" badge. Every declaration of the same
+    /// page ID must agree.
+    /// </summary>
+    public bool CommercialInConfidence { get; set; }
 }

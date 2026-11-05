@@ -11,9 +11,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.10.4";
+    private const string ExpectedVersion = "2026.11.6";
     private const string ExpectedFingerprint =
-        "dca00534e695b14709d2a5ad39a252493ec89e4954a45116c6c4cf67be11ce59";
+        "8eab98f2fe8d74c2ba8726f02cd7baa3fded5d415f42681ed8442370e218520d";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -31,7 +31,10 @@ public class MedicineFormModelTests
     public void Model_HasTheIndicationDetailsPagesInOrder()
     {
         Model
-            .Pages.Select(static p => p.Id)
+            .Pages.Where(static p =>
+                string.Equals(p.SectionId, "indication-details", StringComparison.Ordinal)
+            )
+            .Select(static p => p.Id)
             .ShouldBe([
                 "indication",
                 "bnf-chapter",
@@ -39,8 +42,40 @@ public class MedicineFormModelTests
                 "paediatric",
                 "cancer",
                 "rare-disease",
+                "formulation",
+                "presentation",
+                "mode-of-action",
+                "dose-regimen",
+                "personalised-medicine",
+                "technology-status",
             ]);
-        Model.Pages.ShouldAllBe(static p => p.SectionId == "indication-details");
+    }
+
+    [Fact]
+    public void Model_HasTheLaboratoryTestingPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.SectionId, "laboratory-testing", StringComparison.Ordinal)
+            )
+            .Select(static p => p.Id)
+            .ShouldBe([
+                "diagnostic-test-required",
+                "biomarker-type",
+                "non-genomic-biomarker",
+                "genomic-target",
+                "ngtd-relationship",
+                "sample-type",
+                "turnaround-time",
+                "pathway-point",
+                "genomic-alterations",
+                "additional-genomic-factors",
+                "test-used-in-trials",
+                "specificity-sensitivity",
+                "test-mandatory",
+                "monitoring-tests",
+                "safety-tests",
+            ]);
     }
 
     [Fact]
@@ -78,6 +113,99 @@ public class MedicineFormModelTests
                 FormControl.Radio,
                 AnswerShape.Single
             ),
+            (
+                "medicines_indication_detail.formulation_type_id",
+                FormControl.Select,
+                AnswerShape.Single
+            ),
+            ("medicines_indication_detail.presentation", FormControl.Textarea, AnswerShape.Single),
+            (
+                "medicines_indication_detail.mode_of_action",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_indication_detail.proposed_dose_regimen",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_indication_detail.is_personalised_medicine",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_indication_detail.medicine_technology_status",
+                FormControl.Checkbox,
+                AnswerShape.Multi
+            ),
+            (
+                "medicines_laboratory_testing.diagnostic_test_required",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            ("medicines_laboratory_testing.biomarker_type", FormControl.Radio, AnswerShape.Single),
+            (
+                "medicines_laboratory_testing.non_genomic_biomarker_description",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            ("medicines_laboratory_testing.genomic_target", FormControl.Text, AnswerShape.Single),
+            (
+                "medicines_laboratory_testing.genomic_test_ngtd_relationship",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.genomic_sample_type",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.genomic_turnaround_time_details",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.patient_pathway_point_id",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.genomic_alterations",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.additional_genomic_factors",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_used_in_trials",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_specificity_sensitivity",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_mandatory_status",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.monitoring_tests_details",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.safety_tests_details",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
         ]);
     }
 
@@ -89,7 +217,11 @@ public class MedicineFormModelTests
         model.PreviousPage(model.Pages[0]).ShouldBeNull();
         model.NextPage(model.FindPage("indication")!)!.Id.ShouldBe("bnf-chapter");
         model.PreviousPage(model.FindPage("bnf-chapter")!)!.Id.ShouldBe("indication");
-        model.NextPage(model.FindPage("rare-disease")!).ShouldBeNull();
+        model.NextPage(model.FindPage("rare-disease")!)!.Id.ShouldBe("formulation");
+        model.NextPage(model.FindPage("technology-status")!).ShouldBeNull();
+        model.PreviousPage(model.FindPage("diagnostic-test-required")!).ShouldBeNull();
+        model.NextPage(model.FindPage("diagnostic-test-required")!)!.Id.ShouldBe("biomarker-type");
+        model.NextPage(model.FindPage("safety-tests")!).ShouldBeNull();
         model.FindPage("unknown").ShouldBeNull();
     }
 

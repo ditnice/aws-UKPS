@@ -92,23 +92,95 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product treats a rare disease")]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
 
-    [FormIgnore("No page designed yet")]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
+    [FormPage("formulation", "Formulation", Order = 70)]
+    [FormField(
+        "medicines_indication_detail.formulation_type_id",
+        "What is the formulation?",
+        FormControl.Select,
+        Hint = "Select the formulation that best reflects the intended marketed product.",
+        Placeholder = "Choose or search formulation"
+    )]
+    [FormRequired("Choose a formulation")]
     public int? FormulationTypeId { get; set; }
 
-    [FormIgnore("No page designed yet")]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
+    [FormPage("presentation", "Presentation", Order = 80)]
+    [FormField(
+        "medicines_indication_detail.presentation",
+        "Describe the presentation of this product (optional)",
+        FormControl.Textarea,
+        Hint = "Provide the intended presentation if known. High-level or indicative information is acceptable at early stages."
+    )]
     public string? Presentation { get; set; }
 
-    [FormIgnore("No page designed yet")]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
+    [FormPage("mode-of-action", "Mode of action", Order = 90)]
+    [FormField(
+        "medicines_indication_detail.mode_of_action",
+        "What is the mode of action of this product? (optional)",
+        FormControl.Textarea,
+        Hint = "Briefly describe how the product works at a biological or pharmacological level."
+    )]
     public string? ModeOfAction { get; set; }
 
-    [FormIgnore("No page designed yet")]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
+    [FormPage("dose-regimen", "Proposed dose regimen", Order = 100)]
+    [FormField(
+        "medicines_indication_detail.proposed_dose_regimen",
+        "What is the proposed dose regimen for this product? (optional)",
+        FormControl.Textarea,
+        Hint = "Enter the intended dosing schedule. You can include the dose amount, dose frequency, route and duration.\n\nIf in early stages of development, you can enter high-level or indicative information and update this later."
+    )]
     public string? ProposedDoseRegimen { get; set; }
 
-    [FormIgnore("No page designed yet")]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
+    [FormPage("personalised-medicine", "Personalised medicine", Order = 110)]
+    [FormField(
+        "medicines_indication_detail.is_personalised_medicine",
+        "Is this product a personalised medicine?",
+        FormControl.Radio,
+        Hint = "Personalised medicines are treatments chosen or adjusted to suit a person's genetic, biomarker, molecular or clinical characteristics. This can improve how well the treatment works and reduce side effects."
+    )]
+    [FormRequired("Select yes if the product is a personalised medicine")]
     public YesNoUnknown? IsPersonalisedMedicine { get; set; }
 
     /// <summary>Multi-select technology status types for this record.</summary>
-    [FormIgnore("No page designed yet")]
+    [FormTask(
+        MedicineFormTasks.IndicationDetails,
+        MedicineFormTasks.IndicationDetailsTitle,
+        Order = MedicineFormTasks.IndicationDetailsOrder
+    )]
+    [FormPage("technology-status", "Technology status", Order = 120)]
+    [FormField(
+        "medicines_indication_detail.medicine_technology_status",
+        "What is the technology status for this product?",
+        FormControl.Checkbox,
+        Hint = "Select the classification that best describes this product."
+    )]
+    [FormRequired(
+        "Select the technology status of this product. You can select multiple statuses."
+    )]
     public MedicineTechnologyStatus? MedicineTechnologyStatus { get; set; }
 
     // Navigation
