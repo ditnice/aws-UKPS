@@ -75,21 +75,6 @@ const areasQuestion = question({
   options: tree,
 })
 
-const radioPage = (options: RecordPageQuestionDto['options']) =>
-  page({
-    questions: [
-      question({
-        id: 'choice',
-        type: 'Radio',
-        label: 'Choose an answer',
-        hint: null,
-        rules: [],
-        options,
-      }),
-    ],
-    answers: { choice: null },
-  })
-
 const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
 
 beforeEach(() => {
@@ -251,16 +236,102 @@ describe('FormPage', () => {
     })
 
     it('saves once and returns to the task list from the second button, even with a next page', async () => {
+      const user = userEvent.setup()
       render(<FormPage page={page()} />)
 
-      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Hepatitis C' } })
-      fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+      await user.type(screen.getByRole('textbox'), 'Hepatitis C')
+      await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
 
       await waitFor(() => {
         expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
       })
       expect(mocks.push).not.toHaveBeenCalledWith('/portal/records/5/bnf-chapter')
       expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
+    })
+
+    it('validates before returning to the task list and still allows continuing after correction', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page()} />)
+
+      await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+      expect(await screen.findByText('Enter the indication')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      expect(mocks.push).not.toHaveBeenCalled()
+
+      await user.type(screen.getByRole('textbox'), 'Hepatitis C')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/portal/records/5/bnf-chapter')
+      })
+    })
+
+    it.each([
+      {
+        outcome: 'server validation fails',
+        status: 400,
+        error: { errors: { 'medicines_indication_detail.indication': ['Server says no'] } },
+        message: 'Server says no',
+      },
+      {
+        outcome: 'the revision has changed',
+        status: 409,
+        error: { code: 'revision_changed', detail: 'This record has changed.' },
+        message: 'This record has changed.',
+      },
+      {
+        outcome: 'the server fails',
+        status: 500,
+        error: { detail: 'Internal server error' },
+        message: 'There was a problem saving your answers. Please try again later.',
+      },
+    ])(
+      'stays on the page when returning to the task list and $outcome',
+      async ({ status, error, message }) => {
+        const user = userEvent.setup()
+        mocks.saveRecordFormPage.mockResolvedValue({ error, response: { ok: false, status } })
+        render(
+          <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+        )
+
+        await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+        expect(await screen.findByText(message)).toBeInTheDocument()
+        expect(mocks.push).not.toHaveBeenCalled()
+        expect(screen.getByRole('button', { name: 'Save and return to task list' })).toBeEnabled()
+      },
+    )
+
+    it('disables both save buttons while returning to the task list to prevent duplicate saves', async () => {
+      const user = userEvent.setup()
+      const pending = Promise.withResolvers<{
+        data: { nextPageId: string }
+        response: { ok: boolean; status: number }
+      }>()
+      mocks.saveRecordFormPage.mockReturnValueOnce(pending.promise)
+      render(
+        <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+      )
+
+      const returnButton = screen.getByRole('button', { name: 'Save and return to task list' })
+      const continueButton = screen.getByRole('button', { name: 'Save and continue' })
+      await user.click(returnButton)
+
+      expect(returnButton).toBeDisabled()
+      expect(continueButton).toBeDisabled()
+      await user.click(returnButton)
+      await user.click(continueButton)
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
+      expect(mocks.push).not.toHaveBeenCalled()
+
+      pending.resolve({
+        data: { nextPageId: 'bnf-chapter' },
+        response: { ok: true, status: 200 },
+      })
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/portal/records/5/task-list')
+      })
     })
 
     it('shows client validation errors against the field', async () => {
@@ -409,7 +480,7 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ cancer: 'No' })
     })
 
-    it('shows the hint under a radio option that has one', () => {
+    it('associates a radio option hint only with the option it describes', () => {
       render(
         <FormPage
           page={page({
@@ -437,42 +508,13 @@ describe('FormPage', () => {
         />,
       )
 
+      expect(screen.getByText('For example, a gene mutation, chromosomal alteration')).toBeVisible()
+      expect(screen.getByRole('radio', { name: 'Genomic biomarker' })).toHaveAccessibleDescription(
+        'For example, a gene mutation, chromosomal alteration',
+      )
       expect(
-        screen.getByText('For example, a gene mutation, chromosomal alteration'),
-      ).toBeInTheDocument()
-    })
-
-    it('makes every label in a radio group bold when any option has a hint', () => {
-      const { container } = render(
-        <FormPage
-          page={radioPage([
-            {
-              value: 'GenomicBiomarker',
-              label: 'Genomic biomarker',
-              hint: 'For example, a gene mutation, chromosomal alteration',
-              children: null,
-            },
-            { value: 'Unknown', label: 'Unknown at this stage', hint: null, children: null },
-          ])}
-        />,
-      )
-
-      expect(container.querySelector('[data-component="radios"]')?.className).toMatch(/boldLabels/)
-    })
-
-    it('keeps radio labels regular when no option has a hint', () => {
-      const { container } = render(
-        <FormPage
-          page={radioPage([
-            { value: 'Yes', label: 'Yes', hint: null, children: null },
-            { value: 'No', label: 'No', hint: null, children: null },
-          ])}
-        />,
-      )
-
-      expect(container.querySelector('[data-component="radios"]')?.className).not.toMatch(
-        /boldLabels/,
-      )
+        screen.getByRole('radio', { name: 'Unknown at this stage' }),
+      ).not.toHaveAccessibleDescription()
     })
 
     it('associates checkbox hints and errors and revalidates on selection and blur', async () => {
