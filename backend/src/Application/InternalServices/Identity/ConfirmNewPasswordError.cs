@@ -17,6 +17,11 @@ public abstract record ConfirmNewPasswordError
     public sealed record CodeMismatch() : ConfirmNewPasswordError;
 
     /// <summary>
+    /// The confirmation code has expired.
+    /// </summary>
+    public sealed record CodeExpired : ConfirmNewPasswordError;
+
+    /// <summary>
     /// The new password does not satisfy the password policy
     /// (for example length or required character classes).
     /// </summary>
@@ -36,6 +41,7 @@ public abstract record ConfirmNewPasswordError
 
     internal TResult Match<TResult>(
         Func<CodeMismatch, TResult> codeMismatch,
+        Func<CodeExpired, TResult> codeExpired,
         Func<InvalidPassword, TResult> invalidPassword,
         Func<TooManyRequests, TResult> tooManyRequests,
         Func<TooManyFailedAttempts, TResult> tooManyFailedAttempts
@@ -43,6 +49,7 @@ public abstract record ConfirmNewPasswordError
         this switch
         {
             CodeMismatch e => codeMismatch(e),
+            CodeExpired e => codeExpired(e),
             InvalidPassword e => invalidPassword(e),
             TooManyRequests e => tooManyRequests(e),
             TooManyFailedAttempts e => tooManyFailedAttempts(e),

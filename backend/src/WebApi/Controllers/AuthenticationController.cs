@@ -576,36 +576,22 @@ public class AuthenticationController : ControllerBase
             err =>
                 err.Match(
                     codeMismatch: _ =>
-                        ValidationProblem(
-                            new ValidationProblemDetails(
-                                new Dictionary<string, string[]>(StringComparer.Ordinal)
-                                {
-                                    [nameof(value.ConfirmationCode)] =
-                                    [
-                                        "The confirmation code is incorrect or has expired.",
-                                    ],
-                                }
-                            )
-                            {
-                                Title = "Invalid confirmation code",
-                                Status = StatusCodes.Status400BadRequest,
-                            }
+                        CreateValidationProblem(
+                            "Incorrect confirmation code",
+                            nameof(value.ConfirmationCode),
+                            "The confirmation code is incorrect."
+                        ),
+                    codeExpired: _ =>
+                        CreateValidationProblem(
+                            "Expired confirmation code",
+                            nameof(value.ConfirmationCode),
+                            "The confirmation code has expired."
                         ),
                     invalidPassword: _ =>
-                        ValidationProblem(
-                            new ValidationProblemDetails(
-                                new Dictionary<string, string[]>(StringComparer.Ordinal)
-                                {
-                                    [nameof(value.NewPassword)] =
-                                    [
-                                        "The new password does not meet the password requirements.",
-                                    ],
-                                }
-                            )
-                            {
-                                Title = "Invalid password",
-                                Status = StatusCodes.Status400BadRequest,
-                            }
+                        CreateValidationProblem(
+                            "Invalid password",
+                            nameof(value.NewPassword),
+                            "The new password does not meet the password requirements."
                         ),
                     tooManyRequests: _ =>
                         Problem(
@@ -620,6 +606,19 @@ public class AuthenticationController : ControllerBase
                             statusCode: StatusCodes.Status429TooManyRequests
                         )
                 )
+        );
+    }
+
+    private ActionResult CreateValidationProblem(string title, string key, string error)
+    {
+        return ValidationProblem(
+            new ValidationProblemDetails(
+                new Dictionary<string, string[]>(StringComparer.Ordinal) { [key] = [error] }
+            )
+            {
+                Title = title,
+                Status = StatusCodes.Status400BadRequest,
+            }
         );
     }
 

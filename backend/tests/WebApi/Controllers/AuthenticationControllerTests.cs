@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Bogus;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -127,6 +128,15 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         _mockedLoginService
             .SignOut(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
+        _mockedLoginService
+            .InitiateForgottenPasswordProcedure(
+                Arg.Any<InitiateForgottenPasswordProcedureCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<InitiateForgottenPasswordProcedureError>.Ok());
+        _mockedLoginService
+            .ConfirmNewPassword(Arg.Any<ConfirmNewPasswordCommand>(), Arg.Any<CancellationToken>())
+            .Returns(Result<ConfirmNewPasswordError>.Ok());
     }
 
     [Fact]
@@ -827,6 +837,211 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         AssertCookiesDoNotExist(response.Headers);
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordProcedure_WhenSuccess_ReturnsOk()
+    {
+        _mockedLoginService
+            .InitiateForgottenPasswordProcedure(
+                Arg.Any<InitiateForgottenPasswordProcedureCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<InitiateForgottenPasswordProcedureError>.Ok());
+
+        var response = await SendInitiateForgottenPasswordProcedureRequest();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordProcedure_ShouldPassCommandToService()
+    {
+        const string email = "someone@email.com";
+
+        _mockedLoginService
+            .InitiateForgottenPasswordProcedure(
+                Arg.Any<InitiateForgottenPasswordProcedureCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<InitiateForgottenPasswordProcedureError>.Ok());
+
+        await SendInitiateForgottenPasswordProcedureRequest(command =>
+            command with
+            {
+                Email = email,
+            }
+        );
+
+        await _mockedLoginService
+            .Received(1)
+            .InitiateForgottenPasswordProcedure(
+                Arg.Is<InitiateForgottenPasswordProcedureCommand>(c => c.Email == email),
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordProcedure_NumberOfAttemptExceeded_Returns429()
+    {
+        _mockedLoginService
+            .InitiateForgottenPasswordProcedure(
+                Arg.Any<InitiateForgottenPasswordProcedureCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                Result<InitiateForgottenPasswordProcedureError>.Err(
+                    new InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded()
+                )
+            );
+
+        var response = await SendInitiateForgottenPasswordProcedureRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenServiceReturnSuccess_ShouldReturn200Ok()
+    {
+        var response = await SendConfirmPasswordRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_ShouldPassCommandToService()
+    {
+        await SendConfirmPasswordRequest(c =>
+            c with
+            {
+                Email = "someone@email.com",
+                ConfirmationCode = "654321",
+                NewPassword = "NewPassw0rd!",
+            }
+        );
+
+        await _mockedLoginService
+            .Received(1)
+            .ConfirmNewPassword(
+                Arg.Is<ConfirmNewPasswordCommand>(c =>
+                    c.Email == "someone@email.com"
+                    && c.ConfirmationCode == "654321"
+                    && c.NewPassword == "NewPassw0rd!"
+                ),
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenServiceReturnCodeMismatch_ShouldReturn400BadRequestAndAValidationProblemDetailsWithConfirmationCodeMarkedWithValidationError()
+    {
+        MockConfirmNewPasswordResponse(new ConfirmNewPasswordError.CodeMismatch());
+
+        var response = await SendConfirmPasswordRequest();
+
+        await AssertValidationProblem(response, nameof(ConfirmNewPasswordCommand.ConfirmationCode));
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenServiceReturnCodeExpired_ShouldReturn400BadRequestAndAValidationProblemDetailsWithConfirmationCodeMarkedWithValidationError()
+    {
+        MockConfirmNewPasswordResponse(new ConfirmNewPasswordError.CodeExpired());
+
+        var response = await SendConfirmPasswordRequest();
+
+        await AssertValidationProblem(response, nameof(ConfirmNewPasswordCommand.ConfirmationCode));
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenServiceReturnInvalidPassword_ShouldReturn400BadRequestAndAValidationProblemDetailsWithNewPasswordMarkedWithValidationError()
+    {
+        MockConfirmNewPasswordResponse(new ConfirmNewPasswordError.InvalidPassword());
+
+        var response = await SendConfirmPasswordRequest();
+
+        await AssertValidationProblem(response, nameof(ConfirmNewPasswordCommand.NewPassword));
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenServiceReturnTooManyRequests_ShouldReturn429()
+    {
+        MockConfirmNewPasswordResponse(new ConfirmNewPasswordError.TooManyRequests());
+
+        var response = await SendConfirmPasswordRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenServiceReturnTooManyFailedAttempts_ShouldReturn429()
+    {
+        MockConfirmNewPasswordResponse(new ConfirmNewPasswordError.TooManyFailedAttempts());
+
+        var response = await SendConfirmPasswordRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    private static async Task AssertValidationProblem(
+        HttpResponseMessage response,
+        string expectedField
+    )
+    {
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+
+        problem.ShouldNotBeNull();
+        // Case-insensitive: the serializer may camelCase the keys
+        problem.Errors.Keys.ShouldContain(key =>
+            string.Equals(key, expectedField, StringComparison.OrdinalIgnoreCase)
+        );
+    }
+
+    private void MockConfirmNewPasswordResponse(ConfirmNewPasswordError error)
+    {
+        _mockedLoginService
+            .ConfirmNewPassword(Arg.Any<ConfirmNewPasswordCommand>(), Arg.Any<CancellationToken>())
+            .Returns(Result<ConfirmNewPasswordError>.Err(error));
+    }
+
+    private Task<HttpResponseMessage> SendConfirmPasswordRequest(
+        Func<ConfirmNewPasswordCommand, ConfirmNewPasswordCommand>? overrides = null
+    )
+    {
+        var defaultCommand = new ConfirmNewPasswordCommand()
+        {
+            Email = "example@email.com",
+            ConfirmationCode = "123456",
+            NewPassword = "12345678",
+        };
+        var command = overrides is null ? defaultCommand : overrides(defaultCommand);
+        return _client.PostAsJsonAsync(
+            new Uri("/auth/confirm-new-password", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
+    }
+
+    private Task<HttpResponseMessage> SendInitiateForgottenPasswordProcedureRequest(
+        Func<
+            InitiateForgottenPasswordProcedureCommand,
+            InitiateForgottenPasswordProcedureCommand
+        >? overrides = null
+    )
+    {
+        var defaultCommand = new InitiateForgottenPasswordProcedureCommand()
+        {
+            Email = "example@email.com",
+        };
+        var command = overrides is null ? defaultCommand : overrides(defaultCommand);
+        return _client.PostAsJsonAsync(
+            new Uri("/auth/initiate-forgotten-password", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
     }
 
     private Task<HttpResponseMessage> SendRefreshRequest(

@@ -443,6 +443,20 @@ public class LoginServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.TooManyFailedAttempts>();
     }
 
+    [Fact]
+    public async Task ConfirmNewPassword_WhenCodeExpires_ShouldReturnCodeExpiredError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<ExpiredCodeException>();
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest();
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.CodeExpired>();
+    }
+
     private Task<Result<ConfirmNewPasswordError>> MakeValidConfirmPasswordRequest(
         Func<ConfirmNewPasswordCommand, ConfirmNewPasswordCommand>? overrides = null
     )
