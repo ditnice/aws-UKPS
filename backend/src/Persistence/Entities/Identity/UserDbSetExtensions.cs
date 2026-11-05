@@ -10,6 +10,7 @@ internal static class UserDbSetExtensions
         CancellationToken cancellationToken
     )
     {
+        // Remove this normalisation when we have a normalised column
         // Cannot specify a culture as this cannot be translated to SQL.
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 #pragma warning disable CA1304 // Specify CultureInfo

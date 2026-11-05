@@ -423,6 +423,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         }
         catch (UserNotFoundException)
         {
+            // Don't reveal that the user does not exist.
             return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeMismatch());
         }
         catch (CodeMismatchException)

@@ -59,12 +59,6 @@ builder
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-builder
-    .Services.AddOptions<WebHostingOptions>()
-    .Bind(builder.Configuration.GetSection(WebHostingOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     ConfigureJsonEnums(options.SerializerOptions);

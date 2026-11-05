@@ -410,7 +410,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
         }
     }
 
-    public record ResetPasswordCommand
+    public sealed record ResetPasswordCommand
     {
         public required string Username { get; init; }
         public string? UpdatedPassword { get; init; }
