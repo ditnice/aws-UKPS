@@ -3078,11 +3078,7 @@ export type GetUserDetailsWithinOrganisationErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Returned if the caller is not authorised to view the organisation's users.
-     */
-    403: ProblemDetails;
-    /**
-     * Returned if the organisation does not exist or the user is not a member of it.
+     * The user does not exist in this organisation or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3290,11 +3286,7 @@ export type GetUserRegistrationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to view membership requests for the organisation.
-     */
-    403: ProblemDetails;
-    /**
-     * No membership request was found with the supplied identifier.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3336,11 +3328,7 @@ export type ApproveErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to approve the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3380,11 +3368,7 @@ export type RejectErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to reject the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**

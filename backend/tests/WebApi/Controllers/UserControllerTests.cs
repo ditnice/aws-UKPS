@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using Bogus;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -299,7 +300,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task GetUserDetailsWithinOrganisation_ReturnsForbidden_WhenNotAllowed()
+    public async Task GetUserDetailsWithinOrganisation_ReturnsNotFound_WhenNotAllowed()
     {
         _mockUserService
             .GetUserDetailsWithinOrganisation(
@@ -316,7 +317,46 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             TestContext.Current.CancellationToken
         );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetUserDetailsWithinOrganisation_ShouldConcealDeniedAndMissingResources(
+        bool missingOrganisation
+    )
+    {
+        GetUsersError missing = missingOrganisation
+            ? new GetUsersError.OrganisationNotFound(1)
+            : new GetUsersError.UserNotFound(2, 1);
+        _mockUserService
+            .GetUserDetailsWithinOrganisation(2, 1, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<UserInformationDto, GetUsersError>.Err(new GetUsersError.NotAllowed(1)),
+                Result<UserInformationDto, GetUsersError>.Err(missing)
+            );
+
+        var denied = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 2, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+        var absent = await _client.GetAsync(
+            UserWithinOrganisationUrl(userId: 2, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        denied.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        absent.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var deniedBody = JsonNode
+            .Parse(await denied.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!
+            .AsObject();
+        var absentBody = JsonNode
+            .Parse(await absent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!
+            .AsObject();
+        deniedBody.Remove("traceId");
+        absentBody.Remove("traceId");
+        JsonNode.DeepEquals(deniedBody, absentBody).ShouldBeTrue();
     }
 
     [Fact]

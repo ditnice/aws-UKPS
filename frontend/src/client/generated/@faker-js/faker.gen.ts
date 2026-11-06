@@ -1519,8 +1519,6 @@ export const fakeGetUserDetailsWithinOrganisationResponse200 = (options?: Option
 
 export const fakeGetUserDetailsWithinOrganisationResponse401 = (options?: Options): GetUserDetailsWithinOrganisationErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeGetUserDetailsWithinOrganisationResponse403 = (options?: Options): GetUserDetailsWithinOrganisationErrors[403] => fakeProblemDetails(options);
-
 export const fakeGetUserDetailsWithinOrganisationResponse404 = (options?: Options): GetUserDetailsWithinOrganisationErrors[404] => fakeProblemDetails(options);
 
 export const fakeGetUserDetailsWithinOrganisationResponse409 = (options?: Options): GetUserDetailsWithinOrganisationErrors[409] => fakeAuthenticationProblemDetails(options);
@@ -1608,8 +1606,6 @@ export const fakeGetUserRegistrationByIdResponse200 = (options?: Options): GetUs
 
 export const fakeGetUserRegistrationByIdResponse401 = (options?: Options): GetUserRegistrationByIdErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeGetUserRegistrationByIdResponse403 = (options?: Options): GetUserRegistrationByIdErrors[403] => fakeProblemDetails(options);
-
 export const fakeGetUserRegistrationByIdResponse404 = (options?: Options): GetUserRegistrationByIdErrors[404] => fakeProblemDetails(options);
 
 export const fakeGetUserRegistrationByIdResponse409 = (options?: Options): GetUserRegistrationByIdErrors[409] => fakeAuthenticationProblemDetails(options);
@@ -1628,8 +1624,6 @@ export const fakeApproveResponse200 = (): ApproveResponses[200] => undefined;
 
 export const fakeApproveResponse401 = (options?: Options): ApproveErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeApproveResponse403 = (options?: Options): ApproveErrors[403] => fakeProblemDetails(options);
-
 export const fakeApproveResponse404 = (options?: Options): ApproveErrors[404] => fakeProblemDetails(options);
 
 export const fakeApproveResponse409 = (options?: Options): ApproveErrors[409] => fakeAuthenticationProblemDetails(options);
@@ -1647,8 +1641,6 @@ export const fakeRejectRequest = (options?: Options): Omit<RejectData, 'url'> =>
 export const fakeRejectResponse200 = (): RejectResponses[200] => undefined;
 
 export const fakeRejectResponse401 = (options?: Options): RejectErrors[401] => fakeAuthenticationProblemDetails(options);
-
-export const fakeRejectResponse403 = (options?: Options): RejectErrors[403] => fakeProblemDetails(options);
 
 export const fakeRejectResponse404 = (options?: Options): RejectErrors[404] => fakeProblemDetails(options);
 
