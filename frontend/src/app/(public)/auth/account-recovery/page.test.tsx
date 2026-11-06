@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import AccountRecovery from './page'
 
@@ -7,13 +7,13 @@ vi.mock('next/server', () => ({
   connection: vi.fn(),
 }))
 
-const supportEmail = vi.hoisted(() => {
-  const email = 'support@example.com'
-  vi.stubEnv('QA_SUPPORT_EMAIL', email)
-  return email
-})
+const supportEmail = 'support@example.com'
 
 describe('AccountRecovery', () => {
+  beforeEach(() => {
+    vi.stubEnv('QA_SUPPORT_EMAIL', supportEmail)
+  })
+
   it('explains how to get help recovering an account', async () => {
     render(await AccountRecovery())
 
@@ -32,6 +32,17 @@ describe('AccountRecovery', () => {
       'href',
       `mailto:${supportEmail}`,
     )
+  })
+
+  it('explains how to get help when the support email is not configured', async () => {
+    vi.stubEnv('QA_SUPPORT_EMAIL', '')
+
+    render(await AccountRecovery())
+
+    expect(screen.queryByRole('link', { name: supportEmail })).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Please contact the UK PharmaScan support team for assistance.'),
+    ).toBeInTheDocument()
   })
 
   it('links back to sign-in', async () => {
