@@ -22,10 +22,13 @@ public abstract record UpdateUserDetailsError
     /// </summary>
     internal sealed record ConflictingEmail : UpdateUserDetailsError;
 
+    internal sealed record ReauthenticationRequired : UpdateUserDetailsError;
+
     internal TResult Match<TResult>(
         Func<TResult> unauthorised,
         Func<TResult> userDoesNotExist,
-        Func<TResult> conflictingEmail
+        Func<TResult> conflictingEmail,
+        Func<TResult> reauthenticateRequired
     )
     {
         return this switch
@@ -33,6 +36,7 @@ public abstract record UpdateUserDetailsError
             Unauthorised => unauthorised(),
             UserDoesNotExist => userDoesNotExist(),
             ConflictingEmail => conflictingEmail(),
+            ReauthenticationRequired => reauthenticateRequired(),
             _ => throw new UnreachableException($"Unrecognised {nameof(UpdateUserDetailsError)}"),
         };
     }

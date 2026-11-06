@@ -36,6 +36,7 @@ internal sealed class MockCurrentUserInfoService : ICurrentUserInfoService
             UserRole = UserRole.Super,
             Email = sampleUser.User!.WorkEmail,
             CognitoUsername = sampleUser.User.CognitoUsername,
+            TimeSinceLastAuthentication = TimeSpan.FromMinutes(3),
         };
     }
 

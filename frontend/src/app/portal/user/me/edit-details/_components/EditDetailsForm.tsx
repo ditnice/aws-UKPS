@@ -2,7 +2,7 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { isValidPhoneNumber } from 'libphonenumber-js/max'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
@@ -11,10 +11,29 @@ import { UpdateUserDetailsCommand } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { buildSignInHref } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
+
+const retrieveUserDetails = (key: string | undefined): UpdateUserDetailsCommand | undefined => {
+  if (!key) return undefined
+  const data = sessionStorage.getItem(key)
+  return data ? (JSON.parse(data) as UpdateUserDetailsCommand) : undefined
+}
+
+const storeUserDetails = (userDetailsCommand: UpdateUserDetailsCommand) => {
+  const key = crypto.randomUUID()
+  sessionStorage.setItem(key, JSON.stringify(userDetailsCommand))
+  return key
+}
+
+const clearUserDetailsSessionData = (key: string | undefined) => {
+  if (key) {
+    sessionStorage.removeItem(key)
+  }
+}
 
 const EditDetails = z.object({
   fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
@@ -30,16 +49,17 @@ const EditDetails = z.object({
     .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 
-export type EditDetailsFormProps = { userId: number; initialValues: UpdateUserDetailsCommand }
-export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps) {
+export type EditDetailsFormProps = {
+  userId: number
+  initialValues: UpdateUserDetailsCommand
+  sessionKey: string | undefined
+}
+export function EditDetailsForm({ userId, initialValues, sessionKey }: EditDetailsFormProps) {
   const [error, setError] = useState(false)
   const router = useRouter()
+  const sessionData = retrieveUserDetails(sessionKey)
   const form = useForm({
-    defaultValues: {
-      fullName: initialValues.fullName,
-      workEmail: initialValues.workEmail,
-      workTelephone: initialValues.workTelephone,
-    } satisfies UpdateUserDetailsCommand,
+    defaultValues: sessionData ?? (initialValues satisfies UpdateUserDetailsCommand),
     validationLogic: revalidateLogic({
       mode: 'submit',
       modeAfterSubmission: 'blur',
@@ -50,19 +70,24 @@ export function EditDetailsForm({ userId, initialValues }: EditDetailsFormProps)
     onSubmit: async ({ value, formApi }) => {
       setError(false)
       const data = EditDetails.parse(value)
-      const response = await patchUsersByUserId({ path: { userId }, body: data })
+      const { response, error } = await patchUsersByUserId({ path: { userId }, body: data })
 
-      if (response.response?.ok) {
+      if (response?.ok) {
+        clearUserDetailsSessionData(sessionKey)
         router.push('/portal/user/me?updated=true')
         return
       }
 
       setError(true)
 
-      if (response && isValidationProblemDetails(response.error)) {
-        formApi.setFieldMeta('fullName', updateFormApiErrors(response.error, 'FullName'))
-        formApi.setFieldMeta('workEmail', updateFormApiErrors(response.error, 'WorkEmail'))
-        formApi.setFieldMeta('workTelephone', updateFormApiErrors(response.error, 'WorkTelephone'))
+      if (error && 'code' in error && error.code == 'ReauthenticationRequired') {
+        const key = storeUserDetails(data)
+        redirect(buildSignInHref(`/portal/user/me/edit-details?sessionKey=${key}`))
+      }
+      if (response && isValidationProblemDetails(error)) {
+        formApi.setFieldMeta('fullName', updateFormApiErrors(error, 'FullName'))
+        formApi.setFieldMeta('workEmail', updateFormApiErrors(error, 'WorkEmail'))
+        formApi.setFieldMeta('workTelephone', updateFormApiErrors(error, 'WorkTelephone'))
       }
     },
   })

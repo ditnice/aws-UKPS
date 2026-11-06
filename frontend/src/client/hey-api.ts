@@ -36,6 +36,11 @@ const browserFetch: typeof fetch = async (input, init) => {
     return response
   }
 
+  // reauthentication is handled where it is needed.
+  if (isReauthenticationRequired(response)) {
+    return response
+  }
+
   // The session is valid but needs an organisation selected, so refreshing would not help.
   if (await redirectToOrganisationSelection(response)) {
     return response
@@ -55,6 +60,13 @@ const browserFetch: typeof fetch = async (input, init) => {
   if (retryResponse.status === 401) redirectToSignIn()
 
   return retryResponse
+}
+
+function isReauthenticationRequired(response: Response): boolean {
+  if (response.status !== 401) return false
+
+  const challenge = response.headers.get('WWW-Authenticate')
+  return challenge?.includes('error="insufficient_user_authentication"') ?? false
 }
 
 function refreshBrowserToken(): Promise<boolean> {

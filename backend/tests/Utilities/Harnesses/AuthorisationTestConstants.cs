@@ -13,5 +13,6 @@ internal static class AuthorisationTestConstants
             UserRole = UserRole.Super,
             Email = "exampleuser@email.com",
             CognitoUsername = CognitoUsername.Parse("24a97ae0-d7d2-4c6b-88de-d835b13e8038"),
+            TimeSinceLastAuthentication = TimeSpan.FromMinutes(4),
         };
 }

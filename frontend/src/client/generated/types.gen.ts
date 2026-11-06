@@ -12,7 +12,8 @@ export const AuthenticationFailCode = {
     MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
     MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState',
     ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive',
-    SELECTED_ORGANISATION_MISMATCH: 'SelectedOrganisationMismatch'
+    SELECTED_ORGANISATION_MISMATCH: 'SelectedOrganisationMismatch',
+    REAUTHENTICATION_REQUIRED: 'ReauthenticationRequired'
 } as const;
 
 export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];

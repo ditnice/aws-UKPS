@@ -4047,6 +4047,7 @@
           "MembershipNotInValidState",
           "OrganisationNotActive",
           "SelectedOrganisationMismatch",
+          "ReauthenticationRequired",
           null
         ],
         "type": "string"

@@ -32,4 +32,9 @@ public sealed record CurrentUser
     /// Gets the identifiers of the organisations the current user can select.
     /// </summary>
     public IReadOnlyCollection<int> SelectableOrganisationIds { get; init; } = [];
+
+    /// <summary>
+    /// Gets the amount of time that has elapsed since the current user last authenticated.
+    /// </summary>
+    public required TimeSpan TimeSinceLastAuthentication { get; init; }
 }

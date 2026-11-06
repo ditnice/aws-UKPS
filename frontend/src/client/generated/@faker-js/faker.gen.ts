@@ -35,7 +35,8 @@ export const fakeAuthenticationFailCode = (options?: Options): AuthenticationFai
         'MembershipDeactivated',
         'MembershipNotInValidState',
         'OrganisationNotActive',
-        'SelectedOrganisationMismatch'
+        'SelectedOrganisationMismatch',
+        'ReauthenticationRequired'
     ]);
 };
 
