@@ -59,6 +59,27 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
         RuleFor(x => x.Organisations, _ => CreateOrganisations());
         RuleFor(x => x.Users, (f, o) => FakeUsers(f, o));
         RuleFor(x => x.Memberships, (f, o) => FakeMemberships(f, o));
+        RuleFor(
+            x => x.RegistrationRequests,
+            (_, o) =>
+            {
+                Organisation organisation = o.Organisations.ElementAt(
+                    E2eSubjectUsers.OrganisationId - 1
+                );
+                return
+                [
+                    new UserRegistrationRequest
+                    {
+                        OrganisationId = E2eSubjectUsers.OrganisationId,
+                        Organisation = organisation,
+                        FullName = "E2E Read-only Request",
+                        WorkEmail = E2eSubjectUsers.RegistrationRequestEmail,
+                        PhoneNumber = "07123456789",
+                        CreatedAt = organisation.CreatedAt,
+                    },
+                ];
+            }
+        );
         RuleFor(x => x.SeededRecords, (f, o) => CreateRecords(f, o));
     }
 
@@ -159,28 +180,92 @@ internal sealed class SeedingDataPayloadFaker : Faker<SeedingDataPayload>
             }
         }
 
-        // This membership is added to enable mock auth access.
-        User devUser = new UserFaker()
-            .RuleFor(
-                x => x.CognitoUsername,
-                _ => DevAuthenticationClaims.DefaultUserCognitoUsername
-            )
-            .RuleFor(x => x.WorkEmail, _ => DevAuthenticationClaims.DefaultUserEmail)
-            .RuleFor(x => x.UserType, _ => UserType.ItAdmin)
-            .Generate();
-        memberships.Add(
-            new UserOrgMembership
-            {
-                User = devUser,
-                Organisation = organisations[0],
-                UserRole = UserRole.Super,
-                Status = UserOrgMembershipStatus.Active,
-                AllowedPharmaceuticalEntity = PharmaceuticalEntity.Both,
-                CreatedAt = organisations[0].CreatedAt,
-            }
-        );
+        memberships.AddRange(DevUserMemberships(organisations));
+        memberships.AddRange(E2eSubjectMemberships(organisations));
         return [.. memberships];
     }
+
+    /// <summary>
+    /// A user for each role that dev authentication can act as, in that role's organisation: the
+    /// configured role's user by default, or the role named by its role cookie.
+    /// </summary>
+    private static IEnumerable<UserOrgMembership> DevUserMemberships(Organisation[] organisations)
+    {
+        foreach (
+            (UserRole role, DevAuthenticationUser devUser) in DevAuthenticationClaims.RoleUsers
+        )
+        {
+            Organisation organisation = SeededOrganisation(organisations, devUser.OrganisationId);
+            UserType userType =
+                role == UserRole.Super
+                    ? UserType.ItAdmin
+                    : _userTypes[organisation.OrganisationType];
+            User user = new UserFaker()
+                .RuleFor(x => x.CognitoUsername, _ => devUser.CognitoUsername)
+                .RuleFor(x => x.WorkEmail, _ => devUser.Email)
+                .RuleFor(x => x.UserType, _ => userType)
+                .Generate();
+            yield return FixedMembership(user, organisation, role, UserOrgMembershipStatus.Active);
+        }
+    }
+
+    /// <summary>The users the E2E tests running as a Champion act on.</summary>
+    private static IEnumerable<UserOrgMembership> E2eSubjectMemberships(
+        Organisation[] organisations
+    )
+    {
+        Organisation organisation = SeededOrganisation(
+            organisations,
+            E2eSubjectUsers.OrganisationId
+        );
+        foreach (E2eSubjectUsers.Subject subject in E2eSubjectUsers.All)
+        {
+            User user = new UserFaker()
+                .RuleFor(x => x.WorkEmail, _ => subject.Email)
+                .RuleFor(x => x.UserType, _ => _userTypes[organisation.OrganisationType])
+                .Generate();
+            yield return FixedMembership(user, organisation, subject.Role, subject.Status);
+        }
+
+        Organisation foreignOrganisation = SeededOrganisation(
+            organisations,
+            DevAuthenticationClaims.DefaultOrganisationId
+        );
+        User foreignUser = new UserFaker()
+            .RuleFor(x => x.WorkEmail, _ => E2eSubjectUsers.ForeignUserEmail)
+            .RuleFor(x => x.UserType, _ => _userTypes[foreignOrganisation.OrganisationType])
+            .Generate();
+        yield return FixedMembership(
+            foreignUser,
+            foreignOrganisation,
+            UserRole.Standard,
+            UserOrgMembershipStatus.Active
+        );
+    }
+
+    /// <summary>Seeded organisation ids follow the seeding order, starting at 1.</summary>
+    private static Organisation SeededOrganisation(Organisation[] organisations, int id) =>
+        organisations[id - 1];
+
+    private static UserOrgMembership FixedMembership(
+        User user,
+        Organisation organisation,
+        UserRole role,
+        UserOrgMembershipStatus status
+    ) =>
+        new()
+        {
+            User = user,
+            Organisation = organisation,
+            UserRole = role,
+            Status = status,
+            // The Super user works across every organisation, so it isn't limited to the organisation's.
+            AllowedPharmaceuticalEntity =
+                role == UserRole.Super
+                    ? PharmaceuticalEntity.Both
+                    : organisation.AllowedPharmaceuticalEntity,
+            CreatedAt = organisation.CreatedAt,
+        };
 
     /// <summary>Internal QA organisations have one super user; other organisations have a champion.</summary>
     private static UserRole RoleFor(Faker faker, Organisation organisation, int userIndex)

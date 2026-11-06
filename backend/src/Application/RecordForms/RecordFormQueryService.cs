@@ -1,3 +1,4 @@
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
@@ -28,41 +29,54 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             );
         }
 
-        FormPage page = loaded.Page;
-        var rows = await loader.LoadRowsAsync(
-            page,
-            loaded.Revision.Id,
-            track: false,
+        LoadedAnswers? saved = await loader.LoadAnswersAsync(
+            loaded,
+            forSave: false,
             cancellationToken
         );
-        Dictionary<string, FormAnswer> answers = RecordFormPageLoader.ReadAnswers(page, rows);
-        var options = await loader.LoadOptionsAsync(page, answers, cancellationToken);
+        if (saved is null)
+        {
+            return GetRecordPageResult.Err(new GetRecordPageError.NotFound());
+        }
 
-        return GetRecordPageResult.Ok(
-            new RecordPageDto
+        PageAnswers answers = PageAnswers.For(loaded.Page, saved.Answers);
+        var options = await loader.LoadOptionsAsync(loaded.Page, answers, cancellationToken);
+        return GetRecordPageResult.Ok(ToDto(loaded, saved.Applicability, answers, options));
+    }
+
+    private static RecordPageDto ToDto(
+        LoadedPage loaded,
+        Applicability applicability,
+        PageAnswers answers,
+        Dictionary<string, IReadOnlyList<FormOption>> options
+    )
+    {
+        FormModel model = loaded.Model;
+        FormPage page = loaded.Page;
+        return new RecordPageDto
+        {
+            FormVersion = model.Version,
+            RecordId = loaded.Record.Id,
+            Section = new RecordPageSectionDto { Id = page.SectionId, Title = page.SectionTitle },
+            Task = new RecordPageTaskDto { Id = page.TaskId, Title = page.TaskTitle },
+            Page = new RecordPagePageDto
             {
-                FormVersion = loaded.Model.Version,
-                RevisionVersion = loaded.Revision.Version,
-                RecordId = recordId,
-                Section = new RecordPageSectionDto
-                {
-                    Id = page.SectionId,
-                    Title = page.SectionTitle,
-                },
-                Task = new RecordPageTaskDto { Id = page.TaskId, Title = page.TaskTitle },
-                Page = new RecordPagePageDto { Id = page.Id, Title = page.Title },
-                PreviousPageId = loaded.Model.PreviousPage(page)?.Id,
-                NextPageId = loaded.Model.NextPage(page)?.Id,
-                Questions = page
-                    .Questions.Select(q => ToDto(q, options.GetValueOrDefault(q.Id)))
-                    .ToArray(),
-                Answers = answers.ToDictionary(
-                    static a => a.Key,
-                    static a => a.Value.ToJson(),
-                    StringComparer.Ordinal
-                ),
-            }
-        );
+                Id = page.Id,
+                Title = page.Title,
+                CommercialInConfidence = page.CommercialInConfidence,
+            },
+            PreviousPageId = model.PreviousPage(page, applicability)?.Id,
+            NextPageId = model.NextPage(page, applicability)?.Id,
+            Questions = page
+                .Questions.Select(q => ToDto(q, options.GetValueOrDefault(q.Id)))
+                .ToArray(),
+            Answers = page.Questions.ToDictionary(
+                static q => q.Id,
+                q => answers[q.Id].ToJson(),
+                StringComparer.Ordinal
+            ),
+            PageHash = answers.ComputeStableHash(),
+        };
     }
 
     private static RecordPageQuestionDto ToDto(
@@ -81,6 +95,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             ChildLabel = question.ChildLabel,
             ChildPlaceholder = question.ChildPlaceholder,
             AddAnotherLabel = question.AddAnotherLabel,
+            ShowWhen = question.ShowWhen is null ? null : ToDto(question.ShowWhen),
             Rules = question
                 .Rules.Select(static r => new RecordPageRuleDto
                 {
@@ -92,11 +107,26 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             Options = options?.Select(ToDto).ToArray(),
         };
 
+    private static RecordPageConditionDto ToDto(FormCondition condition) =>
+        condition switch
+        {
+            AnswerInCondition answerIn => new RecordPageConditionDto
+            {
+                Kind = answerIn.Kind,
+                QuestionId = answerIn.QuestionId,
+                Values = answerIn.Values,
+            },
+            _ => throw new InvalidOperationException(
+                $"Unsupported condition kind {condition.Kind}."
+            ),
+        };
+
     private static RecordPageOptionDto ToDto(FormOption option) =>
         new()
         {
             Value = option.Value,
             Label = option.Label,
+            Hint = option.Hint,
             Children = option.Children.Count == 0 ? null : option.Children.Select(ToDto).ToArray(),
         };
 }

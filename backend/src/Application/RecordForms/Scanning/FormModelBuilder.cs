@@ -1,4 +1,5 @@
 using UKPS.Api.Application.RecordForms.Bindings;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Persistence.Enums;
@@ -90,11 +91,18 @@ internal static class FormModelBuilder
             ChildPlaceholder = field.ChildPlaceholder,
             AddAnotherLabel = field.AddAnotherLabel,
             Rules = [.. rules.OrderBy(static r => r.Kind)],
+            ShowWhen = question.ShowWhen is { } showWhen
+                ? Condition(showWhen.QuestionId, showWhen.Values)
+                : null,
             OptionKey = OptionKey(question, options),
             Entity = entity,
             Binding = BuildBinding(question),
         };
     }
+
+    /// <summary>A condition on enum values, which are stored as their member names.</summary>
+    private static AnswerInCondition Condition(string questionId, IReadOnlyList<object> values) =>
+        new(questionId, values.Select(static v => Enum.GetName(v.GetType(), v)!).ToArray());
 
     /// <summary>
     /// The key named by <c>[FormOptions]</c>, or else the only provider of the expected kind and
@@ -153,6 +161,11 @@ internal static class FormModelBuilder
             )
             .ToArray();
 
+        Dictionary<string, FormPageShowWhenAttribute> pageConditions = entities
+            .Where(e => e.Sections.Any(s => s.RecordType == recordType))
+            .SelectMany(static e => e.PageConditions)
+            .ToDictionary(static c => c.PageId, StringComparer.Ordinal);
+
         FormSection[] sections = declared
             .GroupBy(static x => x.Section.Id, StringComparer.Ordinal)
             .Select(group =>
@@ -168,18 +181,7 @@ internal static class FormModelBuilder
                                 static x => x.First.Page.Id,
                                 StringComparer.Ordinal
                             )
-                            .Select(page => new FormPage(
-                                page.Key,
-                                page.First().First.Page.Title,
-                                page.First().First.Page.Order,
-                                section.Id,
-                                section.Title,
-                                taskAttribute.Id,
-                                taskAttribute.Title,
-                                page.Select(static x => x.Second)
-                                    .OrderBy(static q => q.Order)
-                                    .ToArray()
-                            ))
+                            .Select(page => BuildPage(page, section, taskAttribute, pageConditions))
                             .OrderBy(static p => p.Order)
                             .ToArray();
                         return new FormTask(
@@ -198,4 +200,27 @@ internal static class FormModelBuilder
 
         return new FormModel(recordType, FormVersions.For(recordType)!, sections);
     }
+
+    private static FormPage BuildPage(
+        IGrouping<string, (QuestionDeclaration First, FormQuestion Second)> page,
+        FormSectionAttribute section,
+        FormTaskAttribute task,
+        Dictionary<string, FormPageShowWhenAttribute> pageConditions
+    ) =>
+        new(
+            page.Key,
+            page.First().First.Page.Title,
+            page.First().First.Page.Order,
+            section.Id,
+            section.Title,
+            task.Id,
+            task.Title,
+            page.Select(static x => x.Second).OrderBy(static q => q.Order).ToArray(),
+            CommercialInConfidence: page.First().First.Page.CommercialInConfidence
+        )
+        {
+            ShowWhen = pageConditions.TryGetValue(page.Key, out var condition)
+                ? Condition(condition.QuestionId, condition.Values)
+                : null,
+        };
 }

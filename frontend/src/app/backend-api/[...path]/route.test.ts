@@ -160,6 +160,25 @@ describe('backend API route', () => {
     expect(headers.has('x-untrusted')).toBe(false)
   })
 
+  it.each([
+    ['DEV', 'access_token=a; ukps_dev_role=Standard'],
+    ['COGNITO', 'access_token=a'],
+  ])(
+    'forwards the dev role cookie only in DEV mode (AUTHENTICATION_MODE=%s)',
+    async (mode, expectedCookie) => {
+      vi.stubEnv('AUTHENTICATION_MODE', mode)
+
+      await GET(
+        request('GET', { cookie: 'access_token=a; ukps_dev_role=Standard' }) as never,
+        context('users'),
+      )
+
+      const headers = new Headers(vi.mocked(fetch).mock.calls[0][1]?.headers)
+      expect(headers.get('cookie')).toBe(expectedCookie)
+      vi.unstubAllEnvs()
+    },
+  )
+
   it('preserves selected response headers and always prevents response caching', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response('denied', {

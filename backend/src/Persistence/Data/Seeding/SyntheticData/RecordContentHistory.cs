@@ -138,8 +138,13 @@ internal static class RecordContentHistory
         {
             CreationPageFields(record.ProductRecordDetails.NamesAndIdentifiers),
             IndicationFields(record),
+            DevelopmentBackgroundFields(
+                record.IndicationAndDevelopmentInformation.DevelopmentBackground
+            ),
+            LaboratoryTestingFields(record.ServiceReadinessInformation.LaboratoryTestingDetails),
             MhraFields(regulatory.MhraProcedureAndDates),
             HtaAndDesignationFields(regulatory),
+            PatientAndClinicalRequirementsFields(record.ServiceReadinessInformation),
             ServiceReadinessFields(record.ServiceReadinessInformation),
         }
             .SelectMany(fields => fields)
@@ -200,11 +205,51 @@ internal static class RecordContentHistory
                 indication.IsPersonalisedMedicine?.ToString()
             ),
             (
+                "medicines_indication_detail.medicine_technology_status",
+                indication.MedicineTechnologyStatus.Count == 0
+                    ? null
+                    : FieldAuditJson.Serialize(
+                        indication
+                            .MedicineTechnologyStatus.Select(status => status.ToString())
+                            .Order(StringComparer.Ordinal)
+                    )
+            ),
+            (
                 "record_clinical_trial_information.recruiting_in_uk",
                 record.ClinicalTrialInformation.RecruitingInUk?.ToString()
             ),
         ];
     }
+
+    private static (string Path, string? Value)[] DevelopmentBackgroundFields(
+        SyntheticDevelopmentBackground background
+    ) =>
+        [
+            (
+                "medicines_development_background.is_repurposed_medicine",
+                background.IsRepurposedMedicine?.ToString()
+            ),
+            (
+                "medicines_development_background.repurposed_medicine_details",
+                background.RepurposedMedicineDetails
+            ),
+            (
+                "medicines_development_background.is_originator_company",
+                background.IsOriginatorCompany?.ToString()
+            ),
+            (
+                "medicines_development_background.originator_company_name",
+                background.OriginatorCompanyName
+            ),
+            (
+                "medicines_development_background.is_co_marketed",
+                background.IsCoMarketed?.ToString()
+            ),
+            (
+                "medicines_development_background.co_marketing_company_name",
+                background.CoMarketingCompanyName
+            ),
+        ];
 
     private static (string Path, string? Value)[] MhraFields(SyntheticMhraProcedureAndDates mhra) =>
         [
@@ -277,14 +322,93 @@ internal static class RecordContentHistory
         ];
     }
 
-    private static (string Path, string? Value)[] ServiceReadinessFields(
-        SyntheticServiceReadiness readiness
+    private static (string Path, string? Value)[] LaboratoryTestingFields(
+        SyntheticLaboratoryTesting lab
     ) =>
         [
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
-                readiness.LaboratoryTestingDetails.DiagnosticTestRequired?.ToString()
+                lab.DiagnosticTestRequired?.ToString()
             ),
+            ("medicines_laboratory_testing.biomarker_type", lab.BiomarkerType?.ToString()),
+            (
+                "medicines_laboratory_testing.non_genomic_biomarker_description",
+                lab.NonGenomicBiomarkerDescription
+            ),
+            ("medicines_laboratory_testing.genomic_target", lab.GenomicTarget),
+            (
+                "medicines_laboratory_testing.genomic_test_ngtd_relationship",
+                lab.GenomicTestNgtdRelationship?.ToString()
+            ),
+            ("medicines_laboratory_testing.genomic_sample_type", lab.GenomicSampleType),
+            (
+                "medicines_laboratory_testing.genomic_turnaround_time_details",
+                lab.GenomicTurnaroundTimeDetails
+            ),
+            ("medicines_laboratory_testing.patient_pathway_point_id", lab.PatientPathwayPoint),
+            ("medicines_laboratory_testing.genomic_alterations", lab.GenomicAlterations),
+            (
+                "medicines_laboratory_testing.additional_genomic_factors",
+                lab.AdditionalGenomicFactors
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_used_in_trials",
+                lab.GenomicTestUsedInTrials
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_specificity_sensitivity",
+                lab.GenomicTestSpecificitySensitivity
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_mandatory_status",
+                lab.GenomicTestMandatoryStatus?.ToString()
+            ),
+            ("medicines_laboratory_testing.monitoring_tests_details", lab.MonitoringTestsDetails),
+            ("medicines_laboratory_testing.safety_tests_details", lab.SafetyTestsDetails),
+        ];
+
+    private static (string Path, string? Value)[] PatientAndClinicalRequirementsFields(
+        SyntheticServiceReadiness readiness
+    )
+    {
+        SyntheticPatientAndClinicalRequirements patient = readiness.PatientAndClinicalRequirements;
+        return
+        [
+            (
+                "medicines_patient_identification.urgent_identification_required",
+                patient.UrgentIdentificationRequired?.ToString()
+            ),
+            (
+                "medicines_patient_identification.screening_required",
+                patient.ScreeningRequired?.ToString()
+            ),
+            (
+                "medicines_service_impact.nhs_service_changes_required",
+                patient.NhsServiceChangesRequired?.ToString()
+            ),
+            (
+                "medicines_service_impact.handling_storage_requirements",
+                patient.HandlingStorageRequirements?.ToString()
+            ),
+            (
+                "medicines_service_impact.uk_patient_population_notes",
+                patient.UkPatientPopulationNotes
+            ),
+            (
+                "medicines_service_impact.estimated_eligible_patient_population",
+                patient.EstimatedEligiblePatientPopulation
+            ),
+            (
+                "medicines_treatment_detail.estimated_duration_of_treatment",
+                patient.EstimatedDurationOfTreatment
+            ),
+        ];
+    }
+
+    private static (string Path, string? Value)[] ServiceReadinessFields(
+        SyntheticServiceReadiness readiness
+    ) =>
+        [
             (
                 "medicines_treatment_detail.proposed_place_in_therapy",
                 readiness.PatientAndClinicalRequirements.ProposedPlaceInTherapy

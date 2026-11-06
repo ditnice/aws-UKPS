@@ -29,6 +29,8 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     private RecordRevision _revision = null!;
     private BnfChapter _bnfChapter = null!;
     private TherapeuticArea _area = null!;
+    private FormulationType _formulation = null!;
+    private PatientPathwayPoint _pathwayPoint = null!;
 
     public RecordTaskListQueryServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -70,6 +72,11 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             },
             Ct
         );
+        _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
+        _pathwayPoint = await AddEntity(
+            new PatientPathwayPoint { Label = "Initial presentation" },
+            Ct
+        );
     }
 
     [Fact]
@@ -82,13 +89,43 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         taskList.DisplayStatus.ShouldBe(RecordDisplayStatus.Draft);
         taskList.CompanyCode.ShouldBeNull();
         taskList.RecordTitle.ShouldBeNull();
-        RecordTaskListSectionDto section = taskList.Sections.ShouldHaveSingleItem();
-        (section.Id, section.Title).ShouldBe(("indication-details", "Indication details"));
-        RecordTaskListTaskDto task = section.Tasks.ShouldHaveSingleItem();
-        (task.Id, task.Title, task.FirstPageId).ShouldBe(
-            ("indication-details", "Indication details", "indication")
-        );
-        task.Status.ShouldBe(RecordTaskStatus.NotStarted);
+        taskList
+            .Sections.Select(static s => (s.Id, s.Title))
+            .ShouldBe([
+                ("indication-details", "Indication details"),
+                ("development-background", "Development background"),
+                ("laboratory-testing", "Laboratory testing"),
+                ("patient-and-clinical-requirements", "Patient and clinical requirements"),
+            ]);
+        taskList
+            .Sections.SelectMany(static s => s.Tasks)
+            .Select(static t => (t.Id, t.Title, t.FirstPageId, t.Status))
+            .ShouldBe([
+                (
+                    "indication-details",
+                    "Indication details",
+                    "indication",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "development-background",
+                    "Development background",
+                    "repurposed-medicine",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "laboratory-testing",
+                    "Laboratory testing",
+                    "diagnostic-test-required",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "patient-and-clinical-requirements",
+                    "Patient and clinical requirements",
+                    "screening-programme",
+                    RecordTaskStatus.NotStarted
+                ),
+            ]);
     }
 
     [Fact]
@@ -202,6 +239,152 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .ShouldBeOfType<GetRecordTaskListError.NotAllowed>();
     }
 
+    [Fact]
+    public async Task GetTaskList_NoLaboratoryTestingAnswers_IsNotStarted()
+    {
+        RecordTaskListTaskDto task = (await GetTaskList())
+            .Sections.Single(static s =>
+                string.Equals(s.Id, "laboratory-testing", StringComparison.Ordinal)
+            )
+            .Tasks.ShouldHaveSingleItem();
+
+        (task.Id, task.Title, task.FirstPageId).ShouldBe(
+            ("laboratory-testing", "Laboratory testing", "diagnostic-test-required")
+        );
+        task.Status.ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
+    [Fact]
+    public async Task GetTaskList_SomeLaboratoryTestingAnswers_IsInProgress()
+    {
+        await AddLaboratoryTestingRow(
+            new MedicinesLaboratoryTesting { DiagnosticTestRequired = YesNoUnknown.Yes }
+        );
+
+        (await GetLaboratoryTestingStatus()).ShouldBe(RecordTaskStatus.InProgress);
+    }
+
+    [Fact]
+    public async Task GetTaskList_OnlyOptionalLaboratoryTestingAnswerMissing_IsCompleted()
+    {
+        await AddLaboratoryTestingRow(CompleteLaboratoryTestingRow());
+
+        (await GetLaboratoryTestingStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_LaboratoryTestingAnswers_DoNotAffectIndicationDetails()
+    {
+        await AddLaboratoryTestingRow(CompleteLaboratoryTestingRow());
+
+        (await GetStatus()).ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
+    private MedicinesLaboratoryTesting CompleteLaboratoryTestingRow() =>
+        new()
+        {
+            DiagnosticTestRequired = YesNoUnknown.Yes,
+            BiomarkerType = BiomarkerType.GenomicBiomarker,
+            NonGenomicBiomarkerDescription = "Protein",
+            GenomicTarget = "EGFR",
+            GenomicTestNgtdRelationship = GenomicTestNgtdRelationship.NewTest,
+            GenomicSampleType = "Tissue",
+            PatientPathwayPointId = _pathwayPoint.Id,
+            GenomicAlterations = "Exon 19 deletion",
+            AdditionalGenomicFactors = "T790M",
+            GenomicTestUsedInTrials = "PCR assay",
+            GenomicTestSpecificitySensitivity = "95% and 90%",
+            GenomicTestMandatoryStatus = GenomicTestMandatoryStatus.MandatoryNoAlternatives,
+            MonitoringTestsDetails = "Quarterly ctDNA",
+            SafetyTestsDetails = "Monthly liver function",
+        };
+
+    [Fact]
+    public async Task GetTaskList_EveryShownQuestionAnsweredWithFollowUpsHidden_IsCompleted()
+    {
+        // Each answer hides its required follow-up question, which must not hold the task open.
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.No,
+                IsOriginatorCompany = YesNoUnknown.Yes,
+                IsCoMarketed = YesNoUnknown.No,
+            }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_ShownRequiredFollowUpUnanswered_IsInProgress()
+    {
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.No,
+                IsOriginatorCompany = YesNoUnknown.Yes,
+                IsCoMarketed = YesNoUnknown.Yes,
+            }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.InProgress);
+    }
+
+    [Fact]
+    public async Task GetTaskList_ShownRequiredFollowUpAnswered_IsCompleted()
+    {
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.Yes,
+                IsOriginatorCompany = YesNoUnknown.No,
+                OriginatorCompanyName = "Acme Pharma",
+                IsCoMarketed = YesNoUnknown.Yes,
+                CoMarketingCompanyName = "Beta Pharma",
+            }
+        );
+
+        // The revealed optional differences question is left blank.
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_OnlyAHiddenFollowUpStored_IsNotStarted()
+    {
+        // A follow-up stored although its trigger hides it, as seeded or older data may be.
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground { CoMarketingCompanyName = "Acme Pharma" }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
+    private async Task AddDevelopmentBackgroundRow(MedicinesDevelopmentBackground row)
+    {
+        row.RevisionId = _revision.Id;
+        await AddEntity(row, Ct);
+    }
+
+    private async Task<RecordTaskStatus> GetDevelopmentBackgroundStatus() =>
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t =>
+                string.Equals(t.Id, "development-background", StringComparison.Ordinal)
+            )
+            .Status;
+
+    private async Task AddLaboratoryTestingRow(MedicinesLaboratoryTesting row)
+    {
+        row.RevisionId = _revision.Id;
+        await AddEntity(row, Ct);
+    }
+
+    private async Task<RecordTaskStatus> GetLaboratoryTestingStatus() =>
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "laboratory-testing", StringComparison.Ordinal))
+            .Status;
+
     private MedicinesIndicationDetail CompleteRow() =>
         new()
         {
@@ -210,6 +393,9 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             IndicationIsPaediatric = IndicationPaediatricStatus.ExclusivelyAdults,
             IndicationIsCancer = YesNoUnknown.No,
             IndicationIsRareDisease = YesNoUnknown.Unknown,
+            FormulationTypeId = _formulation.Id,
+            IsPersonalisedMedicine = YesNoUnknown.No,
+            MedicineTechnologyStatus = MedicineTechnologyStatus.Biosimilar,
         };
 
     private async Task AddIndicationRow(MedicinesIndicationDetail row)
@@ -235,7 +421,10 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         ).ShouldBeSuccess();
 
     private async Task<RecordTaskStatus> GetStatus() =>
-        (await GetTaskList()).Sections.Single().Tasks.Single().Status;
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "indication-details", StringComparison.Ordinal))
+            .Status;
 
     private ServiceTestHarness<IRecordTaskListQueryService> CreateHarness(int organisationId)
     {

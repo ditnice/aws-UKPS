@@ -40,6 +40,9 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
         ).ShouldBe(566);
         Organisation first = await Context.Organisations.SingleAsync(o => o.Id == 1, ct);
         first.OrganisationType.ShouldBe(OrganisationType.Internal);
+        (await Context.UserRegistrationRequests.SingleAsync(ct)).WorkEmail.ShouldBe(
+            E2eSubjectUsers.RegistrationRequestEmail
+        );
 
         foreach (
             IGrouping<int, Record> organisationRecords in payload.Records.GroupBy(r =>

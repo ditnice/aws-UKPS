@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SSOOIDC" Version="4.0.100.23" />
+    <PackageReference Include="AWSSDK.SSOOIDC" Version="4.0.100.24" />
     <PackageReference Include="coverlet.collector" Version="10.1.0" />
     <PackageReference Include="coverlet.msbuild" Version="10.1.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.14" />
@@ -36,9 +36,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Shared with the frontend's Vitest suite, which reads it from this path. -->
+    <!-- Shared with the frontend's Vitest suite, which reads them from these paths. -->
     <None
       Include="Application/RecordForms/Fixtures/rule-cases.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Include="Application/RecordForms/Fixtures/condition-cases.json"
       CopyToOutputDirectory="PreserveNewest"
     />
   </ItemGroup>

@@ -31,6 +31,11 @@ internal sealed class OptionProviderRegistry
 
     /// <summary>Adds a fixed list of enum members, offered in the order given.</summary>
     public void AddEnum<TEnum>(string key, params (TEnum Value, string Label)[] items)
+        where TEnum : struct, Enum =>
+        AddEnum(key, items.Select(static i => (i.Value, i.Label, (string?)null)).ToArray());
+
+    /// <summary>Adds a fixed list of enum members with optional hints, offered in the order given.</summary>
+    public void AddEnum<TEnum>(string key, params (TEnum Value, string Label, string? Hint)[] items)
         where TEnum : struct, Enum => Add(new EnumOptionProvider<TEnum>(key, items));
 
     /// <summary>Adds a flat list of reference data rows. The query and projection must translate to SQL.</summary>

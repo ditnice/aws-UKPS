@@ -94,14 +94,12 @@ public class UserController(IUserService userService) : ControllerBase
     /// successful, or an appropriate error response if the request fails.
     /// </returns>
     /// <response code="200">Returns the user's details and their role within the organisation.</response>
-    /// <response code="403">Returned if the caller is not authorised to view the organisation's users.</response>
-    /// <response code="404">Returned if the organisation does not exist or the user is not a member of it.</response>
+    /// <response code="404">The user does not exist in this organisation or is not accessible to the caller (ADR-004).</response>
     [HttpGet(
         "{userId:int}/organisations/{organisationId:int}",
         Name = nameof(GetUserDetailsWithinOrganisation)
     )]
     [ProducesResponseType<UserInformationDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserInformationDto>> GetUserDetailsWithinOrganisation(
         int userId,
@@ -120,15 +118,9 @@ public class UserController(IUserService userService) : ControllerBase
             error =>
                 error switch
                 {
-                    GetUsersError.OrganisationNotFound => NotFound("Organisation not found."),
-                    GetUsersError.UserNotFound => NotFound(
-                        "The user is not a member of this organisation."
-                    ),
-                    GetUsersError.NotAllowed => Problem(
-                        statusCode: StatusCodes.Status403Forbidden,
-                        title: "Forbidden",
-                        detail: "You are not authorised to view this user."
-                    ),
+                    GetUsersError.OrganisationNotFound
+                    or GetUsersError.UserNotFound
+                    or GetUsersError.NotAllowed => NotFound(),
                     _ => throw new UnreachableException("Unhandled GetUsersError variant."),
                 }
         );

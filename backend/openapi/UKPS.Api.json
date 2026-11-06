@@ -3298,28 +3298,8 @@
               }
             }
           },
-          "403": {
-            "description": "Returned if the caller is not authorised to view the organisation's users.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "Returned if the organisation does not exist or the user is not a member of it.",
+            "description": "The user does not exist in this organisation or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3930,28 +3910,8 @@
               }
             }
           },
-          "403": {
-            "description": "The current user is not allowed to view membership requests for the organisation.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "No membership request was found with the supplied identifier.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4046,28 +4006,8 @@
           "200": {
             "description": "The membership request was successfully approved."
           },
-          "403": {
-            "description": "The current user is not allowed to approve the membership request.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "The membership request could not be found.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4162,28 +4102,8 @@
           "200": {
             "description": "The membership request was successfully rejected."
           },
-          "403": {
-            "description": "The current user is not allowed to reject the membership request.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "The membership request could not be found.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4344,6 +4264,13 @@
           null
         ],
         "type": "string"
+      },
+      "ConditionKind": {
+        "enum": [
+          "AnswerIn"
+        ],
+        "type": "string",
+        "description": "The kind of a condition that decides whether a question applies. Part of the HTTP API\ncontract: the member names are sent to the frontend, so never rename or remove one."
       },
       "ConfirmNewPasswordCommand": {
         "required": [
@@ -5325,13 +5252,13 @@
         "description": "Represents the NHS service impact section of a medicine record."
       },
       "MedicinesTreatmentDetailDto": {
-        "required": [
-          "proposedPlaceInTherapy"
-        ],
         "type": "object",
         "properties": {
           "proposedPlaceInTherapy": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "description": "Gets the proposed place in therapy."
           },
           "estimatedDurationOfTreatment": {
@@ -6330,10 +6257,35 @@
         },
         "description": "Represents a name or identifier for a product."
       },
+      "RecordPageConditionDto": {
+        "required": [
+          "kind",
+          "questionId",
+          "values"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "How the condition is evaluated.",
+            "$ref": "#/components/schemas/ConditionKind"
+          },
+          "questionId": {
+            "type": "string",
+            "description": "The ID of the trigger question, an earlier question on the same page."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For ConditionKind.AnswerIn: the condition is met when the trigger's answer\nincludes any of these option values."
+          }
+        },
+        "description": "A condition that decides whether a question applies, from another question's answer."
+      },
       "RecordPageDto": {
         "required": [
           "formVersion",
-          "revisionVersion",
           "recordId",
           "section",
           "task",
@@ -6341,18 +6293,14 @@
           "previousPageId",
           "nextPageId",
           "questions",
-          "answers"
+          "answers",
+          "pageHash"
         ],
         "type": "object",
         "properties": {
           "formVersion": {
             "type": "string",
             "description": "The form's version. Echo it back on save."
-          },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The concurrency token of the record's latest revision, which the page reads and writes.\nEcho it back on save.",
-            "format": "uint32"
           },
           "recordId": {
             "type": "integer",
@@ -6395,6 +6343,10 @@
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: a string or null, or an array of strings\nfor multi-value questions."
+          },
+          "pageHash": {
+            "type": "string",
+            "description": "A hash of the answers of the page that must be provided when saving updates.\nIf the hash has changed, answers will be rejected."
           }
         },
         "description": "One page of a record content form: its questions, options and current answers."
@@ -6403,6 +6355,7 @@
         "required": [
           "value",
           "label",
+          "hint",
           "children"
         ],
         "type": "object",
@@ -6414,6 +6367,13 @@
           "label": {
             "type": "string",
             "description": "The text shown for the option."
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Help text shown under the option, or null when it has none."
           },
           "children": {
             "type": [
@@ -6431,7 +6391,8 @@
       "RecordPagePageDto": {
         "required": [
           "id",
-          "title"
+          "title",
+          "commercialInConfidence"
         ],
         "type": "object",
         "properties": {
@@ -6442,9 +6403,13 @@
           "title": {
             "type": "string",
             "description": "A short name for the page."
+          },
+          "commercialInConfidence": {
+            "type": "boolean",
+            "description": "Whether the page shows the \"Commercial in confidence\" badge."
           }
         },
-        "description": "A page's ID and title."
+        "description": "A page's ID, title and \"Commercial in confidence\" flag."
       },
       "RecordPageQuestionDto": {
         "required": [
@@ -6458,6 +6423,7 @@
           "childLabel",
           "childPlaceholder",
           "addAnotherLabel",
+          "showWhen",
           "rules",
           "options"
         ],
@@ -6520,6 +6486,17 @@
               "string"
             ],
             "description": "The button text that adds another entry to a multi-value hierarchical select."
+          },
+          "showWhen": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "When set, the question applies only while the condition is met; otherwise it is hidden,\nnot validated, and should be sent as null (or an empty array).",
+                "$ref": "#/components/schemas/RecordPageConditionDto"
+              }
+            ]
           },
           "rules": {
             "type": "array",
@@ -6975,8 +6952,8 @@
       "SaveRecordPageCommand": {
         "required": [
           "formVersion",
-          "revisionVersion",
-          "answers"
+          "answers",
+          "pageHash"
         ],
         "type": "object",
         "properties": {
@@ -6984,14 +6961,13 @@
             "type": "string",
             "description": "The string RecordPageDto.FormVersion the page was loaded with."
           },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The uint RecordPageDto.RevisionVersion the page was loaded with.",
-            "format": "uint32"
-          },
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: null for an unanswered single-value\nquestion and an empty array for an unanswered multi-value question."
+          },
+          "pageHash": {
+            "type": "string",
+            "description": "The page hash value returned from the query."
           }
         },
         "description": "Every answer on a page, with the versions the page was loaded at."
@@ -7319,7 +7295,8 @@
           "DeactivateMembership",
           "ReactivateMembership",
           "EditUserRole",
-          "RemoveUser"
+          "RemoveUser",
+          "ManageUserDetails"
         ],
         "type": "string",
         "description": "Defines the actions that can be performed on a user or their membership."

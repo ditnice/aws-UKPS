@@ -31,6 +31,7 @@ const question = (overrides: Partial<RecordPageQuestionDto>): RecordPageQuestion
   childLabel: null,
   childPlaceholder: null,
   addAnotherLabel: null,
+  showWhen: null,
   rules: [{ kind: 'Required', value: null, message: 'Enter the indication' }],
   options: null,
   ...overrides,
@@ -40,21 +41,22 @@ const tree = [
   {
     value: '1',
     label: '1: Addiction',
+    hint: null,
     children: [
-      { value: '11', label: '1.1: Opioid use disorder', children: null },
-      { value: '13', label: '1.3: Smoking cessation', children: null },
+      { value: '11', label: '1.1: Opioid use disorder', hint: null, children: null },
+      { value: '13', label: '1.3: Smoking cessation', hint: null, children: null },
     ],
   },
-  { value: '2', label: '2: Allergy', children: null },
+  { value: '2', label: '2: Allergy', hint: null, children: null },
 ]
 
 const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
-  revisionVersion: 4711,
+  pageHash: 'page-hash',
   recordId: 5,
   section: { id: 'product-indication', title: 'Product indication' },
   task: { id: 'indication-details', title: 'Indication details' },
-  page: { id: 'indication', title: 'Indication' },
+  page: { id: 'indication', title: 'Indication', commercialInConfidence: false },
   previousPageId: null,
   nextPageId: 'bnf-chapter',
   questions: [question({})],
@@ -89,6 +91,36 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+const yesNo = [
+  { value: 'Yes', label: 'Yes', hint: null, children: null },
+  { value: 'No', label: 'No', hint: null, children: null },
+  { value: 'Unknown', label: 'Unknown at this stage', hint: null, children: null },
+]
+
+const coMarketingPage = (revealedBy: string[] = ['Yes'], answers: Record<string, unknown> = {}) =>
+  page({
+    page: { id: 'co-marketing', title: 'Co-marketing', commercialInConfidence: false },
+    questions: [
+      question({
+        id: 'co',
+        type: 'Radio',
+        label: 'Is this product co-marketed?',
+        hint: null,
+        rules: [{ kind: 'Required', value: null, message: 'Select whether it is co-marketed' }],
+        options: yesNo,
+      }),
+      question({
+        id: 'co_name',
+        type: 'Text',
+        label: 'Co-marketing company name',
+        hint: null,
+        showWhen: { kind: 'AnswerIn', questionId: 'co', values: revealedBy },
+        rules: [{ kind: 'Required', value: null, message: 'Enter the company name' }],
+      }),
+    ],
+    answers: { co: null, co_name: null, ...answers },
+  })
+
 describe('FormPage', () => {
   describe('rendering', () => {
     it('uses the question label as the heading of a single-question page', () => {
@@ -111,6 +143,24 @@ describe('FormPage', () => {
       expect(screen.queryByText('Product indication')).toBeNull()
     })
 
+    it('shows the Commercial in confidence badge when the page is flagged', () => {
+      render(
+        <FormPage
+          page={page({
+            page: { id: 'indication', title: 'Indication', commercialInConfidence: true },
+          })}
+        />,
+      )
+
+      expect(screen.getByText('Commercial in confidence')).toBeInTheDocument()
+    })
+
+    it('does not show the badge by default', () => {
+      render(<FormPage page={page()} />)
+
+      expect(screen.queryByText('Commercial in confidence')).toBeNull()
+    })
+
     it('goes back to the task list from the first page of a task', () => {
       render(<FormPage page={page()} />)
 
@@ -126,6 +176,15 @@ describe('FormPage', () => {
 
       cleanup()
       render(<FormPage page={page({ nextPageId: null })} />)
+      expect(
+        screen.getByRole('button', { name: 'Save and return to task list' }),
+      ).toBeInTheDocument()
+    })
+
+    it('offers both save buttons while the task has another page', () => {
+      render(<FormPage page={page()} />)
+
+      expect(screen.getByRole('button', { name: 'Save and continue' })).toBeInTheDocument()
       expect(
         screen.getByRole('button', { name: 'Save and return to task list' }),
       ).toBeInTheDocument()
@@ -181,7 +240,7 @@ describe('FormPage', () => {
         path: { recordId: 5, pageId: 'indication' },
         body: {
           formVersion: '2026.10.1',
-          revisionVersion: 4711,
+          pageHash: 'page-hash',
           answers: { 'medicines_indication_detail.indication': 'Hepatitis C' },
         },
       })
@@ -205,6 +264,113 @@ describe('FormPage', () => {
 
       await waitFor(() => {
         expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
+      })
+    })
+
+    it('saves once and returns to the task list from the second button, even with a next page', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page()} />)
+
+      await user.type(screen.getByRole('textbox'), 'Hepatitis C')
+      await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
+      })
+      expect(mocks.push).not.toHaveBeenCalledWith('/portal/records/5/bnf-chapter')
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
+    })
+
+    it('validates before returning to the task list and still allows continuing after correction', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page()} />)
+
+      await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+      expect(await screen.findByText('Enter the indication')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      expect(mocks.push).not.toHaveBeenCalled()
+
+      await user.type(screen.getByRole('textbox'), 'Hepatitis C')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/portal/records/5/bnf-chapter')
+      })
+    })
+
+    it.each([
+      {
+        outcome: 'server validation fails',
+        status: 400,
+        error: { errors: { 'medicines_indication_detail.indication': ['Server says no'] } },
+        message: 'Server says no',
+      },
+      {
+        outcome: 'the page has changed',
+        status: 409,
+        error: {
+          code: 'page_answers_changed',
+          detail: 'This page has changed since it was loaded.',
+        },
+        message: 'This page has changed since it was loaded.',
+      },
+      {
+        outcome: 'the server fails',
+        status: 500,
+        error: { detail: 'Internal server error' },
+        message: 'There was a problem saving your answers. Please try again later.',
+      },
+    ])(
+      'stays on the page when returning to the task list and $outcome',
+      async ({ status, error, message }) => {
+        const user = userEvent.setup()
+        mocks.saveRecordFormPage.mockResolvedValue({ error, response: { ok: false, status } })
+        render(
+          <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+        )
+
+        await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+        expect(await screen.findByText(message)).toBeInTheDocument()
+        expect(mocks.push).not.toHaveBeenCalled()
+        expect(screen.getByRole('button', { name: 'Save and return to task list' })).toBeEnabled()
+      },
+    )
+
+    it('disables both save buttons while returning to the task list to prevent duplicate saves', async () => {
+      const user = userEvent.setup()
+      type SaveResult = {
+        data: { nextPageId: string }
+        response: { ok: boolean; status: number }
+      }
+      let resolveSave!: (result: SaveResult) => void
+      mocks.saveRecordFormPage.mockReturnValueOnce(
+        new Promise<SaveResult>((resolve) => {
+          resolveSave = resolve
+        }),
+      )
+      render(
+        <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+      )
+
+      const returnButton = screen.getByRole('button', { name: 'Save and return to task list' })
+      const continueButton = screen.getByRole('button', { name: 'Save and continue' })
+      await user.click(returnButton)
+
+      expect(returnButton).toBeDisabled()
+      expect(continueButton).toBeDisabled()
+      await user.click(returnButton)
+      await user.click(continueButton)
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
+      expect(mocks.push).not.toHaveBeenCalled()
+
+      resolveSave({
+        data: { nextPageId: 'bnf-chapter' },
+        response: { ok: true, status: 200 },
+      })
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/portal/records/5/task-list')
       })
     })
 
@@ -241,7 +407,7 @@ describe('FormPage', () => {
     it('offers a reload when the page has changed since it was loaded', async () => {
       mocks.saveRecordFormPage.mockResolvedValue({
         error: {
-          code: 'revision_changed',
+          code: 'page_answers_changed',
           detail: 'This record has changed since the page was loaded.',
         },
         response: { ok: false, status: 409 },
@@ -278,6 +444,65 @@ describe('FormPage', () => {
     })
   })
 
+  describe('conditional questions', () => {
+    it('reveals a question beneath the option that triggers it', () => {
+      render(<FormPage page={coMarketingPage()} />)
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: /Is this product co-marketed\?$/ }),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('textbox')).toBeNull()
+
+      fireEvent.click(screen.getByLabelText('Yes'))
+
+      const revealed = document.getElementById(
+        screen.getByLabelText('Yes').getAttribute('aria-controls') ?? '',
+      )
+      expect(revealed).toContainElement(screen.getByLabelText('Co-marketing company name'))
+      expect(revealed).toBeVisible()
+
+      fireEvent.click(screen.getByLabelText('No'))
+
+      expect(screen.queryByRole('textbox')).toBeNull()
+    })
+
+    it('validates a revealed question', async () => {
+      render(<FormPage page={coMarketingPage()} />)
+
+      fireEvent.click(screen.getByLabelText('Yes'))
+      save()
+
+      expect(await screen.findByText('Enter the company name')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('does not validate a hidden question, and sends it unanswered', async () => {
+      render(<FormPage page={coMarketingPage(['Yes'], { co: 'Yes', co_name: 'Acme' })} />)
+
+      expect(screen.getByRole('textbox')).toHaveValue('Acme')
+      fireEvent.click(screen.getByLabelText('No'))
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalled())
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({
+        co: 'No',
+        co_name: null,
+      })
+    })
+
+    it('shows a question revealed by several options after its trigger', () => {
+      render(<FormPage page={coMarketingPage(['Yes', 'Unknown'])} />)
+
+      expect(screen.getByRole('heading', { level: 1, name: /Co-marketing$/ })).toBeInTheDocument()
+      expect(screen.queryByRole('textbox')).toBeNull()
+
+      fireEvent.click(screen.getByLabelText('Unknown at this stage'))
+
+      expect(screen.getByLabelText('Co-marketing company name')).toBeVisible()
+      expect(screen.getByLabelText('Yes').getAttribute('aria-controls')).toBeNull()
+    })
+  })
+
   describe('controls', () => {
     it('associates radio hints and errors and revalidates after selection and blur', async () => {
       const user = userEvent.setup()
@@ -292,8 +517,8 @@ describe('FormPage', () => {
                 hint: 'Select one answer',
                 rules: [{ kind: 'Required', value: null, message: 'Choose yes or no' }],
                 options: [
-                  { value: 'Yes', label: 'Yes', children: null },
-                  { value: 'No', label: 'No', children: null },
+                  { value: 'Yes', label: 'Yes', hint: null, children: null },
+                  { value: 'No', label: 'No', hint: null, children: null },
                 ],
               }),
             ],
@@ -328,7 +553,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'cancer', title: 'Treating cancer' },
+            page: { id: 'cancer', title: 'Treating cancer', commercialInConfidence: false },
             questions: [
               question({
                 id: 'cancer',
@@ -337,8 +562,8 @@ describe('FormPage', () => {
                 hint: null,
                 rules: [],
                 options: [
-                  { value: 'Yes', label: 'Yes', children: null },
-                  { value: 'No', label: 'No', children: null },
+                  { value: 'Yes', label: 'Yes', hint: null, children: null },
+                  { value: 'No', label: 'No', hint: null, children: null },
                 ],
               }),
             ],
@@ -352,6 +577,43 @@ describe('FormPage', () => {
 
       await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalled())
       expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ cancer: 'No' })
+    })
+
+    it('associates a radio option hint only with the option it describes', () => {
+      render(
+        <FormPage
+          page={page({
+            page: { id: 'biomarker-type', title: 'Biomarker type', commercialInConfidence: false },
+            questions: [
+              question({
+                id: 'biomarker-type',
+                type: 'Radio',
+                label: 'What type of biomarker is required for this test?',
+                hint: null,
+                rules: [],
+                options: [
+                  {
+                    value: 'GenomicBiomarker',
+                    label: 'Genomic biomarker',
+                    hint: 'For example, a gene mutation, chromosomal alteration',
+                    children: null,
+                  },
+                  { value: 'Unknown', label: 'Unknown at this stage', hint: null, children: null },
+                ],
+              }),
+            ],
+            answers: { 'biomarker-type': null },
+          })}
+        />,
+      )
+
+      expect(screen.getByText('For example, a gene mutation, chromosomal alteration')).toBeVisible()
+      expect(screen.getByRole('radio', { name: 'Genomic biomarker' })).toHaveAccessibleDescription(
+        'For example, a gene mutation, chromosomal alteration',
+      )
+      expect(
+        screen.getByRole('radio', { name: 'Unknown at this stage' }),
+      ).not.toHaveAccessibleDescription()
     })
 
     it('associates checkbox hints and errors and revalidates on selection and blur', async () => {
@@ -456,7 +718,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'bnf-chapter', title: 'BNF chapter' },
+            page: { id: 'bnf-chapter', title: 'BNF chapter', commercialInConfidence: false },
             questions: [
               question({
                 id: 'bnf',
@@ -492,7 +754,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'bnf-chapter', title: 'BNF chapter' },
+            page: { id: 'bnf-chapter', title: 'BNF chapter', commercialInConfidence: false },
             questions: [
               question({
                 id: 'bnf',
