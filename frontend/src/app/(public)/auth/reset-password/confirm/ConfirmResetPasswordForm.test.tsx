@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { useActionState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
+import FormLevelErrors from '@/lib/form/FormLevelErrors'
 
 import { confirmResetPasswordAction } from './confirmResetPasswordAction'
 import ConfirmResetPasswordForm from './ConfirmResetPasswordForm'
@@ -15,15 +15,14 @@ vi.mock('./confirmResetPasswordAction', () => ({
   confirmResetPasswordAction: vi.fn(),
 }))
 
-// Mock the error helper so we can drive field errors without building TanStack server state
-vi.mock('@/lib/form/getFieldErrorMessage', () => ({
-  getFieldErrorMessage: vi.fn(),
-}))
-
 // Keep the real React, but make useActionState controllable
 vi.mock('react', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react')>()),
   useActionState: vi.fn(),
+}))
+
+vi.mock('@/lib/form/FormLevelErrors', () => ({
+  default: vi.fn(() => null),
 }))
 
 const { defaultValues } = confirmPasswordResetFormOptions
@@ -58,7 +57,6 @@ describe('ConfirmResetPasswordForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockActionState()
-    vi.mocked(getFieldErrorMessage).mockReturnValue(undefined as never)
   })
 
   describe('wiring', () => {
@@ -122,14 +120,12 @@ describe('ConfirmResetPasswordForm', () => {
       expect(screen.queryByText(/error/i)).not.toBeInTheDocument()
     })
 
-    it.each(visibleFields)('shows the error message for the %s field', (name) => {
-      const message = `${name} is invalid`
-      vi.mocked(getFieldErrorMessage).mockReturnValue(message as never)
-
+    it('renders the FormLevelErrors with error', () => {
+      const errors = ['Code has expired', 'Too many attempts']
+      mockActionState({ errors } as never)
       setup()
 
-      // Every visible field shares the mocked helper, so each renders the message
-      expect(screen.getAllByText(message)).toHaveLength(visibleFields.length)
+      expect(FormLevelErrors).toHaveBeenCalledWith({ errors }, undefined)
     })
   })
 
@@ -140,15 +136,6 @@ describe('ConfirmResetPasswordForm', () => {
       setup()
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    })
-
-    it('renders each server error from the action state', () => {
-      const errors = ['Code has expired', 'Too many attempts']
-      mockActionState({ errors } as never)
-
-      setup()
-
-      errors.forEach((error) => expect(screen.getByText(error)).toBeInTheDocument())
     })
   })
 

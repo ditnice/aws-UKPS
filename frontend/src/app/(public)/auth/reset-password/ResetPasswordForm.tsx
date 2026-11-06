@@ -5,7 +5,7 @@ import { ChangeEvent, useActionState } from 'react'
 
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
-import { ErrorState } from '@/components/Placeholder/ErrorState'
+import FormLevelErrors from '@/lib/form/FormLevelErrors'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { resetPasswordAction } from './resetPasswordAction'
@@ -26,17 +26,7 @@ const ResetPasswordForm = () => {
   })
   return (
     <form action={action as never} onSubmit={() => form.handleSubmit()}>
-      {state.errors?.length ? (
-        <ErrorState>
-          <div>
-            {state.errors.map((e) => (
-              <div key={e}>{e}</div>
-            ))}
-          </div>
-        </ErrorState>
-      ) : (
-        <></>
-      )}
+      <FormLevelErrors errors={state.errors} />
       <form.Field name="email">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)

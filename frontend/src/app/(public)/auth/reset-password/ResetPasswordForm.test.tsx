@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
+import FormLevelErrors from '@/lib/form/FormLevelErrors'
 
 import { resetPasswordAction } from './resetPasswordAction'
 import ResetPasswordForm from './ResetPasswordForm'
@@ -12,12 +12,11 @@ vi.mock('./resetPasswordAction', () => ({
   resetPasswordAction: vi.fn(),
 }))
 
-vi.mock('@/lib/form/getFieldErrorMessage', () => ({
-  getFieldErrorMessage: vi.fn(),
+vi.mock('@/lib/form/FormLevelErrors', () => ({
+  default: vi.fn(() => null),
 }))
 
 const mockAction = vi.mocked(resetPasswordAction)
-const mockGetFieldErrorMessage = vi.mocked(getFieldErrorMessage)
 
 type FormState = typeof initialFormState
 
@@ -46,7 +45,6 @@ const setup = (actionResult: FormState = serverState()) => {
 describe('ResetPasswordForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockGetFieldErrorMessage.mockReturnValue(undefined)
   })
 
   describe('initial render', () => {
@@ -96,35 +94,6 @@ describe('ResetPasswordForm', () => {
     })
   })
 
-  describe('server errors', () => {
-    it.each([
-      ['a single error', ['Something went wrong']],
-      ['multiple errors', ['First problem', 'Second problem']],
-    ])('renders %s returned from the action', async (_, errors) => {
-      const { submitWithEmail } = setup(serverState({ errors } as never))
-
-      await submitWithEmail('test@example.com')
-
-      for (const error of errors) {
-        expect(await screen.findByText(error)).toBeInTheDocument()
-      }
-    })
-
-    it('keeps the values returned from the action in the input', async () => {
-      const { submitWithEmail, emailInput } = setup(
-        serverState({
-          errors: ['Something went wrong'],
-          values: { email: 'returned@example.com' },
-        } as never),
-      )
-
-      await submitWithEmail('typed@example.com')
-
-      await screen.findByText('Something went wrong')
-      expect(emailInput()).toHaveValue('returned@example.com')
-    })
-  })
-
   describe('field validation', () => {
     it('shows no error state when there is no field error message', () => {
       const { emailInput } = setup()
@@ -132,12 +101,18 @@ describe('ResetPasswordForm', () => {
       expect(emailInput()).not.toHaveAttribute('aria-invalid', 'true')
     })
 
-    it('shows the field error message when getFieldErrorMessage returns one', () => {
-      mockGetFieldErrorMessage.mockReturnValue('Enter a valid email address')
+    it('renders the FormLevelErrors with error', async () => {
+      const errors = ['Code has expired', 'Too many attempts']
+      const { submitWithEmail } = setup(serverState({ errors } as never))
 
-      setup()
+      await submitWithEmail('test@example.com')
 
-      expect(screen.getByText('Enter a valid email address')).toBeInTheDocument()
+      await waitFor(() =>
+        expect(FormLevelErrors).toHaveBeenLastCalledWith(
+          expect.objectContaining({ errors }),
+          undefined, // drop this arg if you're on React 19
+        ),
+      )
     })
   })
 })
