@@ -14,6 +14,8 @@ import { buildSelectOrganisationHref } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
+import { createResetPasswordHref } from '../../reset-password/navigation'
+
 const signInSchema = z.object({
   email: z
     .string()
@@ -152,12 +154,8 @@ export function SignInForm({ returnTo }: SignInFormProps) {
       </form.Field>
 
       <Details summary="Forgotten your password?">
-        If you have forgotten your password visit the{' '}
-        {/* TODO - Update this to point to the correct page once built */}
-        <a href="#" target="_blank">
-          account recovery (opens in a new tab)
-        </a>{' '}
-        page.
+        If you have forgotten your password, you can{' '}
+        <a href={createResetPasswordHref()}>reset your password</a> page.
       </Details>
 
       <Button type="submit" variant="cta">

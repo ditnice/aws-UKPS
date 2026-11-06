@@ -1,5 +1,8 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Authentication.Dtos;
+using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -74,11 +77,58 @@ internal class LoginService : ILoginService
         return _identityService.RefreshAuthenticationToken(command.RefreshToken, cancellationToken);
     }
 
+    public async Task<InitiateForgottenPasswordProcedureResult> InitiateForgottenPasswordProcedure(
+        InitiateForgottenPasswordProcedureCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        var user = await _appDbContext.Users.GetByEmailOrDefault(command.Email, cancellationToken);
+
+        var username = user is not null ? user.CognitoUsername : CreateDummyUsername(command.Email);
+
+        var success = await _identityService.SendForgottenPasswordCommand(
+            username,
+            cancellationToken
+        );
+        if (!success)
+        {
+            return InitiateForgottenPasswordProcedureResult.Err(
+                new InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded()
+            );
+        }
+
+        return InitiateForgottenPasswordProcedureResult.Ok(); // Return Ok even if the account does not exist to avoid  account enumeration.
+    }
+
+    public async Task<ConfirmNewPasswordResult> ConfirmNewPassword(
+        ConfirmNewPasswordCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        var user = await _appDbContext.Users.GetByEmailOrDefault(command.Email, cancellationToken);
+        var username = user is not null ? user.CognitoUsername : CreateDummyUsername(command.Email);
+        return await _identityService.ConfirmNewPassword(
+            username,
+            command.ConfirmationCode,
+            command.NewPassword,
+            cancellationToken
+        );
+    }
+
     public Task SignOut(string refreshToken, CancellationToken cancellationToken)
     {
         return string.IsNullOrWhiteSpace(refreshToken)
             ? Task.CompletedTask
             : _identityService.RevokeRefreshToken(refreshToken, cancellationToken);
+    }
+
+    private static CognitoUsername CreateDummyUsername(string email)
+    {
+        byte[] bytes = Encoding.UTF8.GetBytes(email);
+        byte[] hash = SHA256.HashData(bytes);
+        var hashString = Convert.ToHexString(hash).Substring(0, 32);
+
+        return CognitoUsername.Parse(hashString);
     }
 
     private Task<User?> GetUserWithMemberships(string email, CancellationToken cancellationToken) =>

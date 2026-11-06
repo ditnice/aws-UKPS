@@ -62,4 +62,16 @@ internal interface IIdentityService
         string code,
         CancellationToken cancellationToken
     );
+
+    Task<bool> SendForgottenPasswordCommand(
+        CognitoUsername username,
+        CancellationToken cancellationToken
+    );
+
+    Task<ConfirmNewPasswordResult> ConfirmNewPassword(
+        CognitoUsername username,
+        string confirmationCode,
+        string newPassword,
+        CancellationToken cancellationToken
+    );
 }
