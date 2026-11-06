@@ -755,7 +755,8 @@ export const fakeUserMembershipAction = (options?: Options): UserMembershipActio
         'DeactivateMembership',
         'ReactivateMembership',
         'EditUserRole',
-        'RemoveUser'
+        'RemoveUser',
+        'ManageUserDetails'
     ]);
 };
 

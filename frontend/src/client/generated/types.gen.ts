@@ -1853,7 +1853,8 @@ export const UserMembershipAction = {
     DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
     REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
     EDIT_USER_ROLE: 'EditUserRole',
-    REMOVE_USER: 'RemoveUser'
+    REMOVE_USER: 'RemoveUser',
+    MANAGE_USER_DETAILS: 'ManageUserDetails'
 } as const;
 
 /**
