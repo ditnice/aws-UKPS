@@ -3,15 +3,19 @@ import { describe, expect, it, vi } from 'vitest'
 
 import AccountRecovery from './page'
 
+vi.mock('next/server', () => ({
+  connection: vi.fn(),
+}))
+
 const supportEmail = vi.hoisted(() => {
   const email = 'support@example.com'
-  vi.stubEnv('NEXT_PUBLIC_QA_SUPPORT_EMAIL', email)
+  vi.stubEnv('QA_SUPPORT_EMAIL', email)
   return email
 })
 
 describe('AccountRecovery', () => {
-  it('explains how to get help recovering an account', () => {
-    render(<AccountRecovery />)
+  it('explains how to get help recovering an account', async () => {
+    render(await AccountRecovery())
 
     expect(screen.getByText('Recover your UK PharmaScan account')).toBeInTheDocument()
     expect(
@@ -21,8 +25,8 @@ describe('AccountRecovery', () => {
     ).toBeInTheDocument()
   })
 
-  it('provides a mailto link to the support team', () => {
-    render(<AccountRecovery />)
+  it('provides a mailto link to the support team', async () => {
+    render(await AccountRecovery())
 
     expect(screen.getByRole('link', { name: supportEmail })).toHaveAttribute(
       'href',
@@ -30,8 +34,8 @@ describe('AccountRecovery', () => {
     )
   })
 
-  it('links back to sign-in', () => {
-    render(<AccountRecovery />)
+  it('links back to sign-in', async () => {
+    render(await AccountRecovery())
 
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/auth/sign-in')
   })
