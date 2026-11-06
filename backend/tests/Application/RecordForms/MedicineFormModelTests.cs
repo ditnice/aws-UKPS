@@ -12,9 +12,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.7";
+    private const string ExpectedVersion = "2026.11.9";
     private const string ExpectedFingerprint =
-        "159b2add29ad6063094759e0fa9955f3f86b0f8d576f1ec94f31ecb393614883";
+        "603a4ac9d2392a3be9a9f2d596889d3457ec45ce7522e8b5140ac7d9a7d5e86b";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -122,6 +122,30 @@ public class MedicineFormModelTests
             model.EntitiesToSave(page).ShouldBe(page.Entities, page.Id);
             model.AffectedBy(page).ShouldBe(page.Questions, page.Id);
         }
+    }
+
+    [Fact]
+    public void Model_HasThePatientAndClinicalRequirementsPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(
+                    p.SectionId,
+                    "patient-and-clinical-requirements",
+                    StringComparison.Ordinal
+                )
+            )
+            .Select(static p => p.Id)
+            .ShouldBe([
+                "screening-programme",
+                "urgent-identification",
+                "place-in-therapy",
+                "treatment-duration",
+                "nhs-service-changes",
+                "handling-storage",
+                "population-range",
+                "eligible-population",
+            ]);
     }
 
     [Fact]
@@ -282,6 +306,51 @@ public class MedicineFormModelTests
                 FormControl.Textarea,
                 AnswerShape.Single
             ),
+            (
+                "medicines_patient_identification.screening_required",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_patient_identification.urgent_identification_required",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_treatment_detail.proposed_place_in_therapy",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_treatment_detail.estimated_duration_of_treatment",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.nhs_service_changes_required",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.handling_storage_requirements",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.uk_patient_population_range_id",
+                FormControl.Select,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.uk_patient_population_notes",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.estimated_eligible_patient_population",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
         ]);
     }
 
@@ -312,6 +381,9 @@ public class MedicineFormModelTests
         Previous("diagnostic-test-required").ShouldBeNull();
         Next("diagnostic-test-required").ShouldBe("biomarker-type");
         Next("safety-tests").ShouldBeNull();
+        Previous("screening-programme").ShouldBeNull();
+        Next("screening-programme").ShouldBe("urgent-identification");
+        Next("eligible-population").ShouldBeNull();
         model.FindPage("unknown").ShouldBeNull();
     }
 

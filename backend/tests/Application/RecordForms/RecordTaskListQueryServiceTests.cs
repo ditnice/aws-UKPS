@@ -95,6 +95,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                 ("indication-details", "Indication details"),
                 ("development-background", "Development background"),
                 ("laboratory-testing", "Laboratory testing"),
+                ("patient-and-clinical-requirements", "Patient and clinical requirements"),
             ]);
         taskList
             .Sections.SelectMany(static s => s.Tasks)
@@ -116,6 +117,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     "laboratory-testing",
                     "Laboratory testing",
                     "diagnostic-test-required",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "patient-and-clinical-requirements",
+                    "Patient and clinical requirements",
+                    "screening-programme",
                     RecordTaskStatus.NotStarted
                 ),
             ]);

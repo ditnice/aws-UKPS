@@ -5163,13 +5163,13 @@
         "description": "Represents the NHS service impact section of a medicine record."
       },
       "MedicinesTreatmentDetailDto": {
-        "required": [
-          "proposedPlaceInTherapy"
-        ],
         "type": "object",
         "properties": {
           "proposedPlaceInTherapy": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "description": "Gets the proposed place in therapy."
           },
           "estimatedDurationOfTreatment": {
