@@ -13,6 +13,10 @@
   }
 }
 
+.question + .question {
+  margin-top: utils.rem(spacing.$x_large);
+}
+
 // On a single-question page the label is the page heading, so the field's own label and
 // legend are hidden visually but still announced. Questions revealed beneath an option keep
 // their labels.
