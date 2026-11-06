@@ -54,7 +54,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
       })
 
       if (!result.error) {
-        router.push(buildSelectOrganisationHref(returnTo))
+        globalThis.location.assign(buildSelectOrganisationHref(returnTo))
         return
       }
 
