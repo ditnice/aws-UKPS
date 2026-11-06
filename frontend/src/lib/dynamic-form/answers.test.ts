@@ -40,6 +40,7 @@ const question = (overrides: Partial<Question>): Question => ({
   childLabel: null,
   childPlaceholder: null,
   addAnotherLabel: null,
+  showWhen: null,
   rules: [],
   options: null,
   ...overrides,
@@ -139,7 +140,20 @@ describe('form values and payload', () => {
     const values = toFormValues(questions, { [text.id]: 'abc', bnf: '11' })
 
     expect(Object.keys(values)).toEqual([fieldName(0), fieldName(1)])
-    expect(buildPayload(questions, values)).toEqual({ [text.id]: 'abc', bnf: '11' })
+    expect(buildPayload(questions, values, new Set([text.id, bnf.id]))).toEqual({
+      [text.id]: 'abc',
+      bnf: '11',
+    })
+  })
+
+  it('sends questions that are not shown unanswered', () => {
+    const questions = [text, bnf]
+    const values = toFormValues(questions, { [text.id]: 'abc', bnf: '11' })
+
+    expect(buildPayload(questions, values, new Set([text.id]))).toEqual({
+      [text.id]: 'abc',
+      bnf: null,
+    })
   })
 })
 

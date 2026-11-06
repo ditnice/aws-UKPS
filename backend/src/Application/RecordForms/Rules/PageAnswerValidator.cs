@@ -1,19 +1,25 @@
 using System.Text.Json;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 
 namespace UKPS.Api.Application.RecordForms.Rules;
 
 /// <summary>
-/// Server-side validation of a submitted page: every question present with the right shape, no
-/// other keys, every value an offered option, then each question's rules. One message per key.
+/// Server-side validation of a submitted page in two steps: <see cref="Parse"/> checks every
+/// question is present with the right shape and there are no other keys; <see cref="Check"/>
+/// then checks, for each question that applies, every value is an offered option and the
+/// question's rules pass. One message per key.
 /// </summary>
 internal static class PageAnswerValidator
 {
-    public static (PageAnswers Answers, Dictionary<string, string> Errors) Validate(
+    /// <summary>
+    /// Parses the submitted page into the normalised answers of the questions that parsed, with
+    /// one error per failing key.
+    /// </summary>
+    public static (Dictionary<string, FormAnswer> Answers, Dictionary<string, string> Errors) Parse(
         FormPage page,
-        IReadOnlyDictionary<string, JsonElement> submitted,
-        IReadOnlyDictionary<string, IReadOnlyList<FormOption>> options
+        IReadOnlyDictionary<string, JsonElement> submitted
     )
     {
         Dictionary<string, FormAnswer> answers = new(StringComparer.Ordinal);
@@ -36,9 +42,6 @@ internal static class PageAnswerValidator
             }
 
             var (answer, error) = AnswerParser.Parse(question.Shape, element);
-            error ??= CheckOptions(answer!, options.GetValueOrDefault(question.Id));
-            error ??= RuleEvaluator.FirstFailure(question.Rules, answer!);
-
             if (error is not null)
             {
                 errors[question.Id] = error;
@@ -49,7 +52,37 @@ internal static class PageAnswerValidator
             }
         }
 
-        return (new PageAnswers(answers), errors);
+        return (answers, errors);
+    }
+
+    /// <summary>
+    /// Checks each parsed answer of a question that applies against its options and rules,
+    /// adding one error per failing question to <paramref name="errors"/>. Questions that do not
+    /// apply are not checked.
+    /// </summary>
+    public static void Check(
+        FormPage page,
+        IReadOnlyDictionary<string, FormAnswer> answers,
+        IReadOnlyDictionary<string, IReadOnlyList<FormOption>> options,
+        Applicability applicability,
+        Dictionary<string, string> errors
+    )
+    {
+        foreach (FormQuestion question in page.Questions.Where(applicability.Applies))
+        {
+            if (!answers.TryGetValue(question.Id, out FormAnswer? answer))
+            {
+                continue;
+            }
+
+            string? error =
+                CheckOptions(answer, options.GetValueOrDefault(question.Id))
+                ?? RuleEvaluator.FirstFailure(question.Rules, answer);
+            if (error is not null)
+            {
+                errors[question.Id] = error;
+            }
+        }
     }
 
     private static string? CheckOptions(FormAnswer answer, IReadOnlyList<FormOption>? options)

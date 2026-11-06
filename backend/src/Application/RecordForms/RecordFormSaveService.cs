@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
-using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Rules;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -38,23 +38,16 @@ internal sealed class RecordFormSaveService(
         {
             return SaveRecordPageResult.Err(loadError);
         }
-        (ModelledPageUpdated? modelledPageUpdate, SaveRecordPageError? updateModelError) =
+
+        (ModelledPageUpdate? update, SaveRecordPageError? updateModelError) =
             await ValidateCommandAndModelUpdate(currentPage!, command, cancellationToken);
         if (updateModelError is not null)
         {
             return SaveRecordPageResult.Err(updateModelError);
         }
-        if (modelledPageUpdate is null)
-        {
-            return CreateSuccessResult(currentPage!);
-        }
 
-        (bool updateRequired, SaveRecordPageResult result) = await ApplyUpdates(
-            modelledPageUpdate!,
-            currentPage!,
-            cancellationToken
-        );
-        if (!updateRequired)
+        SaveRecordPageResult result = CreateSuccessResult(currentPage!, update!.Applicability);
+        if (!await ApplyUpdates(update, currentPage!, cancellationToken))
         {
             return result;
         }
@@ -88,8 +81,12 @@ internal sealed class RecordFormSaveService(
         return (loaded, error);
     }
 
-    async Task<(
-        ModelledPageUpdated? updatedPage,
+    /// <summary>
+    /// Validates the submitted page and models the revision's answers after the save. A page with
+    /// no change gives an update whose answers are unchanged, whatever its hash.
+    /// </summary>
+    private async Task<(
+        ModelledPageUpdate? update,
         SaveRecordPageError? error
     )> ValidateCommandAndModelUpdate(
         LoadedPage currentPage,
@@ -97,31 +94,49 @@ internal sealed class RecordFormSaveService(
         CancellationToken cancellationToken
     )
     {
-        FormPage page = currentPage.Page;
-        Dictionary<FormEntity, object?> rows = await loader.LoadRowsAsync(
-            page,
-            currentPage.Revision.Id,
-            track: true,
+        LoadedAnswers? saved = await loader.LoadAnswersAsync(
+            currentPage,
+            forSave: true,
             cancellationToken
         );
-        PageAnswers before = RecordFormPageLoader.ReadAnswers(page, rows);
-        Dictionary<string, IReadOnlyList<FormOption>> options = await loader.LoadOptionsAsync(
-            page,
-            before,
-            cancellationToken
-        );
-        (PageAnswers after, Dictionary<string, string>? errors) = PageAnswerValidator.Validate(
-            page,
-            command.Answers,
-            options
-        );
-
-        if (before.PageHashIsEqual(after))
+        if (saved is null)
         {
-            return (null, null); // No changes were made, so no error is returned.
+            return (null, new SaveRecordPageError.NotFound());
         }
 
-        if (!before.PageHashIsEqual(command.PageHash))
+        FormModel model = currentPage.Model;
+        FormPage page = currentPage.Page;
+        Dictionary<string, FormAnswer> before = saved.Answers;
+        PageAnswers pageBefore = PageAnswers.For(page, before);
+        var options = await loader.LoadOptionsAsync(page, pageBefore, cancellationToken);
+
+        var (parsed, errors) = PageAnswerValidator.Parse(page, command.Answers);
+        Dictionary<string, FormAnswer> submitted = Overlay(before, parsed);
+        Applicability applicability = FormApplicability.Evaluate(model, submitted);
+        PageAnswerValidator.Check(page, parsed, options, applicability, errors);
+
+        // Answers that no longer apply, on this page or any page that depends on it, are cleared
+        // in the same save, so stored answers always match what applies.
+        Dictionary<string, FormAnswer> after = FormApplicability.ClearInapplicable(
+            model.AffectedBy(page),
+            submitted,
+            applicability
+        );
+
+        // Answers that failed to parse or validate are left out, so a page with errors never
+        // matches the stored answers and its errors are reported.
+        PageAnswers pageAfter = PageAnswers.For(
+            page,
+            after
+                .Where(a => parsed.ContainsKey(a.Key) && !errors.ContainsKey(a.Key))
+                .ToDictionary(StringComparer.Ordinal)
+        );
+        if (pageBefore.PageHashIsEqual(pageAfter))
+        {
+            return (new(before, before, saved.Rows, applicability), null);
+        }
+
+        if (!pageBefore.PageHashIsEqual(command.PageHash))
         {
             return (null, new SaveRecordPageError.PageAnswersChanged());
         }
@@ -131,50 +146,72 @@ internal sealed class RecordFormSaveService(
             return (null, new SaveRecordPageError.Invalid(errors));
         }
 
-        return (new(before, after, rows), null);
+        return (new(before, after, saved.Rows, applicability), null);
     }
 
-    private async Task<(bool updateRequired, SaveRecordPageResult)> ApplyUpdates(
-        ModelledPageUpdated modelledPageUpdate,
+    /// <summary>
+    /// Writes every loaded answer that differs, adding missing rows, and records the change.
+    /// Returns false when nothing changed.
+    /// </summary>
+    private async Task<bool> ApplyUpdates(
+        ModelledPageUpdate update,
         LoadedPage currentPage,
         CancellationToken cancellationToken
     )
     {
         FormQuestion[] changed = currentPage
-            .Page.Questions.Where(q =>
-                !modelledPageUpdate.After[q.Id].Equals(modelledPageUpdate.Before[q.Id])
+            .Model.Questions.Where(q =>
+                update.Before.TryGetValue(q.Id, out FormAnswer? old)
+                && !update.After[q.Id].Equals(old)
             )
             .ToArray();
         if (changed.Length == 0)
         {
-            return (false, CreateSuccessResult(currentPage));
+            return false;
         }
 
         foreach (FormQuestion question in changed)
         {
-            object row = modelledPageUpdate.Rows[question.Entity] ??= AddRow(
+            object row = update.Rows[question.Entity] ??= AddRow(
                 question.Entity,
                 currentPage.Revision.Id
             );
-            question.Binding.Write(dbContext, row, modelledPageUpdate.After[question.Id]);
+            question.Binding.Write(dbContext, row, update.After[question.Id]);
         }
 
         await RecordChangeAsync(
             currentPage,
             changed,
-            modelledPageUpdate.Before,
-            modelledPageUpdate.After,
+            update.Before,
+            update.After,
             cancellationToken
         );
-
-        return (true, CreateSuccessResult(currentPage));
+        return true;
     }
 
-    private static SaveRecordPageResult CreateSuccessResult(LoadedPage currentPage)
-    {
-        return SaveRecordPageResult.Ok(
-            new SaveRecordPageDto { NextPageId = currentPage.Model.NextPage(currentPage.Page)?.Id }
+    private static SaveRecordPageResult CreateSuccessResult(
+        LoadedPage currentPage,
+        Applicability applicability
+    ) =>
+        SaveRecordPageResult.Ok(
+            new SaveRecordPageDto
+            {
+                NextPageId = currentPage.Model.NextPage(currentPage.Page, applicability)?.Id,
+            }
         );
+
+    private static Dictionary<string, FormAnswer> Overlay(
+        IReadOnlyDictionary<string, FormAnswer> answers,
+        IReadOnlyDictionary<string, FormAnswer> overrides
+    )
+    {
+        Dictionary<string, FormAnswer> result = new(answers, StringComparer.Ordinal);
+        foreach (var (questionId, answer) in overrides)
+        {
+            result[questionId] = answer;
+        }
+
+        return result;
     }
 
     private static SaveRecordPageError? CheckCanSave(
@@ -227,8 +264,8 @@ internal sealed class RecordFormSaveService(
     private async Task RecordChangeAsync(
         LoadedPage loaded,
         FormQuestion[] changed,
-        PageAnswers before,
-        PageAnswers after,
+        Dictionary<string, FormAnswer> before,
+        Dictionary<string, FormAnswer> after,
         CancellationToken cancellationToken
     )
     {
@@ -257,9 +294,11 @@ internal sealed class RecordFormSaveService(
         );
     }
 
-    private sealed record ModelledPageUpdated(
-        PageAnswers Before,
-        PageAnswers After,
-        Dictionary<FormEntity, object?> Rows
+    /// <summary>The revision's loaded answers before and after the save, and what applies after.</summary>
+    private sealed record ModelledPageUpdate(
+        Dictionary<string, FormAnswer> Before,
+        Dictionary<string, FormAnswer> After,
+        Dictionary<FormEntity, object?> Rows,
+        Applicability Applicability
     );
 }

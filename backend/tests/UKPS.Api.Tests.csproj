@@ -36,9 +36,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Shared with the frontend's Vitest suite, which reads it from this path. -->
+    <!-- Shared with the frontend's Vitest suite, which reads them from these paths. -->
     <None
       Include="Application/RecordForms/Fixtures/rule-cases.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Include="Application/RecordForms/Fixtures/condition-cases.json"
       CopyToOutputDirectory="PreserveNewest"
     />
   </ItemGroup>

@@ -90,15 +90,35 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         taskList.CompanyCode.ShouldBeNull();
         taskList.RecordTitle.ShouldBeNull();
         taskList
-            .Sections.Select(static s => s.Id)
-            .ShouldBe(["indication-details", "laboratory-testing"]);
-        RecordTaskListSectionDto section = taskList.Sections[0];
-        (section.Id, section.Title).ShouldBe(("indication-details", "Indication details"));
-        RecordTaskListTaskDto task = section.Tasks.ShouldHaveSingleItem();
-        (task.Id, task.Title, task.FirstPageId).ShouldBe(
-            ("indication-details", "Indication details", "indication")
-        );
-        task.Status.ShouldBe(RecordTaskStatus.NotStarted);
+            .Sections.Select(static s => (s.Id, s.Title))
+            .ShouldBe([
+                ("indication-details", "Indication details"),
+                ("development-background", "Development background"),
+                ("laboratory-testing", "Laboratory testing"),
+            ]);
+        taskList
+            .Sections.SelectMany(static s => s.Tasks)
+            .Select(static t => (t.Id, t.Title, t.FirstPageId, t.Status))
+            .ShouldBe([
+                (
+                    "indication-details",
+                    "Indication details",
+                    "indication",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "development-background",
+                    "Development background",
+                    "repurposed-medicine",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "laboratory-testing",
+                    "Laboratory testing",
+                    "diagnostic-test-required",
+                    RecordTaskStatus.NotStarted
+                ),
+            ]);
     }
 
     [Fact]
@@ -215,7 +235,11 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetTaskList_NoLaboratoryTestingAnswers_IsNotStarted()
     {
-        RecordTaskListTaskDto task = (await GetTaskList()).Sections[1].Tasks.ShouldHaveSingleItem();
+        RecordTaskListTaskDto task = (await GetTaskList())
+            .Sections.Single(static s =>
+                string.Equals(s.Id, "laboratory-testing", StringComparison.Ordinal)
+            )
+            .Tasks.ShouldHaveSingleItem();
 
         (task.Id, task.Title, task.FirstPageId).ShouldBe(
             ("laboratory-testing", "Laboratory testing", "diagnostic-test-required")
@@ -268,6 +292,80 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             SafetyTestsDetails = "Monthly liver function",
         };
 
+    [Fact]
+    public async Task GetTaskList_EveryShownQuestionAnsweredWithFollowUpsHidden_IsCompleted()
+    {
+        // Each answer hides its required follow-up question, which must not hold the task open.
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.No,
+                IsOriginatorCompany = YesNoUnknown.Yes,
+                IsCoMarketed = YesNoUnknown.No,
+            }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_ShownRequiredFollowUpUnanswered_IsInProgress()
+    {
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.No,
+                IsOriginatorCompany = YesNoUnknown.Yes,
+                IsCoMarketed = YesNoUnknown.Yes,
+            }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.InProgress);
+    }
+
+    [Fact]
+    public async Task GetTaskList_ShownRequiredFollowUpAnswered_IsCompleted()
+    {
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.Yes,
+                IsOriginatorCompany = YesNoUnknown.No,
+                OriginatorCompanyName = "Acme Pharma",
+                IsCoMarketed = YesNoUnknown.Yes,
+                CoMarketingCompanyName = "Beta Pharma",
+            }
+        );
+
+        // The revealed optional differences question is left blank.
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_OnlyAHiddenFollowUpStored_IsNotStarted()
+    {
+        // A follow-up stored although its trigger hides it, as seeded or older data may be.
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground { CoMarketingCompanyName = "Acme Pharma" }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
+    private async Task AddDevelopmentBackgroundRow(MedicinesDevelopmentBackground row)
+    {
+        row.RevisionId = _revision.Id;
+        await AddEntity(row, Ct);
+    }
+
+    private async Task<RecordTaskStatus> GetDevelopmentBackgroundStatus() =>
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t =>
+                string.Equals(t.Id, "development-background", StringComparison.Ordinal)
+            )
+            .Status;
+
     private async Task AddLaboratoryTestingRow(MedicinesLaboratoryTesting row)
     {
         row.RevisionId = _revision.Id;
@@ -275,7 +373,10 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     }
 
     private async Task<RecordTaskStatus> GetLaboratoryTestingStatus() =>
-        (await GetTaskList()).Sections[1].Tasks.Single().Status;
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "laboratory-testing", StringComparison.Ordinal))
+            .Status;
 
     private MedicinesIndicationDetail CompleteRow() =>
         new()
@@ -313,7 +414,10 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         ).ShouldBeSuccess();
 
     private async Task<RecordTaskStatus> GetStatus() =>
-        (await GetTaskList()).Sections[0].Tasks.Single().Status;
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "indication-details", StringComparison.Ordinal))
+            .Status;
 
     private ServiceTestHarness<IRecordTaskListQueryService> CreateHarness(int organisationId)
     {

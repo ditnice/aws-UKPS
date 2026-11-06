@@ -16,6 +16,7 @@ internal sealed record QuestionDeclaration
     public FormMaxLengthAttribute? MaxLength { get; init; }
     public FormMaxItemsAttribute? MaxItems { get; init; }
     public FormOptionsAttribute? Options { get; init; }
+    public FormShowWhenAttribute? ShowWhen { get; init; }
     public required BindingInfo Binding { get; init; }
 
     public string Where => $"{EntityType.Name}.{Property.Name}";

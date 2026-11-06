@@ -20,6 +20,15 @@ internal static class MedicineFormTasks
     /// <summary>The "Indication details" task's position within its section.</summary>
     public const int IndicationDetailsOrder = 10;
 
+    /// <summary>The "Development background" task's ID.</summary>
+    public const string DevelopmentBackground = "development-background";
+
+    /// <summary>The "Development background" task's title.</summary>
+    public const string DevelopmentBackgroundTitle = "Development background";
+
+    /// <summary>The "Development background" task's position within its section.</summary>
+    public const int DevelopmentBackgroundOrder = 10;
+
     /// <summary>The "Laboratory testing" task's ID.</summary>
     public const string LaboratoryTesting = "laboratory-testing";
 
