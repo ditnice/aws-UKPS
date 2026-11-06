@@ -12,9 +12,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.9";
+    private const string ExpectedVersion = "2026.11.10";
     private const string ExpectedFingerprint =
-        "603a4ac9d2392a3be9a9f2d596889d3457ec45ce7522e8b5140ac7d9a7d5e86b";
+        "68899eddd1f76d097af6f707cce3c2fa0fe37ed6378b601e3dd2b9d4e7cfc202";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -107,20 +107,79 @@ public class MedicineFormModelTests
                     $"AnswerIn {Prefix}is_originator_company [No]"
                 ),
                 ($"{Prefix}co_marketing_company_name", $"AnswerIn {Prefix}is_co_marketed [Yes]"),
+                (
+                    "medicines_laboratory_testing.genomic_test_notes",
+                    "AnswerIn medicines_laboratory_testing.genomic_test_mandatory_status [MandatoryNoAlternatives, MandatoryAlternativesMayExist]"
+                ),
+                (
+                    "medicines_patient_identification.screening_details",
+                    "AnswerIn medicines_patient_identification.screening_required [Yes]"
+                ),
+                (
+                    "medicines_patient_identification.urgent_identification_details",
+                    "AnswerIn medicines_patient_identification.urgent_identification_required [Yes]"
+                ),
+                (
+                    "medicines_service_impact.nhs_service_changes_details",
+                    "AnswerIn medicines_service_impact.nhs_service_changes_required [CompleteTransformation, SomeChange]"
+                ),
+                (
+                    "medicines_service_impact.handling_storage_details",
+                    "AnswerIn medicines_service_impact.handling_storage_requirements [Yes]"
+                ),
             ]);
-        Model.Pages.ShouldAllBe(static p => p.ShowWhen == null);
+        Model
+            .Pages.Where(static p => p.ShowWhen is not null)
+            .Select(static p => p.Id)
+            .ShouldBe([
+                "biomarker-type",
+                "non-genomic-biomarker",
+                "genomic-target",
+                "ngtd-relationship",
+                "sample-type",
+                "turnaround-time",
+                "pathway-point",
+                "genomic-alterations",
+                "additional-genomic-factors",
+                "test-used-in-trials",
+                "specificity-sensitivity",
+                "test-mandatory",
+            ]);
     }
 
     [Fact]
     public void EveryPage_ReadsAndSavesOnlyItsOwnRows()
     {
-        // The Medicine form has only same-page reveals, so conditions add no rows to any request.
+        // Reveals are same-page, so they add no rows. Page conditions add one thing to every
+        // request: the entities holding the triggers, which navigation needs to know which pages apply.
         FormModel model = Model;
+        FormEntity[] triggerEntities = model
+            .Pages.Select(static p => p.ShowWhen)
+            .OfType<FormCondition>()
+            .SelectMany(static c => c.TriggerQuestionIds)
+            .Select(id =>
+                model
+                    .Questions.Single(q => string.Equals(q.Id, id, StringComparison.Ordinal))
+                    .Entity
+            )
+            .Distinct()
+            .ToArray();
         foreach (FormPage page in model.Pages)
         {
-            model.EntitiesToRead(page).ShouldBe(page.Entities, page.Id);
-            model.EntitiesToSave(page).ShouldBe(page.Entities, page.Id);
-            model.AffectedBy(page).ShouldBe(page.Questions, page.Id);
+            FormEntity[] expected = page.Entities.Union(triggerEntities).ToArray();
+            model.EntitiesToRead(page).ShouldBe(expected, ignoreOrder: true, page.Id);
+            model.EntitiesToSave(page).ShouldBe(expected, ignoreOrder: true, page.Id);
+
+            // Saving a page can only clear its own answers, plus those on pages it makes conditional.
+            model
+                .AffectedBy(page)
+                .ShouldBeSubsetOf(
+                    model.Questions.Where(q =>
+                        page.Questions.Contains(q) || model.PageOf(q).ShowWhen is not null
+                    ),
+                    page.Id
+                );
+            page.Questions.ShouldBeSubsetOf(model.AffectedBy(page), page.Id);
         }
     }
 
@@ -297,6 +356,11 @@ public class MedicineFormModelTests
                 AnswerShape.Single
             ),
             (
+                "medicines_laboratory_testing.genomic_test_notes",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
                 "medicines_laboratory_testing.monitoring_tests_details",
                 FormControl.Textarea,
                 AnswerShape.Single
@@ -312,8 +376,18 @@ public class MedicineFormModelTests
                 AnswerShape.Single
             ),
             (
+                "medicines_patient_identification.screening_details",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
                 "medicines_patient_identification.urgent_identification_required",
                 FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_patient_identification.urgent_identification_details",
+                FormControl.Textarea,
                 AnswerShape.Single
             ),
             (
@@ -332,8 +406,18 @@ public class MedicineFormModelTests
                 AnswerShape.Single
             ),
             (
+                "medicines_service_impact.nhs_service_changes_details",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
                 "medicines_service_impact.handling_storage_requirements",
                 FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_service_impact.handling_storage_details",
+                FormControl.Textarea,
                 AnswerShape.Single
             ),
             (
@@ -379,7 +463,8 @@ public class MedicineFormModelTests
         Next("repurposed-medicine").ShouldBe("originator");
         Next("co-marketing").ShouldBeNull();
         Previous("diagnostic-test-required").ShouldBeNull();
-        Next("diagnostic-test-required").ShouldBe("biomarker-type");
+        // With no answers the conditional pages do not apply, so navigation skips to monitoring.
+        Next("diagnostic-test-required").ShouldBe("monitoring-tests");
         Next("safety-tests").ShouldBeNull();
         Previous("screening-programme").ShouldBeNull();
         Next("screening-programme").ShouldBe("urgent-identification");

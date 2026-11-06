@@ -3,7 +3,67 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-[FormSection(RecordType.Medicine, "laboratory-testing", "Laboratory testing", Order = 30)]
+[FormSection(RecordType.Medicine, "laboratory-testing", "Laboratory testing", Order = 70)]
+[FormPageShowWhen(
+    "biomarker-type",
+    "medicines_laboratory_testing.diagnostic_test_required",
+    YesNoUnknown.Yes
+)]
+[FormPageShowWhen(
+    "test-mandatory",
+    "medicines_laboratory_testing.diagnostic_test_required",
+    YesNoUnknown.Yes
+)]
+[FormPageShowWhen(
+    "non-genomic-biomarker",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.NonGenomicBiomarker
+)]
+[FormPageShowWhen(
+    "genomic-target",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
+[FormPageShowWhen(
+    "ngtd-relationship",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
+[FormPageShowWhen(
+    "sample-type",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
+[FormPageShowWhen(
+    "turnaround-time",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
+[FormPageShowWhen(
+    "pathway-point",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
+[FormPageShowWhen(
+    "genomic-alterations",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
+[FormPageShowWhen(
+    "additional-genomic-factors",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
+[FormPageShowWhen(
+    "test-used-in-trials",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
+[FormPageShowWhen(
+    "specificity-sensitivity",
+    "medicines_laboratory_testing.biomarker_type",
+    Enums.BiomarkerType.GenomicBiomarker
+)]
 internal sealed class MedicinesLaboratoryTesting
 {
     [FormIgnore("Database identity")]
@@ -264,12 +324,35 @@ internal sealed class MedicinesLaboratoryTesting
     [FormField(
         "medicines_laboratory_testing.genomic_test_mandatory_status",
         "Is this test mandatory before treatment can start?",
-        FormControl.Radio
+        FormControl.Radio,
+        Order = 10
     )]
     [FormRequired("Select if the test is mandatory before treatment can start")]
     public GenomicTestMandatoryStatus? GenomicTestMandatoryStatus { get; set; }
 
-    [FormIgnore("Conditional reveal not supported yet")]
+    /// <summary>
+    /// Conditional on GenomicTestMandatoryStatus = MandatoryNoAlternatives or
+    /// MandatoryAlternativesMayExist.
+    /// </summary>
+    [FormTask(
+        MedicineFormTasks.LaboratoryTesting,
+        MedicineFormTasks.LaboratoryTestingTitle,
+        Order = MedicineFormTasks.LaboratoryTestingOrder
+    )]
+    [FormPage("test-mandatory", "Mandatory testing", Order = 130, CommercialInConfidence = true)]
+    [FormField(
+        "medicines_laboratory_testing.genomic_test_notes",
+        "Enter any notes about uncertainties, assumptions, or service considerations relating to the tests",
+        FormControl.Textarea,
+        Order = 20,
+        Hint = "Use this field to note anything about genomic testing for this medicine that is not captured by other fields. This could include uncertainties, assumptions, or service considerations.\n\nFor example, this might include a need for repeat testing, such as at progression or relapse. It might include new laboratory equipment or procedures that would need to be in place before the medicine is available. It might also include implications for laboratory capacity if the eligible patient population is large."
+    )]
+    [FormShowWhen(
+        "medicines_laboratory_testing.genomic_test_mandatory_status",
+        Enums.GenomicTestMandatoryStatus.MandatoryNoAlternatives,
+        Enums.GenomicTestMandatoryStatus.MandatoryAlternativesMayExist
+    )]
+    [FormRequired("Enter details")]
     public string? GenomicTestNotes { get; set; }
 
     /// <summary>

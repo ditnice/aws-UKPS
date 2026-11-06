@@ -295,6 +295,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             GenomicTestUsedInTrials = "PCR assay",
             GenomicTestSpecificitySensitivity = "95% and 90%",
             GenomicTestMandatoryStatus = GenomicTestMandatoryStatus.MandatoryNoAlternatives,
+            GenomicTestNotes = "Repeat testing at relapse",
             MonitoringTestsDetails = "Quarterly ctDNA",
             SafetyTestsDetails = "Monthly liver function",
         };
