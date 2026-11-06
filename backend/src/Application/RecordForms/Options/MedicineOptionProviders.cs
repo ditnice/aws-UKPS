@@ -12,7 +12,39 @@ internal static class MedicineOptionProviders
     {
         RegisterIndicationDetailsProviders(registry);
         RegisterLaboratoryTestingProviders(registry);
+        RegisterPatientAndClinicalRequirementsProviders(registry);
         RegisterProductProviders(registry);
+    }
+
+    private static void RegisterPatientAndClinicalRequirementsProviders(
+        OptionProviderRegistry registry
+    )
+    {
+        registry.AddEnum(
+            OptionKeys.NhsServiceChangesRequired,
+            (
+                NhsServiceChangesRequired.CompleteTransformation,
+                "Complete transformation",
+                "NHS services could not currently deliver this treatment"
+            ),
+            (
+                NhsServiceChangesRequired.SomeChange,
+                "Some change",
+                "Modifications to current NHS services will be required to deliver this treatment"
+            ),
+            (
+                NhsServiceChangesRequired.NoChanges,
+                "No changes",
+                "This product could be delivered by current NHS services"
+            ),
+            (NhsServiceChangesRequired.Unknown, "Unknown at this stage", null)
+        );
+
+        registry.AddReference<UkPatientPopulationRange>(
+            OptionKeys.UkPatientPopulationRanges,
+            q => q.OrderBy(x => x.SortOrder).ThenBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
     }
 
     private static void RegisterIndicationDetailsProviders(OptionProviderRegistry registry)

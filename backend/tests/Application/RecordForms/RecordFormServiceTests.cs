@@ -354,6 +354,98 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_StepsThroughEveryPatientAndClinicalRequirementsPage_StoringEachAnswer()
+    {
+        UkPatientPopulationRange range = await AddEntity(
+            new UkPatientPopulationRange { Label = "Between 25 and 50 per 100,000", SortOrder = 3 },
+            Ct
+        );
+
+        (
+            await SaveOk(
+                "screening-programme",
+                Answer("medicines_patient_identification.screening_required", "No")
+            )
+        ).NextPageId.ShouldBe("urgent-identification");
+        (
+            await SaveOk(
+                "urgent-identification",
+                Answer("medicines_patient_identification.urgent_identification_required", "Yes")
+            )
+        ).NextPageId.ShouldBe("place-in-therapy");
+        (
+            await SaveOk(
+                "place-in-therapy",
+                Answer("medicines_treatment_detail.proposed_place_in_therapy", "Second line")
+            )
+        ).NextPageId.ShouldBe("treatment-duration");
+        (
+            await SaveOk(
+                "treatment-duration",
+                Answer("medicines_treatment_detail.estimated_duration_of_treatment", "6 months")
+            )
+        ).NextPageId.ShouldBe("nhs-service-changes");
+        (
+            await SaveOk(
+                "nhs-service-changes",
+                Answer("medicines_service_impact.nhs_service_changes_required", "SomeChange")
+            )
+        ).NextPageId.ShouldBe("handling-storage");
+        (
+            await SaveOk(
+                "handling-storage",
+                Answer("medicines_service_impact.handling_storage_requirements", "Unknown")
+            )
+        ).NextPageId.ShouldBe("population-range");
+        (
+            await SaveOk(
+                "population-range",
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_service_impact.uk_patient_population_range_id"] = Json(
+                        $"{range.Id}"
+                    ),
+                    ["medicines_service_impact.uk_patient_population_notes"] = Json("Notes"),
+                }
+            )
+        ).NextPageId.ShouldBe("eligible-population");
+        (
+            await SaveOk(
+                "eligible-population",
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_service_impact.estimated_eligible_patient_population"] = Json(
+                        "1,000 to 2,000"
+                    ),
+                }
+            )
+        ).NextPageId.ShouldBeNull();
+
+        MedicinesPatientIdentification identification = await Context
+            .MedicinesPatientIdentifications.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+        identification.UrgentIdentificationRequired.ShouldBe(YesNoUnknown.Yes);
+        identification.ScreeningRequired.ShouldBe(YesNoUnknown.No);
+
+        MedicinesTreatmentDetail treatmentDetail = await Context
+            .MedicinesTreatmentDetails.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+        treatmentDetail.ProposedPlaceInTherapy.ShouldBe("Second line");
+        treatmentDetail.EstimatedDurationOfTreatment.ShouldBe("6 months");
+
+        MedicinesServiceImpact serviceImpact = await Context
+            .MedicinesServiceImpacts.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+        serviceImpact.NhsServiceChangesRequired.ShouldBe(NhsServiceChangesRequired.SomeChange);
+        serviceImpact.HandlingStorageRequirements.ShouldBe(YesNoUnknown.Unknown);
+        serviceImpact.UkPatientPopulationRangeId.ShouldBe(range.Id);
+        serviceImpact.UkPatientPopulationNotes.ShouldBe("Notes");
+        serviceImpact.EstimatedEligiblePatientPopulation.ShouldBe("1,000 to 2,000");
+
+        (await FieldAudits().CountAsync(Ct)).ShouldBe(9);
+    }
+
+    [Fact]
     public async Task SavePage_NothingChanged_WritesNothing()
     {
         await SaveOk("indication", Answer(Indication, "Hepatitis C"));
