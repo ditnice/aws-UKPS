@@ -7,7 +7,7 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
     RecordType.Medicine,
     "patient-and-clinical-requirements",
     "Patient and clinical requirements",
-    Order = 40
+    Order = 80
 )]
 internal sealed class MedicinesServiceImpact
 {
@@ -29,7 +29,8 @@ internal sealed class MedicinesServiceImpact
     [FormField(
         "medicines_service_impact.nhs_service_changes_required",
         "Are any changes to NHS services required for the delivery of this product?",
-        FormControl.Radio
+        FormControl.Radio,
+        Order = 10
     )]
     [FormRequired("Select if any changes to NHS services are required to deliver this product")]
     public NhsServiceChangesRequired? NhsServiceChangesRequired { get; set; }
@@ -38,7 +39,24 @@ internal sealed class MedicinesServiceImpact
     /// Conditional on NhsServiceChangesRequired = CompleteTransformation or SomeChange.
     /// Describes changes to staffing, equipment, pathway, or commissioning.
     /// </summary>
-    [FormIgnore("Conditional reveal not supported yet")]
+    [FormTask(
+        MedicineFormTasks.PatientAndClinicalRequirements,
+        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
+        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    )]
+    [FormPage("nhs-service-changes", "NHS service changes", Order = 50)]
+    [FormField(
+        "medicines_service_impact.nhs_service_changes_details",
+        "Describe any changes to staffing, equipment, pathway, or commissioning needed for delivery of this medicine.",
+        FormControl.Textarea,
+        Order = 20
+    )]
+    [FormShowWhen(
+        "medicines_service_impact.nhs_service_changes_required",
+        Enums.NhsServiceChangesRequired.CompleteTransformation,
+        Enums.NhsServiceChangesRequired.SomeChange
+    )]
+    [FormRequired("Enter details")]
     public string? NhsServiceChangesDetails { get; set; }
 
     /// <summary>
@@ -55,6 +73,7 @@ internal sealed class MedicinesServiceImpact
         "medicines_service_impact.handling_storage_requirements",
         "Are there specific requirements for the handling or storage of this product that may cause service issues?",
         FormControl.Radio,
+        Order = 10,
         Hint = "Select yes if the storage, handling, or preparation of this medicine introduces service readiness requirements. For example, this medicine requires aseptic facilities, trained staff, autoinjectors, fridge storage, etc."
     )]
     [FormRequired(
@@ -63,7 +82,20 @@ internal sealed class MedicinesServiceImpact
     public YesNoUnknown? HandlingStorageRequirements { get; set; }
 
     /// <summary>Conditional on HandlingStorageRequirements = Yes.</summary>
-    [FormIgnore("Conditional reveal not supported yet")]
+    [FormTask(
+        MedicineFormTasks.PatientAndClinicalRequirements,
+        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
+        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    )]
+    [FormPage("handling-storage", "Handling and storage", Order = 60)]
+    [FormField(
+        "medicines_service_impact.handling_storage_details",
+        "Provide further details",
+        FormControl.Textarea,
+        Order = 20
+    )]
+    [FormShowWhen("medicines_service_impact.handling_storage_requirements", YesNoUnknown.Yes)]
+    [FormRequired("Enter details")]
     public string? HandlingStorageDetails { get; set; }
 
     [FormTask(

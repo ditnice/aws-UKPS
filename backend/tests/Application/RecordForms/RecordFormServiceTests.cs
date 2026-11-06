@@ -364,13 +364,25 @@ public class RecordFormServiceTests : DatabaseTestBase
         (
             await SaveOk(
                 "screening-programme",
-                Answer("medicines_patient_identification.screening_required", "No")
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_patient_identification.screening_required"] = Json("No"),
+                    ["medicines_patient_identification.screening_details"] = Json<string?>(null),
+                }
             )
         ).NextPageId.ShouldBe("urgent-identification");
         (
             await SaveOk(
                 "urgent-identification",
-                Answer("medicines_patient_identification.urgent_identification_required", "Yes")
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_patient_identification.urgent_identification_required"] = Json(
+                        "Yes"
+                    ),
+                    ["medicines_patient_identification.urgent_identification_details"] = Json(
+                        "Time-critical"
+                    ),
+                }
             )
         ).NextPageId.ShouldBe("place-in-therapy");
         (
@@ -388,13 +400,23 @@ public class RecordFormServiceTests : DatabaseTestBase
         (
             await SaveOk(
                 "nhs-service-changes",
-                Answer("medicines_service_impact.nhs_service_changes_required", "SomeChange")
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_service_impact.nhs_service_changes_required"] = Json("SomeChange"),
+                    ["medicines_service_impact.nhs_service_changes_details"] = Json(
+                        "Extra staffing"
+                    ),
+                }
             )
         ).NextPageId.ShouldBe("handling-storage");
         (
             await SaveOk(
                 "handling-storage",
-                Answer("medicines_service_impact.handling_storage_requirements", "Unknown")
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_service_impact.handling_storage_requirements"] = Json("Unknown"),
+                    ["medicines_service_impact.handling_storage_details"] = Json<string?>(null),
+                }
             )
         ).NextPageId.ShouldBe("population-range");
         (
@@ -426,6 +448,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
         identification.UrgentIdentificationRequired.ShouldBe(YesNoUnknown.Yes);
         identification.ScreeningRequired.ShouldBe(YesNoUnknown.No);
+        identification.UrgentIdentificationDetails.ShouldBe("Time-critical");
 
         MedicinesTreatmentDetail treatmentDetail = await Context
             .MedicinesTreatmentDetails.AsNoTracking()
@@ -437,12 +460,13 @@ public class RecordFormServiceTests : DatabaseTestBase
             .MedicinesServiceImpacts.AsNoTracking()
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
         serviceImpact.NhsServiceChangesRequired.ShouldBe(NhsServiceChangesRequired.SomeChange);
+        serviceImpact.NhsServiceChangesDetails.ShouldBe("Extra staffing");
         serviceImpact.HandlingStorageRequirements.ShouldBe(YesNoUnknown.Unknown);
         serviceImpact.UkPatientPopulationRangeId.ShouldBe(range.Id);
         serviceImpact.UkPatientPopulationNotes.ShouldBe("Notes");
         serviceImpact.EstimatedEligiblePatientPopulation.ShouldBe("1,000 to 2,000");
 
-        (await FieldAudits().CountAsync(Ct)).ShouldBe(9);
+        (await FieldAudits().CountAsync(Ct)).ShouldBe(11);
     }
 
     [Fact]
@@ -808,6 +832,8 @@ public class RecordFormServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetPage_OptionWithAHint_ReturnsTheHint()
     {
+        await AddGenomicRoute();
+
         RecordPageDto page = await GetPage("biomarker-type");
 
         RecordPageOptionDto option = page
@@ -821,6 +847,8 @@ public class RecordFormServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetPage_PathwayPointPage_OffersTheReferenceData()
     {
+        await AddGenomicRoute();
+
         RecordPageDto page = await GetPage("pathway-point");
 
         RecordPageOptionDto option = page.Questions.Single().Options!.ShouldHaveSingleItem();
@@ -854,7 +882,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         [
             ("diagnostic-test-required", $"{LabPrefix}diagnostic_test_required", "Yes"),
             ("biomarker-type", $"{LabPrefix}biomarker_type", "GenomicBiomarker"),
-            ("non-genomic-biomarker", $"{LabPrefix}non_genomic_biomarker_description", "Protein"),
+            // Genomic route: the non-genomic-biomarker page does not apply and is skipped.
             ("genomic-target", $"{LabPrefix}genomic_target", "EGFR"),
             ("ngtd-relationship", $"{LabPrefix}genomic_test_ngtd_relationship", "NewTest"),
             ("sample-type", $"{LabPrefix}genomic_sample_type", "Tissue"),
@@ -877,19 +905,25 @@ public class RecordFormServiceTests : DatabaseTestBase
             ("safety-tests", $"{LabPrefix}safety_tests_details", "Monthly liver function"),
         ];
 
+        string notesQuestion = $"{LabPrefix}genomic_test_notes";
+
         for (int i = 0; i < answers.Length; i++)
         {
-            SaveRecordPageDto saved = await SaveOk(
-                answers[i].PageId,
-                Answer(answers[i].QuestionId, answers[i].Value)
-            );
+            Dictionary<string, JsonElement> page = Answer(answers[i].QuestionId, answers[i].Value);
+            if (string.Equals(answers[i].PageId, "test-mandatory", StringComparison.Ordinal))
+            {
+                // Mandatory testing shows the notes box, which is then required.
+                page[notesQuestion] = Json("Repeat testing at relapse");
+            }
+
+            SaveRecordPageDto saved = await SaveOk(answers[i].PageId, page);
             saved.NextPageId.ShouldBe(i + 1 < answers.Length ? answers[i + 1].PageId : null);
         }
 
         MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
         row.DiagnosticTestRequired.ShouldBe(YesNoUnknown.Yes);
         row.BiomarkerType.ShouldBe(BiomarkerType.GenomicBiomarker);
-        row.NonGenomicBiomarkerDescription.ShouldBe("Protein");
+        row.NonGenomicBiomarkerDescription.ShouldBeNull();
         row.GenomicTarget.ShouldBe("EGFR");
         row.GenomicTestNgtdRelationship.ShouldBe(GenomicTestNgtdRelationship.NewTest);
         row.GenomicSampleType.ShouldBe("Tissue");
@@ -900,6 +934,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         row.GenomicTestUsedInTrials.ShouldBe("PCR assay");
         row.GenomicTestSpecificitySensitivity.ShouldBe("95% and 90%");
         row.GenomicTestMandatoryStatus.ShouldBe(GenomicTestMandatoryStatus.MandatoryNoAlternatives);
+        row.GenomicTestNotes.ShouldBe("Repeat testing at relapse");
         row.MonitoringTestsDetails.ShouldBe("Quarterly ctDNA");
         row.SafetyTestsDetails.ShouldBe("Monthly liver function");
 
@@ -908,12 +943,25 @@ public class RecordFormServiceTests : DatabaseTestBase
             .ToListAsync(Ct);
         changes
             .Select(static c => (c.FieldPath, c.NewValue))
-            .ShouldBe(answers.Select(static a => (a.QuestionId, (string?)a.Value)));
+            .ShouldBe(
+                answers
+                    .Select(static a => (a.QuestionId, (string?)a.Value))
+                    .SelectMany(a =>
+                        string.Equals(
+                            a.QuestionId,
+                            $"{LabPrefix}genomic_test_mandatory_status",
+                            StringComparison.Ordinal
+                        )
+                            ? new[] { a, (notesQuestion, (string?)"Repeat testing at relapse") }
+                            : new[] { a }
+                    )
+            );
     }
 
     [Fact]
     public async Task SavePage_PathwayPointThatIsNotOffered_IsRejected()
     {
+        await AddGenomicRoute();
         string question = $"{LabPrefix}patient_pathway_point_id";
 
         IReadOnlyDictionary<string, string> errors = await SaveInvalid(
@@ -922,13 +970,20 @@ public class RecordFormServiceTests : DatabaseTestBase
         );
 
         errors.ShouldContainKey(question);
-        (
-            await Context.MedicinesLaboratoryTestings.AnyAsync(
-                x => x.RevisionId == _revision.Id,
-                Ct
-            )
-        ).ShouldBeFalse();
+        (await LaboratoryTestingRow()).PatientPathwayPointId.ShouldBeNull();
     }
+
+    // The route to the genomic pages: they apply only once these two answers are saved.
+    private async Task AddGenomicRoute() =>
+        await AddEntity(
+            new MedicinesLaboratoryTesting
+            {
+                RevisionId = _revision.Id,
+                DiagnosticTestRequired = YesNoUnknown.Yes,
+                BiomarkerType = BiomarkerType.GenomicBiomarker,
+            },
+            Ct
+        );
 
     [Fact]
     public async Task SavePage_WhenThePageHasBeenChangedAfterTheRead_ShouldReturnConcurrencyError()

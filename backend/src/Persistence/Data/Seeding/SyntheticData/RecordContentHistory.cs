@@ -363,6 +363,7 @@ internal static class RecordContentHistory
                 "medicines_laboratory_testing.genomic_test_mandatory_status",
                 lab.GenomicTestMandatoryStatus?.ToString()
             ),
+            ("medicines_laboratory_testing.genomic_test_notes", lab.GenomicTestNotes),
             ("medicines_laboratory_testing.monitoring_tests_details", lab.MonitoringTestsDetails),
             ("medicines_laboratory_testing.safety_tests_details", lab.SafetyTestsDetails),
         ];
@@ -379,17 +380,27 @@ internal static class RecordContentHistory
                 patient.UrgentIdentificationRequired?.ToString()
             ),
             (
+                "medicines_patient_identification.urgent_identification_details",
+                patient.UrgentIdentificationDetails
+            ),
+            (
                 "medicines_patient_identification.screening_required",
                 patient.ScreeningRequired?.ToString()
             ),
+            ("medicines_patient_identification.screening_details", patient.ScreeningDetails),
             (
                 "medicines_service_impact.nhs_service_changes_required",
                 patient.NhsServiceChangesRequired?.ToString()
             ),
             (
+                "medicines_service_impact.nhs_service_changes_details",
+                patient.NhsServiceChangesDetails
+            ),
+            (
                 "medicines_service_impact.handling_storage_requirements",
                 patient.HandlingStorageRequirements?.ToString()
             ),
+            ("medicines_service_impact.handling_storage_details", patient.HandlingStorageDetails),
             (
                 "medicines_service_impact.uk_patient_population_notes",
                 patient.UkPatientPopulationNotes

@@ -7,7 +7,7 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
     RecordType.Medicine,
     "patient-and-clinical-requirements",
     "Patient and clinical requirements",
-    Order = 40
+    Order = 80
 )]
 internal sealed class MedicinesTreatmentDetail
 {
