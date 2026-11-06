@@ -19,7 +19,7 @@ const mockExtractErrorMessage = vi.mocked(extractErrorMessage)
 describe('FormLevelErrors', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Default: treat each error as a string message
+    // Default: treat each error as a string message.
     mockExtractErrorMessage.mockImplementation((e: unknown) => e as string)
   })
 
@@ -46,11 +46,12 @@ describe('FormLevelErrors', () => {
   })
 
   it('renders every error message when there are multiple errors', () => {
-    render(<FormLevelErrors errors={['First error', 'Second error', 'Third error']} />)
+    const errors = ['First error', 'Second error', 'Third error']
+    render(<FormLevelErrors errors={errors} />)
 
-    expect(screen.getByText('First error')).toBeInTheDocument()
-    expect(screen.getByText('Second error')).toBeInTheDocument()
-    expect(screen.getByText('Third error')).toBeInTheDocument()
+    errors.forEach((e) => {
+      expect(screen.getByText(e)).toBeInTheDocument()
+    })
   })
 
   it('calls extractErrorMessage once for each error', () => {
