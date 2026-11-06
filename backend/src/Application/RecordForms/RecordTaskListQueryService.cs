@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
@@ -52,6 +53,11 @@ internal sealed class RecordTaskListQueryService(
             form.Revision.Id,
             cancellationToken
         );
+        Applicability applicability = await loader.LoadApplicabilityAsync(
+            form.Model,
+            form.Revision.Id,
+            cancellationToken
+        );
         return GetRecordTaskListResult.Ok(
             new RecordTaskListDto
             {
@@ -70,7 +76,7 @@ internal sealed class RecordTaskListQueryService(
                             {
                                 Id = task.Id,
                                 Title = task.Title,
-                                Status = GetStatus(task, answered),
+                                Status = GetStatus(task, answered, applicability),
                                 FirstPageId = task.FirstPage.Id,
                             })
                             .ToArray(),
@@ -80,10 +86,19 @@ internal sealed class RecordTaskListQueryService(
         );
     }
 
-    private static RecordTaskStatus GetStatus(FormTask task, HashSet<string> answered)
+    /// <summary>
+    /// The task's status, counting only the questions that apply: a hidden question is neither an
+    /// answer nor a required question still to answer.
+    /// </summary>
+    private static RecordTaskStatus GetStatus(
+        FormTask task,
+        HashSet<string> answered,
+        Applicability applicability
+    )
     {
-        bool hasAnyAnswer = task.Questions.Any(question => answered.Contains(question.Id));
-        FormQuestion[] required = task.Questions.Where(static q => q.IsRequired).ToArray();
+        FormQuestion[] applying = task.Questions.Where(applicability.Applies).ToArray();
+        bool hasAnyAnswer = applying.Any(question => answered.Contains(question.Id));
+        FormQuestion[] required = applying.Where(static q => q.IsRequired).ToArray();
         bool requiredAnswersComplete = required.All(question => answered.Contains(question.Id));
 
         if (requiredAnswersComplete && (required.Length > 0 || hasAnyAnswer))

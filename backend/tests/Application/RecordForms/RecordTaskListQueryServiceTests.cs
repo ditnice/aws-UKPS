@@ -300,6 +300,80 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             SafetyTestsDetails = "Monthly liver function",
         };
 
+    [Fact]
+    public async Task GetTaskList_EveryShownQuestionAnsweredWithFollowUpsHidden_IsCompleted()
+    {
+        // Each answer hides its required follow-up question, which must not hold the task open.
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.No,
+                IsOriginatorCompany = YesNoUnknown.Yes,
+                IsCoMarketed = YesNoUnknown.No,
+            }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_ShownRequiredFollowUpUnanswered_IsInProgress()
+    {
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.No,
+                IsOriginatorCompany = YesNoUnknown.Yes,
+                IsCoMarketed = YesNoUnknown.Yes,
+            }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.InProgress);
+    }
+
+    [Fact]
+    public async Task GetTaskList_ShownRequiredFollowUpAnswered_IsCompleted()
+    {
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground
+            {
+                IsRepurposedMedicine = YesNoUnknown.Yes,
+                IsOriginatorCompany = YesNoUnknown.No,
+                OriginatorCompanyName = "Acme Pharma",
+                IsCoMarketed = YesNoUnknown.Yes,
+                CoMarketingCompanyName = "Beta Pharma",
+            }
+        );
+
+        // The revealed optional differences question is left blank.
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_OnlyAHiddenFollowUpStored_IsNotStarted()
+    {
+        // A follow-up stored although its trigger hides it, as seeded or older data may be.
+        await AddDevelopmentBackgroundRow(
+            new MedicinesDevelopmentBackground { CoMarketingCompanyName = "Acme Pharma" }
+        );
+
+        (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
+    private async Task AddDevelopmentBackgroundRow(MedicinesDevelopmentBackground row)
+    {
+        row.RevisionId = _revision.Id;
+        await AddEntity(row, Ct);
+    }
+
+    private async Task<RecordTaskStatus> GetDevelopmentBackgroundStatus() =>
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t =>
+                string.Equals(t.Id, "development-background", StringComparison.Ordinal)
+            )
+            .Status;
+
     private async Task AddLaboratoryTestingRow(MedicinesLaboratoryTesting row)
     {
         row.RevisionId = _revision.Id;

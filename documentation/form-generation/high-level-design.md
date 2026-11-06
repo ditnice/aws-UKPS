@@ -613,6 +613,12 @@ revision:
 | `InProgress` | At least one answer is saved, but one or more required questions are unanswered |
 | `Completed` | Every required question has a saved answer; unanswered optional questions do not prevent completion |
 
+Only questions that apply count. A question hidden by its condition, or on a page that does not
+apply, is neither an answer nor a required question still to answer, so a required follow-up does
+not hold its task open while its trigger hides it. Working this out loads the rows of
+`FormModel.TriggerEntities`, which hold every question a condition reads; a form without
+conditions loads none.
+
 The endpoint is read-only. Missing and inaccessible records both return `404`, so record access
 is not disclosed.
 

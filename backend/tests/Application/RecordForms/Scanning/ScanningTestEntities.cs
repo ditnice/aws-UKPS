@@ -349,7 +349,6 @@ internal sealed class BrokenConditionEntity
 /// </summary>
 [FormSection(RecordType.Vaccine, "conditional", "Conditional", Order = 10)]
 [FormPageShowWhen("extra", "conditional_entity.gate", YesNoUnknown.Yes)]
-[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
 internal sealed class ConditionalExtraEntity
 {
     [FormIgnore("Database identity")]

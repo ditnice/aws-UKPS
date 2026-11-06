@@ -4,6 +4,7 @@ using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
@@ -205,6 +206,14 @@ public class MedicineFormModelTests
                 "population-range",
                 "eligible-population",
             ]);
+    }
+
+    [Fact]
+    public void TriggerEntities_HoldOnlyTheDevelopmentBackground()
+    {
+        Model
+            .TriggerEntities.Select(static e => e.ClrType)
+            .ShouldBe([typeof(MedicinesDevelopmentBackground)]);
     }
 
     [Fact]
