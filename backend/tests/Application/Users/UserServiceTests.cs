@@ -1027,6 +1027,8 @@ public class UserServiceTests : DatabaseTestBase
     [InlineData(UserOrgStatus.RequestedAccess, UserMembershipAction.ApproveMembership, true)]
     [InlineData(UserOrgStatus.RequestedAccess, UserMembershipAction.RejectMembership, true)]
     [InlineData(UserOrgStatus.Deactivated, UserMembershipAction.ReactivateMembership, true)]
+    [InlineData(UserOrgStatus.Active, UserMembershipAction.ManageUserDetails, true)]
+    [InlineData(UserOrgStatus.Inactive, UserMembershipAction.ManageUserDetails, true)]
     public async Task GetUsers_UsersOfGivenState_MayHaveTheGivenAction(
         UserOrgStatus status,
         UserMembershipAction action,

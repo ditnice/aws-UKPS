@@ -47,6 +47,12 @@ const actionOptions: {
     hint: "Permanently remove the user's access to the system",
     path: 'remove',
   },
+  {
+    action: 'ManageUserDetails',
+    label: 'Manage user details and sign in method',
+    hint: 'Update user details or sign in method',
+    path: 'manage-details',
+  },
 ]
 
 export default function ManageUserAccessActions({
@@ -76,6 +82,8 @@ export default function ManageUserAccessActions({
           currentUserRole === 'Super' &&
           (isActive || status === 'AwaitingSetup' || status === 'Deactivated')
         )
+      case 'ManageUserDetails':
+        return isActive
       default:
         return false
     }
@@ -94,7 +102,9 @@ export default function ManageUserAccessActions({
     }
 
     const route =
-      option.action === 'EditUserRole' || option.action === 'RemoveUser'
+      option.action === 'EditUserRole' ||
+      option.action === 'RemoveUser' ||
+      option.action === 'ManageUserDetails'
         ? 'manage-user-access'
         : 'users'
     router.push(`/portal/organisations/${organisationId}/${route}/${selectedUserId}/${option.path}`)

@@ -1,17 +1,19 @@
 import { expect, test } from '../../fixtures/test'
+import { allRoles, forRoles } from '../../helpers/roles'
 import { mutatesDataTag, visualTag } from '../../helpers/test-environment'
 
-test.describe('User details screen', () => {
-  test('shows the user details page', { tag: visualTag }, async ({ page }) => {
-    await page.goto('/portal/user/me/edit-details')
-    await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()
-    // The field values come from whichever user is signed in, so they're masked.
-    await expect(page).toHaveScreenshot('user-details.png', {
-      fullPage: true,
-      mask: [page.getByRole('textbox')],
-    })
+// The baseline is only kept for the Super user.
+test('shows the user details page', { tag: forRoles(['Super'], visualTag) }, async ({ page }) => {
+  await page.goto('/portal/user/me/edit-details')
+  await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()
+  // The field values come from whichever user is signed in, so they're masked.
+  await expect(page).toHaveScreenshot('user-details.png', {
+    fullPage: true,
+    mask: [page.getByRole('textbox')],
   })
+})
 
+test.describe('User details screen', { tag: forRoles(allRoles) }, () => {
   test('saves current-user details', { tag: mutatesDataTag }, async () => {
     test.fixme(true, 'The form does not call the user API or show a success state.')
   })

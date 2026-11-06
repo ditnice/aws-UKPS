@@ -3167,28 +3167,8 @@
               }
             }
           },
-          "403": {
-            "description": "Returned if the caller is not authorised to view the organisation's users.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "Returned if the organisation does not exist or the user is not a member of it.",
+            "description": "The user does not exist in this organisation or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3799,28 +3779,8 @@
               }
             }
           },
-          "403": {
-            "description": "The current user is not allowed to view membership requests for the organisation.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "No membership request was found with the supplied identifier.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3915,28 +3875,8 @@
           "200": {
             "description": "The membership request was successfully approved."
           },
-          "403": {
-            "description": "The current user is not allowed to approve the membership request.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "The membership request could not be found.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4031,28 +3971,8 @@
           "200": {
             "description": "The membership request was successfully rejected."
           },
-          "403": {
-            "description": "The current user is not allowed to reject the membership request.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "The membership request could not be found.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -7206,7 +7126,8 @@
           "DeactivateMembership",
           "ReactivateMembership",
           "EditUserRole",
-          "RemoveUser"
+          "RemoveUser",
+          "ManageUserDetails"
         ],
         "type": "string",
         "description": "Defines the actions that can be performed on a user or their membership."
