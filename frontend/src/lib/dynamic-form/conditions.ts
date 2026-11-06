@@ -47,8 +47,8 @@ export const shownQuestionIds = (questions: Question[], values: FormValues): Set
 }
 
 /**
- * Where each question is rendered. A question revealed by a single option of an earlier Radio is
- * nested beneath that option (`nested`, keyed by trigger index then option value); every other
+ * Where each question is rendered. A question revealed by an earlier Radio is nested beneath each
+ * option that reveals it (`nested`, keyed by trigger index then option value); every other
  * question is rendered at the top level of the page (`topLevel`, in page order).
  */
 export const pageLayout = (questions: Question[]) => {

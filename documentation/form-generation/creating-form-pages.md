@@ -6,6 +6,7 @@
 This guide explains how to put questions on a record content form by annotating EF entities. The
 worked example is the Indication details section of the Medicine form. The designs are in
 [`screenshots/`](screenshots/):
+
 - [indication](screenshots/screen-one.png);
 - BNF chapter: [chapter](screenshots/screen-two-part-1.png),
   [chapter list](screenshots/screen-two-part-2.png),
@@ -25,31 +26,31 @@ describes. You only touch the frontend to add a new control.
 
 ## Before you start
 
-| What | Where |
-|---|---|
-| Attributes | `backend/src/Persistence/FormAnnotations/` |
-| Content entities | `backend/src/Persistence/Entities/MedicinesRevisionContent/`, `VaccinesRevisionContent/`, `SharedRevisionContent/` |
-| Option keys (provider names, for registration and `[FormOptions]` overrides) | `backend/src/Persistence/FormAnnotations/OptionKeys.cs` |
-| Option providers | `backend/src/Application/RecordForms/Options/` (`MedicineOptionProviders.cs`) |
-| Form versions | `backend/src/Application/RecordForms/FormVersions.cs` |
-| Tests | `backend/tests/Application/RecordForms/` |
-| Question components | `frontend/src/components/DynamicForm/questions/` |
+| What                                                                         | Where                                                                                                              |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Attributes                                                                   | `backend/src/Persistence/FormAnnotations/`                                                                         |
+| Content entities                                                             | `backend/src/Persistence/Entities/MedicinesRevisionContent/`, `VaccinesRevisionContent/`, `SharedRevisionContent/` |
+| Option keys (provider names, for registration and `[FormOptions]` overrides) | `backend/src/Persistence/FormAnnotations/OptionKeys.cs`                                                            |
+| Option providers                                                             | `backend/src/Application/RecordForms/Options/` (`MedicineOptionProviders.cs`)                                      |
+| Form versions                                                                | `backend/src/Application/RecordForms/FormVersions.cs`                                                              |
+| Tests                                                                        | `backend/tests/Application/RecordForms/`                                                                           |
+| Question components                                                          | `frontend/src/components/DynamicForm/questions/`                                                                   |
 
 ## Attribute reference
 
-| Attribute | On | Arguments | Notes |
-|---|---|---|---|
-| `[FormSection(recordType, id, title)]` | class | `Order`, `RowSource` | One per record type. Every entity declaring the same section ID must agree on title and `Order` |
-| `[FormTask(id, title)]` | property | `Order` | Required on every question. Every declaration of the same task ID must agree on title, `Order` and section |
-| `[FormPage(id, title)]` | property | `Order`, `CommercialInConfidence` | `Order` is the position within the task. `CommercialInConfidence` shows the "Commercial in confidence" badge above the heading. Every declaration of the same page ID must agree |
-| `[FormField(id, label, control)]` | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` |
-| `[FormRequired(message)]` | property | | |
-| `[FormMaxLength(max, message)]` | property | | `Text`, `Textarea` |
-| `[FormMaxItems(max, message)]` | property | | `Checkbox` |
-| `[FormOptions(key)]` | property | | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type |
-| `[FormIgnore(reason)]` | property | | Not a question. The reason is required |
-| `[FormShowWhen(questionId, values...)]` | property | | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages) |
-| `[FormPageShowWhen(pageId, questionId, values...)]` | class | | The page applies only when a question on an earlier page has one of the values. One per page |
+| Attribute                                           | On       | Arguments                                                                                      | Notes                                                                                                                                                                                                                                               |
+| --------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[FormSection(recordType, id, title)]`              | class    | `Order`, `RowSource`                                                                           | One per record type. Every entity declaring the same section ID must agree on title and `Order`                                                                                                                                                     |
+| `[FormTask(id, title)]`                             | property | `Order`                                                                                        | Required on every question. Every declaration of the same task ID must agree on title, `Order` and section                                                                                                                                          |
+| `[FormPage(id, title)]`                             | property | `Order`, `CommercialInConfidence`                                                              | `Order` is the position within the task. `CommercialInConfidence` shows the "Commercial in confidence" badge above the heading. Every declaration of the same page ID must agree                                                                    |
+| `[FormField(id, label, control)]`                   | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` |
+| `[FormRequired(message)]`                           | property |                                                                                                |                                                                                                                                                                                                                                                     |
+| `[FormMaxLength(max, message)]`                     | property |                                                                                                | `Text`, `Textarea`                                                                                                                                                                                                                                  |
+| `[FormMaxItems(max, message)]`                      | property |                                                                                                | `Checkbox`                                                                                                                                                                                                                                          |
+| `[FormOptions(key)]`                                | property |                                                                                                | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                           |
+| `[FormIgnore(reason)]`                              | property |                                                                                                | Not a question. The reason is required                                                                                                                                                                                                              |
+| `[FormShowWhen(questionId, values...)]`             | property |                                                                                                | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                  |
+| `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                        |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
@@ -201,14 +202,14 @@ internal sealed class MedicinesIndicationDetail
 
 The scanner turns this into one task, containing the following pages in order:
 
-| Order | Page ID | Question ID | Control | Binding |
-|---|---|---|---|---|
-| 10 | `indication` | `medicines_indication_detail.indication` | `Textarea` (explicit) | Column, string |
-| 20 | `bnf-chapter` | `medicines_indication_detail.bnf_chapter_id` | `HierarchicalSelect` (explicit) | Column, reference ID |
-| 30 | `therapeutic-area` | `medicines_indication_detail_therapeutic_area` | `HierarchicalSelect` (explicit) | Junction |
-| 40 | `paediatric` | `medicines_indication_detail.indication_is_paediatric` | `Radio` | Column, enum |
-| 50 | `cancer` | `medicines_indication_detail.indication_is_cancer` | `Radio` | Column, enum |
-| 60 | `rare-disease` | `medicines_indication_detail.indication_is_rare_disease` | `Radio` | Column, enum |
+| Order | Page ID            | Question ID                                              | Control                         | Binding              |
+| ----- | ------------------ | -------------------------------------------------------- | ------------------------------- | -------------------- |
+| 10    | `indication`       | `medicines_indication_detail.indication`                 | `Textarea` (explicit)           | Column, string       |
+| 20    | `bnf-chapter`      | `medicines_indication_detail.bnf_chapter_id`             | `HierarchicalSelect` (explicit) | Column, reference ID |
+| 30    | `therapeutic-area` | `medicines_indication_detail_therapeutic_area`           | `HierarchicalSelect` (explicit) | Junction             |
+| 40    | `paediatric`       | `medicines_indication_detail.indication_is_paediatric`   | `Radio`                         | Column, enum         |
+| 50    | `cancer`           | `medicines_indication_detail.indication_is_cancer`       | `Radio`                         | Column, enum         |
+| 60    | `rare-disease`     | `medicines_indication_detail.indication_is_rare_disease` | `Radio`                         | Column, enum         |
 
 Declaration order in the file does not matter; only `Order` does. For example, the therapeutic
 area page is declared last but sorts third.
@@ -223,8 +224,8 @@ choice. Use `[FormIgnore]` with a reason that a reviewer can understand:
 - `"No page designed yet"`: intended for a form, but not designed. Search for this reason to
   find work still to do.
 - `"Conditional reveal not supported yet"`: intended for a form, but it only makes sense revealed
-  under another answer, which forms cannot do yet. Search for this reason too when adding
-  conditional support.
+  under another answer that forms cannot test yet, such as a reference data option ("Other").
+  Search for this reason too when adding support for reference data triggers.
 - `"Set by record creation"`: collected elsewhere, for example by the create record form.
 
 Navigation properties are exempt, unless they back a junction question.
@@ -264,12 +265,14 @@ entities](#pages-that-span-entities)).
 
 **Question ID**: snake_case `entity.property`, for example
 `medicines_indication_detail.bnf_chapter_id`.
+
 - Use the singular entity name, not the database table name.
 - For a junction, use the junction entity name alone, for example
   `medicines_indication_detail_therapeutic_area`.
 - The ID must match `^[a-z0-9_]+(\.[a-z0-9_]+)?$` and be unique across the whole form.
 
 The question ID is used as:
+
 - the payload key;
 - the validation error key;
 - the frontend field name;
@@ -308,13 +311,13 @@ once it has been released.**
 Every `[FormField]` names its control as the third argument. It must be one of the allowed
 controls for the property type:
 
-| Property type | Allowed | Answer on the wire | Frontend component |
-|---|---|---|---|
-| `string` | `Text`, `Textarea` | `string \| null` | `Input` / `Textarea` |
-| non-flags enum | `Radio`, `Select` | `string \| null` (member name) | NDS radios / `Select` |
-| `int?` reference FK | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID) | NDS radios / `Select` / parent and child `Select`s |
-| `[Flags]` enum | `Checkbox` | `string[]` (member names) | NDS checkboxes |
-| junction navigation | `Checkbox`, `HierarchicalSelect` | `string[]` (IDs) | NDS checkboxes / repeated parent and child `Select`s |
+| Property type       | Allowed                                 | Answer on the wire             | Frontend component                                   |
+| ------------------- | --------------------------------------- | ------------------------------ | ---------------------------------------------------- |
+| `string`            | `Text`, `Textarea`                      | `string \| null`               | `Input` / `Textarea`                                 |
+| non-flags enum      | `Radio`, `Select`                       | `string \| null` (member name) | NDS radios / `Select`                                |
+| `int?` reference FK | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID)          | NDS radios / `Select` / parent and child `Select`s   |
+| `[Flags]` enum      | `Checkbox`                              | `string[]` (member names)      | NDS checkboxes                                       |
+| junction navigation | `Checkbox`, `HierarchicalSelect`        | `string[]` (IDs)               | NDS checkboxes / repeated parent and child `Select`s |
 
 `HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
@@ -338,6 +341,7 @@ Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) take their
 provider registered in C#. Attributes cannot hold queries, so the list itself lives in code.
 
 You don't usually name the provider. A question uses the one provider registered for its type:
+
 - an enum property uses the enum provider of that enum;
 - a reference ID or junction uses the reference provider of the referenced entity, or the
   reference tree provider for a `HierarchicalSelect`.
@@ -348,12 +352,12 @@ and no `[FormOptions]`.
 
 ### Using an existing provider
 
-| Key (`OptionKeys`) | Kind | Offers |
-|---|---|---|
-| `yes-no-unknown` (`YesNoUnknown`) | Enum `YesNoUnknown` | Yes, No, Unknown at this stage |
-| `paediatric-status` (`PaediatricStatus`) | Enum `IndicationPaediatricStatus` | Exclusively for children, Both children and adults, Exclusively for adults, Unknown at this stage |
-| `bnf-chapters` (`BnfChapters`) | Reference tree `BnfChapter` | Chapters with their sections, labelled `"1: Gastro-Intestinal System"` and `"1.3: Antisecretory drugs…"` |
-| `therapeutic-areas` (`TherapeuticAreas`) | Reference tree `TherapeuticArea` | Areas with their diseases or conditions, labelled `"1: Addiction"` and `"1.3: Smoking cessation"` |
+| Key (`OptionKeys`)                       | Kind                              | Offers                                                                                                   |
+| ---------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `yes-no-unknown` (`YesNoUnknown`)        | Enum `YesNoUnknown`               | Yes, No, Unknown at this stage                                                                           |
+| `paediatric-status` (`PaediatricStatus`) | Enum `IndicationPaediatricStatus` | Exclusively for children, Both children and adults, Exclusively for adults, Unknown at this stage        |
+| `bnf-chapters` (`BnfChapters`)           | Reference tree `BnfChapter`       | Chapters with their sections, labelled `"1: Gastro-Intestinal System"` and `"1.3: Antisecretory drugs…"` |
+| `therapeutic-areas` (`TherapeuticAreas`) | Reference tree `TherapeuticArea`  | Areas with their diseases or conditions, labelled `"1: Addiction"` and `"1.3: Smoking cessation"`        |
 
 ### Adding a provider
 
@@ -390,6 +394,7 @@ variable, or on an expression node the describer does not support yet; extend it
 needs one.
 
 The startup check fails in these cases:
+
 - no provider is registered for the question's type, or several are and the question has no
   `[FormOptions]`;
 - the key named by `[FormOptions]` does not exist;
@@ -408,11 +413,11 @@ In that case it is still shown and accepted. See [Reference data](reference-data
 [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
 ```
 
-| Attribute | `RuleKind` | Applies to | Passes when |
-|---|---|---|---|
-| `FormRequired(message)` | `Required` | All controls | Text is not blank, an option is chosen, or at least one checkbox is ticked |
-| `FormMaxLength(max, message)` | `MaxLength` | `Text`, `Textarea` | Text is at most `max` UTF-16 code units, after trimming |
-| `FormMaxItems(max, message)` | `MaxItems` | `Checkbox` | At most `max` options are ticked |
+| Attribute                     | `RuleKind`  | Applies to         | Passes when                                                                |
+| ----------------------------- | ----------- | ------------------ | -------------------------------------------------------------------------- |
+| `FormRequired(message)`       | `Required`  | All controls       | Text is not blank, an option is chosen, or at least one checkbox is ticked |
+| `FormMaxLength(max, message)` | `MaxLength` | `Text`, `Textarea` | Text is at most `max` UTF-16 code units, after trimming                    |
+| `FormMaxItems(max, message)`  | `MaxItems`  | `Checkbox`         | At most `max` options are ticked                                           |
 
 How rules are applied:
 
@@ -428,6 +433,7 @@ How rules are applied:
 
 The server also checks things that the attributes don't declare. You do not need rules for
 these:
+
 - every page question is present;
 - no other keys are sent;
 - each value has the right JSON shape;
@@ -521,10 +527,11 @@ public YesNoUnknown? IsCoMarketed { get; set; }
 public string? CoMarketingCompanyName { get; set; }
 ```
 
-- **Where it is shown.** When the trigger is a `Radio` and the condition has one value, the
-  follow-up is shown beneath that option while it is chosen, using the `Radios` component's
-  conditional reveal. Otherwise the follow-up is shown as the next question on the page while the
-  condition is met.
+- **Where it is shown.** When the trigger is a `Radio`, the follow-up is shown beneath each of its
+  values while that value is chosen, using the `Radios` component's conditional reveal. A
+  follow-up with several values appears under each of them, and the page heading is the trigger's
+  label. Otherwise the follow-up is shown as the next question on the page while the condition is
+  met.
 - **Rules only apply while it is shown.** A `[FormRequired]` follow-up is only required when it
   applies. For an optional follow-up, leave out `[FormRequired]`. It then shows as "Not yet
   provided" when it applies but is unanswered.
@@ -584,20 +591,20 @@ Changing reference data **rows** or labels does not.
 `FormModelValidator` runs when the API starts and in `MedicineFormModelTests.Model_IsValid`. It
 reports every problem in one exception.
 
-| Area | Fails when |
-|---|---|
-| Coverage | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation |
-| Pairing | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]` |
-| IDs | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list` |
-| Agreement | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks |
-| Order | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order` |
-| Structure | A section has no pages, or a page has no questions |
-| Controls | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]` |
-| Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel` |
-| Options | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId` |
-| Rules | A rule is on a control it does not apply to, or a rule kind appears twice |
-| Rows | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns |
-| Conditions | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum. A value is not a member of the trigger's enum, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormSection]` |
+| Area         | Fails when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coverage     | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation                                                                                                                                                                                                                                                                                                                      |
+| Pairing      | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]`                                                                                                                                                                                                                                                                                                                                                                                                               |
+| IDs          | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list`                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Agreement    | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                    |
+| Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Structure    | A section has no pages, or a page has no questions                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`                                                                                                                                                                                                                                                                                                                                                                                                |
+| Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                                                                                                                          |
+| Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                       |
+| Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                     |
+| Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum. A value is not a member of the trigger's enum, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormSection]` |
 
 ## Step 8: Test
 
