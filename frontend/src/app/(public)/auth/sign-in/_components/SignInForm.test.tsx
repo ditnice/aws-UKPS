@@ -29,6 +29,11 @@ describe('SignInForm', () => {
     expect(screen.getByLabelText('Email address')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(screen.getByText('Forgotten your password?')).toBeInTheDocument()
+    expect(screen.getByText('I cannot access my account')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'reset your password' })).toHaveAttribute('href', '#')
+    expect(
+      screen.getByRole('link', { name: 'account recovery (opens in a new tab)' }),
+    ).toHaveAttribute('href', '/auth/account-recovery')
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })
 
