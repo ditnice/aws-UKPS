@@ -3,6 +3,7 @@ using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.RecordForms;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Rules;
@@ -34,6 +35,10 @@ public class RecordFormServiceTests : DatabaseTestBase
     private const string BnfChapter = "medicines_indication_detail.bnf_chapter_id";
     private const string TherapeuticAreas = "medicines_indication_detail_therapeutic_area";
     private const string Paediatric = "medicines_indication_detail.indication_is_paediatric";
+    private const string IsCoMarketed = "medicines_development_background.is_co_marketed";
+    private const string CoMarketingName =
+        "medicines_development_background.co_marketing_company_name";
+
     private const string Formulation = "medicines_indication_detail.formulation_type_id";
     private const string TechnologyStatus =
         "medicines_indication_detail.medicine_technology_status";
@@ -670,6 +675,127 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await FieldAudits().AnyAsync(Ct)).ShouldBeFalse();
         (await RevisionVersion()).ShouldBe(versionBefore);
     }
+
+    [Fact]
+    public async Task GetPage_RevealedQuestion_DescribesItsCondition()
+    {
+        RecordPageDto page = await GetPage("co-marketing");
+
+        page.PreviousPageId.ShouldBe("originator");
+        page.Questions.Select(static q => q.Id).ShouldBe([IsCoMarketed, CoMarketingName]);
+        page.Questions[0].ShowWhen.ShouldBeNull();
+        RecordPageConditionDto showWhen = page.Questions[1].ShowWhen.ShouldNotBeNull();
+        showWhen.Kind.ShouldBe(ConditionKind.AnswerIn);
+        showWhen.QuestionId.ShouldBe(IsCoMarketed);
+        showWhen.Values.ShouldBe(["Yes"]);
+        (await GetPage("repurposed-medicine")).PreviousPageId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_HiddenRequiredQuestion_IsNotValidated()
+    {
+        SaveRecordPageDto result = await SaveOk(
+            "co-marketing",
+            CoMarketing("No", companyName: null)
+        );
+
+        result.NextPageId.ShouldBeNull();
+        (await DevelopmentBackgroundRow()).IsCoMarketed.ShouldBe(YesNoUnknown.No);
+    }
+
+    [Fact]
+    public async Task SavePage_RevealedRequiredQuestion_IsValidated()
+    {
+        (await SaveInvalid("co-marketing", CoMarketing("Yes", companyName: "  "))).ShouldBe(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [CoMarketingName] = "Enter the co-marketing company name",
+            }
+        );
+    }
+
+    [Fact]
+    public async Task SavePage_AnswerThatNoLongerApplies_IsClearedAndAudited()
+    {
+        await SaveOk("co-marketing", CoMarketing("Yes", companyName: "Acme Pharma"));
+
+        await SaveOk("co-marketing", CoMarketing("No", companyName: "Acme Pharma"));
+
+        MedicinesDevelopmentBackground row = await DevelopmentBackgroundRow();
+        row.IsCoMarketed.ShouldBe(YesNoUnknown.No);
+        row.CoMarketingCompanyName.ShouldBeNull();
+        RecordFieldAudit cleared = await FieldAudits()
+            .Where(static a => a.FieldPath == CoMarketingName)
+            .OrderBy(static a => a.Id)
+            .LastAsync(Ct);
+        cleared.OldValue.ShouldBe("Acme Pharma");
+        cleared.NewValue.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_HiddenQuestionSentWithAValue_IsStoredEmpty()
+    {
+        await SaveOk("co-marketing", CoMarketing("No", companyName: "Acme Pharma"));
+
+        (await DevelopmentBackgroundRow()).CoMarketingCompanyName.ShouldBeNull();
+        (await FieldAudits().Select(static a => a.FieldPath).ToListAsync(Ct)).ShouldBe([
+            IsCoMarketed,
+        ]);
+    }
+
+    [Fact]
+    public async Task SavePage_RevealedOptionalQuestion_MayBeLeftBlank()
+    {
+        await SaveOk(
+            "repurposed-medicine",
+            new Dictionary<string, JsonElement>(StringComparer.Ordinal)
+            {
+                ["medicines_development_background.is_repurposed_medicine"] = Json("Yes"),
+                ["medicines_development_background.repurposed_medicine_details"] = Json<string?>(
+                    null
+                ),
+            }
+        );
+
+        (await DevelopmentBackgroundRow()).IsRepurposedMedicine.ShouldBe(YesNoUnknown.Yes);
+    }
+
+    [Fact]
+    public async Task SavePage_AnotherSection_LeavesItsAnswersAlone()
+    {
+        // A follow-up stored although its trigger hides it, as seeded or older data may be.
+        await AddEntity(
+            new MedicinesDevelopmentBackground
+            {
+                RevisionId = _revision.Id,
+                IsCoMarketed = YesNoUnknown.No,
+                CoMarketingCompanyName = "Acme Pharma",
+            },
+            Ct
+        );
+
+        await SaveOk("indication", Answer(Indication, "Hepatitis C"));
+
+        (await DevelopmentBackgroundRow()).CoMarketingCompanyName.ShouldBe("Acme Pharma");
+        (await FieldAudits().Select(static a => a.FieldPath).ToListAsync(Ct)).ShouldBe([
+            Indication,
+        ]);
+    }
+
+    private static Dictionary<string, JsonElement> CoMarketing(
+        string isCoMarketed,
+        string? companyName
+    ) =>
+        new(StringComparer.Ordinal)
+        {
+            [IsCoMarketed] = Json(isCoMarketed),
+            [CoMarketingName] = Json(companyName),
+        };
+
+    private async Task<MedicinesDevelopmentBackground> DevelopmentBackgroundRow() =>
+        await Context
+            .MedicinesDevelopmentBackgrounds.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     [Fact]
     public async Task GetPage_FlaggedPage_ShowsTheCommercialInConfidenceBadge()

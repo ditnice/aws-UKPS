@@ -48,6 +48,18 @@ export const BiomarkerType = {
 export type BiomarkerType = typeof BiomarkerType[keyof typeof BiomarkerType];
 
 /**
+ * The kind of a condition that decides whether a question applies. Part of the HTTP API
+ * contract: the member names are sent to the frontend, so never rename or remove one.
+ */
+export const ConditionKind = { ANSWER_IN: 'AnswerIn' } as const;
+
+/**
+ * The kind of a condition that decides whether a question applies. Part of the HTTP API
+ * contract: the member names are sent to the frontend, so never rename or remove one.
+ */
+export type ConditionKind = typeof ConditionKind[keyof typeof ConditionKind];
+
+/**
  * Represents the information required to create a new organisation.
  */
 export type CreateOrganisationDto = {
@@ -1059,6 +1071,25 @@ export type RecordNameAndIdentifierDto = {
 };
 
 /**
+ * A condition that decides whether a question applies, from another question's answer.
+ */
+export type RecordPageConditionDto = {
+    /**
+     * How the condition is evaluated.
+     */
+    kind: ConditionKind;
+    /**
+     * The ID of the trigger question, an earlier question on the same page.
+     */
+    questionId: string;
+    /**
+     * For ConditionKind.AnswerIn: the condition is met when the trigger's answer
+     * includes any of these option values.
+     */
+    values: Array<string>;
+};
+
+/**
  * One page of a record content form: its questions, options and current answers.
  */
 export type RecordPageDto = {
@@ -1193,6 +1224,7 @@ export type RecordPageQuestionDto = {
      * The button text that adds another entry to a multi-value hierarchical select.
      */
     addAnotherLabel: null | string;
+    showWhen: null | RecordPageConditionDto;
     /**
      * The rules, in evaluation order.
      */

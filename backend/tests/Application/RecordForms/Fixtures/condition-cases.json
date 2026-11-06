@@ -1,0 +1,13 @@
+{
+  "description": "Shared condition cases run by both the backend (ConditionCasesTests) and the frontend (lib/dynamic-form). Each answer is the trigger's wire answer; met is whether the condition holds.",
+  "cases": [
+    { "name": "single answer matches", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Yes"] }, "answer": "Yes", "met": true },
+    { "name": "single answer differs", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Yes"] }, "answer": "No", "met": false },
+    { "name": "single answer unanswered", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Yes"] }, "answer": null, "met": false },
+    { "name": "single answer is one of several values", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Yes", "Unknown"] }, "answer": "Unknown", "met": true },
+    { "name": "values are compared case-sensitively", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Yes"] }, "answer": "yes", "met": false },
+    { "name": "multi answer includes a value", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Other"] }, "answer": ["First", "Other"], "met": true },
+    { "name": "multi answer includes none of the values", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Other"] }, "answer": ["First", "Second"], "met": false },
+    { "name": "multi answer unanswered", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Other"] }, "answer": [], "met": false }
+  ]
+}

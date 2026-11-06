@@ -11,6 +11,7 @@ export function RadioQuestion({
   onChange,
   onBlur,
   error,
+  revealed,
 }: QuestionProps<string>) {
   // Labels are bold across the whole group once any option has a hint, matching the designs.
   const hasOptionHints = question.options?.some((option) => option.hint) ?? false
@@ -28,6 +29,7 @@ export function RadioQuestion({
     >
       {question.options?.map((option) => (
         <Radio
+          conditional={revealed?.[option.value]}
           hint={option.hint ?? undefined}
           key={option.value}
           label={option.label}

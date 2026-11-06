@@ -138,6 +138,9 @@ internal static class RecordContentHistory
         {
             CreationPageFields(record.ProductRecordDetails.NamesAndIdentifiers),
             IndicationFields(record),
+            DevelopmentBackgroundFields(
+                record.IndicationAndDevelopmentInformation.DevelopmentBackground
+            ),
             LaboratoryTestingFields(record.ServiceReadinessInformation.LaboratoryTestingDetails),
             MhraFields(regulatory.MhraProcedureAndDates),
             HtaAndDesignationFields(regulatory),
@@ -217,6 +220,36 @@ internal static class RecordContentHistory
             ),
         ];
     }
+
+    private static (string Path, string? Value)[] DevelopmentBackgroundFields(
+        SyntheticDevelopmentBackground background
+    ) =>
+        [
+            (
+                "medicines_development_background.is_repurposed_medicine",
+                background.IsRepurposedMedicine?.ToString()
+            ),
+            (
+                "medicines_development_background.repurposed_medicine_details",
+                background.RepurposedMedicineDetails
+            ),
+            (
+                "medicines_development_background.is_originator_company",
+                background.IsOriginatorCompany?.ToString()
+            ),
+            (
+                "medicines_development_background.originator_company_name",
+                background.OriginatorCompanyName
+            ),
+            (
+                "medicines_development_background.is_co_marketed",
+                background.IsCoMarketed?.ToString()
+            ),
+            (
+                "medicines_development_background.co_marketing_company_name",
+                background.CoMarketingCompanyName
+            ),
+        ];
 
     private static (string Path, string? Value)[] MhraFields(SyntheticMhraProcedureAndDates mhra) =>
         [

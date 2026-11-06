@@ -16,6 +16,13 @@ internal sealed class PageAnswers : IEnumerable<KeyValuePair<string, FormAnswer>
         _lookup = new Dictionary<string, FormAnswer>(lookup, lookup.Comparer);
     }
 
+    /// <summary>The answers of the page's questions, taken from a wider set of answers.</summary>
+    public static PageAnswers For(FormPage page, IReadOnlyDictionary<string, FormAnswer> answers) =>
+        new(
+            page.Questions.Where(q => answers.ContainsKey(q.Id))
+                .ToDictionary(static q => q.Id, q => answers[q.Id], StringComparer.Ordinal)
+        );
+
     internal string ComputeStableHash()
     {
         using var stream = new MemoryStream();

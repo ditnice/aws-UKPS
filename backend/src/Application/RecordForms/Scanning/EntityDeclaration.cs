@@ -8,5 +8,6 @@ internal sealed record EntityDeclaration(
     Type ClrType,
     IEntityType EntityType,
     IReadOnlyList<FormSectionAttribute> Sections,
-    IReadOnlyList<QuestionDeclaration> Questions
+    IReadOnlyList<QuestionDeclaration> Questions,
+    IReadOnlyList<FormPageShowWhenAttribute> PageConditions
 );

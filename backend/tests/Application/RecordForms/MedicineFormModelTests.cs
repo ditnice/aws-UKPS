@@ -1,8 +1,10 @@
 using Shouldly;
 using UKPS.Api.Application.RecordForms;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
@@ -13,7 +15,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.8";
     private const string ExpectedFingerprint =
-        "e7be59a41364f0543fc95594a3bbd7bf96b74f62b99583b318f8ba52b5cf5c18";
+        "603a4ac9d2392a3be9a9f2d596889d3457ec45ce7522e8b5140ac7d9a7d5e86b";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -103,6 +105,59 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasTheDevelopmentBackgroundPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.SectionId, "development-background", StringComparison.Ordinal)
+            )
+            .Select(static p => p.Id)
+            .ShouldBe(["repurposed-medicine", "originator", "co-marketing"]);
+    }
+
+    [Fact]
+    public void Model_DevelopmentBackgroundRevealsFollowUpQuestions()
+    {
+        const string Prefix = "medicines_development_background.";
+        Model
+            .Questions.Where(static q => q.ShowWhen is not null)
+            .Select(static q => (q.Id, q.ShowWhen!.Description))
+            .ShouldBe([
+                (
+                    $"{Prefix}repurposed_medicine_details",
+                    $"AnswerIn {Prefix}is_repurposed_medicine [Yes]"
+                ),
+                (
+                    $"{Prefix}originator_company_name",
+                    $"AnswerIn {Prefix}is_originator_company [No]"
+                ),
+                ($"{Prefix}co_marketing_company_name", $"AnswerIn {Prefix}is_co_marketed [Yes]"),
+            ]);
+        Model.Pages.ShouldAllBe(static p => p.ShowWhen == null);
+    }
+
+    [Fact]
+    public void EveryPage_ReadsAndSavesOnlyItsOwnRows()
+    {
+        // The Medicine form has only same-page reveals, so conditions add no rows to any request.
+        FormModel model = Model;
+        foreach (FormPage page in model.Pages)
+        {
+            model.EntitiesToRead(page).ShouldBe(page.Entities, page.Id);
+            model.EntitiesToSave(page).ShouldBe(page.Entities, page.Id);
+            model.AffectedBy(page).ShouldBe(page.Questions, page.Id);
+        }
+    }
+
+    [Fact]
+    public void TriggerEntities_HoldOnlyTheDevelopmentBackground()
+    {
+        Model
+            .TriggerEntities.Select(static e => e.ClrType)
+            .ShouldBe([typeof(MedicinesDevelopmentBackground)]);
+    }
+
+    [Fact]
     public void Model_HasTheExpectedQuestions()
     {
         var questions = Model
@@ -162,6 +217,36 @@ public class MedicineFormModelTests
                 "medicines_indication_detail.medicine_technology_status",
                 FormControl.Checkbox,
                 AnswerShape.Multi
+            ),
+            (
+                "medicines_development_background.is_repurposed_medicine",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_development_background.repurposed_medicine_details",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_development_background.is_originator_company",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_development_background.originator_company_name",
+                FormControl.Text,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_development_background.is_co_marketed",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_development_background.co_marketing_company_name",
+                FormControl.Text,
+                AnswerShape.Single
             ),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
@@ -282,20 +367,32 @@ public class MedicineFormModelTests
     public void NextAndPreviousPage_FollowFormOrder()
     {
         FormModel model = Model;
+        Applicability applicability = FormApplicability.Evaluate(
+            model,
+            model.Questions.ToDictionary(
+                static q => q.Id,
+                static q => FormAnswer.Empty(q.Shape),
+                StringComparer.Ordinal
+            )
+        );
+        string? Next(string pageId) => model.NextPage(model.FindPage(pageId)!, applicability)?.Id;
+        string? Previous(string pageId) =>
+            model.PreviousPage(model.FindPage(pageId)!, applicability)?.Id;
 
-        model.PreviousPage(model.Pages[0]).ShouldBeNull();
-        model.NextPage(model.FindPage("indication")!)!.Id.ShouldBe("bnf-chapter");
-        model.PreviousPage(model.FindPage("bnf-chapter")!)!.Id.ShouldBe("indication");
-        model.NextPage(model.FindPage("rare-disease")!)!.Id.ShouldBe("formulation");
-        model.NextPage(model.FindPage("technology-status")!).ShouldBeNull();
-        model.PreviousPage(model.FindPage("diagnostic-test-required")!).ShouldBeNull();
-        model.NextPage(model.FindPage("diagnostic-test-required")!)!.Id.ShouldBe("biomarker-type");
-        model.NextPage(model.FindPage("safety-tests")!).ShouldBeNull();
-        model.PreviousPage(model.FindPage("screening-programme")!).ShouldBeNull();
-        model
-            .NextPage(model.FindPage("screening-programme")!)!
-            .Id.ShouldBe("urgent-identification");
-        model.NextPage(model.FindPage("eligible-population")!).ShouldBeNull();
+        model.PreviousPage(model.Pages[0], applicability).ShouldBeNull();
+        Next("indication").ShouldBe("bnf-chapter");
+        Previous("bnf-chapter").ShouldBe("indication");
+        Next("rare-disease").ShouldBe("formulation");
+        Next("technology-status").ShouldBeNull();
+        Previous("repurposed-medicine").ShouldBeNull();
+        Next("repurposed-medicine").ShouldBe("originator");
+        Next("co-marketing").ShouldBeNull();
+        Previous("diagnostic-test-required").ShouldBeNull();
+        Next("diagnostic-test-required").ShouldBe("biomarker-type");
+        Next("safety-tests").ShouldBeNull();
+        Previous("screening-programme").ShouldBeNull();
+        Next("screening-programme").ShouldBe("urgent-identification");
+        Next("eligible-population").ShouldBeNull();
         model.FindPage("unknown").ShouldBeNull();
     }
 

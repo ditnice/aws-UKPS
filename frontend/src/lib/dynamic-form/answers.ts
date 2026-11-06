@@ -119,6 +119,21 @@ export const validateQuestion = (question: Question, value: FormValue | undefine
   return firstFailure(question.rules, answer)
 }
 
-/** Builds the save payload: every question on the page, keyed by question ID. */
-export const buildPayload = (questions: Question[], values: FormValues): Record<string, Answer> =>
-  Object.fromEntries(questions.map((q, i) => [q.id, toAnswer(q, values[fieldName(i)])]))
+/** The answer of an unanswered question: null, or an empty array when multi-value. */
+const emptyAnswer = (question: Question): Answer => (question.multiple ? [] : null)
+
+/**
+ * Builds the save payload: every question on the page, keyed by question ID. Questions not in
+ * `shown` (hidden by their conditions) are sent unanswered.
+ */
+export const buildPayload = (
+  questions: Question[],
+  values: FormValues,
+  shown: ReadonlySet<string>,
+): Record<string, Answer> =>
+  Object.fromEntries(
+    questions.map((q, i) => [
+      q.id,
+      shown.has(q.id) ? toAnswer(q, values[fieldName(i)]) : emptyAnswer(q),
+    ]),
+  )
