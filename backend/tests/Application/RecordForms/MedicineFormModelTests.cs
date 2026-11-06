@@ -209,11 +209,16 @@ public class MedicineFormModelTests
     }
 
     [Fact]
-    public void TriggerEntities_HoldOnlyTheDevelopmentBackground()
+    public void TriggerEntities_HoldTheEntitiesWithConditions()
     {
         Model
             .TriggerEntities.Select(static e => e.ClrType)
-            .ShouldBe([typeof(MedicinesDevelopmentBackground)]);
+            .ShouldBe([
+                typeof(MedicinesDevelopmentBackground),
+                typeof(MedicinesLaboratoryTesting),
+                typeof(MedicinesPatientIdentification),
+                typeof(MedicinesServiceImpact),
+            ]);
     }
 
     [Fact]
