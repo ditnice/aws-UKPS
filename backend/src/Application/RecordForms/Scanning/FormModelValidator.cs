@@ -477,19 +477,9 @@ internal static partial class FormModelValidator
                 EqualityComparer<(string SectionId, string TaskId, string Id)>.Default
             )
             .ToArray();
+        ValidatePageMetadata(form, pages, problems);
         foreach (var page in pages)
         {
-            if (
-                page.Select(static x => (x.Question.Page.Title, x.Question.Page.Order))
-                    .Distinct()
-                    .Count() > 1
-            )
-            {
-                problems.Add(
-                    $"{form} declares page '{page.Key.Id}' with different titles or orders."
-                );
-            }
-
             ReportTies(
                 page,
                 static x => x.Question.Field.Order,
@@ -710,6 +700,36 @@ internal static partial class FormModelValidator
         if (values.Distinct().Count() != values.Count)
         {
             problems.Add($"{where} repeats a value.");
+        }
+    }
+
+    private static void ValidatePageMetadata(
+        string form,
+        IGrouping<
+            (string SectionId, string TaskId, string Id),
+            (QuestionDeclaration Question, string SectionId)
+        >[] pages,
+        List<string> problems
+    )
+    {
+        foreach (var page in pages)
+        {
+            if (
+                page.Select(static x =>
+                        (
+                            x.Question.Page.Title,
+                            x.Question.Page.Order,
+                            x.Question.Page.CommercialInConfidence
+                        )
+                    )
+                    .Distinct()
+                    .Count() > 1
+            )
+            {
+                problems.Add(
+                    $"{form} declares page '{page.Key.Id}' with different titles, orders or commercial in confidence flags."
+                );
+            }
         }
     }
 

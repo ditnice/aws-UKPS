@@ -19,8 +19,8 @@ const question = (overrides: Partial<Question>): Question => ({
   showWhen: null,
   rules: [],
   options: [
-    { value: 'Yes', label: 'Yes', children: null },
-    { value: 'No', label: 'No', children: null },
+    { value: 'Yes', label: 'Yes', hint: null, children: null },
+    { value: 'No', label: 'No', hint: null, children: null },
   ],
   ...overrides,
 })

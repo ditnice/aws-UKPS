@@ -98,7 +98,7 @@ internal sealed class RecordFormPageLoader(
     /// the page does not apply, which callers treat as not found. A save loads, and tracks, the
     /// rows of every answer it may clear as well.
     /// </summary>
-    public async Task<PageAnswers?> LoadAnswersAsync(
+    public async Task<LoadedAnswers?> LoadAnswersAsync(
         LoadedPage loaded,
         bool forSave,
         CancellationToken cancellationToken
@@ -129,7 +129,7 @@ internal sealed class RecordFormPageLoader(
                 StringComparer.Ordinal
             );
         Applicability applicability = FormApplicability.Evaluate(model, answers);
-        return applicability.Applies(page) ? new PageAnswers(rows, answers, applicability) : null;
+        return applicability.Applies(page) ? new LoadedAnswers(rows, answers, applicability) : null;
     }
 
     /// <summary>
@@ -138,7 +138,7 @@ internal sealed class RecordFormPageLoader(
     /// </summary>
     public async Task<Dictionary<string, IReadOnlyList<FormOption>>> LoadOptionsAsync(
         FormPage page,
-        Dictionary<string, FormAnswer> savedAnswers,
+        PageAnswers savedAnswers,
         CancellationToken cancellationToken
     )
     {

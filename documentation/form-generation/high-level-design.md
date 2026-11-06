@@ -468,6 +468,7 @@ broken build lists everything to fix at once. The full catalogue is in
     (with its current value) to force the `UPDATE`.
   - A save racing another one is caught by EF's concurrency check, which also returns
     `revision_changed`.
+- **`pageAnswersChanged`** when the answers for a page have changed between a read and a write, the will be a HTTP 409 response with the error code `page_answers_changed`
 
 ### Authorisation
 

@@ -20,12 +20,13 @@ const tree: Option[] = [
   {
     value: '1',
     label: '1: Addiction',
+    hint: null,
     children: [
-      { value: '11', label: '1.1: Opioid use disorder', children: null },
-      { value: '12', label: '1.2: NAS', children: null },
+      { value: '11', label: '1.1: Opioid use disorder', hint: null, children: null },
+      { value: '12', label: '1.2: NAS', hint: null, children: null },
     ],
   },
-  { value: '2', label: '2: Allergy', children: null },
+  { value: '2', label: '2: Allergy', hint: null, children: null },
 ]
 
 const question = (overrides: Partial<Question>): Question => ({

@@ -6197,7 +6197,6 @@
       "RecordPageDto": {
         "required": [
           "formVersion",
-          "revisionVersion",
           "recordId",
           "section",
           "task",
@@ -6205,18 +6204,14 @@
           "previousPageId",
           "nextPageId",
           "questions",
-          "answers"
+          "answers",
+          "pageHash"
         ],
         "type": "object",
         "properties": {
           "formVersion": {
             "type": "string",
             "description": "The form's version. Echo it back on save."
-          },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The concurrency token of the record's latest revision, which the page reads and writes.\nEcho it back on save.",
-            "format": "uint32"
           },
           "recordId": {
             "type": "integer",
@@ -6259,6 +6254,10 @@
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: a string or null, or an array of strings\nfor multi-value questions."
+          },
+          "pageHash": {
+            "type": "string",
+            "description": "A hash of the answers of the page that must be provided when saving updates.\nIf the hash has changed, answers will be rejected."
           }
         },
         "description": "One page of a record content form: its questions, options and current answers."
@@ -6267,6 +6266,7 @@
         "required": [
           "value",
           "label",
+          "hint",
           "children"
         ],
         "type": "object",
@@ -6278,6 +6278,13 @@
           "label": {
             "type": "string",
             "description": "The text shown for the option."
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Help text shown under the option, or null when it has none."
           },
           "children": {
             "type": [
@@ -6295,7 +6302,8 @@
       "RecordPagePageDto": {
         "required": [
           "id",
-          "title"
+          "title",
+          "commercialInConfidence"
         ],
         "type": "object",
         "properties": {
@@ -6306,9 +6314,13 @@
           "title": {
             "type": "string",
             "description": "A short name for the page."
+          },
+          "commercialInConfidence": {
+            "type": "boolean",
+            "description": "Whether the page shows the \"Commercial in confidence\" badge."
           }
         },
-        "description": "A page's ID and title."
+        "description": "A page's ID, title and \"Commercial in confidence\" flag."
       },
       "RecordPageQuestionDto": {
         "required": [
@@ -6851,8 +6863,8 @@
       "SaveRecordPageCommand": {
         "required": [
           "formVersion",
-          "revisionVersion",
-          "answers"
+          "answers",
+          "pageHash"
         ],
         "type": "object",
         "properties": {
@@ -6860,14 +6872,13 @@
             "type": "string",
             "description": "The string RecordPageDto.FormVersion the page was loaded with."
           },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The uint RecordPageDto.RevisionVersion the page was loaded with.",
-            "format": "uint32"
-          },
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: null for an unanswered single-value\nquestion and an empty array for an unanswered multi-value question."
+          },
+          "pageHash": {
+            "type": "string",
+            "description": "The page hash value returned from the query."
           }
         },
         "description": "Every answer on a page, with the versions the page was loaded at."

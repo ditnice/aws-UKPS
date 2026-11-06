@@ -36,7 +36,7 @@ internal static class FormModelFingerprint
                 {
                     text.AppendLine(
                         CultureInfo.InvariantCulture,
-                        $"    page {page.Id} | {page.Title} | {page.Order}"
+                        $"    page {page.Id} | {page.Title} | {page.Order} | {page.CommercialInConfidence}"
                     );
                     if (page.ShowWhen is not null)
                     {

@@ -11,7 +11,8 @@ internal sealed record FormPage(
     string SectionTitle,
     string TaskId,
     string TaskTitle,
-    IReadOnlyList<FormQuestion> Questions
+    IReadOnlyList<FormQuestion> Questions,
+    bool CommercialInConfidence = false
 )
 {
     /// <summary>When set, the page and all its questions apply only while it is met.</summary>

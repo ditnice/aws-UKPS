@@ -1,5 +1,7 @@
 import { Radio, Radios } from '@/components/Radios/Radios'
 
+import styles from '../DynamicForm.module.scss'
+
 import type { QuestionProps } from '../types'
 
 export function RadioQuestion({
@@ -11,8 +13,12 @@ export function RadioQuestion({
   error,
   revealed,
 }: QuestionProps<string>) {
+  // Labels are bold across the whole group once any option has a hint, matching the designs.
+  const hasOptionHints = question.options?.some((option) => option.hint) ?? false
+
   return (
     <Radios
+      className={hasOptionHints ? styles.boldLabels : undefined}
       error={error}
       hint={question.hint ?? undefined}
       legend={question.label}
@@ -24,6 +30,7 @@ export function RadioQuestion({
       {question.options?.map((option) => (
         <Radio
           conditional={revealed?.[option.value]}
+          hint={option.hint ?? undefined}
           key={option.value}
           label={option.label}
           value={option.value}

@@ -29,7 +29,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             );
         }
 
-        PageAnswers? saved = await loader.LoadAnswersAsync(
+        LoadedAnswers? saved = await loader.LoadAnswersAsync(
             loaded,
             forSave: false,
             cancellationToken
@@ -39,36 +39,44 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             return GetRecordPageResult.Err(new GetRecordPageError.NotFound());
         }
 
+        PageAnswers answers = PageAnswers.For(loaded.Page, saved.Answers);
+        var options = await loader.LoadOptionsAsync(loaded.Page, answers, cancellationToken);
+        return GetRecordPageResult.Ok(ToDto(loaded, saved.Applicability, answers, options));
+    }
+
+    private static RecordPageDto ToDto(
+        LoadedPage loaded,
+        Applicability applicability,
+        PageAnswers answers,
+        Dictionary<string, IReadOnlyList<FormOption>> options
+    )
+    {
         FormModel model = loaded.Model;
         FormPage page = loaded.Page;
-        Dictionary<string, FormAnswer> answers = saved.Answers;
-        var options = await loader.LoadOptionsAsync(page, answers, cancellationToken);
-
-        return GetRecordPageResult.Ok(
-            new RecordPageDto
+        return new RecordPageDto
+        {
+            FormVersion = model.Version,
+            RecordId = loaded.Record.Id,
+            Section = new RecordPageSectionDto { Id = page.SectionId, Title = page.SectionTitle },
+            Task = new RecordPageTaskDto { Id = page.TaskId, Title = page.TaskTitle },
+            Page = new RecordPagePageDto
             {
-                FormVersion = model.Version,
-                RevisionVersion = loaded.Revision.Version,
-                RecordId = recordId,
-                Section = new RecordPageSectionDto
-                {
-                    Id = page.SectionId,
-                    Title = page.SectionTitle,
-                },
-                Task = new RecordPageTaskDto { Id = page.TaskId, Title = page.TaskTitle },
-                Page = new RecordPagePageDto { Id = page.Id, Title = page.Title },
-                PreviousPageId = model.PreviousPage(page, saved.Applicability)?.Id,
-                NextPageId = model.NextPage(page, saved.Applicability)?.Id,
-                Questions = page
-                    .Questions.Select(q => ToDto(q, options.GetValueOrDefault(q.Id)))
-                    .ToArray(),
-                Answers = page.Questions.ToDictionary(
-                    static q => q.Id,
-                    q => answers[q.Id].ToJson(),
-                    StringComparer.Ordinal
-                ),
-            }
-        );
+                Id = page.Id,
+                Title = page.Title,
+                CommercialInConfidence = page.CommercialInConfidence,
+            },
+            PreviousPageId = model.PreviousPage(page, applicability)?.Id,
+            NextPageId = model.NextPage(page, applicability)?.Id,
+            Questions = page
+                .Questions.Select(q => ToDto(q, options.GetValueOrDefault(q.Id)))
+                .ToArray(),
+            Answers = page.Questions.ToDictionary(
+                static q => q.Id,
+                q => answers[q.Id].ToJson(),
+                StringComparer.Ordinal
+            ),
+            PageHash = answers.ComputeStableHash(),
+        };
     }
 
     private static RecordPageQuestionDto ToDto(
@@ -118,6 +126,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
         {
             Value = option.Value,
             Label = option.Label,
+            Hint = option.Hint,
             Children = option.Children.Count == 0 ? null : option.Children.Select(ToDto).ToArray(),
         };
 }

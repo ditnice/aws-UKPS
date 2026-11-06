@@ -215,7 +215,8 @@ internal static class FormModelBuilder
             section.Title,
             task.Id,
             task.Title,
-            page.Select(static x => x.Second).OrderBy(static q => q.Order).ToArray()
+            page.Select(static x => x.Second).OrderBy(static q => q.Order).ToArray(),
+            CommercialInConfidence: page.First().First.Page.CommercialInConfidence
         )
         {
             ShowWhen = pageConditions.TryGetValue(page.Key, out var condition)

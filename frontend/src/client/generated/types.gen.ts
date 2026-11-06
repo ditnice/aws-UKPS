@@ -1098,11 +1098,6 @@ export type RecordPageDto = {
      */
     formVersion: string;
     /**
-     * The concurrency token of the record's latest revision, which the page reads and writes.
-     * Echo it back on save.
-     */
-    revisionVersion: number;
-    /**
      * The record the page belongs to.
      */
     recordId: number;
@@ -1138,6 +1133,11 @@ export type RecordPageDto = {
     answers: {
         [key: string]: unknown;
     };
+    /**
+     * A hash of the answers of the page that must be provided when saving updates.
+     * If the hash has changed, answers will be rejected.
+     */
+    pageHash: string;
 };
 
 /**
@@ -1153,13 +1153,17 @@ export type RecordPageOptionDto = {
      */
     label: string;
     /**
+     * Help text shown under the option, or null when it has none.
+     */
+    hint: null | string;
+    /**
      * The child options of a hierarchical option, or null.
      */
     children: null | Array<RecordPageOptionDto>;
 };
 
 /**
- * A page's ID and title.
+ * A page's ID, title and "Commercial in confidence" flag.
  */
 export type RecordPagePageDto = {
     /**
@@ -1170,6 +1174,10 @@ export type RecordPagePageDto = {
      * A short name for the page.
      */
     title: string;
+    /**
+     * Whether the page shows the "Commercial in confidence" badge.
+     */
+    commercialInConfidence: boolean;
 };
 
 /**
@@ -1591,16 +1599,16 @@ export type SaveRecordPageCommand = {
      */
     formVersion: string;
     /**
-     * The uint RecordPageDto.RevisionVersion the page was loaded with.
-     */
-    revisionVersion: number;
-    /**
      * Every question on the page, keyed by question ID: null for an unanswered single-value
      * question and an empty array for an unanswered multi-value question.
      */
     answers: {
         [key: string]: unknown;
     };
+    /**
+     * The page hash value returned from the query.
+     */
+    pageHash: string;
 };
 
 /**
