@@ -21,6 +21,13 @@ internal sealed class FormModel
     /// <summary>Every question in form order.</summary>
     public IReadOnlyList<FormQuestion> Questions { get; }
 
+    /// <summary>
+    /// The entities holding a question that any condition reads. Their answers are all that is
+    /// needed to work out which of the form's pages and questions apply. Empty for a form without
+    /// conditions.
+    /// </summary>
+    public IReadOnlyList<FormEntity> TriggerEntities { get; }
+
     public FormModel(RecordType recordType, string version, IReadOnlyList<FormSection> sections)
     {
         RecordType = recordType;
@@ -36,6 +43,11 @@ internal sealed class FormModel
             .SelectMany(static p => p.Questions.Select(q => (q.Id, Page: p)))
             .ToDictionary(static x => x.Id, static x => x.Page, StringComparer.Ordinal);
         _scopes = BuildScopes();
+        TriggerEntities = Questions
+            .SelectMany(TriggersOf)
+            .Select(static q => q.Entity)
+            .Distinct()
+            .ToArray();
     }
 
     public FormPage? FindPage(string pageId) =>

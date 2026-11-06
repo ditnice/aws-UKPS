@@ -9,12 +9,26 @@ using UKPS.Api.Tests.Application.RecordForms.Scanning;
 
 namespace UKPS.Api.Tests.Application.RecordForms;
 
-/// <summary>
-/// Applicability over <see cref="ConditionalEntity"/> and <see cref="ConditionalExtraEntity"/>:
-/// a reveal on the gate page; a follow-up page shown when the gate is Yes or Unknown, with a
-/// reveal of its own; an end page; an extra page in the other entity shown when the gate is Yes;
-/// and an other page that depends on nothing.
-/// </summary>
+// Which pages and questions apply, and which rows each request needs, over a small test form.
+// Gate and Detail are Yes/No/Unknown radios. In page order:
+// - gate (ConditionalEntity) asks Gate. If No, Reason is revealed on the same page.
+// - follow-up (ConditionalEntity) is shown if Gate is Yes or Unknown, and skipped if No. It asks
+//   Detail; if Detail is Yes, Notes is revealed on the same page.
+// - end (ConditionalEntity) is always shown.
+// - extra (ConditionalExtraEntity) is shown only if Gate is Yes.
+// - other (ConditionalExtraEntity) is always shown.
+//
+// So the route through the form is:
+// - Gate No: gate (with Reason), end, other.
+// - Gate Unknown: gate, follow-up, end, other.
+// - Gate Yes: gate, follow-up, end, extra, other.
+//
+// Why it is shaped like this:
+// - Notes depends on Detail, which is on a page that may be skipped, so skipping follow-up must
+//   also hide Notes, whatever Detail holds.
+// - extra is in a second entity, so saving gate must load, and may clear, that entity's row.
+// - other depends on nothing, so saving it clears nothing; it still reads the gate's entity,
+//   because Gate decides where Back and Save and continue go.
 public class FormApplicabilityTests
 {
     private const string Gate = "conditional_entity.gate";
@@ -172,6 +186,14 @@ public class FormApplicabilityTests
         EntitiesToSave("gate")
             .ShouldBe([typeof(ConditionalEntity), typeof(ConditionalExtraEntity)]);
         EntitiesToSave("end").ShouldBe([typeof(ConditionalEntity)]);
+    }
+
+    [Fact]
+    public void TriggerEntities_HoldTheEntitiesConditionsRead()
+    {
+        // Both triggers (gate and detail) are on ConditionalEntity. ConditionalExtraEntity has a page
+        // that depends on the gate but holds no trigger, so its rows are not needed.
+        _form.TriggerEntities.Select(static e => e.ClrType).ShouldBe([typeof(ConditionalEntity)]);
     }
 
     private static FormModel BuildForm()

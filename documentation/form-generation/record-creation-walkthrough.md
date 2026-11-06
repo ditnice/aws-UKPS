@@ -14,7 +14,8 @@ The record task list is available at `GET /records/{recordId}/task-list`. It rea
 and returns the form's sections and tasks, including each task's first page and a status derived
 from saved answers. This read does not write to the database. A task is `Completed` when all its
 required questions have answers, `InProgress` when it has at least one answer but required
-answers remain, and `NotStarted` when it has no saved answers.
+answers remain, and `NotStarted` when it has no saved answers. Questions hidden by their
+conditions are ignored.
 
 ## Conventions
 

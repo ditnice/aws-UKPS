@@ -110,15 +110,55 @@ internal sealed class RecordFormPageLoader(
             ? model.EntitiesToSave(page)
             : model.EntitiesToRead(page);
 
+        var (rows, answers) = await LoadRowsAsync(
+            model,
+            entities,
+            loaded.Revision.Id,
+            track: forSave,
+            cancellationToken
+        );
+        Applicability applicability = FormApplicability.Evaluate(model, answers);
+        return applicability.Applies(page) ? new LoadedAnswers(rows, answers, applicability) : null;
+    }
+
+    /// <summary>
+    /// Works out which of the form's pages and questions apply to the revision, loading only the
+    /// rows of <see cref="FormModel.TriggerEntities"/>.
+    /// </summary>
+    public async Task<Applicability> LoadApplicabilityAsync(
+        FormModel model,
+        int revisionId,
+        CancellationToken cancellationToken
+    )
+    {
+        var (_, answers) = await LoadRowsAsync(
+            model,
+            model.TriggerEntities,
+            revisionId,
+            track: false,
+            cancellationToken
+        );
+        return FormApplicability.Evaluate(model, answers);
+    }
+
+    /// <summary>
+    /// Loads the revision's row of each entity, and the answer of every question stored in them.
+    /// </summary>
+    private async Task<(
+        Dictionary<FormEntity, object?> Rows,
+        Dictionary<string, FormAnswer> Answers
+    )> LoadRowsAsync(
+        FormModel model,
+        IEnumerable<FormEntity> entities,
+        int revisionId,
+        bool track,
+        CancellationToken cancellationToken
+    )
+    {
         Dictionary<FormEntity, object?> rows = [];
         foreach (FormEntity entity in entities)
         {
-            rows[entity] = await entity.LoadAsync(
-                dbContext,
-                loaded.Revision.Id,
-                track: forSave,
-                cancellationToken
-            );
+            rows[entity] = await entity.LoadAsync(dbContext, revisionId, track, cancellationToken);
         }
 
         Dictionary<string, FormAnswer> answers = model
@@ -128,8 +168,7 @@ internal sealed class RecordFormPageLoader(
                 q => q.Binding.Read(rows[q.Entity]),
                 StringComparer.Ordinal
             );
-        Applicability applicability = FormApplicability.Evaluate(model, answers);
-        return applicability.Applies(page) ? new LoadedAnswers(rows, answers, applicability) : null;
+        return (rows, answers);
     }
 
     /// <summary>
