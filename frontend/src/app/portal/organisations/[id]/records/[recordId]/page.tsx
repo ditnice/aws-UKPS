@@ -14,15 +14,20 @@ import { recordStatusLabels, recordStatusTagColours } from '../labels'
 
 import { ManageRecordActionBanner } from './_components/ManageRecordActionBanner'
 import { MedicineRecordDetails } from './_components/MedicineRecordDetails'
+import {
+  parseRecordViewAlert,
+  RecordViewAlert,
+  type RecordViewAlertAction,
+} from './_components/RecordViewAlert'
 
 type RecordPageProps = {
   params: Promise<{ id: string; recordId: string }>
-  searchParams: Promise<{ recordType?: string | string[] }>
+  searchParams: Promise<{ recordType?: string | string[]; action?: string | string[] }>
 }
 
 const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
   const { id, recordId: recordIdParam } = await params
-  const { recordType: recordTypeParam } = await searchParams
+  const { recordType: recordTypeParam, action } = await searchParams
   const organisationId = parsePositiveInteger(id)
   const recordId = parsePositiveInteger(recordIdParam)
   const recordType = Object.values(RecordType).find((type) => type === recordTypeParam)
@@ -34,7 +39,12 @@ const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
   return (
     <OrganisationPageWrapper organisationId={id}>
       {(organisation) => (
-        <RecordView organisationId={organisation.id} recordId={recordId} recordType={recordType} />
+        <RecordView
+          organisationId={organisation.id}
+          recordId={recordId}
+          recordType={recordType}
+          alert={parseRecordViewAlert(action)}
+        />
       )}
     </OrganisationPageWrapper>
   )
@@ -44,9 +54,10 @@ type RecordViewProps = {
   organisationId: number
   recordId: number
   recordType: RecordType
+  alert?: RecordViewAlertAction
 }
 
-const RecordView = async ({ organisationId, recordId, recordType }: RecordViewProps) => {
+const RecordView = async ({ organisationId, recordId, recordType, alert }: RecordViewProps) => {
   const {
     data: record,
     error,
@@ -79,6 +90,8 @@ const RecordView = async ({ organisationId, recordId, recordType }: RecordViewPr
 
   return (
     <>
+      {alert && <RecordViewAlert action={alert} />}
+
       <PageHeader
         backLink={backLink}
         heading={`Record ${record.recordId}${productDetail ? `: ${productDetail.companyCode}` : ''}`}

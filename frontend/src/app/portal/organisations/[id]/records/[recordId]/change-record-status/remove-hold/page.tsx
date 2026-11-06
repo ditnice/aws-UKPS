@@ -1,106 +1,65 @@
-import { notFound } from 'next/navigation'
-
-import { getRecord, RecordType } from '@/client/generated'
-import { createServerApiClient } from '@/client/server-api'
-import { BackLink } from '@/components/BackLink/BackLink'
-import { PageHeader } from '@/components/PageHeader/PageHeader'
-import { ErrorState } from '@/components/Placeholder/ErrorState'
-import { parsePositiveInteger } from '@/lib/valueParsing'
+import type { RecordStatusChangeReason } from '@/client/generated'
 
 import OrganisationPageWrapper from '../../../../_components/OrganisationPageWrapper'
 import { buildRecordHref } from '../../_lib/recordLinks'
+import { StatusChangePage } from '../_components/StatusChangePage'
+import {
+  StatusChangeReasonForm,
+  type StatusChangeReasonOption,
+} from '../_components/StatusChangeReasonForm'
+import { parseStatusChangeRoute, type StatusChangeRouteProps } from '../_lib/statusChangeRoute'
 
-import { RemoveHoldReasons } from './_components/RemoveHoldReasons'
+type RemoveHoldReason = Extract<RecordStatusChangeReason, 'TrialResumed' | 'PlansRefiled' | 'Other'>
 
-type RemoveHoldPageProps = {
-  params: Promise<{ id: string; recordId: string }>
-  searchParams: Promise<{ recordType?: string | string[] }>
-}
+const reasonOptions: StatusChangeReasonOption<RemoveHoldReason>[] = [
+  {
+    reason: 'TrialResumed',
+    label: 'Trial has resumed',
+    hint: 'One or more clinical trials have restarted',
+  },
+  {
+    reason: 'PlansRefiled',
+    label: 'Regulatory plans have been re-filed to MHRA',
+    hint: 'A submission to MHRA has been re-filed and development will be continuing',
+  },
+  {
+    reason: 'Other',
+    label: 'Other',
+    hint: 'Development has restarted for another reason, for example, manufacturing, funding, or strategic considerations have changed',
+  },
+]
 
-const RemoveHoldPage = async ({ params, searchParams }: RemoveHoldPageProps) => {
-  const { id: organisationId, recordId: recordIdParam } = await params
-  const { recordType: recordTypeParam } = await searchParams
-  const recordId = parsePositiveInteger(recordIdParam)
-  const recordType = Object.values(RecordType).find((type) => type === recordTypeParam)
-
-  if (!recordId || !recordType) {
-    notFound()
-  }
+const RemoveHoldPage = async (props: StatusChangeRouteProps) => {
+  const { organisationId, recordId, recordType } = await parseStatusChangeRoute(props)
 
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
       {(organisation) => (
-        <RemoveHold organisationId={organisation.id} recordId={recordId} recordType={recordType} />
+        <StatusChangePage
+          organisationId={organisation.id}
+          recordId={recordId}
+          recordType={recordType}
+          action="RemoveHold"
+          heading="Reason for removing hold"
+          backHref={buildRecordHref(organisation.id, recordId, recordType, 'change-record-status')}
+        >
+          <p>
+            Removing a record from hold means development has restarted and the information in this
+            record may now need updating.
+          </p>
+
+          <StatusChangeReasonForm
+            organisationId={organisation.id}
+            recordId={recordId}
+            recordType={recordType}
+            action="RemoveHold"
+            legend="What best describes why development has restarted?"
+            missingReasonError="Select why development has restarted"
+            options={reasonOptions}
+          />
+        </StatusChangePage>
       )}
     </OrganisationPageWrapper>
-  )
-}
-
-type RemoveHoldProps = {
-  organisationId: number
-  recordId: number
-  recordType: RecordType
-}
-
-const RemoveHold = async ({ organisationId, recordId, recordType }: RemoveHoldProps) => {
-  const {
-    data: record,
-    error,
-    response,
-  } = await getRecord({
-    client: await createServerApiClient(),
-    path: { id: recordId },
-    query: { recordType, organisationId },
-  })
-
-  // Only an on-hold record whose status the user can change can have its hold removed.
-  if (
-    response?.status === 404 ||
-    (record &&
-      (record.organisationId !== organisationId ||
-        !record.actions.includes('ChangeStatus') ||
-        record.recordStatus !== 'OnHold'))
-  ) {
-    notFound()
-  }
-
-  const backLink = (
-    <BackLink href={buildRecordHref(organisationId, recordId, recordType, 'change-record-status')}>
-      Back
-    </BackLink>
-  )
-
-  if (error || !record) {
-    return (
-      <section>
-        <PageHeader heading="Unable to load record" backLink={backLink} />
-        <ErrorState>There was a problem retrieving the record. Please try again later.</ErrorState>
-      </section>
-    )
-  }
-
-  //TODO: needs updating when we add vaccine DTOs
-  const productDetail = record.recordType === 'Medicine' ? record.recordProductDetail : undefined
-
-  return (
-    <>
-      <PageHeader
-        backLink={backLink}
-        heading="Change record status"
-        preheading={productDetail?.recordTitle}
-      />
-
-      <p>
-        Removing a record from hold means development has restarted and the information in this
-        record may now need updating.
-      </p>
-
-      <RemoveHoldReasons
-        organisationId={organisationId}
-        recordId={recordId}
-        recordType={recordType}
-      />
-    </>
   )
 }
 

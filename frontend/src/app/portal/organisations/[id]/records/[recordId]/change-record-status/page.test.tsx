@@ -57,8 +57,8 @@ vi.mock('@nice-digital/nds-page-header', () => ({
   ),
 }))
 
-vi.mock('./_components/ChangeRecordStatusActions', () => ({
-  ChangeRecordStatusActions: ({
+vi.mock('./_components/StatusChangeActionForm', () => ({
+  StatusChangeActionForm: ({
     organisationId,
     recordId,
     recordStatus,
@@ -143,7 +143,11 @@ describe('ChangeRecordStatusPage', () => {
       'Published',
       'If development has paused and may restart in the future, you should place the record on hold. Update requests for records on hold will be reduced to every 6 months.',
     ],
-    ['OnHold', 'OnHold', 'If development has restarted, you should remove the record hold.'],
+    [
+      'OnHold',
+      'OnHold',
+      'Removing a record from hold means development has restarted and the information in this record may now need updating.',
+    ],
   ] as const)('explains the options for a %s record', async (displayStatus, recordStatus, text) => {
     mockRecord({
       data: { ...medicineRecord, displayStatus, recordStatus },
