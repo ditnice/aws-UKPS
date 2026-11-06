@@ -69,9 +69,9 @@ describe('isConditionMet', () => {
 
 describe('pageLayout', () => {
   it('nests questions revealed by one option of a radio, and keeps the rest at the top level', () => {
-    const { topLevel, nested } = pageLayout([gate, detail, notes, other])
+    const { topLevel, nested } = pageLayout([gate, detail, notes])
 
-    expect(topLevel).toEqual([0, 3])
+    expect(topLevel).toEqual([0])
     expect(nested.get(0)).toEqual(new Map([['Yes', [1]]]))
     expect(nested.get(1)).toEqual(new Map([['Yes', [2]]]))
   })
@@ -82,5 +82,17 @@ describe('pageLayout', () => {
 
     expect(pageLayout([text, detail]).topLevel).toEqual([0, 1])
     expect(pageLayout([checkbox, detail]).topLevel).toEqual([0, 1])
+  })
+
+  it('nests a question revealed by several options of a radio beneath each of them', () => {
+    const { topLevel, nested } = pageLayout([gate, other])
+
+    expect(topLevel).toEqual([0])
+    expect(nested.get(0)).toEqual(
+      new Map([
+        ['Yes', [1]],
+        ['No', [1]],
+      ]),
+    )
   })
 })
