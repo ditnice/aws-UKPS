@@ -18,7 +18,12 @@ const PageWrapper = (props: React.PropsWithChildren) => {
   )
 }
 
-export default async function EditDetails() {
+export default async function EditDetails({
+  searchParams,
+}: {
+  searchParams: Promise<{ sessionKey?: string }>
+}) {
+  const { sessionKey } = await searchParams
   const client = await createServerApiClient()
   const { data: me, error } = await getUsersMe({ client })
 
@@ -34,6 +39,7 @@ export default async function EditDetails() {
     <PageWrapper>
       <EditDetailsForm
         userId={me.userId}
+        sessionKey={sessionKey}
         initialValues={{
           fullName: me.fullName,
           workEmail: me.workEmail,

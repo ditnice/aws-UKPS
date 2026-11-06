@@ -69,6 +69,16 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             .ToArray();
     }
 
+    private static TimeSpan FindTimeSinceLastAuthentication(ClaimsPrincipal claimsPrincipal)
+    {
+        string? userRoleClaim = claimsPrincipal.FindFirstValue("auth_time");
+        if (!long.TryParse(userRoleClaim, CultureInfo.InvariantCulture, out var seconds))
+            throw new InvalidOperationException($"Invalid {UkpsClaimTypes.UserRole} claim value."); // missing claim: treat as not fresh
+
+        var authTime = DateTimeOffset.FromUnixTimeSeconds(seconds);
+        return DateTimeOffset.UtcNow - authTime;
+    }
+
     private static CognitoUsername FindCognitoUsername(ClaimsPrincipal claimsPrincipal)
     {
         string usernameValue =
@@ -87,6 +97,7 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
             UserRole = FindUserRole(claimsPrincipal),
             Email = FindUserEmail(claimsPrincipal),
             CognitoUsername = FindCognitoUsername(claimsPrincipal),
+            TimeSinceLastAuthentication = FindTimeSinceLastAuthentication(claimsPrincipal),
             SelectableOrganisationIds = FindSelectableOrganisationIds(claimsPrincipal),
         };
     }

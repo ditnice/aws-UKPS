@@ -5,6 +5,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -156,6 +157,7 @@ public class UserController(IUserService userService) : ControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]
     [HttpPatch("{userId:int}")]
     public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
         [FromRoute] int userId,
@@ -179,7 +181,18 @@ public class UserController(IUserService userService) : ControllerBase
                             statusCode: StatusCodes.Status409Conflict,
                             title: "Conflict",
                             detail: "The specified email conflicts with an existing email."
-                        )
+                        ),
+                    reauthenticateRequired: () =>
+                    {
+                        Response.Headers.WWWAuthenticate =
+                            "Bearer error=\"insufficient_user_authentication\", "
+                            + "error_description=\"A fresh login is required for this action\", "
+                            + "max_age=300";
+
+                        return Unauthorized(
+                            AuthenticationProblemDetails.ReauthenticationRequired()
+                        );
+                    }
                 );
             }
         );

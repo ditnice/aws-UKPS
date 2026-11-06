@@ -68,4 +68,13 @@ public sealed class AuthenticationProblemDetails : ProblemDetails
             ChallengeType = challengeType,
             AuthenticationSession = authenticationSession,
         };
+
+    internal static AuthenticationProblemDetails ReauthenticationRequired() =>
+        new()
+        {
+            Title = "Reauthentication Required",
+            Detail =
+                "The action you are trying to perform requires a newer authentication session. Reauthenticate to perform this action.",
+            Code = AuthenticationFailCode.ReauthenticationRequired,
+        };
 }

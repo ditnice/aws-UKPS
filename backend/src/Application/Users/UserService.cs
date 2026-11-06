@@ -549,6 +549,20 @@ internal partial class UserService(
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
             }
 
+            var modifyingEmail = !user.WorkEmail.Equals(
+                command.WorkEmail,
+                StringComparison.Ordinal
+            );
+            var timeSinceLastAuthentication = currentUserInfoService
+                .GetCurrentUserInfo()
+                .TimeSinceLastAuthentication;
+            if (modifyingEmail && timeSinceLastAuthentication > TimeSpan.FromSeconds(30))
+            {
+                return UpdateUserDetailsResult.Err(
+                    new UpdateUserDetailsError.ReauthenticationRequired()
+                );
+            }
+
             user.UpdateDetails(
                 command.FullName,
                 command.WorkTelephone,
