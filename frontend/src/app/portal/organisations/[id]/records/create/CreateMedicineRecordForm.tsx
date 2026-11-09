@@ -132,10 +132,10 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         {(field) => (
           <AddAnother
             title="Other names and identifiers (optional)"
-            labelPrefix="Other names and identifiers (optional)"
+            labelPrefix="Identifier"
             hint="Enter any other development names, synonyms, or identifiers that you want to associate with this product."
             addItemLabel="Add another identifier"
-            removeItemLabel="Remove additional identifier"
+            removeItemLabel="Remove"
             field={field}
             getSubfield={(name, renderInputs) => (
               <form.Field name={name}>{renderInputs}</form.Field>
@@ -171,7 +171,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
             labelPrefix="Generic name"
             hint="Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin."
             addItemLabel="Add another active substance"
-            removeItemLabel="Remove additional active substance"
+            removeItemLabel="Remove"
             field={field}
             getSubfield={(name, renderInputs) => (
               <form.Field
