@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -12,6 +12,8 @@ import { EditDetailsForm, EditDetailsFormProps } from './EditDetailsForm'
 const mocks = vi.hoisted(() => ({
   patchUsersByUserId: vi.fn(),
   phoneNumberValidationMock: vi.fn(),
+  buildSignInHref: vi.fn(),
+  buildEditDetailsHref: vi.fn(),
 }))
 
 vi.mock('libphonenumber-js/max', () => ({
@@ -23,6 +25,13 @@ vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 vi.mock('@/client/generated', () => ({
   patchUsersByUserId: mocks.patchUsersByUserId,
 }))
+
+vi.mock('@/lib/auth/routing', () => ({
+  buildSignInHref: mocks.buildSignInHref,
+}))
+
+vi.mock('../navigation', () => ({ buildEditDetailsHref: mocks.buildEditDetailsHref }))
+
 beforeEach(() => {
   mocks.phoneNumberValidationMock.mockReturnValue(true)
   mocks.patchUsersByUserId.mockReset()
@@ -41,9 +50,10 @@ function renderForm(override?: Partial<EditDetailsFormProps>) {
   const defaults: EditDetailsFormProps = {
     userId: 123,
     initialValues: { ...validFormValues },
+    sessionKey: undefined,
   }
   const props = { ...defaults, ...override }
-  render(<EditDetailsForm userId={props.userId} initialValues={props.initialValues} />)
+  render(<EditDetailsForm {...props} />)
 }
 
 async function setFieldValue(label: string, value: string) {
@@ -74,6 +84,11 @@ async function updateForm(validRequest: UpdateUserDetailsCommand) {
 
 async function clickSubmit() {
   await user.click(screen.getByRole('button', { name: 'Save' }))
+}
+
+async function clickSignInAgainButton() {
+  const button = screen.getByRole('button', { name: 'Sign in again' })
+  await user.click(button)
 }
 
 let user: ReturnType<typeof userEvent.setup>
@@ -336,5 +351,65 @@ describe('EditDetailsForm', () => {
 
     expect(screen.getByText(errorMessages.updatingUserDetailsError)).toBeInTheDocument()
     expect(router.push).not.toHaveBeenCalled()
+  })
+
+  it('shows reauthentication required if ReauthenticationRequired error returned', async () => {
+    mocks.patchUsersByUserId.mockResolvedValueOnce({
+      response: { ok: false },
+      error: {
+        code: 'ReauthenticationRequired',
+      },
+    })
+
+    renderForm()
+    await fillValidForm()
+    await clickSubmit()
+
+    expect(
+      await screen.getByText('You need to sign in again to change your email address'),
+    ).toBeInTheDocument()
+    expect(await screen.getByRole('button', { name: 'Sign in again' })).toBeInTheDocument()
+  })
+
+  it('redirect to sign-in page on `Sign in again` button click', async () => {
+    mocks.buildSignInHref.mockReturnValue('/sign-in')
+    mocks.patchUsersByUserId.mockResolvedValueOnce({
+      response: { ok: false },
+      error: {
+        code: 'ReauthenticationRequired',
+      },
+    })
+
+    renderForm()
+    await fillValidForm()
+    await clickSubmit()
+
+    await clickSignInAgainButton()
+
+    expect(router.push).toHaveBeenCalledWith('/sign-in')
+  })
+
+  it('should store state in session storage before redirect', async () => {
+    mocks.buildSignInHref.mockReturnValue('/sign-in')
+    mocks.patchUsersByUserId.mockResolvedValueOnce({
+      response: { ok: false },
+      error: {
+        code: 'ReauthenticationRequired',
+      },
+    })
+
+    renderForm()
+    await fillValidForm()
+    await clickSubmit()
+
+    await clickSignInAgainButton()
+
+    const [args] = mocks.buildEditDetailsHref.mock.calls[0]
+    const capturedKey = args!.sessionKey!
+
+    const data = sessionStorage.getItem(capturedKey)
+
+    expect(data).not.toBeNull()
+    expect(data).toBe(JSON.stringify(validFormValues))
   })
 })

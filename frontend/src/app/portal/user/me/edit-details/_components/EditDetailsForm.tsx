@@ -2,7 +2,7 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { isValidPhoneNumber } from 'libphonenumber-js/max'
-import { redirect, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
@@ -17,6 +17,8 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
+
+import { buildEditDetailsHref } from '../navigation'
 
 const retrieveUserDetails = (key: string | undefined): UpdateUserDetailsCommand | undefined => {
   if (!key) return undefined
@@ -96,8 +98,8 @@ export function EditDetailsForm({ userId, initialValues, sessionKey }: EditDetai
   })
 
   const triggerReauthenticationFlow = () => {
-    const key = storeUserDetails(form.state.values)
-    redirect(buildSignInHref(`/portal/user/me/edit-details?sessionKey=${key}`))
+    const sessionKey = storeUserDetails(form.state.values)
+    router.push(buildSignInHref(buildEditDetailsHref({ sessionKey })))
   }
   return (
     <>
@@ -106,7 +108,7 @@ export function EditDetailsForm({ userId, initialValues, sessionKey }: EditDetai
           <h2>You need to sign in again to change your email address</h2>
           <p>
             For your security, we need to check it&apos;s you before we can change your email
-            address.
+            address
           </p>
           <ol>
             <li>Select &quot;Sign in again&quot;.</li>

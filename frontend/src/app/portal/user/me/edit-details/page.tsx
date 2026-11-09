@@ -18,12 +18,10 @@ const PageWrapper = (props: React.PropsWithChildren) => {
   )
 }
 
-export default async function EditDetails({
-  searchParams,
-}: {
+export default async function EditDetails(props?: {
   searchParams: Promise<{ sessionKey?: string }>
 }) {
-  const { sessionKey } = await searchParams
+  const { sessionKey } = props ? await props.searchParams : { sessionKey: undefined }
   const client = await createServerApiClient()
   const { data: me, error } = await getUsersMe({ client })
 

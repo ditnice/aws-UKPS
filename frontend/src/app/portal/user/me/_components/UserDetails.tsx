@@ -6,6 +6,8 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 import { errorMessages } from '@/lib/form/errorMessages'
 
+import { buildEditDetailsHref } from '../edit-details/navigation'
+
 export const UserDetails = ({ currentUser }: { currentUser: UserInformationDto | undefined }) => {
   if (!currentUser)
     return (
@@ -23,7 +25,7 @@ export const UserDetails = ({ currentUser }: { currentUser: UserInformationDto |
         <SummaryListRow label="Contact Number" value={currentUser.workTelephone} />
       </SummaryList>
       <ButtonGroup>
-        <Button elementType={Link} href={`/portal/user/me/edit-details`} variant="cta">
+        <Button elementType={Link} href={buildEditDetailsHref()} variant="cta">
           Edit Details
         </Button>
       </ButtonGroup>
