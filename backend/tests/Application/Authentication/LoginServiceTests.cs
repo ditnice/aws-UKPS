@@ -7,6 +7,8 @@ using NSubstitute.ExceptionExtensions;
 using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
+using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -25,6 +27,8 @@ namespace UKPS.Api.Tests.Application.Authentication;
 [Collection(DatabaseCollection.Name)]
 public class LoginServiceTests : DatabaseTestBase
 {
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     private readonly IServiceTestHarness<ILoginService> _harness;
 
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
@@ -263,6 +267,232 @@ public class LoginServiceTests : DatabaseTestBase
 
         result.ShouldBeSuccess();
         (await GetSelectedOrganisationIds()).ShouldBe([memberships[1].OrganisationId]);
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_ShouldReturnSuccessResult()
+    {
+        await PerformForBothRealAndNonRealUser(
+            async (workEmail) =>
+            {
+                var result = await _harness.Service.InitiateForgottenPasswordProcedure(
+                    new() { Email = workEmail },
+                    Ct
+                );
+
+                result.ShouldBeSuccess();
+            }
+        );
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenTooManyAttemptsHaveOccurred_ShouldReturnTooManyAttemptsError()
+    {
+        _harness
+            .Cognito.Mock.ForgotPasswordAsync(
+                Arg.Any<ForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<LimitExceededException>();
+
+        await PerformForBothRealAndNonRealUser(
+            async (workEmail) =>
+            {
+                Result<InitiateForgottenPasswordProcedureError> result = await _harness
+                    .UpdateCurrentTime(_testTime)
+                    .Service.InitiateForgottenPasswordProcedure(new() { Email = workEmail }, Ct);
+                result
+                    .ShouldBeError()
+                    .ShouldBeOfType<InitiateForgottenPasswordProcedureError.NumberOfAttemptsExceeded>();
+            }
+        );
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenUserExists_ShouldSendForgotPasswordCommandToCognito()
+    {
+        _ = await _harness.Service.InitiateForgottenPasswordProcedure(
+            new() { Email = _user.WorkEmail },
+            Ct
+        );
+
+        _harness
+            .Cognito.ResetPasswordCommands.ShouldHaveSingleItem()
+            .Username.ShouldBe(_user.CognitoUsername.Value);
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenUserDoesNotExist_ShouldSendForgotPasswordCommandToCognito()
+    {
+        _ = await _harness.Service.InitiateForgottenPasswordProcedure(
+            new() { Email = "notreal@email.com" },
+            Ct
+        );
+
+        _harness.Cognito.ResetPasswordCommands.ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenAResetRequestHasBeenInitiated_ShouldReturnSuccess()
+    {
+        Result<InitiateForgottenPasswordProcedureError> initiateResult =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = _user.WorkEmail },
+                Ct
+            );
+        initiateResult.ShouldBeSuccess();
+
+        var updatedPassword = "new-password";
+        var result = await MakeValidConfirmPasswordRequest(x =>
+            x with
+            {
+                NewPassword = updatedPassword,
+            }
+        );
+        result.ShouldBeSuccess();
+
+        var resetCommand = _harness.Cognito.ResetPasswordCommands.ShouldHaveSingleItem();
+        resetCommand.ShouldBe(
+            new MockAmazonCognitoIdentityProvider.ResetPasswordCommand()
+            {
+                Username = _user.CognitoUsername.Value,
+                UpdatedPassword = updatedPassword,
+            }
+        );
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenIncorrectConfirmationCodeIsProvided_ShouldReturnCodeMismatchError()
+    {
+        Result<InitiateForgottenPasswordProcedureError> initiateResult =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = _user.WorkEmail },
+                Ct
+            );
+        initiateResult.ShouldBeSuccess();
+
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest(x =>
+            x with
+            {
+                ConfirmationCode = "invalid-code",
+            }
+        );
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.CodeMismatch>();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenInvalidPasswordIsProvided_ShouldReturnInvalidPassword()
+    {
+        Result<InitiateForgottenPasswordProcedureError> initiateResult =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = _user.WorkEmail },
+                Ct
+            );
+        initiateResult.ShouldBeSuccess();
+
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest(x =>
+            x with
+            {
+                NewPassword = _harness.Cognito.InvalidPassword,
+            }
+        );
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.InvalidPassword>();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenCognitoThrowsRequestLimitExceededException_ShouldReturnTooManyRequestsError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<LimitExceededException>();
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest();
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.TooManyRequests>();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenCognitoThrowsTooManyRequestsExceptionException_ShouldReturnTooManyRequestsError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<TooManyRequestsException>();
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest();
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.TooManyRequests>();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenCognitoThrowsTooManyFailedAttemptsException_ShouldReturnTooManyFailedAttemptsError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<TooManyFailedAttemptsException>();
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest();
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.TooManyFailedAttempts>();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenCodeExpires_ShouldReturnCodeExpiredError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<ExpiredCodeException>();
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest();
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.CodeExpired>();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenHistoryPolicyViolated_ShouldReturnHistoryPolicyViolationError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<PasswordHistoryPolicyViolationException>();
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest();
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.HistoryPolicyViolation>();
+    }
+
+    private Task<Result<ConfirmNewPasswordError>> MakeValidConfirmPasswordRequest(
+        Func<ConfirmNewPasswordCommand, ConfirmNewPasswordCommand>? overrides = null
+    )
+    {
+        var defaultCommand = new ConfirmNewPasswordCommand()
+        {
+            Email = _user.WorkEmail,
+            ConfirmationCode = _harness.Cognito.ValidForgotPasswordCode,
+            NewPassword = "new-password",
+        };
+        var command = overrides is null ? defaultCommand : overrides(defaultCommand);
+        return _harness.Service.ConfirmNewPassword(command, Ct);
+    }
+
+    private async Task PerformForBothRealAndNonRealUser(Func<string, Task> task)
+    {
+        string[] cases = [_user.WorkEmail, "non-existent-user@email.com"];
+
+        foreach (var workEmail in cases)
+        {
+            await task(workEmail);
+        }
     }
 
     private async Task<UserOrgMembership[]> AddMemberships(

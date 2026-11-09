@@ -72,6 +72,24 @@ export const ConditionKind = { ANSWER_IN: 'AnswerIn' } as const;
 export type ConditionKind = typeof ConditionKind[keyof typeof ConditionKind];
 
 /**
+ * Confirms a password reset and sets the new password.
+ */
+export type ConfirmNewPasswordCommand = {
+    /**
+     * Gets the account email address.
+     */
+    email: string;
+    /**
+     * Gets the password reset confirmation code.
+     */
+    confirmationCode: string;
+    /**
+     * Gets the new password.
+     */
+    newPassword: string;
+};
+
+/**
  * Represents the information required to create a new organisation.
  */
 export type CreateOrganisationDto = {
@@ -246,6 +264,16 @@ export const IndicationPaediatricStatus = {
 } as const;
 
 export type IndicationPaediatricStatus = typeof IndicationPaediatricStatus[keyof typeof IndicationPaediatricStatus];
+
+/**
+ * Represents a request to start the forgotten password flow for a user.
+ */
+export type InitiateForgottenPasswordProcedureCommand = {
+    /**
+     * Gets the email address of the user who has forgotten their password.
+     */
+    email: string;
+};
 
 /**
  * Represents the credentials provided by a user when attempting to authenticate.
@@ -2237,6 +2265,65 @@ export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerif
 export type PostAuthVerifyMfaResponses = {
     /**
      * The multi-factor authentication setup was successfully verified.
+     */
+    200: unknown;
+};
+
+export type InitiateForgottenPasswordProcedureData = {
+    /**
+     * A token that can be used to cancel the operation.
+     */
+    body: InitiateForgottenPasswordProcedureCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/initiate-forgotten-password';
+};
+
+export type InitiateForgottenPasswordProcedureErrors = {
+    /**
+     * The number of permitted attempts has been exceeded.
+     */
+    429: ProblemDetails;
+};
+
+export type InitiateForgottenPasswordProcedureError = InitiateForgottenPasswordProcedureErrors[keyof InitiateForgottenPasswordProcedureErrors];
+
+export type InitiateForgottenPasswordProcedureResponses = {
+    /**
+     * The forgotten password procedure was initiated successfully.
+     */
+    200: unknown;
+};
+
+export type ConfirmNewPasswordData = {
+    /**
+     * A token to cancel the operation.
+     */
+    body: ConfirmNewPasswordCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/confirm-new-password';
+};
+
+export type ConfirmNewPasswordErrors = {
+    /**
+     * The request failed validation. This occurs when the confirmation code is incorrect or has expired,
+     * or when the new password does not meet the password requirements.
+     * The response body is a ValidationProblemDetails identifying the invalid field.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Too many requests were made, or too many failed attempts have occurred.
+     * The response body is a ProblemDetails. The client should wait before retrying.
+     */
+    429: ProblemDetails;
+};
+
+export type ConfirmNewPasswordError = ConfirmNewPasswordErrors[keyof ConfirmNewPasswordErrors];
+
+export type ConfirmNewPasswordResponses = {
+    /**
+     * The password was changed successfully.
      */
     200: unknown;
 };

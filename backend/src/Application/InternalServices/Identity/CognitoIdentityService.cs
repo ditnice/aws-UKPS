@@ -359,6 +359,98 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         }
     }
 
+    public async Task<bool> SendForgottenPasswordCommand(
+        CognitoUsername username,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _cognito.ForgotPasswordAsync(
+                new ForgotPasswordRequest()
+                {
+                    ClientId = _options.Value.ClientId,
+                    Username = username.Value,
+                    SecretHash = GenerateSecretHash(
+                        username,
+                        _options.Value.ClientId,
+                        _options.Value.ClientSecret
+                    ),
+                },
+                cancellationToken
+            );
+        }
+        catch (LimitExceededException)
+        {
+            return false;
+        }
+        catch (TooManyRequestsException)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public async Task<ConfirmNewPasswordResult> ConfirmNewPassword(
+        CognitoUsername username,
+        string confirmationCode,
+        string newPassword,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _cognito.ConfirmForgotPasswordAsync(
+                new ConfirmForgotPasswordRequest()
+                {
+                    ClientId = _options.Value.ClientId,
+                    Username = username.Value,
+                    ConfirmationCode = confirmationCode,
+                    Password = newPassword,
+                    SecretHash = GenerateSecretHash(
+                        username,
+                        _options.Value.ClientId,
+                        _options.Value.ClientSecret
+                    ),
+                },
+                cancellationToken
+            );
+        }
+        catch (CodeMismatchException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeMismatch());
+        }
+        catch (InvalidPasswordException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.InvalidPassword());
+        }
+        catch (LimitExceededException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.TooManyRequests());
+        }
+        catch (TooManyRequestsException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.TooManyRequests());
+        }
+        catch (TooManyFailedAttemptsException)
+        {
+            return ConfirmNewPasswordResult.Err(
+                new ConfirmNewPasswordError.TooManyFailedAttempts()
+            );
+        }
+        catch (ExpiredCodeException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeExpired());
+        }
+        catch (PasswordHistoryPolicyViolationException)
+        {
+            return ConfirmNewPasswordResult.Err(
+                new ConfirmNewPasswordError.HistoryPolicyViolation()
+            );
+        }
+        return ConfirmNewPasswordResult.Ok();
+    }
+
     private async Task<InitiatedAuthenticationResult> SendCognitoAuthRequest(
         Func<Task<AuthResponse?>> func
     )
