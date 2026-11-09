@@ -45,6 +45,13 @@ internal interface IIdentityService
         CancellationToken cancellationToken
     );
 
+    Task<AuthenticationCredentialsDto> RespondToSmsMultiFactorAuthenticationChallenge(
+        CognitoUsername cognitoUsername,
+        string authenticationSession,
+        string code,
+        CancellationToken cancellationToken
+    );
+
     Task<UpdatePasswordResult> UpdatePassword(
         CognitoUsername cognitoUsername,
         string newPassword,
@@ -72,6 +79,24 @@ internal interface IIdentityService
         CognitoUsername username,
         string confirmationCode,
         string newPassword,
+        CancellationToken cancellationToken
+    );
+
+    Task SetUserPhoneNumber(
+        CognitoUsername cognitoUsername,
+        string phoneNumber,
+        CancellationToken cancellationToken
+    );
+
+    Task<UserMfaDetails?> GetUserMfaDetails(
+        CognitoUsername cognitoUsername,
+        CancellationToken cancellationToken
+    );
+
+    Task SetUserMfaPreference(
+        CognitoUsername cognitoUsername,
+        bool smsEnabled,
+        bool smsPreferred,
         CancellationToken cancellationToken
     );
 }
