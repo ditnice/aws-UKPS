@@ -116,8 +116,8 @@ describe('ManageUserAccess (direct invocation)', () => {
   })
 
   it.each([
-    ['Active', 3],
-    ['Inactive', 3],
+    ['Active', 4],
+    ['Inactive', 4],
     ['AwaitingSetup', 1],
     ['Deactivated', 2],
   ] as const)('offers state-appropriate options for a %s user', async (status, actionCount) => {

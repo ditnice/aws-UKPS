@@ -241,27 +241,60 @@ public class UserEndpointTests : DatabaseTestBase
         existingProblem.Detail.ShouldBe(guessedProblem.Detail);
     }
 
-    [Fact]
-    public async Task GetUserRegistrationById_NotAuthorisedForOrganisation_ReturnsForbiddenWhetherOrNotRequestExists()
+    [Theory]
+    [InlineData(UserRole.Champion, "GET", "")]
+    [InlineData(UserRole.Champion, "PATCH", "/approve")]
+    [InlineData(UserRole.Champion, "PATCH", "/reject")]
+    [InlineData(UserRole.Standard, "GET", "")]
+    [InlineData(UserRole.Standard, "PATCH", "/approve")]
+    [InlineData(UserRole.Standard, "PATCH", "/reject")]
+    public async Task MembershipRequest_NotAuthorised_ReturnsIndistinguishableNotFound(
+        UserRole role,
+        string method,
+        string action
+    )
     {
         UserRegistrationRequest request = _userRegistrationRequests[0];
-        AuthenticateAs(UserRole.Champion, request.OrganisationId + 1000);
+        AuthenticateAs(
+            role,
+            role == UserRole.Champion ? request.OrganisationId + 1000 : request.OrganisationId
+        );
 
         using HttpResponseMessage existingResponse = await SendMembershipRequest(
-            "GET",
-            "",
+            method,
+            action,
             request.OrganisationId,
             request.Id
         );
         using HttpResponseMessage guessedResponse = await SendMembershipRequest(
-            "GET",
-            "",
+            method,
+            action,
             request.OrganisationId,
             request.Id + 1000
         );
 
-        existingResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        guessedResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        await ShouldConcealResource(existingResponse, guessedResponse);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard)]
+    [InlineData(UserRole.Champion)]
+    public async Task UserDetails_NotAuthorised_ReturnsIndistinguishableNotFound(UserRole role)
+    {
+        User target = _seededUsers.First();
+        int organisationId = target.UserOrgMemberships!.First().OrganisationId;
+        AuthenticateAs(role, role == UserRole.Champion ? organisationId + 1000 : organisationId);
+
+        using HttpResponseMessage existing = await _httpClient.GetAsync(
+            new Uri($"/users/{target.Id}/organisations/{organisationId}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+        using HttpResponseMessage missing = await _httpClient.GetAsync(
+            new Uri($"/users/2147483647/organisations/{organisationId}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        await ShouldConcealResource(existing, missing);
     }
 
     [Fact]
@@ -306,6 +339,27 @@ public class UserEndpointTests : DatabaseTestBase
             request.Id
         );
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    private static async Task ShouldConcealResource(
+        HttpResponseMessage existing,
+        HttpResponseMessage missing
+    )
+    {
+        existing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        ProblemDetails? existingProblem = await existing.Content.ReadFromJsonAsync<ProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+        ProblemDetails? missingProblem = await missing.Content.ReadFromJsonAsync<ProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+        existingProblem.ShouldNotBeNull();
+        missingProblem.ShouldNotBeNull();
+        existingProblem.Status.ShouldBe(missingProblem.Status);
+        existingProblem.Type.ShouldBe(missingProblem.Type);
+        existingProblem.Title.ShouldBe(missingProblem.Title);
+        existingProblem.Detail.ShouldBe(missingProblem.Detail);
     }
 
     private async Task<HttpResponseMessage> SendMembershipRequest(

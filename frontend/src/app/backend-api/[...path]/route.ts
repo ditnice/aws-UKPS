@@ -1,3 +1,5 @@
+import { devRoleCookieName, isDevAuthenticationMode } from '@/lib/auth/cookies'
+
 import type { NextRequest } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -192,8 +194,13 @@ function filterRequestCookies(cookieHeader: string | null): string {
   return cookieHeader
     .split(';')
     .map((cookie) => cookie.trim())
-    .filter((cookie) => allowedCookies.has(cookie.slice(0, cookie.indexOf('=')).trim()))
+    .filter((cookie) => isAllowedRequestCookie(cookie.slice(0, cookie.indexOf('=')).trim()))
     .join('; ')
+}
+
+// The dev role cookie is only sent on to the backend, never set by it.
+function isAllowedRequestCookie(name: string): boolean {
+  return allowedCookies.has(name) || (name === devRoleCookieName && isDevAuthenticationMode())
 }
 
 function filterResponseCookie(cookieHeader: string): string | null {

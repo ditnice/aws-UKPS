@@ -29,8 +29,16 @@ internal static class FormModelScanner
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
             );
 
+            FormPageShowWhenAttribute[] pageConditions =
+                type.GetCustomAttributes<FormPageShowWhenAttribute>(false).ToArray();
+
             if (sections.Length == 0)
             {
+                if (pageConditions.Length > 0)
+                {
+                    problems.Add($"{type.Name} has [FormPageShowWhen] but no [FormSection].");
+                }
+
                 problems.AddRange(
                     properties
                         .Where(HasFormAttribute)
@@ -58,7 +66,9 @@ internal static class FormModelScanner
                 }
             }
 
-            entities.Add(new EntityDeclaration(type, entityType, sections, questions));
+            entities.Add(
+                new EntityDeclaration(type, entityType, sections, questions, pageConditions)
+            );
         }
 
         return (entities, problems);
@@ -122,6 +132,7 @@ internal static class FormModelScanner
                 MaxLength = property.GetCustomAttribute<FormMaxLengthAttribute>(),
                 MaxItems = property.GetCustomAttribute<FormMaxItemsAttribute>(),
                 Options = property.GetCustomAttribute<FormOptionsAttribute>(),
+                ShowWhen = property.GetCustomAttribute<FormShowWhenAttribute>(),
                 Binding = binding,
             };
     }
@@ -221,7 +232,8 @@ internal static class FormModelScanner
         || property.IsDefined(typeof(FormRequiredAttribute), false)
         || property.IsDefined(typeof(FormMaxLengthAttribute), false)
         || property.IsDefined(typeof(FormMaxItemsAttribute), false)
-        || property.IsDefined(typeof(FormOptionsAttribute), false);
+        || property.IsDefined(typeof(FormOptionsAttribute), false)
+        || property.IsDefined(typeof(FormShowWhenAttribute), false);
 
     private static BindingInfo? DescribeColumn(
         string where,

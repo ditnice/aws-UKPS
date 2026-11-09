@@ -20,12 +20,13 @@ const tree: Option[] = [
   {
     value: '1',
     label: '1: Addiction',
+    hint: null,
     children: [
-      { value: '11', label: '1.1: Opioid use disorder', children: null },
-      { value: '12', label: '1.2: NAS', children: null },
+      { value: '11', label: '1.1: Opioid use disorder', hint: null, children: null },
+      { value: '12', label: '1.2: NAS', hint: null, children: null },
     ],
   },
-  { value: '2', label: '2: Allergy', children: null },
+  { value: '2', label: '2: Allergy', hint: null, children: null },
 ]
 
 const question = (overrides: Partial<Question>): Question => ({
@@ -39,6 +40,7 @@ const question = (overrides: Partial<Question>): Question => ({
   childLabel: null,
   childPlaceholder: null,
   addAnotherLabel: null,
+  showWhen: null,
   rules: [],
   options: null,
   ...overrides,
@@ -138,7 +140,20 @@ describe('form values and payload', () => {
     const values = toFormValues(questions, { [text.id]: 'abc', bnf: '11' })
 
     expect(Object.keys(values)).toEqual([fieldName(0), fieldName(1)])
-    expect(buildPayload(questions, values)).toEqual({ [text.id]: 'abc', bnf: '11' })
+    expect(buildPayload(questions, values, new Set([text.id, bnf.id]))).toEqual({
+      [text.id]: 'abc',
+      bnf: '11',
+    })
+  })
+
+  it('sends questions that are not shown unanswered', () => {
+    const questions = [text, bnf]
+    const values = toFormValues(questions, { [text.id]: 'abc', bnf: '11' })
+
+    expect(buildPayload(questions, values, new Set([text.id]))).toEqual({
+      [text.id]: 'abc',
+      bnf: null,
+    })
   })
 })
 

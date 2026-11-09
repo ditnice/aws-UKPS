@@ -78,8 +78,12 @@ Set `PLAYWRIGHT_BASE_URL` to target another deployed environment:
 PLAYWRIGHT_BASE_URL=https://example.test pnpm test:e2e
 ```
 
-Authenticated tests run when `E2E_USER_EMAIL`, `E2E_USER_PASSWORD`, `E2E_TOTP_SECRET`,
-and `E2E_ORGANISATION_ID` are set. Credentials are only submitted to trusted origins.
+Authenticated tests (`*.authenticated.e2e.test.ts`) run as a Super, Champion or Standard
+user. Each role signs in with its own `E2E_<ROLE>_EMAIL`, `E2E_<ROLE>_PASSWORD` and
+`E2E_<ROLE>_TOTP_SECRET` (for example `E2E_CHAMPION_EMAIL`). Super falls back to
+`E2E_USER_EMAIL`, `E2E_USER_PASSWORD` and `E2E_TOTP_SECRET`. `E2E_ORGANISATION_ID` must also be
+set, and the Champion and Standard users must belong to that organisation. A role's tests are
+skipped when its credentials aren't set. Credentials are only submitted to trusted origins.
 The dev environment is trusted by default; set a comma-separated allowlist to trust additional
 environments explicitly:
 
@@ -90,6 +94,65 @@ pnpm test:e2e
 ```
 
 Only add environments controlled by the project to `PLAYWRIGHT_AUTHENTICATED_ORIGINS`.
+
+##### User roles
+
+Every authenticated test or `describe` declares the roles it runs as, using `forRoles` from
+`tests/e2e/helpers/roles.ts`. It then runs once in each role's project (`authenticated-super`,
+`authenticated-champion`, `authenticated-standard`):
+
+```ts
+test.describe('Promoting a user', { tag: forRoles(['Super', 'Champion'], mutatesDataTag) }, () => {
+  test('…', async ({ page, userRole }) => {
+    // userRole is the role this run is signed in as, for content that differs by role.
+  })
+})
+```
+
+An authenticated test without a role tag fails in the `authenticated-untagged` project. Run one
+role with `--project=authenticated-champion`. With dev authentication (`just e2e`), nobody
+signs in: each project sets a `ukps_dev_role` cookie, and the backend then acts as that role's
+seeded user (`DevAuthenticationClaims.RoleUsers`).
+
+Each role acts on its own organisation, from the `organisationId` fixture, so tests running as
+different roles never change the same data. With dev authentication, Super uses organisation 1,
+and Champion and Standard use organisation 2. Otherwise each role reads
+`E2E_<ROLE>_ORGANISATION_ID`, falling back to `E2E_ORGANISATION_ID`. In organisation 2, tests
+running as a Champion change fixed seeded users (`tests/e2e/helpers/subjects.ts`) rather than
+whichever user a search finds first.
+
+Access-control tests verify that protected subjects exist using a separate Super session, then
+check denial as Champion or Standard. With real authentication, configure the Super credentials
+and organisation ID too; its setup runs as a dependency of those role projects. Pre-provision
+the following subjects and set their emails (tests never create or change them on deployed
+environments):
+
+- `E2E_ACCESS_USER_EMAIL`: an active Standard user, distinct from the caller, in the Standard
+  test organisation.
+- `E2E_ACCESS_FOREIGN_USER_EMAIL`: an active Standard user in the Super test organisation,
+  which must differ from the Champion test organisation and be inaccessible to the Champion.
+- `E2E_ACCESS_REQUEST_EMAIL`: a pending registration request in the Standard test organisation.
+
+These checks never skip, so a green run means they ran: missing account or subject configuration
+fails the test, as does a configured subject that cannot be verified. DEV-auth runs use dedicated
+seeded subjects instead. Subject IDs and missing comparison IDs are verified with read-only API
+calls.
+
+What each role can do, and so which roles a test should run as:
+
+| Capability                        | Super   | Champion                  | Standard      |
+| --------------------------------- | ------- | ------------------------- | ------------- |
+| Own organisation's records        | ✓       | ✓                         | ✓             |
+| "Manage my organisation" link     | ✓       | ✓                         | hidden        |
+| Organisation details and users    | any org | own org                   | not permitted |
+| Edit organisation details         | any org | own org                   | not permitted |
+| Invite a user                     | ✓       | own org                   | not permitted |
+| Approve or reject a registration  | ✓       | own org                   | ✗             |
+| Change a user's role              | ✓       | own org, not a super user | ✗             |
+| Deactivate or reactivate a user   | ✓       | own org                   | ✗             |
+| Remove a user (all organisations) | ✓       | ✗                         | ✗             |
+| Actions on your own row           | none    | none                      | none          |
+
 Local development normally uses `AUTHENTICATION_MODE=DEV`, so authentication redirects and
 authenticated flows run against deployed environments rather than the local server.
 

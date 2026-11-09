@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 
-import { getOrganisationById } from '@/client/generated/sdk.gen'
+import { getOrganisationById, getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+
+import { NotPermitted } from '../_components/NotPermitted'
 
 import { EditOrganisationDetailsForm } from './_components/EditOrganisationDetailsForm'
 
@@ -20,10 +22,25 @@ export default async function EditOrganisationPage({ params }: Props) {
   }
 
   const apiClient = await createServerApiClient()
-  const { data: organisation, error } = await getOrganisationById({
-    client: apiClient,
-    path: { id: organisationId },
-  })
+  const [{ data: currentUser, error: currentUserError }, { data: organisation, error }] =
+    await Promise.all([
+      getUsersMe({ client: apiClient }),
+      getOrganisationById({ client: apiClient, path: { id: organisationId } }),
+    ])
+
+  if (currentUserError || !currentUser) {
+    return (
+      <section>
+        <PageHeader heading="Unable to load current user" />
+        <p role="alert">There was a problem retrieving the current user. Please try again later.</p>
+      </section>
+    )
+  }
+
+  // Only champion and super users can update an organisation, so a standard user can't use the form.
+  if (currentUser.userRole === 'Standard') {
+    return <NotPermitted />
+  }
 
   if (error || !organisation) {
     return (
