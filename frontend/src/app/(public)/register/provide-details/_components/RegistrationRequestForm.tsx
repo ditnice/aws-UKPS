@@ -178,7 +178,7 @@ export function RegistrationRequestForm() {
                 }
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
-                hint="For international numbers include the country code."
+                hint="This number will be visible to horizon scanning organisations. For international numbers include the country code."
                 width="one-third"
                 required
                 value={field.state.value}
