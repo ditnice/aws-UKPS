@@ -21,6 +21,10 @@ using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<
     System.Guid,
     UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError
 >;
+using SetupSmsMfaResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.SmsMultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.SetupSmsMfaError
+>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
@@ -30,6 +34,7 @@ using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
+using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError>;
 
 namespace UKPS.Api.Application.Authentication;
 
@@ -361,5 +366,101 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             },
             cancellationToken
         );
+    }
+
+    public async Task<SetupSmsMfaResult> SetupSmsMfa(
+        SetupSmsMfaCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        UserOnboardingRecord? userRecord = await _appDbContext
+            .UserOnboardingRecords.Include(x => x.ResultingUser)
+            .FirstOrDefaultAsync(
+                x => x.SetupToken == command.SetupToken,
+                cancellationToken: cancellationToken
+            );
+
+        if (userRecord is null)
+        {
+            return SetupSmsMfaResult.Err(new SetupSmsMfaError.DoesNotExist());
+        }
+
+        DateTime now = _dateTimeProvider.GetUtcNow();
+        TimeSpan timeSpan = TimeSpan.FromSeconds(_options.Value.SetupTokenExpiryTimeSeconds);
+        if (userRecord.CreatedAt.Add(timeSpan) < now)
+        {
+            return SetupSmsMfaResult.Err(new SetupSmsMfaError.Expired());
+        }
+
+        CognitoUsername cognitoUsername = userRecord.ResultingUser!.CognitoUsername;
+
+        if (!PhoneNumberValidator.IsValidSmsNumber(command.PhoneNumber, out string? e164Number))
+        {
+            return SetupSmsMfaResult.Err(new SetupSmsMfaError.InvalidPhoneNumber());
+        }
+
+        await _identityService.SetUserPhoneNumber(cognitoUsername, e164Number!, cancellationToken);
+
+        // TODO: SMS MFA auth-restart is not implemented.
+        // SetupSmsMfa only stores the phone number and returns Unauthorised, so verification cannot proceed.
+        // Revisit an auth-restart mechanism for the SMS_MFA challenge.
+        return SetupSmsMfaResult.Err(new SetupSmsMfaError.Unauthorised());
+    }
+
+    public async Task<VerifySmsMultiFactorAuthenticationResult> VerifySmsMultiFactorAuthentication(
+        VerifySmsMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        UserOnboardingRecord? userRecord = await _appDbContext
+            .UserOnboardingRecords.Include(x => x.ResultingUser)
+            .FirstOrDefaultAsync(
+                x => x.SetupToken == command.SetupToken,
+                cancellationToken: cancellationToken
+            );
+
+        if (userRecord is null)
+        {
+            return VerifySmsMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.DoesNotExist()
+            );
+        }
+
+        CognitoUsername cognitoUsername = userRecord.ResultingUser!.CognitoUsername;
+
+        try
+        {
+            await _identityService.RespondToSmsMultiFactorAuthenticationChallenge(
+                cognitoUsername,
+                command.AuthenticationSession,
+                command.Code,
+                cancellationToken
+            );
+
+            await _identityService.MarkEmailAsVerified(cognitoUsername, cancellationToken);
+            await _identityService.SetUserMfaPreference(
+                cognitoUsername,
+                smsEnabled: true,
+                smsPreferred: false,
+                cancellationToken
+            );
+
+            userRecord.ResultingUser.FinaliseSetup();
+            await _appDbContext.SaveChangesAsync(cancellationToken);
+
+            return VerifySmsMultiFactorAuthenticationResult.Ok();
+        }
+        catch (NotAuthorizedException)
+        {
+            return VerifySmsMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.InvalidCode()
+            );
+        }
+        catch (CodeMismatchException)
+        {
+            return VerifySmsMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.InvalidCode()
+            );
+        }
     }
 }
