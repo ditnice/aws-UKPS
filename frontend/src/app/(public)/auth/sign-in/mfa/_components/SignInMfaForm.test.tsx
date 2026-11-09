@@ -47,9 +47,7 @@ describe('SignInMfaForm', () => {
   it('renders the MFA controls', () => {
     renderValidForm()
     expect(screen.getByLabelText('Security code')).toBeInTheDocument()
-    expect(
-      screen.getByText(`Enter the 6-digit authentication code shown in the app.`),
-    ).toBeInTheDocument()
+    expect(screen.getByText(`Enter the 6-digit authentication code.`)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'I do not have access to my authenticator device' }),
