@@ -178,7 +178,8 @@ internal static class FormModelBuilder
                                 taskAttribute.Title,
                                 page.Select(static x => x.Second)
                                     .OrderBy(static q => q.Order)
-                                    .ToArray()
+                                    .ToArray(),
+                                CommercialInConfidence: page.First().First.Page.CommercialInConfidence
                             ))
                             .OrderBy(static p => p.Order)
                             .ToArray();

@@ -22,6 +22,22 @@
   }
 }
 
+// The shared Radio makes a label regular weight when its own option has no hint. When any option
+// in the group has a hint, the designs keep every label bold, including options without one.
+.boldLabels {
+  :global(.radio__label) {
+    font-weight: bold;
+  }
+}
+
+// The NDS page header renders the caption as an inline page, so put the badge on its own line.
+.commercialBadge {
+  display: block;
+  font-family: var(--sans-font-family);
+  margin-top: utils.rem(spacing.$small);
+  width: fit-content;
+}
+
 .singleQuestionPageHeader :global(.page-header) {
   margin-bottom: 0;
 }

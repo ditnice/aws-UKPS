@@ -1,0 +1,246 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Radios > renders a legend, hint and options sharing the group name 1`] = `
+<DocumentFragment>
+  <div
+    data-component="radios"
+  >
+    <fieldset
+      aria-describedby="contact-hint"
+      class="form-group"
+      data-component="form-group"
+    >
+      <legend
+        class="form-group__legend"
+      >
+        How would you like to be contacted?
+      </legend>
+      <p
+        class="form-group__hint"
+        id="contact-hint"
+      >
+        Select one option
+      </p>
+      <div
+        class="radio"
+        data-component="radio"
+      >
+        <input
+          aria-controls="conditional-contact_email"
+          aria-describedby="contact-hint"
+          class="radio__input"
+          id="contact_email"
+          name="contact"
+          type="radio"
+          value="email"
+        />
+        <label
+          class="radio__label _labelPlain_3637ee"
+          for="contact_email"
+        >
+          Email
+        </label>
+      </div>
+      <fieldset
+        class="_conditional_3637ee"
+        data-component="radios-conditional"
+        disabled=""
+        hidden=""
+        id="conditional-contact_email"
+      >
+        <label
+          for="contact-email"
+        >
+          Email address
+        </label>
+        <input
+          id="contact-email"
+          name="contactEmail"
+          required=""
+        />
+      </fieldset>
+      <div
+        class="radio"
+        data-component="radio"
+      >
+        <input
+          aria-controls="conditional-contact_phone"
+          aria-describedby="contact-hint"
+          class="radio__input"
+          id="contact_phone"
+          name="contact"
+          type="radio"
+          value="phone"
+        />
+        <label
+          class="radio__label _labelPlain_3637ee"
+          for="contact_phone"
+        >
+          Phone
+        </label>
+      </div>
+      <fieldset
+        class="_conditional_3637ee"
+        data-component="radios-conditional"
+        disabled=""
+        hidden=""
+        id="conditional-contact_phone"
+      >
+        <label
+          for="contact-phone"
+        >
+          Phone number
+        </label>
+        <input
+          id="contact-phone"
+          name="contactPhone"
+        />
+      </fieldset>
+      <div
+        class="radio"
+        data-component="radio"
+      >
+        <input
+          aria-describedby="contact-hint"
+          class="radio__input"
+          id="contact_post"
+          name="contact"
+          type="radio"
+          value="post"
+        />
+        <label
+          class="radio__label _labelPlain_3637ee"
+          for="contact_post"
+        >
+          Post
+        </label>
+      </div>
+    </fieldset>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Radios > renders the error message and styles every option as invalid 1`] = `
+<DocumentFragment>
+  <div
+    data-component="radios"
+  >
+    <fieldset
+      aria-describedby="contact-error"
+      class="form-group"
+      data-component="form-group"
+    >
+      <legend
+        class="form-group__legend"
+      >
+        How would you like to be contacted?
+      </legend>
+      <p
+        class="form-group__error-message"
+        id="contact-error"
+      >
+        <span
+          class="visually-hidden"
+        >
+          Error:
+        </span>
+         Select how you would like to be contacted
+      </p>
+      <div
+        class="radio radio--error"
+        data-component="radio"
+      >
+        <input
+          aria-controls="conditional-contact_email"
+          aria-describedby="contact-error"
+          class="radio__input"
+          id="contact_email"
+          name="contact"
+          type="radio"
+          value="email"
+        />
+        <label
+          class="radio__label _labelPlain_3637ee"
+          for="contact_email"
+        >
+          Email
+        </label>
+      </div>
+      <fieldset
+        class="_conditional_3637ee"
+        data-component="radios-conditional"
+        disabled=""
+        hidden=""
+        id="conditional-contact_email"
+      >
+        <label
+          for="contact-email"
+        >
+          Email address
+        </label>
+        <input
+          id="contact-email"
+          name="contactEmail"
+          required=""
+        />
+      </fieldset>
+      <div
+        class="radio radio--error"
+        data-component="radio"
+      >
+        <input
+          aria-controls="conditional-contact_phone"
+          aria-describedby="contact-error"
+          class="radio__input"
+          id="contact_phone"
+          name="contact"
+          type="radio"
+          value="phone"
+        />
+        <label
+          class="radio__label _labelPlain_3637ee"
+          for="contact_phone"
+        >
+          Phone
+        </label>
+      </div>
+      <fieldset
+        class="_conditional_3637ee"
+        data-component="radios-conditional"
+        disabled=""
+        hidden=""
+        id="conditional-contact_phone"
+      >
+        <label
+          for="contact-phone"
+        >
+          Phone number
+        </label>
+        <input
+          id="contact-phone"
+          name="contactPhone"
+        />
+      </fieldset>
+      <div
+        class="radio radio--error"
+        data-component="radio"
+      >
+        <input
+          aria-describedby="contact-error"
+          class="radio__input"
+          id="contact_post"
+          name="contact"
+          type="radio"
+          value="post"
+        />
+        <label
+          class="radio__label _labelPlain_3637ee"
+          for="contact_post"
+        >
+          Post
+        </label>
+      </div>
+    </fieldset>
+  </div>
+</DocumentFragment>
+`;

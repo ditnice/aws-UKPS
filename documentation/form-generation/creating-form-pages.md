@@ -41,7 +41,7 @@ describes. You only touch the frontend to add a new control.
 |---|---|---|---|
 | `[FormSection(recordType, id, title)]` | class | `Order`, `RowSource` | One per record type. Every entity declaring the same section ID must agree on title and `Order` |
 | `[FormTask(id, title)]` | property | `Order` | Required on every question. Every declaration of the same task ID must agree on title, `Order` and section |
-| `[FormPage(id, title)]` | property | `Order` | Order within the task. Every declaration of the same page ID must agree |
+| `[FormPage(id, title)]` | property | `Order`, `CommercialInConfidence` | `Order` is the position within the task. `CommercialInConfidence` shows the "Commercial in confidence" badge above the heading. Every declaration of the same page ID must agree |
 | `[FormField(id, label, control)]` | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` |
 | `[FormRequired(message)]` | property | | |
 | `[FormMaxLength(max, message)]` | property | | `Text`, `Textarea` |
@@ -220,6 +220,9 @@ choice. Use `[FormIgnore]` with a reason that a reviewer can understand:
 - `"Database identity"`, `"Revision ownership is supplied by the server"`: never on a form.
 - `"No page designed yet"`: intended for a form, but not designed. Search for this reason to
   find work still to do.
+- `"Conditional reveal not supported yet"`: intended for a form, but it only makes sense revealed
+  under another answer, which forms cannot do yet. Search for this reason too when adding
+  conditional support.
 - `"Set by record creation"`: collected elsewhere, for example by the create record form.
 
 Navigation properties are exempt, unless they back a junction question.
@@ -321,6 +324,7 @@ ignored and the control renders as plain dropdowns or checkboxes.
 
 - Pass hint text with `Hint = "..."`. A blank line (`\n\n`) starts a new paragraph.
 - Hints are shown above the input and linked to it with `aria-describedby`.
+- A radio option can carry its own hint. Register the enum with the three-part overload of `AddEnum`, `(Value, Label, Hint)`; see the `BiomarkerType` provider in `MedicineOptionProviders`. The hint shows under that option, and it is part of the form fingerprint, so changing it needs a version bump.
 - On a single-question page, the label is visually hidden on the field because it is already
   the page heading. Screen readers still announce it.
 
@@ -373,7 +377,8 @@ registry.AddReferenceTree<BnfChapter>(OptionKeys.BnfChapters,
     x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived, x.ParentId));
 ```
 
-(`FormulationTypes` is illustrative; it is not registered yet.)
+`FormulationTypes` is registered in `MedicineOptionProviders`; the example above illustrates
+ordering by label rather than the registered provider's ID order.
 
 The query and projection are described for the form fingerprint by `ExpressionDescription`, so
 they must not capture variables: use literals in the lambdas. Startup fails on a captured
@@ -504,7 +509,7 @@ reports every problem in one exception.
 | Coverage | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation |
 | Pairing | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]` |
 | IDs | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list` |
-| Agreement | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title or order. A page spans tasks |
+| Agreement | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks |
 | Order | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order` |
 | Structure | A section has no pages, or a page has no questions |
 | Controls | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]` |

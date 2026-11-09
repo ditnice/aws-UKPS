@@ -35,14 +35,13 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             track: false,
             cancellationToken
         );
-        Dictionary<string, FormAnswer> answers = RecordFormPageLoader.ReadAnswers(page, rows);
+        PageAnswers answers = RecordFormPageLoader.ReadAnswers(page, rows);
         var options = await loader.LoadOptionsAsync(page, answers, cancellationToken);
 
         return GetRecordPageResult.Ok(
             new RecordPageDto
             {
                 FormVersion = loaded.Model.Version,
-                RevisionVersion = loaded.Revision.Version,
                 RecordId = recordId,
                 Section = new RecordPageSectionDto
                 {
@@ -50,7 +49,12 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                     Title = page.SectionTitle,
                 },
                 Task = new RecordPageTaskDto { Id = page.TaskId, Title = page.TaskTitle },
-                Page = new RecordPagePageDto { Id = page.Id, Title = page.Title },
+                Page = new RecordPagePageDto
+                {
+                    Id = page.Id,
+                    Title = page.Title,
+                    CommercialInConfidence = page.CommercialInConfidence,
+                },
                 PreviousPageId = loaded.Model.PreviousPage(page)?.Id,
                 NextPageId = loaded.Model.NextPage(page)?.Id,
                 Questions = page
@@ -61,6 +65,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                     static a => a.Value.ToJson(),
                     StringComparer.Ordinal
                 ),
+                PageHash = answers.ComputeStableHash(),
             }
         );
     }
@@ -97,6 +102,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
         {
             Value = option.Value,
             Label = option.Label,
+            Hint = option.Hint,
             Children = option.Children.Count == 0 ? null : option.Children.Select(ToDto).ToArray(),
         };
 }

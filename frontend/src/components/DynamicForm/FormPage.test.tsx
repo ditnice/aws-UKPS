@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RecordPageDto, RecordPageQuestionDto } from '@/client/generated'
@@ -39,21 +40,22 @@ const tree = [
   {
     value: '1',
     label: '1: Addiction',
+    hint: null,
     children: [
-      { value: '11', label: '1.1: Opioid use disorder', children: null },
-      { value: '13', label: '1.3: Smoking cessation', children: null },
+      { value: '11', label: '1.1: Opioid use disorder', hint: null, children: null },
+      { value: '13', label: '1.3: Smoking cessation', hint: null, children: null },
     ],
   },
-  { value: '2', label: '2: Allergy', children: null },
+  { value: '2', label: '2: Allergy', hint: null, children: null },
 ]
 
 const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
-  revisionVersion: 4711,
+  pageHash: 'page-hash',
   recordId: 5,
   section: { id: 'product-indication', title: 'Product indication' },
   task: { id: 'indication-details', title: 'Indication details' },
-  page: { id: 'indication', title: 'Indication' },
+  page: { id: 'indication', title: 'Indication', commercialInConfidence: false },
   previousPageId: null,
   nextPageId: 'bnf-chapter',
   questions: [question({})],
@@ -110,6 +112,24 @@ describe('FormPage', () => {
       expect(screen.queryByText('Product indication')).toBeNull()
     })
 
+    it('shows the Commercial in confidence badge when the page is flagged', () => {
+      render(
+        <FormPage
+          page={page({
+            page: { id: 'indication', title: 'Indication', commercialInConfidence: true },
+          })}
+        />,
+      )
+
+      expect(screen.getByText('Commercial in confidence')).toBeInTheDocument()
+    })
+
+    it('does not show the badge by default', () => {
+      render(<FormPage page={page()} />)
+
+      expect(screen.queryByText('Commercial in confidence')).toBeNull()
+    })
+
     it('goes back to the task list from the first page of a task', () => {
       render(<FormPage page={page()} />)
 
@@ -125,6 +145,15 @@ describe('FormPage', () => {
 
       cleanup()
       render(<FormPage page={page({ nextPageId: null })} />)
+      expect(
+        screen.getByRole('button', { name: 'Save and return to task list' }),
+      ).toBeInTheDocument()
+    })
+
+    it('offers both save buttons while the task has another page', () => {
+      render(<FormPage page={page()} />)
+
+      expect(screen.getByRole('button', { name: 'Save and continue' })).toBeInTheDocument()
       expect(
         screen.getByRole('button', { name: 'Save and return to task list' }),
       ).toBeInTheDocument()
@@ -180,7 +209,7 @@ describe('FormPage', () => {
         path: { recordId: 5, pageId: 'indication' },
         body: {
           formVersion: '2026.10.1',
-          revisionVersion: 4711,
+          pageHash: 'page-hash',
           answers: { 'medicines_indication_detail.indication': 'Hepatitis C' },
         },
       })
@@ -204,6 +233,113 @@ describe('FormPage', () => {
 
       await waitFor(() => {
         expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
+      })
+    })
+
+    it('saves once and returns to the task list from the second button, even with a next page', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page()} />)
+
+      await user.type(screen.getByRole('textbox'), 'Hepatitis C')
+      await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
+      })
+      expect(mocks.push).not.toHaveBeenCalledWith('/portal/records/5/bnf-chapter')
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
+    })
+
+    it('validates before returning to the task list and still allows continuing after correction', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page()} />)
+
+      await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+      expect(await screen.findByText('Enter the indication')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      expect(mocks.push).not.toHaveBeenCalled()
+
+      await user.type(screen.getByRole('textbox'), 'Hepatitis C')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/portal/records/5/bnf-chapter')
+      })
+    })
+
+    it.each([
+      {
+        outcome: 'server validation fails',
+        status: 400,
+        error: { errors: { 'medicines_indication_detail.indication': ['Server says no'] } },
+        message: 'Server says no',
+      },
+      {
+        outcome: 'the page has changed',
+        status: 409,
+        error: {
+          code: 'page_answers_changed',
+          detail: 'This page has changed since it was loaded.',
+        },
+        message: 'This page has changed since it was loaded.',
+      },
+      {
+        outcome: 'the server fails',
+        status: 500,
+        error: { detail: 'Internal server error' },
+        message: 'There was a problem saving your answers. Please try again later.',
+      },
+    ])(
+      'stays on the page when returning to the task list and $outcome',
+      async ({ status, error, message }) => {
+        const user = userEvent.setup()
+        mocks.saveRecordFormPage.mockResolvedValue({ error, response: { ok: false, status } })
+        render(
+          <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+        )
+
+        await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+        expect(await screen.findByText(message)).toBeInTheDocument()
+        expect(mocks.push).not.toHaveBeenCalled()
+        expect(screen.getByRole('button', { name: 'Save and return to task list' })).toBeEnabled()
+      },
+    )
+
+    it('disables both save buttons while returning to the task list to prevent duplicate saves', async () => {
+      const user = userEvent.setup()
+      type SaveResult = {
+        data: { nextPageId: string }
+        response: { ok: boolean; status: number }
+      }
+      let resolveSave!: (result: SaveResult) => void
+      mocks.saveRecordFormPage.mockReturnValueOnce(
+        new Promise<SaveResult>((resolve) => {
+          resolveSave = resolve
+        }),
+      )
+      render(
+        <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+      )
+
+      const returnButton = screen.getByRole('button', { name: 'Save and return to task list' })
+      const continueButton = screen.getByRole('button', { name: 'Save and continue' })
+      await user.click(returnButton)
+
+      expect(returnButton).toBeDisabled()
+      expect(continueButton).toBeDisabled()
+      await user.click(returnButton)
+      await user.click(continueButton)
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
+      expect(mocks.push).not.toHaveBeenCalled()
+
+      resolveSave({
+        data: { nextPageId: 'bnf-chapter' },
+        response: { ok: true, status: 200 },
+      })
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/portal/records/5/task-list')
       })
     })
 
@@ -240,7 +376,7 @@ describe('FormPage', () => {
     it('offers a reload when the page has changed since it was loaded', async () => {
       mocks.saveRecordFormPage.mockResolvedValue({
         error: {
-          code: 'revision_changed',
+          code: 'page_answers_changed',
           detail: 'This record has changed since the page was loaded.',
         },
         response: { ok: false, status: 409 },
@@ -278,11 +414,56 @@ describe('FormPage', () => {
   })
 
   describe('controls', () => {
+    it('associates radio hints and errors and revalidates after selection and blur', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'choice',
+                type: 'Radio',
+                label: 'Choose an answer',
+                hint: 'Select one answer',
+                rules: [{ kind: 'Required', value: null, message: 'Choose yes or no' }],
+                options: [
+                  { value: 'Yes', label: 'Yes', hint: null, children: null },
+                  { value: 'No', label: 'No', hint: null, children: null },
+                ],
+              }),
+            ],
+            answers: { choice: null },
+          })}
+        />,
+      )
+      const yes = screen.getByRole('radio', { name: 'Yes' })
+      expect(yes).toHaveAccessibleDescription('Select one answer')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      expect(await screen.findByText('Choose yes or no')).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+      for (const radio of screen.getAllByRole('radio')) {
+        expect(radio).not.toHaveAttribute('aria-invalid')
+        expect(radio).not.toHaveAttribute('aria-expanded')
+        expect(radio).toHaveAccessibleDescription(/Select one answer.*Choose yes or no/)
+      }
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      await user.click(yes)
+      await user.tab()
+      await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
+      expect(yes).toBeChecked()
+      expect(yes).not.toHaveAttribute('aria-invalid')
+      expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+    })
+
     it('saves the chosen radio option', async () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'cancer', title: 'Treating cancer' },
+            page: { id: 'cancer', title: 'Treating cancer', commercialInConfidence: false },
             questions: [
               question({
                 id: 'cancer',
@@ -291,8 +472,8 @@ describe('FormPage', () => {
                 hint: null,
                 rules: [],
                 options: [
-                  { value: 'Yes', label: 'Yes', children: null },
-                  { value: 'No', label: 'No', children: null },
+                  { value: 'Yes', label: 'Yes', hint: null, children: null },
+                  { value: 'No', label: 'No', hint: null, children: null },
                 ],
               }),
             ],
@@ -308,7 +489,90 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ cancer: 'No' })
     })
 
-    it('saves ticked checkboxes', async () => {
+    it('associates a radio option hint only with the option it describes', () => {
+      render(
+        <FormPage
+          page={page({
+            page: { id: 'biomarker-type', title: 'Biomarker type', commercialInConfidence: false },
+            questions: [
+              question({
+                id: 'biomarker-type',
+                type: 'Radio',
+                label: 'What type of biomarker is required for this test?',
+                hint: null,
+                rules: [],
+                options: [
+                  {
+                    value: 'GenomicBiomarker',
+                    label: 'Genomic biomarker',
+                    hint: 'For example, a gene mutation, chromosomal alteration',
+                    children: null,
+                  },
+                  { value: 'Unknown', label: 'Unknown at this stage', hint: null, children: null },
+                ],
+              }),
+            ],
+            answers: { 'biomarker-type': null },
+          })}
+        />,
+      )
+
+      expect(screen.getByText('For example, a gene mutation, chromosomal alteration')).toBeVisible()
+      expect(screen.getByRole('radio', { name: 'Genomic biomarker' })).toHaveAccessibleDescription(
+        'For example, a gene mutation, chromosomal alteration',
+      )
+      expect(
+        screen.getByRole('radio', { name: 'Unknown at this stage' }),
+      ).not.toHaveAccessibleDescription()
+    })
+
+    it('associates checkbox hints and errors and revalidates on selection and blur', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'ticks',
+                type: 'Checkbox',
+                multiple: true,
+                label: 'Choose contact methods',
+                hint: 'Select all that apply',
+                rules: [{ kind: 'Required', value: null, message: 'Choose at least one method' }],
+                options: tree,
+              }),
+            ],
+            answers: { ticks: [] },
+          })}
+        />,
+      )
+      const first = screen.getByRole('checkbox', { name: '1: Addiction' })
+      expect(first).toHaveAccessibleDescription('Select all that apply')
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      expect(await screen.findByText('Choose at least one method')).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+      for (const input of screen.getAllByRole('checkbox')) {
+        expect(input).not.toHaveAttribute('aria-invalid')
+        expect(input).toHaveAccessibleDescription(
+          /Select all that apply.*Choose at least one method/,
+        )
+      }
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      await user.click(first)
+      await user.tab()
+      await waitFor(() =>
+        expect(screen.queryByText('Choose at least one method')).not.toBeInTheDocument(),
+      )
+      expect(first).not.toHaveAttribute('aria-invalid')
+      expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
+        'aria-invalid',
+      )
+    })
+
+    it('saves ticked checkboxes in selection insertion order', async () => {
+      const user = userEvent.setup()
       render(
         <FormPage
           page={page({
@@ -321,12 +585,13 @@ describe('FormPage', () => {
       )
 
       expect(screen.getByLabelText('1: Addiction')).toBeChecked()
-      fireEvent.click(screen.getByLabelText('1: Addiction'))
-      fireEvent.click(screen.getByLabelText('2: Allergy'))
-      save()
+      await user.click(screen.getByLabelText('1: Addiction'))
+      await user.click(screen.getByLabelText('2: Allergy'))
+      await user.click(screen.getByLabelText('1: Addiction'))
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
 
       await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalled())
-      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ ticks: ['2'] })
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ ticks: ['2', '1'] })
     })
 
     it('saves a plain select and a text input', async () => {
@@ -363,7 +628,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'bnf-chapter', title: 'BNF chapter' },
+            page: { id: 'bnf-chapter', title: 'BNF chapter', commercialInConfidence: false },
             questions: [
               question({
                 id: 'bnf',
@@ -399,7 +664,7 @@ describe('FormPage', () => {
       render(
         <FormPage
           page={page({
-            page: { id: 'bnf-chapter', title: 'BNF chapter' },
+            page: { id: 'bnf-chapter', title: 'BNF chapter', commercialInConfidence: false },
             questions: [
               question({
                 id: 'bnf',

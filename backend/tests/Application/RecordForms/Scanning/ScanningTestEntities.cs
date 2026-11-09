@@ -166,6 +166,24 @@ internal sealed class DisagreeingEntity
     public RecordRevision? Revision { get; set; }
 }
 
+/// <summary>Agrees with <see cref="ValidEntity"/> except for a page's "Commercial in confidence" flag.</summary>
+[FormSection(RecordType.Vaccine, "valid", "Valid", Order = 10)]
+internal sealed class FlagDisagreeingEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("valid-task", "Valid task", Order = 10)]
+    [FormPage("text", "Text", Order = 10, CommercialInConfidence = true)]
+    [FormField("flag_entity.text", "Text", FormControl.Text, Order = 30)]
+    public string? Text { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+}
+
 /// <summary>
 /// Disagrees with <see cref="ValidEntity"/> about task metadata, and puts one of its pages in
 /// another task with the same order.

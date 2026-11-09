@@ -110,7 +110,7 @@ public class FormModelValidatorTests
             "The Vaccine form declares section 'valid' with different titles or orders."
         );
         problems.ShouldContain(
-            "The Vaccine form declares page 'text' with different titles or orders."
+            "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
         );
         problems.ShouldContain(
             "The Vaccine form uses question ID 'valid_entity.text' more than once."
@@ -128,6 +128,19 @@ public class FormModelValidatorTests
         problems.ShouldContain("The Vaccine form has page 'text' in more than one task.");
         problems.ShouldContain(
             "The Vaccine form, section 'valid', has task 'valid-task' and task 'other-task' with the same Order 10."
+        );
+    }
+
+    [Fact]
+    public void Validate_PageFlagDisagreement_IsReported()
+    {
+        IReadOnlyList<string> problems = Problems(
+            typeof(ValidEntity),
+            typeof(FlagDisagreeingEntity)
+        );
+
+        problems.ShouldContain(
+            "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
         );
     }
 
