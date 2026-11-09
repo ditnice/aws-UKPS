@@ -7,6 +7,7 @@ const changePermissions = 'Change user permissions'
 const deactivate = 'Deactivate user'
 const reactivate = 'Reactivate user'
 const remove = 'Remove user'
+const manageDetails = 'Manage user details and sign in method'
 
 /* The actions each role is offered for the seeded subjects that never change. Only a Super user
  * can remove a user, and a deactivated user can only be reactivated (or removed). */
@@ -14,15 +15,15 @@ const cases: { subject: ChampionSubject; actions: Record<'Super' | 'Champion', s
   {
     subject: 'readonly',
     actions: {
-      Super: [changePermissions, deactivate, remove],
-      Champion: [changePermissions, deactivate],
+      Super: [changePermissions, deactivate, remove, manageDetails],
+      Champion: [changePermissions, deactivate, manageDetails],
     },
   },
   {
     subject: 'champion',
     actions: {
-      Super: [changePermissions, deactivate, remove],
-      Champion: [changePermissions, deactivate],
+      Super: [changePermissions, deactivate, remove, manageDetails],
+      Champion: [changePermissions, deactivate, manageDetails],
     },
   },
   {
