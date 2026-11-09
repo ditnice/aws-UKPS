@@ -45,7 +45,7 @@ describe('EditDetails (direct invocation)', () => {
       response: { ok: true } as Response,
     })
 
-    const result = await EditDetails()
+    const result = await EditDetails({ searchParams: Promise.resolve({}) })
 
     render(result)
 
@@ -59,7 +59,7 @@ describe('EditDetails (direct invocation)', () => {
       data: exampleUser,
     } as Awaited<ReturnType<typeof getUsersMe>>)
 
-    const result = await EditDetails()
+    const result = await EditDetails({ searchParams: Promise.resolve({}) })
 
     render(result)
 
@@ -81,7 +81,7 @@ describe('EditDetails (direct invocation)', () => {
       data: undefined,
     } as Awaited<ReturnType<typeof getUsersMe>>)
 
-    const result = await EditDetails()
+    const result = await EditDetails({ searchParams: Promise.resolve({}) })
 
     render(result)
 
