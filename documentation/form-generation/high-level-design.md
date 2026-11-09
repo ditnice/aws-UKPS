@@ -1,7 +1,8 @@
 # Record content forms: high-level design
 
 > **Status: first delivery implemented** (Medicine form, Indication details section), with
-> conditional questions and pages (Development background section). The
+> conditional questions and pages (Development background, Laboratory testing and Patient and
+> clinical requirements sections). The
 > decision is recorded in
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
@@ -383,8 +384,9 @@ drift apart.
 Some questions and pages only apply when an earlier question has a particular answer:
 
 - **A question revealed on the same page.** `[FormShowWhen(questionId, values...)]` on a
-  property. The trigger must be an earlier question on the same page. The frontend shows the
-  question beneath the trigger's option while it is chosen.
+  property. The trigger must be an earlier question on the same page. For a `Radio` trigger the
+  frontend shows the question beneath each option that reveals it, while that option is chosen;
+  for other triggers it is shown as the next question.
 - **A page shown by an earlier page.** `[FormPageShowWhen(pageId, questionId, values...)]` on the
   entity that declares the page. The trigger must be on an earlier page, and the page must not
   be the first of its task, which the task list links to. Back and Save and continue skip the

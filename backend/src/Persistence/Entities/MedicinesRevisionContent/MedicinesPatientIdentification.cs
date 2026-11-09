@@ -7,7 +7,7 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
     RecordType.Medicine,
     "patient-and-clinical-requirements",
     "Patient and clinical requirements",
-    Order = 40
+    Order = 80
 )]
 internal sealed class MedicinesPatientIdentification
 {
@@ -32,6 +32,7 @@ internal sealed class MedicinesPatientIdentification
         "medicines_patient_identification.screening_required",
         "Is a screening or surveillance programme required to identify eligible patients?",
         FormControl.Radio,
+        Order = 10,
         Hint = "Select yes if identifying patients requires proactive screening, testing, or surveillance beyond usual care. Select no if patients are typically identified through existing clinical pathways. Select unknown if this is not yet clear."
     )]
     [FormRequired(
@@ -40,7 +41,26 @@ internal sealed class MedicinesPatientIdentification
     public YesNoUnknown? ScreeningRequired { get; set; }
 
     /// <summary>Conditional on ScreeningRequired = Yes.</summary>
-    [FormIgnore("Conditional reveal not supported yet")]
+    [FormTask(
+        MedicineFormTasks.PatientAndClinicalRequirements,
+        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
+        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    )]
+    [FormPage(
+        "screening-programme",
+        "Screening or surveillance",
+        Order = 10,
+        CommercialInConfidence = true
+    )]
+    [FormField(
+        "medicines_patient_identification.screening_details",
+        "Briefly describe the type of screening or surveillance needed",
+        FormControl.Textarea,
+        Order = 20,
+        Hint = "Include details of new processes or adaptations to existing systems that may be needed."
+    )]
+    [FormShowWhen("medicines_patient_identification.screening_required", YesNoUnknown.Yes)]
+    [FormRequired("Enter details")]
     public string? ScreeningDetails { get; set; }
 
     [FormTask(
@@ -58,6 +78,7 @@ internal sealed class MedicinesPatientIdentification
         "medicines_patient_identification.urgent_identification_required",
         "Do patients need to be identified for treatment more quickly than standard practice?",
         FormControl.Radio,
+        Order = 10,
         Hint = "Select yes if standard timelines for identification or treatment would create adverse patient outcomes. Select no if standard timelines are acceptable. Select unknown if this has not yet been determined."
     )]
     [FormRequired(
@@ -66,7 +87,29 @@ internal sealed class MedicinesPatientIdentification
     public YesNoUnknown? UrgentIdentificationRequired { get; set; }
 
     /// <summary>Conditional on UrgentIdentificationRequired = Yes.</summary>
-    [FormIgnore("Conditional reveal not supported yet")]
+    [FormTask(
+        MedicineFormTasks.PatientAndClinicalRequirements,
+        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
+        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    )]
+    [FormPage(
+        "urgent-identification",
+        "Urgent patient identification",
+        Order = 20,
+        CommercialInConfidence = true
+    )]
+    [FormField(
+        "medicines_patient_identification.urgent_identification_details",
+        "Provide further details",
+        FormControl.Textarea,
+        Order = 20,
+        Hint = "Explain why faster identification or treatment may be required and what this could mean for services, at a high level. Avoid detailed operational planning."
+    )]
+    [FormShowWhen(
+        "medicines_patient_identification.urgent_identification_required",
+        YesNoUnknown.Yes
+    )]
+    [FormRequired("Enter details")]
     public string? UrgentIdentificationDetails { get; set; }
 
     // Navigation

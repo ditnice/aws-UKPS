@@ -490,16 +490,47 @@ describe('FormPage', () => {
       })
     })
 
-    it('shows a question revealed by several options after its trigger', () => {
+    it('reveals a question beneath each option that triggers it, under the trigger heading', async () => {
+      const user = userEvent.setup()
       render(<FormPage page={coMarketingPage(['Yes', 'Unknown'])} />)
 
-      expect(screen.getByRole('heading', { level: 1, name: /Co-marketing$/ })).toBeInTheDocument()
+      expect(
+        screen.getByRole('heading', { level: 1, name: /Is this product co-marketed\?$/ }),
+      ).toBeInTheDocument()
       expect(screen.queryByRole('textbox')).toBeNull()
 
-      fireEvent.click(screen.getByLabelText('Unknown at this stage'))
+      for (const option of ['Yes', 'Unknown at this stage']) {
+        await user.click(screen.getByLabelText(option))
+        const revealed = document.getElementById(
+          screen.getByLabelText(option).getAttribute('aria-controls') ?? '',
+        )
+        expect(revealed).toContainElement(screen.getByLabelText('Co-marketing company name'))
+        expect(revealed).toBeVisible()
+      }
 
-      expect(screen.getByLabelText('Co-marketing company name')).toBeVisible()
-      expect(screen.getByLabelText('Yes').getAttribute('aria-controls')).toBeNull()
+      await user.click(screen.getByLabelText('No'))
+      expect(screen.queryByRole('textbox')).toBeNull()
+    })
+
+    it('mounts one copy of a question revealed by several options, holding the saved answer', () => {
+      render(
+        <FormPage page={coMarketingPage(['Yes', 'Unknown'], { co: 'Unknown', co_name: 'Acme' })} />,
+      )
+
+      // hidden: true also counts copies inside hidden reveals.
+      expect(screen.getAllByRole('textbox', { hidden: true })).toHaveLength(1)
+      expect(screen.getByRole('textbox')).toHaveValue('Acme')
+    })
+
+    it('keeps the typed answer when switching between options that reveal it', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={coMarketingPage(['Yes', 'Unknown'])} />)
+
+      await user.click(screen.getByLabelText('Yes'))
+      await user.type(screen.getByLabelText('Co-marketing company name'), 'Acme')
+      await user.click(screen.getByLabelText('Unknown at this stage'))
+
+      expect(screen.getByLabelText('Co-marketing company name')).toHaveValue('Acme')
     })
   })
 

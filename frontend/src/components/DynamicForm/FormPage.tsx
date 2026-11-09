@@ -173,7 +173,12 @@ export function FormPage({ page }: FormPageProps) {
                           Object.fromEntries(
                             [...revealed].map(([value, indexes]) => [
                               value,
-                              indexes.map((i) => renderQuestion(i, false)),
+                              // Mounted only under the chosen option: a question revealed by
+                              // several options is nested under each, but one copy keeps its
+                              // id and field unique.
+                              value === field.state.value
+                                ? indexes.map((i) => renderQuestion(i, false))
+                                : [],
                             ]),
                           )
                         }
