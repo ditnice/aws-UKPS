@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RecordStatus } from '@/client/generated'
 import { router } from '@/test-utils/nextNavigation'
 
-import { ChangeRecordStatusActions } from './ChangeRecordStatusActions'
+import { StatusChangeActionForm } from './StatusChangeActionForm'
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
@@ -17,7 +17,7 @@ beforeEach(() => {
 
 const renderActions = (recordStatus: RecordStatus = 'Published') =>
   render(
-    <ChangeRecordStatusActions
+    <StatusChangeActionForm
       organisationId={7}
       recordId={42}
       recordType="Medicine"
@@ -28,10 +28,10 @@ const renderActions = (recordStatus: RecordStatus = 'Published') =>
 const getRadioValues = () =>
   screen.getAllByRole('radio').map((radio) => radio.getAttribute('value'))
 
-describe('ChangeRecordStatusActions', () => {
+describe('StatusChangeActionForm', () => {
   it.each<[RecordStatus, string[]]>([
-    ['Published', ['Archive', 'PlaceOnHold']],
-    ['OnHold', ['Archive', 'RemoveHold']],
+    ['Published', ['PlaceOnHold', 'Archive']],
+    ['OnHold', ['RemoveHold', 'Archive']],
   ])('offers the actions for a %s record', (recordStatus, expected) => {
     renderActions(recordStatus)
 
@@ -96,7 +96,7 @@ describe('ChangeRecordStatusActions', () => {
   it.each<[RecordStatus, string, string]>([
     ['Published', 'Archive the record', 'archive'],
     ['Published', 'Place the record on hold', 'place-on-hold'],
-    ['OnHold', 'Remove the record hold', 'remove-hold'],
+    ['OnHold', 'Remove hold and return to published', 'remove-hold'],
   ])('navigates a %s record to the "%s" page', async (recordStatus, label, path) => {
     renderActions(recordStatus)
 

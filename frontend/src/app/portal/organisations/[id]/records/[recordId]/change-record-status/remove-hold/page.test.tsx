@@ -57,21 +57,33 @@ vi.mock('@nice-digital/nds-page-header', () => ({
   ),
 }))
 
-vi.mock('./_components/RemoveHoldReasons', () => ({
-  RemoveHoldReasons: ({
+vi.mock('../_components/StatusChangeReasonForm', () => ({
+  StatusChangeReasonForm: ({
     organisationId,
     recordId,
     recordType,
+    action,
+    legend,
+    missingReasonError,
+    options,
   }: {
     organisationId: number
     recordId: number
     recordType: string
+    action: string
+    legend: string
+    missingReasonError: string
+    options: { reason: string }[]
   }) => (
     <div
       data-testid="remove-hold-reasons"
       data-organisation-id={organisationId}
       data-record-id={recordId}
       data-record-type={recordType}
+      data-action={action}
+      data-legend={legend}
+      data-missing-reason-error={missingReasonError}
+      data-reasons={options.map((option) => option.reason).join(',')}
     />
   ),
 }))
@@ -127,7 +139,7 @@ describe('RemoveHoldPage', () => {
         },
       }),
     )
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Change record status')
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Reason for removing hold')
     expect(screen.getByTestId('preheading').textContent).toBe(
       onHoldRecord.recordProductDetail.recordTitle,
     )
@@ -140,6 +152,14 @@ describe('RemoveHoldPage', () => {
     expect(reasons.getAttribute('data-organisation-id')).toBe(organisationId)
     expect(reasons.getAttribute('data-record-id')).toBe(recordId)
     expect(reasons.getAttribute('data-record-type')).toBe('Medicine')
+    expect(reasons.getAttribute('data-action')).toBe('RemoveHold')
+    expect(reasons.getAttribute('data-legend')).toBe(
+      'What best describes why development has restarted?',
+    )
+    expect(reasons.getAttribute('data-missing-reason-error')).toBe(
+      'Select why development has restarted',
+    )
+    expect(reasons.getAttribute('data-reasons')).toBe('TrialResumed,PlansRefiled,Other')
   })
 
   it('links back to the change record status page', async () => {
