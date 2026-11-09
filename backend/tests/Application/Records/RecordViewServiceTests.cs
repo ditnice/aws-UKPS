@@ -110,6 +110,29 @@ public class RecordViewServiceTests : DatabaseTestBase
             .CanEditContent.ShouldBe(expected);
     }
 
+    [Theory]
+    [InlineData(UserRole.Standard, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Super, false)]
+    public async Task GetRecord_ChangeStatus_IsOnlyReturnedToUsersWhoCanChangeStatus(
+        UserRole role,
+        bool expected
+    )
+    {
+        Record record = await AddRecord(RecordStatus.Published);
+        await AddRevision(record, 1, WorkflowStatus.Published);
+        _harness.UpdateCurrentUser(x => x with { UserRole = role });
+
+        GetRecordResult result = await Service.GetRecord(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().Actions.Contains(RecordAction.ChangeStatus).ShouldBe(expected);
+    }
+
     [Fact]
     public async Task GetRecord_DraftAfterPublishedRevision_ReturnsDraftRevisionContent()
     {

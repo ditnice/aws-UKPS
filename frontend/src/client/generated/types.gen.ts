@@ -48,6 +48,18 @@ export const BiomarkerType = {
 export type BiomarkerType = typeof BiomarkerType[keyof typeof BiomarkerType];
 
 /**
+ * Contains why a record is being put on hold, resumed or archived.
+ */
+export type ChangeRecordStatusCommand = {
+    reason: null | RecordStatusChangeReason;
+    /**
+     * Gets further details about the change. Required when the reason is
+     * RecordStatusChangeReason.Other.
+     */
+    note?: null | string;
+};
+
+/**
  * The kind of a condition that decides whether a question applies. Part of the HTTP API
  * contract: the member names are sent to the frontend, so never rename or remove one.
  */
@@ -1346,6 +1358,19 @@ export const RecordStatus = {
  * Represents the status of a record in the system.
  */
 export type RecordStatus = typeof RecordStatus[keyof typeof RecordStatus];
+
+export const RecordStatusChangeReason = {
+    DEVELOPMENT_DISCONTINUED: 'DevelopmentDiscontinued',
+    TRIAL_SUSPENDED: 'TrialSuspended',
+    FILING_WITHDRAWN: 'FilingWithdrawn',
+    TRIAL_RESUMED: 'TrialResumed',
+    PLANS_REFILED: 'PlansRefiled',
+    OTHER: 'Other',
+    ARCHIVED_AUTOMATICALLY: 'ArchivedAutomatically',
+    MANUALLY_DISCARDED: 'ManuallyDiscarded'
+} as const;
+
+export type RecordStatusChangeReason = typeof RecordStatusChangeReason[keyof typeof RecordStatusChangeReason];
 
 /**
  * The task list for a record's latest revision.
@@ -2892,6 +2917,168 @@ export type DiscardRecordError = DiscardRecordErrors[keyof DiscardRecordErrors];
 export type DiscardRecordResponses = {
     /**
      * The record was discarded.
+     */
+    200: unknown;
+};
+
+export type PutRecordOnHoldData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to put on hold.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/hold';
+};
+
+export type PutRecordOnHoldErrors = {
+    /**
+     * The reason is missing or is not a reason for putting a record on hold, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type PutRecordOnHoldError = PutRecordOnHoldErrors[keyof PutRecordOnHoldErrors];
+
+export type PutRecordOnHoldResponses = {
+    /**
+     * The record was put on hold.
+     */
+    200: unknown;
+};
+
+export type ResumeRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to resume.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/resume';
+};
+
+export type ResumeRecordErrors = {
+    /**
+     * The reason is missing or is not a reason for removing a hold, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type ResumeRecordError = ResumeRecordErrors[keyof ResumeRecordErrors];
+
+export type ResumeRecordResponses = {
+    /**
+     * The hold was removed.
+     */
+    200: unknown;
+};
+
+export type ArchiveRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to archive.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/archive';
+};
+
+export type ArchiveRecordErrors = {
+    /**
+     * The reason is missing or is not a reason for archiving a record, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type ArchiveRecordError = ArchiveRecordErrors[keyof ArchiveRecordErrors];
+
+export type ArchiveRecordResponses = {
+    /**
+     * The record was archived.
      */
     200: unknown;
 };

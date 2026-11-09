@@ -11,12 +11,14 @@ internal class OrganisationAuthoriser : IOrganisationAuthoriser
         Operation.Read,
         Operation.Create,
         Operation.EditRecordContent,
+        Operation.ChangeRecordStatus,
     ];
 
-    // Super users can act on every organisation but must not change its record content.
+    // Super users can act on every organisation but can't change record content or status.
     private static readonly Operation[] _deniedOperationsForSuperUser =
     [
         Operation.EditRecordContent,
+        Operation.ChangeRecordStatus,
     ];
 
     public OrganisationAuthoriser(ICurrentUserInfoService currentUserInfoService)
